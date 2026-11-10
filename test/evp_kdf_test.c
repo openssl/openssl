@@ -834,7 +834,10 @@ static int test_kdf_pbkdf1_skey(void)
         goto err;
 
     /* The derived key must not be left in a buffer freed while deriving */
-    if (!(watching = test_watch_freed_start(expected, sizeof(expected))))
+    watching = test_watch_freed_start(expected, sizeof(expected));
+    if (!TEST_int_ge(watching, 0))
+        goto err;
+    if (watching == 0)
         TEST_info("cannot replace the allocator, not checking the key is cleared");
     skey_out = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
         NULL, sizeof(out), NULL);

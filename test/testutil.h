@@ -747,13 +747,30 @@ BIO *glue2bio(const char **pem, char **out);
  * of freed blocks that still held the secret, or -1 if more blocks were live
  * than could be watched.
  *
- * Watching needs the allocator to be replaceable.  On master the mfail hooks
- * make that possible at any time; elsewhere it only works if the recipe sets
- * OPENSSL_TEST_WATCH_FREED, so that the hooks are installed before the first
- * allocation and pass everything through until a watch starts.
- * test_watch_freed_start() returns 0 and watches nothing if the allocator
- * cannot be replaced or a watch is already running; callers should then skip
- * the check.
+ * The watch hooks go in front of the allocator the test program started
+ * with.  On master that is the mfail allocator: the test driver installs it
+ * before the first allocation, which also keeps the allocator replaceable,
+ * and the hooks pass every call on to it.  So a watch can be used in an mfail
+ * test as well; injected allocation failures still reach the code under test,
+ * and blocks that failed to allocate are not watched.  Without mfail the
+ * allocator can only be replaced before the first allocation, so watching
+ * only works if the recipe sets OPENSSL_TEST_WATCH_FREED; the hooks are then
+ * installed at startup and pass everything to the C library until a watch
+ * starts.
+ *
+ * A test that installs its own allocator must not start a watch while it is
+ * installed, and must not replace the allocator during a watch.
+ *
+ * Allocations made inside a provider module that carries its own copy of
+ * libcrypto, such as the legacy module in a no-shared build, do not go
+ * through the hooks and are not watched.
+ *
+ * test_watch_freed_start() returns 1 when watching.  It returns 0 if the
+ * allocator cannot be replaced; callers should then skip the check.  It
+ * returns -1, and callers should fail, if a watch is already running, the
+ * arguments are invalid, or an allocator other than the starting one is
+ * installed.  test_watch_freed_stop() also returns -1 if the hooks are no
+ * longer installed when it is called.
  */
 int test_watch_freed_start(const void *secret, size_t secret_len);
 int test_watch_freed_stop(void);

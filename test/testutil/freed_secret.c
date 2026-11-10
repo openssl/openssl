@@ -25,7 +25,14 @@ static size_t nwatched;
 static int watching, overflow, nfound;
 static const unsigned char *watch_secret;
 static size_t watch_secret_len;
-static int installed;
+/*
+ * The allocator the test program started with: the mfail hooks on master,
+ * otherwise the library default.
+ */
+static int base_known;
+static CRYPTO_malloc_fn base_malloc;
+static CRYPTO_realloc_fn base_realloc;
+static CRYPTO_free_fn base_free;
 /* Where the hooks pass allocations on to; NULL means the C library */
 static CRYPTO_malloc_fn next_malloc;
 static CRYPTO_realloc_fn next_realloc;
@@ -125,29 +132,58 @@ static void watch_free(void *ptr, const char *file, int line)
     next_free_fn(ptr, file, line);
 }
 
+static void note_base(void)
+{
+    if (base_known)
+        return;
+    CRYPTO_get_mem_functions(&base_malloc, &base_realloc, &base_free);
+    base_known = 1;
+}
+
+static int hooks_installed(void)
+{
+    CRYPTO_malloc_fn m;
+    CRYPTO_realloc_fn r;
+    CRYPTO_free_fn f;
+
+    CRYPTO_get_mem_functions(&m, &r, &f);
+    return m == watch_malloc && r == watch_realloc && f == watch_free;
+}
+
 /*
- * Put the hooks in front of the allocator.  The library's own functions call
- * back into whatever is installed, so unless the mfail hooks are there to
- * pass allocations on to, the hooks use the C library directly, as mfail
- * does.  The allocator can only be replaced before the first allocation,
- * unless another allocator was installed before that: on master the test
- * driver installs mfail first, elsewhere test_watch_freed_init() has to run
- * at startup.
+ * Put the hooks in front of the allocator the program started with.  Tests
+ * such as quic_stream_test and dtlsssllistenertest replace the allocator and
+ * restore it afterwards, which can take the hooks out again, so look at what
+ * is installed each time rather than remembering that this was done.
+ *
+ * The hooks pass every call on to the mfail hooks if those are the starting
+ * allocator.  If it is the library default, they call the C library directly,
+ * as mfail does, because the library's functions would call back into the
+ * hooks.  If anything else is installed, such as a test's own allocator that
+ * may itself call the hooks, return -1 rather than guess what to pass on to.
+ *
+ * The allocator can only be replaced before the first allocation, unless
+ * another allocator was installed before that: on master the test driver
+ * installs mfail first, elsewhere the hooks have to go in at startup (see
+ * test_watch_freed_init()).  Return 0 if it cannot be replaced.
  */
 static int watch_install(void)
 {
-    if (installed)
+    CRYPTO_malloc_fn m;
+    CRYPTO_realloc_fn r;
+    CRYPTO_free_fn f;
+
+    note_base();
+    CRYPTO_get_mem_functions(&m, &r, &f);
+    if (m == watch_malloc && r == watch_realloc && f == watch_free)
         return 1;
-    if (mfail_is_installed()) {
-        CRYPTO_get_mem_functions(&next_malloc, &next_realloc, &next_free);
-    } else {
-        next_malloc = NULL;
-        next_realloc = NULL;
-        next_free = NULL;
-    }
+    if (m != base_malloc || r != base_realloc || f != base_free)
+        return -1;
+    next_malloc = m == CRYPTO_malloc ? NULL : m;
+    next_realloc = r == CRYPTO_realloc ? NULL : r;
+    next_free = f == CRYPTO_free ? NULL : f;
     if (!CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free))
         return 0;
-    installed = 1;
     return 1;
 }
 
@@ -155,15 +191,20 @@ int test_watch_freed_init(void)
 {
     const char *e = getenv("OPENSSL_TEST_WATCH_FREED");
 
+    note_base();
     if (e == NULL || *e == '\0' || strcmp(e, "0") == 0)
         return 0;
-    return watch_install() ? 1 : -1;
+    return watch_install() == 1 ? 1 : -1;
 }
 
 int test_watch_freed_start(const void *secret, size_t secret_len)
 {
-    if (watching || secret == NULL || secret_len == 0 || !watch_install())
-        return 0;
+    int ret;
+
+    if (watching || secret == NULL || secret_len == 0)
+        return -1;
+    if ((ret = watch_install()) != 1)
+        return ret;
     nwatched = 0;
     overflow = 0;
     nfound = 0;
@@ -178,5 +219,8 @@ int test_watch_freed_stop(void)
     if (!watching)
         return -1;
     watching = 0;
-    return overflow ? -1 : nfound;
+    /* If the hooks were taken out, blocks freed meanwhile were not searched */
+    if (overflow || !hooks_installed())
+        return -1;
+    return nfound;
 }
