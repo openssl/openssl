@@ -1293,15 +1293,16 @@ err:
 /*
  * A page left odd, as if the hypervisor stopped in the middle of an update:
  * the read gives up after a bounded number of looks, the call succeeds and
- * reseeds, and once the page is consistent again without a change, the DRBGs
- * stop reseeding.
+ * the DRBGs reseed once. While the page stays odd they do not reseed again,
+ * and when it is consistent again they reseed once more, whether or not the
+ * counter moved meanwhile.
  */
 static int test_rand_vmclock_stuck(void)
 {
     OSSL_LIB_CTX *ctx = NULL;
-    EVP_RAND_CTX *public;
+    EVP_RAND_CTX *primary, *public;
     unsigned char buf[32];
-    unsigned int pub;
+    unsigned int pri, pub;
     int ret;
 
     if ((ret = vmclock_ctx_new(&ctx)) <= 0) {
@@ -1310,25 +1311,35 @@ static int test_rand_vmclock_stuck(void)
     }
     ret = 0;
     if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
-        || !TEST_ptr(public = RAND_get0_public(ctx)))
+        || !TEST_ptr(public = RAND_get0_public(ctx))
+        || !TEST_ptr(primary = RAND_get0_primary(ctx)))
         goto err;
     pub = vmclock_reseed_counter(public);
+    pri = vmclock_reseed_counter(primary);
 
     /*
-     * A read that gives up counts as a change: the public DRBG reseeds at the
-     * check before generating and again at the one after.
+     * The first read that gives up counts as a change: the public DRBG
+     * reseeds, and the primary with it, once each.
      */
     vmclock_test_set_seq(++vmclock_test_seq);
     if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
-        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 2))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 1)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))
         goto err;
-    vmclock_test_set_seq(++vmclock_test_seq);
-
-    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0)))
-        goto err;
-    pub = vmclock_reseed_counter(public);
+    /* the page stays odd: no further reseed */
     if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
-        || !TEST_uint_eq(vmclock_reseed_counter(public), pub))
+        || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 1)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))
+        goto err;
+    /* it settles, the counter where it was: one more reseed, then none */
+    vmclock_test_set_seq(++vmclock_test_seq);
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 2)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 2)
+        || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 2)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 2))
         goto err;
     ret = 1;
 err:

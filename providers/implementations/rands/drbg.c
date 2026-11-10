@@ -674,7 +674,7 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         drbg->fork_id = fork_id;
         reseed_required = 1;
     }
-    if (ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_epoch))
+    if (ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_state))
         reseed_required = 1;
 
     if (drbg->reseed_interval > 0) {
@@ -715,7 +715,7 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
      * the caller's additional input. If that fails, the output must not be
      * used, so it is cleared.
      */
-    if (ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_epoch)) {
+    if (ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_state)) {
         if (!ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, NULL,
                 0, adin_in, adinlen_in)) {
             OPENSSL_cleanse(out, outlen);
@@ -842,7 +842,7 @@ PROV_DRBG *ossl_rand_drbg_new(void *provctx, void *parent, const OSSL_DISPATCH *
     drbg->generate = generate;
     drbg->fork_id = openssl_get_fork_id();
     drbg->vmclock_page = ossl_prov_vmclock_page(ossl_prov_ctx_get0_libctx(provctx));
-    (void)ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_epoch);
+    (void)ossl_prov_vmclock_changed(drbg->vmclock_page, &drbg->vmclock_state);
 
     /* Extract parent's functions */
     drbg->parent = parent;

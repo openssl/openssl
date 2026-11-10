@@ -22,7 +22,9 @@
  *
  * ossl_prov_vmclock_changed() compares the current value of the two fields
  * with the one a DRBG last saw, so that the DRBG can treat a change like a
- * change of pid. Each library context maps the page once, when its first
+ * change of pid. A page that stays in mid-update for a whole read counts as
+ * a change once, and once more when it can be read again; in between the
+ * DRBG is left alone. Each library context maps the page once, when its first
  * DRBG is created, and unmaps it when the context is freed; the mapping is
  * kept with the context rather than in a static, as the FIPS provider
  * requires. A read is a few loads under the page's sequence count, with no
@@ -114,8 +116,9 @@ struct ossl_vmclock_page {
  * The number of times a reader looks at the sequence count before it gives
  * up. The hypervisor holds the count odd only while it rewrites the page,
  * which takes a few stores; the bound keeps a reader from spinning with a
- * DRBG lock held if the count stays odd. A read that gives up is reported
- * as a change, so the cost of a bound that is too short is one reseed.
+ * DRBG lock held if the count stays odd. The first read that gives up is
+ * reported as a change, and so is the first that succeeds after it, so a
+ * bound that is too short costs two reseeds.
  */
 #define OSSL_VMCLOCK_MAX_TRIES 1000
 
@@ -227,16 +230,16 @@ const volatile void *ossl_prov_vmclock_page(OSSL_LIB_CTX *libctx)
 /*
  * Reads the two fields under the page's sequence count and folds them into
  * |*epoch|. Returns 0 if the page was being rewritten on every one of
- * OSSL_VMCLOCK_MAX_TRIES looks.
+ * |max_tries| looks.
  */
 static int vmclock_read(const volatile struct ossl_vmclock_page *page,
-    uint64_t *epoch)
+    uint64_t *epoch, int max_tries)
 {
     uint64_t generation, marker, flags;
     uint32_t seq;
     int tries;
 
-    for (tries = 0; tries < OSSL_VMCLOCK_MAX_TRIES; tries++) {
+    for (tries = 0; tries < max_tries; tries++) {
         seq = vmclock_le32(page->seq_count);
         if ((seq & 1) != 0)
             continue;
@@ -257,17 +260,34 @@ static int vmclock_read(const volatile struct ossl_vmclock_page *page,
     return 0;
 }
 
-int ossl_prov_vmclock_changed(const volatile void *page, uint64_t *epoch)
+int ossl_prov_vmclock_changed(const volatile void *page,
+    PROV_VMCLOCK_STATE *state)
 {
     uint64_t now;
 
     if (page == NULL)
         return 0;
-    if (!vmclock_read(page, &now))
+    /*
+     * A page that has stayed in mid-update for a whole read is one we cannot
+     * tell anything from: reseed once, then leave the DRBG alone until the
+     * page settles. Meanwhile one look per call shows whether it has.
+     */
+    if (!vmclock_read(page, &now,
+            state->unreadable ? 1 : OSSL_VMCLOCK_MAX_TRIES)) {
+        if (state->unreadable)
+            return 0;
+        state->unreadable = 1;
         return 1;
-    if (now == *epoch)
+    }
+    if (state->unreadable) {
+        /* Whatever the page went through, the DRBG has not seen it. */
+        state->unreadable = 0;
+        state->epoch = now;
+        return 1;
+    }
+    if (now == state->epoch)
         return 0;
-    *epoch = now;
+    state->epoch = now;
     return 1;
 }
 
@@ -279,7 +299,7 @@ const volatile void *ossl_prov_vmclock_page(ossl_unused OSSL_LIB_CTX *libctx)
 }
 
 int ossl_prov_vmclock_changed(ossl_unused const volatile void *page,
-    ossl_unused uint64_t *epoch)
+    ossl_unused PROV_VMCLOCK_STATE *state)
 {
     return 0;
 }
