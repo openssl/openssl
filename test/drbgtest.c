@@ -884,7 +884,15 @@ err:
     return ret;
 }
 
-#if defined(__linux__) && defined(__GNUC__)
+/*
+ * The DRBGs read the VMClock page on Linux, and only a debug build lets
+ * OPENSSL_VMCLOCK name a file in place of the device.
+ */
+#if defined(__linux__) && defined(__GNUC__) && !defined(NDEBUG)
+#define VMCLOCK_TESTS
+#endif
+
+#ifdef VMCLOCK_TESTS
 /*
  * A regular file laid out like the VMClock page stands in for the device
  * (OPENSSL_VMCLOCK is set to it in setup_tests, before any DRBG runs). Bumping
@@ -1440,7 +1448,7 @@ int setup_tests(void)
         TEST_error("Error parsing test options\n");
         return 0;
     }
-#if defined(__linux__) && defined(__GNUC__)
+#ifdef VMCLOCK_TESTS
     vmclock_fips_config = test_get_argument(0);
     if (vmclock_test_setup()) {
         ADD_TEST(test_rand_reseed_on_vmclock);
@@ -1470,7 +1478,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-#if defined(__linux__) && defined(__GNUC__)
+#ifdef VMCLOCK_TESTS
     if (vmclock_test_page != NULL)
         munmap(vmclock_test_page, VMCLOCK_TEST_SIZE);
     if (vmclock_test_created)

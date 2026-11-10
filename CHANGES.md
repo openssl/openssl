@@ -79,8 +79,8 @@ OpenSSL 4.2
    kernel's generator, so restored copies diverge only if the guest kernel has
    reseeded first, which it does on the VMGenID notification when it has the
    vmgenid driver. Processes that cannot open the device (by default only root
-   can) and hosts without the device are unaffected. OPENSSL_VMCLOCK names
-   another path, for tests.
+   can) and hosts without the device are unaffected. In a debug build,
+   OPENSSL_VMCLOCK names another path, for tests.
 
    *Yuxiang Ji*
 
