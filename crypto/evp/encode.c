@@ -229,6 +229,13 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 {
     int wrap_cnt = 0;
 
+    if (t == NULL || f == NULL || dlen < 0)
+        return -1;
+
+    /* Ensure the base64 output length does not overflow. */
+    if (dlen > (INT_MAX / 4) * 3)
+        return -1;
+
 #ifdef HAVE_AVX2
     if (HAVE_AVX2())
         return (int)encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
@@ -484,6 +491,9 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
 
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 {
+    if (t == NULL || f == NULL || n < 0)
+        return -1;
+
 #ifdef HAVE_AVX2
     if (HAVE_AVX2() && n >= 64) {
         const unsigned char *fx = f;

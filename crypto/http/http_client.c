@@ -1432,7 +1432,8 @@ static char *base64encode(const void *buf, size_t len)
     size_t outl;
     char *out;
 
-    if (len > INT_MAX)
+    /* Ensure the base64 output length does not overflow. */
+    if (len > (INT_MAX / 4) * 3)
         return 0;
     /* Calculate size of encoded data */
     outl = (len / 3);
