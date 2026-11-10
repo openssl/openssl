@@ -47,11 +47,14 @@ void test_fail_memory_message(const char *prefix, const char *file,
     const unsigned char *m2, size_t l2);
 
 __owur int setup_test_framework(int argc, char *argv[]);
-/*
+/**
+ * @brief Prepare the freed memory watch at startup.
+ *
  * Note the allocator the test program starts with, and install the freed
  * memory watch hooks in front of it if OPENSSL_TEST_WATCH_FREED is set.
- * Must run before the first allocation.  Returns 1 if installed, 0 if not
- * requested, -1 on failure.
+ * Must run before the first allocation.
+ *
+ * @returns 1 if installed, 0 if not requested, -1 on failure
  */
 int test_watch_freed_init(void);
 __owur int pulldown_test_framework(int ret);
