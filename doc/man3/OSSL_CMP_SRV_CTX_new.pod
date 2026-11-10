@@ -171,7 +171,9 @@ confirmation of newly enrolled certificates if requested.
 
 OSSL_CMP_SRV_CTX_set_enforce_same_credentials() enables checking that the
 sender name, senderKID, and protection algorithm OID remain unchanged in messages
-belonging to the same transaction.
+belonging to the same transaction. With signature-based protection,
+the sender certificate used for the first request must also be used for
+all later requests in the transaction.
 This implements RFC 9483 requirements on using same credentials,
 preventing other legitimate clients from taking over a transaction.
 Changes to the parameters of the same protection algorithm,
