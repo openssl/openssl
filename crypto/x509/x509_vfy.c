@@ -72,9 +72,10 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_curve(X509 *cert);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
-    unsigned int *preasons, X509_CRL *crl, X509 *x, STACK_OF(X509_NAME) *crldp_names);
+    unsigned int *preasons, X509_CRL *crl, X509 *x, STACK_OF(X509_NAME) **crldp_names,
+    int *vfy_cb_err);
 static int get_crl_delta(X509_STORE_CTX *ctx,
-    X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x);
+    X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x, int *vfy_cb_err);
 static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     int *pcrl_score, X509_CRL *base,
     STACK_OF(X509_CRL) *crls);
@@ -83,7 +84,8 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
 static int matching_crl_issuer_and_akid(const X509_CRL *crl,
     const X509 *issuer, const X509_NAME *crl_issuer_name);
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-    unsigned int *preasons, STACK_OF(X509_NAME) *crldp_names);
+    unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
+    int *vfy_cb_err);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
     STACK_OF(X509) *cert_path,
@@ -1435,6 +1437,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     int cnum = ctx->error_depth;
     X509 *x = sk_X509_value(ctx->chain, cnum);
     STACK_OF(X509_NAME) *crldp_names = NULL;
+    int vfy_cb_err = X509_V_OK;
 
     ctx->current_cert = x;
     ctx->current_issuer = NULL;
@@ -1457,31 +1460,24 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
 
             ok = ctx->get_crl(ctx, &crl, x);
             if (crl != NULL) {
-
-                /*
-                 * Pre-build the crldp X509_NAMES here as we will reuse
-                 * them for each iteration of the above loop, and we don't
-                 * want to rebuild them each time
-                 */
-                if (crldp_names == NULL) {
-                    crldp_names = get_crldp_full_names(x);
-                    if (crldp_names == NULL) {
-                        ok = verify_cb_crl(ctx, X509_V_ERR_OUT_OF_MEM);
-                        goto done;
-                    }
-                }
-
                 ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
-                    &reasons, crl, x, crldp_names);
+                    &reasons, crl, x, &crldp_names, &vfy_cb_err);
+                if (vfy_cb_err != X509_V_OK) {
+                    ok = verify_cb_crl(ctx, vfy_cb_err);
+                    goto done;
+                }
                 ctx->current_issuer = crl_issuer;
                 ctx->current_reasons = reasons;
             }
         } else {
-            ok = get_crl_delta(ctx, &crl, &dcrl, x);
+            ok = get_crl_delta(ctx, &crl, &dcrl, x, &vfy_cb_err);
         }
         /* If error looking up CRL, nothing we can do except notify callback */
         if (!ok) {
-            ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
+            if (vfy_cb_err == X509_V_OK)
+                vfy_cb_err = X509_V_ERR_UNABLE_TO_GET_CRL;
+
+            ok = verify_cb_crl(ctx, vfy_cb_err);
             goto done;
         }
 
@@ -1584,7 +1580,8 @@ int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 
 static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
     X509 **pissuer, int *pscore, unsigned int *preasons,
-    STACK_OF(X509_CRL) *crls, STACK_OF(X509_NAME) **crldp_names)
+    STACK_OF(X509_CRL) *crls, STACK_OF(X509_NAME) **crldp_names,
+    int *vfy_cb_err)
 {
     int i, crl_score, best_score = *pscore;
     unsigned int reasons, best_reasons = 0;
@@ -1595,19 +1592,11 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
     for (i = 0; i < sk_X509_CRL_num(crls); i++) {
         crl = sk_X509_CRL_value(crls, i);
         reasons = *preasons;
-        /*
-         * Pre-build the crldp X509_NAMES here as we will reuse
-         * them for each iteration of the below loop, and we don't
-         * want to rebuild them each time.  We also store this in a pointer
-         * passed by the caller, as lookups call this twice, so we save having
-         * to rebuild again.
-         */
-        if (*crldp_names == NULL) {
-            *crldp_names = get_crldp_full_names(x);
-            if (*crldp_names == NULL)
-                return 0;
-        }
-        crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x, *crldp_names);
+
+        crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x, crldp_names, vfy_cb_err);
+        if (*vfy_cb_err != X509_V_OK)
+            return 0;
+
         if (crl_score < best_score || crl_score == 0)
             continue;
         /* If current CRL is equivalent use it if it is newer */
@@ -1751,7 +1740,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
  * is rejected, otherwise reasons is updated.
  */
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
-    unsigned int *preasons, X509_CRL *crl, X509 *x, STACK_OF(X509_NAME) *crldp_names)
+    unsigned int *preasons, X509_CRL *crl, X509 *x, STACK_OF(X509_NAME) **crldp_names,
+    int *vfy_cb_err)
 {
     int crl_score = 0;
     unsigned int tmp_reasons = *preasons, crl_reasons;
@@ -1799,7 +1789,7 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
         return 0;
 
     /* Check cert for matching CRL distribution points */
-    if (crl_crldp_check(x, crl, crl_score, &crl_reasons, crldp_names)) {
+    if (crl_crldp_check(x, crl, crl_score, &crl_reasons, crldp_names, vfy_cb_err)) {
         /* If no new reasons reject */
         if ((crl_reasons & ~tmp_reasons) == 0)
             return 0;
@@ -2095,7 +2085,8 @@ end:
 
 /* Check CRLDP and IDP */
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-    unsigned int *preasons, STACK_OF(X509_NAME) *crldp_names)
+    unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
+    int *vfy_cb_err)
 {
     int i;
 
@@ -2111,9 +2102,17 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     *preasons = crl->idp_reasons;
     for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
-        X509_NAME *dpname = sk_X509_NAME_value(crldp_names, i);
+        X509_NAME *dpname;
         int match;
 
+        if (*crldp_names == NULL) {
+            *crldp_names = get_crldp_full_names(x);
+            if (*crldp_names == NULL) {
+                *vfy_cb_err = X509_V_ERR_OUT_OF_MEM;
+                return 0;
+            }
+        }
+        dpname = sk_X509_NAME_value(*crldp_names, i);
         if (!crldp_check_crlissuer(dp, crl, crl_score))
             continue;
         if (crl->idp == NULL) {
@@ -2146,7 +2145,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
  * to find a delta CRL too
  */
 static int get_crl_delta(X509_STORE_CTX *ctx,
-    X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x)
+    X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x,
+    int *vfy_cb_err)
 {
     int ok;
     X509 *issuer = NULL;
@@ -2159,8 +2159,10 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
 
     reasons = ctx->current_reasons;
     ok = get_crl_sk(ctx, &crl, &dcrl,
-        &issuer, &crl_score, &reasons, ctx->crls, &crldp_names);
+        &issuer, &crl_score, &reasons, ctx->crls, &crldp_names, vfy_cb_err);
     if (ok)
+        goto done;
+    if (*vfy_cb_err != X509_V_OK)
         goto done;
 
     /* Lookup CRLs from store */
@@ -2170,7 +2172,9 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     if (skcrl == NULL && crl != NULL)
         goto done;
 
-    get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl, &crldp_names);
+    ok = get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl, &crldp_names, vfy_cb_err);
+    if (!ok && *vfy_cb_err != X509_V_OK)
+        crl = NULL;
 
     sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
 
