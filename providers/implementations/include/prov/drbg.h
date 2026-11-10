@@ -49,8 +49,18 @@ typedef struct prov_drbg_st PROV_DRBG;
 typedef struct prov_vmclock_state_st {
     /* The generation as of the last look that could read the page. */
     uint64_t epoch;
+    /* Set once a look has read the page: until then |epoch| holds nothing. */
+    int seen;
     /* Set while the page is in mid-update and was for a whole read. */
     int unreadable;
+    /*
+     * The reseeds still to follow a change, and the time their waits count
+     * from, set by ossl_prov_vmclock_reseeded() when the reseed that the
+     * change caused has completed.
+     */
+    int followups;
+    int followup_armed;
+    uint64_t followup_base;
 } PROV_VMCLOCK_STATE;
 
 /*
@@ -219,11 +229,19 @@ const volatile void *ossl_prov_vmclock_page(OSSL_LIB_CTX *libctx);
  * @param state what the caller last saw, updated by the call
  * @returns 1 if the guest has since been restored from a snapshot or
  * migrated, if the page has just become unreadable, being in mid-update for
- * a whole read, or if it has just become readable again; 0 if nothing
- * changed, if the page is still unreadable, or if |page| is NULL
+ * a whole read, if it has just become readable again, or if a reseed that
+ * follows an earlier change is due; 0 if nothing changed, if the page is
+ * still unreadable, on the first look, or if |page| is NULL
  */
 int ossl_prov_vmclock_changed(const volatile void *page,
     PROV_VMCLOCK_STATE *state);
+
+/**
+ * @brief Records that a reseed has completed, from which the waits for the
+ * reseeds that follow a change are counted.
+ * @param state the caller's state
+ */
+void ossl_prov_vmclock_reseeded(PROV_VMCLOCK_STATE *state);
 
 /* Seeding api */
 OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;

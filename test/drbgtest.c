@@ -906,6 +906,7 @@ err:
  */
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <time.h>
 #include <unistd.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/provider.h>
@@ -917,6 +918,7 @@ static int vmclock_test_created;
 static uint8_t *vmclock_test_page;
 static uint32_t vmclock_test_seq = 2;
 static uint64_t vmclock_test_generation;
+static time_t vmclock_test_changed_at;
 
 static int vmclock_test_setup(void)
 {
@@ -973,9 +975,21 @@ static void vmclock_test_set_seq(uint32_t seq)
     __atomic_store_n((uint32_t *)(vmclock_test_page + 12), raw, __ATOMIC_SEQ_CST);
 }
 
+/*
+ * A DRBG reseeds again a second or more after a change. A test that counts
+ * the reseeds of calls that follow a change therefore counts them only while
+ * the clock still shows the second in which the page changed, and takes the
+ * count as given if a stalled machine brings it there later.
+ */
+static int vmclock_test_in_time(void)
+{
+    return time(NULL) == vmclock_test_changed_at;
+}
+
 /* Set the generation counter as a hypervisor does, holding the page odd for |hold_ms|. */
 static void vmclock_test_set_generation(uint64_t generation, unsigned int hold_ms)
 {
+    vmclock_test_changed_at = time(NULL);
     vmclock_test_generation = generation;
     vmclock_test_set_seq(++vmclock_test_seq); /* odd: update in progress */
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
@@ -1067,7 +1081,8 @@ static int test_rand_reseed_on_vmclock(void)
     /* and the private DRBG on its next call, once */
     if (!TEST_true(RAND_priv_bytes_ex(ctx, buf, sizeof(buf), 0))
         || !TEST_true(RAND_priv_bytes_ex(ctx, buf, sizeof(buf), 0))
-        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri2))
+        || (vmclock_test_in_time()
+            && !TEST_uint_eq(vmclock_reseed_counter(primary), pri2)))
         goto err;
     ret = 1;
 err:
@@ -1333,7 +1348,63 @@ static int test_rand_vmclock_stuck(void)
         || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))
         goto err;
     /* it settles, the counter where it was: one more reseed, then none */
+    vmclock_test_changed_at = time(NULL);
     vmclock_test_set_seq(++vmclock_test_seq);
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 2)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 2)
+        || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || (vmclock_test_in_time()
+            && (!TEST_uint_eq(vmclock_reseed_counter(public), pub + 2)
+                || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 2))))
+        goto err;
+    ret = 1;
+err:
+    if ((vmclock_test_seq & 1) != 0)
+        vmclock_test_set_seq(++vmclock_test_seq);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * After a change a DRBG reseeds again on its first call once a wait is over,
+ * and the primary with it, so that seed taken before the guest's kernel had
+ * reseeded does not stay. This runs through the first wait; the second is
+ * too long for a test and takes the same path.
+ */
+static int test_rand_vmclock_followup(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_RAND_CTX *primary, *public;
+    uint64_t generation = vmclock_test_generation;
+    unsigned char buf[32];
+    unsigned int pri, pub;
+    int ret;
+
+    if ((ret = vmclock_ctx_new(&ctx)) <= 0) {
+        OSSL_LIB_CTX_free(ctx);
+        return ret < 0 ? TEST_skip("this FIPS provider does not read VMClock") : 0;
+    }
+    ret = 0;
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_ptr(public = RAND_get0_public(ctx))
+        || !TEST_ptr(primary = RAND_get0_primary(ctx)))
+        goto err;
+    pub = vmclock_reseed_counter(public);
+    pri = vmclock_reseed_counter(primary);
+
+    /* the change itself: one reseed each, and none on the next call */
+    vmclock_test_bump(0);
+    if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 1)
+        || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1)
+        || !TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
+        || (vmclock_test_in_time()
+            && (!TEST_uint_eq(vmclock_reseed_counter(public), pub + 1)
+                || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))))
+        goto err;
+    /* the first wait is over: one more reseed each, and none after it */
+    OSSL_sleep(1100);
     if (!TEST_true(RAND_bytes_ex(ctx, buf, sizeof(buf), 0))
         || !TEST_uint_eq(vmclock_reseed_counter(public), pub + 2)
         || !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 2)
@@ -1343,8 +1414,7 @@ static int test_rand_vmclock_stuck(void)
         goto err;
     ret = 1;
 err:
-    if ((vmclock_test_seq & 1) != 0)
-        vmclock_test_set_seq(++vmclock_test_seq);
+    vmclock_test_set_generation(generation, 0);
     OSSL_LIB_CTX_free(ctx);
     return ret;
 }
@@ -1392,7 +1462,8 @@ static void *vmclock_thread(void *arg)
     pthread_barrier_wait(&vmclock_barrier); /* every thread has drawn once */
     before = public == NULL ? 0 : vmclock_reseed_counter(public);
     if (!RAND_bytes_ex(vmclock_ctx, buf, sizeof(buf), 0)
-        || public == NULL || vmclock_reseed_counter(public) != before)
+        || public == NULL
+        || (vmclock_test_in_time() && vmclock_reseed_counter(public) != before))
         *ok = 0;
 end:
     OPENSSL_thread_stop();
@@ -1440,7 +1511,8 @@ static int test_rand_vmclock_threads(void)
     }
     if (vmclock_phases) {
         pthread_barrier_destroy(&vmclock_barrier);
-        if (!TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))
+        if (vmclock_test_in_time()
+            && !TEST_uint_eq(vmclock_reseed_counter(primary), pri + 1))
             ret = 0;
     }
     vmclock_test_set_generation(generation, 0);
@@ -1467,6 +1539,7 @@ int setup_tests(void)
         if (vmclock_fips_config == NULL)
             ADD_TEST(test_rand_vmclock_recheck);
         ADD_TEST(test_rand_vmclock_stuck);
+        ADD_TEST(test_rand_vmclock_followup);
 #if defined(OPENSSL_THREADS)
         ADD_TEST(test_rand_vmclock_threads);
 #endif

@@ -576,6 +576,7 @@ static int ossl_prov_drbg_reseed_unlocked(PROV_DRBG *drbg,
     tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
     if (drbg->parent != NULL)
         drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
+    ossl_prov_vmclock_reseeded(&drbg->vmclock_state);
 
 end:
     cleanup_entropy(drbg, entropy, entropylen);
