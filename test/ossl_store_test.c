@@ -664,6 +664,51 @@ static int test_fake_store_delete(void)
         0);
 }
 
+static int test_fake_store_skey_ref(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    EVP_SKEY *skey = NULL;
+    EVP_SKEY *skey2 = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex(
+                      FAKE_STORE_SCHEME ":" FAKE_STORE_CMD_SKEY_REF,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS,
+                      NULL, NULL, NULL, NULL, NULL))
+        || !TEST_true(OSSL_STORE_expect(sctx, OSSL_STORE_INFO_SKEY))
+        || !TEST_ptr(info = OSSL_STORE_load(sctx)))
+        goto err;
+
+    if (!TEST_int_eq(OSSL_STORE_INFO_get_type(info), OSSL_STORE_INFO_SKEY)
+        || !TEST_ptr(skey = OSSL_STORE_INFO_get0_SKEY(info))
+        || !TEST_ptr(skey2 = OSSL_STORE_INFO_get1_SKEY(info))
+        || !TEST_ptr(OSSL_STORE_INFO_get0_data(OSSL_STORE_INFO_SKEY, info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_PARAMS(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_PARAMS(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_PUBKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_PUBKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_PKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_PKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_CERT(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_CERT(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_CRL(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_CRL(info)))
+        goto err;
+
+    if (!TEST_true(OSSL_STORE_eof(sctx))
+        || !TEST_ptr_null(OSSL_STORE_load(sctx))
+        || !TEST_false(OSSL_STORE_error(sctx)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey2);
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -736,6 +781,7 @@ int setup_tests(void)
     ADD_TEST(test_fake_store_post_process);
     ADD_TEST(test_fake_store_attach);
     ADD_TEST(test_fake_store_delete);
+    ADD_TEST(test_fake_store_skey_ref);
     return 1;
 }
 
