@@ -236,8 +236,8 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
         }
         width = ossl_fn_get_dsize(cardinality);
         own = OSSL_FN_CTX_size(1, 1, width);
-        mulsz = OSSL_FN_mod_mul_ctx_size_from_data(
-            cardinality, scalar, cofactor, cardinality);
+        mulsz = OSSL_FN_mod_mul_ctx_size_from_sizes(width,
+            ossl_fn_get_dsize(scalar), ossl_fn_get_dsize(cofactor), width);
         mfsz = EC_POINT_mul_fn_ctx_size(group, tmp, cardinality, pub_key);
         if (own == 0 || mulsz == 0 || mfsz == 0)
             goto err;

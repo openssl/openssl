@@ -1650,8 +1650,9 @@ size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group)
     if (mont == NULL)
         return 0;
     w = ossl_fn_get_dsize(OSSL_FN_MONT_CTX_get0_modulus(mont));
+    /* The operand reduced is at most 2 * w wide; see the function above. */
     return ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, 2 * w),
-        OSSL_FN_mont_reduce_ctx_size_from_data(NULL, NULL, mont));
+        OSSL_FN_mont_reduce_ctx_size_from_sizes(w, 2 * w, w));
 }
 
 /*-

@@ -1158,8 +1158,9 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     OSSL_FN_CTX *fn_ctx = NULL;
     OSSL_FN *fn_r0 = NULL;
     const OSSL_FN *fn_I = NULL, *fn_n = NULL;
-    size_t fn_size, nl;
-    int ret = 0;
+    const OSSL_FN *fn_dmp1, *fn_p, *fn_dmq1, *fn_q;
+    size_t fn_size, nl, Il, pl, ql;
+    int ret = 0, cache_priv;
 
     if (rsa->meth->ossl_fn_rsa_mod_exp == NULL
         || rsa->meth->bn_mod_exp != BN_mod_exp_mont)
@@ -1206,21 +1207,32 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
      *
      * The mod_exp sizings intentionally use the key components' own
      * (possibly over-allocated) widths; a little arena over-allocation
-     * is harmless, the use of it is what matters.
+     * is harmless, the use of it is what matters.  The operands proper
+     * are the CRT body's scratch, which does not exist yet, so the
+     * sizing works from widths.
      */
+    fn_dmp1 = bn_get_ossl_fn(rsa->dmp1);
+    fn_p = bn_get_ossl_fn(rsa->p);
+    fn_dmq1 = bn_get_ossl_fn(rsa->dmq1);
+    fn_q = bn_get_ossl_fn(rsa->q);
+    if (fn_dmp1 == NULL || fn_p == NULL || fn_dmq1 == NULL || fn_q == NULL)
+        goto err;
+    Il = ossl_fn_get_dsize(fn_I);
+    pl = ossl_fn_get_dsize(fn_p);
+    ql = ossl_fn_get_dsize(fn_q);
+    /* The prime Montgomery contexts are only used when they are cached */
+    cache_priv = (rsa->flags & RSA_FLAG_CACHE_PRIVATE) != 0;
     fn_size = ossl_fn_ctx_add_size(
         ossl_fn_ctx_add_size(
-            OSSL_FN_mod_exp_mont_ctx_size_from_data(fn_r0, fn_I,
-                bn_get_ossl_fn(rsa->dmp1),
-                bn_get_ossl_fn(rsa->p), NULL),
-            OSSL_FN_mod_exp_mont_ctx_size_from_data(fn_r0, fn_I,
-                bn_get_ossl_fn(rsa->dmq1),
-                bn_get_ossl_fn(rsa->q), NULL)),
+            OSSL_FN_mod_exp_mont_ctx_size_from_sizes(nl, Il,
+                ossl_fn_get_dsize(fn_dmp1), pl, cache_priv ? pl : 0),
+            OSSL_FN_mod_exp_mont_ctx_size_from_sizes(nl, Il,
+                ossl_fn_get_dsize(fn_dmq1), ql, cache_priv ? ql : 0)),
         OSSL_FN_CTX_size(8, 48, 24 * nl + 16));
-    /* Bringing I below n: f_I, and a reduction */
+    /* Bringing I below n: f_I, and a reduction into it modulo f_n */
     fn_size = ossl_fn_ctx_add_size(fn_size,
         ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, nl),
-            OSSL_FN_mod_ctx_size_from_data(fn_n, fn_I, fn_n)));
+            OSSL_FN_mod_ctx_size_from_sizes(nl, Il, nl)));
     if (fn_size == 0)
         goto err;
 

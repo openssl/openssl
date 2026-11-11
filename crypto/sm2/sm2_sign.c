@@ -319,12 +319,14 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      * operations.  Every operand handed to those is exactly nlimbs wide.
      */
     need = ossl_fn_ctx_max_size(
-        ossl_fn_ctx_max_size(OSSL_FN_mod_inverse_prime_ctx_size_from_data(
-                                 order_fn, order_fn, order_fn, mont),
-            OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont)),
+        ossl_fn_ctx_max_size(
+            OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(nlimbs, nlimbs,
+                nlimbs, nlimbs),
+            OSSL_FN_mul_mont_quick_ctx_size_from_sizes(nlimbs, nlimbs, nlimbs,
+                nlimbs)),
         ossl_ec_group_fn_reduce_ord_ctx_size(group));
     need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_to_mont_quick_ctx_size_from_data(NULL, NULL, mont));
+        OSSL_FN_to_mont_quick_ctx_size_from_sizes(nlimbs, nlimbs, nlimbs));
     /*
      * Seven temporaries; rk is one limb wider, see below.
      * The order of the SM2 curve group is fixed, so we don't have to worry

@@ -304,10 +304,10 @@ int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
 
 /**
  * Calculate the arena payload size that ossl_fn_miller_rabin_is_prime()
- * needs for a candidate of width |w|->dsize.  |w| may be a width-only
- * model: the nested sizing functions inspect widths only.
+ * needs for a candidate of width |w|->dsize.  To size from the width
+ * alone, use ossl_fn_miller_rabin_is_prime_ctx_size_from_sizes().
  *
- * @param[in]   w       a model for the candidate (width only).
+ * @param[in]   w       the candidate.
  * @returns             the arena size in bytes, 0 on arithmetic overflow
  *                      or invalid input.
  */
@@ -343,7 +343,7 @@ int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
  * Calculate the arena payload size that ossl_fn_check_prime() needs for a
  * candidate of width |w|->dsize.
  *
- * @param[in]   w       a model for the candidate (width only).
+ * @param[in]   w       the candidate.
  * @returns             the arena size in bytes, 0 on arithmetic overflow
  *                      or invalid input.
  */
@@ -378,7 +378,7 @@ int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
  * Calculate the arena payload size that ossl_fn_check_generated_prime()
  * needs for a candidate of width |w|->dsize.
  *
- * @param[in]   w       a model for the candidate (width only).
+ * @param[in]   w       the candidate.
  * @returns             the arena size in bytes, 0 on arithmetic overflow
  *                      or invalid input.
  */
@@ -427,12 +427,12 @@ int ossl_fn_rsa_fips186_5_gen_prob_primes(OSSL_FN *p, OSSL_FN *Xpout,
  * ossl_fn_rsa_fips186_5_gen_prob_primes() needs.  |p1|, |p2|, |Xp1|
  * and |Xp2| may be NULL, as for the operation.
  *
- * @param[in]   p       a model for the probable prime (width only).
- * @param[in]   Xpout   a model for the accepted seed (width only).
- * @param[in]   p1      a model for the auxiliary prime, may be NULL.
- * @param[in]   p2      a model for the auxiliary prime, may be NULL.
- * @param[in]   Xp1     a model for the auxiliary seed, may be NULL.
- * @param[in]   Xp2     a model for the auxiliary seed, may be NULL.
+ * @param[in]   p       the probable prime.
+ * @param[in]   Xpout   the accepted seed.
+ * @param[in]   p1      the auxiliary prime, may be NULL.
+ * @param[in]   p2      the auxiliary prime, may be NULL.
+ * @param[in]   Xp1     the auxiliary seed, may be NULL.
+ * @param[in]   Xp2     the auxiliary seed, may be NULL.
  * @param[in]   nlen    the target modulus length, in bits.
  * @param[in]   e       the public exponent the prime must suit.
  * @returns             the arena size in bytes, 0 on arithmetic overflow
@@ -493,10 +493,10 @@ int ossl_fn_rsa_fips186_5_derive_prime(OSSL_FN *Y, OSSL_FN *X,
  * Calculate the arena payload size that
  * ossl_fn_rsa_fips186_5_derive_prime() needs.
  *
- * @param[in]   Y       a model for the derived prime (width only).
- * @param[in]   X       a model for the accepted seed (width only).
- * @param[in]   r1      a model for the first auxiliary prime (width only).
- * @param[in]   r2      a model for the second auxiliary prime (width only).
+ * @param[in]   Y       the derived prime.
+ * @param[in]   X       the accepted seed.
+ * @param[in]   r1      the first auxiliary prime.
+ * @param[in]   r2      the second auxiliary prime.
  * @param[in]   nlen    the target modulus length, in bits.
  * @param[in]   e       the public exponent the prime must suit.
  * @returns             the arena size in bytes, 0 on arithmetic overflow

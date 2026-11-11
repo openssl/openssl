@@ -120,9 +120,13 @@ static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,
         || !OSSL_FN_copy(r2, fn_q) || !OSSL_FN_sub_word(r2, 1))
         goto err;
 
-    /* The mul and the mod_inverse run sequentially in one arena. */
+    /*
+     * The mul and the mod_inverse run sequentially in one arena.  The
+     * latter's result is acquired only later, at r0's width.
+     */
     fn_size = ossl_fn_ctx_max_size(OSSL_FN_mul_ctx_size_from_data(r0, r1, r2),
-        OSSL_FN_mod_inverse_ctx_size_from_data(r0, fn_d, r0));
+        OSSL_FN_mod_inverse_ctx_size_from_sizes(nl, ossl_fn_get_dsize(fn_d),
+            nl));
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */

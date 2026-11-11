@@ -678,7 +678,7 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
     const int is_mont = group->meth->field_encode != NULL;
     OSSL_FN_MONT_CTX *mont;
     int nlimbs;
-    size_t need = 0;
+    size_t w, need = 0;
     int ret = 0;
 
     if (EC_POINT_is_at_infinity(group, point)) {
@@ -692,21 +692,25 @@ int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *group,
         return 0;
     }
     nlimbs = (int)ossl_fn_get_dsize(p_fn);
+    w = (size_t)nlimbs;
 
     /*
      * Size the secure arena: six nlimbs temporaries plus the widest nested op.
-     * The composition helpers honour the OSSL_FN_*_ctx_size convention (0 is a
-     * sticky error, OSSL_FN_CTX_SIZE_NONE counts as no contribution). nlimbs is
-     * the field width of an arbitrary curve, so guard the * 6 against overflow.
+     * Every operand of those is one of the temporaries, as wide as the field
+     * modulus and so as the Montgomery context's modulus, which is built from
+     * it.  The composition helpers honour the OSSL_FN_*_ctx_size_from_*()
+     * convention (0 is a sticky error, OSSL_FN_CTX_SIZE_NONE counts as no
+     * contribution).  nlimbs is the field width of an arbitrary curve, so
+     * guard the * 6 against overflow.
      */
     need = ossl_fn_ctx_max_size(
-        is_mont ? OSSL_FN_from_mont_ctx_size_from_data(NULL, p_fn, mont)
-                : OSSL_FN_mont_reduce_ctx_size_from_data(NULL, p_fn, mont),
-        OSSL_FN_mod_inverse_prime_ctx_size_from_data(p_fn, p_fn, p_fn, mont));
+        is_mont ? OSSL_FN_from_mont_ctx_size_from_sizes(w, w, w)
+                : OSSL_FN_mont_reduce_ctx_size_from_sizes(w, w, w),
+        OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(w, w, w, w));
     need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_to_mont_quick_ctx_size_from_data(NULL, NULL, mont));
+        OSSL_FN_to_mont_quick_ctx_size_from_sizes(w, w, w));
     need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont));
+        OSSL_FN_mul_mont_quick_ctx_size_from_sizes(w, w, w, w));
     need = ossl_fn_ctx_add_size(need,
         (size_t)nlimbs > SIZE_MAX / 6 ? 0
                                       : OSSL_FN_CTX_size(1, 6, (size_t)nlimbs * 6));
