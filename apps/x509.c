@@ -1051,10 +1051,12 @@ cert_loop:
             goto err;
         if (!noout) {
             if (outformat == FORMAT_ASN1) {
-                X509_REQ_print_ex(out, rq, get_nameopt(), X509_FLAG_COMPAT);
-                i = i2d_X509_bio(out, x);
-            } else {
+                i = i2d_X509_REQ_bio(out, rq);
+            } else if (outformat == FORMAT_PEM) {
                 i = PEM_write_bio_X509_REQ(out, rq);
+            } else {
+                BIO_puts(bio_err, "Bad output format specified for outfile\n");
+                goto err;
             }
             if (!i) {
                 BIO_puts(bio_err,
