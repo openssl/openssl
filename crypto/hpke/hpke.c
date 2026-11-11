@@ -109,7 +109,7 @@ static EVP_PKEY *evp_pkey_new_raw_nist_public_key(OSSL_LIB_CTX *libctx,
     EVP_PKEY *ret = NULL;
     EVP_PKEY_CTX *cctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_group_name,
         (char *)gname, 0);
     params[1] = OSSL_PARAM_construct_end();
     if (cctx == NULL
@@ -506,11 +506,11 @@ static int hpke_encap(OSSL_HPKE_CTX *ctx, unsigned char *enc, size_t *enclen,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_operation,
         OSSL_KEM_PARAM_OPERATION_DHKEM,
         0);
     if (ctx->ikme != NULL) {
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_ikme,
             ctx->ikme, ctx->ikmelen);
     }
     *p = OSSL_PARAM_construct_end();
@@ -590,7 +590,7 @@ static int hpke_decap(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_operation,
         OSSL_KEM_PARAM_OPERATION_DHKEM,
         0);
     *p = OSSL_PARAM_construct_end();
@@ -1035,7 +1035,7 @@ int OSSL_HPKE_CTX_set1_authpub(OSSL_HPKE_CTX *ctx,
     if (lpub == NULL)
         goto err;
     if (EVP_PKEY_get_octet_string_param(pubp,
-            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+            OSSL_PKEY_PARAM_encoded_public_key,
             lpub, OSSL_HPKE_MAXSIZE, &lpublen)
         != 1) {
         OPENSSL_free(lpub);
@@ -1344,7 +1344,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
 
     if (hpke_kem_id_nist_curve(suite.kem_id) == 1) {
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_group_name,
             (char *)kem_info->groupname, 0);
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
     } else {
@@ -1356,7 +1356,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
         goto err;
     }
     if (ikm != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_dhkem_ikm,
             (char *)ikm, ikmlen);
     *p = OSSL_PARAM_construct_end();
     if (EVP_PKEY_CTX_set_params(pctx, params) <= 0) {
@@ -1369,7 +1369,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
     EVP_PKEY_CTX_free(pctx);
     pctx = NULL;
-    if (EVP_PKEY_get_octet_string_param(skR, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+    if (EVP_PKEY_get_octet_string_param(skR, OSSL_PKEY_PARAM_encoded_public_key,
             pub, *publen, publen)
         != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);

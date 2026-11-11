@@ -238,7 +238,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
     }
 
     params[0] = OSSL_PARAM_construct_octet_string(
-        OSSL_SIGNATURE_PARAM_ALGORITHM_ID, aid, sizeof(aid));
+        OSSL_SIGNATURE_PARAM_algorithm_id, aid, sizeof(aid));
     params[1] = OSSL_PARAM_construct_end();
 
     if (EVP_PKEY_CTX_get_params(pkctx, params) <= 0)

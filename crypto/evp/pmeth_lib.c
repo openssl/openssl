@@ -677,7 +677,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
             EVP_PKEY_CTRL_GET_MD, 0, (void *)(md));
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_digest,
         name,
         sizeof(name));
     *p = OSSL_PARAM_construct_end();
@@ -730,14 +730,14 @@ static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return evp_pkey_ctx_set_md(ctx, md, ctx->op.sig.algctx == NULL,
-        OSSL_SIGNATURE_PARAM_DIGEST,
+        OSSL_SIGNATURE_PARAM_digest,
         EVP_PKEY_OP_TYPE_SIG, EVP_PKEY_CTRL_MD);
 }
 
 int EVP_PKEY_CTX_set_tls1_prf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return evp_pkey_ctx_set_md(ctx, md, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_DIGEST,
+        OSSL_KDF_PARAM_digest,
         EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_TLS_MD);
 }
 
@@ -852,7 +852,7 @@ int EVP_PKEY_CTX_set1_tls1_prf_secret(EVP_PKEY_CTX *ctx,
     const unsigned char *sec, int seclen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_SECRET,
+        OSSL_KDF_PARAM_secret,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_TLS_SECRET,
         sec, seclen);
@@ -862,7 +862,7 @@ int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *ctx,
     const unsigned char *seed, int seedlen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_SEED,
+        OSSL_KDF_PARAM_seed,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_TLS_SEED,
         seed, seedlen);
@@ -871,7 +871,7 @@ int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_CTX_set_hkdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return evp_pkey_ctx_set_md(ctx, md, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_DIGEST,
+        OSSL_KDF_PARAM_digest,
         EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_HKDF_MD);
 }
 
@@ -879,7 +879,7 @@ int EVP_PKEY_CTX_set1_hkdf_salt(EVP_PKEY_CTX *ctx,
     const unsigned char *salt, int saltlen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_SALT,
+        OSSL_KDF_PARAM_salt,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_HKDF_SALT,
         salt, saltlen);
@@ -889,7 +889,7 @@ int EVP_PKEY_CTX_set1_hkdf_key(EVP_PKEY_CTX *ctx,
     const unsigned char *key, int keylen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_KEY,
+        OSSL_KDF_PARAM_key,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_HKDF_KEY,
         key, keylen);
@@ -899,7 +899,7 @@ int EVP_PKEY_CTX_add1_hkdf_info(EVP_PKEY_CTX *ctx,
     const unsigned char *info, int infolen)
 {
     return evp_pkey_ctx_add1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_INFO,
+        OSSL_KDF_PARAM_info,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_HKDF_INFO,
         info, infolen);
@@ -926,7 +926,7 @@ int EVP_PKEY_CTX_set_hkdf_mode(EVP_PKEY_CTX *ctx, int mode)
         return 0;
     }
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_mode, &mode);
     *p = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, int_params);
@@ -936,7 +936,7 @@ int EVP_PKEY_CTX_set1_pbe_pass(EVP_PKEY_CTX *ctx, const char *pass,
     int passlen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_PASSWORD,
+        OSSL_KDF_PARAM_password,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_PASS,
         (const unsigned char *)pass, passlen);
@@ -946,7 +946,7 @@ int EVP_PKEY_CTX_set1_scrypt_salt(EVP_PKEY_CTX *ctx,
     const unsigned char *salt, int saltlen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.algctx == NULL,
-        OSSL_KDF_PARAM_SALT,
+        OSSL_KDF_PARAM_salt,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_SCRYPT_SALT,
         salt, saltlen);
@@ -976,21 +976,21 @@ static int evp_pkey_ctx_set_uint64(EVP_PKEY_CTX *ctx, const char *param,
 
 int EVP_PKEY_CTX_set_scrypt_N(EVP_PKEY_CTX *ctx, uint64_t n)
 {
-    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_N,
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_scrypt_n,
         EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_SCRYPT_N,
         n);
 }
 
 int EVP_PKEY_CTX_set_scrypt_r(EVP_PKEY_CTX *ctx, uint64_t r)
 {
-    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_R,
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_scrypt_r,
         EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_SCRYPT_R,
         r);
 }
 
 int EVP_PKEY_CTX_set_scrypt_p(EVP_PKEY_CTX *ctx, uint64_t p)
 {
-    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_P,
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_scrypt_p,
         EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_SCRYPT_P,
         p);
 }
@@ -998,7 +998,7 @@ int EVP_PKEY_CTX_set_scrypt_p(EVP_PKEY_CTX *ctx, uint64_t p)
 int EVP_PKEY_CTX_set_scrypt_maxmem_bytes(EVP_PKEY_CTX *ctx,
     uint64_t maxmem_bytes)
 {
-    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_MAXMEM,
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_scrypt_maxmem,
         EVP_PKEY_OP_DERIVE,
         EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES,
         maxmem_bytes);
@@ -1008,7 +1008,7 @@ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
     int keylen)
 {
     return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.keymgmt.genctx == NULL,
-        OSSL_PKEY_PARAM_PRIV_KEY,
+        OSSL_PKEY_PARAM_priv_key,
         EVP_PKEY_OP_KEYGEN,
         EVP_PKEY_CTRL_SET_MAC_KEY,
         key, keylen);
@@ -1026,7 +1026,7 @@ int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op)
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_operation,
         (char *)op, 0);
     *p = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);

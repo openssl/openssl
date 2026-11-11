@@ -231,9 +231,9 @@ static int kdf_derive(unsigned char *kek, size_t keklen,
     if (kctx == NULL)
         goto err;
 
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
         (unsigned char *)ss, sslen);
-    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_info,
         (char *)infoder, infolen);
     params[2] = OSSL_PARAM_construct_end();
 

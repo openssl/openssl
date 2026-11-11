@@ -609,7 +609,7 @@ static int cms_ktri_harderr_ok(EVP_PKEY_CTX *pctx, EVP_PKEY *pkey)
 
     /* For PKCS#1 v1.5 it is only safe with implicit rejection in effect */
     params[0] = OSSL_PARAM_construct_uint(
-        OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION,
+        OSSL_ASYM_CIPHER_PARAM_implicit_rejection,
         &implicit_rejection);
     params[1] = OSSL_PARAM_construct_end();
     if (EVP_PKEY_CTX_get_params(pctx, params) <= 0
@@ -1467,7 +1467,7 @@ int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk)
      * and/or RSA-KEM.
      */
     if (evp_pkey_is_provided(pk)
-        && EVP_PKEY_get_int_param(pk, OSSL_PKEY_PARAM_CMS_RI_TYPE, &ri_type))
+        && EVP_PKEY_get_int_param(pk, OSSL_PKEY_PARAM_cms_ri_type, &ri_type))
         return ri_type;
 
     /* Check types that we know about */

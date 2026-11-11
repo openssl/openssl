@@ -4380,7 +4380,7 @@ static int check_curve(X509 *cert)
         return 1;
 
     ret = EVP_PKEY_get_int_param(pkey,
-        OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS,
+        OSSL_PKEY_PARAM_ec_decoded_from_explicit_params,
         &val);
     return ret == 1 ? !val : -1;
 }

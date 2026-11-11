@@ -850,10 +850,10 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
         return NULL;
     }
     if (input_structure != NULL)
-        decoder_params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+        decoder_params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_structure,
             (char *)input_structure, 0);
     if (propquery != NULL)
-        decoder_params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
+        decoder_params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_properties,
             (char *)propquery, 0);
 
     /* It is safe to cast away the const here */

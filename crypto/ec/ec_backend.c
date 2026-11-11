@@ -202,11 +202,11 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
             goto err;
         }
-        if (!ossl_param_build_set_bn(tmpl, param_p, OSSL_PKEY_PARAM_EC_P, p)
+        if (!ossl_param_build_set_bn(tmpl, param_p, OSSL_PKEY_PARAM_ec_p, p)
             || !ossl_param_build_set_bn(tmpl, param_a,
-                OSSL_PKEY_PARAM_EC_A, a)
+                OSSL_PKEY_PARAM_ec_a, a)
             || !ossl_param_build_set_bn(tmpl, param_b,
-                OSSL_PKEY_PARAM_EC_B, b)) {
+                OSSL_PKEY_PARAM_ec_b, b)) {
             ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
         }
@@ -220,7 +220,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
             goto err;
         }
-        if (!ossl_param_build_set_bn(tmpl, param, OSSL_PKEY_PARAM_EC_ORDER,
+        if (!ossl_param_build_set_bn(tmpl, param, OSSL_PKEY_PARAM_ec_order,
                 order)) {
             ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
@@ -230,7 +230,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     param = params == NULL ? NULL : params->field_type;
     if (tmpl != NULL || param != NULL) {
         if (!ossl_param_build_set_utf8_string(tmpl, param,
-                OSSL_PKEY_PARAM_EC_FIELD_TYPE,
+                OSSL_PKEY_PARAM_ec_field_type,
                 field_type)) {
             ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
@@ -253,7 +253,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
             goto err;
         }
         if (!ossl_param_build_set_octet_string(tmpl, param,
-                OSSL_PKEY_PARAM_EC_GENERATOR,
+                OSSL_PKEY_PARAM_ec_generator,
                 *genbuf, genbuf_len)) {
             ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
@@ -266,7 +266,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
 
         if (cofactor != NULL
             && !ossl_param_build_set_bn(tmpl, param,
-                OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
+                OSSL_PKEY_PARAM_ec_cofactor, cofactor)) {
             ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
         }
@@ -280,7 +280,7 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         if (seed != NULL
             && seed_len > 0
             && !ossl_param_build_set_octet_string(tmpl, param,
-                OSSL_PKEY_PARAM_EC_SEED,
+                OSSL_PKEY_PARAM_ec_seed,
                 seed, seed_len)) {
             ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
@@ -310,7 +310,7 @@ int ossl_ec_group_todata_parsed(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     if (pt_form_name == NULL
         || !ossl_param_build_set_utf8_string(
             tmpl, params == NULL ? NULL : params->pt_format,
-            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT, pt_form_name)) {
+            OSSL_PKEY_PARAM_ec_point_conversion_format, pt_form_name)) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
         return 0;
     }
@@ -319,7 +319,7 @@ int ossl_ec_group_todata_parsed(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     if (encoding_name == NULL
         || !ossl_param_build_set_utf8_string(tmpl,
             params == NULL ? NULL : params->encoding,
-            OSSL_PKEY_PARAM_EC_ENCODING,
+            OSSL_PKEY_PARAM_ec_encoding,
             encoding_name)) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
         return 0;
@@ -327,7 +327,7 @@ int ossl_ec_group_todata_parsed(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
 
     if (!ossl_param_build_set_int(tmpl,
             params == NULL ? NULL : params->decoded,
-            OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS,
+            OSSL_PKEY_PARAM_ec_decoded_from_explicit_params,
             group->decoded_from_explicit_params))
         return 0;
 
@@ -349,7 +349,7 @@ int ossl_ec_group_todata_parsed(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         if (curve_name == NULL
             || !ossl_param_build_set_utf8_string(tmpl,
                 params == NULL ? NULL : params->group_name,
-                OSSL_PKEY_PARAM_GROUP_NAME,
+                OSSL_PKEY_PARAM_group_name,
                 curve_name)) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
             goto err;

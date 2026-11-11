@@ -35,7 +35,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ffc_type,
         (char *)name, 0);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -50,7 +50,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX, &gindex);
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_ffc_gindex, &gindex);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -66,7 +66,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ffc_seed,
         (void *)seed, seedlen);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -82,7 +82,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_ffc_pbits, &bits);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -97,7 +97,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_ffc_qbits, &bits2);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -113,10 +113,10 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ffc_digest,
         (char *)md_name, 0);
     if (md_properties != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST_PROPS,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ffc_digest_props,
             (char *)md_properties, 0);
     *p++ = OSSL_PARAM_construct_end();
 

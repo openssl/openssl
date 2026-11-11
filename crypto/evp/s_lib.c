@@ -205,7 +205,7 @@ EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname
 {
     OSSL_PARAM params[2];
 
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_raw_bytes,
         (void *)key, keylen);
     params[1] = OSSL_PARAM_construct_end();
 

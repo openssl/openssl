@@ -102,7 +102,7 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
          * If the KDF OID hasn't already been set, then query the provider
          * for a default KDF.
          */
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_CMS_KEMRI_KDF_ALGORITHM,
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_cms_kemri_kdf_algorithm,
             kemri_x509_algor, sizeof(kemri_x509_algor));
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_PKEY_get_params(pkey, params))

@@ -1034,8 +1034,8 @@ int EVP_PKEY_CTX_set_rsa_pss_keygen_md_name(EVP_PKEY_CTX *ctx,
     const char *mdprops)
 {
     return int_set_rsa_md_name(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
-        OSSL_PKEY_PARAM_RSA_DIGEST, mdname,
-        OSSL_PKEY_PARAM_RSA_DIGEST_PROPS, mdprops);
+        OSSL_PKEY_PARAM_rsa_digest, mdname,
+        OSSL_PKEY_PARAM_rsa_digest_props, mdprops);
 }
 
 /*
@@ -1056,15 +1056,15 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
     const char *mdprops)
 {
     return int_set_rsa_md_name(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,
-        OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST, mdname,
-        OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS, mdprops);
+        OSSL_ASYM_CIPHER_PARAM_oaep_digest, mdname,
+        OSSL_ASYM_CIPHER_PARAM_oaep_digest_props, mdprops);
 }
 
 int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
     size_t namesize)
 {
     return int_get_rsa_md_name(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,
-        OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+        OSSL_ASYM_CIPHER_PARAM_oaep_digest,
         name, namesize);
 }
 
@@ -1097,8 +1097,8 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
 {
     return int_set_rsa_md_name(ctx, -1,
         EVP_PKEY_OP_TYPE_CRYPT | EVP_PKEY_OP_TYPE_SIG,
-        OSSL_PKEY_PARAM_MGF1_DIGEST, mdname,
-        OSSL_PKEY_PARAM_MGF1_PROPERTIES, mdprops);
+        OSSL_PKEY_PARAM_mgf1_digest, mdname,
+        OSSL_PKEY_PARAM_mgf1_properties, mdprops);
 }
 
 int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
@@ -1106,7 +1106,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
 {
     return int_get_rsa_md_name(ctx, -1,
         EVP_PKEY_OP_TYPE_CRYPT | EVP_PKEY_OP_TYPE_SIG,
-        OSSL_PKEY_PARAM_MGF1_DIGEST, name, namesize);
+        OSSL_PKEY_PARAM_mgf1_digest, name, namesize);
 }
 
 /*
@@ -1123,7 +1123,7 @@ int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name(EVP_PKEY_CTX *ctx,
     const char *mdname)
 {
     return int_set_rsa_md_name(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
-        OSSL_PKEY_PARAM_MGF1_DIGEST, mdname,
+        OSSL_PKEY_PARAM_mgf1_digest, mdname,
         NULL, NULL);
 }
 
@@ -1163,7 +1163,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
         plabel = (void *)empty;
 
     /* Cast away the const. This is read only so should be safe */
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_oaep_label,
         (void *)plabel, (size_t)llen);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -1191,7 +1191,7 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
     if (!EVP_PKEY_CTX_is_a(ctx, "RSA"))
         return -1;
 
-    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
+    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_ASYM_CIPHER_PARAM_oaep_label,
         (void **)label, 0);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -1257,7 +1257,7 @@ int EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
     if (!EVP_PKEY_CTX_is_a(ctx, "RSA-PSS"))
         return -1;
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_pss_saltlen,
         &saltlen);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -1280,7 +1280,7 @@ int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int bits)
         && !EVP_PKEY_CTX_is_a(ctx, "RSA-PSS"))
         return -1;
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits2);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_rsa_bits, &bits2);
     *p++ = OSSL_PARAM_construct_end();
 
     return evp_pkey_ctx_set_params_strict(ctx, params);
@@ -1340,7 +1340,7 @@ int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes)
         && !EVP_PKEY_CTX_is_a(ctx, "RSA-PSS"))
         return -1;
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_PRIMES, &primes2);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_rsa_primes, &primes2);
     *p++ = OSSL_PARAM_construct_end();
 
     return evp_pkey_ctx_set_params_strict(ctx, params);

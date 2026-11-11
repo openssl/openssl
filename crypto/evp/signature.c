@@ -1054,7 +1054,7 @@ int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *ctx,
         return 0;
     }
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_SIGNATURE,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_signature,
         /*
          * Cast away the const. This is
          * read only so should be safe

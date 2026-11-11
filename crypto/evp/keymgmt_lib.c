@@ -299,12 +299,12 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
         int size = 0;
         OSSL_PARAM params[5];
 
-        params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_BITS, &bits);
-        params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_SECURITY_BITS,
+        params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_bits, &bits);
+        params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_security_bits,
             &security_bits);
-        params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY,
+        params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_security_category,
             &security_category);
-        params[3] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_MAX_SIZE, &size);
+        params[3] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_max_size, &size);
         params[4] = OSSL_PARAM_construct_end();
         if (evp_keymgmt_get_params(pk->keymgmt, pk->keydata, params)) {
             pk->cache.size = size;
@@ -541,9 +541,9 @@ int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
     char *result = NULL;
     int rv = -2;
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_default_digest,
         mddefault, sizeof(mddefault));
-    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST,
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_mandatory_digest,
         mdmandatory,
         sizeof(mdmandatory));
     params[2] = OSSL_PARAM_construct_end();

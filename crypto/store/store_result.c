@@ -595,7 +595,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             } else {
                 static char prompt_info[] = "PKCS12 import pass phrase";
                 OSSL_PARAM pw_params[] = {
-                    OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO,
+                    OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_info,
                         prompt_info,
                         sizeof(prompt_info) - 1),
                     OSSL_PARAM_END
@@ -735,7 +735,7 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
         keysize = data->ref_size;
         keybytes = (unsigned char *)data->ref;
-        params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_OBJECT_PARAM_REFERENCE,
+        params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_OBJECT_PARAM_reference,
             (void **)&keybytes, keysize);
         params[1] = OSSL_PARAM_construct_end();
 

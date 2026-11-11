@@ -204,7 +204,7 @@ int ossl_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
         return 0;
 
     cbc_name = EVP_CIPHER_get0_name(cbc);
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_cipher,
         (char *)cbc_name, 0);
     params[1] = OSSL_PARAM_construct_end();
 

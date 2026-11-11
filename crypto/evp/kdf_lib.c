@@ -146,7 +146,7 @@ size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx)
     if (ctx == NULL)
         return 0;
 
-    *params = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &s);
+    *params = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_size, &s);
     if (ctx->meth->get_ctx_params != NULL
         && ctx->meth->get_ctx_params(ctx->algctx, params))
         return s;
@@ -200,7 +200,7 @@ int EVP_KDF_CTX_set_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *key, const char *paramname)
     if (ctx == NULL)
         return 0;
 
-    ckey.name = (paramname != NULL) ? paramname : OSSL_KDF_PARAM_KEY;
+    ckey.name = (paramname != NULL) ? paramname : OSSL_KDF_PARAM_key;
 
     if (ctx->meth->set_skey != NULL && ctx->meth->prov == key->skeymgmt->prov)
         return ctx->meth->set_skey(ctx->algctx, key->keydata, ckey.name);
@@ -271,7 +271,7 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
             OPENSSL_free(key);
             return NULL;
         }
-        import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+        import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_raw_bytes,
             key, keylen);
 
         ret = EVP_SKEY_import_SKEYMGMT(ossl_provider_libctx(ctx->meth->prov), skeymgmt,
