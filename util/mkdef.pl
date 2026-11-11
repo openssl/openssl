@@ -124,7 +124,8 @@ my %OS_data = (
     vms         => 'VMS',       # alias
     WINDOWS     => { writer     => \&writer_windows,
                      sort       => OpenSSL::Ordinals::by_name(),
-                     platforms  => { WIN32                      => 1,
+                     platforms  => { WINDOWS                    => 1,
+                                     WIN32                      => 1,
                                      _WIN32                     => 1 } },
     windows     => 'WINDOWS',   # alias
     WIN32       => 'WINDOWS',   # alias

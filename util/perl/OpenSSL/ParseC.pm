@@ -667,6 +667,11 @@ my @chandlers = (
     { regexp   => qr/^extern "C" (.*(?:;|>>>))/,
       massager => sub { return ($1); },
     },
+    # External arrays declare exported variables.  Strip extern so that the
+    # variable declaration handler can process the array and its conditions.
+    { regexp   => qr/^extern (.*<<<\[[^\]]*\]>>>);/,
+      massager => sub { return ("$1;"); },
+    },
     # any other extern is just ignored
     { regexp   => qr/^\s*                       # Any spaces before
                      extern                     # The keyword we look for

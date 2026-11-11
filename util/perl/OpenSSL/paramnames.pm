@@ -719,7 +719,7 @@ sub calculate_name_offsets {
     return $character_count, %offsets;
 }
 
-# Generate string based macros for public consumption
+# Generate the size in bytes and literal and table-based macros.
 sub generate_public_macros {
     my @macros = ();
     my @name_text = ();
@@ -742,30 +742,14 @@ sub generate_public_macros {
         push(@macros, $def);
         push(@name_text, $ary);
     }
-    my $prelude = "\n\n/* Parameter names as indices into a global array */\n"
-                  . "#if defined(OPENSSL_SYS_WINDOWS)\n"
-                  . "const char *ossl_get_parameter_names_table(void);\n"
-                  . "#else\n"
-                  . "extern const char ossl_parameter_names_table[$total];\n"
-                  . "# define ossl_get_parameter_names_table() (ossl_parameter_names_table)\n"
-                  . "#endif\n"
-                  . "\nstatic ossl_inline int ossl_is_static_parameter_name(const void *ptr)\n{\n"
-                  . "    const char *const names_table = ossl_get_parameter_names_table();\n\n"
-                  . "    return (uintptr_t)ptr - (uintptr_t)names_table < $total;\n"
-                  . "}\n\n";
-    return join("\n", sort @macros) . $prelude . join("\n", sort @name_text);
+    return ($total, join("\n", sort @macros), join("\n", sort @name_text));
 }
 
+# Generate the array declaration and initializer.
 sub generate_param_name_array {
     my @name_text = ();
     my ($total, %position_info) = calculate_name_offsets();
 
-    my $prelude = "#if defined(OPENSSL_SYS_WINDOWS)\n"
-                  . "const char *ossl_get_parameter_names_table(void)\n{\n"
-                  . "    static const char names_table[$total] = {\n"
-                  . "#else\n"
-                  . "const char ossl_parameter_names_table[$total] = {\n"
-                  . "#endif\n";
     foreach my $name (sort keys %params) {
         my $val = $position_info{$name}{'text'};
         my $text = '';
@@ -778,11 +762,14 @@ sub generate_param_name_array {
             push(@name_text, $text . "'\\0',");
         }
     }
-    my $epilogue = "\n};\n"
-                  . "#if defined(OPENSSL_SYS_WINDOWS)\n"
-                  . "    return names_table;\n}\n"
-                  . "#endif\n";
-    return $prelude . join("\n", @name_text) . $epilogue;
+    return join("\n",
+                '#if defined(OPENSSL_SYS_WINDOWS)',
+                "    static const char names_table[$total] = {",
+                '#else',
+                "const char ossl_parameter_names_table[$total] = {",
+                '#endif',
+                @name_text,
+                '};');
 }
 
 sub trie_matched {
