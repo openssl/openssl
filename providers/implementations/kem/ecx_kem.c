@@ -134,7 +134,7 @@ static ECX_KEY *ecxkey_pubfromdata(PROV_ECX_CTX *ctx,
     ECX_KEY *ecx = NULL;
     OSSL_PARAM pub;
 
-    pub = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+    pub = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_pub_key,
         (char *)pubbuf, pubbuflen);
 
     ecx = ossl_ecx_key_new(ctx->libctx, ctx->recipient_key->type, 1, ctx->propq);

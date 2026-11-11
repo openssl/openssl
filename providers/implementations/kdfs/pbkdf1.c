@@ -311,7 +311,7 @@ static void *kdf_pbkdf1_derive_skey(void *vctx, const char *key_type ossl_unused
         return NULL;
     }
 
-    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_raw_bytes,
         (void *)key, keylen);
 
     ret = import(provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);

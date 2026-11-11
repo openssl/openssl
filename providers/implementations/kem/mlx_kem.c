@@ -244,7 +244,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     if (ctx == NULL
         || EVP_PKEY_keygen_init(ctx) <= 0
         || EVP_PKEY_keygen(ctx, &xkey) <= 0
-        || EVP_PKEY_get_octet_string_param(xkey, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+        || EVP_PKEY_get_octet_string_param(xkey, OSSL_PKEY_PARAM_encoded_public_key,
                cbuf, encap_clen, &encap_clen)
             <= 0)
         goto end;

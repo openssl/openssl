@@ -171,7 +171,7 @@ ossl_ml_kem_d2i_PKCS8(const uint8_t *prvenc, int prvlen,
 
     /* Get the list of enabled decoders. Their order is not important here. */
     formats = ossl_prov_ctx_get_param(
-        provctx, OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS, NULL);
+        provctx, OSSL_PKEY_PARAM_ml_kem_input_formats, NULL);
     fmt_slots = ossl_ml_common_pkcs8_fmt_order(v->algorithm_name, codec->p8fmt,
         "input", formats);
     if (fmt_slots == NULL)
@@ -329,7 +329,7 @@ int ossl_ml_kem_i2d_prvkey(const ML_KEM_KEY *key, uint8_t **out,
         if ((key->prov_flags & ML_KEM_KEY_RETAIN_SEED) == 0)
             have_seed = 0;
         formats = ossl_prov_ctx_get_param(provctx,
-            OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS,
+            OSSL_PKEY_PARAM_ml_kem_output_formats,
             NULL);
     }
     fmt_slots = ossl_ml_common_pkcs8_fmt_order(v->algorithm_name, codec->p8fmt,

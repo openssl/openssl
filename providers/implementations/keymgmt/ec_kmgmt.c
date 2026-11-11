@@ -169,7 +169,7 @@ static ossl_inline int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
                      pub_key, bnctx))
                     == 0
                 || !ossl_param_build_set_octet_string(tmpl, p,
-                    OSSL_PKEY_PARAM_PUB_KEY,
+                    OSSL_PKEY_PARAM_pub_key,
                     *pub_key, pub_key_len))
                 goto err;
         }
@@ -189,11 +189,11 @@ static ossl_inline int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
                 goto err;
             if (px != NULL
                 && !ossl_param_build_set_bn(tmpl, px,
-                    OSSL_PKEY_PARAM_EC_PUB_X, x))
+                    OSSL_PKEY_PARAM_ec_pub_x, x))
                 goto err;
             if (py != NULL
                 && !ossl_param_build_set_bn(tmpl, py,
-                    OSSL_PKEY_PARAM_EC_PUB_Y, y))
+                    OSSL_PKEY_PARAM_ec_pub_y, y))
                 goto err;
         }
     }
@@ -242,7 +242,7 @@ static ossl_inline int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
 
         if (!ossl_param_build_set_bn_pad(tmpl,
                 params == NULL ? NULL : params->priv,
-                OSSL_PKEY_PARAM_PRIV_KEY,
+                OSSL_PKEY_PARAM_priv_key,
                 priv_key, sz))
             goto err;
     }
@@ -266,20 +266,20 @@ static ossl_inline int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *t
     if (name != NULL
         && !ossl_param_build_set_utf8_string(tmpl,
             params == NULL ? NULL : params->group_check,
-            OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE,
+            OSSL_PKEY_PARAM_ec_group_check_type,
             name))
         return 0;
 
     if ((EC_KEY_get_enc_flags(ec) & EC_PKEY_NO_PUBKEY) != 0
         && !ossl_param_build_set_int(tmpl,
             params == NULL ? NULL : params->include_public,
-            OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0))
+            OSSL_PKEY_PARAM_ec_include_public, 0))
         return 0;
 
     ecdh_cofactor_mode = (EC_KEY_get_flags(ec) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
     return ossl_param_build_set_int(tmpl,
         params == NULL ? NULL : params->use_cofactor,
-        OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+        OSSL_PKEY_PARAM_use_cofactor_ecdh,
         ecdh_cofactor_mode);
 }
 
@@ -659,26 +659,26 @@ static int ec_get_ecm_params(const EC_GROUP *group, const EC_PARAMS *params)
 
     m = EC_GROUP_get_degree(group);
     if (!ossl_param_build_set_int(NULL, params->char2_m,
-            OSSL_PKEY_PARAM_EC_CHAR2_M, m)
+            OSSL_PKEY_PARAM_ec_char2_m, m)
         || !ossl_param_build_set_utf8_string(NULL, params->char2_type,
-            OSSL_PKEY_PARAM_EC_CHAR2_TYPE,
+            OSSL_PKEY_PARAM_ec_char2_type,
             basis_name))
         goto err;
 
     if (basis_nid == NID_X9_62_tpBasis) {
         if (!EC_GROUP_get_trinomial_basis(group, &k1)
             || !ossl_param_build_set_int(NULL, params->char2_tp,
-                OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS,
+                OSSL_PKEY_PARAM_ec_char2_tp_basis,
                 (int)k1))
             goto err;
     } else {
         if (!EC_GROUP_get_pentanomial_basis(group, &k1, &k2, &k3)
             || !ossl_param_build_set_int(NULL, params->char2_k1,
-                OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, (int)k1)
+                OSSL_PKEY_PARAM_ec_char2_pp_k1, (int)k1)
             || !ossl_param_build_set_int(NULL, params->char2_k2,
-                OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, (int)k2)
+                OSSL_PKEY_PARAM_ec_char2_pp_k2, (int)k2)
             || !ossl_param_build_set_int(NULL, params->char2_k3,
-                OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, (int)k3))
+                OSSL_PKEY_PARAM_ec_char2_pp_k3, (int)k3))
             goto err;
     }
     ret = 1;
@@ -1144,24 +1144,24 @@ static int ec_gen_set_group_from_params(struct ec_gen_ctx *gctx)
         return 0;
 
     if (gctx->encoding != NULL
-        && !OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_EC_ENCODING,
+        && !OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_ec_encoding,
             gctx->encoding, 0))
         goto err;
 
     if (gctx->pt_format != NULL
         && !OSSL_PARAM_BLD_push_utf8_string(bld,
-            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            OSSL_PKEY_PARAM_ec_point_conversion_format,
             gctx->pt_format, 0))
         goto err;
 
     if (gctx->group_name != NULL) {
-        if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_group_name,
                 gctx->group_name, 0))
             goto err;
         /* Ignore any other parameters if there is a group name */
         goto build;
     } else if (gctx->field_type != NULL) {
-        if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_EC_FIELD_TYPE,
+        if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_ec_field_type,
                 gctx->field_type, 0))
             goto err;
     } else {
@@ -1171,24 +1171,24 @@ static int ec_gen_set_group_from_params(struct ec_gen_ctx *gctx)
         || gctx->a == NULL
         || gctx->b == NULL
         || gctx->order == NULL
-        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_P, gctx->p)
-        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_A, gctx->a)
-        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_B, gctx->b)
-        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_ORDER, gctx->order))
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_ec_p, gctx->p)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_ec_a, gctx->a)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_ec_b, gctx->b)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_ec_order, gctx->order))
         goto err;
 
     if (gctx->cofactor != NULL
-        && !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_COFACTOR,
+        && !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_ec_cofactor,
             gctx->cofactor))
         goto err;
 
     if (gctx->seed != NULL
-        && !OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_EC_SEED,
+        && !OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_ec_seed,
             gctx->seed, gctx->seed_len))
         goto err;
 
     if (gctx->gen == NULL
-        || !OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_EC_GENERATOR,
+        || !OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_ec_generator,
             gctx->gen, gctx->gen_len))
         goto err;
 build:

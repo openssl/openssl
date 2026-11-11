@@ -242,16 +242,16 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         objtype = pem_name_map[i].object_type;
         if (data_type != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_type,
                 data_type, 0);
 
         /* We expect this to be read only so casting away the const is ok */
         if (data_structure != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_structure,
                 data_structure, 0);
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_data,
             der, der_len);
-        *p++ = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &objtype);
+        *p++ = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_type, &objtype);
 
         *p = OSSL_PARAM_construct_end();
 

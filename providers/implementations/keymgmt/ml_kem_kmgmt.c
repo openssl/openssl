@@ -181,15 +181,15 @@ ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
      */
     if ((key = ossl_ml_kem_key_new(PROV_LIBCTX_OF(ctx), propq, evp_type)) != NULL) {
         const char *pct_type = ossl_prov_ctx_get_param(
-            ctx, OSSL_PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE, "random");
+            ctx, OSSL_PKEY_PARAM_ml_kem_import_pct_type, "random");
 
         if (ossl_prov_ctx_get_bool_param(
-                ctx, OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED, 1))
+                ctx, OSSL_PKEY_PARAM_ml_kem_retain_seed, 1))
             key->prov_flags |= ML_KEM_KEY_RETAIN_SEED;
         else
             key->prov_flags &= ~ML_KEM_KEY_RETAIN_SEED;
         if (ossl_prov_ctx_get_bool_param(
-                ctx, OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED, 1))
+                ctx, OSSL_PKEY_PARAM_ml_kem_prefer_seed, 1))
             key->prov_flags |= ML_KEM_KEY_PREFER_SEED;
         else
             key->prov_flags &= ~ML_KEM_KEY_PREFER_SEED;
@@ -312,19 +312,19 @@ static int ml_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
     /* The (d, z) seed, when available and private keys are requested. */
     if (seedenc != NULL
         && !ossl_param_build_set_octet_string(
-            tmpl, params, OSSL_PKEY_PARAM_ML_KEM_SEED, seedenc, seedlen))
+            tmpl, params, OSSL_PKEY_PARAM_ml_kem_seed, seedenc, seedlen))
         goto err;
 
     /* The private key in the FIPS 203 |dk| format, when requested. */
     if (prvenc != NULL
         && !ossl_param_build_set_octet_string(
-            tmpl, params, OSSL_PKEY_PARAM_PRIV_KEY, prvenc, prvlen))
+            tmpl, params, OSSL_PKEY_PARAM_priv_key, prvenc, prvlen))
         goto err;
 
     /* The public key on request; it is always available when either is */
     if (pubenc != NULL
         && !ossl_param_build_set_octet_string(
-            tmpl, params, OSSL_PKEY_PARAM_PUB_KEY, pubenc, v->pubkey_bytes))
+            tmpl, params, OSSL_PKEY_PARAM_pub_key, pubenc, v->pubkey_bytes))
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
