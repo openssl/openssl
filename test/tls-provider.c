@@ -196,8 +196,7 @@ static void xor_prov_free_key(const OSSL_DISPATCH *fns, void *key)
 }
 
 /*
- * We define 2 dummy TLS groups called "xorgroup" and "xorkemgroup" for test
- * purposes
+ * We define dummy TLS groups for test purposes
  */
 struct tls_group_st {
     unsigned int group_id; /* for "tls-group-id", see provider-base(7) */
@@ -270,6 +269,37 @@ static const OSSL_PARAM xor_kemgroup_params[] = {
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &xor_kemgroup.mindtls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &xor_kemgroup.maxdtls),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_IS_KEM, &xor_kemgroup.is_kem),
+    OSSL_PARAM_END
+};
+
+#define XORDISABLEDGROUP_NAME "xordisabledgroup"
+#define XORDISABLEDGROUP_NAME_INTERNAL "xordisabledgroup-int"
+static struct tls_group_st xor_disabledgroup = {
+    0, /* group_id, set by randomize_tls_alg_id() */
+    128, /* secbits */
+    -1, /* mintls */
+    -1, /* maxtls */
+    -1, /* mindtls */
+    -1, /* maxdtls */
+    0 /* is_kem */
+};
+
+static const OSSL_PARAM xor_disabledgroup_params[] = {
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME,
+        XORDISABLEDGROUP_NAME, sizeof(XORDISABLEDGROUP_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL,
+        XORDISABLEDGROUP_NAME_INTERNAL,
+        sizeof(XORDISABLEDGROUP_NAME_INTERNAL)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG, ALGORITHM,
+        sizeof(ALGORITHM)),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID, &xor_disabledgroup.group_id),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,
+        &xor_disabledgroup.secbits),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS, &xor_disabledgroup.mintls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS, &xor_disabledgroup.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &xor_disabledgroup.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &xor_disabledgroup.maxdtls),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_IS_KEM, &xor_disabledgroup.is_kem),
     OSSL_PARAM_END
 };
 
@@ -383,11 +413,12 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
     const size_t dummy_name_max_size = strlen(dummy_base) + 3;
 
     if (strcmp(capability, "TLS-GROUP") == 0) {
-        /* Register our 2 groups */
+        /* Register our dummy groups */
         OPENSSL_assert(xor_group.group_id >= 65024
             && xor_group.group_id < 65279 - NUM_DUMMY_GROUPS);
         ret = cb(xor_group_params, arg);
         ret &= cb(xor_kemgroup_params, arg);
+        ret &= cb(xor_disabledgroup_params, arg);
 
         /*
          * Now register some dummy groups > GROUPLIST_INCREMENT (== 40) as defined
@@ -3210,6 +3241,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
      */
     xor_group.group_id = randomize_tls_alg_id(libctx);
     xor_kemgroup.group_id = randomize_tls_alg_id(libctx);
+    xor_disabledgroup.group_id = randomize_tls_alg_id(libctx);
     xor_sigalg.code_point = randomize_tls_alg_id(libctx);
     xor_sigalg_hash.code_point = randomize_tls_alg_id(libctx);
 
