@@ -794,7 +794,7 @@ sub trie_matched {
   my $indent1 = shift;
   my $indent2 = shift;
 
-    printf "%s/* %s */\n", $indent1, $macro;
+  printf "%s/* %s */\n", $indent1, $macro;
   if ($field eq $invalid_param) {
     printf "%sERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,\n", $indent1;
     printf "%s               \"param %%s is unsupported\", s);\n", $indent1;
