@@ -28,7 +28,25 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.1.0 and OpenSSL 4.1.1 [under development]
 
-  * none
+OpenSSL 4.1.1 is a security patch release.  The most severe CVE fixed
+in this release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed use of uninitialized stack data in QUIC automated peer detection.
+    ([CVE-2026-88822])
+
+  * Fixed AES-GCM-SIV AAD forgery after a zero-length incremental AAD update.
+    ([CVE-2026-88823])
+
+  * Fixed use-after-free on retransmitted QUIC CRYPTO frames.
+    ([CVE-2026-95691])
+
+  * Fixed out-of-bounds read and incorrect IV length handling in AES-GCM-SIV.
+    ([CVE-2026-95692])
+
+  * Fixed infinite loop in `CMS_encrypt()` with an EC group order of 1.
+    ([CVE-2026-107496])
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1.0 [23 Oct 2026]
 
@@ -2673,6 +2691,11 @@ OpenSSL 0.9.x
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-88822]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88822
+[CVE-2026-88823]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88823
+[CVE-2026-95691]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95691
+[CVE-2026-95692]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95692
+[CVE-2026-107496]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107496
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
