@@ -430,6 +430,7 @@ $code.=<<___;
 .align	32
 SHA3_absorb:
 .cfi_startproc
+	endbranch
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -532,6 +533,7 @@ $code.=<<___;
 .align	32
 SHA3_squeeze:
 .cfi_startproc
+	endbranch
 	push	%r12
 .cfi_push	%r12
 	push	%r13
