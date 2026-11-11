@@ -27,13 +27,13 @@ extern "C" {
 #endif
 
 /*
- * Context-size composition helpers, shared by all the *_ctx_size()
+ * Context-size composition helpers, shared by all the *_ctx_size_from_*()
  * functions, which all compose nested arena budgets the same way: sum the
  * operation's own scratch frame with the largest nested frame it may need.
  *
  * ossl_fn_ctx_add_size() adds two sizes overflow-safely, and
  * ossl_fn_ctx_max_size() picks the larger of two sequential frame budgets.
- * Both honour the *_ctx_size() result convention: 0 (error) is sticky,
+ * Both honour the *_ctx_size_from_*() result convention: 0 (error) is sticky,
  * OSSL_FN_CTX_SIZE_NONE counts as 0, and a resulting 0 maps back to
  * OSSL_FN_CTX_SIZE_NONE.
  */
@@ -314,6 +314,16 @@ int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
 size_t ossl_fn_miller_rabin_is_prime_ctx_size_from_data(const OSSL_FN *w);
 
 /**
+ * Calculate the budgeted OSSL_FN_CTX size consumed by
+ * ossl_fn_miller_rabin_is_prime(), from the operand widths alone.
+ *
+ * @param[in]           w_dsize The width of the candidate, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_miller_rabin_is_prime_ctx_size_from_sizes(size_t w_dsize);
+
+/**
  * Test whether |w| is probably prime, clamping |checks| to a minimum
  * round count based on the candidate's width.
  *
@@ -340,6 +350,16 @@ int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
 size_t ossl_fn_check_prime_ctx_size_from_data(const OSSL_FN *w);
 
 /**
+ * Calculate the budgeted OSSL_FN_CTX size consumed by ossl_fn_check_prime(),
+ * from the operand widths alone.
+ *
+ * @param[in]           w_dsize The width of the candidate, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_check_prime_ctx_size_from_sizes(size_t w_dsize);
+
+/**
  * Test whether |w| is probably prime, for key generation.  Always
  * trial-divides; |checks| is used unclamped.
  *
@@ -363,6 +383,16 @@ int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
  *                      or invalid input.
  */
 size_t ossl_fn_check_generated_prime_ctx_size_from_data(const OSSL_FN *w);
+
+/**
+ * Calculate the budgeted OSSL_FN_CTX size consumed by
+ * ossl_fn_check_generated_prime(), from the operand widths alone.
+ *
+ * @param[in]           w_dsize The width of the candidate, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_check_generated_prime_ctx_size_from_sizes(size_t w_dsize);
 
 /**
  * Generate a probable prime (an RSA p or q candidate) per FIPS 186-5
@@ -414,6 +444,29 @@ size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size_from_data(
     const OSSL_FN *e);
 
 /**
+ * Calculate the budgeted OSSL_FN_CTX size consumed by
+ * ossl_fn_rsa_fips186_5_gen_prob_primes(), from the operand widths alone.
+ *
+ * @param[in]           p_dsize The width of the probable prime, in limbs
+ * @param[in]           Xpout_dsize The width of the accepted seed, in limbs
+ * @param[in]           p1_dsize The width of the first auxiliary prime, in
+ *                              limbs, or 0 if absent
+ * @param[in]           p2_dsize The width of the second auxiliary prime, in
+ *                              limbs, or 0 if absent
+ * @param[in]           Xp1_dsize The width of the first auxiliary seed, in
+ *                              limbs, or 0 if absent
+ * @param[in]           Xp2_dsize The width of the second auxiliary seed, in
+ *                              limbs, or 0 if absent
+ * @param[in]           nlen    The RSA modulus size, in bits
+ * @param[in]           e_dsize The width of the public exponent, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size_from_sizes(size_t p_dsize,
+    size_t Xpout_dsize, size_t p1_dsize, size_t p2_dsize, size_t Xp1_dsize,
+    size_t Xp2_dsize, int nlen, size_t e_dsize);
+
+/**
  * Generate a probable prime factor per FIPS 186-5 B.9 from two
  * auxiliary primes using the Chinese Remainder Theorem.  Same width
  * contract as ossl_fn_rsa_fips186_5_gen_prob_primes().
@@ -452,6 +505,24 @@ int ossl_fn_rsa_fips186_5_derive_prime(OSSL_FN *Y, OSSL_FN *X,
 size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size_from_data(const OSSL_FN *Y,
     const OSSL_FN *X, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
     const OSSL_FN *e);
+
+/**
+ * Calculate the budgeted OSSL_FN_CTX size consumed by
+ * ossl_fn_rsa_fips186_5_derive_prime(), from the operand widths alone.
+ *
+ * @param[in]           Y_dsize The width of the derived prime, in limbs
+ * @param[in]           X_dsize The width of the accepted seed, in limbs
+ * @param[in]           r1_dsize The width of the first auxiliary prime, in
+ *                              limbs
+ * @param[in]           r2_dsize The width of the second auxiliary prime, in
+ *                              limbs
+ * @param[in]           nlen    The RSA modulus size, in bits
+ * @param[in]           e_dsize The width of the public exponent, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size_from_sizes(size_t Y_dsize,
+    size_t X_dsize, size_t r1_dsize, size_t r2_dsize, int nlen, size_t e_dsize);
 
 #ifdef __cplusplus
 }

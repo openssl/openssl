@@ -174,14 +174,9 @@ end:
  * that the algorithm swaps), plus the nested OSSL_FN_mod() (= OSSL_FN_div())
  * call in the loop body.
  */
-size_t OSSL_FN_kronecker_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b)
+size_t OSSL_FN_kronecker_ctx_size_from_sizes(size_t a_dsize, size_t b_dsize)
 {
-    if (a == NULL || b == NULL)
-        return 0;
-
-    size_t al = (size_t)a->dsize;
-    size_t bl = (size_t)b->dsize;
-    size_t L = al > bl ? al : bl;
+    size_t L = a_dsize > b_dsize ? a_dsize : b_dsize;
     if (ossl_fn_totalsize(L) == 0)
         return 0;
 
@@ -190,12 +185,17 @@ size_t OSSL_FN_kronecker_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b)
 
     /*
      * Nested: the loop-body reduction OSSL_FN_mod(B, B, A) with all three at
-     * L limbs.  Model the temporaries the nested call sees with a local
-     * header at L limbs.
+     * L limbs.
      */
-    OSSL_FN t_L = { .dsize = (int)L };
-
-    size_t nested_size = OSSL_FN_mod_ctx_size_from_data(&t_L, &t_L, &t_L);
+    size_t nested_size = OSSL_FN_mod_ctx_size_from_sizes(L, L, L);
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FN_kronecker_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b)
+{
+    if (a == NULL || b == NULL)
+        return 0;
+
+    return OSSL_FN_kronecker_ctx_size_from_sizes(a->dsize, b->dsize);
 }

@@ -111,6 +111,11 @@ void OSSL_FN_clear(OSSL_FN *f)
     OPENSSL_cleanse(f->d, limbssize);
 }
 
+size_t OSSL_FN_size_limbs(const OSSL_FN *a)
+{
+    return a == NULL ? 0 : (size_t)a->dsize;
+}
+
 /*-
  * Sets a->d[0] to |w| and zeroes the remaining limbs, so the full dsize
  * array reflects the value |w|.  OSSL_FN is fixed-size: if a->dsize is 0

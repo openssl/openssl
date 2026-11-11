@@ -216,14 +216,11 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
 #endif /* !BN_DIV3W */
 }
 
-size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
-    const OSSL_FN *n, const OSSL_FN *d)
+size_t OSSL_FN_div_ctx_size_from_sizes(size_t q_dsize, size_t r_dsize,
+    size_t n_dsize, size_t d_dsize)
 {
-    if (n == NULL || d == NULL)
-        return 0;
-
-    size_t nl = n->dsize;
-    size_t dl = d->dsize;
+    size_t nl = n_dsize;
+    size_t dl = d_dsize;
     size_t snuml, tmp;
     int err = 0;
 
@@ -231,7 +228,8 @@ size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
     tmp = safe_add_size_t(dl, 1, &err);
 
     size_t max_ql = nl == 0 ? 1 : nl;
-    size_t ql = (q == NULL || (size_t)q->dsize < max_ql) ? max_ql : 0;
+    /* An absent |q| (q_dsize == 0) always takes the quotient temporary. */
+    size_t ql = q_dsize < max_ql ? max_ql : 0;
     size_t max_n_numbers = 3 + (ql != 0);
     size_t max_n_limbs;
 
@@ -240,6 +238,16 @@ size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
     max_n_limbs = safe_add_size_t(max_n_limbs, ql, &err);
 
     return err == 0 ? OSSL_FN_CTX_size(1, max_n_numbers, max_n_limbs) : 0;
+}
+
+size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d)
+{
+    if (n == NULL || d == NULL)
+        return 0;
+
+    return OSSL_FN_div_ctx_size_from_sizes(OSSL_FN_size_limbs(q),
+        OSSL_FN_size_limbs(r), n->dsize, d->dsize);
 }
 
 /* Trivia: this function implements Knuth's algorithm D */

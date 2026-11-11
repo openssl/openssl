@@ -24,7 +24,7 @@
  * left for future implementations.
  *
  * The runtime dispatcher (OSSL_FN_mod_exp) guards against these; the sizing
- * companion (OSSL_FN_mod_exp_ctx_size_from_data) budgets the largest
+ * companion (OSSL_FN_mod_exp_ctx_size_from_sizes) budgets the largest
  * implemented path instead, so it stays width-only.
  */
 #define MONT_MUL_MOD
@@ -222,28 +222,27 @@ static void mod_exp_ctime_copy_from_prebuf(OSSL_FN *b,
     }
 }
 
-/*-
- * mod_exp_mont_nested() -- Montgomery-path nested arena size for
- * OSSL_FN_mod_exp_mont().  |own_size| is added by the callers.  Nested frames
- * are sequential, so the size is their max.
+/**
+ * Calculate the nested arena payload size of OSSL_FN_mod_exp_mont()'s
+ * Montgomery path.  The function's own frame is added by the callers.
+ * Nested frames are sequential, so the size is their max.
  *
- * |in_mont| mirrors OSSL_FN_mod_exp_mont(): NULL models the function-owned
- * context, a real value sizes for a reused one.  Both give the same size:
- * the mont sizing helpers inspect widths only, so the only |in_mont| datum
- * they read is mont->N->dsize, and |N| equals |m| either way (the model
- * points it at |m|; a reused context holds a copy made by
+ * The size is the same whether OSSL_FN_mod_exp_mont() builds its own
+ * Montgomery context or reuses one: the mont sizing helpers depend on
+ * the context through its modulus width only, and its modulus is |m|
+ * either way (a reused context holds a copy made by
  * OSSL_FN_MONT_CTX_new()).  The loop and from_mont operate on reduced
- * ml-wide Montgomery-domain values; their sizing helpers read only
- * mont->N->dsize (== ml), so those operands are not modelled here.
+ * ml-wide Montgomery-domain values, whose widths the mont sizing helpers
+ * do not need.
+ *
+ * @param[in]   a_dsize The width of the base, in limbs.
+ * @param[in]   m_dsize The width of the modulus, in limbs.
+ * @returns             The nested arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
  */
-static size_t mod_exp_mont_nested(const OSSL_FN *a, const OSSL_FN *m,
-    OSSL_FN_MONT_CTX *in_mont)
+static size_t mod_exp_mont_nested(size_t a_dsize, size_t m_dsize)
 {
-    OSSL_FN_MONT_CTX mont_model = { .N = m };
     size_t mont_size;
-
-    if (in_mont == NULL)
-        in_mont = &mont_model;
 
     /*
      * Base conversion / loop mul_mont_quick / from_mont, via their ctx_size
@@ -254,40 +253,42 @@ static size_t mod_exp_mont_nested(const OSSL_FN *a, const OSSL_FN *m,
      * already-reduced Montgomery-domain values, so it uses the non-reducing
      * OSSL_FN_mul_mont_quick() and its smaller ctx_size.
      */
-    mont_size = a->dsize <= m->dsize
-        ? OSSL_FN_mont_reduce_ctx_size_from_data(NULL, a, in_mont)
-        : OSSL_FN_to_mont_ctx_size_from_data(NULL, a, in_mont);
+    mont_size = a_dsize <= m_dsize
+        ? OSSL_FN_mont_reduce_ctx_size_from_sizes(0, a_dsize, m_dsize)
+        : OSSL_FN_to_mont_ctx_size_from_sizes(0, a_dsize, m_dsize);
     mont_size = ossl_fn_ctx_max_size(mont_size,
-        ossl_fn_ctx_max_size(OSSL_FN_mul_mont_quick_ctx_size_from_data(
-                                 NULL, NULL, NULL, in_mont),
-            OSSL_FN_from_mont_ctx_size_from_data(NULL, NULL, in_mont)));
+        ossl_fn_ctx_max_size(
+            OSSL_FN_mul_mont_quick_ctx_size_from_sizes(0, 0, 0, m_dsize),
+            OSSL_FN_from_mont_ctx_size_from_sizes(0, 0, m_dsize)));
 
     return mont_size;
 }
 
 /*-
- * OSSL_FN_mod_exp_mont_ctx_size_from_data() -- arena sizing for
+ * OSSL_FN_mod_exp_mont_ctx_size_from_sizes() -- arena sizing for
  * OSSL_FN_mod_exp_mont().  Sizes only the Montgomery path; see
- * mod_exp_mont_nested() for the |in_mont| modelling and the NULL/reused
- * equivalence.
+ * mod_exp_mont_nested() for why a reused Montgomery context currently makes
+ * no difference.
  */
-size_t OSSL_FN_mod_exp_mont_ctx_size_from_data(const OSSL_FN *r,
-    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m,
-    OSSL_FN_MONT_CTX *in_mont)
+size_t OSSL_FN_mod_exp_mont_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t p_dsize, size_t m_dsize, size_t in_mont_dsize)
 {
-    if (a == NULL || p == NULL || m == NULL)
-        return 0;
-
-    size_t ml = (size_t)m->dsize;
+    size_t ml = m_dsize;
     /* A zero-limb modulus is invalid; OSSL_FN_mod_exp_mont() rejects it. */
     if (ml == 0 || ossl_fn_totalsize(ml) == 0)
+        return 0;
+    /* OSSL_FN_mod_exp_mont() rejects a context whose modulus is not |m| */
+    if (in_mont_dsize != 0 && in_mont_dsize != ml)
         return 0;
 
     /*
      * The window size derives from the exponent's and modulus' widths only,
      * so the sizing matches the runtime choice exactly.
      */
-    size_t bits = (size_t)p->dsize * OSSL_FN_BITS;
+    if (p_dsize > SIZE_MAX / OSSL_FN_BITS)
+        return 0;
+
+    size_t bits = p_dsize * OSSL_FN_BITS;
     size_t window = mod_exp_mont_ctime_window(bits, ml);
     size_t power_limbs;
     /* The accelerated gather path parks a copy of N's limbs after the table. */
@@ -301,21 +302,30 @@ size_t OSSL_FN_mod_exp_mont_ctx_size_from_data(const OSSL_FN *r,
     size_t n_numbers = 3;
     size_t own_size = OSSL_FN_CTX_size(1, n_numbers, power_limbs + 2 * ml);
 
-    size_t nested_size = mod_exp_mont_nested(a, m, in_mont);
+    size_t nested_size = mod_exp_mont_nested(a_dsize, ml);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
-/*
- * OSSL_FN_mod_exp_simple_ctx_size_from_data() -- arena sizing for
- * OSSL_FN_mod_exp_simple().
- */
-size_t OSSL_FN_mod_exp_simple_ctx_size_from_data(const OSSL_FN *r,
-    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
+size_t OSSL_FN_mod_exp_mont_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m,
+    OSSL_FN_MONT_CTX *in_mont)
 {
-    if (m == NULL)
+    if (a == NULL || p == NULL || m == NULL)
         return 0;
 
-    size_t ml = (size_t)m->dsize;
+    return OSSL_FN_mod_exp_mont_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        a->dsize, p->dsize, m->dsize,
+        in_mont == NULL ? 0 : OSSL_FN_size_limbs(in_mont->N));
+}
+
+/*
+ * OSSL_FN_mod_exp_simple_ctx_size_from_sizes() -- arena sizing for
+ * OSSL_FN_mod_exp_simple().
+ */
+size_t OSSL_FN_mod_exp_simple_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t p_dsize, size_t m_dsize)
+{
+    size_t ml = m_dsize;
     /* A zero-limb modulus is invalid; OSSL_FN_mod_exp_simple() rejects it. */
     if (ml == 0 || ossl_fn_totalsize(ml) == 0)
         return 0;
@@ -324,31 +334,73 @@ size_t OSSL_FN_mod_exp_simple_ctx_size_from_data(const OSSL_FN *r,
     size_t own_size = OSSL_FN_CTX_size(1, n_numbers, n_numbers * ml);
 
     /* Initial reduction OSSL_FN_mod(val[0], a, m); |a| may be wider than |m|. */
-    size_t mod_size = OSSL_FN_mod_ctx_size_from_data(NULL, a, m);
+    size_t mod_size = OSSL_FN_mod_ctx_size_from_sizes(0, a_dsize, ml);
 
     /*
      * Loop multiply OSSL_FN_mod_mul(rr, rr, rr|val, m): all operands are
-     * ml-wide, so four |m| pointers model them (sizing reads only dsize).
-     * The aliased (a == b, square) sizing dominates the mul sizing, so one
-     * call covers both loop steps.
+     * ml-wide.  With equal operand widths the sizing covers both the
+     * squaring (a == b) and the multiplication step, so one call covers
+     * both loop steps.
      */
-    size_t mul_size = OSSL_FN_mod_mul_ctx_size_from_data(m, m, m, m);
+    size_t mul_size = OSSL_FN_mod_mul_ctx_size_from_sizes(ml, ml, ml, ml);
 
     size_t nested_size = ossl_fn_ctx_max_size(mod_size, mul_size);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
-#ifdef RECP_MUL_MOD
-static size_t ossl_fn_mod_exp_recp_ctx_size_from_data(const OSSL_FN *r,
+size_t OSSL_FN_mod_exp_simple_ctx_size_from_data(const OSSL_FN *r,
     const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
+{
+    if (a == NULL || m == NULL)
+        return 0;
+
+    return OSSL_FN_mod_exp_simple_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        a->dsize, OSSL_FN_size_limbs(p), m->dsize);
+}
+
+#ifdef RECP_MUL_MOD
+/**
+ * Calculate the arena payload size that ossl_fn_mod_exp_recp() needs, from
+ * the operand widths alone.  Not implemented, like the operator itself.
+ *
+ * @param[in]   r_dsize The width of the result, in limbs
+ * @param[in]   a_dsize The width of the base, in limbs
+ * @param[in]   p_dsize The width of the exponent, in limbs
+ * @param[in]   m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       always, for now.
+ */
+static size_t ossl_fn_mod_exp_recp_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t p_dsize, size_t m_dsize)
 {
     /* Not implemented; see ossl_fn_mod_exp_recp(). */
     return 0;
 }
+
+/**
+ * Calculate the arena payload size that ossl_fn_mod_exp_recp() needs.
+ *
+ * @param[in]   r       The result
+ * @param[in]   a       The base
+ * @param[in]   p       The exponent
+ * @param[in]   m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       always, for now; see
+ *                      ossl_fn_mod_exp_recp_ctx_size_from_sizes().
+ */
+static size_t ossl_fn_mod_exp_recp_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
+{
+    if (a == NULL || p == NULL || m == NULL)
+        return 0;
+
+    return ossl_fn_mod_exp_recp_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        a->dsize, p->dsize, m->dsize);
+}
 #endif
 
 /*-
- * OSSL_FN_mod_exp_ctx_size_from_data() -- arena sizing for OSSL_FN_mod_exp().
+ * OSSL_FN_mod_exp_ctx_size_from_sizes() -- arena sizing for OSSL_FN_mod_exp().
  * Budgets the largest implemented path rather than reading the modulus'
  * parity, keeping this companion width-only (see include/crypto/fn.h);
  * the runtime dispatcher still picks the path.  When another path is
@@ -361,19 +413,30 @@ static size_t ossl_fn_mod_exp_recp_ctx_size_from_data(const OSSL_FN *r,
  *      mont, non-asm (window 6)   ~2120
  *      simple                     ~1088
  */
+size_t OSSL_FN_mod_exp_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t p_dsize, size_t m_dsize)
+{
+#ifdef MONT_MUL_MOD
+    return ossl_fn_ctx_max_size(
+        /* OSSL_FN_mod_exp() calls OSSL_FN_mod_exp_mont() with no context */
+        OSSL_FN_mod_exp_mont_ctx_size_from_sizes(r_dsize, a_dsize, p_dsize,
+            m_dsize, 0),
+        OSSL_FN_mod_exp_simple_ctx_size_from_sizes(r_dsize, a_dsize, p_dsize,
+            m_dsize));
+#else
+    return OSSL_FN_mod_exp_simple_ctx_size_from_sizes(r_dsize, a_dsize,
+        p_dsize, m_dsize);
+#endif
+}
+
 size_t OSSL_FN_mod_exp_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m)
 {
-    if (m == NULL)
+    if (a == NULL || p == NULL || m == NULL)
         return 0;
 
-#ifdef MONT_MUL_MOD
-    return ossl_fn_ctx_max_size(
-        OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, p, m, NULL),
-        OSSL_FN_mod_exp_simple_ctx_size_from_data(r, a, p, m));
-#else
-    return OSSL_FN_mod_exp_simple_ctx_size_from_data(r, a, p, m);
-#endif
+    return OSSL_FN_mod_exp_ctx_size_from_sizes(OSSL_FN_size_limbs(r), a->dsize,
+        p->dsize, m->dsize);
 }
 
 /*-

@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 #include "crypto/bn.h" /* For the BN_PRIMETEST_* status codes */
 #include "crypto/fn.h"
+#include "crypto/fn_constants.h" /* ossl_fn_static_zero_storage */
 #include "crypto/fn_intern.h"
 #include "crypto/fnerr.h"
 #include "testutil.h"
@@ -740,6 +741,37 @@ err:
     OSSL_FN_free(fn1);
     OSSL_FN_free(fn2);
     OSSL_FN_free(wide);
+    return ret;
+}
+
+/*
+ * OSSL_FN_size_limbs() reports the allocated width, whatever the value: 0 for
+ * NULL and for the constant zero (whose dsize is 0), and the requested limb
+ * count for an allocated number.
+ */
+static int test_size_limbs(void)
+{
+    /*
+     * The top limb is zero, so the value is narrower than the allocation;
+     * the width must still count it.
+     */
+    static const OSSL_FN_ULONG words[] = { 1, 1, 0 };
+    const size_t limbs = OSSL_NELEM(words);
+    int ret = 0;
+    OSSL_FN *fn = NULL;
+
+    if (!TEST_ptr(fn = OSSL_FN_new_limbs(limbs))
+        || !TEST_true(ossl_fn_set_words(fn, words, limbs)))
+        goto err;
+
+    if (!TEST_size_t_eq(OSSL_FN_size_limbs(NULL), 0)
+        || !TEST_size_t_eq(OSSL_FN_size_limbs(&ossl_fn_static_zero_storage.fn), 0)
+        || !TEST_size_t_eq(OSSL_FN_size_limbs(fn), limbs))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(fn);
     return ret;
 }
 
@@ -6053,8 +6085,11 @@ err:
 /*
  * OSSL_FN_mod_exp_mont_ctx_size_from_data(): the mont-only size must be
  * positive, must not exceed the dispatcher size (the dispatcher budgets the
- * larger of the mont and simple paths), and must not depend on whether in_mont
- * is NULL or a real reused context (the operand modelling makes them the same).
+ * larger of the mont and simple paths), and with the current implementation
+ * does not depend on whether in_mont is NULL or a real reused context.  The
+ * *_from_sizes() companions of OSSL_FN_mod_exp_mont() and
+ * OSSL_FN_mod_inverse_prime() reject a context modulus width other than the
+ * modulus', as the operators reject such a context.
  */
 static int test_mod_exp_mont_ctx_size(void)
 {
@@ -6089,8 +6124,22 @@ static int test_mod_exp_mont_ctx_size(void)
         || !TEST_size_t_ne(sz_mont, 0)
         || !TEST_size_t_ne(sz_disp, 0))
         goto err;
-    /* NULL and real in_mont produce the same arena size. */
+    /* NULL and real in_mont currently produce the same arena size. */
     if (!TEST_size_t_eq(sz_null, sz_mont))
+        goto err;
+    /* The width-based companions agree, and reject a mismatched context. */
+    if (!TEST_size_t_eq(OSSL_FN_mod_exp_mont_ctx_size_from_sizes(m_size, L,
+                            p_size, m_size, m_size),
+            sz_mont)
+        || !TEST_size_t_eq(OSSL_FN_mod_exp_mont_ctx_size_from_sizes(m_size, L,
+                               p_size, m_size, m_size + 1),
+            0)
+        || !TEST_size_t_ne(OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(m_size,
+                               L, m_size, m_size),
+            0)
+        || !TEST_size_t_eq(OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(m_size,
+                               L, m_size, m_size + 1),
+            0))
         goto err;
     /* The dispatcher budgets the larger of the mont and simple paths. */
     sz_simple = OSSL_FN_mod_exp_simple_ctx_size_from_data(r, fa, fp, fm);
@@ -7392,6 +7441,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sub, 18);
     ADD_ALL_TESTS(test_sub_truncated, 18);
     ADD_TEST(test_num_bits);
+    ADD_TEST(test_size_limbs);
     ADD_TEST(test_cmp);
     ADD_TEST(test_introspection);
     ADD_TEST(test_get_word);

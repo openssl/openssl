@@ -16,20 +16,25 @@
 
 OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
-size_t OSSL_FN_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a)
+size_t OSSL_FN_sqr_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize)
 {
     size_t max, limbs, n_numbers = 1;
-
-    if (r == NULL || a == NULL)
-        return 0;
     int err = 0;
 
-    max = safe_mul_size_t(2, a->dsize, &err);
-    if ((size_t)r->dsize < max)
+    max = safe_mul_size_t(2, a_dsize, &err);
+    if (r_dsize < max)
         n_numbers++;
     limbs = safe_mul_size_t(n_numbers, max, &err);
 
     return err == 0 ? OSSL_FN_CTX_size(1, n_numbers, limbs) : 0;
+}
+
+size_t OSSL_FN_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a)
+{
+    if (r == NULL || a == NULL)
+        return 0;
+
+    return OSSL_FN_sqr_ctx_size_from_sizes(r->dsize, a->dsize);
 }
 
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)

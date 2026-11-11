@@ -82,12 +82,20 @@ int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
  * operation holds one scratch number of the destination's width for
  * the pair gap check.
  */
-size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_data(const OSSL_FN *Xp)
+size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_sizes(size_t Xp_dsize)
 {
-    if (Xp == NULL || Xp->dsize == 0)
+    if (Xp_dsize == 0)
         return 0;
 
-    return OSSL_FN_CTX_size(1, 1, (size_t)Xp->dsize);
+    return OSSL_FN_CTX_size(1, 1, Xp_dsize);
+}
+
+size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_data(const OSSL_FN *Xp)
+{
+    if (Xp == NULL)
+        return 0;
+
+    return OSSL_FN_X931_generate_Xpq_ctx_size_from_sizes(Xp->dsize);
 }
 
 /*
@@ -99,42 +107,52 @@ size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_data(const OSSL_FN *Xp)
  * operation is added as its own term, with same-width alternatives
  * taking the maximum.
  */
-size_t OSSL_FN_X931_derive_prime_ctx_size_from_data(const OSSL_FN *p,
-    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
-    const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e)
+size_t OSSL_FN_X931_derive_prime_ctx_size_from_sizes(size_t p_dsize,
+    size_t p1_dsize, size_t p2_dsize, size_t Xp_dsize, size_t Xp1_dsize,
+    size_t Xp2_dsize, size_t e_dsize)
 {
-    OSSL_FN p1w, p2w, p1p2w, tw, pm1w;
+    size_t n = Xp_dsize, n2;
     size_t scratch, pi, mul, inv, mm, ms, loop, own;
 
-    if (p == NULL || Xp == NULL || e == NULL || Xp->dsize == 0
-        || ossl_fn_totalsize(2 * (size_t)Xp->dsize) == 0)
+    if (n == 0 || n > SIZE_MAX / 2 || ossl_fn_totalsize(2 * n) == 0)
         return 0;
 
-    p1w.dsize = p2w.dsize = Xp->dsize;
-    p1p2w.dsize = 2 * Xp->dsize;
-    tw.dsize = pm1w.dsize = 2 * Xp->dsize;
+    /* p1 and p2 are n limbs wide, p1p2, t and pm1 2n limbs. */
+    n2 = 2 * n;
 
-    scratch = OSSL_FN_CTX_size(1, 5,
-        (size_t)(p1w.dsize + p2w.dsize + p1p2w.dsize + tw.dsize
-            + pm1w.dsize));
+    scratch = OSSL_FN_CTX_size(1, 5, n + n + n2 + n2 + n2);
+    /* An absent |Xp1| or |Xp2| (passed as 0) is drawn at |Xp|'s width. */
     pi = ossl_fn_ctx_max_size(
-        ossl_fn_check_prime_ctx_size_from_data(Xp1 != NULL ? Xp1 : Xp),
-        ossl_fn_check_prime_ctx_size_from_data(Xp2 != NULL ? Xp2 : Xp));
-    mul = OSSL_FN_mul_ctx_size_from_data(&p1p2w, &p1w, &p2w);
+        ossl_fn_check_prime_ctx_size_from_sizes(Xp1_dsize != 0 ? Xp1_dsize : n),
+        ossl_fn_check_prime_ctx_size_from_sizes(Xp2_dsize != 0 ? Xp2_dsize : n));
+    mul = OSSL_FN_mul_ctx_size_from_sizes(n2, n, n);
     inv = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_inverse_ctx_size_from_data(p, &p2w, &p1w),
-        OSSL_FN_mod_inverse_ctx_size_from_data(&tw, &p1w, &p2w));
+        OSSL_FN_mod_inverse_ctx_size_from_sizes(p_dsize, n, n),
+        OSSL_FN_mod_inverse_ctx_size_from_sizes(n2, n, n));
     mm = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_mul_ctx_size_from_data(p, p, &p2w, &p1p2w),
-        OSSL_FN_mod_mul_ctx_size_from_data(&tw, &tw, &p1w, &p1p2w));
-    ms = OSSL_FN_mod_sub_ctx_size_from_data(p, p, &tw, &p1p2w);
-    loop = ossl_fn_ctx_max_size(OSSL_FN_gcd_ctx_size_from_data(&pm1w, e),
-        ossl_fn_check_prime_ctx_size_from_data(p));
+        OSSL_FN_mod_mul_ctx_size_from_sizes(p_dsize, p_dsize, n, n2),
+        OSSL_FN_mod_mul_ctx_size_from_sizes(n2, n2, n, n2));
+    ms = OSSL_FN_mod_sub_ctx_size_from_sizes(p_dsize, p_dsize, n2, n2);
+    loop = ossl_fn_ctx_max_size(
+        OSSL_FN_gcd_ctx_size_from_sizes(n2, e_dsize),
+        ossl_fn_check_prime_ctx_size_from_sizes(p_dsize));
 
     own = ossl_fn_ctx_add_size(ossl_fn_ctx_add_size(scratch, pi),
         ossl_fn_ctx_add_size(ossl_fn_ctx_add_size(mul, inv),
             ossl_fn_ctx_add_size(mm, ms)));
     return ossl_fn_ctx_add_size(own, loop);
+}
+
+size_t OSSL_FN_X931_derive_prime_ctx_size_from_data(const OSSL_FN *p,
+    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
+    const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e)
+{
+    if (p == NULL || Xp == NULL || e == NULL)
+        return 0;
+
+    return OSSL_FN_X931_derive_prime_ctx_size_from_sizes(p->dsize,
+        OSSL_FN_size_limbs(p1), OSSL_FN_size_limbs(p2), Xp->dsize,
+        OSSL_FN_size_limbs(Xp1), OSSL_FN_size_limbs(Xp2), e->dsize);
 }
 
 /*
@@ -143,20 +161,30 @@ size_t OSSL_FN_X931_derive_prime_ctx_size_from_data(const OSSL_FN *p,
  * into (p1, p2, Xp1 and Xp2 when passed as NULL), so 4n limbs over 4
  * numbers come on top of the OSSL_FN_X931_derive_prime() estimate.
  */
+size_t OSSL_FN_X931_generate_prime_ctx_size_from_sizes(size_t p_dsize,
+    size_t p1_dsize, size_t p2_dsize, size_t Xp_dsize, size_t e_dsize)
+{
+    size_t own, derive;
+
+    if (Xp_dsize == 0 || Xp_dsize > SIZE_MAX / 4
+        || ossl_fn_totalsize(4 * Xp_dsize) == 0)
+        return 0;
+
+    own = OSSL_FN_CTX_size(1, 4, 4 * Xp_dsize);
+    derive = OSSL_FN_X931_derive_prime_ctx_size_from_sizes(p_dsize, p1_dsize,
+        p2_dsize, Xp_dsize, 0, 0, e_dsize);
+    return ossl_fn_ctx_add_size(own, derive);
+}
+
 size_t OSSL_FN_X931_generate_prime_ctx_size_from_data(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *e)
 {
-    size_t own, derive;
-
-    if (Xp == NULL || Xp->dsize == 0
-        || ossl_fn_totalsize(4 * (size_t)Xp->dsize) == 0)
+    if (p == NULL || Xp == NULL || e == NULL)
         return 0;
 
-    own = OSSL_FN_CTX_size(1, 4, 4 * (size_t)Xp->dsize);
-    derive = OSSL_FN_X931_derive_prime_ctx_size_from_data(
-        p, p1, p2, Xp, NULL, NULL, e);
-    return ossl_fn_ctx_add_size(own, derive);
+    return OSSL_FN_X931_generate_prime_ctx_size_from_sizes(p->dsize,
+        OSSL_FN_size_limbs(p1), OSSL_FN_size_limbs(p2), Xp->dsize, e->dsize);
 }
 
 /*
