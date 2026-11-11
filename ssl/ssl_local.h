@@ -817,7 +817,20 @@ int ssl_get_EC_curve_nid(const EVP_PKEY *pkey);
 __owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
     const unsigned char *enckey,
     size_t enckeylen);
-__owur int tls13_hybrid_ec_point_format_ok(uint16_t group_id,
+/**
+ * @brief Validate the EC point format in a TLS 1.3 hybrid ML-KEM key share.
+ *
+ * EC-first hybrid groups require an uncompressed EC point (0x04)
+ * as specified in RFC 8446 section 4.2.8.2. Other groups are
+ * accepted without checking the point format.
+ *
+ * @param group_id TLS named group identifier
+ * @param enc Encoded client key share or ServerHello key share
+ * @param enclen Length of enc in bytes
+ * @return 1 if the point format is acceptable or the group is not
+ *          subject to this check, 0 otherwise
+ */
+ __owur int tls13_hybrid_ec_point_format_ok(uint16_t group_id,
     const unsigned char *enc,
     size_t enclen);
 
