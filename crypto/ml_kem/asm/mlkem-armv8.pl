@@ -34,6 +34,30 @@
 # Final reduction/scaling passes each use eight 64-byte iterations.
 # Addresses and branch conditions depend only on public offsets and counters;
 # canonicalization uses sign masks.
+#
+# Only little-endian AArch64 is supported.  Big-endian builds retain the
+# generic C transforms because the vector loads and packing are endian-sensitive.
+#
+# Performance on Apple M3 Pro, macOS 26.7.1, Apple clang 21.0.0:
+#   ./Configure darwin64-arm64-cc no-shared --strict-warnings
+#   (default -O3), single-threaded, default provider.
+#   openssl speed -elapsed -seconds 2 ml-kem-512 ml-kem-768 ml-kem-1024
+# Median operations/second from three runs per backend, alternating backend
+# order between runs.  The generic baseline uses the same build with
+# MLKEM_NTT_ARMV8_ASM undefined only when compiling ml_kem.c; all other
+# assembly remains enabled.  These are full KEM operation rates, not isolated
+# transform timings.  Higher is better; gain is the increase in throughput.
+#
+# Parameter set   Operation     Generic C    AArch64    Gain
+# ML-KEM-512      Keygen           99,901    112,726   12.8%
+#                 Encaps          152,875    219,129   43.3%
+#                 Decaps          102,990    148,347   44.0%
+# ML-KEM-768      Keygen           61,821     68,922   11.5%
+#                 Encaps          105,366    145,407   38.0%
+#                 Decaps           71,698    101,336   41.3%
+# ML-KEM-1024     Keygen           39,804     43,923   10.4%
+#                 Encaps           74,128     98,779   33.3%
+#                 Decaps           52,570     70,457   34.0%
 use strict;
 use warnings;
 

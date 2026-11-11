@@ -431,7 +431,7 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 #if defined(_ARCH_PPC64)
 #include "arch/ppc_arch.h"
 #endif
-#if defined(MLKEM_NTT_ARMV8_ASM)
+#if defined(MLKEM_NTT_ARMV8_ASM) && !defined(__AARCH64EB__)
 #include "arch/arm_arch.h"
 #endif
 
@@ -525,7 +525,8 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 }
 #endif
 
-#if defined(MLKEM_NTT_ARMV8_ASM)
+/* The assembly uses little-endian vector lane packing. */
+#if defined(MLKEM_NTT_ARMV8_ASM) && !defined(__AARCH64EB__)
 void ossl_ml_kem_ntt_armv8(uint16_t *c);
 void ossl_ml_kem_intt_armv8(uint16_t *c);
 
@@ -650,7 +651,7 @@ static void ml_kem_ntt_init(void)
         matrix_mult_transpose_add = matrix_mult_transpose_add_avx2;
     }
 #endif
-#if defined(MLKEM_NTT_ARMV8_ASM)
+#if defined(MLKEM_NTT_ARMV8_ASM) && !defined(__AARCH64EB__)
     if (OPENSSL_armcap_P & ARMV7_NEON) {
         scalar_ntt = scalar_ntt_armv8;
         scalar_inverse_ntt = scalar_inverse_ntt_armv8;
