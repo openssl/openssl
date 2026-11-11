@@ -18,6 +18,8 @@ use OpenSSL::paramnames qw(generate_public_macros);
 #define OPENSSL_CORE_NAMES_H
 #pragma once
 
+#include <openssl/e_os2.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
