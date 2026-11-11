@@ -3433,12 +3433,12 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
 
             /* These BIGNUMs need to be freed when we're finished */
             freer = 1;
-            if (!EVP_PKEY_get_bn_param(s->s3.tmp.pkey, OSSL_PKEY_PARAM_FFC_P,
+            if (!EVP_PKEY_get_bn_param(s->s3.tmp.pkey, OSSL_PKEY_PARAM_ffc_p,
                     &r[0])
-                || !EVP_PKEY_get_bn_param(s->s3.tmp.pkey, OSSL_PKEY_PARAM_FFC_G,
+                || !EVP_PKEY_get_bn_param(s->s3.tmp.pkey, OSSL_PKEY_PARAM_ffc_g,
                     &r[1])
                 || !EVP_PKEY_get_bn_param(s->s3.tmp.pkey,
-                    OSSL_PKEY_PARAM_PUB_KEY, &r[2])) {
+                    OSSL_PKEY_PARAM_pub_key, &r[2])) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -3849,11 +3849,11 @@ static int tls_process_cke_rsa(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    *p++ = OSSL_PARAM_construct_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION,
+    *p++ = OSSL_PARAM_construct_uint(OSSL_ASYM_CIPHER_PARAM_tls_client_version,
         (unsigned int *)&s->client_version);
     if ((s->options & SSL_OP_TLS_ROLLBACK_BUG) != 0)
         *p++ = OSSL_PARAM_construct_uint(
-            OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION,
+            OSSL_ASYM_CIPHER_PARAM_tls_negotiated_version,
             (unsigned int *)&s->version);
     *p++ = OSSL_PARAM_construct_end();
 

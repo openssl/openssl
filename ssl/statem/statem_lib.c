@@ -361,9 +361,9 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
      * To avoid problems with older RSA providers we must also pass the digest
      * name when passing any other parameters.
      */
-    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_TLS_VERSION, &s->version);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_tls_version, &s->version);
     if (md != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_digest,
             (char *)EVP_MD_get0_name(md), 0);
     *p = OSSL_PARAM_construct_end();
 
@@ -537,9 +537,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
      * To avoid problems with older RSA providers we must also pass the digest
      * name when passing any other parameters.
      */
-    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_TLS_VERSION, &s->version);
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_tls_version, &s->version);
     if (md != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_digest,
             (char *)EVP_MD_get0_name(md), 0);
     *p = OSSL_PARAM_construct_end();
 

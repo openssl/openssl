@@ -2103,7 +2103,7 @@ void SSL_set_read_ahead(SSL *s, int yes)
 
     RECORD_LAYER_set_read_ahead(&sc->rlayer, yes);
 
-    *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
+    *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_read_ahead,
         &sc->rlayer.read_ahead);
     *opts = OSSL_PARAM_construct_end();
 
@@ -3555,7 +3555,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
 
         sc->mode |= larg;
 
-        *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+        *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_mode,
             &sc->mode);
         *opts = OSSL_PARAM_construct_end();
 
@@ -7114,7 +7114,7 @@ uint64_t SSL_set_options(SSL *s, uint64_t op)
 
     sc->options |= op;
 
-    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_options,
         &sc->options);
     *opts = OSSL_PARAM_construct_end();
 
@@ -7145,7 +7145,7 @@ uint64_t SSL_clear_options(SSL *s, uint64_t op)
 
     sc->options &= ~op;
 
-    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_options,
         &sc->options);
     *opts = OSSL_PARAM_construct_end();
 
@@ -8283,7 +8283,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
         OSSL_PARAM params[2];
         int decrypt_only = 0;
 
-        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_DECRYPT_ONLY,
+        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_decrypt_only,
             &decrypt_only);
         params[1] = OSSL_PARAM_construct_end();
         if (EVP_CIPHER_get_params((EVP_CIPHER *)ciph, params)

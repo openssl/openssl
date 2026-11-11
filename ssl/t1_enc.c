@@ -50,27 +50,27 @@ static int tls1_PRF(SSL_CONNECTION *s,
 
     const char *mdname = EVP_MD_get0_name(md);
     OSSL_PARAM params[9], *p = params;
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         (char *)mdname, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_secret,
         (unsigned char *)sec,
         (size_t)slen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_seed,
         (void *)seed1, (size_t)seed1_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_seed,
         (void *)seed2, (size_t)seed2_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_seed,
         (void *)seed3, (size_t)seed3_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_seed,
         (void *)seed4, (size_t)seed4_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_seed,
         (void *)seed5, (size_t)seed5_len);
     /*
      * If we have a property query string, the kdf needs to know about it in the event
      * the specific kdf in use allocated a digest as part of its implementation
      */
     if (SSL_CONNECTION_GET_CTX(s)->propq != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_properties,
             (char *)SSL_CONNECTION_GET_CTX(s)->propq, 0);
     *p = OSSL_PARAM_construct_end();
     if (EVP_KDF_derive(kctx, out, olen, params)) {

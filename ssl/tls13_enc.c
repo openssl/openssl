@@ -74,22 +74,22 @@ static int hkdf_expand(OSSL_LIB_CTX *libctx, const char *propq,
     }
     hashlen = (size_t)ret;
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_mode, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         (char *)mdname, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
         (unsigned char *)secret, hashlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_prefix,
         (unsigned char *)label_prefix,
         label_prefix_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_label,
         (unsigned char *)label, labellen);
     if (data != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_data,
             (unsigned char *)data,
             datalen);
     if (propq != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_properties,
             (char *)propq, 0);
 
     *p++ = OSSL_PARAM_construct_end();
@@ -239,26 +239,26 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
     }
     mdlen = (size_t)mdleni;
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_mode, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         (char *)mdname, 0);
     if (insecret != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
             (unsigned char *)insecret,
             insecretlen);
     if (prevsecret != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_salt,
             (unsigned char *)prevsecret, mdlen);
     if (isdtls)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_prefix,
             (unsigned char *)label_prefix_dtls13,
             sizeof(label_prefix_dtls13) - 1);
     else
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_prefix,
             (unsigned char *)label_prefix_tls13,
             sizeof(label_prefix_tls13) - 1);
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_label,
         (unsigned char *)derived_secret_label,
         sizeof(derived_secret_label) - 1);
     *p++ = OSSL_PARAM_construct_end();
@@ -332,7 +332,7 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
 
     /* Safe to cast away const here since we're not "getting" any data */
     if (sctx->propq != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_properties,
             (char *)sctx->propq,
             0);
     *p = OSSL_PARAM_construct_end();

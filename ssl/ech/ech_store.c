@@ -455,7 +455,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         goto err;
     if (priv != NULL) {
         if (EVP_PKEY_get_octet_string_param(priv,
-                OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                OSSL_PKEY_PARAM_encoded_public_key,
                 test_pub, OSSL_ECH_CRYPTO_VAR_SIZE,
                 &test_publen)
             != 1) {
