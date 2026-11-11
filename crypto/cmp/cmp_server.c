@@ -684,8 +684,13 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
     }
 
+    (void)ERR_set_mark();
     req_verified = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
         srv_ctx->acceptUnprotected);
+    if (req_verified)
+        (void)ERR_pop_to_mark(); /* clear validation errors potentially waived with accept_unprotected */
+    else
+        (void)ERR_clear_last_mark();
     if (ctx->secretValue != NULL && ctx->pkey != NULL
         && ossl_cmp_hdr_get_protection_nid(hdr) != NID_id_PasswordBasedMAC)
         ctx->secretValue = NULL; /* use MSG_SIG_ALG when protecting rsp */

@@ -14,6 +14,7 @@
 typedef struct test_fixture {
     const char *test_case_name;
     int expected;
+    int accept_unprotected;
     OSSL_CMP_SRV_CTX *srv_ctx;
     OSSL_CMP_MSG *req;
 } CMP_SRV_TEST_FIXTURE;
@@ -25,6 +26,8 @@ static OSSL_CMP_MSG *request = NULL;
 static void tear_down(CMP_SRV_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_SRV_CTX_free(fixture->srv_ctx);
+    if (fixture->req != request)
+        OSSL_CMP_MSG_free(fixture->req);
     OPENSSL_free(fixture);
 }
 
@@ -82,7 +85,7 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
         goto end;
 
     if (!TEST_true(OSSL_CMP_SRV_CTX_set_send_unprotected_errors(ctx, 0))
-        || !TEST_true(OSSL_CMP_SRV_CTX_set_accept_unprotected(ctx, 0))
+        || !TEST_true(OSSL_CMP_SRV_CTX_set_accept_unprotected(ctx, fixture->accept_unprotected))
         || !TEST_true(OSSL_CMP_SRV_CTX_set_accept_raverified(ctx, 1))
         || !TEST_true(OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(ctx, 1)))
         goto end;
@@ -110,11 +113,19 @@ end:
     return res;
 }
 
-static int test_handle_request(void)
+static int test_handle_request(int invalid_signature)
 {
     SETUP_TEST_FIXTURE(CMP_SRV_TEST_FIXTURE, set_up);
     fixture->req = request;
     fixture->expected = 1;
+    fixture->accept_unprotected = invalid_signature;
+    if (invalid_signature
+        && (!TEST_ptr(fixture->req = OSSL_CMP_MSG_dup(request))
+            || !TEST_true(X509_ALGOR_set0(fixture->req->header->protectionAlg,
+                OBJ_nid2obj(NID_sha256WithRSAEncryption), V_ASN1_NULL, NULL)))) {
+        tear_down(fixture);
+        return 0;
+    }
     EXECUTE_TEST(execute_test_handle_request, tear_down);
     return result;
 }
@@ -168,6 +179,6 @@ int setup_tests(void)
      * OSSL_CMP_SRV_CTX_set_accept_raverified(), and
      * OSSL_CMP_SRV_CTX_set_grant_implicit_confirm()
      */
-    ADD_TEST(test_handle_request);
+    ADD_ALL_TESTS(test_handle_request, 2);
     return 1;
 }
