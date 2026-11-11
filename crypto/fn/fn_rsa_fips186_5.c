@@ -172,7 +172,7 @@ static ossl_inline int get_multiple_of_y_congruent_to_cmod8(OSSL_FN *y,
  * sequentially within that frame, so their nested needs combine by
  * maximum.
  */
-size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size(const OSSL_FN *Y,
+size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size_from_data(const OSSL_FN *Y,
     const OSSL_FN *X, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
     const OSSL_FN *e)
 {
@@ -194,15 +194,16 @@ size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size(const OSSL_FN *Y,
     OSSL_FN m_mod = { .dsize = (int)r1r2x2_limbs };
     OSSL_FN m_y1 = { .dsize = Y->dsize };
     OSSL_FN m_r1x2 = { .dsize = (int)r1x2_limbs };
-    size_t inv1 = OSSL_FN_mod_inverse_ctx_size(&m_tmp, &m_r1x2, r2);
-    size_t inv2 = OSSL_FN_mod_inverse_ctx_size(&m_R, r2, &m_r1x2);
-    size_t mul1 = OSSL_FN_mul_ctx_size(&m_R, &m_R, r2);
-    size_t mul2 = OSSL_FN_mul_ctx_size(&m_tmp, &m_tmp, &m_r1x2);
-    size_t mul3 = OSSL_FN_mul_ctx_size(&m_mod, &m_r1x2, r2);
-    size_t msub1 = OSSL_FN_mod_sub_ctx_size(&m_R, &m_R, &m_tmp, &m_mod);
-    size_t msub2 = OSSL_FN_mod_sub_ctx_size(Y, &m_R, X, &m_mod);
-    size_t gcd = OSSL_FN_gcd_ctx_size(&m_y1, e);
-    size_t prime = ossl_fn_check_generated_prime_ctx_size(Y);
+    size_t inv1 = OSSL_FN_mod_inverse_ctx_size_from_data(&m_tmp, &m_r1x2, r2);
+    size_t inv2 = OSSL_FN_mod_inverse_ctx_size_from_data(&m_R, r2, &m_r1x2);
+    size_t mul1 = OSSL_FN_mul_ctx_size_from_data(&m_R, &m_R, r2);
+    size_t mul2 = OSSL_FN_mul_ctx_size_from_data(&m_tmp, &m_tmp, &m_r1x2);
+    size_t mul3 = OSSL_FN_mul_ctx_size_from_data(&m_mod, &m_r1x2, r2);
+    size_t msub1
+        = OSSL_FN_mod_sub_ctx_size_from_data(&m_R, &m_R, &m_tmp, &m_mod);
+    size_t msub2 = OSSL_FN_mod_sub_ctx_size_from_data(Y, &m_R, X, &m_mod);
+    size_t gcd = OSSL_FN_gcd_ctx_size_from_data(&m_y1, e);
+    size_t prime = ossl_fn_check_generated_prime_ctx_size_from_data(Y);
     size_t nested = ossl_fn_ctx_max_size(inv1,
         ossl_fn_ctx_max_size(inv2,
             ossl_fn_ctx_max_size(mul1,
@@ -418,9 +419,10 @@ err:
  * primes are modelled with width-only headers of the auxiliary prime
  * width.  Returns 0 for an invalid |nlen|, like the operation itself.
  */
-size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(const OSSL_FN *p,
-    const OSSL_FN *Xpout, const OSSL_FN *p1, const OSSL_FN *p2,
-    const OSSL_FN *Xp1, const OSSL_FN *Xp2, int nlen, const OSSL_FN *e)
+size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size_from_data(
+    const OSSL_FN *p, const OSSL_FN *Xpout, const OSSL_FN *p1,
+    const OSSL_FN *p2, const OSSL_FN *Xp1, const OSSL_FN *Xp2, int nlen,
+    const OSSL_FN *e)
 {
     if (p == NULL || Xpout == NULL || e == NULL)
         return 0;
@@ -439,10 +441,10 @@ size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(const OSSL_FN *p,
     size_t n_temps = (size_t)(p1 == NULL) + (p2 == NULL) + (Xp1 == NULL)
         + (Xp2 == NULL);
     size_t own = OSSL_FN_CTX_size(1, n_temps, n_temps * bitlimbs);
-    size_t hunt1 = ossl_fn_check_generated_prime_ctx_size(w1);
-    size_t hunt2 = ossl_fn_check_generated_prime_ctx_size(w2);
-    size_t derive = ossl_fn_rsa_fips186_5_derive_prime_ctx_size(p, Xpout, w1,
-        w2, nlen, e);
+    size_t hunt1 = ossl_fn_check_generated_prime_ctx_size_from_data(w1);
+    size_t hunt2 = ossl_fn_check_generated_prime_ctx_size_from_data(w2);
+    size_t derive = ossl_fn_rsa_fips186_5_derive_prime_ctx_size_from_data(
+        p, Xpout, w1, w2, nlen, e);
     size_t nested = ossl_fn_ctx_max_size(hunt1,
         ossl_fn_ctx_max_size(hunt2, derive));
 

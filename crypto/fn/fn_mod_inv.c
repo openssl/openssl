@@ -13,7 +13,7 @@
 #include "fn_local.h"
 
 /*-
- * OSSL_FN_mod_inverse_ctx_size() calculates a plausible upper bound
+ * OSSL_FN_mod_inverse_ctx_size_from_data() calculates a plausible upper bound
  * for the OSSL_FN_CTX size.
  *
  * Working set (A, B, X, Y, D, M):
@@ -35,16 +35,16 @@
  *                        OSSL_FN_mod(r, Y, n)        [if reduction needed]
  *
  * The dominant nested requirement is that of the two OSSL_FN_mod() calls
- * (OSSL_FN_div() with q == NULL, which makes OSSL_FN_div_ctx_size() reserve
- * an extra quotient temporary).  OSSL_FN_mul's own ctx requirement is
+ * (OSSL_FN_div() with q == NULL, which makes OSSL_FN_div_ctx_size_from_data()
+ * reserve an extra quotient temporary).  OSSL_FN_mul's own ctx requirement is
  * zero when r != a and r != b (tmp != D and tmp != X here), so it
  * contributes no nested frame.  OSSL_FN_add and OSSL_FN_sub take no ctx.
  * The loop-body OSSL_FN_div(D, M, A, B)'s requirement is bounded by the
  * OSSL_FN_mod calls'.  We compute the max of the div and mod sizes to be
  * safe across the reductions and the loop-body division.
  */
-size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *n)
+size_t OSSL_FN_mod_inverse_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n)
 {
     if (a == NULL || n == NULL)
         return 0;
@@ -65,9 +65,9 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN t_L = { .dsize = (int)L };
 
     /* OSSL_FN_div(D, M, A, B): D and M are results, A and B are operands. */
-    size_t div_size = OSSL_FN_div_ctx_size(&t_L, &t_L, &t_L, &t_L);
+    size_t div_size = OSSL_FN_div_ctx_size_from_data(&t_L, &t_L, &t_L, &t_L);
     /* OSSL_FN_mod(r, Y, n): the final reduction, r is the caller's. */
-    size_t mod_size = OSSL_FN_mod_ctx_size(r, &t_L, n);
+    size_t mod_size = OSSL_FN_mod_ctx_size_from_data(r, &t_L, n);
 
     size_t nested_size = ossl_fn_ctx_max_size(div_size, mod_size);
     return ossl_fn_ctx_add_size(own_size, nested_size);
@@ -262,18 +262,19 @@ err:
 }
 
 /*-
- * OSSL_FN_mod_inverse_prime_ctx_size() -- arena sizing for
+ * OSSL_FN_mod_inverse_prime_ctx_size_from_data() -- arena sizing for
  * OSSL_FN_mod_inverse_prime().
  *
  * This companion reads operand widths only, so it can nest.  The exponent
  * e = m - 2 the operator computes internally is exactly m-wide, so the
- * caller's |m| stands in for it in the nested OSSL_FN_mod_exp_mont_ctx_size()
- * call.  Sizing must go directly to the Montgomery companion: the general
- * dispatcher OSSL_FN_mod_exp_ctx_size() reads the modulus' lowest limb to
- * route on parity, which is a limb read this companion must not perform.
+ * caller's |m| stands in for it in the nested
+ * OSSL_FN_mod_exp_mont_ctx_size_from_data() call.  Sizing must go directly to
+ * the Montgomery companion: the general dispatcher
+ * OSSL_FN_mod_exp_ctx_size_from_data() reads the modulus' lowest limb to route
+ * on parity, which is a limb read this companion must not perform.
  */
-size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont)
+size_t OSSL_FN_mod_inverse_prime_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont)
 {
     /* Only |m| is dereferenced here; the nested sizing vets |r| and |a|. */
     if (m == NULL)
@@ -293,7 +294,8 @@ size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
      * through; the nested sizing is the same whether it is NULL or a
      * reused context.
      */
-    size_t nested_size = OSSL_FN_mod_exp_mont_ctx_size(r, a, m, m, in_mont);
+    size_t nested_size
+        = OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, m, m, in_mont);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 

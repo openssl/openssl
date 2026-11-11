@@ -76,11 +76,11 @@ int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
      * each reduces a product of a CRT component (prime width) and e
      * modulo a prime(-minus-one).
      */
-    size = OSSL_FN_mod_mul_ctx_size(r, fn_dmp1, fn_e, p1);
+    size = OSSL_FN_mod_mul_ctx_size_from_data(r, fn_dmp1, fn_e, p1);
     size = ossl_fn_ctx_max_size(size,
-        OSSL_FN_mod_mul_ctx_size(r, fn_dmq1, fn_e, q1));
+        OSSL_FN_mod_mul_ctx_size_from_data(r, fn_dmq1, fn_e, q1));
     size = ossl_fn_ctx_max_size(size,
-        OSSL_FN_mod_mul_ctx_size(r, fn_iqmp, fn_q, fn_p));
+        OSSL_FN_mod_mul_ctx_size_from_data(r, fn_iqmp, fn_q, fn_p));
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
     if (size == 0
         || (fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, size)) == NULL)
@@ -206,7 +206,7 @@ int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
     pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
 
     /* (Steps 5 a-b) prime test */
-    size = ossl_fn_check_prime_ctx_size(fn_p);
+    size = ossl_fn_check_prime_ctx_size_from_data(fn_p);
     if (size == 0
         || (fn_ctx = OSSL_FN_CTX_new_size(libctx, size)) == NULL)
         return 0;
@@ -226,7 +226,7 @@ int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
     /* (Step 5d) GCD(p-1, e) = 1 */
     if (!OSSL_FN_copy(p1, fn_p) || !OSSL_FN_sub_word(p1, 1))
         goto err;
-    size = OSSL_FN_gcd_ctx_size(p1, fn_e);
+    size = OSSL_FN_gcd_ctx_size_from_data(p1, fn_e);
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
     if (size == 0
         || (fn_ctx = OSSL_FN_CTX_new_size(NULL, size)) == NULL)
@@ -301,7 +301,7 @@ int ossl_rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
     r = OSSL_FN_secure_new_limbs(ossl_fn_get_dsize((OSSL_FN *)fn_lcm));
     if (r == NULL)
         goto end;
-    size = OSSL_FN_mod_mul_ctx_size(r, fn_e, fn_d, fn_lcm);
+    size = OSSL_FN_mod_mul_ctx_size_from_data(r, fn_e, fn_d, fn_lcm);
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
     if (size == 0
         || (fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, size)) == NULL)
@@ -453,9 +453,9 @@ int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
      */
     fn_size = ossl_fn_ctx_max_size(
         ossl_fn_ctx_max_size(
-            OSSL_FN_mul_ctx_size(fn_p1q1, fn_p1, fn_q1),
-            OSSL_FN_gcd_ctx_size(fn_p1, fn_q1)),
-        OSSL_FN_div_ctx_size(fn_lcm, NULL, fn_p1q1, fn_gcd));
+            OSSL_FN_mul_ctx_size_from_data(fn_p1q1, fn_p1, fn_q1),
+            OSSL_FN_gcd_ctx_size_from_data(fn_p1, fn_q1)),
+        OSSL_FN_div_ctx_size_from_data(fn_lcm, NULL, fn_p1q1, fn_gcd));
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -658,7 +658,7 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         + 1);
     if (prod == NULL)
         goto err;
-    size = OSSL_FN_mul_ctx_size(prod, fn_p, fn_q);
+    size = OSSL_FN_mul_ctx_size_from_data(prod, fn_p, fn_q);
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
     if (size == 0
         || (fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, size)) == NULL)

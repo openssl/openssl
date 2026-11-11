@@ -376,7 +376,7 @@ end:
  * OSSL_FN_mod, and OSSL_FN_kronecker.  The largest nested requirement
  * dominates; mod_exp is typically the heaviest.
  */
-size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
+size_t OSSL_FN_mod_sqrt_ctx_size_from_data(const OSSL_FN *ret, const OSSL_FN *a,
     const OSSL_FN *p)
 {
     if (p == NULL)
@@ -402,11 +402,11 @@ size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
      * except for the initial reduction, where the numerator is |a| itself
      * and may be wider than p.
      */
-    size_t mod_exp_size = OSSL_FN_mod_exp_ctx_size(p, p, p, p);
-    size_t mod_sqr_size = OSSL_FN_mod_sqr_ctx_size(p, p, p);
-    size_t mod_mul_size = OSSL_FN_mod_mul_ctx_size(p, p, p, p);
-    size_t mod_size = OSSL_FN_mod_ctx_size(p, a, p);
-    size_t kronecker_size = OSSL_FN_kronecker_ctx_size(p, p);
+    size_t mod_exp_size = OSSL_FN_mod_exp_ctx_size_from_data(p, p, p, p);
+    size_t mod_sqr_size = OSSL_FN_mod_sqr_ctx_size_from_data(p, p, p);
+    size_t mod_mul_size = OSSL_FN_mod_mul_ctx_size_from_data(p, p, p, p);
+    size_t mod_size = OSSL_FN_mod_ctx_size_from_data(p, a, p);
+    size_t kronecker_size = OSSL_FN_kronecker_ctx_size_from_data(p, p);
 
     size_t nested_size = ossl_fn_ctx_max_size(mod_exp_size,
         ossl_fn_ctx_max_size(mod_sqr_size,

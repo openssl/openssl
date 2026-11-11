@@ -1145,6 +1145,13 @@ err:
  * OSSL_FN CRT implementation, as the OSSL_FN slots have no setters; such
  * a method gets the legacy BIGNUM body, which dispatches through the
  * BIGNUM slot.
+ *
+ * @param[out]  r0      The result, I^d mod n.
+ * @param[in]   I       The input; a negative one is reduced into [0, n).
+ * @param[in]   rsa     The private key.
+ * @param[in]   ctx     The BIGNUM context, for the legacy body and the
+ *                      reduction of a negative input.
+ * @returns             1 on success, 0 on error.
  */
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
@@ -1203,17 +1210,17 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
      */
     fn_size = ossl_fn_ctx_add_size(
         ossl_fn_ctx_add_size(
-            OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
+            OSSL_FN_mod_exp_mont_ctx_size_from_data(fn_r0, fn_I,
                 bn_get_ossl_fn(rsa->dmp1),
                 bn_get_ossl_fn(rsa->p), NULL),
-            OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
+            OSSL_FN_mod_exp_mont_ctx_size_from_data(fn_r0, fn_I,
                 bn_get_ossl_fn(rsa->dmq1),
                 bn_get_ossl_fn(rsa->q), NULL)),
         OSSL_FN_CTX_size(8, 48, 24 * nl + 16));
     /* Bringing I below n: f_I, and a reduction */
     fn_size = ossl_fn_ctx_add_size(fn_size,
         ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, nl),
-            OSSL_FN_mod_ctx_size(fn_n, fn_I, fn_n)));
+            OSSL_FN_mod_ctx_size_from_data(fn_n, fn_I, fn_n)));
     if (fn_size == 0)
         goto err;
 

@@ -797,7 +797,7 @@ int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
  *
  * TODO(FIXNUM): not all companions follow the signature pattern strictly
  * -- the Montgomery companions take a non-const OSSL_FN *r,
- * OSSL_FN_gcd_ctx_size() has no r parameter at all, and the NULL-r
+ * OSSL_FN_gcd_ctx_size_from_data() has no r parameter at all, and the NULL-r
  * conventions differ between functions.  Whether to clean these up is
  * left open.
  */
@@ -848,7 +848,7 @@ int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_gcd_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
+size_t OSSL_FN_gcd_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b);
 
 /**
  * Add two OSSL_FN numbers.
@@ -914,7 +914,7 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b);
 
 /**
@@ -931,7 +931,7 @@ size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @note This function currently requires that the OSSL_FN_CTX has free
  * space for 1 frame, 4 numbers, and 4 * max(n->dsize, d->dsize) + 2 limbs.
  * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_div_ctx_size() for a budgeted value.
+ * smaller - see OSSL_FN_div_ctx_size_from_data() for a budgeted value.
  */
 int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx);
@@ -950,7 +950,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
  * When q is NULL, the size is computed for the modulo case, i.e. as if
  * only the remainder is produced.
  */
-size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
     const OSSL_FN *n, const OSSL_FN *d);
 
 /**
@@ -982,7 +982,7 @@ int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_add_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_add_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m);
 
 /**
@@ -1027,7 +1027,7 @@ int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_sub_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_sub_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m);
 
 /**
@@ -1073,7 +1073,7 @@ int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m);
 
 /**
@@ -1103,7 +1103,7 @@ int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *m);
 
 /**
@@ -1132,8 +1132,8 @@ int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_lshift1_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m);
+size_t OSSL_FN_mod_lshift1_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
 
 /**
  * Left shift an OSSL_FN number by 1 bit, modulo m.  This is a quick
@@ -1176,7 +1176,7 @@ int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_lshift_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     int n, const OSSL_FN *m);
 
 /**
@@ -1223,13 +1223,13 @@ static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
- * This is a thin wrapper around OSSL_FN_div_ctx_size() with a NULL
+ * This is a thin wrapper around OSSL_FN_div_ctx_size_from_data() with a NULL
  * quotient, since OSSL_FN_mod() is itself a wrapper around OSSL_FN_div().
  */
-static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
+static inline size_t OSSL_FN_mod_ctx_size_from_data(const OSSL_FN *r,
     const OSSL_FN *n, const OSSL_FN *d)
 {
-    return OSSL_FN_div_ctx_size(NULL, r, n, d);
+    return OSSL_FN_div_ctx_size_from_data(NULL, r, n, d);
 }
 
 /**
@@ -1266,8 +1266,8 @@ int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *n);
+size_t OSSL_FN_mod_inverse_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n);
 
 /**
  * Calculate the modular multiplicative inverse of |a| modulo the prime
@@ -1297,7 +1297,7 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           m       The modulus.  Must be an odd prime.
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from, sized per
- *                              OSSL_FN_mod_inverse_prime_ctx_size().
+ *                              OSSL_FN_mod_inverse_prime_ctx_size_from_data().
  * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
  *                              to have this function build and free its own.
  *                              When non-NULL it is borrowed (used as-is, never
@@ -1328,8 +1328,8 @@ int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * OSSL_FN_mod_inverse_prime(), and is the same whether |in_mont| is NULL
  * or a reused context.
  */
-size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
+size_t OSSL_FN_mod_inverse_prime_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
 
 /**
  * Calculate  a^p mod m  (modular exponentiation).  Odd moduli use the
@@ -1357,7 +1357,7 @@ size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  *       crypto/fn/fn_exp.c.
  *
  * @note This function currently requires that the OSSL_FN_CTX is sized per
- *       OSSL_FN_mod_exp_ctx_size().
+ *       OSSL_FN_mod_exp_ctx_size_from_data().
  */
 int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
@@ -1375,7 +1375,7 @@ int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
  * It budgets the larger of the Montgomery (odd modulus) and simple (even
  * modulus) paths, keeping the sizing width-only; see fn_exp.c.
  */
-size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_exp_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m);
 
 /**
@@ -1391,7 +1391,8 @@ size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           p       The exponent.
  * @param[in]           m       The modulus.  Must be non-zero.
  * @param[in]           ctx     A context to get temporary OSSL_FN instances
- *                              from, sized per OSSL_FN_mod_exp_simple_ctx_size().
+ *                              from, sized per
+ *                              OSSL_FN_mod_exp_simple_ctx_size_from_data().
  * @returns             1 on success, 0 on error.
  *
  * @note This path is not constant-time per se; do not use it for secret
@@ -1410,8 +1411,8 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m);
+size_t OSSL_FN_mod_exp_simple_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m);
 
 /**
  * Calculate  a^p mod m  with the Montgomery fixed-window algorithm.
@@ -1428,7 +1429,8 @@ size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           p       The exponent.
  * @param[in]           m       The modulus.  Must be odd and non-zero.
  * @param[in]           ctx     A context to get temporary OSSL_FN instances
- *                              from, sized per OSSL_FN_mod_exp_mont_ctx_size().
+ *                              from, sized per
+ *                              OSSL_FN_mod_exp_mont_ctx_size_from_data().
  * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
  *                              to have this function build and free its own.
  *                              When non-NULL it is borrowed (used as-is, never
@@ -1464,8 +1466,9 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
+size_t OSSL_FN_mod_exp_mont_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m,
+    OSSL_FN_MONT_CTX *in_mont);
 
 /**
  * Compute the Kronecker symbol (a/b).
@@ -1498,7 +1501,7 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx);
  * Two temporaries of max(a, b) limbs are needed, plus the nested
  * OSSL_FN_mod() call in the loop body.
  */
-size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
+size_t OSSL_FN_kronecker_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b);
 
 /**
  * Compute a square root of @p a modulo @p p.
@@ -1535,7 +1538,7 @@ int OSSL_FN_mod_sqrt(OSSL_FN *ret, const OSSL_FN *a, const OSSL_FN *p,
  * Seven temporaries of p->dsize limbs are needed, plus the nested calls
  * (mod_exp, mod_sqr, mod_mul, mod, kronecker).
  */
-size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
+size_t OSSL_FN_mod_sqrt_ctx_size_from_data(const OSSL_FN *ret, const OSSL_FN *a,
     const OSSL_FN *p);
 
 /**
@@ -1561,7 +1564,7 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
+size_t OSSL_FN_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a);
 
 /**
  * Initialize a Montgomery context for modulus mod.
@@ -1631,7 +1634,7 @@ const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont);
  * has free space for 2 frame, 7 numbers, and
  * 7 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
  * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_mul_mont_ctx_size() for a budgeted value.
+ * smaller - see OSSL_FN_mul_mont_ctx_size_from_data() for a budgeted value.
  *
  * A timing side-channel may leak limb-size misalignment or whether the input
  * operands exceed the modulus. However, this leakage is non-critical and
@@ -1653,8 +1656,8 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * If `r == NULL`, the returned size is calculated as if @p r has the same size
  * as the modulus.
  */
-size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
-    OSSL_FN_MONT_CTX *mont);
+size_t OSSL_FN_mul_mont_ctx_size_from_data(
+    OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_MONT_CTX *mont);
 
 /**
  * Fulfil the Montgomery multiplication. This is a quick variant that may be
@@ -1687,7 +1690,7 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  *
  * All parameters except @p mont can be NULL.
  */
-size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, OSSL_FN_MONT_CTX *mont);
 
 /**
@@ -1705,7 +1708,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  * the same size and that the OSSL_FN_CTX has free space for 2 frame,
  * 5 numbers, and 5 * max(a->dsize, mont->N->dsize) + 2 limbs.
  * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_to_mont_ctx_size() for a budgeted value.
+ * smaller - see OSSL_FN_to_mont_ctx_size_from_data() for a budgeted value.
  *
  * A timing side-channel may leak limb-size misalignment or whether @p a
  * exceeds the modulus. However, this leakage is non-critical and acceptable
@@ -1726,7 +1729,7 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  * If `r == NULL`, the returned size is calculated as if @p r has the same
  * size as the modulus.
  */
-size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
 
 /**
@@ -1756,7 +1759,7 @@ int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
 
 /**
@@ -1791,7 +1794,7 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_from_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
 
 /**
@@ -1807,7 +1810,7 @@ size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  *
  * @note @p r must have the same size as @p mont->N.  @p a may be narrower,
  * or up to twice that size provided its value is less than @p mont->N * R.
- * See OSSL_FN_mont_reduce_ctx_size() for the arena requirement.
+ * See OSSL_FN_mont_reduce_ctx_size_from_data() for the arena requirement.
  */
 int OSSL_FN_mont_reduce(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
@@ -1822,7 +1825,7 @@ int OSSL_FN_mont_reduce(OSSL_FN *r, const OSSL_FN *a,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mont_reduce_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
 
 /**
@@ -1868,8 +1871,8 @@ int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
  * tests they run.  The same size serves a given |bits| and |safe| regardless
  * of the |add| and |rem| values.
  */
-size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
-    int safe, const OSSL_FN *add, const OSSL_FN *rem);
+size_t OSSL_FN_generate_prime_ctx_size_from_data(const OSSL_FN *ret,
+    size_t bits, int safe, const OSSL_FN *add, const OSSL_FN *rem);
 
 /**
  * Generate a pair of X9.31 parameters Xp and Xq for prime generation.
@@ -1880,7 +1883,7 @@ size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
  * @param[out]          Xq      The second parameter
  * @param[in]           nbits   The total bit length (sum of both)
  * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
- *                              OSSL_FN_X931_generate_Xpq_ctx_size()
+ *                              OSSL_FN_X931_generate_Xpq_ctx_size_from_data()
  * @param[in]           libctx  The library context for the random draws
  * @returns             1 on success, 0 on error
  */
@@ -1903,7 +1906,7 @@ int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
  * @param[in]           Xp2     The second parameter for p2
  * @param[in]           e       The exponent; must be odd
  * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
- *                              OSSL_FN_X931_derive_prime_ctx_size()
+ *                              OSSL_FN_X931_derive_prime_ctx_size_from_data()
  * @param[in]           cb      Progress callback, or NULL
  * @param[in]           libctx  The library context for the random draws
  * @returns             1 on success, 0 on error
@@ -1935,7 +1938,7 @@ int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
  *                              OSSL_FN_X931_generate_Xpq()
  * @param[in]           e       The exponent; must be odd
  * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
- *                              OSSL_FN_X931_generate_prime_ctx_size()
+ *                              OSSL_FN_X931_generate_prime_ctx_size_from_data()
  * @param[in]           cb      Progress callback, or NULL
  * @param[in]           libctx  The library context for the random draws
  * @returns             1 on success, 0 on error
@@ -1952,7 +1955,7 @@ int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
+size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_data(const OSSL_FN *Xp);
 
 /**
  * Calculate the arena payload size that OSSL_FN_X931_generate_prime()
@@ -1970,7 +1973,7 @@ size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
  * The returned size covers the operation's own frame for the parameter
  * draws as well as OSSL_FN_X931_derive_prime()'s needs.
  */
-size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
+size_t OSSL_FN_X931_generate_prime_ctx_size_from_data(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *e);
 
@@ -1991,7 +1994,7 @@ size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
  * The returned size includes any frame budget needed by
  * OSSL_FN_X931_derive_prime().
  */
-size_t OSSL_FN_X931_derive_prime_ctx_size(const OSSL_FN *p,
+size_t OSSL_FN_X931_derive_prime_ctx_size_from_data(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e);
 #ifdef __cplusplus

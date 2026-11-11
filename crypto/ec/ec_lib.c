@@ -1333,7 +1333,7 @@ int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
             == NULL)
             goto err;
         modctx = OSSL_FN_CTX_secure_new_size(group->libctx,
-            OSSL_FN_mod_ctx_size(reduced, scalar, card_fn));
+            OSSL_FN_mod_ctx_size_from_data(reduced, scalar, card_fn));
         ok = modctx != NULL
             && OSSL_FN_mod(reduced, scalar, card_fn, modctx);
         OSSL_FN_CTX_free(modctx);
@@ -1651,7 +1651,7 @@ size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group)
         return 0;
     w = ossl_fn_get_dsize(OSSL_FN_MONT_CTX_get0_modulus(mont));
     return ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, 2 * w),
-        OSSL_FN_mont_reduce_ctx_size(NULL, NULL, mont));
+        OSSL_FN_mont_reduce_ctx_size_from_data(NULL, NULL, mont));
 }
 
 /*-

@@ -24,8 +24,8 @@
  * left for future implementations.
  *
  * The runtime dispatcher (OSSL_FN_mod_exp) guards against these; the sizing
- * companion (OSSL_FN_mod_exp_ctx_size) budgets the largest implemented path
- * instead, so it stays width-only.
+ * companion (OSSL_FN_mod_exp_ctx_size_from_data) budgets the largest
+ * implemented path instead, so it stays width-only.
  */
 #define MONT_MUL_MOD
 #undef RECP_MUL_MOD
@@ -255,22 +255,25 @@ static size_t mod_exp_mont_nested(const OSSL_FN *a, const OSSL_FN *m,
      * OSSL_FN_mul_mont_quick() and its smaller ctx_size.
      */
     mont_size = a->dsize <= m->dsize
-        ? OSSL_FN_mont_reduce_ctx_size(NULL, a, in_mont)
-        : OSSL_FN_to_mont_ctx_size(NULL, a, in_mont);
+        ? OSSL_FN_mont_reduce_ctx_size_from_data(NULL, a, in_mont)
+        : OSSL_FN_to_mont_ctx_size_from_data(NULL, a, in_mont);
     mont_size = ossl_fn_ctx_max_size(mont_size,
-        ossl_fn_ctx_max_size(OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, in_mont),
-            OSSL_FN_from_mont_ctx_size(NULL, NULL, in_mont)));
+        ossl_fn_ctx_max_size(OSSL_FN_mul_mont_quick_ctx_size_from_data(
+                                 NULL, NULL, NULL, in_mont),
+            OSSL_FN_from_mont_ctx_size_from_data(NULL, NULL, in_mont)));
 
     return mont_size;
 }
 
 /*-
- * OSSL_FN_mod_exp_mont_ctx_size() -- arena sizing for OSSL_FN_mod_exp_mont().
- * Sizes only the Montgomery path; see mod_exp_mont_nested() for the |in_mont|
- * modelling and the NULL/reused equivalence.
+ * OSSL_FN_mod_exp_mont_ctx_size_from_data() -- arena sizing for
+ * OSSL_FN_mod_exp_mont().  Sizes only the Montgomery path; see
+ * mod_exp_mont_nested() for the |in_mont| modelling and the NULL/reused
+ * equivalence.
  */
-size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont)
+size_t OSSL_FN_mod_exp_mont_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m,
+    OSSL_FN_MONT_CTX *in_mont)
 {
     if (a == NULL || p == NULL || m == NULL)
         return 0;
@@ -303,9 +306,10 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 }
 
 /*
- * OSSL_FN_mod_exp_simple_ctx_size() -- arena sizing for OSSL_FN_mod_exp_simple().
+ * OSSL_FN_mod_exp_simple_ctx_size_from_data() -- arena sizing for
+ * OSSL_FN_mod_exp_simple().
  */
-size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r,
+size_t OSSL_FN_mod_exp_simple_ctx_size_from_data(const OSSL_FN *r,
     const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
 {
     if (m == NULL)
@@ -320,7 +324,7 @@ size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r,
     size_t own_size = OSSL_FN_CTX_size(1, n_numbers, n_numbers * ml);
 
     /* Initial reduction OSSL_FN_mod(val[0], a, m); |a| may be wider than |m|. */
-    size_t mod_size = OSSL_FN_mod_ctx_size(NULL, a, m);
+    size_t mod_size = OSSL_FN_mod_ctx_size_from_data(NULL, a, m);
 
     /*
      * Loop multiply OSSL_FN_mod_mul(rr, rr, rr|val, m): all operands are
@@ -328,14 +332,14 @@ size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r,
      * The aliased (a == b, square) sizing dominates the mul sizing, so one
      * call covers both loop steps.
      */
-    size_t mul_size = OSSL_FN_mod_mul_ctx_size(m, m, m, m);
+    size_t mul_size = OSSL_FN_mod_mul_ctx_size_from_data(m, m, m, m);
 
     size_t nested_size = ossl_fn_ctx_max_size(mod_size, mul_size);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
 #ifdef RECP_MUL_MOD
-static size_t ossl_fn_mod_exp_recp_ctx_size(const OSSL_FN *r,
+static size_t ossl_fn_mod_exp_recp_ctx_size_from_data(const OSSL_FN *r,
     const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
 {
     /* Not implemented; see ossl_fn_mod_exp_recp(). */
@@ -344,7 +348,7 @@ static size_t ossl_fn_mod_exp_recp_ctx_size(const OSSL_FN *r,
 #endif
 
 /*-
- * OSSL_FN_mod_exp_ctx_size() -- arena sizing for OSSL_FN_mod_exp().
+ * OSSL_FN_mod_exp_ctx_size_from_data() -- arena sizing for OSSL_FN_mod_exp().
  * Budgets the largest implemented path rather than reading the modulus'
  * parity, keeping this companion width-only (see include/crypto/fn.h);
  * the runtime dispatcher still picks the path.  When another path is
@@ -357,17 +361,18 @@ static size_t ossl_fn_mod_exp_recp_ctx_size(const OSSL_FN *r,
  *      mont, non-asm (window 6)   ~2120
  *      simple                     ~1088
  */
-size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_exp_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m)
 {
     if (m == NULL)
         return 0;
 
 #ifdef MONT_MUL_MOD
-    return ossl_fn_ctx_max_size(OSSL_FN_mod_exp_mont_ctx_size(r, a, p, m, NULL),
-        OSSL_FN_mod_exp_simple_ctx_size(r, a, p, m));
+    return ossl_fn_ctx_max_size(
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, p, m, NULL),
+        OSSL_FN_mod_exp_simple_ctx_size_from_data(r, a, p, m));
 #else
-    return OSSL_FN_mod_exp_simple_ctx_size(r, a, p, m);
+    return OSSL_FN_mod_exp_simple_ctx_size_from_data(r, a, p, m);
 #endif
 }
 

@@ -22,12 +22,24 @@
 #define RSA_FIPS186_5_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS186_5_MIN_KEYGEN_STRENGTH 112
 
-/*
+/**
  * Generate one probable prime (p or q) on OSSL_FN views, converting the
- * BIGNUM parameters at the boundary.  |p_bn| and |Xpo_bn| are the writable
- * results; |p1|, |p2| are optional writable results; |Xp|, |Xp1|, |Xp2|
- * are optional read-only inputs (all BIGNUM, for CAVS testing).  The
- * OSSL_FN generation runs in an explicitly sized OSSL_FN_CTX arena.
+ * BIGNUM parameters at the boundary.  The OSSL_FN generation runs in an
+ * explicitly sized OSSL_FN_CTX arena.
+ *
+ * @param[out]  p_bn    The probable prime.
+ * @param[out]  Xpo_bn  The accepted seed.
+ * @param[out]  p1      The first auxiliary prime, or NULL.
+ * @param[out]  p2      The second auxiliary prime, or NULL.
+ * @param[in]   Xp      The seed, or NULL to generate one (for CAVS testing).
+ * @param[in]   Xp1     The first auxiliary seed, or NULL.
+ * @param[in]   Xp2     The second auxiliary seed, or NULL.
+ * @param[in]   nbits   The target modulus length, in bits.
+ * @param[in]   e       The public exponent the prime must suit.
+ * @param[in]   cb      The progress callback, or NULL.
+ * @param[in]   c       Nonzero to enforce p congruent to c mod 8.
+ * @param[in]   libctx  The library context for the random numbers.
+ * @returns             1 on success, 0 on error.
  */
 static int rsa_fn_gen_prob_prime(BIGNUM *p_bn, BIGNUM *Xpo_bn,
     BIGNUM *p1, BIGNUM *p2,
@@ -66,9 +78,8 @@ static int rsa_fn_gen_prob_prime(BIGNUM *p_bn, BIGNUM *Xpo_bn,
     if (p2 != NULL && (fn_p2 = bn_acquire_ossl_fn(p2, (int)pl)) == NULL)
         goto err;
 
-    fn_size = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(fn_p, fn_Xpo,
-        fn_p1, fn_p2, fn_Xp1, fn_Xp2,
-        nbits, fn_e);
+    fn_size = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size_from_data(
+        fn_p, fn_Xpo, fn_p1, fn_p2, fn_Xp1, fn_Xp2, nbits, fn_e);
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -378,7 +389,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
         /* (Step 3) d = (e^-1) mod lcm, on OSSL_FN views. */
         if ((fn_d = bn_acquire_ossl_fn(rsa->d, (int)nl)) == NULL)
             goto err;
-        fn_size = OSSL_FN_mod_inverse_ctx_size(fn_d, fn_e, fn_lcm);
+        fn_size = OSSL_FN_mod_inverse_ctx_size_from_data(fn_d, fn_e, fn_lcm);
         if (fn_size == 0)
             goto err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -410,7 +421,7 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
 
         if ((fn_n = bn_acquire_ossl_fn(rsa->n, (int)(npl + nql))) == NULL)
             goto err;
-        fn_size = OSSL_FN_mul_ctx_size(fn_n, fn_p, fn_q);
+        fn_size = OSSL_FN_mul_ctx_size_from_data(fn_n, fn_p, fn_q);
         if (fn_size == 0)
             goto err;
         fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
@@ -481,11 +492,11 @@ derived:
         if (fn_dmp1 == NULL || fn_dmq1 == NULL || fn_iqmp == NULL)
             goto err;
 
-        fn_size = OSSL_FN_mod_ctx_size(fn_dmp1, fn_d, fn_p1);
+        fn_size = OSSL_FN_mod_ctx_size_from_data(fn_dmp1, fn_d, fn_p1);
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_ctx_size(fn_dmq1, fn_d, fn_q1));
+            OSSL_FN_mod_ctx_size_from_data(fn_dmq1, fn_d, fn_q1));
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_inverse_ctx_size(fn_iqmp, fn_q, fn_p));
+            OSSL_FN_mod_inverse_ctx_size_from_data(fn_iqmp, fn_q, fn_p));
         if (fn_size == 0)
             goto err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -654,8 +665,8 @@ int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
 
     /* The two exponentiations run sequentially in one arena. */
     fn_size = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_exp_mont_ctx_size(tmp, k, fn_e, fn_n, NULL),
-        OSSL_FN_mod_exp_mont_ctx_size(tmp, tmp, fn_d, fn_n, NULL));
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(tmp, k, fn_e, fn_n, NULL),
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(tmp, tmp, fn_d, fn_n, NULL));
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */

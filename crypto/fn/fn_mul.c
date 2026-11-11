@@ -13,7 +13,7 @@
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
 #include "fn_local.h"
 
-size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b)
 {
     size_t limbs = 0;

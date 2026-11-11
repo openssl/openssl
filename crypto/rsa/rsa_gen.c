@@ -116,7 +116,7 @@ static BIGNUM *rsa_fn_mod_new(const BIGNUM *a, const BIGNUM *m,
         return NULL;
     if ((fn_r = bn_acquire_ossl_fn(r, (int)ml)) == NULL)
         goto err;
-    fn_size = OSSL_FN_mod_ctx_size(fn_r, fn_a, fn_m);
+    fn_size = OSSL_FN_mod_ctx_size_from_data(fn_r, fn_a, fn_m);
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -195,7 +195,7 @@ static BIGNUM *rsa_fn_mul_new(const BIGNUM *a, const BIGNUM *b,
         return NULL;
     if ((fn_r = bn_acquire_ossl_fn(r, (int)(al + bl))) == NULL)
         goto err;
-    fn_size = OSSL_FN_mul_ctx_size(fn_r, fn_a, fn_b);
+    fn_size = OSSL_FN_mul_ctx_size_from_data(fn_r, fn_a, fn_b);
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -240,7 +240,7 @@ static BIGNUM *rsa_fn_mod_inverse_new(const BIGNUM *a, const BIGNUM *m,
         return NULL;
     if ((fn_r = bn_acquire_ossl_fn(r, (int)ml)) == NULL)
         goto err;
-    fn_size = OSSL_FN_mod_inverse_ctx_size(fn_r, fn_a, fn_m);
+    fn_size = OSSL_FN_mod_inverse_ctx_size_from_data(fn_r, fn_a, fn_m);
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -428,11 +428,17 @@ err:
     return ret;
 }
 
-/*
+/**
  * Generate one probable prime of |bits| bits into |prime| on an OSSL_FN
  * view, converting at the BIGNUM boundary.  The OSSL_FN generation runs
  * in an explicitly sized OSSL_FN_CTX arena; |prime| is acquired writable
  * before sizing.
+ *
+ * @param[out]  prime   The generated prime.
+ * @param[in]   bits    The size of the prime, in bits.
+ * @param[in]   cb      The progress callback, or NULL.
+ * @param[in]   libctx  The library context for the random numbers.
+ * @returns             1 on success, 0 on error.
  */
 static int rsa_fn_generate_prime(BIGNUM *prime, int bits, BN_GENCB *cb,
     OSSL_LIB_CTX *libctx)
@@ -446,8 +452,8 @@ static int rsa_fn_generate_prime(BIGNUM *prime, int bits, BN_GENCB *cb,
     if ((fn_p = bn_acquire_ossl_fn(prime, (int)pl)) == NULL)
         return 0;
 
-    fn_size = OSSL_FN_generate_prime_ctx_size(fn_p, (size_t)bits, 0, NULL,
-        NULL);
+    fn_size = OSSL_FN_generate_prime_ctx_size_from_data(
+        fn_p, (size_t)bits, 0, NULL, NULL);
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -492,7 +498,7 @@ static int rsa_fn_coprime_with_e(const BIGNUM *prime, const BIGNUM *e,
     if (pm1 == NULL || inv == NULL)
         goto err;
 
-    fn_size = OSSL_FN_mod_inverse_ctx_size(inv, fn_e, pm1);
+    fn_size = OSSL_FN_mod_inverse_ctx_size_from_data(inv, fn_e, pm1);
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -554,7 +560,7 @@ static int rsa_fn_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     if ((fn_r = bn_acquire_ossl_fn(r, (int)(al + bl))) == NULL)
         return 0;
-    fn_size = OSSL_FN_mul_ctx_size(fn_r, fn_a, fn_b);
+    fn_size = OSSL_FN_mul_ctx_size_from_data(fn_r, fn_a, fn_b);
     if (fn_size == 0)
         goto err;
     fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
@@ -602,12 +608,17 @@ err:
     return ret;
 }
 
-/*
+/**
  * Calculate d = e^-1 mod L, where L = (p-1)(q-1)...(r_i-1), on OSSL_FN
  * views.  The partial products of the (prime-1) values are accumulated in
  * the caller's |r0| (which receives L).  The result is stored in rsa->d.
  * Multi-prime r_i - 1 values are also stashed in pinfo->d for later use.
- * Returns 1 on success, 0 on error.
+ *
+ * @param[in,out] rsa   The key: e, p and q are read, d is written.
+ * @param[in]   primes  The total number of primes.
+ * @param[in,out] prime_infos The extra primes, for a multi-prime key.
+ * @param[out]  r0      Receives L.
+ * @returns             1 on success, 0 on error.
  */
 static int rsa_fn_calculate_d(RSA *rsa, int primes,
     STACK_OF(RSA_PRIME_INFO) *prime_infos,
@@ -646,8 +657,8 @@ static int rsa_fn_calculate_d(RSA *rsa, int primes,
      * so it is sized for the largest single operation.
      */
     fn_size = ossl_fn_ctx_max_size(
-        OSSL_FN_mul_ctx_size(fn_L, acc, pm1),
-        OSSL_FN_mod_inverse_ctx_size(fn_d, fn_e, fn_L));
+        OSSL_FN_mul_ctx_size_from_data(fn_L, acc, pm1),
+        OSSL_FN_mod_inverse_ctx_size_from_data(fn_d, fn_e, fn_L));
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */

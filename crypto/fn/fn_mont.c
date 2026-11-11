@@ -281,7 +281,7 @@ const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont)
  *     limb values; N->dsize is a public width and the returned size is the
  *     function's declared output, not a side channel.
  */
-size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, OSSL_FN_MONT_CTX *mont)
 {
     if (mont == NULL)
@@ -398,8 +398,8 @@ end:
  *     (operand dsize vs the modulus width), and the returned size depends
  *     on widths alone.
  */
-size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
-    OSSL_FN_MONT_CTX *mont)
+size_t OSSL_FN_mul_mont_ctx_size_from_data(
+    OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_MONT_CTX *mont)
 {
     if (mont == NULL)
         return 0;
@@ -415,9 +415,9 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     own_size = OSSL_FN_CTX_size(1, num, num * (size_t)len);
     nested_size = ossl_fn_ctx_max_size(
         ossl_fn_ctx_max_size(
-            OSSL_FN_mod_ctx_size(NULL, a, mont->N),
-            OSSL_FN_mod_ctx_size(NULL, b, mont->N)),
-        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+            OSSL_FN_mod_ctx_size_from_data(NULL, a, mont->N),
+            OSSL_FN_mod_ctx_size_from_data(NULL, b, mont->N)),
+        OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont));
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
@@ -508,7 +508,7 @@ end:
  *     (operand dsize vs the modulus width), and the returned size depends
  *     on widths alone.
  */
-size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
     if (mont == NULL) {
@@ -525,8 +525,8 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
     own_size = OSSL_FN_CTX_size(1, num, num * (size_t)len);
     nested_size = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_ctx_size(NULL, a, mont->N),
-        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+        OSSL_FN_mod_ctx_size_from_data(NULL, a, mont->N),
+        OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont));
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
@@ -566,10 +566,10 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  *   - This function is constant-time; it depends on the public modulus
  *     width only.
  */
-size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
-    return OSSL_FN_mul_mont_quick_ctx_size(r, a, NULL, mont);
+    return OSSL_FN_mul_mont_quick_ctx_size_from_data(r, a, NULL, mont);
 }
 
 /*
@@ -601,7 +601,7 @@ int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
  *     limb values; N->dsize is a public width and the returned size is the
  *     function's declared output, not a side channel.
  */
-size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_from_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
     if (mont == NULL)
@@ -765,7 +765,7 @@ end:
  * Constant-time profile:
  *   - This function is constant-time; it depends on public widths only.
  */
-size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mont_reduce_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
     size_t own_size, nested_size;
@@ -785,8 +785,8 @@ size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
     own_size = OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize);
     nested_size = ossl_fn_ctx_max_size(
-        OSSL_FN_from_mont_ctx_size(r, src, mont),
-        OSSL_FN_to_mont_quick_ctx_size(r, NULL, mont));
+        OSSL_FN_from_mont_ctx_size_from_data(r, src, mont),
+        OSSL_FN_to_mont_quick_ctx_size_from_data(r, NULL, mont));
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 

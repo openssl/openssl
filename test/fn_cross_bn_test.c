@@ -77,7 +77,7 @@ static int test_check_prime_cross_bn(void)
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(4))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_check_prime_ctx_size(w)))
+                         ossl_fn_check_prime_ctx_size_from_data(w)))
         || !TEST_ptr(bctx = BN_CTX_new())
         || !TEST_ptr(bw = BN_new()))
         goto err;
@@ -178,7 +178,7 @@ static int test_x931_derive_prime_cross_bn(void)
         goto err;
     p2_acq = 1;
 
-    size = OSSL_FN_X931_derive_prime_ctx_size(fp, fp1, fp2,
+    size = OSSL_FN_X931_derive_prime_ctx_size_from_data(fp, fp1, fp2,
         bn_get_ossl_fn(bXp), bn_get_ossl_fn(bXp1),
         bn_get_ossl_fn(bXp2), bn_get_ossl_fn(be));
     if (!TEST_size_t_ne(size, 0)
@@ -328,8 +328,8 @@ static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
      * invalid key size it returns 0; a minimal arena suffices then,
      * since the call fails before allocating more than its frame.
      */
-    fn_ctxsize = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(f_p, f_x,
-        f_p1, f_p2, v_xp1, v_xp2, t->nlen, v_e);
+    fn_ctxsize = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size_from_data(
+        f_p, f_x, f_p1, f_p2, v_xp1, v_xp2, t->nlen, v_e);
     if (fn_ctxsize == 0)
         fn_ctxsize = OSSL_FN_CTX_size(2, 1, 8);
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, fn_ctxsize)))

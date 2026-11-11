@@ -22,7 +22,7 @@ OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
  * with OSSL_FN_CTX_get_limbs().  This is enough for nested ctx-size helpers,
  * which only inspect operand sizes.
  */
-size_t OSSL_FN_mod_add_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_add_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m)
 {
     size_t tl, own_size, nested_size;
@@ -39,7 +39,7 @@ size_t OSSL_FN_mod_add_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN t = { .dsize = (int)tl };
 
     own_size = OSSL_FN_CTX_size(1, 1, tl);
-    nested_size = OSSL_FN_mod_ctx_size(r, &t, m);
+    nested_size = OSSL_FN_mod_ctx_size_from_data(r, &t, m);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
@@ -143,7 +143,7 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     return 1;
 }
 
-size_t OSSL_FN_mod_sub_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_sub_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m)
 {
     size_t ml, n_numbers, own_size, mod_a_size, mod_b_size, nested_size;
@@ -160,8 +160,8 @@ size_t OSSL_FN_mod_sub_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN bm = { .dsize = (int)ml };
 
     own_size = OSSL_FN_CTX_size(1, n_numbers, n_numbers * ml);
-    mod_a_size = OSSL_FN_mod_ctx_size(&am, a, m);
-    mod_b_size = OSSL_FN_mod_ctx_size(&bm, b, m);
+    mod_a_size = OSSL_FN_mod_ctx_size_from_data(&am, a, m);
+    mod_b_size = OSSL_FN_mod_ctx_size_from_data(&bm, b, m);
     nested_size = ossl_fn_ctx_max_size(mod_a_size, mod_b_size);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
@@ -283,7 +283,7 @@ int OSSL_FN_mod_sub_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     return 1;
 }
 
-size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m)
 {
     size_t tl, own_size, mul_size, mod_size, nested_size;
@@ -299,8 +299,8 @@ size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
             return 0;
         OSSL_FN t = { .dsize = (int)tl };
 
-        mul_size = OSSL_FN_sqr_ctx_size(&t, a);
-        mod_size = OSSL_FN_mod_ctx_size(r, &t, m);
+        mul_size = OSSL_FN_sqr_ctx_size_from_data(&t, a);
+        mod_size = OSSL_FN_mod_ctx_size_from_data(r, &t, m);
     } else {
         int err = 0;
 
@@ -309,8 +309,8 @@ size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
             return 0;
         OSSL_FN t = { .dsize = (int)tl };
 
-        mul_size = OSSL_FN_mul_ctx_size(&t, a, b);
-        mod_size = OSSL_FN_mod_ctx_size(r, &t, m);
+        mul_size = OSSL_FN_mul_ctx_size_from_data(&t, a, b);
+        mod_size = OSSL_FN_mod_ctx_size_from_data(r, &t, m);
     }
 
     own_size = OSSL_FN_CTX_size(1, 1, tl);
@@ -355,7 +355,7 @@ err:
     return ret;
 }
 
-size_t OSSL_FN_mod_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *m)
 {
     size_t tl, own_size, sqr_size, mod_size, nested_size;
@@ -371,8 +371,8 @@ size_t OSSL_FN_mod_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN t = { .dsize = (int)tl };
 
     own_size = OSSL_FN_CTX_size(1, 1, tl);
-    sqr_size = OSSL_FN_sqr_ctx_size(&t, a);
-    mod_size = OSSL_FN_mod_ctx_size(r, &t, m);
+    sqr_size = OSSL_FN_sqr_ctx_size_from_data(&t, a);
+    mod_size = OSSL_FN_mod_ctx_size_from_data(r, &t, m);
     nested_size = ossl_fn_ctx_max_size(sqr_size, mod_size);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
@@ -402,8 +402,8 @@ err:
     return ret;
 }
 
-size_t OSSL_FN_mod_lshift1_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m)
+size_t OSSL_FN_mod_lshift1_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m)
 {
     size_t tl, own_size, nested_size;
     int err = 0;
@@ -418,7 +418,7 @@ size_t OSSL_FN_mod_lshift1_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN t = { .dsize = (int)tl };
 
     own_size = OSSL_FN_CTX_size(1, 1, tl);
-    nested_size = OSSL_FN_mod_ctx_size(r, &t, m);
+    nested_size = OSSL_FN_mod_ctx_size_from_data(r, &t, m);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
@@ -505,7 +505,7 @@ int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m)
     return mod_lshift_quick(r, a, 1, m);
 }
 
-size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_lshift_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     int n, const OSSL_FN *m)
 {
     size_t ml, own_size, nested_size;
@@ -521,7 +521,7 @@ size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN ra = { .dsize = (int)ml };
 
     own_size = OSSL_FN_CTX_size(1, 1, ml);
-    nested_size = OSSL_FN_mod_ctx_size(&ra, a, m);
+    nested_size = OSSL_FN_mod_ctx_size_from_data(&ra, a, m);
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 

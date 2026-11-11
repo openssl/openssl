@@ -100,7 +100,7 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 
         if ((fn_pp = bn_acquire_ossl_fn(pinfo->pp, (int)ppl)) == NULL)
             goto err;
-        fn_size = OSSL_FN_mul_ctx_size(fn_pp, fn_p1, fn_p2);
+        fn_size = OSSL_FN_mul_ctx_size_from_data(fn_pp, fn_p1, fn_p2);
         if (fn_size == 0)
             goto err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */

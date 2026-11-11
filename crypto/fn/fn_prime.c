@@ -56,7 +56,7 @@ static int ossl_fn_mr_min_checks(size_t bits)
  * their nested needs combine by maximum.  The enhanced variant's gcd calls
  * are accounted for whether the caller uses them or not.
  */
-size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w)
+size_t ossl_fn_miller_rabin_is_prime_ctx_size_from_data(const OSSL_FN *w)
 {
     size_t scratch, exp, mul, gcd, inner;
 
@@ -70,9 +70,9 @@ size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w)
      * The nested sizing functions inspect widths only, so a width-only
      * model would serve as well; |w| itself is simply at hand.
      */
-    exp = OSSL_FN_mod_exp_mont_ctx_size(w, w, w, w, NULL);
-    mul = OSSL_FN_mod_mul_ctx_size(w, w, w, w);
-    gcd = OSSL_FN_gcd_ctx_size(w, w);
+    exp = OSSL_FN_mod_exp_mont_ctx_size_from_data(w, w, w, w, NULL);
+    mul = OSSL_FN_mod_mul_ctx_size_from_data(w, w, w, w);
+    gcd = OSSL_FN_gcd_ctx_size_from_data(w, w);
     inner = ossl_fn_ctx_max_size(exp, ossl_fn_ctx_max_size(mul, gcd));
 
     return ossl_fn_ctx_add_size(scratch, inner);
@@ -334,14 +334,14 @@ int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
  * Both primality test variants need what the Miller-Rabin test needs;
  * trial division uses no context space.
  */
-size_t ossl_fn_check_prime_ctx_size(const OSSL_FN *w)
+size_t ossl_fn_check_prime_ctx_size_from_data(const OSSL_FN *w)
 {
-    return ossl_fn_miller_rabin_is_prime_ctx_size(w);
+    return ossl_fn_miller_rabin_is_prime_ctx_size_from_data(w);
 }
 
-size_t ossl_fn_check_generated_prime_ctx_size(const OSSL_FN *w)
+size_t ossl_fn_check_generated_prime_ctx_size_from_data(const OSSL_FN *w)
 {
-    return ossl_fn_miller_rabin_is_prime_ctx_size(w);
+    return ossl_fn_miller_rabin_is_prime_ctx_size_from_data(w);
 }
 
 /*
@@ -659,8 +659,8 @@ err:
  * attempt adds the residue adjustment when |add| is not NULL, and one or
  * two primality tests, all run sequentially.
  */
-size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
-    int safe, const OSSL_FN *add, const OSSL_FN *rem)
+size_t OSSL_FN_generate_prime_ctx_size_from_data(const OSSL_FN *ret,
+    size_t bits, int safe, const OSSL_FN *add, const OSSL_FN *rem)
 {
     size_t limbs = bits / OSSL_FN_BITS + (bits % OSSL_FN_BITS != 0);
     size_t scratch, mr, div, sz;
@@ -678,11 +678,11 @@ size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
     cand.dsize = (int)(limbs + 1);
 
     scratch = OSSL_FN_CTX_size(1, 2, 2 * (limbs + 1));
-    mr = ossl_fn_miller_rabin_is_prime_ctx_size(&cand);
+    mr = ossl_fn_miller_rabin_is_prime_ctx_size_from_data(&cand);
     /* probable_prime_dh's own frame (t1) is open while the div runs */
     div = add != NULL
         ? ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, limbs + 1),
-              OSSL_FN_div_ctx_size(NULL, &cand, &cand, add))
+              OSSL_FN_div_ctx_size_from_data(NULL, &cand, &cand, add))
         : OSSL_FN_CTX_SIZE_NONE;
 
     /* The one or two primality tests run sequentially, so max. */

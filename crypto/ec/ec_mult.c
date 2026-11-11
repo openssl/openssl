@@ -456,8 +456,9 @@ static size_t ec_fn_fmul_ctx_size(const EC_GROUP *group)
     const OSSL_FN *p_fn = group->field_fn;
 
     return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
-        : OSSL_FN_mod_mul_ctx_size(p_fn, p_fn, p_fn, p_fn);
+        ? OSSL_FN_mul_mont_quick_ctx_size_from_data(
+              NULL, NULL, NULL, group->fn_mont_ctx)
+        : OSSL_FN_mod_mul_ctx_size_from_data(p_fn, p_fn, p_fn, p_fn);
 }
 
 /* Field squaring; Montgomery has no dedicated square, so it reuses the mul. */
@@ -474,8 +475,9 @@ static size_t ec_fn_fsqr_ctx_size(const EC_GROUP *group)
     const OSSL_FN *p_fn = group->field_fn;
 
     return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
-        : OSSL_FN_mod_sqr_ctx_size(p_fn, p_fn, p_fn);
+        ? OSSL_FN_mul_mont_quick_ctx_size_from_data(
+              NULL, NULL, NULL, group->fn_mont_ctx)
+        : OSSL_FN_mod_sqr_ctx_size_from_data(p_fn, p_fn, p_fn);
 }
 
 /* Encode a plain, reduced value in place into the coordinate representation. */
@@ -490,7 +492,7 @@ static ossl_inline int ec_fn_encode(const EC_GROUP *group, OSSL_FN *r,
 static size_t ec_fn_encode_ctx_size(const EC_GROUP *group)
 {
     return ec_fn_is_mont(group)
-        ? OSSL_FN_to_mont_ctx_size(NULL, group->field_fn,
+        ? OSSL_FN_to_mont_ctx_size_from_data(NULL, group->field_fn,
               group->fn_mont_ctx)
         : OSSL_FN_CTX_SIZE_NONE; /* plain: no arena needed */
 }
@@ -520,12 +522,13 @@ static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
     size_t frm, inv, tom, m;
 
     if (!ec_fn_is_mont(group))
-        return OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn,
+        return OSSL_FN_mod_inverse_prime_ctx_size_from_data(p_fn, p_fn, p_fn,
             group->fn_mont_ctx);
 
-    frm = OSSL_FN_from_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
-    inv = OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, group->fn_mont_ctx);
-    tom = OSSL_FN_to_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
+    frm = OSSL_FN_from_mont_ctx_size_from_data(NULL, p_fn, group->fn_mont_ctx);
+    inv = OSSL_FN_mod_inverse_prime_ctx_size_from_data(
+        p_fn, p_fn, p_fn, group->fn_mont_ctx);
+    tom = OSSL_FN_to_mont_ctx_size_from_data(NULL, p_fn, group->fn_mont_ctx);
     if (frm == 0 || inv == 0 || tom == 0)
         return 0;
     m = frm;

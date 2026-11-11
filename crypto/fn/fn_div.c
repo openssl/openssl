@@ -216,7 +216,7 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
 #endif /* !BN_DIV3W */
 }
 
-size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
     const OSSL_FN *n, const OSSL_FN *d)
 {
     if (n == NULL || d == NULL)

@@ -72,6 +72,21 @@ struct dsa_method {
     int (*dsa_keygen)(DSA *dsa);
 };
 
+/**
+ * Compute a DSA signature, with the nonce and the private key kept in
+ * OSSL_FN.
+ *
+ * @param[in]   dgst    The message digest.
+ * @param[in]   dlen    The length of |dgst|, in bytes.
+ * @param[in]   dsa     The signing key.
+ * @param[in]   nonce_type 0 for a random nonce, 1 for a deterministic one
+ *                      (RFC 6979).
+ * @param[in]   digestname The digest for a deterministic nonce.
+ * @param[in]   libctx  The library context.
+ * @param[in]   propq   The property query, or NULL.
+ * @returns             A newly allocated signature, which the caller must
+ *                      free, or NULL on error.
+ */
 DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa,
     unsigned int nonce_type, const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq);

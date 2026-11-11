@@ -174,7 +174,7 @@ end:
  * that the algorithm swaps), plus the nested OSSL_FN_mod() (= OSSL_FN_div())
  * call in the loop body.
  */
-size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
+size_t OSSL_FN_kronecker_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b)
 {
     if (a == NULL || b == NULL)
         return 0;
@@ -195,7 +195,7 @@ size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
      */
     OSSL_FN t_L = { .dsize = (int)L };
 
-    size_t nested_size = OSSL_FN_mod_ctx_size(&t_L, &t_L, &t_L);
+    size_t nested_size = OSSL_FN_mod_ctx_size_from_data(&t_L, &t_L, &t_L);
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
 }

@@ -157,6 +157,20 @@ err:
     return ret;
 }
 
+/**
+ * Compute the ECDH shared secret for a prime-field group with OSSL_FN,
+ * keeping the private key and the shared point out of variable-width
+ * BIGNUMs.  See the comment above ecdh_simple_compute_key_bignum() for the
+ * standards followed.
+ *
+ * @param[out]  pout    On success, a newly allocated buffer holding the
+ *                      shared secret, which the caller must free.
+ * @param[out]  poutlen On success, the length of |*pout|, the field width
+ *                      in bytes.
+ * @param[in]   pub_key The peer's public key.
+ * @param[in]   ecdh    The own key, holding the private key and the group.
+ * @returns             1 on success, 0 on error.
+ */
 static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
     const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
@@ -222,8 +236,8 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
         }
         width = ossl_fn_get_dsize(cardinality);
         own = OSSL_FN_CTX_size(1, 1, width);
-        mulsz = OSSL_FN_mod_mul_ctx_size(cardinality, scalar, cofactor,
-            cardinality);
+        mulsz = OSSL_FN_mod_mul_ctx_size_from_data(
+            cardinality, scalar, cofactor, cardinality);
         mfsz = EC_POINT_mul_fn_ctx_size(group, tmp, cardinality, pub_key);
         if (own == 0 || mulsz == 0 || mfsz == 0)
             goto err;

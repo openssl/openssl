@@ -121,7 +121,7 @@ static int ossl_fn_signed_add(OSSL_FN *r, int *rneg,
     return 1;
 }
 
-size_t OSSL_FN_gcd_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
+size_t OSSL_FN_gcd_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b)
 {
     size_t max, scratch, limbs;
     int err = 0;

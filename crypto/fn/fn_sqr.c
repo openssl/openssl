@@ -16,7 +16,7 @@
 
 OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
-size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a)
+size_t OSSL_FN_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a)
 {
     size_t max, limbs, n_numbers = 1;
 

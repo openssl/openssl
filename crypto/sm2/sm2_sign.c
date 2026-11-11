@@ -230,6 +230,16 @@ done:
     return e;
 }
 
+/**
+ * Compute an SM2 signature over a message digest, with the secret scalars
+ * kept in OSSL_FN.
+ *
+ * @param[in]   key     The signing key.
+ * @param[in]   e       The digest of Z_A || M, as computed by
+ *                      sm2_compute_msg_hash().
+ * @returns             A newly allocated signature, which the caller must
+ *                      free, or NULL on error.
+ */
 static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 {
     const BIGNUM *dA = EC_KEY_get0_private_key(key);
@@ -309,13 +319,12 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      * operations.  Every operand handed to those is exactly nlimbs wide.
      */
     need = ossl_fn_ctx_max_size(
-        ossl_fn_ctx_max_size(
-            OSSL_FN_mod_inverse_prime_ctx_size(order_fn, order_fn, order_fn,
-                mont),
-            OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)),
+        ossl_fn_ctx_max_size(OSSL_FN_mod_inverse_prime_ctx_size_from_data(
+                                 order_fn, order_fn, order_fn, mont),
+            OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont)),
         ossl_ec_group_fn_reduce_ord_ctx_size(group));
     need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_to_mont_quick_ctx_size(NULL, NULL, mont));
+        OSSL_FN_to_mont_quick_ctx_size_from_data(NULL, NULL, mont));
     /*
      * Seven temporaries; rk is one limb wider, see below.
      * The order of the SM2 curve group is fixed, so we don't have to worry
