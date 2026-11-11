@@ -8,10 +8,13 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
 #include <openssl/rand.h>
 #include <openssl/pem.h>
+#include <openssl/proverr.h>
+#include "crypto/evp.h"
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -114,6 +117,73 @@ end:
             (unsigned)pub_len, (unsigned)td->pub_len);
     EVP_PKEY_free(pkey);
     return ret == 1;
+}
+
+/* An import into a key that already has a public component must fail */
+static int slh_dsa_import_must_fail(EVP_KEYMGMT *keymgmt, void *keydata,
+    int selection, const OSSL_PARAM params[])
+{
+    int ret = TEST_false(evp_keymgmt_import(keymgmt, keydata, selection, params))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+
+    ERR_clear_error();
+    return ret;
+}
+
+/*
+ * Keys are immutable once they have a public component, whether that came
+ * from a public key or from a key pair import.
+ */
+static int slh_dsa_key_immutable_test(void)
+{
+    int ret = 0;
+    EVP_KEYMGMT *keymgmt = NULL;
+    void *keydata = NULL;
+    const SLH_DSA_SIG_TEST_DATA *td = &slh_dsa_sig_testdata[0];
+    OSSL_PARAM pub_params[2], keypair_params[3];
+
+    pub_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PUB_KEY, (void *)td->pub, td->pub_len);
+    pub_params[1] = OSSL_PARAM_construct_end();
+
+    keypair_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PRIV_KEY, (void *)td->priv, td->priv_len);
+    keypair_params[1] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PUB_KEY, (void *)td->pub, td->pub_len);
+    keypair_params[2] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(lib_ctx, td->alg, NULL)))
+        goto end;
+
+    /* Public key only, then a second public key or a key pair */
+    if (!TEST_ptr(keydata = evp_keymgmt_newdata(keymgmt))
+        || !TEST_true(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, pub_params))
+        || !slh_dsa_import_must_fail(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, pub_params)
+        || !slh_dsa_import_must_fail(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_KEYPAIR, keypair_params))
+        goto end;
+    evp_keymgmt_freedata(keymgmt, keydata);
+    keydata = NULL;
+
+    /* Key pair, then a second key pair or a public key */
+    if (!TEST_ptr(keydata = evp_keymgmt_newdata(keymgmt))
+        || !TEST_true(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_KEYPAIR, keypair_params))
+        || !slh_dsa_import_must_fail(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_KEYPAIR, keypair_params)
+        || !slh_dsa_import_must_fail(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, pub_params))
+        goto end;
+
+    ret = 1;
+end:
+    if (keymgmt != NULL)
+        evp_keymgmt_freedata(keymgmt, keydata);
+    EVP_KEYMGMT_free(keymgmt);
+    return ret;
 }
 
 static int slh_dsa_key_eq_test(void)
@@ -665,6 +735,12 @@ int setup_tests(void)
     ADD_TEST(slh_dsa_key_validate_test);
     ADD_TEST(slh_dsa_key_validate_failure_test);
     ADD_TEST(slh_dsa_key_eq_test);
+    /*
+     * Older FIPS providers do not enforce the immutability checks, so only
+     * run this test where the provider (if any) is at least 4.2.0.
+     */
+    if (fips_provider_version_ge(lib_ctx, 3, 5, 10))
+        ADD_TEST(slh_dsa_key_immutable_test);
     ADD_TEST(slh_dsa_usage_test);
     ADD_TEST(slh_dsa_deterministic_usage_test);
     ADD_ALL_TESTS(slh_dsa_sign_verify_test, OSSL_NELEM(slh_dsa_sig_testdata));
