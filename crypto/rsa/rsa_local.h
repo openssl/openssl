@@ -180,6 +180,23 @@ int ossl_rsa_multip_cap(int bits);
 int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength);
 int ossl_rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
     int nbits);
+/**
+ * Compute LCM(p-1, q-1), as (p-1)(q-1) / gcd(p-1, q-1), on OSSL_FN views.
+ * The intermediate results are returned too.
+ *
+ * Caller should ensure that lcm, gcd, p1, q1, p1q1 are flagged with
+ * BN_FLG_CONSTTIME.
+ *
+ * @param[in]   ctx     Unused.
+ * @param[in]   p       The first prime.
+ * @param[in]   q       The second prime.
+ * @param[out]  lcm     LCM(p-1, q-1).
+ * @param[out]  gcd     gcd(p-1, q-1).
+ * @param[out]  p1      p-1.
+ * @param[out]  q1      q-1.
+ * @param[out]  p1q1    (p-1)(q-1).
+ * @returns             1 on success, 0 on error.
+ */
 int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
     BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
     BIGNUM *p1q1);
@@ -190,6 +207,15 @@ int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx);
 int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx);
 int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx);
 
+/**
+ * Perform the pair-wise consistency test of SP800-56Br1 6.3.1.3 (Step 6):
+ * check that k = (k^e)^d mod n, for k = 2.
+ *
+ * @param[in]   rsa     The key to test.
+ * @param[in]   ctx     Unused.
+ * @returns             1 if the key passes the test, 0 if it fails or on
+ *                      error.
+ */
 int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx);
 int ossl_rsa_sp800_56b_check_public(const RSA *rsa);
 int ossl_rsa_sp800_56b_check_private(const RSA *rsa);
