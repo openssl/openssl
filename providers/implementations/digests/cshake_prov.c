@@ -165,7 +165,7 @@ static int cshake_set_xoflen(CSHAKE_CTX *ctx, size_t xoflen)
 {
     OSSL_PARAM params[2];
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN_STR, &xoflen);
     params[1] = OSSL_PARAM_construct_end();
 
     ctx->xoflen = xoflen;
