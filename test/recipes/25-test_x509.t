@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 141;
+plan tests => 142;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -541,6 +541,19 @@ my $invextfile = srctop_file('test', 'invalid-x509.cnf');
 ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
             "-out", File::Spec->devnull(), "-days", "3650" , "-extensions", "ext",
             "-extfile", $invextfile])));
+
+subtest "signing output detection with -key" => sub {
+    plan tests => 2;
+
+    my $v1_cert = srctop_file("test", "testx509.pem");
+    my $request_der = "x509-to-request.der";
+
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-x509toreq",
+                "-key", $in_key, "-outform", "DER", "-out", $request_der])),
+       "generate DER-encoded certificate request with -x509toreq");
+    ok(run(app(["openssl", "req", "-in", $request_der, "-inform", "DER", "-noout"])),
+       "verify generated DER certificate request");
+};
 
 # Tests for issue #16080 (fixed in 1.1.1o)
 my $b_key = "b-key.pem";
