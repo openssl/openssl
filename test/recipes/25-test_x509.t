@@ -607,12 +607,13 @@ ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
             "-extfile", $invextfile])));
 
 subtest "signing output detection with -key" => sub {
-    plan tests => 5;
+    plan tests => 7;
 
     my $v1_cert = srctop_file("test", "testx509.pem");
     my $with_days_cert = "x509-resigned-with-days.pem";
     my $default_ext_cert = "x509-resigned-with-default-ext.pem";
     my $request = "x509-to-request-with-ext.pem";
+    my $request_der = "x509-to-request.der";
 
     ok(!run(app(["openssl", "x509", "-in", $v1_cert, "-noout",
                  "-days", "1"])),
@@ -628,6 +629,11 @@ subtest "signing output detection with -key" => sub {
                 "-key", $in_key, "-extfile", $cnf,
                 "-extensions", "v3_req", "-out", $request])),
        "accept extension options when signing a request with -key");
+    ok(run(app(["openssl", "x509", "-in", $v1_cert, "-x509toreq",
+                "-key", $in_key, "-outform", "DER", "-out", $request_der])),
+       "generate DER-encoded certificate request with -x509toreq");
+    ok(run(app(["openssl", "req", "-in", $request_der, "-inform", "DER", "-noout"])),
+       "verify generated DER certificate request");
 };
 
 # Tests for issue #16080 (fixed in 1.1.1o)
