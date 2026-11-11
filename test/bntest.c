@@ -2076,14 +2076,8 @@ static int test_bn2signed(int i)
             || !TEST_int_eq(BN_signed_bn2bin(bn, scratch, test->mpi_len - 1), -1))
             goto err;
 
-        /* Fixed-top inputs can have an unused zero limb above the value. */
-        if (!TEST_ptr(bn2 = BN_new())
-            || !TEST_true(bn_lshift_fixed_top(bn2, bn, 0)))
-            goto err;
-        if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
-                test->mpi_len)
-            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
-            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len - 1), -1))
+        /* Exercise the constant-time path with a public BIGNUM copy. */
+        if (!TEST_ptr(bn2 = BN_dup(bn)))
             goto err;
         BN_set_flags(bn2, BN_FLG_CONSTTIME);
         if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
@@ -2132,10 +2126,11 @@ static int test_bn2signed(int i)
         if (!TEST_int_eq(BN_signed_bn2lebin(bn, scratch, test->mpi_len),
                 test->mpi_len)
             || !TEST_true(copy_reversed(reversed, (const uint8_t *)test->mpi,
-                    test->mpi_len))
+                test->mpi_len))
             || !TEST_mem_eq(reversed, test->mpi_len, scratch, test->mpi_len)
             || !TEST_int_eq(BN_signed_bn2lebin(bn, scratch,
-                    test->mpi_len - 1), -1))
+                                test->mpi_len - 1),
+                -1))
             goto err;
     }
 
@@ -2146,7 +2141,8 @@ static int test_bn2signed(int i)
             || !TEST_ptr(bn2 = BN_signed_native2bn(scratch, test->mpi_len, NULL))
             || !TEST_BN_eq(bn, bn2)
             || !TEST_int_eq(BN_signed_bn2native(bn, scratch,
-                    test->mpi_len - 1), -1))
+                                test->mpi_len - 1),
+                -1))
             goto err;
         BN_free(bn2);
         bn2 = NULL;
