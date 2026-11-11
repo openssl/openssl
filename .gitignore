@@ -32,6 +32,7 @@
 /crypto/asn1/charmap.h
 /crypto/bn/bn_prime.h
 /crypto/conf/conf_def.h
+/crypto/core_names.c
 /crypto/objects/obj_dat.h
 /crypto/objects/obj_xref.h
 /include/crypto/*_conf.h

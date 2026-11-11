@@ -80,6 +80,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/crypto/dso_conf.h \
          include/crypto/ec_params.h \
          include/crypto/rsa_params.h \
+         crypto/core_names.c \
          ssl/t1_lib.inc \
          ssl/record/methods/tls_common.inc \
          providers/implementations/asymciphers/rsa_enc.inc \
@@ -328,7 +329,8 @@ DEPEND[ssl/t1_lib.inc \
        providers/implementations/rands/test_rng.inc \
        include/crypto/ec_params.h \
        include/crypto/rsa_params.h \
-       include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
+       include/openssl/core_names.h \
+       crypto/core_names.c]=util/perl|OpenSSL/paramnames.pm
 
 GENERATE[include/crypto/ec_params.h]=\
     include/crypto/ec_params.h.in
@@ -540,6 +542,7 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+GENERATE[crypto/core_names.c]=crypto/core_names.c.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
