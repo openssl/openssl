@@ -76,7 +76,12 @@ static OSSL_PARAM *ossl_param_dup(const OSSL_PARAM *src, OSSL_PARAM *dst,
             dst->data = buf[is_secure].cur;
         }
 
-        if (in->data_type == OSSL_PARAM_OCTET_PTR
+        if (in->data == NULL) {
+            /* A request or descriptor element: there is nothing to copy */
+            param_sz = 0;
+            if (has_dst)
+                dst->data = NULL;
+        } else if (in->data_type == OSSL_PARAM_OCTET_PTR
             || in->data_type == OSSL_PARAM_UTF8_PTR) {
             param_sz = sizeof(in->data);
             if (has_dst)
@@ -85,9 +90,9 @@ static OSSL_PARAM *ossl_param_dup(const OSSL_PARAM *src, OSSL_PARAM *dst,
             param_sz = in->data_size;
             if (has_dst)
                 memcpy(dst->data, in->data, param_sz);
+            if (in->data_type == OSSL_PARAM_UTF8_STRING)
+                param_sz++; /* NULL terminator */
         }
-        if (in->data_type == OSSL_PARAM_UTF8_STRING)
-            param_sz++; /* NULL terminator */
         blks = ossl_param_bytes_to_blocks(param_sz);
 
         if (has_dst) {
