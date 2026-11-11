@@ -152,7 +152,6 @@ available online.
 - [OpenSSL master](https://docs.openssl.org/master/)
 - [OpenSSL 4.1](https://docs.openssl.org/4.1/)
 - [OpenSSL 4.0](https://docs.openssl.org/4.0/)
-- [OpenSSL 3.6](https://docs.openssl.org/3.6/)
 - [OpenSSL 3.5](https://docs.openssl.org/3.5/)
 
 Demos
