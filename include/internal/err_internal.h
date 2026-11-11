@@ -11,12 +11,7 @@
 #define OPENSSL_ERR_INTERNAL_H
 
 #include <openssl/err.h>
-#include "err_local.h"
-
-static ossl_inline ERR_STATE *ERR_get_state(void)
-{
-    return ossl_err_get_state_int(0);
-}
+#include "../crypto/err/err_local.h"
 
 static ossl_inline int ERR_STATE_set_mark(ERR_STATE *es)
 {

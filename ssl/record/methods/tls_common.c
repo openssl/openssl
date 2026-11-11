@@ -18,6 +18,7 @@
 #include "internal/packet.h"
 #include "internal/ssl3_cbc.h"
 #include "internal/dtls_record_rx.h"
+#include "internal/err_internal.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"

@@ -14,6 +14,7 @@
 #include <openssl/crypto.h>
 #include "internal/numbers.h"
 #include "bio_local.h"
+#include "internal/err_internal.h"
 
 /*
  * Helper macro for the callback to determine whether an operator expects a

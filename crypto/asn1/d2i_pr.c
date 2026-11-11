@@ -20,6 +20,7 @@
 #include "crypto/x509.h"
 #include "internal/asn1.h"
 #include "internal/sizes.h"
+#include "internal/err_internal.h"
 
 static EVP_PKEY *
 d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,

@@ -11,6 +11,7 @@
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
+#include "internal/err_internal.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 #include "internal/asn1.h"

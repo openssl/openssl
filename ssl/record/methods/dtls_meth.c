@@ -12,6 +12,7 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 #include "internal/safe_math.h"
+#include "internal/err_internal.h"
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 

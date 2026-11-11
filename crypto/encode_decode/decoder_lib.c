@@ -19,6 +19,7 @@
 #include "internal/bio.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
+#include "internal/err_internal.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "internal/e_os.h"

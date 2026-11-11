@@ -11,6 +11,11 @@
 #include "err_local.h"
 #include "internal/err_internal.h"
 
+ERR_STATE *ERR_get_state(void)
+{
+    return ossl_err_get_state_int(0);
+}
+
 int ERR_set_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(0);

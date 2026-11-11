@@ -32,6 +32,7 @@
 #include "internal/ktls.h"
 #include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/err_internal.h"
 #include "quic/quic_local.h"
 
 #ifndef OPENSSL_NO_SSLKEYLOG

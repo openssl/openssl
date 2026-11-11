@@ -15,6 +15,7 @@
 #include "internal/provider.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/common.h"
+#include "internal/err_internal.h"
 #include "evp_local.h"
 
 /*
