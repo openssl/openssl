@@ -2105,19 +2105,22 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         X509_NAME *dpname;
         int match;
 
-        if (*crldp_names == NULL) {
-            *crldp_names = get_crldp_full_names(x);
-            if (*crldp_names == NULL) {
-                *vfy_cb_err = X509_V_ERR_OUT_OF_MEM;
-                return 0;
-            }
-        }
-        dpname = sk_X509_NAME_value(*crldp_names, i);
         if (!crldp_check_crlissuer(dp, crl, crl_score))
             continue;
         if (crl->idp == NULL) {
             match = 1;
         } else {
+            if (dp->distpoint != NULL && dp->distpoint->type == 1) {
+                if (*crldp_names == NULL) {
+                    *crldp_names = get_crldp_full_names(x);
+                    if (*crldp_names == NULL) {
+                        *vfy_cb_err = X509_V_ERR_UNSPECIFIED;
+                        return 0;
+                    }
+                }
+            }
+            dpname = sk_X509_NAME_value(*crldp_names, i);
+
             if (dp->distpoint != NULL && dp->distpoint->type == 1
                 && dpname == NULL)
                 continue;
@@ -2153,7 +2156,7 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     int crl_score = 0;
     unsigned int reasons;
     X509_CRL *crl = NULL, *dcrl = NULL;
-    STACK_OF(X509_CRL) *skcrl;
+    STACK_OF(X509_CRL) *skcrl = NULL;
     const X509_NAME *nm = X509_get_issuer_name(x);
     STACK_OF(X509_NAME) *crldp_names = NULL;
 
@@ -2174,13 +2177,16 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
 
     ok = get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl, &crldp_names, vfy_cb_err);
     if (!ok && *vfy_cb_err != X509_V_OK)
-        crl = NULL;
-
-    sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
+        goto done;
 
 done:
+    sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
     sk_X509_NAME_pop_free(crldp_names, X509_NAME_free);
-
+    if (*vfy_cb_err != X509_V_OK) {
+        X509_CRL_free(crl);
+        X509_CRL_free(dcrl);
+        crl = dcrl = NULL;
+    }
     /* If we got any kind of CRL use it and return success */
     if (crl != NULL) {
         ctx->current_issuer = issuer;
