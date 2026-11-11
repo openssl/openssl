@@ -411,7 +411,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             OSSL_PARAM params[2], *p = params;
 
             /* Get the MAC */
-            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
+            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC_STR,
                 (void **)mac, macsize);
             *p = OSSL_PARAM_construct_end();
 
