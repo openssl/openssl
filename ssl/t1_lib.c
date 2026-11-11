@@ -983,6 +983,8 @@ int tls1_get0_implemented_groups(int min_proto_version, int max_proto_version,
         if (grps->maxtls > 0 && min_proto_version > 0
             && grps->maxtls < min_proto_version)
             continue;
+        if (grps->mintls < 0 || grps->maxtls < 0)
+            continue;
 
         if ((gix = OPENSSL_malloc(sizeof(*gix))) == NULL)
             goto end;
