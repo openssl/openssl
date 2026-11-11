@@ -32,7 +32,106 @@ OpenSSL 4.0
 
 ### Changes between 4.0.3 and 4.0.4 [xx XXX xxxx]
 
- * none yet
+ * Fixed use of uninitialized stack data in QUIC automated peer detection.
+
+   Severity: Low
+
+   Issue summary: QUIC, when performing automated peer detection, may allow
+   uninitialized stack data to leak into the received address which is then
+   used as the destination for outgoing packets.
+
+   Impact summary: Applications using QUIC's automated peer detection mechanism
+   may receive an invalid address, leading to connection loss and disclosure of
+   uninitialized stack data to an attacker observing the outgoing network
+   traffic.
+
+   Reported by: Jaehun Lee.
+
+   ([CVE-2026-88822])
+   <!-- https://github.com/openssl/openssl/pull/33566 -->
+
+   *Neil Horman*
+
+ * Fixed AES-GCM-SIV AAD forgery after a zero-length incremental AAD update.
+
+   Severity: Low
+
+   Issue summary: The AES-GCM-SIV implementation treats a zero-length
+   Additional Authenticated Data (AAD) update as a reset of all the AAD
+   supplied so far, instead of leaving the AAD unchanged. An application that
+   supplies its AAD in several fragments, one of which is empty, therefore
+   produces or verifies messages whose authentication tag does not cover
+   the AAD supplied before the empty fragment.
+
+   Impact summary: Data an application intended to authenticate alongside
+   a message is silently left unauthenticated. An attacker can forge the AAD
+   of such a message.
+
+   Reported by: Jérémy Jean (ANSSI), Bhargava Shastry and Jonathan Bateman
+   (Rochester Institute of Technology).
+
+   ([CVE-2026-88823])
+   <!-- https://github.com/openssl/openssl/pull/33456 -->
+
+   *Daniel Kubec*
+
+ * Fixed use-after-free on retransmitted QUIC CRYPTO frames.
+
+   Severity: Low
+
+   Issue summary: A retransmitted QUIC CRYPTO frame can release packet storage
+   while the TLS record layer retains a direct pointer into that storage
+   causing use after free.
+
+   Impact summary: A malicious QUIC server can cause a heap-use-after-free read
+   in the OpenSSL QUIC client. The server can also identify one
+   allocator-adjacent byte through the client's protected Handshake response.
+
+   Reported by: Filipe Casal (Trail of Bits).
+
+   ([CVE-2026-95691])
+   <!-- https://github.com/openssl/openssl/pull/33543 -->
+
+   *Filipe Casal*
+
+ * Fixed out-of-bounds read and incorrect IV length handling in AES-GCM-SIV.
+
+   Severity: Low
+
+   Issue summary: Setting an AES-GCM-SIV IV shorter than the expected nonce
+   length via EVP_CipherInit_ex() may trigger a heap out-of-bounds read.
+   Supplying a longer IV is silently truncated instead of rejected.
+
+   Impact summary: An application passing a caller-supplied IV of the wrong
+   length may crash or read beyond its buffer. Because trailing IV bytes are
+   ignored, an attacker who knows one message and tag may forge messages under
+   a different IV.
+
+   Reported by: Billy Brumley (Rochester Institute of Technology).
+
+   ([CVE-2026-95692])
+   <!-- https://github.com/openssl/openssl/pull/33512 -->
+
+   *Billy Brumley*
+
+ * Fixed infinite loop in CMS_encrypt() with an EC group order of 1.
+
+   Severity: Low
+
+   Issue summary: Encrypting a CMS message to an EC certificate whose group
+   order is 1 may cause CMS_encrypt() or CMS_encrypt_ex() to loop
+   indefinitely.
+
+   Impact summary: An attacker able to supply the recipient certificate to an
+   application performing CMS encryption can cause that application to loop
+   indefinitely, consuming CPU and resulting in Denial of Service.
+
+   Reported by: Yinxi Liu.
+
+   ([CVE-2026-107496])
+   <!-- https://github.com/openssl/openssl/pull/33554 -->
+
+   *Jakub Zelenka*
 
 ### Changes between 4.0.2 and 4.0.3 [29 Sep 2026]
 
@@ -23935,6 +24034,11 @@ ndif
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-88822]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88822
+[CVE-2026-88823]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88823
+[CVE-2026-95691]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95691
+[CVE-2026-95692]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95692
+[CVE-2026-107496]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107496
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
