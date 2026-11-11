@@ -68,7 +68,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
     unsigned char *data = NULL;
     const unsigned char *p;
     long len, error = 0;
-    int ok = 0;
+    int ok = 0, preserve_cnt = 0;
     STACK_OF(X509_INFO) *ret = NULL;
     unsigned int i, raw, ptype;
     pem_info_type itype = PEM_INFO_NONE;
@@ -78,8 +78,10 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
             ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
             goto err;
         }
-    } else
+    } else {
         ret = sk;
+        preserve_cnt = sk_X509_INFO_num(sk);
+    }
 
     if ((xi = X509_INFO_new()) == NULL)
         goto err;
@@ -229,10 +231,8 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
 err:
     X509_INFO_free(xi);
     if (!ok) {
-        for (i = 0; ((int)i) < sk_X509_INFO_num(ret); i++) {
-            xi = sk_X509_INFO_value(ret, i);
-            X509_INFO_free(xi);
-        }
+        while (sk_X509_INFO_num(ret) > preserve_cnt)
+            X509_INFO_free(sk_X509_INFO_pop(ret));
         if (ret != sk)
             sk_X509_INFO_free(ret);
         ret = NULL;
