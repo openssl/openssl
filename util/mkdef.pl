@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -309,6 +309,7 @@ _____
         if (platform->can('export2internal')) {
             print "=". platform->export2internal($_->name());
         }
+        print " DATA" if $_->type() eq 'VARIABLE';
         print "\n";
     }
 }

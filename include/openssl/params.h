@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -66,6 +66,12 @@ extern "C" {
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UTF8_PTR, (addr), sz)
 #define OSSL_PARAM_octet_ptr(key, addr, sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_OCTET_PTR, (addr), sz)
+
+/**
+ * Check whether ptr points into the shared parameter name storage.
+ * @see OSSL_PARAM_is_internal_name(3)
+ */
+int OSSL_PARAM_is_internal_name(const void *ptr);
 
 /* Search an OSSL_PARAM array for a matching name */
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key);
