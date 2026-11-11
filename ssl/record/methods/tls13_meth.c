@@ -52,7 +52,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             return OSSL_RECORD_RETURN_FATAL;
         }
         EVP_MAC_free(mac);
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest,
             (char *)EVP_MD_name(md), 0);
         *p = OSSL_PARAM_construct_end();
         if (!EVP_MAC_init(mac_ctx, key, keylen, params)) {

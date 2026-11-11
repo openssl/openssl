@@ -1386,19 +1386,19 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     }
 
     /* Parameters that *may* be supported by a record layer if passed */
-    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_options,
         &s->options);
-    *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+    *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_mode,
         &s->mode);
     if (direction == OSSL_RECORD_DIRECTION_READ) {
-        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN,
+        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_read_buffer_len,
             &s->rlayer.default_read_buf_len);
-        *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
+        *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_read_ahead,
             &s->rlayer.read_ahead);
     } else {
-        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING,
+        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_PARAM_block_padding,
             &s->rlayer.block_padding);
-        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING,
+        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_PARAM_hs_padding,
             &s->rlayer.hs_padding);
     }
     *opts = OSSL_PARAM_construct_end();
@@ -1421,15 +1421,15 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     }
 
     if (use_etm)
-        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM,
+        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_use_etm,
             &use_etm);
 
     if (stream_mac)
-        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC,
+        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_stream_mac,
             &stream_mac);
 
     if (tlstree)
-        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
+        *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_tlstree,
             &tlstree);
 
     /*
@@ -1442,7 +1442,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         maxfrag = GET_MAX_FRAGMENT_LENGTH(s->session);
 
     if (maxfrag != SSL3_RT_MAX_PLAIN_LENGTH)
-        *set++ = OSSL_PARAM_construct_uint(OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN,
+        *set++ = OSSL_PARAM_construct_uint(OSSL_LIBSSL_RECORD_LAYER_PARAM_max_frag_len,
             &maxfrag);
 
     /*
@@ -1460,7 +1460,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         max_early_data = ossl_get_max_early_data(s);
 
         if (max_early_data != 0)
-            *set++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA,
+            *set++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_max_early_data,
                 &max_early_data);
     }
 

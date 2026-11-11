@@ -34,9 +34,9 @@ QUIC_SRT_GEN *ossl_quic_srt_gen_new(OSSL_LIB_CTX *libctx, const char *propq,
     if ((srt_gen->mac_ctx = EVP_MAC_CTX_new(srt_gen->mac)) == NULL)
         goto err;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA256", 7);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest, "SHA256", 7);
     if (propq != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_properties,
             (char *)propq, 0);
     *p++ = OSSL_PARAM_construct_end();
 
