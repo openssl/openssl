@@ -282,13 +282,13 @@ static int key_to_params(MAC_KEY *key, OSSL_PARAM_BLD *tmpl,
 
     if (key->priv_key != NULL
         && !ossl_param_build_set_octet_string(tmpl, p->key,
-            OSSL_PKEY_PARAM_PRIV_KEY,
+            OSSL_PKEY_PARAM_priv_key,
             key->priv_key, key->priv_key_len))
         return 0;
 
     if (key->cipher.cipher != NULL
         && !ossl_param_build_set_utf8_string(tmpl, p->cipher,
-            OSSL_PKEY_PARAM_CIPHER,
+            OSSL_PKEY_PARAM_cipher,
             EVP_CIPHER_get0_name(key->cipher.cipher)))
         return 0;
 

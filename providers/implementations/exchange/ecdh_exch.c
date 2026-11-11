@@ -610,7 +610,7 @@ static void *ecdh_derive_skey(void *vpecdhctx, const char *key_type ossl_unused,
         return NULL;
     }
 
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_raw_bytes,
         (void *)secret, outlen);
 
     /* This is mandatory, no need to check for its presence */

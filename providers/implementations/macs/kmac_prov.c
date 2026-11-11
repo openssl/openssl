@@ -334,7 +334,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {
         const OSSL_PARAM cparams[] = {
-            OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, "", 0),
+            OSSL_PARAM_octet_string(OSSL_MAC_PARAM_custom, "", 0),
             OSSL_PARAM_END
         };
         (void)kmac_set_ctx_params(kctx, cparams);

@@ -117,7 +117,7 @@ static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if (!ossl_param_build_set_octet_string(tmpl, params,
-            OSSL_PKEY_PARAM_PUB_KEY,
+            OSSL_PKEY_PARAM_pub_key,
             lmskey->pub.encoded,
             lmskey->pub.encodedlen))
         goto err;

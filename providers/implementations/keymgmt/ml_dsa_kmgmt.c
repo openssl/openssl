@@ -130,13 +130,13 @@ ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *ctx, const char *propq, int evp_type)
         int flags_set = 0, flags_clr = 0;
 
         if (ossl_prov_ctx_get_bool_param(
-                ctx, OSSL_PKEY_PARAM_ML_DSA_RETAIN_SEED, 1))
+                ctx, OSSL_PKEY_PARAM_ml_dsa_retain_seed, 1))
             flags_set |= ML_DSA_KEY_RETAIN_SEED;
         else
             flags_clr = ML_DSA_KEY_RETAIN_SEED;
 
         if (ossl_prov_ctx_get_bool_param(
-                ctx, OSSL_PKEY_PARAM_ML_DSA_PREFER_SEED, 1))
+                ctx, OSSL_PKEY_PARAM_ml_dsa_prefer_seed, 1))
             flags_set |= ML_DSA_KEY_PREFER_SEED;
         else
             flags_clr |= ML_DSA_KEY_PREFER_SEED;
@@ -440,16 +440,16 @@ static int ml_dsa_export(void *keydata, int selection,
      */
     if (include_private) {
         if ((buf = ossl_ml_dsa_key_get_seed(key)) != NULL) {
-            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, (void *)buf, ML_DSA_SEED_BYTES);
+            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ml_dsa_seed, (void *)buf, ML_DSA_SEED_BYTES);
         }
         if ((buf = ossl_ml_dsa_key_get_priv(key)) != NULL) {
-            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, (void *)buf,
+            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_priv_key, (void *)buf,
                 ossl_ml_dsa_key_get_priv_len(key));
         }
     }
     if (((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         && ((buf = ossl_ml_dsa_key_get_pub(key)) != NULL)) {
-        params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY, (void *)buf,
+        params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_pub_key, (void *)buf,
             ossl_ml_dsa_key_get_pub_len(key));
     }
     if (pnum == 0)

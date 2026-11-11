@@ -186,11 +186,11 @@ next:
         OSSL_PARAM params[4];
         int object_type = OSSL_OBJECT_PKEY;
 
-        params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
-        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+        params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_type, &object_type);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_type,
             (char *)ctx->desc->name, 0);
         /* The address of the key becomes the octet string */
-        params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
+        params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_reference,
             &key, sizeof(key));
         params[3] = OSSL_PARAM_construct_end();
 

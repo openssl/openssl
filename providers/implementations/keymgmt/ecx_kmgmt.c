@@ -265,14 +265,14 @@ static int key_to_params(ECX_KEY *key, OSSL_PARAM_BLD *tmpl,
         return 0;
 
     if (!ossl_param_build_set_octet_string(tmpl, pub,
-            OSSL_PKEY_PARAM_PUB_KEY,
+            OSSL_PKEY_PARAM_pub_key,
             key->pubkey, key->keylen))
         return 0;
 
     if (include_private
         && key->privkey != NULL
         && !ossl_param_build_set_octet_string(tmpl, priv,
-            OSSL_PKEY_PARAM_PRIV_KEY,
+            OSSL_PKEY_PARAM_priv_key,
             key->privkey, key->keylen))
         return 0;
 

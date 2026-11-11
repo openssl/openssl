@@ -798,9 +798,9 @@ static int blake2b_mac(EVP_MAC *mac, void *out, size_t outlen, const void *in,
     if ((ctx = EVP_MAC_CTX_new(mac)) == NULL)
         goto fail;
 
-    par[par_n++] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+    par[par_n++] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_key,
         (void *)key, keylen);
-    par[par_n++] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &outlen);
+    par[par_n++] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_size, &outlen);
     par[par_n++] = OSSL_PARAM_construct_end();
 
     ret = EVP_MAC_CTX_set_params(ctx, par) == 1
@@ -823,7 +823,7 @@ static int blake2b_md(EVP_MD *md, void *out, size_t outlen, const void *in,
     if ((ctx = EVP_MD_CTX_create()) == NULL)
         return 0;
 
-    par[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &outlen);
+    par[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_size, &outlen);
     par[1] = OSSL_PARAM_construct_end();
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
@@ -868,7 +868,7 @@ static int blake2b_long(EVP_MD *md, EVP_MAC *mac, unsigned char *out,
         return 0;
 
     outlen_md = (outlen <= BLAKE2B_OUTBYTES) ? outlen : BLAKE2B_OUTBYTES;
-    par[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &outlen_md);
+    par[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_size, &outlen_md);
     par[1] = OSSL_PARAM_construct_end();
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1

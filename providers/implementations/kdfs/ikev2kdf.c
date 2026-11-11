@@ -563,7 +563,7 @@ static int IKEV2_GEN(OSSL_LIB_CTX *libctx, unsigned char *seedkey, const size_t 
     int ret = 0;
     unsigned char *nonce = NULL;
     OSSL_PARAM params[] = {
-        OSSL_PARAM_construct_utf8_string("digest", md_name, 0),
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest, md_name, 0),
         OSSL_PARAM_construct_end()
     };
 
@@ -624,7 +624,7 @@ static int IKEV2_REKEY(OSSL_LIB_CTX *libctx, unsigned char *seedkey, const size_
     size_t outl = 0;
     int ret = 0;
     OSSL_PARAM params[] = {
-        OSSL_PARAM_construct_utf8_string("digest", md_name, 0),
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest, md_name, 0),
         OSSL_PARAM_construct_end()
     };
 
@@ -699,7 +699,7 @@ static int IKEV2_DKM(OSSL_LIB_CTX *libctx, unsigned char *dkm, const size_t len_
     int value = 0;
     unsigned char counter = 1;
     OSSL_PARAM params[] = {
-        OSSL_PARAM_construct_utf8_string("digest", (char *)EVP_MD_name(evp_md), 0),
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest, (char *)EVP_MD_name(evp_md), 0),
         OSSL_PARAM_construct_end()
     };
 

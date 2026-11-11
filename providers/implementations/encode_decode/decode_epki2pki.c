@@ -176,15 +176,15 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
 
         OBJ_obj2txt(keytype, sizeof(keytype), alg->algorithm, 0);
 
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_type,
             keytype, 0);
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_INPUT_TYPE,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_input_type,
             "DER", 0);
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_structure,
             "PrivateKeyInfo", 0);
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_data,
             der, der_len);
-        *p++ = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &objtype);
+        *p++ = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_type, &objtype);
         *p = OSSL_PARAM_construct_end();
 
         ok = data_cb(params, data_cbarg);

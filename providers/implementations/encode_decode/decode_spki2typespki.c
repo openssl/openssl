@@ -150,17 +150,17 @@ int ossl_spki2typespki_der_decode(unsigned char *der, long len, int selection,
     ossl_X509_PUBKEY_INTERNAL_free(xpub);
     xpub = NULL;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_type,
         dataname, 0);
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_INPUT_TYPE,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_input_type,
         "DER", 0);
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_structure,
         "SubjectPublicKeyInfo",
         0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA, der, len);
-    *p++ = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &objtype);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_data, der, len);
+    *p++ = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_type, &objtype);
 
     *p = OSSL_PARAM_construct_end();
 

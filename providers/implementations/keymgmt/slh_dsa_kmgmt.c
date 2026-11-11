@@ -170,7 +170,7 @@ static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
     if (((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         && ossl_slh_dsa_key_get_priv(key) != NULL)
         if (ossl_param_build_set_octet_string(tmpl, NULL,
-                OSSL_PKEY_PARAM_PRIV_KEY,
+                OSSL_PKEY_PARAM_priv_key,
                 ossl_slh_dsa_key_get_priv(key),
                 ossl_slh_dsa_key_get_priv_len(key))
             != 1)
@@ -180,7 +180,7 @@ static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
         return 1;
 
     return ossl_param_build_set_octet_string(tmpl, NULL,
-        OSSL_PKEY_PARAM_PUB_KEY,
+        OSSL_PKEY_PARAM_pub_key,
         ossl_slh_dsa_key_get_pub(key),
         ossl_slh_dsa_key_get_pub_len(key));
 }

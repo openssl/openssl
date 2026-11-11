@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/crypto.h>
@@ -234,7 +235,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     if (ctx == NULL)
         goto err;
 
-    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest, DIGEST_NAME, 0);
     *p = OSSL_PARAM_construct_end();
 
     if (!EVP_MAC_init(ctx, fixed_key, sizeof(fixed_key), params))

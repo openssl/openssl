@@ -109,7 +109,7 @@ static void kdf_pvk_init(KDF_PVK *ctx)
     OSSL_PARAM param;
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
 
-    param = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    param = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         SN_sha1, 0);
     if (!ossl_prov_digest_load(&ctx->digest, &param, NULL, provctx))
         /* This is an error, but there is no way to indicate such directly */

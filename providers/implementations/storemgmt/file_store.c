@@ -690,8 +690,8 @@ static int file_load_dir_entry(struct file_ctx_st *ctx,
     /* Prepare as much as possible in advance */
     static const int object_type = OSSL_OBJECT_NAME;
     OSSL_PARAM object[] = {
-        OSSL_PARAM_int(OSSL_OBJECT_PARAM_TYPE, (int *)&object_type),
-        OSSL_PARAM_utf8_string(OSSL_OBJECT_PARAM_DATA, NULL, 0),
+        OSSL_PARAM_int(OSSL_OBJECT_PARAM_type, (int *)&object_type),
+        OSSL_PARAM_utf8_string(OSSL_OBJECT_PARAM_data, NULL, 0),
         OSSL_PARAM_END
     };
     char *newname = NULL;
