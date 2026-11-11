@@ -830,7 +830,7 @@ __owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
  * @return 1 if the point format is acceptable or the group is not
  *          subject to this check, 0 otherwise
  */
- __owur int tls13_hybrid_ec_point_format_ok(uint16_t group_id,
+__owur int tls13_hybrid_ec_point_format_ok(uint16_t group_id,
     const unsigned char *enc,
     size_t enclen);
 
