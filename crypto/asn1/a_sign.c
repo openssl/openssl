@@ -196,7 +196,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
             goto err;
         }
 
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID,
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_algorithm_id,
             aid, sizeof(aid));
         params[1] = OSSL_PARAM_construct_end();
 

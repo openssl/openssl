@@ -29,9 +29,9 @@ int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
 {
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_CIPHER,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_cipher,
         (void *)cipher_name, 0);
-    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_PROPERTIES,
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_properties,
         (void *)propquery, 0);
 
     return OSSL_ENCODER_CTX_set_params(ctx, params);
@@ -390,7 +390,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey,
         int save_parameters = pkey->save_parameters;
 
         ctx->frozen = 1;
-        params[0] = OSSL_PARAM_construct_int(OSSL_ENCODER_PARAM_SAVE_PARAMETERS,
+        params[0] = OSSL_PARAM_construct_int(OSSL_ENCODER_PARAM_save_parameters,
             &save_parameters);
         /* ignoring error as this is only auxiliary parameter */
         (void)OSSL_ENCODER_CTX_set_params(ctx, params);

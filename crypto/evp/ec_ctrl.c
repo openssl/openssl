@@ -56,7 +56,7 @@ int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode)
         return -2;
     }
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
+    *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_ec_ecdh_cofactor_mode,
         &cofactor_mode);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -75,7 +75,7 @@ int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx)
     if (ret != 1)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
+    *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_ec_ecdh_cofactor_mode,
         &mode);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -162,7 +162,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int outlen)
         return -2;
     }
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_kdf_outlen,
         &len);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -182,7 +182,7 @@ int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
     if (ret != 1)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_kdf_outlen,
         &len);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -215,7 +215,7 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
     if (ret != 1)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_kdf_ukm,
         /*
          * Cast away the const. This is read
          * only so should be safe
@@ -249,7 +249,7 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     if (ret != 1)
         return ret;
 
-    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
+    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_kdf_ukm,
         (void **)pukm, 0);
     *p++ = OSSL_PARAM_construct_end();
 

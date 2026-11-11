@@ -77,11 +77,11 @@ static void self_test_setparams(OSSL_SELF_TEST *st)
     size_t n = 0;
 
     if (st->cb != NULL) {
-        st->params[n++] = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_SELF_TEST_PHASE,
+        st->params[n++] = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_self_test_phase,
             (char *)st->phase, 0);
-        st->params[n++] = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_SELF_TEST_TYPE,
+        st->params[n++] = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_self_test_type,
             (char *)st->type, 0);
-        st->params[n++] = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_SELF_TEST_DESC,
+        st->params[n++] = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_self_test_desc,
             (char *)st->desc, 0);
     }
     st->params[n++] = OSSL_PARAM_construct_end();

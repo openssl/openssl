@@ -235,7 +235,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         BIGNUM *bn_pub_key = NULL;
         ASN1_INTEGER *pubk;
 
-        if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, &bn_pub_key))
+        if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_pub_key, &bn_pub_key))
             goto err;
 
         pubk = BN_to_ASN1_INTEGER(bn_pub_key, NULL);

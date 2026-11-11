@@ -44,14 +44,14 @@ int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
     if (kctx == NULL)
         goto err;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         (char *)mdname, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
         (unsigned char *)Z, Zlen);
     if (ukm != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_UKM,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_ukm,
             (unsigned char *)ukm, ukmlen);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_cek_alg,
         (char *)cek_alg, 0);
     *p = OSSL_PARAM_construct_end();
     ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;

@@ -445,19 +445,19 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (tmpl == NULL)
         return 0;
 
-    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_ffc_p, p)
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_ffc_q, q)
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_ffc_g, g))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
     if (pub_key != NULL) {
-        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_pub_key,
                 pub_key))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
     }
     if (priv_key != NULL) {
-        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
+        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_priv_key,
                 priv_key))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;

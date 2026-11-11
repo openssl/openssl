@@ -34,11 +34,11 @@ int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_X963KDF, propq);
 
     if ((kctx = EVP_KDF_CTX_new(kdf)) != NULL) {
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
             (char *)mdname, 0);
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
             (void *)Z, Zlen);
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_info,
             (void *)sinfo, sinfolen);
         *p = OSSL_PARAM_construct_end();
 

@@ -357,14 +357,14 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         return 0;
 
     /* A key must at least have a public part */
-    if (!OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+    if (!OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_pub_key,
             key->pubkey, key->keylen))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     if (key->privkey != NULL) {
         if (!OSSL_PARAM_BLD_push_octet_string(tmpl,
-                OSSL_PKEY_PARAM_PRIV_KEY,
+                OSSL_PKEY_PARAM_priv_key,
                 key->privkey, key->keylen))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;

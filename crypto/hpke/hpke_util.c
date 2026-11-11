@@ -253,15 +253,15 @@ static int kdf_derive(EVP_KDF_CTX *kctx,
     int ret;
     OSSL_PARAM params[5], *p = params;
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_mode, &mode);
     if (salt != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_salt,
             (char *)salt, saltlen);
     if (ikm != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
             (char *)ikm, ikmlen);
     if (info != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_info,
             (char *)info, infolen);
     *p = OSSL_PARAM_construct_end();
     ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;
@@ -406,10 +406,10 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     if (kctx != NULL && mdname != NULL) {
         OSSL_PARAM params[3], *p = params;
 
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
             (char *)mdname, 0);
         if (propq != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_properties,
                 (char *)propq, 0);
         *p = OSSL_PARAM_construct_end();
         if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {

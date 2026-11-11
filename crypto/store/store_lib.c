@@ -50,7 +50,7 @@ static int loader_set_params(OSSL_STORE_LOADER *loader,
             /* use the propq from params */
             return 1;
 
-        propp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_PROPERTIES,
+        propp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_properties,
             (char *)propq, 0);
         propp[1] = OSSL_PARAM_construct_end();
 
@@ -310,7 +310,7 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
         && ctx->fetched_loader->p_set_ctx_params != NULL) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        params[0] = OSSL_PARAM_construct_int(OSSL_STORE_PARAM_EXPECT, &expected_type);
+        params[0] = OSSL_PARAM_construct_int(OSSL_STORE_PARAM_expect, &expected_type);
         ret = ctx->fetched_loader->p_set_ctx_params(ctx->loader_ctx, params);
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -362,7 +362,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
                      (unsigned char **)&name_der))
                     > 0
                 && OSSL_PARAM_BLD_push_octet_string(bld,
-                    OSSL_STORE_PARAM_SUBJECT,
+                    OSSL_STORE_PARAM_subject,
                     name_der, name_der_sz))
                 ret = 1;
             break;
@@ -372,24 +372,24 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
                     > 0
                 && (number = ASN1_INTEGER_to_BN(search->serial, NULL)) != NULL
                 && OSSL_PARAM_BLD_push_octet_string(bld,
-                    OSSL_STORE_PARAM_ISSUER,
+                    OSSL_STORE_PARAM_issuer,
                     name_der, name_der_sz)
-                && OSSL_PARAM_BLD_push_BN(bld, OSSL_STORE_PARAM_SERIAL,
+                && OSSL_PARAM_BLD_push_BN(bld, OSSL_STORE_PARAM_serial,
                     number))
                 ret = 1;
             break;
         case OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT:
-            if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_DIGEST,
+            if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_digest,
                     EVP_MD_get0_name(search->digest),
                     0)
                 && OSSL_PARAM_BLD_push_octet_string(bld,
-                    OSSL_STORE_PARAM_FINGERPRINT,
+                    OSSL_STORE_PARAM_fingerprint,
                     search->string,
                     search->stringlength))
                 ret = 1;
             break;
         case OSSL_STORE_SEARCH_BY_ALIAS:
-            if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_ALIAS,
+            if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_alias,
                     (char *)search->string,
                     search->stringlength))
                 ret = 1;

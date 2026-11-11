@@ -97,7 +97,7 @@ int ossl_dh_params_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM *privlen,
     if (!ossl_ffc_params_todata(ossl_dh_get0_params(dh), bld, pp))
         return 0;
     if (l > 0
-        && !ossl_param_build_set_long(bld, privlen, OSSL_PKEY_PARAM_DH_PRIV_LEN, l))
+        && !ossl_param_build_set_long(bld, privlen, OSSL_PKEY_PARAM_dh_priv_len, l))
         return 0;
     return 1;
 }
@@ -113,10 +113,10 @@ int ossl_dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM *pubkey,
     DH_get0_key(dh, &pub, &priv);
     if (priv != NULL
         && include_private
-        && !ossl_param_build_set_bn(bld, privkey, OSSL_PKEY_PARAM_PRIV_KEY, priv))
+        && !ossl_param_build_set_bn(bld, privkey, OSSL_PKEY_PARAM_priv_key, priv))
         return 0;
     if (pub != NULL
-        && !ossl_param_build_set_bn(bld, pubkey, OSSL_PKEY_PARAM_PUB_KEY, pub))
+        && !ossl_param_build_set_bn(bld, pubkey, OSSL_PKEY_PARAM_pub_key, pub))
         return 0;
 
     return 1;

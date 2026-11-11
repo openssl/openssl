@@ -675,13 +675,13 @@ static int encoder_process(struct encoder_process_data_st *data)
                 OSSL_PARAM *abstract_p = abstract;
                 const char *prev_output_structure = OSSL_ENCODER_INSTANCE_get_output_structure(data->prev_encoder_inst);
 
-                *abstract_p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                *abstract_p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_type,
                     (char *)data->data_type, 0);
                 if (prev_output_structure != NULL)
-                    *abstract_p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                    *abstract_p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_data_structure,
                         (char *)prev_output_structure,
                         0);
-                *abstract_p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
+                *abstract_p++ = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_data,
                     data->running_output,
                     data->running_output_length);
                 *abstract_p = OSSL_PARAM_construct_end();

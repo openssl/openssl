@@ -572,7 +572,7 @@ static int evp_rand_generate_locked(EVP_RAND_CTX *ctx, unsigned char *out,
     size_t chunk, max_request = 0;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_RAND_PARAM_MAX_REQUEST,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_RAND_PARAM_max_request,
         &max_request);
     if (!evp_rand_get_ctx_params_locked(ctx, params)
         || max_request == 0) {
@@ -638,7 +638,7 @@ static unsigned int evp_rand_strength_locked(EVP_RAND_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     unsigned int strength = 0;
 
-    params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_strength, &strength);
     if (!evp_rand_get_ctx_params_locked(ctx, params))
         return 0;
     return strength;
@@ -686,7 +686,7 @@ int EVP_RAND_get_state(EVP_RAND_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int state;
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_STATE, &state);
+    params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_state, &state);
     if (!EVP_RAND_CTX_get_params(ctx, params))
         state = EVP_RAND_STATE_ERROR;
     return state;

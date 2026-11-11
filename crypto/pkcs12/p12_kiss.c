@@ -383,12 +383,12 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
                 fname_utf8_len = ASN1_STRING_to_UTF8(&fname_utf8, fname);
                 if (fname_utf8_len >= 0)
                     extra[nparams++] = OSSL_PARAM_construct_utf8_string(
-                        OSSL_SKEY_PARAM_ALIAS,
+                        OSSL_SKEY_PARAM_alias,
                         (char *)fname_utf8, (size_t)fname_utf8_len);
             }
             if (lkid)
                 extra[nparams++] = OSSL_PARAM_construct_octet_string(
-                    OSSL_SKEY_PARAM_LOCAL_KEYID,
+                    OSSL_SKEY_PARAM_local_keyid,
                     lkid->data, (size_t)lkid->length);
             extra[nparams] = OSSL_PARAM_construct_end();
 
