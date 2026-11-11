@@ -115,6 +115,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     size_t off = 0;
     size_t len = 0;
     size_t diff;
+    ERR_STATE *es;
 
     const unsigned char *q;
     long slen;
@@ -126,7 +127,8 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         return -1;
     }
 
-    ERR_set_mark();
+    es = ERR_get_state();
+    ERR_STATE_set_mark(es);
     for (;;) {
         diff = len - off;
         if (want >= diff) {
@@ -233,8 +235,8 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             e = ERR_GET_REASON(ERR_peek_last_error());
             if (e != ASN1_R_TOO_LONG)
                 goto err;
-            ERR_pop_to_mark();
-            ERR_set_mark();
+            ERR_STATE_pop_to_mark(es);
+            ERR_STATE_set_mark(es);
         }
         off += q - p; /* end of data */
 
@@ -314,10 +316,10 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     }
 
     *pb = b;
-    ERR_clear_last_mark();
+    ERR_STATE_clear_last_mark(es);
     return (int)off;
 err:
-    ERR_clear_last_mark();
+    ERR_STATE_clear_last_mark(es);
     BUF_MEM_free(b);
     return -1;
 }

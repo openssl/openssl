@@ -438,6 +438,7 @@ int ERR_STATE_pop_to_mark(ERR_STATE *es);
 int ERR_clear_last_mark(void);
 int ERR_STATE_clear_last_mark(ERR_STATE *es);
 int ERR_count_to_mark(void);
+int ERR_STATE_count_to_mark(ERR_STATE *es);
 int ERR_pop(void);
 
 ERR_STATE *OSSL_ERR_STATE_new(void);

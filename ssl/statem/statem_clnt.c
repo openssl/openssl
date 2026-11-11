@@ -2440,6 +2440,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
     size_t certidx;
     const SSL_CERT_LOOKUP *clu;
     int v_ok;
+    ERR_STATE *es = ERR_get_state();
 
     if (sc->session->peer_rpk == NULL) {
         SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER,
@@ -2450,7 +2451,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
     if (sc->rwstate == SSL_RETRY_VERIFY)
         sc->rwstate = SSL_NOTHING;
 
-    ERR_set_mark();
+    ERR_STATE_set_mark(es);
     v_ok = ssl_verify_rpk(sc, sc->session->peer_rpk);
     if (v_ok <= 0 && sc->verify_mode != SSL_VERIFY_NONE) {
         ERR_clear_last_mark();
@@ -2458,7 +2459,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
             SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;
     }
-    ERR_pop_to_mark(); /* but we keep s->verify_result */
+    ERR_STATE_pop_to_mark(es); /* but we keep s->verify_result */
     if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
         return WORK_MORE_A;
     }
@@ -2616,6 +2617,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     const SSL_CERT_LOOKUP *clu;
     size_t certidx;
     int i;
+    ERR_STATE *es = ERR_get_state();
 
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
         return tls_post_process_server_rpk(s, wst);
@@ -2637,15 +2639,15 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * (less clean) historic behaviour of performing validation if any flag is
      * set. The *documented* interface remains the same.
      */
-    ERR_set_mark();
+    ERR_STATE_set_mark(es);
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
     if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
-        ERR_clear_last_mark();
+        ERR_STATE_clear_last_mark(es);
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
             SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;
     }
-    ERR_pop_to_mark(); /* but we keep s->verify_result */
+    ERR_STATE_pop_to_mark(es); /* but we keep s->verify_result */
     if (i > 0 && s->rwstate == SSL_RETRY_VERIFY)
         return WORK_MORE_A;
 

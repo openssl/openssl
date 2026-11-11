@@ -15,7 +15,7 @@ ERR_STATE *ERR_get_state(void)
     return ossl_err_get_state_int(0);
 }
 
-static ossl_inline int ERR_set_mark_int(ERR_STATE *es)
+static ossl_inline int ERR_STATE_set_mark(ERR_STATE *es)
 {
     if (es == NULL)
         return 0;
@@ -30,12 +30,7 @@ int ERR_set_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(0);
 
-    return ERR_set_mark_int(es);
-}
-
-int ERR_STATE_set_mark(ERR_STATE *es)
-{
-    return ERR_set_mark_int(es);
+    return ERR_STATE_set_mark(es);
 }
 
 int ERR_pop(void)
@@ -51,7 +46,7 @@ int ERR_pop(void)
     return 1;
 }
 
-static ossl_inline int ERR_pop_to_mark_int(ERR_STATE *es)
+static ossl_inline int ERR_STATE_pop_to_mark(ERR_STATE *es)
 {
     if (es == NULL)
         return 0;
@@ -72,20 +67,13 @@ int ERR_pop_to_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(1);
 
-    return ERR_pop_to_mark_int(es);
+    return ERR_STATE_pop_to_mark(es);
 }
 
-int ERR_STATE_pop_to_mark(ERR_STATE *es)
+static ossl_inline int ERR_STATE_count_to_mark(ERR_state *es)
 {
-    return ERR_pop_to_mark_int(es);
-}
-
-int ERR_count_to_mark(void)
-{
-    ERR_STATE *es;
     int count = 0, top;
 
-    es = ossl_err_get_state_int(1);
     if (es == NULL)
         return 0;
 
@@ -99,7 +87,14 @@ int ERR_count_to_mark(void)
     return count;
 }
 
-static ossl_inline int ERR_clear_last_mark_int(ERR_STATE *es)
+int ERR_count_to_mark(void)
+{
+    ERR_STATE *es = ossl_err_get_state_int(1);
+
+    return ERR_STATE_count_to_mark_int(es);
+}
+
+static ossl_inline int ERR_STATE_clear_last_mark(ERR_STATE *es)
 {
     int top;
 
@@ -122,10 +117,5 @@ int ERR_clear_last_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(0);
 
-    return ERR_clear_last_mark_int(es);
-}
-
-int ERR_STATE_clear_last_mark(ERR_STATE *es)
-{
-    return ERR_clear_last_mark_int(es);
+    return ERR_STATE_clear_last_mark(es);
 }

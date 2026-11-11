@@ -8064,8 +8064,9 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
     const char *properties)
 {
     const EVP_CIPHER *ciph;
+    ERR_STATE *es = ERR_get_state();
 
-    ERR_set_mark();
+    ERR_STATE_set_mark(es);
     ciph = EVP_CIPHER_fetch(libctx, name, properties);
     if (ciph != NULL) {
         OSSL_PARAM params[2];
@@ -8081,7 +8082,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
             ciph = NULL;
         }
     }
-    ERR_pop_to_mark();
+    ERR_STATE_pop_to_mark(es);
     return ciph;
 }
 
