@@ -28,7 +28,7 @@ ossl_unused uint64_t ossl_fnv1a_hash(uint8_t *key, size_t len);
  * mixing they share a handful of buckets and the chains grow with the
  * number of objects. Likewise an integer whose low bits are a type tag.
  */
-static ossl_unused ossl_inline uint64_t ossl_hash_mix64(uint64_t x)
+static ossl_inline uint64_t ossl_hash_mix64(uint64_t x)
 {
     x ^= x >> 30;
     x *= 0xbf58476d1ce4e5b9ULL;
@@ -39,7 +39,7 @@ static ossl_unused ossl_inline uint64_t ossl_hash_mix64(uint64_t x)
 }
 
 /* A 64-bit value, mixed, as an LHASH hash value. */
-static ossl_unused ossl_inline unsigned long ossl_lh_hash_u64(uint64_t x)
+static ossl_inline unsigned long ossl_lh_hash_u64(uint64_t x)
 {
     x = ossl_hash_mix64(x);
 #if ULONG_MAX > 0xFFFFFFFFUL
@@ -50,7 +50,7 @@ static ossl_unused ossl_inline unsigned long ossl_lh_hash_u64(uint64_t x)
 }
 
 /* A pointer's identity, mixed, as an LHASH hash value. */
-static ossl_unused ossl_inline unsigned long ossl_lh_hash_ptr(const void *p)
+static ossl_inline unsigned long ossl_lh_hash_ptr(const void *p)
 {
     return ossl_lh_hash_u64((uint64_t)(uintptr_t)p);
 }

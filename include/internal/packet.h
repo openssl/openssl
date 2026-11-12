@@ -328,7 +328,7 @@ __owur static ossl_inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
  * @param data The object to write the data to.
  * @returns 1 on success, or 0 otherwise.
  */
-static ossl_unused ossl_inline int PACKET_get_net_4_len_u32(PACKET *pkt, uint32_t *data)
+static ossl_inline int PACKET_get_net_4_len_u32(PACKET *pkt, uint32_t *data)
 {
     size_t i = 0;
     int ret = PACKET_get_net_4_len(pkt, &i);

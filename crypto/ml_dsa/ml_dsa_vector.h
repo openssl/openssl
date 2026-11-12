@@ -31,7 +31,7 @@ struct vector_st {
  *              does not own/free this.
  * @param num_polys The number of |polys| blocks (k or l)
  */
-static ossl_inline ossl_unused void vector_init(VECTOR *v, POLY *polys, size_t num_polys)
+static ossl_inline void vector_init(VECTOR *v, POLY *polys, size_t num_polys)
 {
     v->poly = polys;
     v->num_poly = num_polys;
@@ -63,7 +63,7 @@ static ossl_inline ossl_unused void vector_init(VECTOR *v, POLY *polys, size_t n
 #if defined(OPENSSL_ML_DSA_S390X)
 #define POLY_ALIGN 16
 
-static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
+static ossl_inline int vector_alloc(VECTOR *v, size_t num_polys)
 {
     size_t bytes = num_polys * sizeof(POLY) + sizeof(void *) + (POLY_ALIGN - 1);
     uint8_t *raw = OPENSSL_malloc(bytes);
@@ -79,7 +79,7 @@ static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
     return 1;
 }
 
-static ossl_inline ossl_unused int vector_secure_alloc(VECTOR *v, size_t num_polys)
+static ossl_inline int vector_secure_alloc(VECTOR *v, size_t num_polys)
 {
     size_t bytes = num_polys * sizeof(POLY) + sizeof(void *) + (POLY_ALIGN - 1);
     uint8_t *raw = OPENSSL_secure_malloc(bytes);
@@ -95,7 +95,7 @@ static ossl_inline ossl_unused int vector_secure_alloc(VECTOR *v, size_t num_pol
     return 1;
 }
 
-static ossl_inline ossl_unused void vector_free(VECTOR *v)
+static ossl_inline void vector_free(VECTOR *v)
 {
     if (v->poly != NULL)
         OPENSSL_free(*(void **)((uint8_t *)v->poly - sizeof(void *)));
@@ -103,7 +103,7 @@ static ossl_inline ossl_unused void vector_free(VECTOR *v)
     v->num_poly = 0;
 }
 
-static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
+static ossl_inline void vector_secure_free(VECTOR *v, size_t rank)
 {
     size_t bytes = rank * sizeof(POLY) + sizeof(void *) + (POLY_ALIGN - 1);
 
@@ -118,7 +118,7 @@ static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
 
 #else /* !OPENSSL_ML_DSA_S390X */
 
-static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
+static ossl_inline int vector_alloc(VECTOR *v, size_t num_polys)
 {
     v->poly = OPENSSL_malloc_array(num_polys, sizeof(POLY));
     if (v->poly == NULL)
@@ -127,7 +127,7 @@ static ossl_inline ossl_unused int vector_alloc(VECTOR *v, size_t num_polys)
     return 1;
 }
 
-static ossl_inline ossl_unused int vector_secure_alloc(VECTOR *v, size_t num_polys)
+static ossl_inline int vector_secure_alloc(VECTOR *v, size_t num_polys)
 {
     v->poly = OPENSSL_secure_malloc_array(num_polys, sizeof(POLY));
     if (v->poly == NULL)
@@ -136,14 +136,14 @@ static ossl_inline ossl_unused int vector_secure_alloc(VECTOR *v, size_t num_pol
     return 1;
 }
 
-static ossl_inline ossl_unused void vector_free(VECTOR *v)
+static ossl_inline void vector_free(VECTOR *v)
 {
     OPENSSL_free(v->poly);
     v->poly = NULL;
     v->num_poly = 0;
 }
 
-static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
+static ossl_inline void vector_secure_free(VECTOR *v, size_t rank)
 {
     OPENSSL_secure_clear_free(v->poly, rank * sizeof(POLY));
     v->poly = NULL;
@@ -153,7 +153,7 @@ static ossl_inline ossl_unused void vector_secure_free(VECTOR *v, size_t rank)
 #endif /* OPENSSL_ML_DSA_S390X */
 
 /* @brief zeroize a vectors polynomial coefficients */
-static ossl_inline ossl_unused void vector_zero(VECTOR *va)
+static ossl_inline void vector_zero(VECTOR *va)
 {
     if (va->poly != NULL)
         memset(va->poly, 0, va->num_poly * sizeof(va->poly[0]));
@@ -163,7 +163,7 @@ static ossl_inline ossl_unused void vector_zero(VECTOR *va)
  * @brief copy a vector
  * The assumption is that |dst| has already been initialized
  */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_copy(VECTOR *dst, const VECTOR *src)
 {
     assert(dst->num_poly == src->num_poly);
@@ -171,7 +171,7 @@ vector_copy(VECTOR *dst, const VECTOR *src)
 }
 
 /* @brief return 1 if 2 vectors are equal, or 0 otherwise */
-static ossl_inline ossl_unused int
+static ossl_inline int
 vector_equal(const VECTOR *a, const VECTOR *b)
 {
     size_t i;
@@ -186,7 +186,7 @@ vector_equal(const VECTOR *a, const VECTOR *b)
 }
 
 /* @brief add 2 vectors */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_add(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
 {
     size_t i;
@@ -196,7 +196,7 @@ vector_add(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
 }
 
 /* @brief subtract 2 vectors */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_sub(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
 {
     size_t i;
@@ -206,7 +206,7 @@ vector_sub(const VECTOR *lhs, const VECTOR *rhs, VECTOR *out)
 }
 
 /* @brief convert a vector in place into NTT form */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_ntt(VECTOR *va)
 {
     size_t i;
@@ -216,7 +216,7 @@ vector_ntt(VECTOR *va)
 }
 
 /* @brief convert a vector in place into inverse NTT form */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_ntt_inverse(VECTOR *va)
 {
     size_t i;
@@ -226,7 +226,7 @@ vector_ntt_inverse(VECTOR *va)
 }
 
 /* @brief multiply a vector by a SCALAR polynomial */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_mult_scalar(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
 {
     size_t i;
@@ -236,7 +236,7 @@ vector_mult_scalar(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
 }
 
 /* Scale back previously rounded value */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_scale_power2_round_ntt(const VECTOR *in, VECTOR *out)
 {
     size_t i;
@@ -251,7 +251,7 @@ vector_scale_power2_round_ntt(const VECTOR *in, VECTOR *out)
  * that coeff[i] == t1[i] * 2^13 + t0[i] mod q.
  * See FIPS 204, Algorithm 35, Power2Round()
  */
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_power2_round(const VECTOR *t, VECTOR *t1, VECTOR *t0)
 {
     size_t i;
@@ -260,7 +260,7 @@ vector_power2_round(const VECTOR *t, VECTOR *t1, VECTOR *t0)
         poly_power2_round(t->poly + i, t1->poly + i, t0->poly + i);
 }
 
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_high_bits(const VECTOR *in, uint32_t gamma2, VECTOR *out)
 {
     size_t i;
@@ -269,7 +269,7 @@ vector_high_bits(const VECTOR *in, uint32_t gamma2, VECTOR *out)
         poly_high_bits(in->poly + i, gamma2, out->poly + i);
 }
 
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_low_bits(const VECTOR *in, uint32_t gamma2, VECTOR *out)
 {
     size_t i;
@@ -278,7 +278,7 @@ vector_low_bits(const VECTOR *in, uint32_t gamma2, VECTOR *out)
         poly_low_bits(in->poly + i, gamma2, out->poly + i);
 }
 
-static ossl_inline ossl_unused uint32_t
+static ossl_inline uint32_t
 vector_max(const VECTOR *v)
 {
     size_t i;
@@ -289,7 +289,7 @@ vector_max(const VECTOR *v)
     return mx;
 }
 
-static ossl_inline ossl_unused uint32_t
+static ossl_inline uint32_t
 vector_max_signed(const VECTOR *v)
 {
     size_t i;
@@ -300,7 +300,7 @@ vector_max_signed(const VECTOR *v)
     return mx;
 }
 
-static ossl_inline ossl_unused size_t
+static ossl_inline size_t
 vector_count_ones(const VECTOR *v)
 {
     int j;
@@ -312,7 +312,7 @@ vector_count_ones(const VECTOR *v)
     return count;
 }
 
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_make_hint(const VECTOR *ct0, const VECTOR *cs2, const VECTOR *w,
     uint32_t gamma2, VECTOR *out)
 {
@@ -323,7 +323,7 @@ vector_make_hint(const VECTOR *ct0, const VECTOR *cs2, const VECTOR *w,
             out->poly + i);
 }
 
-static ossl_inline ossl_unused void
+static ossl_inline void
 vector_use_hint(const VECTOR *h, const VECTOR *r, uint32_t gamma2, VECTOR *out)
 {
     size_t i;
