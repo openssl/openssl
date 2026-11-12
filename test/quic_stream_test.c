@@ -2910,8 +2910,7 @@ static int tdc_find_pattern(const unsigned char *pat, size_t plen,
 {
     TDC_ALLOC_HDR *h;
 
-    OSSL_LIST_FOREACH(h, tdc, &tdc_alloc_list)
-    {
+    OSSL_LIST_FOREACH (h, tdc, &tdc_alloc_list) {
         unsigned char *p = (unsigned char *)&h[1];
         size_t i;
 

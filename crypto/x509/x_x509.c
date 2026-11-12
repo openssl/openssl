@@ -284,6 +284,15 @@ int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
     return i2d_X509_CINF(&x->cert_info, pp);
 }
 
+int ossl_x509_get0_tbs(const X509 *x, const uint8_t **tbs, size_t *tbs_len)
+{
+    if (x->cert_info.enc.modified || x->cert_info.enc.enc == NULL)
+        return 0;
+    *tbs = x->cert_info.enc.enc;
+    *tbs_len = (size_t)x->cert_info.enc.len;
+    return 1;
+}
+
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x)
 {

@@ -129,6 +129,11 @@ extern "C" {
     generate_stack_macros("EVP_SKEY");
 -}
 /* clang-format on */
+/* clang-format off */
+{-
+    generate_stack_macros("EVP_PKEY");
+-}
+/* clang-format on */
 
 int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq);
 char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx);

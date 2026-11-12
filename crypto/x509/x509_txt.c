@@ -229,6 +229,20 @@ const char *X509_verify_cert_error_string(long n)
         return "Authority Key Identifier issuer and serial number must be paired";
     case X509_V_ERR_DUPLICATE_EXTENSION:
         return "Certificate includes more than one instance of a particular extension";
+    case X509_V_ERR_MTC_NOT_MTC:
+        return "Not a Merkle Tree Certificate";
+    case X509_V_ERR_MTC_BAD_PROOF:
+        return "Malformed Merkle Tree Certificate proof";
+    case X509_V_ERR_MTC_UNTRUSTED_CA:
+        return "No trusted Merkle Tree Certificate CA for the issuer";
+    case X509_V_ERR_MTC_REVOKED:
+        return "Merkle Tree Certificate serial number is revoked";
+    case X509_V_ERR_MTC_INCLUSION_FAILED:
+        return "Merkle Tree Certificate inclusion proof did not evaluate";
+    case X509_V_ERR_MTC_NOT_TRUSTED:
+        return "Merkle Tree Certificate subtree is not trusted";
+    case X509_V_ERR_MTC_COSIGNER_QUORUM:
+        return "Merkle Tree Certificate lacks the required cosignatures";
 
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in

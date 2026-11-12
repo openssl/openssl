@@ -129,6 +129,9 @@ current certificate and the B<chainidx> parameter will indicate the position
 of the certificate in the message. The first certificate is always the end
 entity certificate and has a B<chainidx> value of 0. The certificates are in the
 order that they were received in the Certificate message.
+Custom extensions are not supported in a Certificate message that carries the
+certificates of a credential added with L<SSL_CTX_add1_credential(3)>: the
+callback is not called for them and no custom extension is added.
 
 For all messages except the ServerHello and EncryptedExtensions every
 registered B<add_cb> is always called to see if the application wishes to add an

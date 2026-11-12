@@ -349,6 +349,11 @@ call to SSL_dane_tlsa_add(), and if all return 0 (due to invalid
 or unsupported parameters) disable peer authentication by calling
 L<SSL_set_verify(3)> with B<mode> equal to B<SSL_VERIFY_NONE>.
 
+DANE is not supported for a Merkle Tree Certificate.
+When DANE is enabled for a connection and TLSA records have been added, a
+peer that presents a Merkle Tree Certificate fails verification with
+B<X509_V_ERR_DANE_NO_MATCH>.
+
 =head1 SEE ALSO
 
 L<ssl(7)>,

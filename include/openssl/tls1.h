@@ -175,6 +175,15 @@ extern "C" {
 #define TLSEXT_TYPE_outer_extensions 0xfd00
 #endif
 
+/*
+ * Trust Anchor Identifiers.  Not yet an IANA-assigned codepoint; this is the
+ * provisional value used by the draft and by other implementations.  See
+ * section 5 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+ */
+#define TLSEXT_TYPE_trust_anchors 0xca34
+#define TLSEXT_TRUST_ANCHOR_ID_MAX_LEN 32
+
 /* NameType value from RFC3546 */
 #define TLSEXT_NAMETYPE_host_name 0
 /* status request value from RFC3546 */
