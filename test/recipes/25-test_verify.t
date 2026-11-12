@@ -13,6 +13,7 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Spec::Functions qw/canonpath/;
 use File::Copy;
+use IO::Socket::INET;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir ok_nofips with/;
 use OpenSSL::Test::Utils;
 
@@ -80,7 +81,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 230;
+plan tests => 233;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -808,6 +809,134 @@ ok(!run(app(["openssl", "verify", "-auth_level", "1",
            }),
    "Delta CRL with onlySomeReasons is not accepted as complete CRL");
 
+# -crl_download must say why no CRL could be obtained
+my $no_cdp_stderr = "crl-download-no-cdp.err";
+ok(!run(app(["openssl", "verify", "-auth_level", "1",
+             "-trusted", srctop_file(@certspath, "root-cert.pem"),
+             "-untrusted", srctop_file(@certspath, "ca-cert.pem"),
+             "-crl_check", "-crl_download",
+             srctop_file(@certspath, "ee-cert.pem")],
+            stderr => $no_cdp_stderr))
+   && grep(/no distribution point/,
+           do { open my $fh, '<', $no_cdp_stderr; <$fh> }),
+   "-crl_download reports missing CRL distribution point");
+
+# -crl_download lists the URIs of a CDP without any http:// URI, escaping
+# control characters.  The extension holds the URI "ldap://ex\x01ample/".
+my $ctrl_uri = "ldap://ex\x01ample/";
+my $ctrl_der = sprintf("86%02x", length($ctrl_uri)) . unpack("H*", $ctrl_uri);
+$ctrl_der = sprintf("a0%02x", length($ctrl_der) / 2) . $ctrl_der for 1 .. 2;
+$ctrl_der = sprintf("30%02x", length($ctrl_der) / 2) . $ctrl_der for 1 .. 2;
+my $ctrl_stderr = "crl-download-ctrl-uri.err";
+ok(issue_cert("cdp-ctrl", "crlDistributionPoints = DER:$ctrl_der")
+   && !verify("cdp-ctrl", "", [qw(root-cert)], [qw(ca-cert)],
+              "-crl_check", "-crl_download", { stderr => $ctrl_stderr })
+   && do {
+       my $err = do { local $/; open my $fh, '<', $ctrl_stderr; <$fh> };
+       $err =~ /No http:\/\/ URI/
+           && index($err, "  ldap://ex\\01ample/\n") >= 0
+           && index($err, "\x01") < 0;
+   },
+   "-crl_download lists non-HTTP CDP URIs with control characters escaped");
+
+SKIP: {
+    skip "CRL download needs sockets, HTTP, fork() and IPv4", 1
+        if disabled("sock") || disabled("http")
+           || $^O =~ /^(MSWin32|VMS)$/ || !have_IPv4();
+
+    subtest "-crl_download over HTTP" => sub {
+        my $log = "crl-server.log";
+        my ($pid, $port) = start_crl_server($log);
+        plan skip_all => "could not start CRL server" unless defined $pid;
+        plan tests => 7;
+
+        my $url = "http://127.0.0.1:$port";
+        local $ENV{no_proxy} = "127.0.0.1";
+        my $download = sub {
+            my ($cert, @opts) = @_;
+            verify($cert, "", [qw(root-cert)], [qw(ca-cert)],
+                   "-crl_check", "-crl_download", @opts,
+                   { stderr => "$cert.err" });
+        };
+        my $requested = sub {
+            my $path = shift;
+            grep { $_ eq "$path\n" } split /^/, slurp($log);
+        };
+
+        make_empty_crl("http-crl", $ca_cert, $ca_key, "http-crl.pem");
+        run(app(["openssl", "crl", "-in", "http-crl.pem",
+                 "-outform", "DER", "-out", "http-crl.der"]));
+
+        ok(issue_cert("cdp-der", "crlDistributionPoints = URI:$url/http-crl.der")
+           && $download->("cdp-der")
+           && slurp("cdp-der.err") eq ""
+           && $requested->("/http-crl.der"),
+           "DER CRL is downloaded silently");
+
+        ok(issue_cert("cdp-pem", "crlDistributionPoints = URI:$url/http-crl.pem")
+           && !$download->("cdp-pem")
+           && slurp("cdp-pem.err") =~ /not a DER-encoded/,
+           "PEM CRL is reported as not DER");
+
+        ok(issue_cert("cdp-404", "crlDistributionPoints = URI:$url/missing.der")
+           && !$download->("cdp-404")
+           && slurp("cdp-404.err") =~ /not a DER-encoded/,
+           "text error page is reported as not DER");
+
+        # The client rejects a text/* Content-Type without reading the body
+        ok(issue_cert("cdp-html", "crlDistributionPoints = URI:$url/missing.html")
+           && !$download->("cdp-html")
+           && (disabled("err") || disabled("autoerrinit")
+               || slurp("cdp-html.err") =~ /content type mismatch/)
+           && slurp("cdp-html.err") !~ /not a DER-encoded/,
+           "HTML error page is not reported as not DER");
+
+        ok(issue_cert("cdp-delta",
+                      "crlDistributionPoints = URI:$url/http-crl.der\n"
+                      . "freshestCRL = URI:$url/delta.der")
+           && $download->("cdp-delta")
+           && !$requested->("/delta.der"),
+           "delta CRL is not requested without -use_deltas");
+
+        # delta.der is not served, so the complete CRL alone must suffice
+        ok($download->("cdp-delta", "-use_deltas")
+           && $requested->("/delta.der"),
+           "delta CRL is requested with -use_deltas");
+
+        # An indirect CRL from the root covers a certificate issued by the
+        # intermediate, so its issuer differing from the certificate's is fine
+        my $indirect_exts = <<"EOF";
+[ crl_ext ]
+issuingDistributionPoint = critical, \@idp_section
+
+[ idp_section ]
+fullname = URI:$url/indirect.der
+indirectCRL = TRUE
+EOF
+        ok(make_empty_crl("indirect", srctop_file(@certspath, "root-cert.pem"),
+                          srctop_file(@certspath, "root-key.pem"),
+                          "indirect.pem", $indirect_exts)
+           && run(app(["openssl", "crl", "-in", "indirect.pem",
+                       "-outform", "DER", "-out", "indirect.der"]))
+           && issue_cert("cdp-indirect", <<"EOF")
+crlDistributionPoints = dp
+
+[ dp ]
+fullname = URI:$url/indirect.der
+CRLissuer = dirName:issuer_dn
+
+[ issuer_dn ]
+CN = Root CA
+EOF
+           && $download->("cdp-indirect", "-extended_crl")
+           && slurp("cdp-indirect.err") eq "",
+           "indirect CRL is downloaded silently");
+
+        kill 'KILL', $pid;
+        waitpid($pid, 0);
+    };
+}
+
 # CAstore option
 my $rootcertname = "root-cert";
 my $rootcert = srctop_file(@certspath, "${rootcertname}.pem");
@@ -849,3 +978,71 @@ ok(vfy_root("-CAstore", "file://".$abs_cert), "CAstore file:///path");
 ok(vfy_root("-CAstore", "file:".$abs_cert), "CAstore file:/path"); # we allow dropping the "//" before an empty authority part
 ok(vfy_root("-CAstore", "file://localhost".$abs_cert), "CAstore file://localhost/path");
 ok(!vfy_root("-CAstore", "file://otherhost".$abs_cert), "CAstore file://otherhost/path");
+
+sub slurp {
+    my $file = shift;
+    open my $fh, '<', $file or return "";
+    binmode $fh;
+    local $/;
+    return <$fh>;
+}
+
+# Issue a certificate with the given extensions for ee-key.pem by ca-cert.
+sub issue_cert {
+    my ($name, $exts) = @_;
+
+    open my $fh, '>', "$name.cnf" or return 0;
+    print $fh "[ ext ]\n$exts\n";
+    close $fh;
+    run(app(["openssl", "req", "-new",
+             "-key", srctop_file(@certspath, "ee-key.pem"),
+             "-subj", "/CN=$name", "-out", "$name.csr"]))
+        && run(app(["openssl", "x509", "-req", "-in", "$name.csr",
+                    "-CA", $ca_cert, "-CAkey", $ca_key, "-days", "3650",
+                    "-extfile", "$name.cnf", "-extensions", "ext",
+                    "-out", "$name.pem"]));
+}
+
+# Fork an HTTP server answering GET /name with the file of that name in the
+# current directory, or with a 404 page that is HTML for /missing.html. Each
+# path is appended to $log.
+sub start_crl_server {
+    my $log = shift;
+    my $sock = IO::Socket::INET->new(LocalAddr => '127.0.0.1', LocalPort => 0,
+                                     Listen => 5, ReuseAddr => 1)
+        or return;
+    my $port = $sock->sockport();
+    my $pid = fork();
+
+    return unless defined $pid;
+    if ($pid == 0) {
+        while (my $client = $sock->accept()) {
+            my $path = "";
+            while (my $line = <$client>) {
+                $path = $1 if $line =~ m{^GET (/\S*)};
+                last if $line =~ /^\r?\n$/;
+            }
+            if (open my $fh, '>>', $log) {
+                print $fh "$path\n";
+                close $fh;
+            }
+            my $body = $path =~ m{^/([\w.-]+)$} && -f $1 ? slurp($1) : undef;
+            binmode $client;
+            if (defined $body) {
+                print $client "HTTP/1.0 200 OK\r\n",
+                    "Content-Type: application/pkix-crl\r\n",
+                    "Content-Length: ", length($body), "\r\n\r\n", $body;
+            } elsif ($path eq "/missing.html") {
+                print $client "HTTP/1.0 404 Not Found\r\n",
+                    "Content-Type: text/html\r\n\r\n<p>not found</p>\n";
+            } else {
+                # no Content-Type, so the client reads the body as ASN.1
+                print $client "HTTP/1.0 404 Not Found\r\n\r\nnot found\n";
+            }
+            $client->close();
+        }
+        exit 0;
+    }
+    $sock->close();
+    return ($pid, $port);
+}
