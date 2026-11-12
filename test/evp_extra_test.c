@@ -5040,6 +5040,92 @@ err:
     return ret;
 }
 
+static int keygen_info_cb_ok;
+
+static int keygen_info_cb(EVP_PKEY_CTX *ctx)
+{
+    int n = EVP_PKEY_CTX_get_keygen_info(ctx, -1);
+
+    /* Valid indices are 0 to n - 1; n itself is out of range */
+    if (n != 2 || EVP_PKEY_CTX_get_keygen_info(ctx, n) != 0)
+        keygen_info_cb_ok = 0;
+    return 1;
+}
+
+/*
+ * EVP_PKEY_CTX_get_keygen_info() must stay within the parameters of the
+ * current generation and must not dereference anything outside of one.
+ */
+static int test_keygen_info(void)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 1024), 0))
+        goto err;
+
+    /* No generation yet: no parameters */
+    if (!TEST_int_eq(EVP_PKEY_CTX_get_keygen_info(ctx, -1), 0)
+        || !TEST_int_eq(EVP_PKEY_CTX_get_keygen_info(ctx, 0), 0))
+        goto err;
+
+    keygen_info_cb_ok = 1;
+    EVP_PKEY_CTX_set_cb(ctx, keygen_info_cb);
+    if (!TEST_int_gt(EVP_PKEY_generate(ctx, &pkey), 0)
+        || !TEST_true(keygen_info_cb_ok))
+        goto err;
+
+    /* The generation is over: its parameters are gone */
+    if (!TEST_int_eq(EVP_PKEY_CTX_get_keygen_info(ctx, -1), 0)
+        || !TEST_int_eq(EVP_PKEY_CTX_get_keygen_info(ctx, 0), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_EC)
+/*
+ * A generation that fails after the parameters were set up (here: a legacy
+ * template key that cannot be exported to the provider) must not leave them,
+ * a stack buffer of EVP_PKEY_generate(), attached to the context.
+ */
+static int test_keygen_info_after_failure(void)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL, *tkey = NULL;
+    EC_KEY *eckey = NULL;
+    int ret = 0;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    if (!TEST_ptr(eckey = EC_KEY_new())
+        || !TEST_ptr(tkey = EVP_PKEY_new())
+        || !TEST_true(EVP_PKEY_set1_EC_KEY(tkey, eckey))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, tkey, testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_le(EVP_PKEY_generate(ctx, &pkey), 0)
+        || !TEST_int_eq(EVP_PKEY_CTX_get_keygen_info(ctx, -1), 0)
+        || !TEST_int_eq(EVP_PKEY_CTX_get_keygen_info(ctx, 0), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(tkey);
+    EC_KEY_free(eckey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
 /*
  * Test that we fail if we attempt to use an algorithm that is not available
  * in the current library context (unless we are using an algorithm that
@@ -9914,6 +10000,10 @@ int setup_tests(void)
 #endif
 #endif
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
+    ADD_TEST(test_keygen_info);
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_EC)
+    ADD_TEST(test_keygen_info_after_failure);
+#endif
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
