@@ -7298,9 +7298,10 @@ static BIO *push_failing_filter(BIO *base, struct failing_send_data *data)
  *
  * The handshake flights are written through the buffering BIO, which sends
  * when it is flushed, so these sends do not take the record layer's handling of
- * a failed send and a failure is not recorded in error_state. Neither a
- * transient failure nor a permanent one may be reported as
- * SSL_ERROR_WANT_WRITE: both are SSL_ERROR_SYSCALL.
+ * a failed send and a failure is not recorded in error_state. The buffering BIO
+ * must therefore report a transient failure itself, as a retry, so that it is
+ * SSL_ERROR_WANT_WRITE and the handshake can be completed by calling again. A
+ * permanent failure is SSL_ERROR_SYSCALL.
  *
  * Bit 0 of idx selects a permanent failure (EIO) over a transient one. Bit 1
  * removes the session ticket, so that the final flight is the change cipher
@@ -7359,13 +7360,41 @@ static int test_dtls_nonblocking_handshake_flush_failure(int idx)
 
     if (!TEST_int_eq(data.fails_remaining, 0)
         || !TEST_int_le(ret, 0)
-        || !TEST_int_eq(err, SSL_ERROR_SYSCALL))
+        || !TEST_int_eq(err, (idx & 1) != 0 ? SSL_ERROR_SYSCALL : SSL_ERROR_WANT_WRITE))
         goto end;
 
     /* Confirm the send which failed was the one after Finished. */
     if ((idx & 2) != 0
         && !TEST_int_eq(SSL_get_state(serverssl), TLS_ST_SW_FINISHED))
         goto end;
+
+    /* After a transient failure the handshake can be completed. */
+    if ((idx & 1) == 0) {
+        for (i = 0; i < 10; i++) {
+            if (!SSL_is_init_finished(clientssl)) {
+                ret = SSL_connect(clientssl);
+                err = SSL_get_error(clientssl, ret);
+                if (!TEST_false(ret <= 0
+                        && err != SSL_ERROR_WANT_READ
+                        && err != SSL_ERROR_WANT_WRITE))
+                    goto end;
+            }
+            if (!SSL_is_init_finished(serverssl)) {
+                ret = SSL_do_handshake(serverssl);
+                err = SSL_get_error(serverssl, ret);
+                if (!TEST_false(ret <= 0
+                        && err != SSL_ERROR_WANT_READ
+                        && err != SSL_ERROR_WANT_WRITE))
+                    goto end;
+            }
+            if (SSL_is_init_finished(clientssl)
+                && SSL_is_init_finished(serverssl))
+                break;
+        }
+        if (!TEST_true(SSL_is_init_finished(clientssl))
+            || !TEST_true(SSL_is_init_finished(serverssl)))
+            goto end;
+    }
 
     testresult = 1;
 end:

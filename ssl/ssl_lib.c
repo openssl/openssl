@@ -5481,13 +5481,14 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
              * it. A permanent failure is reported through error_state, which
              * was checked first.
              *
-             * During initialization, BIO_f_buffer retains unsent output,
-             * but its flush path doesn't reliably distinguish temporary
-             * send failures from permanent ones or record them in
-             * error_state. SSL_WRITING alone isn't enough to report a
-             * retry, so the SSL_in_init guard is needed. This also applies
-             * when KeyUpdate or an additional session ticket puts an
-             * established connection back into initialization.
+             * During initialization the send goes through BIO_f_buffer, which
+             * sets the retry flags on itself for a temporary failure, so
+             * that is reported by the checks above. Its flush path does not
+             * record a permanent failure in error_state, so SSL_WRITING alone
+             * isn't enough to report a retry and the SSL_in_init guard is
+             * needed. This also applies when KeyUpdate or an additional
+             * session ticket puts an established connection back into
+             * initialization.
              *
              * A blocking connection waits and sends again instead of
              * reporting a retry.
