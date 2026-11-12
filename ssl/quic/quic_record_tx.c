@@ -11,6 +11,7 @@
 #include "internal/qlog_event_helpers.h"
 #include "internal/bio_addr.h"
 #include "internal/common.h"
+#include "internal/err_internal.h"
 #include "quic_record_shared.h"
 #include "internal/list.h"
 #include "../ssl_local.h"
@@ -917,6 +918,7 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
     size_t wr, i, total_written = 0;
     TXE *txe;
     int res;
+    ERR_STATE *es;
 
     if (ossl_list_txe_head(&qtx->pending) == NULL)
         return QTX_FLUSH_NET_RES_OK; /* Nothing to send. */
@@ -924,6 +926,7 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
     if (qtx->bio == NULL)
         return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
 
+    es = ossl_err_get_state();
     for (;;) {
         for (txe = ossl_list_txe_head(&qtx->pending), i = 0;
             txe != NULL && i < OSSL_NELEM(msg);
@@ -934,13 +937,13 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
             /* Nothing to send. */
             break;
 
-        ERR_set_mark();
+        ossl_err_state_set_mark(es);
         res = BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0, &wr);
         if (res && wr == 0) {
             /*
              * Treat 0 messages sent as a transient error and just stop for now.
              */
-            ERR_clear_last_mark();
+            ossl_err_state_clear_last_mark(es);
             break;
         } else if (!res) {
             /*
@@ -949,16 +952,16 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
              */
             if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
                 /* Transient error, just stop for now, clearing the error. */
-                ERR_pop_to_mark();
+                ossl_err_state_pop_to_mark(es);
                 break;
             } else {
                 /* Non-transient error, fail and do not clear the error. */
-                ERR_clear_last_mark();
+                ossl_err_state_clear_last_mark(es);
                 return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
             }
         }
 
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
 
         /*
          * Remove everything which was successfully sent from the pending queue.
