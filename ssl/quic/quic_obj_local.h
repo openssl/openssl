@@ -171,7 +171,7 @@ SSL_CONNECTION *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
  * Returns a pointer to the SSL base object structure. Returns NULL if obj is
  * NULL. If obj is non-NULL, it must be initialised.
  */
-static ossl_inline ossl_unused SSL *
+static ossl_inline SSL *
 ossl_quic_obj_get0_ssl(QUIC_OBJ *obj)
 {
     /*
@@ -188,7 +188,7 @@ ossl_quic_obj_get0_ssl(QUIC_OBJ *obj)
  * Determines the applicable engine and return a pointer to it. Never returns
  * NULL.
  */
-static ossl_inline ossl_unused QUIC_ENGINE *
+static ossl_inline QUIC_ENGINE *
 ossl_quic_obj_get0_engine(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
@@ -197,7 +197,7 @@ ossl_quic_obj_get0_engine(const QUIC_OBJ *obj)
 }
 
 /* Determines the applicable port (if any) and returns a pointer to it. */
-static ossl_inline ossl_unused QUIC_PORT *
+static ossl_inline QUIC_PORT *
 ossl_quic_obj_get0_port(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
@@ -205,7 +205,7 @@ ossl_quic_obj_get0_port(const QUIC_OBJ *obj)
 }
 
 /* Returns 1 iff this leader structure represents an event leader. */
-static ossl_inline ossl_unused int
+static ossl_inline int
 ossl_quic_obj_is_event_leader(const QUIC_OBJ *obj)
 {
     return obj->is_event_leader;
@@ -215,7 +215,7 @@ ossl_quic_obj_is_event_leader(const QUIC_OBJ *obj)
  * Similar to ossl_quic_obj_get0_engine, but only returns a non-NULL value if
  * the obj object itself is an event leader, rather than one of its ancestors.
  */
-static ossl_inline ossl_unused QUIC_ENGINE *
+static ossl_inline QUIC_ENGINE *
 ossl_quic_obj_get0_engine_local(const QUIC_OBJ *obj)
 {
     return ossl_quic_obj_is_event_leader(obj)
@@ -224,7 +224,7 @@ ossl_quic_obj_get0_engine_local(const QUIC_OBJ *obj)
 }
 
 /* Returns 1 iff this leader structure represents a port leader. */
-static ossl_inline ossl_unused int
+static ossl_inline int
 ossl_quic_obj_is_port_leader(const QUIC_OBJ *obj)
 {
     return obj->is_port_leader;
@@ -234,7 +234,7 @@ ossl_quic_obj_is_port_leader(const QUIC_OBJ *obj)
  * Similar to ossl_quic_obj_get0_port, but only returns a non-NULL value if
  * the obj object itself is a port leader, rather than one of its ancestors.
  */
-static ossl_inline ossl_unused QUIC_PORT *
+static ossl_inline QUIC_PORT *
 ossl_quic_obj_get0_port_local(const QUIC_OBJ *obj)
 {
     return ossl_quic_obj_is_port_leader(obj)
@@ -276,7 +276,7 @@ void ossl_quic_obj_set_blocking_mode(QUIC_OBJ *obj, unsigned int mode);
  */
 
 /* Get a pointer to the QUIC domain mutex. Always returns non-NULL. */
-static ossl_inline ossl_unused CRYPTO_MUTEX *
+static ossl_inline CRYPTO_MUTEX *
 ossl_quic_obj_get0_mutex(const QUIC_OBJ *obj)
 {
     return ossl_quic_engine_get0_mutex(ossl_quic_obj_get0_engine(obj));
@@ -286,21 +286,21 @@ ossl_quic_obj_get0_mutex(const QUIC_OBJ *obj)
  * Get a reference to the reactor applicable to a leader. Always returns
  * non-NULL.
  */
-static ossl_inline ossl_unused QUIC_REACTOR *
+static ossl_inline QUIC_REACTOR *
 ossl_quic_obj_get0_reactor(const QUIC_OBJ *obj)
 {
     return ossl_quic_engine_get0_reactor(ossl_quic_obj_get0_engine(obj));
 }
 
 /* Get a reference to the OSSL_LIB_CTX pointer applicable to a leader. */
-static ossl_inline ossl_unused OSSL_LIB_CTX *
+static ossl_inline OSSL_LIB_CTX *
 ossl_quic_obj_get0_libctx(const QUIC_OBJ *obj)
 {
     return ossl_quic_engine_get0_libctx(ossl_quic_obj_get0_engine(obj));
 }
 
 /* Get a reference to the propq pointer applicable to a leader. */
-static ossl_inline ossl_unused const char *
+static ossl_inline const char *
 ossl_quic_obj_get0_propq(const QUIC_OBJ *obj)
 {
     return ossl_quic_engine_get0_propq(ossl_quic_obj_get0_engine(obj));
@@ -310,7 +310,7 @@ ossl_quic_obj_get0_propq(const QUIC_OBJ *obj)
  * Returns the APL object pointer to the event leader in a hierarchy. Always
  * returns non-NULL.
  */
-static ossl_inline ossl_unused SSL *
+static ossl_inline SSL *
 ossl_quic_obj_get0_event_leader(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
@@ -323,7 +323,7 @@ ossl_quic_obj_get0_event_leader(const QUIC_OBJ *obj)
  * Returns the APL object pointer to the port leader in a hierarchy (if any).
  * Always returns non-NULL.
  */
-static ossl_inline ossl_unused SSL *
+static ossl_inline SSL *
 ossl_quic_obj_get0_port_leader(const QUIC_OBJ *obj)
 {
     assert(obj->init_done);
@@ -336,7 +336,7 @@ ossl_quic_obj_get0_port_leader(const QUIC_OBJ *obj)
  * Change the domain flags. Should only be called immediately after
  * ossl_quic_obj_init().
  */
-static ossl_inline ossl_unused void
+static ossl_inline void
 ossl_quic_obj_set_domain_flags(QUIC_OBJ *obj, uint64_t domain_flags)
 {
     obj->domain_flags = domain_flags;
