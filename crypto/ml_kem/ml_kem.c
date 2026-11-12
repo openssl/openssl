@@ -31,7 +31,7 @@
 #endif
 
 typedef int (*ML_KEM_MATRIX_EXPAND_FN)(EVP_MD_CTX *mdctx,
-                                       ML_KEM_KEY *key);
+    ML_KEM_KEY *key);
 
 typedef struct {
     ML_KEM_MATRIX_EXPAND_FN matrix_expand;
@@ -989,7 +989,8 @@ matrix_mult_transpose_add(scalar *out, const scalar *m, const scalar *a, int ran
  *
  * Where FIPS 203 computes t = A * s + e, we use the transpose of "m".
  */
-static __owur int matrix_expand_scalar(EVP_MD_CTX *mdctx, ML_KEM_KEY *key){
+static __owur int matrix_expand_scalar(EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
+{
     scalar *out = key->m;
     uint8_t input[ML_KEM_RANDOM_BYTES + 2];
     int rank = key->vinfo->rank;
@@ -1021,8 +1022,8 @@ static const OSSL_ML_KEM_SAMPLE_OPS ml_kem_sample_generic_meth = {
 
 #if defined(__PPC64__) && defined(__LITTLE_ENDIAN__)
 
-# include "arch/ppc_arch.h"
-# include "ml_kem_hw_ppc64le.inc"
+#include "arch/ppc_arch.h"
+#include "ml_kem_hw_ppc64le.inc"
 
 static const OSSL_ML_KEM_SAMPLE_OPS *ossl_ml_kem_sample_ops(void)
 {
