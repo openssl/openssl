@@ -95,7 +95,9 @@ the B<ML-KEM>, B<ECDH> or B<SM2> algorithms.
 
 Sets the 32 byte private seed when generating an B<X-Wing> key.  The
 ML-KEM-768 and X25519 component private keys are deterministically expanded
-from this seed.
+from this seed.  The seed is single-use and is cleared after key generation.
+When reusing a generation context, set the seed again before each generation
+that should use it.  Otherwise, a fresh random seed is generated.
 
 =back
 

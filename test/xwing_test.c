@@ -371,10 +371,127 @@ end:
     return ret;
 }
 
+/* A generation context may be reused, but each seed is single-use. */
+static int test_xwing_keygen_reuse(int seeded)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *first = NULL, *second = NULL, *reseeded = NULL;
+    OSSL_PARAM params[2];
+    unsigned char firstpub[sizeof(expected_pk)];
+    unsigned char secondpub[sizeof(expected_pk)];
+    unsigned char reseededpub[sizeof(expected_pk)];
+    size_t len;
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SEED,
+        gen_seed, sizeof(gen_seed));
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "X-Wing", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1)
+        || (seeded && !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1))
+        || !TEST_int_eq(EVP_PKEY_generate(ctx, &first), 1)
+        || !TEST_int_eq(EVP_PKEY_generate(ctx, &second), 1)
+        || !TEST_true(EVP_PKEY_get_octet_string_param(first,
+            OSSL_PKEY_PARAM_PUB_KEY, firstpub, sizeof(firstpub), &len))
+        || !TEST_size_t_eq(len, sizeof(firstpub))
+        || !TEST_true(EVP_PKEY_get_octet_string_param(second,
+            OSSL_PKEY_PARAM_PUB_KEY, secondpub, sizeof(secondpub), &len))
+        || !TEST_size_t_eq(len, sizeof(secondpub))
+        || !TEST_mem_ne(firstpub, sizeof(firstpub), secondpub, sizeof(secondpub)))
+        goto end;
+
+    if (seeded
+        && (!TEST_mem_eq(firstpub, sizeof(firstpub),
+                expected_pk, sizeof(expected_pk))
+            || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
+            || !TEST_int_eq(EVP_PKEY_generate(ctx, &reseeded), 1)
+            || !TEST_true(EVP_PKEY_get_octet_string_param(reseeded,
+                OSSL_PKEY_PARAM_PUB_KEY, reseededpub, sizeof(reseededpub), &len))
+            || !TEST_size_t_eq(len, sizeof(reseededpub))
+            || !TEST_mem_eq(firstpub, sizeof(firstpub),
+                reseededpub, sizeof(reseededpub))))
+        goto end;
+    ret = 1;
+end:
+    EVP_PKEY_free(reseeded);
+    EVP_PKEY_free(second);
+    EVP_PKEY_free(first);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+/* Probe either public-key parameter, with and without a private-key output. */
+static int test_xwing_public_key_params(int idx)
+{
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[4];
+    unsigned char encpub[sizeof(expected_pk)], pub[sizeof(expected_pk)];
+    unsigned char priv[sizeof(gen_seed)], expected_priv[sizeof(gen_seed)];
+    unsigned char expected[sizeof(expected_pk)];
+    /* Each public parameter is a size probe, valid buffer, short buffer or wrong type. */
+    int enc_mode = idx % 4, pub_mode = (idx / 4) % 4;
+    int with_priv = idx / 16;
+    size_t len;
+    int ret = 0, valid = enc_mode < 2 && pub_mode < 2;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "X-Wing"))
+        || !TEST_true(EVP_PKEY_get_octet_string_param(key,
+            OSSL_PKEY_PARAM_PUB_KEY, expected, sizeof(expected), &len))
+        || !TEST_size_t_eq(len, sizeof(expected)))
+        goto end;
+    memset(encpub, 0, sizeof(encpub));
+    memset(pub, 0, sizeof(pub));
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, enc_mode == 0 ? NULL : encpub,
+        enc_mode == 2 ? sizeof(encpub) - 1 : sizeof(encpub));
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+        pub_mode == 0 ? NULL : pub,
+        pub_mode == 2 ? sizeof(pub) - 1 : sizeof(pub));
+    if (enc_mode == 3)
+        params[0].data_type = OSSL_PARAM_UTF8_STRING;
+    if (pub_mode == 3)
+        params[1].data_type = OSSL_PARAM_UTF8_STRING;
+    params[2] = with_priv
+        ? OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+              priv, sizeof(priv))
+        : OSSL_PARAM_construct_end();
+    params[3] = OSSL_PARAM_construct_end();
+    if (!valid) {
+        ret = TEST_false(EVP_PKEY_get_params(key, params));
+        ERR_clear_error();
+        goto end;
+    }
+    if (!TEST_true(EVP_PKEY_get_params(key, params))
+        || !TEST_size_t_eq(params[0].return_size, sizeof(expected))
+        || !TEST_size_t_eq(params[1].return_size, sizeof(expected))
+        || (enc_mode == 1
+            && !TEST_mem_eq(encpub, sizeof(encpub), expected, sizeof(expected)))
+        || (pub_mode == 1
+            && !TEST_mem_eq(pub, sizeof(pub), expected, sizeof(expected))))
+        goto end;
+    if (with_priv
+        && (!TEST_size_t_eq(params[2].return_size, sizeof(priv))
+            || !TEST_true(EVP_PKEY_get_octet_string_param(key,
+                OSSL_PKEY_PARAM_PRIV_KEY,
+                expected_priv, sizeof(expected_priv), &len))
+            || !TEST_size_t_eq(len, sizeof(expected_priv))
+            || !TEST_mem_eq(priv, sizeof(priv),
+                expected_priv, sizeof(expected_priv))))
+        goto end;
+    ret = 1;
+end:
+    OPENSSL_cleanse(priv, sizeof(priv));
+    OPENSSL_cleanse(expected_priv, sizeof(expected_priv));
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_xwing_kat);
     ADD_TEST(test_xwing);
     ADD_TEST(test_xwing_hpke);
+    ADD_ALL_TESTS(test_xwing_keygen_reuse, 2);
+    ADD_ALL_TESTS(test_xwing_public_key_params, 32);
     return 1;
 }

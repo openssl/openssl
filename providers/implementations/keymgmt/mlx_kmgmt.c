@@ -65,8 +65,8 @@ static const ECDH_VINFO hybrid_vtable[] = {
         NULL, 0, NULL, NULL, 0, 0, 0, 80 },
 #if !defined(OPENSSL_NO_ECX)
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_512,
-       MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
-       NULL, 0, NULL, NULL, 0, 0, 0, 64 },
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
+        NULL, 0, NULL, NULL, 0, 0, 0, 64 },
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768,
         MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 64 },
@@ -715,6 +715,14 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     memset(&sub_arg, 0, sizeof(sub_arg));
     pub = p.encpub != NULL ? p.encpub : p.pub;
+    if (mlx_kem_uses_hybrid_seed(key)
+        && p.encpub != NULL && p.encpub->data == NULL) {
+        /* A size probe must not hide a separate public-key output. */
+        if (p.encpub->data_type != OSSL_PARAM_OCTET_STRING)
+            return 0;
+        p.encpub->return_size = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
+        pub = p.pub;
+    }
     if (pub != NULL) {
         size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
 
@@ -767,7 +775,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
             && !ossl_mlx_encode_seed(key, sub_arg.prvenc,
                 key->xinfo->seed_bytes))
             return 0;
-        if (p.encpub != NULL && p.pub != NULL)
+        if (p.encpub != NULL && p.pub != NULL && p.encpub->data != NULL)
             return OSSL_PARAM_set_octet_string(p.pub, p.encpub->data,
                 p.encpub->return_size);
         return 1;
@@ -923,6 +931,7 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     PROV_ML_KEM_GEN_CTX *gctx = vgctx;
     MLX_KEY *key;
     char *propq;
+    int genok;
 
     if (gctx == NULL
         || (gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
@@ -945,7 +954,11 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
                 goto err;
             gctx->seedlen = key->xinfo->seed_bytes;
         }
-        if (ossl_mlx_set_seed(key, gctx->seed, gctx->seedlen))
+        genok = ossl_mlx_set_seed(key, gctx->seed, gctx->seedlen);
+        /* Erase the single-use seed, whether supplied or randomly generated. */
+        OPENSSL_cleanse(gctx->seed, sizeof(gctx->seed));
+        gctx->seedlen = 0;
+        if (genok)
             return key;
         goto err;
     }
@@ -962,6 +975,8 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 
 err:
+    OPENSSL_cleanse(gctx->seed, sizeof(gctx->seed));
+    gctx->seedlen = 0;
     ossl_mlx_key_free(key);
     return NULL;
 }
