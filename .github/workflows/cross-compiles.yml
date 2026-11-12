@@ -187,9 +187,9 @@ jobs:
           }, {
             # GCC / VX enabled (FIPS).
             # The base linux64-s390x target carries no -march flag, so the
-            # whole library is safe to execute on any s390x CPU.
-            # ml_kem_vec128.c and ml_dsa_ntt_vec128.c use "#pragma GCC target"
-            # to scope VX codegen to those TUs only.
+            # whole library is compiled at the compiler's default architecture.
+            # The Configure probe appends -mvx to the two vec128 TUs only;
+            # no -march= is injected by the build system.
             #
             # Why qemucpu: max instead of z13:
             #   QEMU 8.x named z/Architecture CPU models (z13, z13-base, …)
@@ -242,14 +242,13 @@ jobs:
             label: s390x-gcc-z13-vx-off
           }, {
             # Clang / z13 / VX enabled (FIPS).
-            # Clang does not honour #pragma GCC target for preprocessor-level
-            # macros, so -march=z13 must be passed at compile time to make
-            # Clang define __VX__ and enable the VX code paths.  -march=z13
-            # is safe to run on any z13+ CPU and does not imply z14 instructions.
-            # Configure also adds -fzvector when Clang needs it to access
-            # <vecintrin.h>; that flag only unlocks the header, not codegen.
-            # Verifies that Clang emits all six ML-KEM and three ML-DSA VX
-            # entry points and that the ML-DSA dispatcher references them.
+            # Clang requires -march=z13 (user-supplied here) to define __VX__
+            # and enable the VX code paths; without it the probe fails and the
+            # vec128 back-end is excluded.  Configure adds -fzvector when Clang
+            # needs it to access <vecintrin.h>; that flag only unlocks the
+            # header, not codegen.  Verifies that Clang emits all six ML-KEM
+            # and three ML-DSA VX entry points and that the ML-DSA dispatcher
+            # references them.
             # qemucpu: max — see the GCC VX-on job comment for why z13 is avoided.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
@@ -278,15 +277,15 @@ jobs:
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_internal_ml_dsa test_ml_dsa test_ml_dsa_codecs test_evp*,
             label: s390x-clang-z13-vx-off
           }, {
-            # Clang / z10 baseline / VX enabled (FIPS).
-            # Tests the intended per-TU isolation design: the whole library is
-            # compiled with -march=z10 (no VX), but Configure detects the s390x
-            # target via $target{asm_arch} and runs the feature probe with the
-            # effective compiler flags plus -march=z13 -mvx.  Only the two vec128
-            # TUs (ml_kem_vec128.c, ml_dsa_ntt_vec128.c) receive -march=z13 -mvx
-            # (and -fzvector if Clang needs it); the rest of the library is compiled
-            # to the z10 baseline.  This verifies that the scalar fallback objects
-            # are correct z10 code while the two vector TUs are valid z13+VX code.
+            # Clang / z10 baseline / VX disabled (FIPS).
+            # The user specifies -march=z10 (pre-VX); the Configure probe
+            # appends -mvx and tests compilation.  z10 does not support the
+            # vector facility, so the probe fails and the vec128 back-end is
+            # cleanly disabled — the two vec128 source files are excluded from
+            # the build entirely.  The test suite verifies that the scalar
+            # fallback path produces correct results.  VX capability bits are
+            # still set in OPENSSL_s390xcap to prove the back-end was disabled
+            # at compile time (not runtime).
             # qemucpu: max — see the GCC VX-on job comment for why z13 is avoided.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
@@ -296,8 +295,24 @@ jobs:
             opensslcapsname: s390xcap,
             opensslcaps: "stfle:0:0:4000000000000000;kimd:0:0;klmd:0:0;km:0:0;kmc:0:0;kmac:0:0;kmctr:0:0;kmo:0:0;kmf:0:0;prno:0:0;kma:0:0;pcc:0:0;kdsa:0:0",
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_internal_ml_dsa test_ml_dsa test_ml_dsa_codecs test_evp*,
+            label: s390x-clang-z10-vx-off-fips
+            }, {
+            # GCC / z15 / VX enabled (FIPS).
+            # Verifies that a user-supplied -march=z15 is respected: the
+            # Makefile appends only -mvx (S390X_VEC_CFLAGS) to the two vec128
+            # TUs; the user's -march=z15 flows through $(CFLAGS) unchanged.
+            # The nm_check step confirms all vec128 symbols are present and
+            # the dispatcher references them, proving the backend compiled at z15.
+            # qemucpu: max — see the GCC VX-on job comment for why z13 is avoided.
+            arch: s390x-linux-gnu,
+            libs: libc6-dev-s390x-cross,
+            target: -march=z15 linux64-s390x,
+            qemucpu: max,
+            opensslcapsname: s390xcap,
+            opensslcaps: "stfle:0:0:4000000000000000;kimd:0:0;klmd:0:0;km:0:0;kmc:0:0;kmac:0:0;kmctr:0:0;kmo:0:0;kmf:0:0;prno:0:0;kma:0:0;pcc:0:0;kdsa:0:0",
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_internal_ml_dsa test_ml_dsa test_ml_dsa_codecs test_evp*,
             nm_check: "yes",
-            label: s390x-clang-z10-vx-on-fips
+            label: s390x-gcc-z15-vx-on-fips
           }, {
             arch: sh4-linux-gnu,
             label: sh4,
