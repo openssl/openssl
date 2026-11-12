@@ -102,6 +102,7 @@ $code=<<___;
 .align	32
 _aesni_ctr32_ghash_6x:
 .cfi_startproc
+.cfi_endprolog
 	vmovdqu		0x20($const),$T2	# borrow $T2, .Lone_msb
 	sub		\$6,$len
 	vpxor		$Z0,$Z0,$Z0		# $Z0   = 0
@@ -444,19 +445,30 @@ aesni_gcm_decrypt:
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa8(%rsp),%rsp
+.cfi_stackalloc	 0xa8
 	movaps	%xmm6,-0xd8(%rax)
+.cfi_offset	%xmm6,-0xd8-8
 	movaps	%xmm7,-0xc8(%rax)
+.cfi_offset	%xmm7,-0xc8-8
 	movaps	%xmm8,-0xb8(%rax)
+.cfi_offset	%xmm8,-0xb8-8
 	movaps	%xmm9,-0xa8(%rax)
+.cfi_offset	%xmm9,-0xa8-8
 	movaps	%xmm10,-0x98(%rax)
+.cfi_offset	%xmm10,-0x98-8
 	movaps	%xmm11,-0x88(%rax)
+.cfi_offset	%xmm11,-0x88-8
 	movaps	%xmm12,-0x78(%rax)
+.cfi_offset	%xmm12,-0x78-8
 	movaps	%xmm13,-0x68(%rax)
+.cfi_offset	%xmm13,-0x68-8
 	movaps	%xmm14,-0x58(%rax)
+.cfi_offset	%xmm14,-0x58-8
 	movaps	%xmm15,-0x48(%rax)
-.Lgcm_dec_body:
+.cfi_offset	%xmm15,-0x48-8
 ___
 $code.=<<___;
+.cfi_endprolog
 	vzeroupper
 
 	vmovdqu		($ivp),$T1		# input counter value
@@ -557,6 +569,7 @@ $code.=<<___;
 .align	32
 _aesni_ctr32_6x:
 .cfi_startproc
+.cfi_endprolog
 	vmovdqu		0x00-0x80($key),$Z0	# borrow $Z0 for $rndkey
 	vmovdqu		0x20($const),$T2	# borrow $T2, .Lone_msb
 	lea		-1($rounds),%r13
@@ -672,19 +685,30 @@ aesni_gcm_encrypt:
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa8(%rsp),%rsp
+.cfi_stackalloc	 0xa8
 	movaps	%xmm6,-0xd8(%rax)
+.cfi_offset	%xmm6,-0xd8-8
 	movaps	%xmm7,-0xc8(%rax)
+.cfi_offset	%xmm7,-0xc8-8
 	movaps	%xmm8,-0xb8(%rax)
+.cfi_offset	%xmm8,-0xb8-8
 	movaps	%xmm9,-0xa8(%rax)
+.cfi_offset	%xmm9,-0xa8-8
 	movaps	%xmm10,-0x98(%rax)
+.cfi_offset	%xmm10,-0x98-8
 	movaps	%xmm11,-0x88(%rax)
+.cfi_offset	%xmm11,-0x88-8
 	movaps	%xmm12,-0x78(%rax)
+.cfi_offset	%xmm12,-0x78-8
 	movaps	%xmm13,-0x68(%rax)
+.cfi_offset	%xmm13,-0x68-8
 	movaps	%xmm14,-0x58(%rax)
+.cfi_offset	%xmm14,-0x58-8
 	movaps	%xmm15,-0x48(%rax)
-.Lgcm_enc_body:
+.cfi_offset	%xmm15,-0x48-8
 ___
 $code.=<<___;
+.cfi_endprolog
 	vzeroupper
 
 	vmovdqu		($ivp),$T1		# input counter value
@@ -968,127 +992,6 @@ $code.=<<___;
 .previous
 .align	64
 ___
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___
-.extern	__imp_RtlVirtualUnwind
-.type	gcm_se_handler,\@abi-omnipotent
-.align	16
-gcm_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	mov	120($context),%rax	# pull context->Rax
-
-	mov	-48(%rax),%r15
-	mov	-40(%rax),%r14
-	mov	-32(%rax),%r13
-	mov	-24(%rax),%r12
-	mov	-16(%rax),%rbp
-	mov	-8(%rax),%rbx
-	mov	%r15,240($context)
-	mov	%r14,232($context)
-	mov	%r13,224($context)
-	mov	%r12,216($context)
-	mov	%rbp,160($context)
-	mov	%rbx,144($context)
-
-	lea	-0xd8(%rax),%rsi	# %xmm save area
-	lea	512($context),%rdi	# & context.Xmm6
-	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	gcm_se_handler,.-gcm_se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_aesni_gcm_decrypt
-	.rva	.LSEH_end_aesni_gcm_decrypt
-	.rva	.LSEH_gcm_dec_info
-
-	.rva	.LSEH_begin_aesni_gcm_encrypt
-	.rva	.LSEH_end_aesni_gcm_encrypt
-	.rva	.LSEH_gcm_enc_info
-.section	.xdata
-.align	8
-.LSEH_gcm_dec_info:
-	.byte	9,0,0,0
-	.rva	gcm_se_handler
-	.rva	.Lgcm_dec_body,.Lgcm_dec_abort
-.LSEH_gcm_enc_info:
-	.byte	9,0,0,0
-	.rva	gcm_se_handler
-	.rva	.Lgcm_enc_body,.Lgcm_enc_abort
-___
-}
 }}} else {{{
 $code=<<___;	# assembler is too old
 .text
@@ -1097,6 +1000,7 @@ $code=<<___;	# assembler is too old
 .type	aesni_gcm_encrypt,\@abi-omnipotent
 aesni_gcm_encrypt:
 .cfi_startproc
+.cfi_endprolog
 	xor	%eax,%eax
 	ret
 .cfi_endproc
@@ -1106,6 +1010,7 @@ aesni_gcm_encrypt:
 .type	aesni_gcm_decrypt,\@abi-omnipotent
 aesni_gcm_decrypt:
 .cfi_startproc
+.cfi_endprolog
 	xor	%eax,%eax
 	ret
 .cfi_endproc

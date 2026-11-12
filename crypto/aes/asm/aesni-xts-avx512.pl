@@ -1114,6 +1114,8 @@ ___
     .type	aesni_xts_avx512_eligible,\@abi-omnipotent
     .align	32
     aesni_xts_avx512_eligible:
+        .cfi_startproc
+        .cfi_endprolog
         mov	OPENSSL_ia32cap_P+8(%rip), %ecx
         xor	%eax,%eax
     	# 1<<31|1<<30|1<<17|1<<16 avx512vl + avx512bw + avx512dq + avx512f
@@ -1127,6 +1129,7 @@ ___
         cmove	%ecx,%eax
         .L_done:
         ret
+        .cfi_endproc
     .size   aesni_xts_avx512_eligible, .-aesni_xts_avx512_eligible
 ___
   }
@@ -1149,7 +1152,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_128_encrypt_avx512
       .hidden	aesni_xts_128_encrypt_avx512
-      .type	aesni_xts_128_encrypt_avx512,\@function,6
+      .type	aesni_xts_128_encrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_128_encrypt_avx512:
       .cfi_startproc
@@ -1159,15 +1162,18 @@ ___
       $code.=<<___;
       .globl	aesni_xts_256_encrypt_avx512
       .hidden	aesni_xts_256_encrypt_avx512
-      .type	aesni_xts_256_encrypt_avx512,\@function,6
+      .type	aesni_xts_256_encrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_256_encrypt_avx512:
       .cfi_startproc
       endbranch
 ___
     }
+    # TODO/FIXME: Incomplete unwind info!
     $code .= "push 	 %rbp\n";
+    $code .= ".cfi_push  %rbp\n";
     $code .= "mov 	 $TW,%rbp\n";
+    $code .= ".cfi_def_cfa_register %rbp\n";
     $code .= "sub 	 \$$VARIABLE_OFFSET,$TW\n";
     $code .= "and 	 \$0xffffffffffffffc0,$TW\n";
     $code .= "mov 	 %rbx,$GP_STORAGE($TW)\n";
@@ -1189,6 +1195,7 @@ ___
 
     $code .= "mov 	 \$0x87, $gf_poly_8b\n";
     $code .= "vmovdqu 	 ($tweak),%xmm1\n";      # read initial tweak values
+    $code .= ".cfi_endprolog\n"; # TODO/FIXME: a bit early, but keep it small
 
     encrypt_tweak("%xmm1", $is_128);
 
@@ -1813,6 +1820,11 @@ ___
     .cfi_endproc
 ___
     }
+    if ($is_128) {
+        $code .= ".size aesni_xts_128_encrypt_avx512, . - aesni_xts_128_encrypt_avx512\n";
+    } else {
+        $code .= ".size aesni_xts_256_encrypt_avx512, . - aesni_xts_256_encrypt_avx512\n";
+    }
   }
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1832,7 +1844,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_128_decrypt_avx512
       .hidden	aesni_xts_128_decrypt_avx512
-      .type	aesni_xts_128_decrypt_avx512,\@function,6
+      .type	aesni_xts_128_decrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_128_decrypt_avx512:
       .cfi_startproc
@@ -1842,15 +1854,18 @@ ___
       $code.=<<___;
       .globl	aesni_xts_256_decrypt_avx512
       .hidden	aesni_xts_256_decrypt_avx512
-      .type	aesni_xts_256_decrypt_avx512,\@function,6
+      .type	aesni_xts_256_decrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_256_decrypt_avx512:
       .cfi_startproc
       endbranch
 ___
     }
+    # TODO/FIXME: Incomplete unwind info!
     $code .= "push 	 %rbp\n";
+    $code .= ".cfi_push  %rbp\n";
     $code .= "mov 	 $TW,%rbp\n";
+    $code .= ".cfi_def_cfa_register %rbp\n";
     $code .= "sub 	 \$$VARIABLE_OFFSET,$TW\n";
     $code .= "and 	 \$0xffffffffffffffc0,$TW\n";
     $code .= "mov 	 %rbx,$GP_STORAGE($TW)\n";
@@ -1869,6 +1884,7 @@ ___
       $code .= "vmovdqa      %xmm14, $XMM_STORAGE + 16*8($TW)\n";
       $code .= "vmovdqa      %xmm15, $XMM_STORAGE + 16*9($TW)\n";
     }
+    $code .= ".cfi_endprolog\n"; # TODO/FIXME: a bit early, but keep it small
 
     $code .= "mov 	 \$0x87, $gf_poly_8b\n";
     $code .= "vmovdqu 	 ($tweak),%xmm1\n";      # read initial tweak values
@@ -2808,7 +2824,11 @@ ___
     .cfi_endproc
 ___
     }
-
+    if ($is_128) {
+        $code .= ".size aesni_xts_128_decrypt_avx512, . - aesni_xts_128_decrypt_avx512\n";
+    } else {
+        $code .= ".size aesni_xts_256_decrypt_avx512, . - aesni_xts_256_decrypt_avx512\n";
+    }
   }
 
   # The only difference between AES-XTS-128 and -256 is the number of rounds,
@@ -2870,8 +2890,11 @@ ___
     .globl  aesni_xts_avx512_eligible
     .type   aesni_xts_avx512_eligible,\@abi-omnipotent
     aesni_xts_avx512_eligible:
+    .cfi_startproc
+    .cfi_endprolog
     xor	%eax,%eax
     ret
+    .cfi_endproc
     .size   aesni_xts_avx512_eligible, .-aesni_xts_avx512_eligible
 
 ___
