@@ -22,7 +22,6 @@
 X509_REQ *X509_to_X509_REQ(const X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     X509_REQ *ret;
-    X509_REQ_INFO *ri;
     int i;
     EVP_PKEY *pktmp;
     OSSL_LIB_CTX *libctx;
@@ -34,14 +33,6 @@ X509_REQ *X509_to_X509_REQ(const X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
     }
-
-    ri = &ret->req_info;
-
-    ri->version->length = 1;
-    ri->version->data = OPENSSL_malloc(1);
-    if (ri->version->data == NULL)
-        goto err;
-    ri->version->data[0] = 0; /* version == 0 */
 
     if (!X509_REQ_set_subject_name(ret, X509_get_subject_name(x)))
         goto err;
