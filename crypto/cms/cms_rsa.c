@@ -41,7 +41,7 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     EVP_PKEY_CTX *pkctx;
     X509_ALGOR *cmsalg;
     int nid;
-    int rv = -1;
+    int rv = 0;
     const unsigned char *label = NULL;
     size_t labellen = 0;
     const EVP_MD *mgf1md = NULL, *md = NULL;
@@ -54,13 +54,13 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     if (pkctx == NULL)
         return 0;
     if (!CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &cmsalg))
-        return -1;
+        return 0;
     nid = OBJ_obj2nid(cmsalg->algorithm);
     if (nid == NID_rsaEncryption)
         return 1;
     if (nid != NID_rsaesOaep) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_ENCRYPTION_TYPE);
-        return -1;
+        return 0;
     }
     /* Decode OAEP parameters */
     oaep = rsa_oaep_decode(cmsalg);
