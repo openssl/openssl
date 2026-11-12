@@ -551,6 +551,98 @@ static int pkcs7_stream_non_data_test(void)
     return ret;
 }
 
+
+/*
+ * The content in a PKCS#7 ContentInfo is optional in ASN.1. Recognised
+ * content types without their payload must be rejected by public mutators.
+ */
+static PKCS7 *pkcs7_without_content(unsigned char type)
+{
+    static const unsigned char content_info[] = {
+        0x30, 0x0b, 0x06, 0x09, 0x2a, 0x86, 0x48,
+        0x86, 0xf7, 0x0d, 0x01, 0x07, 0x00
+    };
+    unsigned char der[sizeof(content_info)];
+    const unsigned char *p = der;
+
+    memcpy(der, content_info, sizeof(der));
+    der[sizeof(der) - 1] = type;
+    return d2i_PKCS7(NULL, &p, sizeof(der));
+}
+
+static int pkcs7_missing_optional_content_test(void)
+{
+    PKCS7 *p7 = NULL;
+    PKCS7_SIGNER_INFO *si = NULL;
+    PKCS7_RECIP_INFO *ri = NULL;
+    X509 *cert = NULL;
+    X509_CRL *crl = NULL;
+    int ret = 0;
+
+# define CHECK_NO_CONTENT(call) do {                                     \
+        ERR_clear_error();                                                \
+        if (!TEST_false(call)                                             \
+            || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),             \
+                            PKCS7_R_NO_CONTENT))                          \
+            goto end;                                                    \
+    } while (0)
+# define CHECK_NO_CONTENT_PTR(call) do {                                 \
+        ERR_clear_error();                                                \
+        if (!TEST_ptr_null(call)                                          \
+            || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),             \
+                            PKCS7_R_NO_CONTENT))                          \
+            goto end;                                                    \
+    } while (0)
+
+    if (!TEST_ptr(si = PKCS7_SIGNER_INFO_new())
+        || !TEST_ptr(ri = PKCS7_RECIP_INFO_new())
+        || !TEST_ptr(cert = X509_new())
+        || !TEST_ptr(crl = X509_CRL_new())
+        || !TEST_ptr(p7 = pkcs7_without_content(2)))
+        goto end;
+    CHECK_NO_CONTENT(PKCS7_set_content(p7, NULL));
+    CHECK_NO_CONTENT(PKCS7_add_signer(p7, si));
+    CHECK_NO_CONTENT(PKCS7_add_certificate(p7, cert));
+    CHECK_NO_CONTENT(PKCS7_add_crl(p7, crl));
+    CHECK_NO_CONTENT_PTR(PKCS7_cert_from_signer_info(p7, si));
+    PKCS7_free(p7);
+    p7 = NULL;
+
+    if (!TEST_ptr(p7 = pkcs7_without_content(4)))
+        goto end;
+    CHECK_NO_CONTENT(PKCS7_add_signer(p7, si));
+    CHECK_NO_CONTENT(PKCS7_add_certificate(p7, cert));
+    CHECK_NO_CONTENT(PKCS7_add_crl(p7, crl));
+    CHECK_NO_CONTENT(PKCS7_add_recipient_info(p7, ri));
+    CHECK_NO_CONTENT(PKCS7_set_cipher(p7, EVP_aes_128_cbc()));
+    PKCS7_free(p7);
+    p7 = NULL;
+
+    if (!TEST_ptr(p7 = pkcs7_without_content(5)))
+        goto end;
+    CHECK_NO_CONTENT(PKCS7_set_content(p7, NULL));
+    CHECK_NO_CONTENT(PKCS7_set_digest(p7, EVP_sha256()));
+    PKCS7_free(p7);
+    p7 = NULL;
+
+    if (!TEST_ptr(p7 = pkcs7_without_content(3)))
+        goto end;
+    CHECK_NO_CONTENT(PKCS7_add_recipient_info(p7, ri));
+    CHECK_NO_CONTENT(PKCS7_set_cipher(p7, EVP_aes_128_cbc()));
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    PKCS7_free(p7);
+    PKCS7_SIGNER_INFO_free(si);
+    PKCS7_RECIP_INFO_free(ri);
+    X509_free(cert);
+    X509_CRL_free(crl);
+    return ret;
+# undef CHECK_NO_CONTENT
+# undef CHECK_NO_CONTENT_PTR
+}
+
 int setup_tests(void)
 {
     const char *certin, *privkeyin;
@@ -575,6 +667,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(pkcs7_issuer_and_serial_negative_idx_test);
+    ADD_TEST(pkcs7_missing_optional_content_test);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(pkcs7_verify_test);
     ADD_TEST(pkcs7_inner_content_verify_test);
