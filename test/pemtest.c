@@ -29,6 +29,7 @@ static TESTDATA b64_pem_data[] = {
 static const char *pemtype = "PEMTESTDATA";
 
 static char *pemfile;
+static char *trustedfile;
 
 static int test_b64(int idx)
 {
@@ -152,14 +153,38 @@ err:
     return ret;
 }
 
+static int test_trusted_cert(void)
+{
+    BIO *b = NULL;
+    X509 *x = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(b = BIO_new_file(trustedfile, "r"))
+        || !TEST_ptr_null(x = PEM_read_bio_X509(b, NULL, NULL, NULL)))
+        goto err;
+    BIO_free(b);
+
+    if (!TEST_ptr(b = BIO_new_file(trustedfile, "r"))
+        || !TEST_ptr(x = PEM_read_bio_X509_AUX(b, NULL, NULL, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(x);
+    BIO_free(b);
+    return ret;
+}
+
 int setup_tests(void)
 {
-    if (!TEST_ptr(pemfile = test_get_argument(0)))
+    if (!TEST_ptr(pemfile = test_get_argument(0))
+        || !TEST_ptr(trustedfile = test_get_argument(1)))
         return 0;
     ADD_ALL_TESTS(test_b64, OSSL_NELEM(b64_pem_data));
     ADD_TEST(test_invalid);
     ADD_TEST(test_cert_key_cert);
     ADD_TEST(test_empty_payload);
     ADD_TEST(test_protected_params);
+    ADD_TEST(test_trusted_cert);
     return 1;
 }
