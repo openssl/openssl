@@ -386,11 +386,15 @@ jobs:
             config: no-asm enable-fips
           - name: no-shared
             config: no-shared enable-fips enable-ec_nistp_64_gcc_128
+          # gcc 11's ASan makes every process exit take seconds on aarch64 (LSan walks
+          # a 32-bit-style allocator); gcc 14's runtime does not.
           - name: asan-ubsan
-            config: --debug enable-asan enable-ubsan enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5
+            config: CC=gcc14-gcc CXX=gcc14-g++ --debug enable-asan enable-ubsan enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5
     name: linux-aarch64-graviton4 (${{ matrix.name }})
     env:
       HARNESS_JOBS: 8
+      # On by default in gcc 14's runtime and very slow on aarch64; gcc 11 had it off.
+      ASAN_OPTIONS: detect_stack_use_after_return=0
     steps:
     - uses: actions/checkout@v6
       with:
