@@ -2043,6 +2043,7 @@ static int test_bn2signed(int i)
     uint8_t scratch[10], reversed[10];
     const MPITEST *test = &kSignedTests_BE[i];
     BIGNUM *bn = NULL, *bn2 = NULL;
+    int mpi_len = (int)test->mpi_len;
     int st = 0;
 
     if (!TEST_ptr(bn = BN_new())
@@ -2070,20 +2071,18 @@ static int test_bn2signed(int i)
 
     /* Check the minimum signed big-endian width and reject one byte less. */
     if (test->mpi_len > 0) {
-        if (!TEST_int_eq(BN_signed_bn2bin(bn, scratch, test->mpi_len),
-                test->mpi_len)
-            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
-            || !TEST_int_eq(BN_signed_bn2bin(bn, scratch, test->mpi_len - 1), -1))
+        if (!TEST_int_eq(BN_signed_bn2bin(bn, scratch, mpi_len), mpi_len)
+            || !TEST_mem_eq(test->mpi, mpi_len, scratch, mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn, scratch, mpi_len - 1), -1))
             goto err;
 
         /* Exercise the constant-time path with a public BIGNUM copy. */
         if (!TEST_ptr(bn2 = BN_dup(bn)))
             goto err;
         BN_set_flags(bn2, BN_FLG_CONSTTIME);
-        if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len),
-                test->mpi_len)
-            || !TEST_mem_eq(test->mpi, test->mpi_len, scratch, test->mpi_len)
-            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, test->mpi_len - 1), -1))
+        if (!TEST_int_eq(BN_signed_bn2bin(bn2, scratch, mpi_len), mpi_len)
+            || !TEST_mem_eq(test->mpi, mpi_len, scratch, mpi_len)
+            || !TEST_int_eq(BN_signed_bn2bin(bn2, scratch, mpi_len - 1), -1))
             goto err;
         BN_free(bn2);
         bn2 = NULL;
@@ -2123,26 +2122,20 @@ static int test_bn2signed(int i)
 
     /* Check the minimum signed little-endian width and reject one byte less. */
     if (test->mpi_len > 0) {
-        if (!TEST_int_eq(BN_signed_bn2lebin(bn, scratch, test->mpi_len),
-                test->mpi_len)
+        if (!TEST_int_eq(BN_signed_bn2lebin(bn, scratch, mpi_len), mpi_len)
             || !TEST_true(copy_reversed(reversed, (const uint8_t *)test->mpi,
-                test->mpi_len))
-            || !TEST_mem_eq(reversed, test->mpi_len, scratch, test->mpi_len)
-            || !TEST_int_eq(BN_signed_bn2lebin(bn, scratch,
-                                test->mpi_len - 1),
-                -1))
+                    test->mpi_len))
+            || !TEST_mem_eq(reversed, mpi_len, scratch, mpi_len)
+            || !TEST_int_eq(BN_signed_bn2lebin(bn, scratch, mpi_len - 1), -1))
             goto err;
     }
 
     /* Check the minimum native-endian width and reject one byte less. */
     if (test->mpi_len > 0) {
-        if (!TEST_int_eq(BN_signed_bn2native(bn, scratch, test->mpi_len),
-                test->mpi_len)
-            || !TEST_ptr(bn2 = BN_signed_native2bn(scratch, test->mpi_len, NULL))
+        if (!TEST_int_eq(BN_signed_bn2native(bn, scratch, mpi_len), mpi_len)
+            || !TEST_ptr(bn2 = BN_signed_native2bn(scratch, mpi_len, NULL))
             || !TEST_BN_eq(bn, bn2)
-            || !TEST_int_eq(BN_signed_bn2native(bn, scratch,
-                                test->mpi_len - 1),
-                -1))
+            || !TEST_int_eq(BN_signed_bn2native(bn, scratch, mpi_len - 1), -1))
             goto err;
         BN_free(bn2);
         bn2 = NULL;
