@@ -14,6 +14,7 @@
 #include <openssl/crypto.h>
 #include "internal/numbers.h"
 #include "bio_local.h"
+#include "internal/err_internal.h"
 
 /*
  * Helper macro for the callback to determine whether an operator expects a
@@ -1047,6 +1048,7 @@ int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
     int blocking = timeout <= 0;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
     int rv;
+    ERR_STATE *es;
 
     if (bio == NULL) {
         ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
@@ -1058,7 +1060,8 @@ int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
     BIO_set_nbio(bio, !blocking);
 
 retry:
-    ERR_set_mark();
+    es = ossl_err_get_state();
+    ossl_err_state_set_mark(es);
     rv = BIO_do_connect(bio);
 
     if (rv <= 0) { /* could be timeout or retryable error or fatal error */
@@ -1086,7 +1089,7 @@ retry:
             }
         }
         if (timeout >= 0 && do_retry) {
-            ERR_pop_to_mark();
+            ossl_err_state_pop_to_mark(es);
             /* will not actually wait if timeout == 0 (i.e., blocking BIO): */
             rv = bio_wait(bio, max_time, nap_milliseconds);
             if (rv > 0)
@@ -1094,14 +1097,14 @@ retry:
             ERR_raise(ERR_LIB_BIO,
                 rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
         } else {
-            ERR_clear_last_mark();
+            ossl_err_state_clear_last_mark(es);
             rv = -1;
             if (err == 0) /* missing error queue entry */
                 /* workaround: general error */
                 ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
         }
     } else {
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
     }
 
     return rv;
