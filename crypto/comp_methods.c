@@ -30,7 +30,11 @@ STACK_OF(SSL_COMP) *ossl_load_builtin_compressions(void)
     STACK_OF(SSL_COMP) *comp_methods = NULL;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
-    COMP_METHOD *method = COMP_zlib();
+    COMP_METHOD *method = NULL;
+
+    ERR_set_mark();
+    method = COMP_zlib();
+    ERR_pop_to_mark();
 
     comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 
