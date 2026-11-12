@@ -1857,6 +1857,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             s->ext.ech.backend = 1;
             s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
             OPENSSL_free(s->ext.ech.innerch);
+            s->ext.ech.innerch = NULL;
             s->ext.ech.innerch_len = PACKET_remaining(pkt);
             if (PACKET_peek_bytes(pkt, &pbuf, s->ext.ech.innerch_len) != 1) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
