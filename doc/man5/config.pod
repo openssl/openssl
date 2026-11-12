@@ -318,6 +318,15 @@ B<yes>, this is exactly equivalent to:
 If the value is B<no>, nothing happens. Using this name is deprecated, and
 if used, it must be the only name in the section.
 
+=item B<strict_params>
+
+The value is a boolean that can be B<yes> or B<no>.
+It is passed to L<OSSL_PARAM_set_strict(3)>, which turns strict parameter
+checking on or off for the whole process; see
+L<OSSL_PARAM(3)/Strict checking>.
+If this name is absent, strict parameter checking is left as it is,
+which is off unless the application has turned it on.
+
 =back
 
 =head2 SSL Configuration

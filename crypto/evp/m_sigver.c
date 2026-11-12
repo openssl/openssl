@@ -237,6 +237,9 @@ reinitialize:
         }
     }
 
+    if (!evp_pkey_ctx_check_settable(locpctx, params))
+        goto err;
+
     desc = signature->description != NULL ? signature->description : "";
     if (ver) {
         if (signature->digest_verify_init == NULL) {

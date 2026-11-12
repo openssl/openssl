@@ -16,7 +16,7 @@ OSSL_PARAM_construct_uint32, OSSL_PARAM_construct_uint64,
 OSSL_PARAM_construct_ulong, OSSL_PARAM_construct_BN,
 OSSL_PARAM_construct_utf8_string, OSSL_PARAM_construct_utf8_ptr,
 OSSL_PARAM_construct_octet_string, OSSL_PARAM_construct_octet_ptr,
-OSSL_PARAM_construct_end,
+OSSL_PARAM_construct_end, OSSL_PARAM_set_strict,
 OSSL_PARAM_locate, OSSL_PARAM_locate_const,
 OSSL_PARAM_get_double, OSSL_PARAM_get_int, OSSL_PARAM_get_int32,
 OSSL_PARAM_get_int64, OSSL_PARAM_get_long, OSSL_PARAM_get_size_t,
@@ -74,6 +74,8 @@ OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
  OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
                                            size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_end(void);
+
+ int OSSL_PARAM_set_strict(int strict);
 
  OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *array, const char *key);
  const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *array,
@@ -216,6 +218,13 @@ is created.
 
 OSSL_PARAM_construct_end() is a function that constructs the terminating
 L<OSSL_PARAM(3)> structure.
+
+OSSL_PARAM_set_strict() turns strict parameter checking on for the whole
+process when I<strict> is 1, and off when I<strict> is 0.
+It is off initially.
+While it is on, the functions listed in L<OSSL_PARAM(3)/Strict checking>
+reject any L<OSSL_PARAM(3)> array that contains a key the receiving
+implementation does not list as settable.
 
 OSSL_PARAM_locate() is a function that searches an I<array> of parameters for
 the one matching the I<key> name.
@@ -434,6 +443,8 @@ L<openssl-core.h(7)>, L<OSSL_PARAM(3)>
 These functions were added in OpenSSL 3.0.
 
 OSSL_PARAM_set_octet_string_or_ptr was added in OpenSSL 3.6.
+
+OSSL_PARAM_set_strict() was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

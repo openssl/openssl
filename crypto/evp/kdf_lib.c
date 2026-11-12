@@ -17,6 +17,7 @@
 #include <openssl/core_names.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 #include "internal/param_build_set.h"
@@ -156,6 +157,9 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
     if (ctx == NULL)
         return 0;
 
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_KDF_CTX_settable_params(ctx)))
+        return 0;
     return ctx->meth->derive(ctx->algctx, key, keylen, params);
 }
 
@@ -320,6 +324,9 @@ int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[])
 
 int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
 {
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_KDF_CTX_settable_params(ctx)))
+        return 0;
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->algctx, params);
     return 1;
