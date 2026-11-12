@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "openssl-3.5"
-      - "openssl-3.6"
       - "openssl-4.0"
       - "openssl-4.1"
       - "master"

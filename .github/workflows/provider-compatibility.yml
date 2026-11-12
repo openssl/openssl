@@ -120,11 +120,6 @@ jobs:
             tgz: branch-3.5.tar.gz,
             extra_config: "",
           }, {
-            name: openssl-3.6,
-            dir: branch-3.6,
-            tgz: branch-3.6.tar.gz,
-            extra_config: "enable-lms",
-          }, {
             name: openssl-4.0,
             dir: branch-4.0,
             tgz: branch-4.0.tar.gz,
@@ -208,9 +203,9 @@ jobs:
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
-        tree_a: [ branch-master, branch-4.1, branch-4.0, branch-3.6, branch-3.5,
+        tree_a: [ branch-master, branch-4.1, branch-4.0, branch-3.5,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
-        tree_b: [ branch-master, branch-4.1, branch-4.0, branch-3.6, branch-3.5 ]
+        tree_b: [ branch-master, branch-4.1, branch-4.0, branch-3.5 ]
     steps:
       - name: early exit checks
         id: early_exit
