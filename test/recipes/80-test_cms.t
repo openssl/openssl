@@ -1075,8 +1075,11 @@ subtest "CMS decrypt authEnvelopedData AES-GCM tag length\n" => sub {
 
     # AES-128-GCM authEnvelopedData (KEK) carrying the 12 octet ICV that
     # RFC 5084 section 3.2 allows as its minimum must still decrypt.
+    # The plaintext ends in CRLF, so write it with -binary to keep Windows
+    # text mode from turning it into CR CR LF.
     1 while unlink "gcm_tag12.txt";
     ok(run(app(["openssl", "cms", @defaultprov, "-decrypt", "-inform", "PEM",
+                "-binary",
                 "-secretkey", "000102030405060708090A0B0C0D0E0F",
                 "-secretkeyid", "C0FEE0",
                 "-in", catfile($datadir, "authenveloped_gcm_tag12.pem"),
