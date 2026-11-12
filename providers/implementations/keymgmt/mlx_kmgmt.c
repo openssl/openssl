@@ -55,7 +55,7 @@ static const unsigned char xwing_label[] = {
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
     { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_512,
-        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+        MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
         NULL, 0, NULL, NULL, 0, 0, 0, 64 },
     { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768,
         MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
@@ -65,7 +65,7 @@ static const ECDH_VINFO hybrid_vtable[] = {
         NULL, 0, NULL, NULL, 0, 0, 0, 80 },
 #if !defined(OPENSSL_NO_ECX)
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_512,
-       MLX_COMBINER_CONCAT, MLX_FRAMEWORK_LEGACY_TLS,
+       MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
        NULL, 0, NULL, NULL, 0, 0, 0, 64 },
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768,
         MLX_COMBINER_CONCAT, MLX_FRAMEWORK_TLS_CONCAT,
@@ -1089,5 +1089,5 @@ DECLARE_DISPATCH(x448, 5);
 DECLARE_DISPATCH(curve_sm2, 6);
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ECX)
-DECLARE_DISPATCH(xwing, 5);
+DECLARE_DISPATCH(xwing, MLX_VARIANT_XWING);
 #endif

@@ -85,7 +85,7 @@ typedef struct mlx_key_st {
 #define MLX_HAVE_PRVKEY 2
 
 /* Indices in the MLX variant table. */
-#define MLX_VARIANT_XWING 5
+#define MLX_VARIANT_XWING 7
 
 /* Both key parts have whatever the ML-KEM component has */
 #define mlx_kem_have_pubkey(key) ((key)->state > 0)
