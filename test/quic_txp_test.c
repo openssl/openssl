@@ -1866,6 +1866,13 @@ static int test_control_frame_loss(void)
         || !TEST_true(control_credit(packet, 7, &limit))
         || !TEST_uint64_t_eq(limit, 32))
         goto err;
+    stop->deleted = 1;
+    if (!TEST_true(control_ack(&h, packet->pn, packet->pn))
+        || !TEST_true(stop->acked_stop_sending)
+        || !TEST_false(stop->ready_for_gc)
+        || !TEST_true(ossl_quic_stream_map_gc(&h.qsm, ossl_ms2time(10)))
+        || !TEST_ptr_eq(ossl_quic_stream_map_get_by_id(&h.qsm, 3), stop))
+        goto err;
     testresult = 1;
 err:
     ossl_qrx_pkt_release(packet);

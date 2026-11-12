@@ -3452,10 +3452,10 @@ static int gc_fixture_init(GC_FIXTURE *f)
         || !TEST_true(ossl_quic_txfc_init(&f->tx_connection, NULL))
         || !TEST_true(ossl_quic_rxfc_init(&f->connection, NULL,
             16, 16, gc_now, NULL))
-        || !TEST_true(ossl_quic_rxfc_init(&f->max_bidi, NULL,
-            32, 32, gc_now, NULL))
-        || !TEST_true(ossl_quic_rxfc_init(&f->max_uni, NULL,
-            32, 32, gc_now, NULL))
+        || !TEST_true(ossl_quic_rxfc_init_standalone(&f->max_bidi,
+            32, gc_now, NULL))
+        || !TEST_true(ossl_quic_rxfc_init_standalone(&f->max_uni,
+            32, gc_now, NULL))
         || !TEST_true(ossl_quic_stream_map_init(&f->map, NULL, NULL,
             &f->max_bidi, &f->max_uni, f->ch)))
         return 0;
@@ -3468,6 +3468,11 @@ static QUIC_STREAM *gc_stream_new(GC_FIXTURE *f, uint64_t id)
     QUIC_STREAM *s = ossl_quic_stream_map_alloc(&f->map, id, id & 3);
 
     if (!TEST_ptr(s))
+        return NULL;
+    if (!ossl_quic_stream_is_local_init(s)
+        && !TEST_true(ossl_quic_rxfc_on_rx_stream_frame(
+            ossl_quic_stream_is_bidi(s) ? &f->max_bidi : &f->max_uni,
+            (id >> 2) + 1, 0)))
         return NULL;
     if (ossl_quic_stream_has_send(s)
         && (!TEST_ptr(s->sstream = ossl_quic_sstream_new(256))
@@ -3570,7 +3575,7 @@ static int test_stream_map_gc_states(int idx)
             || !TEST_true(ossl_quic_stream_map_gc(&f.map, ossl_ms2time(10)))
             || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.connection), id == 2 ? 0 : 8)
             || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.max_bidi), 0)
-            || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.max_uni), 0)))
+            || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.max_uni), id == 3)))
         goto err;
     if (idx == 11
         && !TEST_size_t_eq(ossl_quic_stream_map_get_accept_queue_len(&f.map, 1), 1))
@@ -3613,14 +3618,14 @@ err:
 }
 
 /* A failed retirement must retain the object, rather than lose its credit. */
-static int test_stream_map_gc_retire_error(void)
+static int test_stream_map_gc_retire_error(int idx)
 {
     GC_FIXTURE f;
     QUIC_STREAM *s = NULL;
     int testresult = 0;
 
     if (!gc_fixture_init(&f)
-        || !TEST_ptr(s = gc_stream_new(&f, 0))
+        || !TEST_ptr(s = gc_stream_new(&f, idx))
         || !gc_finish_send(&f, s, 1)
         || !TEST_true(ossl_quic_rxfc_on_rx_stream_frame(&s->rxfc, 8, 1))
         || !TEST_true(ossl_quic_stream_map_notify_size_known_recv_part(&f.map, s, 8)))
@@ -3629,10 +3634,23 @@ static int test_stream_map_gc_retire_error(void)
     s->deleted = 1;
     ossl_quic_stream_map_update_state(&f.map, s);
     /* Inject inconsistent internal accounting at the error boundary. */
-    s->rxfc.rwm = 9;
+    if (idx == 0)
+        s->rxfc.rwm = 9;
+    else
+        f.max_bidi.rwm = 1;
     if (!TEST_false(ossl_quic_stream_map_gc(&f.map, ossl_ms2time(10)))
-        || !TEST_ptr_eq(ossl_quic_stream_map_get_by_id(&f.map, 0), s)
-        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.connection), 0))
+        || !TEST_ptr_eq(ossl_quic_stream_map_get_by_id(&f.map, idx), s)
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.connection), idx == 0 ? 0 : 8))
+        goto err;
+    if (idx == 0)
+        s->rxfc.rwm = 0;
+    else
+        f.max_bidi.rwm = 0;
+    if (!TEST_true(ossl_quic_stream_map_gc(&f.map, ossl_ms2time(10)))
+        || !TEST_ptr_null(ossl_quic_stream_map_get_by_id(&f.map, idx))
+        || !TEST_true(ossl_quic_stream_map_gc(&f.map, ossl_ms2time(10)))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.connection), 8)
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&f.max_bidi), idx))
         goto err;
     testresult = 1;
 err:
@@ -3645,13 +3663,13 @@ typedef struct {
     SSL *ssl;
     QUIC_CHANNEL *ch;
     QUIC_STREAM *stream;
-    RXE *packets[2];
-    QUIC_PKT_HDR headers[2];
-    unsigned char wire[2][16];
+    RXE *packets[4];
+    QUIC_PKT_HDR headers[4];
+    unsigned char wire[4][16];
     size_t used;
 } GC_RX_FIXTURE;
 
-static int gc_rx_init(GC_RX_FIXTURE *f)
+static int gc_rx_init(GC_RX_FIXTURE *f, int create_stream)
 {
     QUIC_STREAM *s;
 
@@ -3659,8 +3677,11 @@ static int gc_rx_init(GC_RX_FIXTURE *f)
     if (!TEST_ptr(f->ctx = SSL_CTX_new(OSSL_QUIC_client_method()))
         || !TEST_ptr(f->ssl = SSL_new(f->ctx))
         || !TEST_true(SSL_set_default_stream_mode(f->ssl, SSL_DEFAULT_STREAM_MODE_NONE))
-        || !TEST_ptr(f->ch = ossl_quic_conn_get_channel(f->ssl))
-        || !TEST_ptr(f->stream = ossl_quic_stream_map_alloc(&f->ch->qsm, 0, 0)))
+        || !TEST_ptr(f->ch = ossl_quic_conn_get_channel(f->ssl)))
+        return 0;
+    if (!create_stream)
+        return 1;
+    if (!TEST_ptr(f->stream = ossl_quic_stream_map_alloc(&f->ch->qsm, 0, 0)))
         return 0;
     s = f->stream;
     if (!TEST_ptr(s->sstream = ossl_quic_sstream_new(256))
@@ -3726,7 +3747,7 @@ static int test_stream_gc_receive_progress(int idx)
     int fin = 0, testresult = 0;
     uint64_t final_size = idx == 0 ? 0 : (idx == 3 ? 12 : 8);
 
-    if (!gc_rx_init(&f))
+    if (!gc_rx_init(&f, 1))
         goto err;
     s = f.stream;
     if (idx == 1) {
@@ -3784,7 +3805,7 @@ static int test_stream_gc_receive_guards(int idx)
     const QUIC_TERMINATE_CAUSE *cause;
     int testresult = 0;
 
-    if (!gc_rx_init(&f)
+    if (!gc_rx_init(&f, 1)
         || !TEST_true(ossl_quic_stream_map_stop_sending_recv_part(&f.ch->qsm, f.stream, 0)))
         goto err;
     if (idx == 0 && !TEST_true(gc_rx_frame(&f, fin, sizeof(fin))))
@@ -3799,13 +3820,76 @@ err:
     return gc_rx_cleanup(&f) && testresult;
 }
 
+static int test_stream_gc_stream_credit(int idx)
+{
+    GC_RX_FIXTURE f;
+    QUIC_STREAM *s;
+    QUIC_RXFC *count;
+    SSL *accepted = NULL;
+    const QUIC_TERMINATE_CAUSE *cause;
+    int is_uni = idx & 1, reject = idx >> 1, i, testresult = 0;
+    unsigned char id = is_uni ? 3 : 1;
+    unsigned char opened[] = { 0x0a, id, 0, 0x0a, id + 4, 0 };
+    unsigned char fin[] = { 0x0b, id, 0 };
+    unsigned char reset[] = { 0x04, id, 0, 0 };
+    unsigned char next[] = { 0x0b, id, 0, 0x0a, id + 8, 0 };
+    unsigned char over_limit[] = { 0x0a, id + 12, 0 };
+
+    if (!gc_rx_init(&f, 0)
+        || !TEST_true(ossl_quic_channel_set_max_streams_request(f.ch, 2, is_uni))
+        || !TEST_true(SSL_set_incoming_stream_policy(f.ssl,
+            reject ? SSL_INCOMING_STREAM_POLICY_REJECT : SSL_INCOMING_STREAM_POLICY_ACCEPT, 0))
+        || !TEST_true(gc_rx_frame(&f, opened, sizeof(opened))))
+        goto err;
+    count = is_uni ? &f.ch->max_streams_uni_rxfc : &f.ch->max_streams_bidi_rxfc;
+    for (i = 0; i < 2; ++i) {
+        if (!reject) {
+            if (!TEST_ptr(accepted = SSL_accept_stream(f.ssl, SSL_ACCEPT_STREAM_NO_BLOCK)))
+                goto err;
+            SSL_free(accepted);
+            accepted = NULL;
+        }
+        if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(&f.ch->qsm, id + 4 * i)))
+            goto err;
+        /* Controlled ACK state; packet ACK processing is covered by TXP tests. */
+        s->acked_stop_sending = 1;
+        s->want_stop_sending = 0;
+        if (!is_uni
+            && !TEST_true(ossl_quic_stream_map_notify_reset_stream_acked(&f.ch->qsm, s)))
+            goto err;
+        ossl_quic_stream_map_update_state(&f.ch->qsm, s);
+    }
+    if (!TEST_true(ossl_quic_stream_map_gc(&f.ch->qsm, ossl_ms2time(10)))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(count), 0)
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_cwm(count), 2)
+        || !TEST_size_t_eq(OPENSSL_LH_num_items((OPENSSL_LHASH *)f.ch->qsm.map), 2)
+        || !TEST_true(gc_rx_frame(&f, reject ? reset : fin, reject ? sizeof(reset) : sizeof(fin)))
+        || !TEST_true(ossl_quic_stream_map_gc(&f.ch->qsm, ossl_ms2time(10)))
+        || !TEST_ptr_null(ossl_quic_stream_map_get_by_id(&f.ch->qsm, id))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(count), 1)
+        || !TEST_true(gc_rx_frame(&f, next, sizeof(next)))
+        || !TEST_ptr(ossl_quic_stream_map_get_by_id(&f.ch->qsm, id + 8))
+        || !TEST_true(ossl_quic_stream_map_gc(&f.ch->qsm, ossl_ms2time(10)))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(count), 1)
+        || !TEST_false(gc_rx_frame(&f, over_limit, sizeof(over_limit)))
+        || !TEST_ptr(cause = ossl_quic_channel_get_terminate_cause(f.ch))
+        || !TEST_uint64_t_eq(cause->error_code, OSSL_QUIC_ERR_STREAM_LIMIT_ERROR)
+        || !TEST_size_t_eq(OPENSSL_LH_num_items((OPENSSL_LHASH *)f.ch->qsm.map), 2))
+        goto err;
+    testresult = 1;
+err:
+    SSL_free(accepted);
+    return gc_rx_cleanup(&f) && testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_stream_map_gc_states, 15);
     ADD_TEST(test_stream_map_gc_multiple);
-    ADD_TEST(test_stream_map_gc_retire_error);
+    ADD_ALL_TESTS(test_stream_map_gc_retire_error, 2);
     ADD_ALL_TESTS(test_stream_gc_receive_progress, 4);
     ADD_ALL_TESTS(test_stream_gc_receive_guards, 2);
+    ADD_ALL_TESTS(test_stream_gc_stream_credit, 4);
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
     ADD_ALL_TESTS(test_rstream_simple, 2);
