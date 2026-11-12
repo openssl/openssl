@@ -319,6 +319,15 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
     }
 
     /*
+     * Likewise, if secretlen is specified it must report the length of the
+     * secret buffer, which receives nlen bytes
+     */
+    if (secretlen != NULL && *secretlen < nlen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
+        return 0;
+    }
+
+    /*
      * Step (2): Generate a random byte string z of nlen bytes where
      *            1 < z < n - 1
      */
