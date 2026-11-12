@@ -421,6 +421,48 @@ static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     return allow;
 }
 
+static int execute_msg_check_ca_pubs_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    STACK_OF(X509) *trusted = NULL;
+    int res = 0;
+
+    if (!TEST_true(ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg,
+            fixture->allow_unprotected_cb, 1))
+        || !TEST_ptr(trusted = X509_STORE_get1_all_certs(
+                         OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx)))
+        || !TEST_int_eq(sk_X509_num(trusted), fixture->expected))
+        goto end;
+    res = 1;
+
+end:
+    OSSL_STACK_OF_X509_free(trusted);
+    return res;
+}
+
+static int test_msg_check_ca_pubs(int valid_protection)
+{
+    int num_ca_pubs;
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->allow_unprotected_cb = valid_protection ? NULL : allow_unprotected;
+    if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_1,
+            sizeof(sec_1)))
+        || !TEST_ptr(fixture->msg = load_pkimsg(ip_waiting_f, libctx))
+        || !TEST_int_eq(OSSL_CMP_MSG_get_bodytype(fixture->msg),
+            OSSL_CMP_PKIBODY_IP)
+        || !TEST_int_gt(num_ca_pubs = sk_X509_num(
+                            fixture->msg->body->value.ip->caPubs),
+            0)
+        || (!valid_protection && !TEST_true(flip_bit(fixture->msg->protection)))) {
+        tear_down(fixture);
+        fixture = NULL;
+    } else {
+        fixture->expected = valid_protection ? num_ca_pubs : 0;
+    }
+    EXECUTE_TEST(execute_msg_check_ca_pubs_test, tear_down);
+    return result;
+}
+
 static void setup_check_update(CMP_VFY_TEST_FIXTURE **fixture, int expected,
     ossl_cmp_allow_unprotected_cb_t cb, int arg,
     const OSSL_CMP_MSG *msg,
@@ -795,6 +837,7 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_no_protection_restrictive_cb);
 #endif
     ADD_TEST(test_msg_check_no_protection_permissive_cb);
+    ADD_ALL_TESTS(test_msg_check_ca_pubs, 2);
     ADD_TEST(test_msg_check_transaction_id);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_transaction_id_bad);
