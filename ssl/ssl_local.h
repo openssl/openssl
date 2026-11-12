@@ -3147,6 +3147,13 @@ void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
+/**
+ * @brief Check whether the current write record layer is still needed for
+ * retransmissions.
+ * @param[in] s the DTLS connection
+ * @returns 1 if a message in the sent_messages queue was sent with the
+ *          current write record layer, which then has to be kept, 0 otherwise
+ */
 int dtls1_sent_buffer_uses_current_wrl(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
