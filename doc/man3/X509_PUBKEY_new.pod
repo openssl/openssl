@@ -141,8 +141,8 @@ X509_PUBKEY_get0(), X509_PUBKEY_get(), d2i_PUBKEY_ex(), d2i_PUBKEY(),
 d2i_PUBKEY_ex_bio(), d2i_PUBKEY_bio(), d2i_PUBKEY_ex_fp() and d2i_PUBKEY_fp()
 return a pointer to an B<EVP_PKEY> structure or NULL if an error occurs.
 
-i2d_PUBKEY() returns the number of bytes successfully encoded or a
-negative value if an error occurs.
+i2d_PUBKEY() returns the number of bytes successfully encoded or
+<= 0 if an error occurs.
 
 i2d_PUBKEY_fp() and i2d_PUBKEY_bio() return 1 if successfully
 encoded or 0 if an error occurs.
