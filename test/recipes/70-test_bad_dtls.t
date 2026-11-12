@@ -15,6 +15,9 @@ setup("test_bad_dtls");
 plan skip_all => "DTLSv1 is not supported by this OpenSSL build"
     if disabled("dtls1");
 
+plan skip_all => "MD5 is not supported by this OpenSSL build"
+    if disabled("md5");
+
 plan tests => 1;
 
 ok(run(test(["bad_dtls_test"])), "running bad_dtls_test");
