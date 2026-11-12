@@ -508,6 +508,9 @@ static int buffer_puts(BIO *b, const char *str)
  *
  * Returns the number of bytes sent - the full len for the datagram case, which
  * is all-or-nothing - or 0 / a negative value on a transient or fatal error.
+ * BIO_sendmmsg() does not set retry flags, since the network BIO is shared, so
+ * a transient failure, as BIO_err_is_non_fatal() decides, is reported by
+ * setting the retry flags on this BIO. A fatal one leaves its error queued.
  */
 static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
     const char *data, int len)
@@ -523,10 +526,20 @@ static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
         msg.peer = ctx->peer;
 
         /* Datagrams are all-or-nothing: either the whole chunk goes or none. */
-        if (!BIO_sendmmsg(b->next_bio, &msg, sizeof(msg), 1, 0, &processed)
-            || processed != 1)
-            return -1;
-        return len;
+        ERR_set_mark();
+        if (BIO_sendmmsg(b->next_bio, &msg, sizeof(msg), 1, 0, &processed)
+            && processed == 1) {
+            ERR_clear_last_mark();
+            return len;
+        }
+
+        if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+            ERR_pop_to_mark();
+            BIO_set_retry_write(b);
+        } else {
+            ERR_clear_last_mark();
+        }
+        return -1;
     }
 #endif
     return BIO_write(b->next_bio, data, len);
