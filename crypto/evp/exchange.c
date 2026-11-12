@@ -415,6 +415,12 @@ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
             return -1;
     }
 
+    /* The peer key must be of the same type as our own key */
+    if (!EVP_PKEY_is_a(peer, EVP_KEYMGMT_get0_name(ctx->keymgmt))) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
+        return -1;
+    }
+
     /*
      * Ensure that the |peer| is provided, either natively, or as a cached
      * export.  We start by fetching the keymgmt with the same name as
