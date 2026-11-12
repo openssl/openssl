@@ -153,6 +153,7 @@ static int create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     struct in_addr ina = { 0 };
     BIO *tmpbio = NULL;
     QTEST_DATA *bdata = NULL;
+    int own_bdata = 1;
     SSL_CTX *sctx = NULL;
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
@@ -342,6 +343,7 @@ static int create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
 
     BIO_set_data(fisbio, bdata);
+    own_bdata = 0;
 
     if (!BIO_up_ref(sbio))
         goto err;
@@ -467,7 +469,8 @@ err:
         OPENSSL_free(*fault);
         *fault = NULL;
     }
-    OPENSSL_free(bdata);
+    if (own_bdata)
+        OPENSSL_free(bdata);
     BIO_free(tmpbio);
     if (tracebio != NULL)
         *tracebio = NULL;
@@ -965,7 +968,7 @@ int qtest_check_server_transport_err_ssl(SSL *sconn, uint64_t code)
 
     (void)SSL_handle_events(sconn);
 
-    if (!TEST_true(SSL_get_conn_close_info(sconn, &info, sizeof(info)))
+    if (!TEST_int_eq(SSL_get_conn_close_info(sconn, &info, sizeof(info)), 1)
         || !TEST_false(info.flags & SSL_CONN_CLOSE_FLAG_LOCAL)
         || !TEST_true(info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT)
         || !TEST_uint64_t_eq(info.error_code, code))
