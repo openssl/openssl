@@ -317,6 +317,124 @@ end:
     return res;
 }
 
+static const struct {
+    const char *url;
+    const char *redirect;
+    const char *second_redirect;
+    int expect_sensitive_headers;
+} redirect_header_tests[] = {
+    { "https://server/start", "/relative", NULL, 1 },
+    { "https://server/start", "https://SERVER:443/end", NULL, 1 },
+    { "https://server/start", "https://other/end", NULL, 0 },
+    { "https://server/start", "https://server:444/end", NULL, 0 },
+    { "http://server/start", "https://server/end", NULL, 0 },
+    { "https://server/start", "https://other/middle",
+        "https://server/end", 0 },
+};
+
+typedef struct {
+    const char *redirect;
+    const char *second_redirect;
+    int request_count;
+    int expect_sensitive_headers;
+    int requests_ok;
+} redirect_header_args;
+
+static int request_contains(const char *request, long request_len,
+    const char *text)
+{
+    size_t i, text_len = strlen(text);
+
+    for (i = 0; i + text_len <= (size_t)request_len; i++)
+        if (memcmp(request + i, text, text_len) == 0)
+            return 1;
+    return 0;
+}
+
+static int check_redirect_headers(BIO *bio, int expect_sensitive_headers)
+{
+    const char *request;
+    long request_len = BIO_get_mem_data(bio, (char **)&request);
+
+    return TEST_long_ge(request_len, 0)
+        && TEST_int_eq(request_contains(request, request_len,
+                           "authorization: secret\r\n"),
+            expect_sensitive_headers)
+        && TEST_int_eq(request_contains(request, request_len,
+                           "Cookie: secret\r\n"),
+            expect_sensitive_headers)
+        && TEST_int_eq(request_contains(request, request_len,
+                           "PROXY-AUTHORIZATION: secret\r\n"),
+            expect_sensitive_headers)
+        && TEST_true(request_contains(request, request_len,
+            "X-Test: value\r\n"));
+}
+
+static long http_redirect_header_cb(BIO *bio, int oper, const char *argp,
+    size_t len, int cmd, long argl, int ret, size_t *processed)
+{
+    redirect_header_args *args = (redirect_header_args *)BIO_get_callback_arg(bio);
+    int expect_sensitive_headers;
+
+    if (oper != (BIO_CB_CTRL | BIO_CB_RETURN))
+        return ret;
+    if (cmd == BIO_C_DO_STATE_MACHINE)
+        return 1;
+    if (cmd != BIO_CTRL_FLUSH)
+        return ret;
+
+    expect_sensitive_headers = args->request_count == 0
+        || args->expect_sensitive_headers;
+    args->requests_ok &= check_redirect_headers(bio, expect_sensitive_headers);
+    if (!TEST_int_eq(BIO_reset(bio), 1))
+        return 0;
+    if (args->request_count++ == 0)
+        return BIO_printf(bio, "HTTP/1.0 302 Found\r\nLocation: %s\r\n\r\n",
+                   args->redirect)
+            > 0;
+    if (args->request_count == 2 && args->second_redirect != NULL)
+        return BIO_printf(bio, "HTTP/1.0 302 Found\r\nLocation: %s\r\n\r\n",
+                   args->second_redirect)
+            > 0;
+    return BIO_puts(bio, "HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\n" text1) > 0;
+}
+
+static int test_http_redirect_headers(int idx)
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    BIO *rsp = NULL;
+    STACK_OF(CONF_VALUE) *headers = NULL;
+    redirect_header_args args = { redirect_header_tests[idx].redirect,
+        redirect_header_tests[idx].second_redirect, 0,
+        redirect_header_tests[idx].expect_sensitive_headers, 1 };
+    char buf[sizeof(text1)];
+    int expected_requests = args.second_redirect == NULL ? 2 : 3;
+    int res = 0;
+
+    if (!TEST_ptr(bio)
+        || !TEST_true(X509V3_add_value("authorization", "secret", &headers))
+        || !TEST_true(X509V3_add_value("Cookie", "secret", &headers))
+        || !TEST_true(X509V3_add_value("PROXY-AUTHORIZATION", "secret", &headers))
+        || !TEST_true(X509V3_add_value("X-Test", "value", &headers)))
+        goto end;
+
+    BIO_set_callback_ex(bio, http_redirect_header_cb);
+    BIO_set_callback_arg(bio, (char *)&args);
+    rsp = OSSL_HTTP_get(redirect_header_tests[idx].url, NULL, NULL, bio, NULL,
+        http_noop_update, NULL, 0, headers, NULL, 0,
+        OSSL_HTTP_DEFAULT_MAX_RESP_LEN, 0);
+    res = TEST_ptr(rsp) && TEST_int_eq(args.request_count, expected_requests)
+        && TEST_true(args.requests_ok)
+        && TEST_int_eq(BIO_read(rsp, buf, sizeof(buf)), sizeof(text1) - 1)
+        && TEST_mem_eq(buf, sizeof(text1) - 1, text1, sizeof(text1) - 1);
+
+end:
+    BIO_free(rsp);
+    BIO_free(bio);
+    sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
+    return res;
+}
+
 static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
 {
     BIO *wbio = BIO_new(BIO_s_mem());
@@ -760,6 +878,8 @@ int setup_tests(void)
     ADD_TEST(test_http_get_txt);
     ADD_TEST(test_http_get_txt_redirected);
     ADD_ALL_TESTS(test_http_redirect, OSSL_NELEM(redirect_tests));
+    ADD_ALL_TESTS(test_http_redirect_headers,
+        OSSL_NELEM(redirect_header_tests));
     ADD_TEST(test_http_get_txt_fatal_status);
     ADD_TEST(test_http_get_txt_error_status);
     ADD_TEST(test_http_post_txt);
