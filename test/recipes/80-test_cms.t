@@ -1653,10 +1653,10 @@ subtest "EdDSA -noattr tests for CMS" => sub {
 };
 
 subtest "ML-DSA tests for CMS" => sub {
-    plan tests => 4;
+    plan tests => 6;
 
     SKIP: {
-        skip "ML-DSA is not supported in this build", 4
+        skip "ML-DSA is not supported in this build", 6
             if disabled("ml-dsa") || $no_pqc;
 
         my $sig1 = "sig1.cms";
@@ -1680,14 +1680,24 @@ subtest "ML-DSA tests for CMS" => sub {
                     "-inform", "DER", "-certfile", catfile($smdir, "sm_mldsa44.pem"),
                     "-noverify", "-content", $smcont])),
            "accept CMS verify with ML-DSA-44 and -noattr");
+
+        # ESSCertIDv2 must not inherit the SHAKE256 default digest (XOF)
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-cades", "-in", $smcont,
+                    "-outform", "DER", "-certfile", $smroot,
+                    "-signer", catfile($smdir, "sm_mldsa44.pem"), "-out", $sig1])),
+           "accept CAdES signature with ML-DSA-44");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-cades", "-in", $sig1,
+                    "-inform", "DER", "-CAfile", $smroot, "-content", $smcont])),
+           "accept CAdES verify with ML-DSA-44");
     }
 };
 
 subtest "SLH-DSA tests for CMS" => sub {
-    plan tests => 8;
+    plan tests => 10;
 
     SKIP: {
-        skip "SLH-DSA is not supported in this build", 8
+        skip "SLH-DSA is not supported in this build", 10
             if disabled("slh-dsa") || $no_pqc;
 
         my $sig1 = "sig1.cms";
@@ -1731,6 +1741,15 @@ subtest "SLH-DSA tests for CMS" => sub {
                     "-inform", "DER", "-certfile", catfile($smdir, "sm_slhdsa_shake_256s.pem"),
                     "-noverify", "-content", $smcont])),
            "accept CMS verify with SLH-DSA-SHAKE-256s and -noattr");
+
+        ok(run(app(["openssl", "cms", @prov, "-sign", "-cades", "-md", "shake128",
+                    "-in", $smcont, "-outform", "DER", "-certfile", $smroot,
+                    "-signer", catfile($smdir, "sm_slhdsa_shake_128s.pem"), "-out", $sig1])),
+           "accept CAdES signature with SLH-DSA-SHAKE-128s");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-cades", "-in", $sig1,
+                    "-inform", "DER", "-CAfile", $smroot, "-content", $smcont])),
+           "accept CAdES verify with SLH-DSA-SHAKE-128s");
     }
 };
 
