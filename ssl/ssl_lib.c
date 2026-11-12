@@ -4965,7 +4965,12 @@ X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
     for (idx = 0; idx < cache_len; idx++) {
         find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
         if (!memcmp(find->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH)) {
-            X509_up_ref(find->cert);
+            /*
+             * If for some reason we cant take the reference on the
+             * cert, just don't return one
+             */
+            if (!X509_up_ref(find->cert))
+                break;
             ret = find->cert;
             break;
         }
