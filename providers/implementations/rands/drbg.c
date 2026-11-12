@@ -406,7 +406,7 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
             /*
              * NIST SP800-90Ar1 section 9.1 says you can combine getting
              * the entropy and nonce in 1 call by increasing the entropy
-             * with 50% and increasing the minimum length to accommodate
+             * by 50% and increasing the minimum length to accommodate
              * the length of the nonce. We do this in case a nonce is
              * required and there is no parental nonce capability.
              */
