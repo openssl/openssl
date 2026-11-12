@@ -9,13 +9,20 @@
 
 #include <openssl/err.h>
 #include "err_local.h"
+
+#ifdef OPENSSL_SMALL_FOOTPRINT
+#undef OPENSSL_SMALL_FOOTPRINT
 #include "internal/err_internal.h"
+#define OPENSSL_SMALL_FOOTPRINT
+#else
+#include "internal/err_internal.h"
+#endif
 
 int ERR_set_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(0);
 
-    return ERR_STATE_set_mark(es);
+    return ossl_err_state_set_mark(es);
 }
 
 int ERR_pop(void)
@@ -35,19 +42,19 @@ int ERR_pop_to_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(0);
 
-    return ERR_STATE_pop_to_mark(es);
+    return ossl_err_state_pop_to_mark(es);
 }
 
 int ERR_count_to_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(1);
 
-    return ERR_STATE_count_to_mark(es);
+    return ossl_err_state_count_to_mark(es);
 }
 
 int ERR_clear_last_mark(void)
 {
     ERR_STATE *es = ossl_err_get_state_int(0);
 
-    return ERR_STATE_clear_last_mark(es);
+    return ossl_err_state_clear_last_mark(es);
 }
