@@ -855,10 +855,6 @@ int OSSL_FN_mask_bits(OSSL_FN *a, int n);
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for four temporary OSSL_FNs, max(a->dsize, b->dsize) + 1 limbs
- * each, plus one frame.
  */
 int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
@@ -931,10 +927,6 @@ int OSSL_FN_sub_word(OSSL_FN *a, OSSL_FN_ULONG w);
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with res->dsize limbs, plus one frame
- * (currently 32 bytes).
  */
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
@@ -978,12 +970,6 @@ size_t OSSL_FN_mul_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for 1 frame, 4 numbers, and 4 * max(n->dsize, d->dsize) + 2 limbs.
- * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_div_ctx_size_from_data() or
- * OSSL_FN_div_ctx_size_from_sizes() for a budgeted value.
  */
 int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx);
@@ -1034,11 +1020,6 @@ size_t OSSL_FN_div_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with max(a->dsize, b->dsize) + 1
- * limbs, plus the requirements of OSSL_FN_mod(), plus one frame
- * (currently 32 bytes).
  */
 int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
@@ -1094,11 +1075,6 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for two temporary OSSL_FNs with m->dsize limbs each, plus an
- * additional temporary OSSL_FN with m->dsize limbs if r == m, plus the
- * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
@@ -1157,12 +1133,6 @@ int OSSL_FN_mod_sub_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with a->dsize + b->dsize limbs
- * (or 2 * a->dsize limbs if a == b), plus the largest of the
- * requirements of OSSL_FN_mul(), OSSL_FN_sqr(), and OSSL_FN_mod(),
- * plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
@@ -1208,11 +1178,6 @@ size_t OSSL_FN_mod_mul_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with 2 * a->dsize limbs, plus the
- * larger of the requirements of OSSL_FN_sqr() and OSSL_FN_mod(),
- * plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
@@ -1252,10 +1217,6 @@ size_t OSSL_FN_mod_sqr_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with m->dsize + 1 limbs, plus the
- * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
@@ -1310,10 +1271,6 @@ int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with m->dsize limbs, plus the
- * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
@@ -1435,11 +1392,6 @@ static inline size_t OSSL_FN_mod_ctx_size_from_sizes(size_t r_dsize,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error.
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for six temporary OSSL_FNs with max(a->dsize, n->dsize) limbs
- * each, plus the requirements of OSSL_FN_div() (the loop-body division
- * and the initial/final reductions), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
     OSSL_FN_CTX *ctx);
@@ -1506,10 +1458,6 @@ size_t OSSL_FN_mod_inverse_ctx_size_from_sizes(
  *                              When non-NULL it is borrowed (used as-is, never
  *                              freed here) and its modulus must be |m|.
  * @returns             1 on success, 0 on error.
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with m->dsize limbs, plus one frame,
- * plus the requirements of OSSL_FN_mod_exp_mont().
  */
 int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont);
@@ -1843,10 +1791,6 @@ size_t OSSL_FN_mod_sqrt_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for two temporary OSSL_FNs, a->dsize * 2 limbs each, plus one
- * frame (currently 32 bytes).
  */
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
 
@@ -1935,15 +1879,8 @@ const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont);
  *                              instances from.
  * @returns             1 on success, 0 on error
  *
- * @note This function currently requires that the OSSL_FN_CTX
- * has free space for 2 frame, 7 numbers, and
- * 7 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
- * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_mul_mont_ctx_size_from_data() or
- * OSSL_FN_mul_mont_ctx_size_from_sizes() for a budgeted value.
- *
- * A timing side-channel may leak limb-size misalignment or whether the input
- * operands exceed the modulus. However, this leakage is non-critical and
+ * @note A timing side-channel may leak limb-size misalignment or whether the
+ * input operands exceed the modulus. However, this leakage is non-critical and
  * acceptable from a security perspective.
  */
 int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
@@ -1993,9 +1930,6 @@ size_t OSSL_FN_mul_mont_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that @p ctx has free space for
- * one temporary OSSL_FN with @p mont->N->dsize+2 limbs, plus one frame.
  */
 int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
@@ -2046,11 +1980,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size_from_sizes(
  * @returns             1 on success, 0 on error
  *
  * @note This function requires that @p r and @p mont->N are of
- * the same size and that the OSSL_FN_CTX has free space for 2 frame,
- * 5 numbers, and 5 * max(a->dsize, mont->N->dsize) + 2 limbs.
- * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_to_mont_ctx_size_from_data() or
- * OSSL_FN_to_mont_ctx_size_from_sizes() for a budgeted value.
+ * the same size.
  *
  * A timing side-channel may leak limb-size misalignment or whether @p a
  * exceeds the modulus. However, this leakage is non-critical and acceptable
@@ -2101,8 +2031,6 @@ size_t OSSL_FN_to_mont_ctx_size_from_sizes(
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note The arena requirement is that of OSSL_FN_mul_mont_quick().
  */
 int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
@@ -2151,9 +2079,7 @@ size_t OSSL_FN_to_mont_quick_ctx_size_from_sizes(
  * reduced modulo @p mont->N; any value that fits that limb width (sometimes
  * called "almost reduced") is accepted.  @p a may also be up to twice that
  * size, provided its value is less than @p mont->N * R.  The result is fully
- * reduced.  @p ctx must have free space for one temporary OSSL_FN with
- * mont->N->dsize+2 limbs, or 2*mont->N->dsize limbs if @p a is wider than
- * @p mont->N, plus one frame.
+ * reduced.
  */
 int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
