@@ -183,7 +183,7 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
         && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         /* Trying legacy PUBKEY decoding only if we do not want private key. */
         ret = ossl_d2i_PUBKEY_legacy(x, &p, len);
-    } else if ((selection & EVP_PKEY_KEYPAIR) == 0
+    } else if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0
         && (slen = ossl_pem_check_suffix(nm, "PARAMETERS")) > 0) {
         /* Trying legacy params decoding only if we do not want a key. */
         ret = EVP_PKEY_new();
