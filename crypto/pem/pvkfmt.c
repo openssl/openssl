@@ -653,14 +653,17 @@ static int check_bitlen_rsa(const RSA *rsa, int ispub, unsigned int *pmagic)
         *pmagic = MS_RSA2MAGIC;
 
         /*
-         * For private key each component must fit within nbyte or hnbyte.
+         * For private key each component must be present and fit within
+         * nbyte or hnbyte.
          */
         RSA_get0_key(rsa, NULL, NULL, &d);
-        if (BN_num_bytes(d) > nbyte)
+        if (d == NULL || BN_num_bytes(d) > nbyte)
             goto badkey;
         RSA_get0_factors(rsa, &p, &q);
         RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
-        if ((BN_num_bytes(iqmp) > hnbyte)
+        if (p == NULL || q == NULL || dmp1 == NULL || dmq1 == NULL
+            || iqmp == NULL
+            || (BN_num_bytes(iqmp) > hnbyte)
             || (BN_num_bytes(p) > hnbyte)
             || (BN_num_bytes(q) > hnbyte)
             || (BN_num_bytes(dmp1) > hnbyte)
@@ -713,7 +716,7 @@ static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *pmagic)
             goto badkey;
         *pmagic = MS_DSS1MAGIC;
     } else {
-        if (BN_num_bits(priv_key) > 160)
+        if (priv_key == NULL || BN_num_bits(priv_key) > 160)
             goto badkey;
         *pmagic = MS_DSS2MAGIC;
     }
