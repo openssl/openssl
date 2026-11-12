@@ -393,6 +393,11 @@ The subjectKeyIdentifier must be given for all X.509v3 CA certs.
 
 =back
 
+When CRL checking is also enabled (B<-crl_check> or B<-crl_check_all>),
+a negative CRL Number or Base CRL Number on a CRL selected for revocation
+checking is rejected.
+This does not change CRL parsing or B<openssl crl -text> output.
+
 =item B<-ignore_critical>
 
 Normally if an unhandled critical extension is present that is not
