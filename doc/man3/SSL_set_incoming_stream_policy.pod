@@ -20,7 +20,7 @@ policy
 
 =head1 DESCRIPTION
 
-SSL_set_incoming_stream_policy() policy changes the incoming stream policy for a
+SSL_set_incoming_stream_policy() changes the incoming stream policy for a
 QUIC connection. Depending on the policy configured, OpenSSL QUIC may
 automatically reject incoming streams initiated by the peer. This is intended to
 ensure that legacy applications using single-stream operation with a default
@@ -45,14 +45,15 @@ following rules:
 =item *
 
 If the default stream mode (configured using L<SSL_set_default_stream_mode(3)>)
-is set to B<SSL_DEFAULT_STREAM_MODE_AUTO_BIDI> (the default) or
-B<SSL_DEFAULT_STREAM_MODE_AUTO_UNI>, the incoming stream is rejected.
+is B<SSL_DEFAULT_STREAM_MODE_NONE>, incoming streams are accepted.
 
 =item *
 
-Otherwise (where the default stream mode is B<SSL_DEFAULT_STREAM_MODE_NONE>),
-the application is assumed to be stream aware, and the incoming stream is
-accepted.
+Otherwise, incoming streams are accepted while automatic default stream
+creation remains possible. Once a default stream has been created, or automatic
+default stream creation has been inhibited by a successful call to
+L<SSL_new_stream(3)> or L<SSL_accept_stream(3)>, further incoming streams are
+rejected.
 
 =back
 
@@ -89,7 +90,7 @@ SSL_set_incoming_stream_policy() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
