@@ -272,7 +272,7 @@ static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
             return 0;
     }
 
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size(r, a, p, m, fn_mont);
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, p, m, fn_mont);
     if (fn_size == 0)
         return 0;
 
@@ -280,7 +280,7 @@ static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
     if (fn_ctx == NULL)
         return 0;
     /*
-     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size()
+     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size_from_data()
      * budgets the callee's frames, not a caller frame.
      */
     ret = OSSL_FN_mod_exp_mont(r, a, p, m, fn_ctx, fn_mont);

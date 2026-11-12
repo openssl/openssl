@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 #include "crypto/bn.h" /* For the BN_PRIMETEST_* status codes */
 #include "crypto/fn.h"
+#include "crypto/fn_constants.h" /* ossl_fn_static_zero_storage */
 #include "crypto/fn_intern.h"
 #include "crypto/fnerr.h"
 #include "testutil.h"
@@ -743,6 +744,37 @@ err:
     return ret;
 }
 
+/*
+ * OSSL_FN_size_limbs() reports the allocated width, whatever the value: 0 for
+ * NULL and for the constant zero (whose dsize is 0), and the requested limb
+ * count for an allocated number.
+ */
+static int test_size_limbs(void)
+{
+    /*
+     * The top limb is zero, so the value is narrower than the allocation;
+     * the width must still count it.
+     */
+    static const OSSL_FN_ULONG words[] = { 1, 1, 0 };
+    const size_t limbs = OSSL_NELEM(words);
+    int ret = 0;
+    OSSL_FN *fn = NULL;
+
+    if (!TEST_ptr(fn = OSSL_FN_new_limbs(limbs))
+        || !TEST_true(ossl_fn_set_words(fn, words, limbs)))
+        goto err;
+
+    if (!TEST_size_t_eq(OSSL_FN_size_limbs(NULL), 0)
+        || !TEST_size_t_eq(OSSL_FN_size_limbs(&ossl_fn_static_zero_storage.fn), 0)
+        || !TEST_size_t_eq(OSSL_FN_size_limbs(fn), limbs))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(fn);
+    return ret;
+}
+
 static int test_cmp(void)
 {
     int ret = 0;
@@ -1107,7 +1139,7 @@ static int test_check_prime(int idx)
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_check_prime_ctx_size(w))))
+                         ossl_fn_check_prime_ctx_size_from_data(w))))
         goto err;
     if (!TEST_true(OSSL_FN_set_word(w, c->w)))
         goto err;
@@ -1132,7 +1164,7 @@ static int test_check_generated_prime(int idx)
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_check_generated_prime_ctx_size(w))))
+                         ossl_fn_check_generated_prime_ctx_size_from_data(w))))
         goto err;
     if (!TEST_true(OSSL_FN_set_word(w, c->w)))
         goto err;
@@ -1166,8 +1198,8 @@ static int test_generate_prime(void)
     if (!TEST_ptr(p = OSSL_FN_new_limbs(2))
         || !TEST_ptr(q = OSSL_FN_new_limbs(2))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_generate_prime_ctx_size(p, bits, 1, p,
-                             NULL))))
+                         OSSL_FN_generate_prime_ctx_size_from_data(
+                             p, bits, 1, p, NULL))))
         goto err;
 
     /* Plain generation: exact width, odd, and prime. */
@@ -1236,7 +1268,7 @@ static int test_miller_rabin_enhanced(void)
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
+                         ossl_fn_miller_rabin_is_prime_ctx_size_from_data(w))))
         goto err;
 
     /* A prime reports BN_PRIMETEST_PROBABLY_PRIME. */
@@ -3168,7 +3200,7 @@ static int test_div_quotient_only_common(struct test_case_st test_case)
         || !TEST_true(ossl_fn_set_words(fd, d, d_limbs))
         || !TEST_ptr(fq = OSSL_FN_new_limbs(q_limbs))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_div_ctx_size(fq, NULL, fn, fd)))) {
+                         OSSL_FN_div_ctx_size_from_data(fq, NULL, fn, fd)))) {
         ret = 0;
         goto end;
     }
@@ -4322,7 +4354,10 @@ static int test_mod_inverse(int i)
     struct mod_inv_test_st *tc = &test_mod_inverse_cases[i];
     size_t n_size = tc->n_size;
     size_t a_size = tc->a_size;
-    /* Working width: max of a and n, as in OSSL_FN_mod_inverse_ctx_size(). */
+    /*
+     * Working width: max of a and n, as in
+     * OSSL_FN_mod_inverse_ctx_size_from_data().
+     */
     size_t L = a_size > n_size ? a_size : n_size;
     OSSL_FN_CTX *ctx = NULL;
     OSSL_FN *fa = NULL, *fn = NULL, *r = NULL;
@@ -4549,9 +4584,10 @@ err:
 /*
  * Asymmetric operand widths: dsize(a) != dsize(n), both directions.
  * The ctx for OSSL_FN_mod_inverse() itself is sized exactly by
- * OSSL_FN_mod_inverse_ctx_size(), to prove the helper's estimate holds
- * when the operand widths differ.  The defining property  r * a == 1 (mod n)
- * is the oracle, checked with a separately, generously sized ctx.
+ * OSSL_FN_mod_inverse_ctx_size_from_data(), to prove the helper's estimate
+ * holds when the operand widths differ.  The defining property
+ * r * a == 1 (mod n)  is the oracle, checked with a separately, generously
+ * sized ctx.
  */
 static int test_mod_inverse_asym(int i)
 {
@@ -4587,7 +4623,7 @@ static int test_mod_inverse_asym(int i)
         goto err;
 
     /* Size the ctx from the actual operands via the helper. */
-    size = OSSL_FN_mod_inverse_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_ctx_size_from_data(r, fa, fn);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -4623,10 +4659,10 @@ err:
 }
 
 /*
- * Validate OSSL_FN_mod_inverse_ctx_size(): allocate the ctx from the helper
- * and confirm the operation succeeds within that budget (an under-estimate
- * would make the operation fail).  Peak usage is recorded as instrumentation
- * and must show that at least one frame was actually used.
+ * Validate OSSL_FN_mod_inverse_ctx_size_from_data(): allocate the ctx from the
+ * helper and confirm the operation succeeds within that budget (an
+ * under-estimate would make the operation fail).  Peak usage is recorded as
+ * instrumentation and must show that at least one frame was actually used.
  * Uses the wide secp128r1 case so the estimate is exercised non-trivially.
  */
 static int test_mod_inverse_ctx_size(void)
@@ -4652,7 +4688,7 @@ static int test_mod_inverse_ctx_size(void)
         goto err;
 
     /* Size the ctx from the actual operands via the helper. */
-    size = OSSL_FN_mod_inverse_ctx_size(r, fa, fn);
+    size = OSSL_FN_mod_inverse_ctx_size_from_data(r, fa, fn);
     if (!TEST_size_t_ne(size, 0))
         goto err;
 
@@ -4707,9 +4743,9 @@ err:
  * defining property  r * a == 1 (mod m)  is one oracle, and
  * OSSL_FN_mod_inverse() (extended Euclid, an independent algorithm) is
  * another, valid here because the moduli are prime.  The operation's own
- * ctx is sized exactly by OSSL_FN_mod_inverse_prime_ctx_size(..., NULL), which
- * doubles as a budget proof; the oracles use a separately, generously
- * sized ctx.
+ * ctx is sized exactly by
+ * OSSL_FN_mod_inverse_prime_ctx_size_from_data(..., NULL), which doubles as a
+ * budget proof; the oracles use a separately, generously sized ctx.
  */
 
 static struct mod_inv_test_st test_mod_inverse_prime_cases[] = {
@@ -4756,7 +4792,7 @@ static int test_mod_inverse_prime(int i)
         goto err;
 
     /* Size the ctx from the actual operands via the helper. */
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -4822,7 +4858,7 @@ static int test_mod_inverse_prime_zero(void)
     if (!TEST_true(pollute(r, 0, n_size)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -4862,7 +4898,7 @@ static int test_mod_inverse_prime_even_modulus(void)
         || !TEST_true(ossl_fn_set_words(fn, inv_n4, LIMBSOF(inv_n4))))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -4910,7 +4946,7 @@ static int test_mod_inverse_prime_alias_a(void)
         || !TEST_true(ossl_fn_set_words(check, inv_a3, LIMBSOF(inv_a3))))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(fa, fa, fn, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(fa, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -4977,7 +5013,7 @@ static int test_mod_inverse_prime_result_size(int i)
     if (!TEST_true(pollute(r, 0, r_size)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -5019,8 +5055,9 @@ err:
 
 /*
  * Asymmetric operand widths: dsize(a) != dsize(m), both directions, with
- * the ctx sized exactly by OSSL_FN_mod_inverse_prime_ctx_size(..., NULL).  The
- * defining property  r * a == 1 (mod m)  is the oracle.
+ * the ctx sized exactly by
+ * OSSL_FN_mod_inverse_prime_ctx_size_from_data(..., NULL).  The defining
+ * property  r * a == 1 (mod m)  is the oracle.
  */
 static int test_mod_inverse_prime_asym(int i)
 {
@@ -5055,7 +5092,7 @@ static int test_mod_inverse_prime_asym(int i)
     if (!TEST_true(pollute(r, 0, m_size)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fm, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fm, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -5091,12 +5128,11 @@ err:
 }
 
 /*
- * Validate OSSL_FN_mod_inverse_prime_ctx_size(..., NULL): allocate the ctx from the
- * helper and confirm the operation succeeds within that budget (an
- * under-estimate would make the operation fail).  Peak usage is recorded
- * as instrumentation and must show that at least one frame was actually
- * used.  Uses the wide secp128r1 case so the estimate is exercised
- * non-trivially.
+ * Validate OSSL_FN_mod_inverse_prime_ctx_size_from_data(..., NULL): allocate
+ * the ctx from the helper and confirm the operation succeeds within that budget
+ * (an under-estimate would make the operation fail).  Peak usage is recorded as
+ * instrumentation and must show that at least one frame was actually used.
+ * Uses the wide secp128r1 case so the estimate is exercised non-trivially.
  */
 static int test_mod_inverse_prime_ctx_size(void)
 {
@@ -5125,7 +5161,7 @@ static int test_mod_inverse_prime_ctx_size(void)
         || !TEST_true(ossl_fn_set_words(one, &one_word, 1)))
         goto err;
 
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, NULL);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fn, NULL);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -5207,7 +5243,7 @@ static int test_mod_inverse_prime_in_mont(void)
         goto err;
 
     /* The reused-context and NULL-in_mont sizes are the same. */
-    size = OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fn, mont);
+    size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fn, mont);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     ctx = OSSL_FN_CTX_new_size(NULL, size);
@@ -5473,7 +5509,7 @@ static int test_mod_exp_common(struct mod_exp_test_st *tc)
         goto err;
 
     /* Validate the ctx-size helper by allocating the function ctx from it. */
-    size = OSSL_FN_mod_exp_ctx_size(r_got, fa, fp, fm);
+    size = OSSL_FN_mod_exp_ctx_size_from_data(r_got, fa, fp, fm);
     if (!TEST_size_t_ne(size, 0))
         goto err;
     if (!TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size)))
@@ -5541,7 +5577,7 @@ static int test_mod_exp_alias(int alias_p)
         || !TEST_true(ossl_fn_set_words(fm, exp_m7, m_size)))
         goto err;
 
-    size = OSSL_FN_mod_exp_ctx_size(alias_p ? fp : fa, fa, fp, fm);
+    size = OSSL_FN_mod_exp_ctx_size_from_data(alias_p ? fp : fa, fa, fp, fm);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
         || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 16, 16 * m_size + 16)))
@@ -5727,7 +5763,7 @@ static int test_mod_exp_result_size(int i)
         || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
         goto err;
 
-    size = OSSL_FN_mod_exp_ctx_size(r_got, fa, fp, fm);
+    size = OSSL_FN_mod_exp_ctx_size_from_data(r_got, fa, fp, fm);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
         || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 16, 16 * m_size + 16)))
@@ -5760,8 +5796,8 @@ err:
 }
 
 /*
- * Validate OSSL_FN_mod_exp_ctx_size(): allocate from the helper and confirm
- * the operation succeeds with peak usage within the budgeted arena.
+ * Validate OSSL_FN_mod_exp_ctx_size_from_data(): allocate from the helper and
+ * confirm the operation succeeds with peak usage within the budgeted arena.
  */
 static int test_mod_exp_ctx_size(void)
 {
@@ -5787,7 +5823,7 @@ static int test_mod_exp_ctx_size(void)
         || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
         goto err;
 
-    size = OSSL_FN_mod_exp_ctx_size(r, fa, fp, fm);
+    size = OSSL_FN_mod_exp_ctx_size_from_data(r, fa, fp, fm);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
         goto err;
@@ -5861,7 +5897,7 @@ static int test_mod_exp_mont_in_mont(void)
     /* Size the arena for the mont path with the reused context.  The NULL
      * in_mont case is the same size (see mod_exp_mont_nested()), so the NULL
      * call below fits this arena too. */
-    size = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, mont);
+    size = OSSL_FN_mod_exp_mont_ctx_size_from_data(r, fa, fp, fm, mont);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
         || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 16, 16 * m_size + 16)))
@@ -6018,7 +6054,7 @@ static int test_mont_ctx_set_locked(void)
         goto err;
 
     /* The cached context is usable for modular exponentiation. */
-    size = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, mont);
+    size = OSSL_FN_mod_exp_mont_ctx_size_from_data(r, fa, fp, fm, mont);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
         || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 16, 16 * m_size + 16)))
@@ -6047,10 +6083,13 @@ err:
 }
 
 /*
- * OSSL_FN_mod_exp_mont_ctx_size(): the mont-only size must be positive, must
- * not exceed the dispatcher size (the dispatcher budgets the larger of the
- * mont and simple paths), and must not depend on whether in_mont is NULL or
- * a real reused context (the operand modelling makes them the same).
+ * OSSL_FN_mod_exp_mont_ctx_size_from_data(): the mont-only size must be
+ * positive, must not exceed the dispatcher size (the dispatcher budgets the
+ * larger of the mont and simple paths), and with the current implementation
+ * does not depend on whether in_mont is NULL or a real reused context.  The
+ * *_from_sizes() companions of OSSL_FN_mod_exp_mont() and
+ * OSSL_FN_mod_inverse_prime() reject a context modulus width other than the
+ * modulus', as the operators reject such a context.
  */
 static int test_mod_exp_mont_ctx_size(void)
 {
@@ -6078,18 +6117,32 @@ static int test_mod_exp_mont_ctx_size(void)
     if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm)))
         goto err;
 
-    sz_null = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, NULL);
-    sz_mont = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, mont);
-    sz_disp = OSSL_FN_mod_exp_ctx_size(r, fa, fp, fm);
+    sz_null = OSSL_FN_mod_exp_mont_ctx_size_from_data(r, fa, fp, fm, NULL);
+    sz_mont = OSSL_FN_mod_exp_mont_ctx_size_from_data(r, fa, fp, fm, mont);
+    sz_disp = OSSL_FN_mod_exp_ctx_size_from_data(r, fa, fp, fm);
     if (!TEST_size_t_ne(sz_null, 0)
         || !TEST_size_t_ne(sz_mont, 0)
         || !TEST_size_t_ne(sz_disp, 0))
         goto err;
-    /* NULL and real in_mont produce the same arena size. */
+    /* NULL and real in_mont currently produce the same arena size. */
     if (!TEST_size_t_eq(sz_null, sz_mont))
         goto err;
+    /* The width-based companions agree, and reject a mismatched context. */
+    if (!TEST_size_t_eq(OSSL_FN_mod_exp_mont_ctx_size_from_sizes(m_size, L,
+                            p_size, m_size, m_size),
+            sz_mont)
+        || !TEST_size_t_eq(OSSL_FN_mod_exp_mont_ctx_size_from_sizes(m_size, L,
+                               p_size, m_size, m_size + 1),
+            0)
+        || !TEST_size_t_ne(OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(m_size,
+                               L, m_size, m_size),
+            0)
+        || !TEST_size_t_eq(OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(m_size,
+                               L, m_size, m_size + 1),
+            0))
+        goto err;
     /* The dispatcher budgets the larger of the mont and simple paths. */
-    sz_simple = OSSL_FN_mod_exp_simple_ctx_size(r, fa, fp, fm);
+    sz_simple = OSSL_FN_mod_exp_simple_ctx_size_from_data(r, fa, fp, fm);
     if (!TEST_size_t_ne(sz_simple, 0)
         || !TEST_size_t_eq(sz_disp,
             sz_mont > sz_simple ? sz_mont : sz_simple))
@@ -6160,7 +6213,7 @@ static int test_kronecker(int i)
         goto err;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_kronecker_ctx_size(fa, fb))))
+                      OSSL_FN_kronecker_ctx_size_from_data(fa, fb))))
         goto err;
 
     if (!TEST_int_eq(OSSL_FN_kronecker(fa, fb, ctx), expected))
@@ -6232,8 +6285,8 @@ static int test_kronecker_legendre(int i)
      * pre-setting for them (fp's low limb, which selects the mod_exp
      * path, is already set above).
      */
-    size_t ksz = OSSL_FN_kronecker_ctx_size(fa, fp);
-    size_t esz = OSSL_FN_mod_exp_ctx_size(r, fa, exp, fp);
+    size_t ksz = OSSL_FN_kronecker_ctx_size_from_data(fa, fp);
+    size_t esz = OSSL_FN_mod_exp_ctx_size_from_data(r, fa, exp, fp);
     size_t sz = ksz > esz ? ksz : esz;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
@@ -6339,8 +6392,8 @@ static int test_kronecker_legendre_wide(int i)
      * ctx must hold both kronecker's and mod_exp's scratch needs.
      * Size for the larger of the two (mod_exp typically needs more).
      */
-    ksz = OSSL_FN_kronecker_ctx_size(fa, fp);
-    esz = OSSL_FN_mod_exp_ctx_size(r, fa, exp, fp);
+    ksz = OSSL_FN_kronecker_ctx_size_from_data(fa, fp);
+    esz = OSSL_FN_mod_exp_ctx_size_from_data(r, fa, exp, fp);
     sz = ksz > esz ? ksz : esz;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
@@ -6419,7 +6472,7 @@ static int test_mod_sqrt(int i)
         || !TEST_true(OSSL_FN_set_word(fp, p)))
         goto err;
 
-    size_t sz = OSSL_FN_mod_sqrt_ctx_size(r, fa, fp);
+    size_t sz = OSSL_FN_mod_sqrt_ctx_size_from_data(r, fa, fp);
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
         goto err;
@@ -6492,7 +6545,7 @@ static int test_mod_sqrt_result_truncation(void)
         || !TEST_true(ossl_fn_set_words(fp, mod_sqrt_wide_prime, p_limbs)))
         goto err;
 
-    size_t sz = OSSL_FN_mod_sqrt_ctx_size(r, fa, fp);
+    size_t sz = OSSL_FN_mod_sqrt_ctx_size_from_data(r, fa, fp);
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
         goto err;
 
@@ -6698,8 +6751,9 @@ static int test_x931_generate_Xpq(void)
         || !TEST_ptr(diff = OSSL_FN_new_limbs(limbs)))
         goto err;
 
-    if (!TEST_size_t_eq(OSSL_FN_X931_generate_Xpq_ctx_size(NULL), 0)
-        || !TEST_size_t_gt(size = OSSL_FN_X931_generate_Xpq_ctx_size(Xp), 0)
+    if (!TEST_size_t_eq(OSSL_FN_X931_generate_Xpq_ctx_size_from_data(NULL), 0)
+        || !TEST_size_t_gt(
+            size = OSSL_FN_X931_generate_Xpq_ctx_size_from_data(Xp), 0)
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
         goto err;
 
@@ -6777,7 +6831,8 @@ static int test_x931_derive_prime(void)
         || !TEST_true(OSSL_FN_set_word(even_e, 2)))
         goto err;
 
-    size = OSSL_FN_X931_derive_prime_ctx_size(p, p1, p2, Xp, Xp1, Xp2, e);
+    size = OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        p, p1, p2, Xp, Xp1, Xp2, e);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
         goto err;
@@ -6885,7 +6940,7 @@ static int test_x931_generate_prime(void)
         || !TEST_true(OSSL_FN_set_word(e, 65537)))
         goto err;
 
-    size = OSSL_FN_X931_generate_prime_ctx_size(p, p1, p2, Xp, e);
+    size = OSSL_FN_X931_generate_prime_ctx_size_from_data(p, p1, p2, Xp, e);
     if (!TEST_size_t_ne(size, 0)
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
         goto err;
@@ -7026,30 +7081,30 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mul(r, NULL, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul(r, a, b, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size(NULL, a, b));
-    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size(r, NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size_from_data(NULL, a, b));
+    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size_from_data(r, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_mul_ctx_size_from_data(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_sqr(NULL, a, ctx));
     CHECK_NO_CRASH(OSSL_FN_sqr(r, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_sqr(r, a, NULL));
-    CHECK_NO_CRASH(OSSL_FN_sqr_ctx_size(NULL, a));
-    CHECK_NO_CRASH(OSSL_FN_sqr_ctx_size(r, NULL));
+    CHECK_NO_CRASH(OSSL_FN_sqr_ctx_size_from_data(NULL, a));
+    CHECK_NO_CRASH(OSSL_FN_sqr_ctx_size_from_data(r, NULL));
     CHECK_NO_CRASH(OSSL_FN_div(NULL, r, a, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_div(r, NULL, a, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_div(b, r, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_div(b, r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_div(b, r, a, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(NULL, r, a, m));
-    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(b, NULL, a, m));
-    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(b, r, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_div_ctx_size(b, r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size_from_data(NULL, r, a, m));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size_from_data(b, NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size_from_data(b, r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_div_ctx_size_from_data(b, r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod(NULL, a, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod(r, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod(r, a, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size(NULL, a, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size(r, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size_from_data(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size_from_data(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_ctx_size_from_data(r, a, NULL));
 
     /* fn_mod.c */
     CHECK_NO_CRASH(OSSL_FN_mod_add(NULL, a, b, m, ctx));
@@ -7057,10 +7112,10 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_add(r, a, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_add(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_add(r, a, b, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(NULL, a, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(r, NULL, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(r, a, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size_from_data(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size_from_data(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size_from_data(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_add_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_add_quick(NULL, a, b, m));
     CHECK_NO_CRASH(OSSL_FN_mod_add_quick(r, NULL, b, m));
     CHECK_NO_CRASH(OSSL_FN_mod_add_quick(r, a, NULL, m));
@@ -7070,10 +7125,10 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_sub(r, a, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sub(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sub(r, a, b, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(NULL, a, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(r, NULL, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(r, a, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size_from_data(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size_from_data(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size_from_data(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sub_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(NULL, a, b, m));
     CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(r, NULL, b, m));
     CHECK_NO_CRASH(OSSL_FN_mod_sub_quick(r, a, NULL, m));
@@ -7083,24 +7138,24 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_mul(r, a, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_mul(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_mul(r, a, b, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(NULL, a, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(r, NULL, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(r, a, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size_from_data(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size_from_data(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size_from_data(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_mul_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_sqr(NULL, a, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sqr(r, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sqr(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sqr(r, a, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size(NULL, a, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size(r, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size_from_data(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size_from_data(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqr_ctx_size_from_data(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1(NULL, a, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1(r, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1(r, a, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size(NULL, a, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size(r, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size_from_data(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size_from_data(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift1_ctx_size_from_data(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1_quick(NULL, a, m));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1_quick(r, NULL, m));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift1_quick(r, a, NULL));
@@ -7108,9 +7163,9 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_lshift(r, NULL, 1, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift(r, a, 1, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift(r, a, 1, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size(NULL, a, 1, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size(r, NULL, 1, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size(r, a, 1, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size_from_data(NULL, a, 1, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size_from_data(r, NULL, 1, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_lshift_ctx_size_from_data(r, a, 1, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift_quick(NULL, a, 1, m));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift_quick(r, NULL, 1, m));
     CHECK_NO_CRASH(OSSL_FN_mod_lshift_quick(r, a, 1, NULL));
@@ -7120,9 +7175,9 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_inverse(r, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_inverse(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_inverse(r, a, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size(NULL, a, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size(r, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size_from_data(NULL, a, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size_from_data(r, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_ctx_size_from_data(r, a, NULL));
 
     /* fn_exp.c */
     CHECK_NO_CRASH(OSSL_FN_mod_exp(NULL, a, b, m, ctx));
@@ -7130,54 +7185,58 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_exp(r, a, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_exp(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_exp(r, a, b, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(NULL, a, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(r, NULL, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(r, a, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size_from_data(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size_from_data(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size_from_data(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(NULL, a, b, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, NULL, b, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, a, NULL, m, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_simple(r, a, b, m, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(NULL, a, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(r, NULL, b, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(r, a, NULL, m));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size_from_data(NULL, a, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size_from_data(r, NULL, b, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size_from_data(r, a, NULL, m));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_simple_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(NULL, a, b, m, ctx, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, NULL, b, m, ctx, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, NULL, m, ctx, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, b, NULL, ctx, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, b, m, NULL, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_exp_mont(r, a, b, m, ctx, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(NULL, a, b, m, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, NULL, b, m, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, a, NULL, m, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, a, b, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size(r, a, b, m, NULL));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(NULL, a, b, m, mont));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(r, NULL, b, m, mont));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, NULL, m, mont));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, b, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_exp_mont_ctx_size_from_data(r, a, b, m, NULL));
 
     /* fn_sqrt.c */
     CHECK_NO_CRASH(OSSL_FN_mod_sqrt(NULL, a, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sqrt(r, NULL, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sqrt(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mod_sqrt(r, a, b, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size(NULL, a, b));
-    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size(r, NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size_from_data(NULL, a, b));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size_from_data(r, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_mod_sqrt_ctx_size_from_data(r, a, NULL));
 
     /* fn_gcd.c */
     CHECK_NO_CRASH(OSSL_FN_gcd(NULL, a, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_gcd(r, NULL, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_gcd(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_gcd(r, a, b, NULL));
-    CHECK_NO_CRASH(OSSL_FN_gcd_ctx_size(NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_gcd_ctx_size(a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_gcd_ctx_size_from_data(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_gcd_ctx_size_from_data(a, NULL));
 
     /* fn_kron.c */
     CHECK_NO_CRASH(OSSL_FN_kronecker(NULL, b, ctx));
     CHECK_NO_CRASH(OSSL_FN_kronecker(a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_kronecker(a, b, NULL));
-    CHECK_NO_CRASH(OSSL_FN_kronecker_ctx_size(NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_kronecker_ctx_size(a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_kronecker_ctx_size_from_data(NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_kronecker_ctx_size_from_data(a, NULL));
 
     /* fn_rand.c */
     CHECK_NO_CRASH(OSSL_FN_rand(NULL, 0, 0, 0, 0, NULL));
@@ -7207,47 +7266,47 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont(r, a, b, mont, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(NULL, a, b, mont));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(r, NULL, b, mont));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(r, a, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size_from_data(NULL, a, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size_from_data(r, NULL, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size_from_data(r, a, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(NULL, a, b, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, NULL, b, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, a, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, a, b, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mul_mont_quick(r, a, b, mont, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(NULL, a, b, mont));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(r, NULL, b, mont));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(r, a, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size(r, a, b, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, a, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size_from_data(r, NULL, b, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size_from_data(r, a, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mul_mont_quick_ctx_size_from_data(r, a, b, NULL));
     CHECK_NO_CRASH(OSSL_FN_to_mont(NULL, a, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_to_mont(r, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_to_mont(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_to_mont(r, a, mont, NULL));
-    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(NULL, a, mont));
-    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(r, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size_from_data(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size_from_data(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_ctx_size_from_data(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_to_mont_quick(NULL, a, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_to_mont_quick(r, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_to_mont_quick(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_to_mont_quick(r, a, mont, NULL));
-    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size(NULL, a, mont));
-    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size(r, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size_from_data(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size_from_data(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_to_mont_quick_ctx_size_from_data(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_from_mont(NULL, a, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_from_mont(r, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_from_mont(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_from_mont(r, a, mont, NULL));
-    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(NULL, a, mont));
-    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size_from_data(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size_from_data(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_from_mont_ctx_size_from_data(r, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_mont_reduce(NULL, a, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, NULL, mont, ctx));
     CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, a, NULL, ctx));
     CHECK_NO_CRASH(OSSL_FN_mont_reduce(r, a, mont, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(NULL, a, mont));
-    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(r, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size(r, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size_from_data(NULL, a, mont));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size_from_data(r, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mont_reduce_ctx_size_from_data(r, a, NULL));
 
     /* fn_lib.c word accessors */
     CHECK_NO_CRASH(OSSL_FN_get_word(NULL));
@@ -7260,10 +7319,13 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, a, NULL, ctx, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, a, m, NULL, mont));
     CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime(r, a, m, ctx, NULL));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(NULL, a, m, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(r, NULL, m, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(r, a, NULL, mont));
-    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size(r, a, m, NULL));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_inverse_prime_ctx_size_from_data(NULL, a, m, mont));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, NULL, m, mont));
+    CHECK_NO_CRASH(
+        OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, a, NULL, mont));
+    CHECK_NO_CRASH(OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, a, m, NULL));
 
     /*
      * fn_prime.c / fn_x931p.c: this is only a crash smoke test, so none of the
@@ -7281,13 +7343,13 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_generate_prime(r, 0, 0, NULL, b, NULL, ctx, NULL));
     CHECK_NO_CRASH(OSSL_FN_generate_prime(r, 0, 0, a, NULL, NULL, ctx, NULL));
     CHECK_NO_CRASH(OSSL_FN_generate_prime(r, 0, 0, a, b, NULL, NULL, NULL));
-    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size(NULL, 0, 0, a, b));
-    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size(r, 0, 0, NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size(r, 0, 0, a, NULL));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size_from_data(NULL, 0, 0, a, b));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size_from_data(r, 0, 0, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_generate_prime_ctx_size_from_data(r, 0, 0, a, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq(NULL, b, 0, ctx, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq(r, NULL, 0, ctx, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq(r, b, 0, NULL, NULL));
-    CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq_ctx_size(NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_generate_Xpq_ctx_size_from_data(NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(NULL, b, a, xseed, xseed, xseed, even, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, NULL, a, xseed, xseed, xseed, even, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, NULL, xseed, xseed, xseed, even, ctx, NULL, NULL));
@@ -7296,11 +7358,16 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, xseed, NULL, even, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, xseed, xseed, NULL, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_generate_prime(r, b, a, xseed, xseed, xseed, even, NULL, NULL, NULL));
-    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(NULL, b, a, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, NULL, a, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, b, NULL, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, b, a, NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_generate_prime_ctx_size(r, b, a, m, NULL));
+    CHECK_NO_CRASH(
+        OSSL_FN_X931_generate_prime_ctx_size_from_data(NULL, b, a, m, b));
+    CHECK_NO_CRASH(
+        OSSL_FN_X931_generate_prime_ctx_size_from_data(r, NULL, a, m, b));
+    CHECK_NO_CRASH(
+        OSSL_FN_X931_generate_prime_ctx_size_from_data(r, b, NULL, m, b));
+    CHECK_NO_CRASH(
+        OSSL_FN_X931_generate_prime_ctx_size_from_data(r, b, a, NULL, b));
+    CHECK_NO_CRASH(
+        OSSL_FN_X931_generate_prime_ctx_size_from_data(r, b, a, m, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(NULL, b, a, m, range, m, even, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, NULL, a, m, range, m, even, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, NULL, m, range, m, even, ctx, NULL, NULL));
@@ -7309,13 +7376,20 @@ static int test_null_params(void)
     CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, range, NULL, even, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, range, m, NULL, ctx, NULL, NULL));
     CHECK_NO_CRASH(OSSL_FN_X931_derive_prime(r, b, a, m, range, m, even, NULL, NULL, NULL));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(NULL, b, a, m, range, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, NULL, a, m, range, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, NULL, m, range, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, NULL, range, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, m, NULL, m, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, m, range, NULL, b));
-    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size(r, b, a, m, range, m, NULL));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        NULL, b, a, m, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        r, NULL, a, m, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        r, b, NULL, m, range, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        r, b, a, NULL, range, m, b));
+    CHECK_NO_CRASH(
+        OSSL_FN_X931_derive_prime_ctx_size_from_data(r, b, a, m, NULL, m, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        r, b, a, m, range, NULL, b));
+    CHECK_NO_CRASH(OSSL_FN_X931_derive_prime_ctx_size_from_data(
+        r, b, a, m, range, m, NULL));
 
     /* fn_ctx.c */
     CHECK_NO_CRASH(token = OSSL_FN_CTX_start(NULL));
@@ -7367,6 +7441,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sub, 18);
     ADD_ALL_TESTS(test_sub_truncated, 18);
     ADD_TEST(test_num_bits);
+    ADD_TEST(test_size_limbs);
     ADD_TEST(test_cmp);
     ADD_TEST(test_introspection);
     ADD_TEST(test_get_word);

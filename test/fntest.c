@@ -194,7 +194,7 @@ static int file_product(STANZA *s)
         goto err;
     r_acq = 1;
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mul_ctx_size(rf, af, bf))))
+                      OSSL_FN_mul_ctx_size_from_data(rf, af, bf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_mul(rf, af, bf, ctx)))
@@ -239,7 +239,7 @@ static int file_square(STANZA *s)
         goto err;
     r_acq = 1;
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_sqr_ctx_size(rf, af))))
+                      OSSL_FN_sqr_ctx_size_from_data(rf, af))))
         goto err;
 
     if (!TEST_true(OSSL_FN_sqr(rf, af, ctx)))
@@ -300,9 +300,9 @@ static int file_quotient(STANZA *s)
         goto err;
     m_acq = 1;
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_div_ctx_size(qf, rf, af, bf)))
+                      OSSL_FN_div_ctx_size_from_data(qf, rf, af, bf)))
         || !TEST_ptr(mod_ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_mod_ctx_size(mf, af, bf))))
+                         OSSL_FN_mod_ctx_size_from_data(mf, af, bf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_div(qf, rf, af, bf, ctx)))
@@ -375,7 +375,7 @@ static int file_lshift1(STANZA *s)
         goto err;
     r_acq = 1;
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mul_ctx_size(rf, af, tf))))
+                      OSSL_FN_mul_ctx_size_from_data(rf, af, tf))))
         goto err;
 
     /* A + A == LShift1 */
@@ -605,7 +605,7 @@ static int file_modmul(STANZA *s)
     r_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_mul_ctx_size(rf, af, bf, mf))))
+                      OSSL_FN_mod_mul_ctx_size_from_data(rf, af, bf, mf))))
         goto err;
 
     /*
@@ -634,16 +634,16 @@ static int file_modmul(STANZA *s)
             goto err;
 
         size_t max = 0, tmp;
-        tmp = OSSL_FN_to_mont_ctx_size(NULL, af, mont);
+        tmp = OSSL_FN_to_mont_ctx_size_from_data(NULL, af, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_to_mont_ctx_size(NULL, bf, mont);
+        tmp = OSSL_FN_to_mont_ctx_size_from_data(NULL, bf, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
+        tmp = OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_from_mont_ctx_size(NULL, NULL, mont);
+        tmp = OSSL_FN_from_mont_ctx_size_from_data(NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
         OSSL_FN_CTX_free(ctx);
@@ -722,7 +722,7 @@ static int file_modsqr(STANZA *s)
     r_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_sqr_ctx_size(rf, af, mf))))
+                      OSSL_FN_mod_sqr_ctx_size_from_data(rf, af, mf))))
         goto err;
 
     /*
@@ -745,13 +745,13 @@ static int file_modsqr(STANZA *s)
             goto err;
 
         size_t max = 0, tmp;
-        tmp = OSSL_FN_to_mont_ctx_size(NULL, af, mont);
+        tmp = OSSL_FN_to_mont_ctx_size_from_data(NULL, af, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
+        tmp = OSSL_FN_mul_mont_quick_ctx_size_from_data(NULL, NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_from_mont_ctx_size(NULL, NULL, mont);
+        tmp = OSSL_FN_from_mont_ctx_size_from_data(NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
         OSSL_FN_CTX_free(ctx);
@@ -815,7 +815,7 @@ static int file_gcd(STANZA *s)
         goto err;
     r_acq = 1;
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_gcd_ctx_size(af, bf))))
+                      OSSL_FN_gcd_ctx_size_from_data(af, bf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_gcd(rf, af, bf, ctx)))
@@ -868,7 +868,7 @@ static int file_modinv(STANZA *s)
     p_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size(rf, af, mf))))
+                      OSSL_FN_mod_inverse_ctx_size_from_data(rf, af, mf))))
         goto err;
 
     if (BN_is_negative(ainv_check)) {
@@ -900,7 +900,7 @@ static int file_modinv(STANZA *s)
      * corpus comparison below.
      */
     if (!TEST_ptr(mul_ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_mul_ctx_size(pf, af, rf, mf)))
+                      OSSL_FN_mod_mul_ctx_size_from_data(pf, af, rf, mf)))
         || !TEST_true(OSSL_FN_mod_mul(pf, af, rf, mf, mul_ctx))
         || !TEST_true(OSSL_FN_is_one(pf)))
         goto err;
@@ -975,7 +975,7 @@ static int file_modexp(STANZA *s)
     r_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_exp_ctx_size(rf, af, ef, mf))))
+                      OSSL_FN_mod_exp_ctx_size_from_data(rf, af, ef, mf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_mod_exp(rf, af, ef, mf, ctx)))
@@ -1045,7 +1045,7 @@ static int file_modsqrt(STANZA *s)
     r2_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_sqrt_ctx_size(rf, af, pf))))
+                      OSSL_FN_mod_sqrt_ctx_size_from_data(rf, af, pf))))
         goto err;
 
     /*
@@ -1220,7 +1220,7 @@ static int test_mod_inverse(void)
     r_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size(rf, af, nf))))
+                      OSSL_FN_mod_inverse_ctx_size_from_data(rf, af, nf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_mod_inverse(rf, af, nf, ctx)))
@@ -1245,7 +1245,7 @@ static int test_mod_inverse(void)
     n_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size(rf, af, rf))))
+                      OSSL_FN_mod_inverse_ctx_size_from_data(rf, af, rf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_mod_inverse(rf, af, rf, ctx)))
@@ -1271,7 +1271,7 @@ static int test_mod_inverse(void)
     a_acq = 1;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size(rf, rf, nf))))
+                      OSSL_FN_mod_inverse_ctx_size_from_data(rf, rf, nf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_mod_inverse(rf, rf, nf, ctx)))

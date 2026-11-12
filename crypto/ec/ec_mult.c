@@ -450,14 +450,40 @@ int ossl_ec_fn_read(OSSL_FN *dst, const BIGNUM *src)
                      : OSSL_FN_set_word(dst, 0);
 }
 
-/* Arena sizes for the helpers (0 on error, per the _ctx_size contract). */
+/**
+ * Return the operand width the helpers' arena sizing works from: every
+ * operand is a field element, as wide as the field modulus, and so as the
+ * Montgomery context's modulus, which is built from it.
+ *
+ * @param[in]   group   The group whose field the helpers operate in.
+ * @returns             The field element width, in limbs.
+ * @retval      0       if the group lacks the OSSL_FN data its
+ *                      representation needs.
+ */
+static size_t ec_fn_field_dsize(const EC_GROUP *group)
+{
+    if (group->field_fn == NULL
+        || (ec_fn_is_mont(group) && group->fn_mont_ctx == NULL))
+        return 0;
+    return ossl_fn_get_dsize(group->field_fn);
+}
+
+/**
+ * Calculate the arena payload size that ec_fn_fmul() needs.
+ *
+ * @param[in]   group   The group whose field ec_fn_fmul() operates in.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
 static size_t ec_fn_fmul_ctx_size(const EC_GROUP *group)
 {
-    const OSSL_FN *p_fn = group->field_fn;
+    size_t pl = ec_fn_field_dsize(group);
 
+    if (pl == 0)
+        return 0;
     return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
-        : OSSL_FN_mod_mul_ctx_size(p_fn, p_fn, p_fn, p_fn);
+        ? OSSL_FN_mul_mont_quick_ctx_size_from_sizes(pl, pl, pl, pl)
+        : OSSL_FN_mod_mul_ctx_size_from_sizes(pl, pl, pl, pl);
 }
 
 /* Field squaring; Montgomery has no dedicated square, so it reuses the mul. */
@@ -469,13 +495,22 @@ static ossl_inline int ec_fn_fsqr(const EC_GROUP *group, OSSL_FN *r,
         : OSSL_FN_mod_sqr(r, a, group->field_fn, ctx);
 }
 
+/**
+ * Calculate the arena payload size that ec_fn_fsqr() needs.
+ *
+ * @param[in]   group   The group whose field ec_fn_fsqr() operates in.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
 static size_t ec_fn_fsqr_ctx_size(const EC_GROUP *group)
 {
-    const OSSL_FN *p_fn = group->field_fn;
+    size_t pl = ec_fn_field_dsize(group);
 
+    if (pl == 0)
+        return 0;
     return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, group->fn_mont_ctx)
-        : OSSL_FN_mod_sqr_ctx_size(p_fn, p_fn, p_fn);
+        ? OSSL_FN_mul_mont_quick_ctx_size_from_sizes(pl, pl, pl, pl)
+        : OSSL_FN_mod_sqr_ctx_size_from_sizes(pl, pl, pl);
 }
 
 /* Encode a plain, reduced value in place into the coordinate representation. */
@@ -487,12 +522,24 @@ static ossl_inline int ec_fn_encode(const EC_GROUP *group, OSSL_FN *r,
         : 1; /* plain representation: nothing to encode */
 }
 
+/**
+ * Calculate the arena payload size that ec_fn_encode() needs.
+ *
+ * @param[in]   group   The group whose field ec_fn_encode() operates in.
+ * @returns             The arena payload size, in bytes.
+ * @retval      OSSL_FN_CTX_SIZE_NONE   for a plain representation, which
+ *                                      needs no arena.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
 static size_t ec_fn_encode_ctx_size(const EC_GROUP *group)
 {
-    return ec_fn_is_mont(group)
-        ? OSSL_FN_to_mont_ctx_size(NULL, group->field_fn,
-              group->fn_mont_ctx)
-        : OSSL_FN_CTX_SIZE_NONE; /* plain: no arena needed */
+    size_t pl;
+
+    if (!ec_fn_is_mont(group))
+        return OSSL_FN_CTX_SIZE_NONE; /* plain: no arena needed */
+    if ((pl = ec_fn_field_dsize(group)) == 0)
+        return 0;
+    return OSSL_FN_to_mont_ctx_size_from_sizes(pl, pl, pl);
 }
 
 /*
@@ -514,18 +561,26 @@ static ossl_inline int ec_fn_finv(const EC_GROUP *group, OSSL_FN *r,
     return OSSL_FN_mod_inverse_prime(r, a, p_fn, ctx, group->fn_mont_ctx);
 }
 
+/**
+ * Calculate the arena payload size that ec_fn_finv() needs.
+ *
+ * @param[in]   group   The group whose field ec_fn_finv() operates in.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
 static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
 {
-    const OSSL_FN *p_fn = group->field_fn;
+    size_t pl = ec_fn_field_dsize(group);
     size_t frm, inv, tom, m;
 
+    if (pl == 0)
+        return 0;
     if (!ec_fn_is_mont(group))
-        return OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn,
-            group->fn_mont_ctx);
+        return OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(pl, pl, pl, pl);
 
-    frm = OSSL_FN_from_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
-    inv = OSSL_FN_mod_inverse_prime_ctx_size(p_fn, p_fn, p_fn, group->fn_mont_ctx);
-    tom = OSSL_FN_to_mont_ctx_size(NULL, p_fn, group->fn_mont_ctx);
+    frm = OSSL_FN_from_mont_ctx_size_from_sizes(pl, pl, pl);
+    inv = OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(pl, pl, pl, pl);
+    tom = OSSL_FN_to_mont_ctx_size_from_sizes(pl, pl, pl);
     if (frm == 0 || inv == 0 || tom == 0)
         return 0;
     m = frm;

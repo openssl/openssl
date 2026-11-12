@@ -198,18 +198,20 @@ redo:
          * operations start their own frames, and this body allocates
          * nothing from the arena.
          */
-        fn_size = OSSL_FN_mod_mul_ctx_size(fn_tmp, fn_blind, fn_priv, fn_q);
+        fn_size = OSSL_FN_mod_mul_ctx_size_from_data(
+            fn_tmp, fn_blind, fn_priv, fn_q);
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_mul_ctx_size(fn_tmp, fn_tmp, fn_r, fn_q));
+            OSSL_FN_mod_mul_ctx_size_from_data(fn_tmp, fn_tmp, fn_r, fn_q));
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_mul_ctx_size(fn_blindm, fn_blind, fn_m, fn_q));
+            OSSL_FN_mod_mul_ctx_size_from_data(
+                fn_blindm, fn_blind, fn_m, fn_q));
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_mul_ctx_size(fn_s, fn_s, fn_kinv, fn_q));
+            OSSL_FN_mod_mul_ctx_size_from_data(fn_s, fn_s, fn_kinv, fn_q));
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_mul_ctx_size(fn_s, fn_s, fn_blindm, fn_q));
+            OSSL_FN_mod_mul_ctx_size_from_data(fn_s, fn_s, fn_blindm, fn_q));
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mod_inverse_prime_ctx_size(fn_blindm, fn_blind, fn_q,
-                NULL));
+            OSSL_FN_mod_inverse_prime_ctx_size_from_data(
+                fn_blindm, fn_blind, fn_q, NULL));
         if (fn_size == 0)
             goto release;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -633,13 +635,21 @@ static int dsa_finish(DSA *dsa)
     return 1;
 }
 
-/*
- * The OSSL_FN modular exponentiation backing the default DSA_METHOD's
+/**
+ * Compute r = a^p mod m with OSSL_FN, for the default DSA_METHOD's
  * private-key calculations.  The exponent arrives in OSSL_FN form; the
  * remaining BIGNUM operands are passed as views, the writable result is
  * acquired at the modulus width before OSSL_FN_CTX sizing, and the
  * OSSL_FN_CTX arena is explicitly sized from the operation's sizing
  * companion.
+ *
+ * @param[in]   dsa     The key; with DSA_FLAG_CACHE_MONT_P set, its cached
+ *                      Montgomery context for |m| is used.
+ * @param[out]  r       The result, as wide as |m|.
+ * @param[in]   a       The base.
+ * @param[in]   p       The secret exponent.
+ * @param[in]   m       The modulus.
+ * @returns             1 on success, 0 on error.
  */
 static int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
     const BIGNUM *a, const OSSL_FN *p,
@@ -679,7 +689,8 @@ static int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
             goto err;
     }
 
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_a, fn_p, fn_m, fn_mont);
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size_from_data(
+        fn_r, fn_a, fn_p, fn_m, fn_mont);
     if (fn_size == 0)
         goto err;
 
@@ -688,7 +699,7 @@ static int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
     if (fn_ctx == NULL)
         goto err;
     /*
-     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size()
+     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size_from_data()
      * budgets the callee's frames, not a caller frame.
      */
     ret = OSSL_FN_mod_exp_mont(fn_r, fn_a, fn_p, fn_m, fn_ctx, fn_mont);
@@ -700,12 +711,17 @@ err:
     return ret;
 }
 
-/*
+/**
  * Compute the inverse of k modulo q.
  * Since q is prime, Fermat's Little Theorem applies, which
  * OSSL_FN_mod_inverse_prime() exploits: the exponent it derives from q
  * is public, so a mod-exp that doesn't leak the base is sufficient.
- * A newly allocated BIGNUM is returned which the caller must free.
+ *
+ * @param[in]   k       The secret nonce to invert.
+ * @param[in]   q       The prime subgroup order.
+ * @param[in]   ctx     The BIGNUM context, used for its library context.
+ * @returns             A newly allocated BIGNUM holding k^-1 mod q, which
+ *                      the caller must free, or NULL on error.
  */
 static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     BN_CTX *ctx)
@@ -733,7 +749,7 @@ static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     if ((fn_r = bn_acquire_ossl_fn(r, qlimbs)) == NULL)
         goto err;
 
-    fn_size = OSSL_FN_mod_inverse_prime_ctx_size(fn_r, k, fn_q, NULL);
+    fn_size = OSSL_FN_mod_inverse_prime_ctx_size_from_data(fn_r, k, fn_q, NULL);
     if (fn_size == 0)
         goto err;
 
@@ -742,8 +758,9 @@ static BIGNUM *dsa_mod_inverse_fermat(const OSSL_FN *k, const BIGNUM *q,
     if (fn_ctx == NULL)
         goto err;
     /*
-     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_inverse_prime_ctx_size()
-     * budgets the callee's frames, not a caller frame.
+     * No OSSL_FN_CTX_start() here:
+     * OSSL_FN_mod_inverse_prime_ctx_size_from_data() budgets the callee's
+     * frames, not a caller frame.
      */
     if (OSSL_FN_mod_inverse_prime(fn_r, k, fn_q, fn_ctx, NULL))
         ok = 1;

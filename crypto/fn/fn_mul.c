@@ -13,7 +13,19 @@
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
 #include "fn_local.h"
 
-size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t b_dsize)
+{
+    /*
+     * The operands are not at hand, so whether |r| aliases |a| or |b| is
+     * unknown.  Budget the aliased case whenever the widths allow it.
+     */
+    size_t limbs = (r_dsize == a_dsize || r_dsize == b_dsize) ? r_dsize : 0;
+
+    return OSSL_FN_CTX_size(1, limbs == 0 ? 0 : 1, limbs);
+}
+
+size_t OSSL_FN_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b)
 {
     size_t limbs = 0;

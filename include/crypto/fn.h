@@ -111,6 +111,18 @@ OSSL_FN *OSSL_FN_new_bits(size_t size);
 OSSL_FN *OSSL_FN_secure_new_bits(size_t size);
 
 /**
+ * Return the width of an OSSL_FN, i.e. the number of limbs it was allocated
+ * with.  This is the width the OSSL_FN_*_ctx_size_from_sizes() companions
+ * take for each operand.  It depends on the allocation only, not on the
+ * value; for the number of significant bits, see OSSL_FN_num_bits().
+ *
+ * @param[in]   a       The OSSL_FN instance, or NULL.
+ * @returns             The number of limbs, or 0 if a is NULL (the width an
+ *                      absent optional operand is passed as).
+ */
+size_t OSSL_FN_size_limbs(const OSSL_FN *a);
+
+/**
  * Free an OSSL_FN instance if it was dynamically allocated.
  * Free it securely if it was allocated securely.
  *
@@ -248,11 +260,12 @@ int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len);
 int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len);
 
 /*
- * Sentinel return value for the OSSL_FN_*_ctx_size() family, meaning "this
- * operation needs no context"; the caller may skip the OSSL_FN_CTX
- * allocation and pass NULL, which such an operation must accept.  This is
- * unambiguous because every genuine arena holds at least one frame, so 1
- * is smaller than any possible real size.
+ * Sentinel return value for the OSSL_FN_*_ctx_size_from_data() and
+ * OSSL_FN_*_ctx_size_from_sizes() families, meaning "this operation needs
+ * no context"; the caller may skip the OSSL_FN_CTX allocation and pass
+ * NULL, which such an operation must accept.  This is unambiguous because
+ * every genuine arena holds at least one frame, so 1 is smaller than any
+ * possible real size.
  */
 #define OSSL_FN_CTX_SIZE_NONE ((size_t)1)
 
@@ -766,38 +779,48 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
 int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
 
 /*-
- * Context sizing companions (OSSL_FN_*_ctx_size())
- * -------------------------------------------------
+ * Context sizing companions (OSSL_FN_*_ctx_size_from_*())
+ * -------------------------------------------------------
  *
  * Every operator function that takes a caller-supplied OSSL_FN_CTX
- * argument comes with a *_ctx_size() companion, declared right after the
- * operator.  The companion calculates the budgeted OSSL_FN_CTX size, in
- * bytes, consumed by the corresponding operator function, including any
- * frame budget the operator needs; the result is suitable to pass to
- * OSSL_FN_CTX_new_size() or OSSL_FN_CTX_secure_new_size().  A companion
- * may also return OSSL_FN_CTX_SIZE_NONE when the operator needs no
- * context at all, and returns 0 on arithmetic overflow or invalid input.
+ * argument comes with a pair of companions, declared right after the
+ * operator.  A companion calculates the arena payload size, in bytes,
+ * that the corresponding operator function needs, its frame budget
+ * included; the result is suitable to pass to OSSL_FN_CTX_new_size() or
+ * OSSL_FN_CTX_secure_new_size().  A companion may also return
+ * OSSL_FN_CTX_SIZE_NONE when the operator needs no context at all, and
+ * returns 0 on arithmetic overflow or invalid input.
  *
- * Apart from the OSSL_FN_CTX argument itself, a companion is designed to
- * take the same sort of arguments as its operator function, so the caller
- * can size the context with the same operands at hand.
+ * The two companions differ in how they get the operands:
+ *
+ * - *_ctx_size_from_data() takes the same sort of arguments as its
+ *   operator function, apart from the OSSL_FN_CTX argument itself, so
+ *   the caller can size the context with the same operands at hand.
+ *
+ * - *_ctx_size_from_sizes() takes the operand widths (dsize, in limbs)
+ *   in place of the OSSL_FN operands, and the width of the modulus in
+ *   place of an OSSL_FN_MONT_CTX, so the caller can size the context
+ *   before the operands exist.  The width of an existing OSSL_FN is
+ *   available through OSSL_FN_size_limbs().  An optional (NULL-able)
+ *   operand that is absent is passed as width 0.  Where the operator's
+ *   budget depends on whether operands alias each other, which widths
+ *   cannot tell, the aliased case is budgeted whenever the widths allow it.
+ *
+ * Except where aliasing matters, *_ctx_size_from_data() is a wrapper
+ * around *_ctx_size_from_sizes() and gives the same result.
  *
  * The companions are designed to be nestable: an operator that calls
  * other operators computes its own budget from the called operators'
- * companions (combined with the ossl_fn_ctx_add_size() and
- * ossl_fn_ctx_max_size() composition helpers, see crypto/fn_intern.h).
- * To nest with minimal churn, a companion must only consider the
- * *widths* (dsize) of the arguments it gets, never the limb values:
- * nested calls pass width-only model headers as stand-ins for
- * not-yet-existing temporaries, and those carry no d[] storage, so
- * reading a limb would read out of bounds.  When the operator's runtime
- * path branches on an operand value, the companion budgets that branch
- * conservatively; over-allocation is safe, a d[] dereference from a
- * sizing function is not.
+ * *_ctx_size_from_sizes() companions (combined with the
+ * ossl_fn_ctx_add_size() and ossl_fn_ctx_max_size() composition helpers,
+ * see crypto/fn_intern.h).  A companion must therefore only consider the
+ * *widths* of the arguments it gets, never the limb values.  When the
+ * operator's runtime path branches on an operand value, the companion
+ * budgets that branch conservatively; over-allocation is safe.
  *
  * TODO(FIXNUM): not all companions follow the signature pattern strictly
  * -- the Montgomery companions take a non-const OSSL_FN *r,
- * OSSL_FN_gcd_ctx_size() has no r parameter at all, and the NULL-r
+ * OSSL_FN_gcd_ctx_size_from_data() has no r parameter at all, and the NULL-r
  * conventions differ between functions.  Whether to clean these up is
  * left open.
  */
@@ -832,23 +855,30 @@ int OSSL_FN_mask_bits(OSSL_FN *a, int n);
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for four temporary OSSL_FNs, max(a->dsize, b->dsize) + 1 limbs
- * each, plus one frame.
  */
 int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_gcd().
+ * Calculate the arena payload size that OSSL_FN_gcd() needs.
  *
  * @param[in]           a       The first operand
  * @param[in]           b       The second operand
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_gcd_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
+size_t OSSL_FN_gcd_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_gcd() needs, from the operand
+ * widths alone.
+ *
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_gcd_ctx_size_from_sizes(size_t a_dsize, size_t b_dsize);
 
 /**
  * Add two OSSL_FN numbers.
@@ -897,16 +927,12 @@ int OSSL_FN_sub_word(OSSL_FN *a, OSSL_FN_ULONG w);
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with res->dsize limbs, plus one frame
- * (currently 32 bytes).
  */
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mul().
+ * Calculate the arena payload size that OSSL_FN_mul() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The first operand
@@ -914,8 +940,25 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mul() needs, from the operand
+ * widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The operands are not at hand, so the size is budgeted as if |r| aliases |a|
+ * or |b| whenever the widths allow it.  It may thus exceed
+ * OSSL_FN_mul_ctx_size_from_data()'s result.
+ */
+size_t OSSL_FN_mul_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t b_dsize);
 
 /**
  * Divide two OSSL_FN numbers.  Truncates the result to fit in q and r.
@@ -927,17 +970,12 @@ size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for 1 frame, 4 numbers, and 4 * max(n->dsize, d->dsize) + 2 limbs.
- * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_div_ctx_size() for a budgeted value.
  */
 int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_div().
+ * Calculate the arena payload size that OSSL_FN_div() needs.
  *
  * @param[in]           q       The OSSL_FN for the quotient, or NULL when
  *                              only the remainder is of interest.
@@ -950,8 +988,27 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
  * When q is NULL, the size is computed for the modulo case, i.e. as if
  * only the remainder is produced.
  */
-size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+size_t OSSL_FN_div_ctx_size_from_data(const OSSL_FN *q, const OSSL_FN *r,
     const OSSL_FN *n, const OSSL_FN *d);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_div() needs, from the operand
+ * widths alone.
+ *
+ * @param[in]           q_dsize The width of the quotient, in limbs, or 0 if
+ *                              absent
+ * @param[in]           r_dsize The width of the remainder, in limbs, or 0 if
+ *                              absent
+ * @param[in]           n_dsize The width of the numerator, in limbs
+ * @param[in]           d_dsize The width of the denominator, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * When q_dsize is 0, the size is computed for the modulo case, i.e. as if only
+ * the remainder is produced.
+ */
+size_t OSSL_FN_div_ctx_size_from_sizes(
+    size_t q_dsize, size_t r_dsize, size_t n_dsize, size_t d_dsize);
 
 /**
  * Add two OSSL_FN numbers modulo m.
@@ -963,17 +1020,12 @@ size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with max(a->dsize, b->dsize) + 1
- * limbs, plus the requirements of OSSL_FN_mod(), plus one frame
- * (currently 32 bytes).
  */
 int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_add().
+ * Calculate the arena payload size that OSSL_FN_mod_add() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The first operand
@@ -982,8 +1034,23 @@ int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_add_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_add_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_add() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_add_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t b_dsize, size_t m_dsize);
 
 /**
  * Add two OSSL_FN numbers modulo m.  This is a quick variant that may be
@@ -1008,17 +1075,12 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for two temporary OSSL_FNs with m->dsize limbs each, plus an
- * additional temporary OSSL_FN with m->dsize limbs if r == m, plus the
- * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_sub().
+ * Calculate the arena payload size that OSSL_FN_mod_sub() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The first operand
@@ -1027,8 +1089,26 @@ int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_sub_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_sub_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_sub() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The operands are not at hand, so the size is budgeted as if |r| aliases |m|
+ * whenever the widths allow it.  It may thus exceed
+ * OSSL_FN_mod_sub_ctx_size_from_data()'s result.
+ */
+size_t OSSL_FN_mod_sub_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t b_dsize, size_t m_dsize);
 
 /**
  * Subtract two OSSL_FN numbers modulo m.  This is a quick variant that may
@@ -1053,18 +1133,12 @@ int OSSL_FN_mod_sub_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with a->dsize + b->dsize limbs
- * (or 2 * a->dsize limbs if a == b), plus the largest of the
- * requirements of OSSL_FN_mul(), OSSL_FN_sqr(), and OSSL_FN_mod(),
- * plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_mul().
+ * Calculate the arena payload size that OSSL_FN_mod_mul() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The first operand
@@ -1073,8 +1147,27 @@ int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_mul_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_mul() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The operands are not at hand, so the size covers the squaring path taken when
+ * |a| aliases |b| whenever the widths allow it.  It may thus exceed
+ * OSSL_FN_mod_mul_ctx_size_from_data()'s result.
+ */
+size_t OSSL_FN_mod_mul_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t b_dsize, size_t m_dsize);
 
 /**
  * Square an OSSL_FN number modulo m.
@@ -1085,17 +1178,12 @@ size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with 2 * a->dsize limbs, plus the
- * larger of the requirements of OSSL_FN_sqr() and OSSL_FN_mod(),
- * plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_sqr().
+ * Calculate the arena payload size that OSSL_FN_mod_sqr() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1103,8 +1191,22 @@ int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_sqr() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_sqr_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t m_dsize);
 
 /**
  * Left shift an OSSL_FN number by 1 bit, modulo m.
@@ -1115,16 +1217,12 @@ size_t OSSL_FN_mod_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with m->dsize + 1 limbs, plus the
- * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_lshift1().
+ * Calculate the arena payload size that OSSL_FN_mod_lshift1() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1132,8 +1230,23 @@ int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_lshift1_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m);
+size_t OSSL_FN_mod_lshift1_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_lshift1() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs, or 0 if
+ *                              absent
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_lshift1_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t m_dsize);
 
 /**
  * Left shift an OSSL_FN number by 1 bit, modulo m.  This is a quick
@@ -1158,16 +1271,12 @@ int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with m->dsize limbs, plus the
- * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_lshift().
+ * Calculate the arena payload size that OSSL_FN_mod_lshift() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1176,8 +1285,23 @@ int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_lshift_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     int n, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_lshift() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @param[in]           n       The number of bits to shift by
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_lshift_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, int n, size_t m_dsize);
 
 /**
  * Left shift an OSSL_FN number by n bits, modulo m.  This is a quick
@@ -1215,7 +1339,7 @@ static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
 }
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod().
+ * Calculate the arena payload size that OSSL_FN_mod() needs.
  *
  * @param[in]           r       The OSSL_FN for the remainder
  * @param[in]           n       The numerator
@@ -1223,13 +1347,33 @@ static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
- * This is a thin wrapper around OSSL_FN_div_ctx_size() with a NULL
+ * This is a thin wrapper around OSSL_FN_div_ctx_size_from_data() with a NULL
  * quotient, since OSSL_FN_mod() is itself a wrapper around OSSL_FN_div().
  */
-static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
+static inline size_t OSSL_FN_mod_ctx_size_from_data(const OSSL_FN *r,
     const OSSL_FN *n, const OSSL_FN *d)
 {
-    return OSSL_FN_div_ctx_size(NULL, r, n, d);
+    return OSSL_FN_div_ctx_size_from_data(NULL, r, n, d);
+}
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod() needs, from the operand
+ * widths alone.
+ *
+ * @param[in]           r_dsize The width of the remainder, in limbs, or 0
+ *                              if absent
+ * @param[in]           n_dsize The width of the numerator, in limbs
+ * @param[in]           d_dsize The width of the denominator, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * This is a thin wrapper around OSSL_FN_div_ctx_size_from_sizes() with no
+ * quotient, since OSSL_FN_mod() is itself a wrapper around OSSL_FN_div().
+ */
+static inline size_t OSSL_FN_mod_ctx_size_from_sizes(size_t r_dsize,
+    size_t n_dsize, size_t d_dsize)
+{
+    return OSSL_FN_div_ctx_size_from_sizes(0, r_dsize, n_dsize, d_dsize);
 }
 
 /**
@@ -1248,17 +1392,12 @@ static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error.
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for six temporary OSSL_FNs with max(a->dsize, n->dsize) limbs
- * each, plus the requirements of OSSL_FN_div() (the loop-body division
- * and the initial/final reductions), plus one frame (currently 32 bytes).
  */
 int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_inverse().
+ * Calculate the arena payload size that OSSL_FN_mod_inverse() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1266,8 +1405,22 @@ int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *n);
+size_t OSSL_FN_mod_inverse_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_inverse() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @param[in]           n_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_inverse_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t n_dsize);
 
 /**
  * Calculate the modular multiplicative inverse of |a| modulo the prime
@@ -1297,16 +1450,14 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           m       The modulus.  Must be an odd prime.
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from, sized per
- *                              OSSL_FN_mod_inverse_prime_ctx_size().
+ *                              OSSL_FN_mod_inverse_prime_ctx_size_from_data()
+ *                              or
+ *                              OSSL_FN_mod_inverse_prime_ctx_size_from_sizes().
  * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
  *                              to have this function build and free its own.
  *                              When non-NULL it is borrowed (used as-is, never
  *                              freed here) and its modulus must be |m|.
  * @returns             1 on success, 0 on error.
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for one temporary OSSL_FN with m->dsize limbs, plus one frame,
- * plus the requirements of OSSL_FN_mod_exp_mont().
  */
 int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont);
@@ -1317,19 +1468,36 @@ int OSSL_FN_mod_inverse_prime(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
  * @param[in]           m       The modulus
- * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
- *                              to model the function-owned context
- *                              OSSL_FN_mod_inverse_prime() builds when called
- *                              with in_mont == NULL.
+ * @param[in]           in_mont The Montgomery context to be passed to
+ *                              OSSL_FN_mod_inverse_prime(), or NULL if it
+ *                              will be called without one.
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
  * The returned size includes any frame budget needed by
- * OSSL_FN_mod_inverse_prime(), and is the same whether |in_mont| is NULL
- * or a reused context.
+ * OSSL_FN_mod_inverse_prime().
  */
-size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
+size_t OSSL_FN_mod_inverse_prime_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_inverse_prime() needs,
+ * from the operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @param[in]           in_mont_dsize The width of the modulus of the
+ *                              Montgomery context to be passed to
+ *                              OSSL_FN_mod_inverse_prime(), in limbs, or 0 if
+ *                              it will be called without one.  A non-zero
+ *                              width other than |m_dsize| is invalid input.
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t m_dsize, size_t in_mont_dsize);
 
 /**
  * Calculate  a^p mod m  (modular exponentiation).  Odd moduli use the
@@ -1357,13 +1525,14 @@ size_t OSSL_FN_mod_inverse_prime_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  *       crypto/fn/fn_exp.c.
  *
  * @note This function currently requires that the OSSL_FN_CTX is sized per
- *       OSSL_FN_mod_exp_ctx_size().
+ *       OSSL_FN_mod_exp_ctx_size_from_data() or
+ *       OSSL_FN_mod_exp_ctx_size_from_sizes().
  */
 int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_exp().
+ * Calculate the arena payload size that OSSL_FN_mod_exp() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The base
@@ -1375,8 +1544,23 @@ int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
  * It budgets the larger of the Montgomery (odd modulus) and simple (even
  * modulus) paths, keeping the sizing width-only; see fn_exp.c.
  */
-size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mod_exp_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the base, in limbs
+ * @param[in]           p_dsize The width of the exponent, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_exp_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t p_dsize, size_t m_dsize);
 
 /**
  * Calculate  a^p mod m  with the simple sliding-window algorithm.
@@ -1391,7 +1575,9 @@ size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           p       The exponent.
  * @param[in]           m       The modulus.  Must be non-zero.
  * @param[in]           ctx     A context to get temporary OSSL_FN instances
- *                              from, sized per OSSL_FN_mod_exp_simple_ctx_size().
+ *                              from, sized per
+ *                              OSSL_FN_mod_exp_simple_ctx_size_from_data() or
+ *                              OSSL_FN_mod_exp_simple_ctx_size_from_sizes().
  * @returns             1 on success, 0 on error.
  *
  * @note This path is not constant-time per se; do not use it for secret
@@ -1401,7 +1587,7 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_exp_simple().
+ * Calculate the arena payload size that OSSL_FN_mod_exp_simple() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The base
@@ -1410,8 +1596,24 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m);
+size_t OSSL_FN_mod_exp_simple_ctx_size_from_data(
+    const OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp_simple() needs, from
+ * the operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the base, in limbs
+ * @param[in]           p_dsize The width of the exponent, in limbs, or 0 if
+ *                              absent
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_exp_simple_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t p_dsize, size_t m_dsize);
 
 /**
  * Calculate  a^p mod m  with the Montgomery fixed-window algorithm.
@@ -1428,7 +1630,9 @@ size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           p       The exponent.
  * @param[in]           m       The modulus.  Must be odd and non-zero.
  * @param[in]           ctx     A context to get temporary OSSL_FN instances
- *                              from, sized per OSSL_FN_mod_exp_mont_ctx_size().
+ *                              from, sized per
+ *                              OSSL_FN_mod_exp_mont_ctx_size_from_data() or
+ *                              OSSL_FN_mod_exp_mont_ctx_size_from_sizes().
  * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
  *                              to have this function build and free its own.
  *                              When non-NULL it is borrowed (used as-is, never
@@ -1445,27 +1649,43 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     const OSSL_FN *m, OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_exp_mont().
+ * Calculate the arena payload size that OSSL_FN_mod_exp_mont() needs.
  *
- * Sizes only the Montgomery fixed-window path; the arena also serves a
- * call that passes NULL |in_mont| (the function builds and frees its own
- * context then), since the operand modelling makes the two cases the same
- * size.  Pass a non-NULL |in_mont| to keep the sizing signature parallel to
- * OSSL_FN_mod_exp_mont().
+ * Sizes only the Montgomery fixed-window path.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The base
  * @param[in]           p       The exponent
  * @param[in]           m       The modulus
- * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
- *                              to model the function-owned context
- *                              OSSL_FN_mod_exp_mont() builds when called
- *                              with in_mont == NULL.
+ * @param[in]           in_mont The Montgomery context to be passed to
+ *                              OSSL_FN_mod_exp_mont(), or NULL if it will be
+ *                              called without one.
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
+size_t OSSL_FN_mod_exp_mont_ctx_size_from_data(const OSSL_FN *r,
+    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m,
+    OSSL_FN_MONT_CTX *in_mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp_mont() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the base, in limbs
+ * @param[in]           p_dsize The width of the exponent, in limbs
+ * @param[in]           m_dsize The width of the modulus, in limbs
+ * @param[in]           in_mont_dsize The width of the modulus of the
+ *                              Montgomery context to be passed to
+ *                              OSSL_FN_mod_exp_mont(), in limbs, or 0 if it
+ *                              will be called without one.  A non-zero width
+ *                              other than |m_dsize| is invalid input.
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_exp_mont_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t p_dsize, size_t m_dsize, size_t in_mont_dsize);
 
 /**
  * Compute the Kronecker symbol (a/b).
@@ -1488,7 +1708,7 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
 int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_kronecker().
+ * Calculate the arena payload size that OSSL_FN_kronecker() needs.
  *
  * @param[in]           a       The first operand
  * @param[in]           b       The second operand
@@ -1498,7 +1718,18 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx);
  * Two temporaries of max(a, b) limbs are needed, plus the nested
  * OSSL_FN_mod() call in the loop body.
  */
-size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
+size_t OSSL_FN_kronecker_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_kronecker() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_kronecker_ctx_size_from_sizes(size_t a_dsize, size_t b_dsize);
 
 /**
  * Compute a square root of @p a modulo @p p.
@@ -1524,7 +1755,7 @@ int OSSL_FN_mod_sqrt(OSSL_FN *ret, const OSSL_FN *a, const OSSL_FN *p,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mod_sqrt().
+ * Calculate the arena payload size that OSSL_FN_mod_sqrt() needs.
  *
  * @param[in]           ret     The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1535,8 +1766,22 @@ int OSSL_FN_mod_sqrt(OSSL_FN *ret, const OSSL_FN *a, const OSSL_FN *p,
  * Seven temporaries of p->dsize limbs are needed, plus the nested calls
  * (mod_exp, mod_sqr, mod_mul, mod, kronecker).
  */
-size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
+size_t OSSL_FN_mod_sqrt_ctx_size_from_data(const OSSL_FN *ret, const OSSL_FN *a,
     const OSSL_FN *p);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_sqrt() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           ret_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @param[in]           p_dsize The width of the modulus, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_sqrt_ctx_size_from_sizes(
+    size_t ret_dsize, size_t a_dsize, size_t p_dsize);
 
 /**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
@@ -1546,22 +1791,29 @@ size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that the OSSL_FN_CTX has free
- * space for two temporary OSSL_FNs, a->dsize * 2 limbs each, plus one
- * frame (currently 32 bytes).
  */
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_sqr().
+ * Calculate the arena payload size that OSSL_FN_sqr() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The operand
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
+size_t OSSL_FN_sqr_ctx_size_from_data(const OSSL_FN *r, const OSSL_FN *a);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_sqr() needs, from the operand
+ * widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_sqr_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize);
 
 /**
  * Initialize a Montgomery context for modulus mod.
@@ -1627,21 +1879,15 @@ const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont);
  *                              instances from.
  * @returns             1 on success, 0 on error
  *
- * @note This function currently requires that the OSSL_FN_CTX
- * has free space for 2 frame, 7 numbers, and
- * 7 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
- * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_mul_mont_ctx_size() for a budgeted value.
- *
- * A timing side-channel may leak limb-size misalignment or whether the input
- * operands exceed the modulus. However, this leakage is non-critical and
+ * @note A timing side-channel may leak limb-size misalignment or whether the
+ * input operands exceed the modulus. However, this leakage is non-critical and
  * acceptable from a security perspective.
  */
 int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mul_mont().
+ * Calculate the arena payload size that OSSL_FN_mul_mont() needs.
  *
  * @param[in]           r       The OSSL_FN for the result (can be NULL)
  * @param[in]           a       The first operand
@@ -1653,8 +1899,24 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * If `r == NULL`, the returned size is calculated as if @p r has the same size
  * as the modulus.
  */
-size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
-    OSSL_FN_MONT_CTX *mont);
+size_t OSSL_FN_mul_mont_ctx_size_from_data(
+    OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mul_mont() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the first operand, in limbs
+ * @param[in]           b_dsize The width of the second operand, in limbs
+ * @param[in]           n_dsize The width of the Montgomery modulus mont->N, in
+ *                              limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mul_mont_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t b_dsize, size_t n_dsize);
 
 /**
  * Fulfil the Montgomery multiplication. This is a quick variant that may be
@@ -1668,15 +1930,12 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note This function currently requires that @p ctx has free space for
- * one temporary OSSL_FN with @p mont->N->dsize+2 limbs, plus one frame.
  */
 int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mul_mont_quick().
+ * Calculate the arena payload size that OSSL_FN_mul_mont_quick() needs.
  *
  * @param[in]           r       The OSSL_FN for the result
  * @param[in]           a       The first operand
@@ -1687,8 +1946,27 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  *
  * All parameters except @p mont can be NULL.
  */
-size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mul_mont_quick() needs, from
+ * the operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the first operand, in limbs, or 0
+ *                              if
+ *                              absent
+ * @param[in]           b_dsize The width of the second operand, in limbs, or 0
+ *                              if absent
+ * @param[in]           n_dsize The width of the Montgomery modulus mont->N, in
+ *                              limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mul_mont_quick_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t b_dsize, size_t n_dsize);
 
 /**
  * Convert a number to Montgomery representation: r = a * R mod N,
@@ -1702,10 +1980,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  * @returns             1 on success, 0 on error
  *
  * @note This function requires that @p r and @p mont->N are of
- * the same size and that the OSSL_FN_CTX has free space for 2 frame,
- * 5 numbers, and 5 * max(a->dsize, mont->N->dsize) + 2 limbs.
- * Note that this provides an upper bound.  Actual use of the arena may be
- * smaller - see OSSL_FN_to_mont_ctx_size() for a budgeted value.
+ * the same size.
  *
  * A timing side-channel may leak limb-size misalignment or whether @p a
  * exceeds the modulus. However, this leakage is non-critical and acceptable
@@ -1715,7 +1990,7 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_to_mont().
+ * Calculate the arena payload size that OSSL_FN_to_mont() needs.
  *
  * @param[in]           r       The OSSL_FN for the result (can be NULL)
  * @param[in]           a       The operand
@@ -1726,8 +2001,23 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  * If `r == NULL`, the returned size is calculated as if @p r has the same
  * size as the modulus.
  */
-size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_to_mont() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs
+ * @param[in]           n_dsize The width of the Montgomery modulus mont->N, in
+ *                              limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_to_mont_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t n_dsize);
 
 /**
  * Convert a number to Montgomery representation: r = a * R mod N.  This is
@@ -1741,14 +2031,12 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  * @param[in]           ctx     A context to get temporary OSSL_FN
  *                              instances from.
  * @returns             1 on success, 0 on error
- *
- * @note The arena requirement is that of OSSL_FN_mul_mont_quick().
  */
 int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_to_mont_quick().
+ * Calculate the arena payload size that OSSL_FN_to_mont_quick() needs.
  *
  * @param[in]           r       The OSSL_FN for the result (can be NULL)
  * @param[in]           a       The operand (can be NULL)
@@ -1756,8 +2044,24 @@ int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_to_mont_quick() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs, or 0 if
+ *                              absent
+ * @param[in]           n_dsize The width of the Montgomery modulus mont->N, in
+ *                              limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_to_mont_quick_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t n_dsize);
 
 /**
  * Convert a number from Montgomery representation: r = a * R^(-1) mod N,
@@ -1775,15 +2079,13 @@ size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  * reduced modulo @p mont->N; any value that fits that limb width (sometimes
  * called "almost reduced") is accepted.  @p a may also be up to twice that
  * size, provided its value is less than @p mont->N * R.  The result is fully
- * reduced.  @p ctx must have free space for one temporary OSSL_FN with
- * mont->N->dsize+2 limbs, or 2*mont->N->dsize limbs if @p a is wider than
- * @p mont->N, plus one frame.
+ * reduced.
  */
 int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_from_mont().
+ * Calculate the arena payload size that OSSL_FN_from_mont() needs.
  *
  * @param[in]           r       The OSSL_FN for the result (can be NULL)
  * @param[in]           a       The operand (can be NULL)
@@ -1791,8 +2093,24 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_from_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_from_mont() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs, at most
+ *                              twice n_dsize, or 0 if absent
+ * @param[in]           n_dsize The width of the Montgomery modulus mont->N, in
+ *                              limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_from_mont_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t n_dsize);
 
 /**
  * Reduce a number modulo the Montgomery modulus in constant time:
@@ -1807,23 +2125,39 @@ size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  *
  * @note @p r must have the same size as @p mont->N.  @p a may be narrower,
  * or up to twice that size provided its value is less than @p mont->N * R.
- * See OSSL_FN_mont_reduce_ctx_size() for the arena requirement.
+ * See OSSL_FN_mont_reduce_ctx_size_from_data() or
+ * OSSL_FN_mont_reduce_ctx_size_from_sizes() for the arena requirement.
  */
 int OSSL_FN_mont_reduce(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the budgeted OSSL_FN_CTX size consumed by OSSL_FN_mont_reduce().
+ * Calculate the arena payload size that OSSL_FN_mont_reduce() needs.
  *
  * @param[in]           r       The OSSL_FN for the result (can be NULL)
- * @param[in]           a       The operand (can be NULL, in which case the
- *                              size covers any operand width accepted)
+ * @param[in]           a       The operand
  * @param[in]           mont    The Montgomery context
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mont_reduce_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mont_reduce() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]           r_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           a_dsize The width of the operand, in limbs; at most
+ *                              twice n_dsize
+ * @param[in]           n_dsize The width of the Montgomery modulus mont->N, in
+ *                              limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mont_reduce_ctx_size_from_sizes(
+    size_t r_dsize, size_t a_dsize, size_t n_dsize);
 
 /**
  * Generate a probable prime of @p bits bits.  When @p safe is nonzero, a
@@ -1868,8 +2202,26 @@ int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
  * tests they run.  The same size serves a given |bits| and |safe| regardless
  * of the |add| and |rem| values.
  */
-size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
-    int safe, const OSSL_FN *add, const OSSL_FN *rem);
+size_t OSSL_FN_generate_prime_ctx_size_from_data(const OSSL_FN *ret,
+    size_t bits, int safe, const OSSL_FN *add, const OSSL_FN *rem);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_generate_prime() needs, from
+ * the operand widths alone.
+ *
+ * @param[in]           ret_dsize The width of the result, in limbs, or 0 if
+ *                              absent
+ * @param[in]           bits    The size of the prime, in bits
+ * @param[in]           safe    Whether a safe prime is generated
+ * @param[in]           add_dsize The width of the modulus for the residue
+ *                              condition, in limbs, or 0 if absent
+ * @param[in]           rem_dsize The width of the residue, in limbs, or 0 if
+ *                              absent
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_generate_prime_ctx_size_from_sizes(size_t ret_dsize, size_t bits,
+    int safe, size_t add_dsize, size_t rem_dsize);
 
 /**
  * Generate a pair of X9.31 parameters Xp and Xq for prime generation.
@@ -1880,7 +2232,9 @@ size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
  * @param[out]          Xq      The second parameter
  * @param[in]           nbits   The total bit length (sum of both)
  * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
- *                              OSSL_FN_X931_generate_Xpq_ctx_size()
+ *                              OSSL_FN_X931_generate_Xpq_ctx_size_from_data()
+ *                              or
+ *                              OSSL_FN_X931_generate_Xpq_ctx_size_from_sizes()
  * @param[in]           libctx  The library context for the random draws
  * @returns             1 on success, 0 on error
  */
@@ -1903,7 +2257,9 @@ int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
  * @param[in]           Xp2     The second parameter for p2
  * @param[in]           e       The exponent; must be odd
  * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
- *                              OSSL_FN_X931_derive_prime_ctx_size()
+ *                              OSSL_FN_X931_derive_prime_ctx_size_from_data()
+ *                              or
+ *                              OSSL_FN_X931_derive_prime_ctx_size_from_sizes()
  * @param[in]           cb      Progress callback, or NULL
  * @param[in]           libctx  The library context for the random draws
  * @returns             1 on success, 0 on error
@@ -1935,7 +2291,9 @@ int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
  *                              OSSL_FN_X931_generate_Xpq()
  * @param[in]           e       The exponent; must be odd
  * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
- *                              OSSL_FN_X931_generate_prime_ctx_size()
+ *                              OSSL_FN_X931_generate_prime_ctx_size_from_data()
+ *                              or
+ *                              OSSL_FN_X931_generate_prime_ctx_size_from_sizes()
  * @param[in]           cb      Progress callback, or NULL
  * @param[in]           libctx  The library context for the random draws
  * @returns             1 on success, 0 on error
@@ -1952,7 +2310,17 @@ int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  */
-size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
+size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_data(const OSSL_FN *Xp);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_Xpq() needs, from
+ * the operand widths alone.
+ *
+ * @param[in]           Xp_dsize The width of the destination, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_Xpq_ctx_size_from_sizes(size_t Xp_dsize);
 
 /**
  * Calculate the arena payload size that OSSL_FN_X931_generate_prime()
@@ -1970,9 +2338,26 @@ size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
  * The returned size covers the operation's own frame for the parameter
  * draws as well as OSSL_FN_X931_derive_prime()'s needs.
  */
-size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
+size_t OSSL_FN_X931_generate_prime_ctx_size_from_data(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *e);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_prime() needs,
+ * from the operand widths alone.
+ *
+ * @param[in]           p_dsize The width of the prime, in limbs
+ * @param[in]           p1_dsize The width of the first auxiliary prime, in
+ *                              limbs, or 0 if absent
+ * @param[in]           p2_dsize The width of the second auxiliary prime, in
+ *                              limbs, or 0 if absent
+ * @param[in]           Xp_dsize The width of the seed, in limbs
+ * @param[in]           e_dsize The width of the public exponent, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_prime_ctx_size_from_sizes(size_t p_dsize,
+    size_t p1_dsize, size_t p2_dsize, size_t Xp_dsize, size_t e_dsize);
 
 /**
  * Calculate the arena payload size that OSSL_FN_X931_derive_prime() needs.
@@ -1991,9 +2376,31 @@ size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
  * The returned size includes any frame budget needed by
  * OSSL_FN_X931_derive_prime().
  */
-size_t OSSL_FN_X931_derive_prime_ctx_size(const OSSL_FN *p,
+size_t OSSL_FN_X931_derive_prime_ctx_size_from_data(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_derive_prime() needs, from
+ * the operand widths alone.
+ *
+ * @param[in]           p_dsize The width of the prime, in limbs
+ * @param[in]           p1_dsize The width of the first auxiliary prime, in
+ *                              limbs, or 0 if absent
+ * @param[in]           p2_dsize The width of the second auxiliary prime, in
+ *                              limbs, or 0 if absent
+ * @param[in]           Xp_dsize The width of the seed, in limbs
+ * @param[in]           Xp1_dsize The width of the first auxiliary seed, in
+ *                              limbs, or 0 if absent
+ * @param[in]           Xp2_dsize The width of the second auxiliary seed, in
+ *                              limbs, or 0 if absent
+ * @param[in]           e_dsize The width of the public exponent, in limbs
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_derive_prime_ctx_size_from_sizes(size_t p_dsize,
+    size_t p1_dsize, size_t p2_dsize, size_t Xp_dsize, size_t Xp1_dsize,
+    size_t Xp2_dsize, size_t e_dsize);
 #ifdef __cplusplus
 }
 #endif

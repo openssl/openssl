@@ -244,7 +244,7 @@ static int test_mont_ops(int idx)
         || !TEST_ptr(wider = fn_from_bn(a, limbs + 1,
                          (limbs + 1) * OSSL_FN_BYTES))
         || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_from_mont_ctx_size(r, wide, mont))))
+                         OSSL_FN_from_mont_ctx_size_from_data(r, wide, mont))))
         goto err;
 
     fn_secret(fa, limbs);
@@ -347,14 +347,15 @@ static int test_mont_reduce(int idx)
     if (!TEST_ptr(fm = fn_from_bn(m, limbs, len))
         || !TEST_ptr(wide = fn_from_bn(e, 2 * limbs, 2 * limbs * OSSL_FN_BYTES))
         || !TEST_true(BN_rshift(a, a, OSSL_FN_BITS))
-        || !TEST_ptr(narrow = fn_from_bn(a, limbs - 1,
-                         (limbs - 1) * OSSL_FN_BYTES))
+        || !TEST_ptr(
+            narrow = fn_from_bn(a, limbs - 1, (limbs - 1) * OSSL_FN_BYTES))
         || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
         || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_ctx_max_size(
-                             OSSL_FN_mont_reduce_ctx_size(r, wide, mont),
-                             OSSL_FN_mont_reduce_ctx_size(r, narrow, mont)))))
+        || !TEST_ptr(
+            ctx = OSSL_FN_CTX_new_size(NULL,
+                ossl_fn_ctx_max_size(
+                    OSSL_FN_mont_reduce_ctx_size_from_data(r, wide, mont),
+                    OSSL_FN_mont_reduce_ctx_size_from_data(r, narrow, mont)))))
         goto err;
 
     fn_secret(wide, 2 * limbs);
@@ -429,8 +430,9 @@ static int test_mod_exp(int idx)
         || !TEST_ptr(fa = fn_from_bn(a, limbs, len))
         || !TEST_ptr(fp = fn_from_bn(p, exp_limbs[idx], plen))
         || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, NULL))))
+        || !TEST_ptr(
+            ctx = OSSL_FN_CTX_new_size(NULL,
+                OSSL_FN_mod_exp_mont_ctx_size_from_data(r, fa, fp, fm, NULL))))
         goto err;
 
     fn_secret(fp, exp_limbs[idx]);
@@ -491,8 +493,9 @@ static int test_mod_inverse_prime(int idx)
         || !TEST_ptr(fa = fn_from_bn(a, limbs, len))
         || !TEST_ptr(r = OSSL_FN_new_limbs(limbs))
         || !TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_mod_inverse_prime_ctx_size(r, fa, fm, mont))))
+        || !TEST_ptr(
+            ctx = OSSL_FN_CTX_new_size(NULL,
+                OSSL_FN_mod_inverse_prime_ctx_size_from_data(r, fa, fm, mont))))
         goto err;
 
     fn_secret(fa, limbs);

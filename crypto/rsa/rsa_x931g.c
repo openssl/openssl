@@ -59,7 +59,7 @@ static int rsa_fn_x931_derive_prime(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
         && (fn_p2 = bn_acquire_ossl_fn(p2, (int)pl)) == NULL)
         goto err;
 
-    fn_size = OSSL_FN_X931_derive_prime_ctx_size(fn_p, fn_p1, fn_p2,
+    fn_size = OSSL_FN_X931_derive_prime_ctx_size_from_data(fn_p, fn_p1, fn_p2,
         fn_Xp, fn_Xp1, fn_Xp2, fn_e);
     if (fn_size == 0)
         goto err;
@@ -194,21 +194,21 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
      * The operations run sequentially in one arena, each in its own frame,
      * so the arena is sized for the largest single operation.
      */
-    fn_size = OSSL_FN_mul_ctx_size(fn_n, fn_p, fn_q);
+    fn_size = OSSL_FN_mul_ctx_size_from_data(fn_n, fn_p, fn_q);
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mul_ctx_size(r0, r1, r2));
+        OSSL_FN_mul_ctx_size_from_data(r0, r1, r2));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_gcd_ctx_size(r1, r2));
+        OSSL_FN_gcd_ctx_size_from_data(r1, r2));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_div_ctx_size(r0, NULL, r0, r3));
+        OSSL_FN_div_ctx_size_from_data(r0, NULL, r0, r3));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_inverse_ctx_size(fn_d, fn_e, r0));
+        OSSL_FN_mod_inverse_ctx_size_from_data(fn_d, fn_e, r0));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_ctx_size(fn_dmp1, fn_d, r1));
+        OSSL_FN_mod_ctx_size_from_data(fn_dmp1, fn_d, r1));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_ctx_size(fn_dmq1, fn_d, r2));
+        OSSL_FN_mod_ctx_size_from_data(fn_dmq1, fn_d, r2));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_inverse_ctx_size(fn_iqmp, fn_q, fn_p));
+        OSSL_FN_mod_inverse_ctx_size_from_data(fn_iqmp, fn_q, fn_p));
     if (fn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -275,7 +275,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     if (Xp == NULL || Xq == NULL)
         goto error;
 
-    fn_size = OSSL_FN_X931_generate_Xpq_ctx_size(Xp);
+    fn_size = OSSL_FN_X931_generate_Xpq_ctx_size_from_data(Xp);
     if (fn_size == 0)
         goto error;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -304,8 +304,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
         if (fn_p == NULL || fn_q == NULL)
             goto x931_err;
 
-        fn_size = OSSL_FN_X931_generate_prime_ctx_size(fn_p, NULL, NULL,
-            Xp, fn_e);
+        fn_size = OSSL_FN_X931_generate_prime_ctx_size_from_data(
+            fn_p, NULL, NULL, Xp, fn_e);
         if (fn_size == 0)
             goto x931_err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
@@ -318,8 +318,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
         OSSL_FN_CTX_free(fn_ctx);
         fn_ctx = NULL;
 
-        fn_size = OSSL_FN_X931_generate_prime_ctx_size(fn_q, NULL, NULL,
-            Xq, fn_e);
+        fn_size = OSSL_FN_X931_generate_prime_ctx_size_from_data(
+            fn_q, NULL, NULL, Xq, fn_e);
         if (fn_size == 0)
             goto x931_err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */

@@ -15,6 +15,7 @@
 #include "internal/constant_time.h"
 #include "fn_local.h"
 
+OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
 /*
@@ -121,23 +122,23 @@ static int ossl_fn_signed_add(OSSL_FN *r, int *rneg,
     return 1;
 }
 
-size_t OSSL_FN_gcd_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
+size_t OSSL_FN_gcd_ctx_size_from_sizes(size_t a_dsize, size_t b_dsize)
 {
-    size_t max, scratch, limbs;
+    size_t scratch, limbs;
     int err = 0;
 
-    if (a == NULL || b == NULL)
-        return 0;
-
-    /*
-     * dsize is an int, so max <= INT_MAX and max + 1 cannot overflow a
-     * size_t.  The 4 * scratch product is checked via safe_mul_size_t.
-     */
-    max = (size_t)((a->dsize > b->dsize) ? a->dsize : b->dsize);
-    scratch = max + 1;
+    scratch = safe_add_size_t(a_dsize > b_dsize ? a_dsize : b_dsize, 1, &err);
     limbs = safe_mul_size_t(4, scratch, &err);
 
     return err == 0 ? OSSL_FN_CTX_size(1, 4, limbs) : 0;
+}
+
+size_t OSSL_FN_gcd_ctx_size_from_data(const OSSL_FN *a, const OSSL_FN *b)
+{
+    if (a == NULL || b == NULL)
+        return 0;
+
+    return OSSL_FN_gcd_ctx_size_from_sizes(a->dsize, b->dsize);
 }
 
 int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,

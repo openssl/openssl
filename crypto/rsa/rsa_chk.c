@@ -36,7 +36,7 @@ static int rsa_fn_check_prime(const BIGNUM *w, BN_GENCB *cb,
 
     if (fn_w == NULL)
         return -1;
-    fn_size = ossl_fn_check_prime_ctx_size(fn_w);
+    fn_size = ossl_fn_check_prime_ctx_size_from_data(fn_w);
     if (fn_size == 0)
         return -1;
     fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
@@ -60,6 +60,16 @@ static OSSL_FN_CTX *rsa_fn_ctx_new(size_t size, OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
+/**
+ * Check an RSA key pair, including any extra primes of a multi-prime key:
+ * e is odd and not 1, the primes are prime, n is their product, d*e is 1
+ * modulo the lcm of the (prime - 1) values, and the CRT components, when
+ * present, are consistent with d and the primes.
+ *
+ * @param[in]   key     The key to check.
+ * @param[in]   cb      The callback for the primality tests, or NULL.
+ * @returns             1 if the key is valid, 0 if it is not, -1 on error.
+ */
 static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 {
     OSSL_FN_CTX *fn_ctx = NULL;
@@ -175,11 +185,11 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
-    fn_size = OSSL_FN_mul_ctx_size(i, fn_p, fn_q);
+    fn_size = OSSL_FN_mul_ctx_size_from_data(i, fn_p, fn_q);
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
         fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mul_ctx_size(i, i, bn_get_ossl_fn(pinfo->r)));
+            OSSL_FN_mul_ctx_size_from_data(i, i, bn_get_ossl_fn(pinfo->r)));
     }
     if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
         ret = -1;
@@ -233,12 +243,13 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
      * both operands at the modulus width, which dominates the muls, the
      * gcds, and the closing mod_mul.
      */
-    fn_size = OSSL_FN_div_ctx_size(m, NULL, l, m);
+    fn_size = OSSL_FN_div_ctx_size_from_data(m, NULL, l, m);
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mul_ctx_size(l, i, j));
-    fn_size = ossl_fn_ctx_max_size(fn_size, OSSL_FN_gcd_ctx_size(i, j));
+        OSSL_FN_mul_ctx_size_from_data(l, i, j));
+    fn_size
+        = ossl_fn_ctx_max_size(fn_size, OSSL_FN_gcd_ctx_size_from_data(i, j));
     fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_mul_ctx_size(i, fn_d, fn_e, m));
+        OSSL_FN_mod_mul_ctx_size_from_data(i, fn_d, fn_e, m));
     if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
         ret = -1;
         goto err;
@@ -311,11 +322,11 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 
         if (phase3 == 1 && key->dmp1 != NULL && key->dmq1 != NULL
             && key->iqmp != NULL) {
-            fn_size = OSSL_FN_mod_ctx_size(k, fn_d, pm1);
+            fn_size = OSSL_FN_mod_ctx_size_from_data(k, fn_d, pm1);
             fn_size = ossl_fn_ctx_max_size(fn_size,
-                OSSL_FN_mod_ctx_size(k, fn_d, qm1));
+                OSSL_FN_mod_ctx_size_from_data(k, fn_d, qm1));
             fn_size = ossl_fn_ctx_max_size(fn_size,
-                OSSL_FN_mod_inverse_ctx_size(k, fn_q, fn_p));
+                OSSL_FN_mod_inverse_ctx_size_from_data(k, fn_q, fn_p));
             if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
                 phase3 = -1;
             }
@@ -385,9 +396,9 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
                 OSSL_FN_clear_free(rm1);
                 break;
             }
-            fn_size = OSSL_FN_mod_ctx_size(kr, fn_d, rm1);
+            fn_size = OSSL_FN_mod_ctx_size_from_data(kr, fn_d, rm1);
             fn_size = ossl_fn_ctx_max_size(fn_size,
-                OSSL_FN_mod_inverse_ctx_size(kr, fn_pp, fn_r));
+                OSSL_FN_mod_inverse_ctx_size_from_data(kr, fn_pp, fn_r));
             if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
                 phase3 = -1;
             } else {

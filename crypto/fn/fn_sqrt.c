@@ -376,13 +376,10 @@ end:
  * OSSL_FN_mod, and OSSL_FN_kronecker.  The largest nested requirement
  * dominates; mod_exp is typically the heaviest.
  */
-size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
-    const OSSL_FN *p)
+size_t OSSL_FN_mod_sqrt_ctx_size_from_sizes(size_t ret_dsize, size_t a_dsize,
+    size_t p_dsize)
 {
-    if (p == NULL)
-        return 0;
-
-    size_t L = (size_t)p->dsize;
+    size_t L = p_dsize;
     if (ossl_fn_totalsize(L) == 0)
         return 0;
 
@@ -398,15 +395,14 @@ size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
      *   - OSSL_FN_kronecker(y, q, p)
      *   - OSSL_FN_mod(A, a, p)           (initial A = a mod p)
      *
-     * |p| stands in for the L-wide temporaries (sizing reads only dsize),
-     * except for the initial reduction, where the numerator is |a| itself
-     * and may be wider than p.
+     * The initial reduction is the only one whose numerator is |a| itself,
+     * which may be wider than p.
      */
-    size_t mod_exp_size = OSSL_FN_mod_exp_ctx_size(p, p, p, p);
-    size_t mod_sqr_size = OSSL_FN_mod_sqr_ctx_size(p, p, p);
-    size_t mod_mul_size = OSSL_FN_mod_mul_ctx_size(p, p, p, p);
-    size_t mod_size = OSSL_FN_mod_ctx_size(p, a, p);
-    size_t kronecker_size = OSSL_FN_kronecker_ctx_size(p, p);
+    size_t mod_exp_size = OSSL_FN_mod_exp_ctx_size_from_sizes(L, L, L, L);
+    size_t mod_sqr_size = OSSL_FN_mod_sqr_ctx_size_from_sizes(L, L, L);
+    size_t mod_mul_size = OSSL_FN_mod_mul_ctx_size_from_sizes(L, L, L, L);
+    size_t mod_size = OSSL_FN_mod_ctx_size_from_sizes(L, a_dsize, L);
+    size_t kronecker_size = OSSL_FN_kronecker_ctx_size_from_sizes(L, L);
 
     size_t nested_size = ossl_fn_ctx_max_size(mod_exp_size,
         ossl_fn_ctx_max_size(mod_sqr_size,
@@ -414,4 +410,14 @@ size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
                 ossl_fn_ctx_max_size(mod_size, kronecker_size))));
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FN_mod_sqrt_ctx_size_from_data(const OSSL_FN *ret, const OSSL_FN *a,
+    const OSSL_FN *p)
+{
+    if (a == NULL || p == NULL)
+        return 0;
+
+    return OSSL_FN_mod_sqrt_ctx_size_from_sizes(OSSL_FN_size_limbs(ret),
+        a->dsize, p->dsize);
 }

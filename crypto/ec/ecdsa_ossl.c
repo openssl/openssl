@@ -289,7 +289,7 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
     const void *token = NULL;
     const OSSL_FN *order_fn, *priv_fn = NULL;
     OSSL_FN *kf = NULL, *kinvf = NULL;
-    size_t need = 0;
+    size_t w, need = 0;
 
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -363,9 +363,9 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
      * its own against the possibly-NULL group->libctx) is what lets the
      * ladder's coordinate blinding draw entropy from the caller's context.
      */
+    w = ossl_fn_get_dsize(order_fn);
     need = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_inverse_prime_ctx_size(order_fn, order_fn, order_fn,
-            group->fn_mont_ctx_ord),
+        OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(w, w, w, w),
         EC_POINT_mul_fn_ctx_size(group, tmp_point, order_fn, NULL));
     /* ... plus the outer frame holding the nonce k itself. */
     need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 1, (size_t)nlimbs));
@@ -585,9 +585,9 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     order_fn = OSSL_FN_MONT_CTX_get0_modulus(mont);
     w = ossl_fn_get_dsize(order_fn);
     need = ossl_fn_ctx_max_size(ossl_ec_group_fn_reduce_ord_ctx_size(group),
-        OSSL_FN_to_mont_quick_ctx_size(NULL, NULL, mont));
+        OSSL_FN_to_mont_quick_ctx_size_from_sizes(w, w, w));
     need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+        OSSL_FN_mul_mont_quick_ctx_size_from_sizes(w, w, w, w));
     need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 3, 3 * w));
     if (need == 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);

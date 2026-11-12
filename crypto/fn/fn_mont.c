@@ -281,12 +281,24 @@ const OSSL_FN *OSSL_FN_MONT_CTX_get0_modulus(const OSSL_FN_MONT_CTX *mont)
  *     limb values; N->dsize is a public width and the returned size is the
  *     function's declared output, not a side channel.
  */
-size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mul_mont_quick_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t b_dsize, size_t n_dsize)
+{
+    size_t limbs;
+    int err = 0;
+
+    limbs = safe_add_size_t(n_dsize, 2, &err);
+    return err == 0 ? OSSL_FN_CTX_size(1, 1, limbs) : 0;
+}
+
+size_t OSSL_FN_mul_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, OSSL_FN_MONT_CTX *mont)
 {
     if (mont == NULL)
         return 0;
-    return OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize + 2);
+
+    return OSSL_FN_mul_mont_quick_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        OSSL_FN_size_limbs(a), OSSL_FN_size_limbs(b), mont->N->dsize);
 }
 
 /*
@@ -398,28 +410,39 @@ end:
  *     (operand dsize vs the modulus width), and the returned size depends
  *     on widths alone.
  */
-size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
-    OSSL_FN_MONT_CTX *mont)
+size_t OSSL_FN_mul_mont_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t b_dsize, size_t n_dsize)
 {
-    if (mont == NULL)
-        return 0;
-
-    int len = mont->N->dsize;
     /* a and b each get a canonicalisation budget; see above. */
     size_t num = 2;
-    size_t own_size, nested_size;
+    size_t limbs, own_size, nested_size;
+    int err = 0;
 
-    if (r != NULL && r->dsize != len)
+    /* An absent |r| (r_dsize == 0) needs no result temporary. */
+    if (r_dsize != 0 && r_dsize != n_dsize)
         num++;
 
-    own_size = OSSL_FN_CTX_size(1, num, num * (size_t)len);
+    limbs = safe_mul_size_t(num, n_dsize, &err);
+    if (err != 0)
+        return 0;
+    own_size = OSSL_FN_CTX_size(1, num, limbs);
     nested_size = ossl_fn_ctx_max_size(
         ossl_fn_ctx_max_size(
-            OSSL_FN_mod_ctx_size(NULL, a, mont->N),
-            OSSL_FN_mod_ctx_size(NULL, b, mont->N)),
-        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+            OSSL_FN_mod_ctx_size_from_sizes(0, a_dsize, n_dsize),
+            OSSL_FN_mod_ctx_size_from_sizes(0, b_dsize, n_dsize)),
+        OSSL_FN_mul_mont_quick_ctx_size_from_sizes(0, 0, 0, n_dsize));
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FN_mul_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b, OSSL_FN_MONT_CTX *mont)
+{
+    if (a == NULL || b == NULL || mont == NULL)
+        return 0;
+
+    return OSSL_FN_mul_mont_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        a->dsize, b->dsize, mont->N->dsize);
 }
 
 /*
@@ -508,27 +531,36 @@ end:
  *     (operand dsize vs the modulus width), and the returned size depends
  *     on widths alone.
  */
-size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
-    OSSL_FN_MONT_CTX *mont)
+size_t OSSL_FN_to_mont_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t n_dsize)
 {
-    if (mont == NULL) {
-        return 0;
-    }
-
-    int len = mont->N->dsize;
     /* a gets a canonicalisation budget; see above. */
     size_t num = 1;
-    size_t own_size, nested_size;
+    size_t limbs, own_size, nested_size;
+    int err = 0;
 
-    if (r != NULL && r->dsize != len)
+    if (r_dsize != 0 && r_dsize != n_dsize)
         num++;
 
-    own_size = OSSL_FN_CTX_size(1, num, num * (size_t)len);
+    limbs = safe_mul_size_t(num, n_dsize, &err);
+    if (err != 0)
+        return 0;
+    own_size = OSSL_FN_CTX_size(1, num, limbs);
     nested_size = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_ctx_size(NULL, a, mont->N),
-        OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont));
+        OSSL_FN_mod_ctx_size_from_sizes(0, a_dsize, n_dsize),
+        OSSL_FN_mul_mont_quick_ctx_size_from_sizes(0, 0, 0, n_dsize));
 
     return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FN_to_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont)
+{
+    if (a == NULL || mont == NULL)
+        return 0;
+
+    return OSSL_FN_to_mont_ctx_size_from_sizes(OSSL_FN_size_limbs(r), a->dsize,
+        mont->N->dsize);
 }
 
 /*
@@ -566,10 +598,21 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  *   - This function is constant-time; it depends on the public modulus
  *     width only.
  */
-size_t OSSL_FN_to_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_to_mont_quick_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t n_dsize)
+{
+    return OSSL_FN_mul_mont_quick_ctx_size_from_sizes(r_dsize, a_dsize, 0,
+        n_dsize);
+}
+
+size_t OSSL_FN_to_mont_quick_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
-    return OSSL_FN_mul_mont_quick_ctx_size(r, a, NULL, mont);
+    if (mont == NULL)
+        return 0;
+
+    return OSSL_FN_to_mont_quick_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        OSSL_FN_size_limbs(a), mont->N->dsize);
 }
 
 /*
@@ -601,21 +644,38 @@ int OSSL_FN_to_mont_quick(OSSL_FN *r, const OSSL_FN *a,
  *     limb values; N->dsize is a public width and the returned size is the
  *     function's declared output, not a side channel.
  */
-size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_from_mont_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t n_dsize)
+{
+    size_t limbs;
+    int err = 0;
+
+    /* A wider |a| is reduced in a copy of itself; see from_mont_wide() */
+    if (a_dsize > n_dsize) {
+        /* from_mont_wide() accepts an |a| at most twice as wide as N */
+        if (a_dsize - n_dsize > n_dsize)
+            return 0;
+        limbs = safe_mul_size_t(2, n_dsize, &err);
+    } else {
+        /*
+         * from_mont is mul_mont_quick specialised to b == 1, so it uses the
+         * same len + 2 scratch buffer (len limbs plus the two CIOS guard
+         * words).
+         */
+        limbs = safe_add_size_t(n_dsize, 2, &err);
+    }
+
+    return err == 0 ? OSSL_FN_CTX_size(1, 1, limbs) : 0;
+}
+
+size_t OSSL_FN_from_mont_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
     if (mont == NULL)
         return 0;
 
-    /* A wider |a| is reduced in a copy of itself; see from_mont_wide() */
-    if (a != NULL && a->dsize > mont->N->dsize)
-        return OSSL_FN_CTX_size(1, 1, 2 * (size_t)mont->N->dsize);
-
-    /*
-     * from_mont is mul_mont_quick specialised to b == 1, so it uses the same
-     * len + 2 scratch buffer (len limbs plus the two CIOS guard words).
-     */
-    return OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize + 2);
+    return OSSL_FN_from_mont_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        OSSL_FN_size_limbs(a), mont->N->dsize);
 }
 
 /*
@@ -765,29 +825,36 @@ end:
  * Constant-time profile:
  *   - This function is constant-time; it depends on public widths only.
  */
-size_t OSSL_FN_mont_reduce_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+size_t OSSL_FN_mont_reduce_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t n_dsize)
+{
+    size_t src_dsize, own_size, nested_size;
+
+    if (a_dsize < n_dsize) {
+        /* A narrower |a| is first copied into an N-wide temporary */
+        own_size = OSSL_FN_CTX_size(1, 1, n_dsize);
+        src_dsize = n_dsize;
+    } else {
+        /* Otherwise |a| is used as is, in a frame of its own */
+        own_size = OSSL_FN_CTX_size(1, 0, 0);
+        src_dsize = a_dsize;
+    }
+
+    /* from_mont(r, src), then to_mont_quick(r, r) */
+    nested_size = ossl_fn_ctx_max_size(
+        OSSL_FN_from_mont_ctx_size_from_sizes(r_dsize, src_dsize, n_dsize),
+        OSSL_FN_to_mont_quick_ctx_size_from_sizes(r_dsize, r_dsize, n_dsize));
+    return ossl_fn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FN_mont_reduce_ctx_size_from_data(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont)
 {
-    size_t own_size, nested_size;
-
-    if (mont == NULL)
+    if (a == NULL || mont == NULL)
         return 0;
 
-    /* A NULL |a| is budgeted as the widest operand accepted */
-    OSSL_FN narrow = { .dsize = mont->N->dsize };
-    OSSL_FN widest = { .dsize = 2 * mont->N->dsize };
-    const OSSL_FN *src = a;
-
-    if (a == NULL)
-        src = &widest;
-    else if (a->dsize < mont->N->dsize)
-        src = &narrow;
-
-    own_size = OSSL_FN_CTX_size(1, 1, (size_t)mont->N->dsize);
-    nested_size = ossl_fn_ctx_max_size(
-        OSSL_FN_from_mont_ctx_size(r, src, mont),
-        OSSL_FN_to_mont_quick_ctx_size(r, NULL, mont));
-    return ossl_fn_ctx_add_size(own_size, nested_size);
+    return OSSL_FN_mont_reduce_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+        a->dsize, mont->N->dsize);
 }
 
 /*
