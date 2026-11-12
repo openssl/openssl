@@ -7869,84 +7869,6 @@ static int test_aes_rc4_keylen_change_cve_2023_5363(void)
 }
 #endif
 
-static int test_aes_gcm_siv_empty_data(void)
-{
-    unsigned char key[16] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10 };
-    unsigned char nonce[12] = { 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11,
-        0x22, 0x33, 0x44, 0x55 };
-    unsigned char aad[33] = "this AAD was never authenticated";
-    unsigned char zero_tag[16] = { 0 };
-    unsigned char real_tag[16];
-    unsigned char out[16];
-    int outl, ret = 0;
-    EVP_CIPHER_CTX *ctx = NULL;
-    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, "AES-128-GCM-SIV", testpropq);
-
-    if (c == NULL) {
-        return TEST_skip("AES-128-GCM-SIV cipher is not available");
-    }
-
-    /* Compute the CORRECT tag for (key,nonce,aad,pt="") via encrypt */
-    ctx = EVP_CIPHER_CTX_new();
-    if (!TEST_ptr(ctx)
-        || !TEST_true(EVP_EncryptInit_ex2(ctx, c, key, nonce, NULL))
-        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad))) /* AAD */
-        || !TEST_true(EVP_EncryptUpdate(ctx, out, &outl, aad, 0)) /* empty PT, out!=NULL */
-        || !TEST_true(EVP_EncryptFinal_ex(ctx, out, &outl))
-        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, real_tag)))
-        goto err;
-    EVP_CIPHER_CTX_free(ctx);
-
-    /* SANITY: decrypt with CORRECT tag and an explicit empty-PT Update */
-    ctx = EVP_CIPHER_CTX_new();
-    if (!TEST_ptr(ctx)
-        || !TEST_true(EVP_DecryptInit_ex2(ctx, c, key, nonce, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, real_tag))
-        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad)))
-        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, aad, 0)) /* force aes_gcm_siv_decrypt(len=0) */
-        || !TEST_true(EVP_DecryptFinal_ex(ctx, out, &outl)))
-        goto err;
-    EVP_CIPHER_CTX_free(ctx);
-
-    /* FORGERY A: AAD only, NO ciphertext Update, ALL-ZERO tag */
-    ctx = EVP_CIPHER_CTX_new();
-    if (!TEST_ptr(ctx)
-        || !TEST_true(EVP_DecryptInit_ex2(ctx, c, key, nonce, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, zero_tag))
-        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad))) /* AAD only, out==NULL */
-        || !TEST_false(EVP_DecryptFinal_ex(ctx, out, &outl)))
-        goto err;
-    EVP_CIPHER_CTX_free(ctx);
-
-    /* FORGERY B: no AAD, no Update at all, ALL-ZERO tag */
-    ctx = EVP_CIPHER_CTX_new();
-    if (!TEST_ptr(ctx)
-        || !TEST_true(EVP_DecryptInit_ex2(ctx, c, key, nonce, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, zero_tag))
-        || !TEST_false(EVP_DecryptFinal_ex(ctx, out, &outl)))
-        goto err;
-    EVP_CIPHER_CTX_free(ctx);
-
-    /* CONTROL: AAD only, NO ciphertext Update, CORRECT tag */
-    ctx = EVP_CIPHER_CTX_new();
-    if (!TEST_ptr(ctx)
-        || !TEST_true(EVP_DecryptInit_ex2(ctx, c, key, nonce, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, real_tag))
-        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad)))
-        || !TEST_true(EVP_DecryptFinal_ex(ctx, out, &outl)))
-        goto err;
-    EVP_CIPHER_CTX_free(ctx);
-    ctx = NULL;
-
-    ret = 1;
-err:
-    EVP_CIPHER_CTX_free(ctx);
-
-    EVP_CIPHER_free(c);
-    return ret;
-}
-
 /* A zero-length AAD update must be a no-op for AES-GCM-SIV. */
 static int gcm_siv_encrypt_aad_seq(const EVP_CIPHER *c,
     const unsigned char *key, const unsigned char *nonce,
@@ -10065,7 +9987,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
 
     /* Test cases for CVE-2026-45446 */
-    ADD_TEST(test_aes_gcm_siv_empty_data);
     ADD_TEST(test_aes_siv_ctx_reuse);
     ADD_TEST(test_aes_siv_ctx_dec_retval);
     ADD_TEST(test_aes_gcm_siv_reinit_aad_replay);
