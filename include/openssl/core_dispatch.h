@@ -96,7 +96,6 @@ OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
     (const OSSL_CORE_HANDLE *prov))
 #define OSSL_FUNC_CORE_POP_ERROR_TO_MARK 10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_CORE_HANDLE *prov))
-
 /* Functions to access the OBJ database */
 
 #define OSSL_FUNC_CORE_OBJ_ADD_SIGID 11

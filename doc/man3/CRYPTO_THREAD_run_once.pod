@@ -5,6 +5,7 @@
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
+CRYPTO_THREAD_get_local_ex,
 CRYPTO_atomic_add, CRYPTO_atomic_add64, CRYPTO_atomic_and, CRYPTO_atomic_or,
 CRYPTO_atomic_load, CRYPTO_atomic_store, CRYPTO_atomic_load_int,
 CRYPTO_atomic_store_int, CRYPTO_atomic_load_ptr, CRYPTO_atomic_store_ptr,
@@ -25,6 +26,8 @@ OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
  int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
  int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
  void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
+
+ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ctx);
 
  int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_add64(uint64_t *val, uint64_t op, uint64_t *ret,
@@ -94,6 +97,14 @@ CRYPTO_THREAD_unlock() unlocks the previously locked I<lock>.
 
 CRYPTO_THREAD_lock_free() frees the provided I<lock>.
 If the argument is NULL, nothing is done.
+
+=item *
+
+CRYPTO_THREAD_get_local_ex() returns thread local storage for internally defined key values.
+This function is exported solely for use by other OpenSSL libraries (such as libssl.so), and should
+not be used by any external user.  The predefined values of B<CRYPTO_THREAD_LOCAL_KEY_ID> are intentionally
+left undefined in public headers, as are the data structure pointers it returns to discourage its use.
+Do not use this function.
 
 =item *
 
@@ -321,7 +332,9 @@ were added in OpenSSL 3.4.
 CRYPTO_atomic_store_int() was added in OpenSSL 4.0.
 
 CRYPTO_atomic_load_ptr(), CRYPTO_atomic_store_ptr(), CRYPTO_atomic_cmp_exch_ptr()
-were added in OpenSSL 4.1
+were added in OpenSSL 4.1.
+
+CRYPTO_THREAD_get_local_ex() was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

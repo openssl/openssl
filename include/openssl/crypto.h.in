@@ -576,12 +576,20 @@ typedef unsigned int CRYPTO_THREAD_ID;
 #define CRYPTO_ONCE_STATIC_INIT 0
 #endif
 
+typedef int CRYPTO_THREAD_LOCAL_KEY_ID;
+
 int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void));
 
 int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *));
 void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key);
 int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val);
 int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
+
+/**
+ * @see CRYPTO_THREAD_get_local_ex(3)
+ */
+void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
+    OSSL_LIB_CTX *ctx);
 
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);

@@ -8,7 +8,6 @@ set mark, clear mark, pop errors until mark and pop last error
 =head1 SYNOPSIS
 
  #include <openssl/err.h>
-
  int ERR_set_mark(void);
  int ERR_pop_to_mark(void);
  int ERR_clear_last_mark(void);

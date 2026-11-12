@@ -327,4 +327,5 @@ int ERR_count_to_mark(void)
 {
     return c_count_to_mark != NULL ? c_count_to_mark(NULL) : 0;
 }
+
 #endif
