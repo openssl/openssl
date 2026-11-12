@@ -3150,7 +3150,7 @@ void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 /**
  * @brief Check whether the current write record layer is still needed for
  * retransmissions.
- * @param s the DTLS connection
+ * @param[in] s the DTLS connection
  * @returns 1 if a message in the sent_messages queue was sent with the
  *          current write record layer, which then has to be kept, 0 otherwise
  */
