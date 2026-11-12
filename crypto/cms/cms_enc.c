@@ -99,6 +99,10 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         }
         /* Generate a random IV if we need one */
         ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
+        if (ivlen > (int)sizeof(iv)) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
+            goto err;
+        }
 
         if (ivlen > 0) {
             if (RAND_bytes_ex(libctx, iv, ivlen, 0) <= 0)

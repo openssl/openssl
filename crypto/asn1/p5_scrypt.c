@@ -86,6 +86,10 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
 
     /* Create random IV */
     ivlen = EVP_CIPHER_get_iv_length(cipher);
+    if (ivlen > (int)sizeof(iv)) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_CIPHER);
+        goto err;
+    }
     if (ivlen > 0) {
         if (aiv)
             memcpy(iv, aiv, ivlen);
