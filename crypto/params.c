@@ -17,6 +17,7 @@
 #include "internal/params.h"
 #include "internal/packet.h"
 #include "internal/common.h"
+#include "internal/tsan_assist.h"
 
 /* Shortcuts for raising errors that are widely used */
 #define err_unsigned_negative \
@@ -1666,6 +1667,41 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
     OSSL_PARAM end = OSSL_PARAM_END;
 
     return end;
+}
+
+/* Set by OSSL_PARAM_set_strict() */
+static TSAN_QUALIFIER int strict_params;
+
+int OSSL_PARAM_set_strict(int strict)
+{
+    if (strict != 0 && strict != 1) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    tsan_store(&strict_params, strict);
+    return 1;
+}
+
+int ossl_param_strict_enabled(void)
+{
+    return tsan_load(&strict_params);
+}
+
+int ossl_param_check_settable(const OSSL_PARAM *params,
+    const OSSL_PARAM *settable)
+{
+    const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
+    for (p = params; p->key != NULL; p++) {
+        if (settable == NULL || OSSL_PARAM_locate_const(settable, p->key) == NULL) {
+            ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PARAM_NOT_SETTABLE,
+                "key=%s", p->key);
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static int get_string_ptr_internal(const OSSL_PARAM *p, const void **val,

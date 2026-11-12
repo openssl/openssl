@@ -33,6 +33,15 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added `OSSL_PARAM_set_strict()`, which turns on strict parameter
+   checking for the whole process. While it is on, the EVP functions
+   that set parameters reject an `OSSL_PARAM` array containing a key the
+   implementation does not list as settable, instead of ignoring the
+   key. It is off by default, and can also be turned on with
+   `strict_params = yes` in the configuration file's `alg_section`.
+
+   *Bob Beck*
+
  * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
    `CRYPTO_new_ex_data()`.
 

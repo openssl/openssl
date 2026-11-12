@@ -809,6 +809,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
+    if (!evp_pkey_ctx_check_settable(ctx, params))
+        goto err;
 
     switch (operation) {
     case EVP_PKEY_OP_SIGN:

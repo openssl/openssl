@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/common.h"
@@ -132,6 +133,17 @@ int evp_md_ctx_free_algctx(EVP_MD_CTX *ctx)
     return 1;
 }
 
+/* The settable list of the digest itself, ignoring any signature context */
+static const OSSL_PARAM *md_settable_ctx_params(const EVP_MD_CTX *ctx)
+{
+    void *provctx;
+
+    if (ctx->digest == NULL || ctx->digest->settable_ctx_params == NULL)
+        return NULL;
+    provctx = ossl_provider_ctx(EVP_MD_get0_provider(ctx->digest));
+    return ctx->digest->settable_ctx_params(ctx->algctx, provctx);
+}
+
 static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     const OSSL_PARAM params[])
 {
@@ -220,6 +232,9 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         return 0;
     }
 
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, md_settable_ctx_params(ctx)))
+        return 0;
     return ctx->digest->dinit(ctx->algctx, params);
 }
 
@@ -601,6 +616,10 @@ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 {
     EVP_PKEY_CTX *pctx = ctx->pctx;
 
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_MD_CTX_settable_params(ctx)))
+        return 0;
+
     /* If we have a pctx then we should try that first */
     if (ossl_unlikely(pctx != NULL)
         && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
@@ -630,7 +649,6 @@ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
 const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
 {
     EVP_PKEY_CTX *pctx;
-    void *alg;
 
     if (ctx == NULL)
         return NULL;
@@ -645,12 +663,7 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
         return pctx->op.sig.signature->settable_ctx_md_params(
             pctx->op.sig.algctx);
 
-    if (ctx->digest != NULL && ctx->digest->settable_ctx_params != NULL) {
-        alg = ossl_provider_ctx(EVP_MD_get0_provider(ctx->digest));
-        return ctx->digest->settable_ctx_params(ctx->algctx, alg);
-    }
-
-    return NULL;
+    return md_settable_ctx_params(ctx);
 }
 
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])

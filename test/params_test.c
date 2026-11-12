@@ -14,8 +14,14 @@
 
 #include <string.h>
 #include <openssl/bn.h>
+#include <openssl/bio.h>
+#include <openssl/conf.h>
 #include <openssl/core.h>
+#include <openssl/core_names.h>
+#include <openssl/cryptoerr.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/params.h>
 #include "internal/numbers.h"
 #include "internal/nelem.h"
@@ -701,10 +707,177 @@ static int test_more_allocate_from_text(void)
     return check_octetstr_from_hexstr();
 }
 
+static int last_error_is_not_settable(void)
+{
+    return TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+        CRYPTO_R_PARAM_NOT_SETTABLE);
+}
+
+static int test_strict_switch(void)
+{
+    return TEST_false(OSSL_PARAM_set_strict(2))
+        && TEST_true(OSSL_PARAM_set_strict(1))
+        && TEST_true(OSSL_PARAM_set_strict(0));
+}
+
+static int test_strict_kdf(void)
+{
+    int ret = 0;
+    char digest[] = "SHA256";
+    char bogus[] = "bogus";
+    OSSL_PARAM known[] = {
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, digest, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM unknown[] = {
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, digest, 0),
+        OSSL_PARAM_utf8_string("no-such-param", bogus, 0),
+        OSSL_PARAM_END
+    };
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *ctx = NULL;
+
+    if (!TEST_ptr(kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_HKDF, NULL))
+        || !TEST_ptr(ctx = EVP_KDF_CTX_new(kdf)))
+        goto err;
+
+    if (!TEST_true(EVP_KDF_CTX_set_params(ctx, unknown)))
+        goto err;
+
+    if (!TEST_true(OSSL_PARAM_set_strict(1))
+        || !TEST_true(EVP_KDF_CTX_set_params(ctx, known)))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_false(EVP_KDF_CTX_set_params(ctx, unknown))
+        || !last_error_is_not_settable())
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_set_strict(0);
+    EVP_KDF_CTX_free(ctx);
+    EVP_KDF_free(kdf);
+    return ret;
+}
+
+static int test_strict_digest_init(void)
+{
+    int ret = 0;
+    size_t xoflen = 16;
+    OSSL_PARAM xof[] = {
+        OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen),
+        OSSL_PARAM_END
+    };
+    EVP_MD *sha256 = NULL;
+    EVP_MD_CTX *ctx = NULL;
+
+    if (!TEST_ptr(sha256 = EVP_MD_fetch(NULL, "SHA256", NULL))
+        || !TEST_ptr(ctx = EVP_MD_CTX_new())
+        || !TEST_true(OSSL_PARAM_set_strict(1)))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(EVP_DigestInit_ex2(ctx, sha256, xof))
+        || !last_error_is_not_settable())
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_set_strict(0);
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_free(sha256);
+    return ret;
+}
+
+static int test_strict_config(void)
+{
+    static const char cnf_text[] = "openssl_conf = init\n"
+                                   "[init]\n"
+                                   "alg_section = algs\n"
+                                   "[algs]\n"
+                                   "strict_params = yes\n";
+    int ret = 0;
+    size_t xoflen = 16;
+    OSSL_PARAM xof[] = {
+        OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen),
+        OSSL_PARAM_END
+    };
+    BIO *bio = NULL;
+    CONF *conf = NULL;
+    EVP_MD *sha256 = NULL;
+    EVP_MD_CTX *ctx = NULL;
+
+    OPENSSL_load_builtin_modules();
+    if (!TEST_ptr(bio = BIO_new_mem_buf(cnf_text, -1))
+        || !TEST_ptr(conf = NCONF_new_ex(NULL, NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0)
+        || !TEST_int_gt(CONF_modules_load(conf, NULL, 0), 0))
+        goto err;
+
+    if (!TEST_ptr(sha256 = EVP_MD_fetch(NULL, "SHA256", NULL))
+        || !TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_false(EVP_DigestInit_ex2(ctx, sha256, xof))
+        || !last_error_is_not_settable())
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_set_strict(0);
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_free(sha256);
+    NCONF_free(conf);
+    BIO_free(bio);
+    return ret;
+}
+
+#if !defined(OPENSSL_NO_RSA)
+static int test_strict_pkey_keygen(void)
+{
+    int ret = 0;
+    unsigned int bits = 1024;
+    OSSL_PARAM old_name[] = {
+        OSSL_PARAM_uint("rsa_keygen_bits", &bits),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM new_name[] = {
+        OSSL_PARAM_uint(OSSL_PKEY_PARAM_RSA_BITS, &bits),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_true(OSSL_PARAM_set_strict(1)))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(EVP_PKEY_CTX_set_params(ctx, old_name))
+        || !last_error_is_not_settable())
+        goto err;
+    if (!TEST_true(EVP_PKEY_CTX_set_params(ctx, new_name)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_set_strict(0);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif /* !defined(OPENSSL_NO_RSA) */
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_case, OSSL_NELEM(test_cases));
     ADD_ALL_TESTS(test_allocate_from_text, OSSL_NELEM(int_from_text_test_cases));
     ADD_TEST(test_more_allocate_from_text);
+    ADD_TEST(test_strict_switch);
+    ADD_TEST(test_strict_kdf);
+    ADD_TEST(test_strict_digest_init);
+    ADD_TEST(test_strict_config);
+#if !defined(OPENSSL_NO_RSA)
+    ADD_TEST(test_strict_pkey_keygen);
+#endif /* !defined(OPENSSL_NO_RSA) */
     return 1;
 }

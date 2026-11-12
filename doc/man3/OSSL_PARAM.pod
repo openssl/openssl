@@ -240,7 +240,8 @@ The recommended behaviour is:
 
 Keys that a I<setter> or I<responder> doesn't recognise should simply
 be ignored.
-That in itself isn't an error.
+That in itself isn't an error, unless strict checking is on; see
+L</Strict checking>.
 
 =item *
 
@@ -291,6 +292,76 @@ native endianness, and set I<return_size> to the same value as
 I<data_size>.
 
 =back
+
+=head2 Strict checking
+
+Strict checking is turned on for the whole process with
+L<OSSL_PARAM_set_strict(3)>, or with the B<strict_params> setting in the
+configuration file; see L<config(5)/EVP Configuration>.
+It is off by default.
+While it is on, every key in an array passed to one of the following
+functions is looked up in the settable list of the implementation it is
+being passed to.
+If the array contains a key that is not on that list, or the
+implementation has no settable list, the function fails without passing
+the array on, and raises an error naming the key.
+The array does not need to contain every key on the list; a settable
+parameter that is left out keeps its default.
+The functions affected are:
+
+=over 4
+
+=item *
+
+L<EVP_PKEY_CTX_set_params(3)>, L<EVP_PKEY_fromdata(3)>
+
+=item *
+
+L<EVP_PKEY_sign_init_ex(3)>, L<EVP_PKEY_sign_init_ex2(3)>,
+L<EVP_PKEY_sign_message_init(3)>, L<EVP_PKEY_verify_init_ex(3)>,
+L<EVP_PKEY_verify_init_ex2(3)>, L<EVP_PKEY_verify_message_init(3)>,
+L<EVP_PKEY_verify_recover_init_ex(3)>,
+L<EVP_PKEY_verify_recover_init_ex2(3)>
+
+=item *
+
+L<EVP_DigestSignInit_ex(3)>, L<EVP_DigestVerifyInit_ex(3)>
+
+=item *
+
+L<EVP_PKEY_encrypt_init_ex(3)>, L<EVP_PKEY_decrypt_init_ex(3)>,
+L<EVP_PKEY_derive_init_ex(3)>
+
+=item *
+
+L<EVP_PKEY_encapsulate_init(3)>, L<EVP_PKEY_auth_encapsulate_init(3)>,
+L<EVP_PKEY_decapsulate_init(3)>, L<EVP_PKEY_auth_decapsulate_init(3)>
+
+=item *
+
+L<EVP_KDF_CTX_set_params(3)>, L<EVP_KDF_derive(3)>
+
+=item *
+
+L<EVP_MAC_CTX_set_params(3)>, L<EVP_MAC_init(3)>, L<EVP_MAC_init_SKEY(3)>
+
+=item *
+
+L<EVP_CIPHER_CTX_set_params(3)>, L<EVP_CipherInit_ex2(3)>,
+L<EVP_EncryptInit_ex2(3)>, L<EVP_DecryptInit_ex2(3)>,
+L<EVP_CipherInit_SKEY(3)>
+
+=item *
+
+L<EVP_MD_CTX_set_params(3)>, L<EVP_DigestInit_ex2(3)>
+
+=item *
+
+L<EVP_RAND_CTX_set_params(3)>, L<EVP_RAND_instantiate(3)>
+
+=back
+
+Other functions are not affected by strict checking.
 
 =begin comment RETURN VALUES doesn't make sense for a manual that only
 describes a type, but document checkers still want that section, and
@@ -361,6 +432,8 @@ L<openssl-core.h(7)>, L<OSSL_PARAM_get_int(3)>, L<OSSL_PARAM_dup(3)>, L<OSSL_PAR
 =head1 HISTORY
 
 B<OSSL_PARAM> was added in OpenSSL 3.0.
+
+Strict checking was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

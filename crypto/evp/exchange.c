@@ -371,6 +371,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
+    if (!evp_pkey_ctx_check_settable(ctx, params))
+        goto err;
     ret = exchange->init(ctx->op.kex.algctx, provkey, params);
 
     EVP_KEYMGMT_free(tmp_keymgmt);
