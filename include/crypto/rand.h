@@ -167,9 +167,10 @@ uint32_t ossl_rand_uniform_uint32(OSSL_LIB_CTX *ctx, uint32_t upper, int *err);
 uint32_t ossl_rand_range_uint32(OSSL_LIB_CTX *ctx, uint32_t lower, uint32_t upper,
     int *err);
 
-/*
- * Random salt for hashing untrusted input, e.g. the SipHash key of a hash
- * table, with fallbacks for library contexts without a usable RAND.
+#ifndef FIPS_MODULE
+/**
+ * @brief Random salt for hashing untrusted input, e.g. the SipHash key of a
+ * hash table, with fallbacks for library contexts without a usable RAND.
  * Not suitable for cryptographic keys, IVs, nonces or other secrets.
  *
  * Only built into libcrypto: its fallbacks rely on the libcrypto seeding
@@ -178,8 +179,12 @@ uint32_t ossl_rand_range_uint32(OSSL_LIB_CTX *ctx, uint32_t lower, uint32_t uppe
  * fallback is needed there. Hiding the declaration from FIPS_MODULE builds
  * turns an accidental use into a compile error rather than a link failure
  * of the FIPS provider.
+ *
+ * @param ctx the library context whose RAND is tried first
+ * @param buf output buffer for the salt
+ * @param num number of bytes to write to @p buf
+ * @returns 1 on success, 0 if no source could supply the bytes
  */
-#ifndef FIPS_MODULE
 int ossl_rand_hash_salt(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num);
 #endif
 
