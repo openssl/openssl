@@ -236,7 +236,7 @@ static ossl_inline void store_48(unsigned char *out, __m256i p0, __m256i p1)
 OPENSSL_UNTARGET_AVX2
 
 /* Portable popcount for 32-bit values using BitsSetTable256mul2 */
-static ossl_inline int popcount32(uint32_t x)
+static ossl_inline int b64_popcount32(uint32_t x)
 {
     return (BitsSetTable256mul2[x & 0xFF] + BitsSetTable256mul2[(x >> 8) & 0xFF] + BitsSetTable256mul2[(x >> 16) & 0xFF] + BitsSetTable256mul2[x >> 24]) >> 1;
 }
@@ -285,7 +285,7 @@ static ossl_inline void compress256(__m256i data, uint32_t mask,
     }
     compress128(_mm256_castsi256_si128(data), (uint16_t)mask, output);
     compress128(_mm256_extracti128_si256(data, 1), (uint16_t)(mask >> 16),
-        output + 16 - popcount32(mask & 0xFFFF));
+        output + 16 - b64_popcount32(mask & 0xFFFF));
 }
 OPENSSL_UNTARGET_AVX2
 
@@ -601,9 +601,9 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
                 } else {
                     /* General compress */
                     compress256(v0, wsmask0, bufferptr);
-                    bufferptr += 32 - popcount32(wsmask0);
+                    bufferptr += 32 - b64_popcount32(wsmask0);
                     compress256(v1, wsmask1, bufferptr);
-                    bufferptr += 32 - popcount32(wsmask1);
+                    bufferptr += 32 - b64_popcount32(wsmask1);
                 }
             } else {
                 /* No WS, but buffer has pending data from earlier WS blocks.
