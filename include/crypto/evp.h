@@ -662,6 +662,7 @@ const char *evp_pkey_type2name(int type);
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
 
+#if !defined(FIPS_MODULE)
 /**
  * @brief When strict checking is on, check an OSSL_PARAM array against
  * the settable list of the provider operation set up in an EVP_PKEY_CTX.
@@ -671,16 +672,15 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
  *          contains a key that is not in
  *          EVP_PKEY_CTX_settable_params(ctx), 1 otherwise
  */
-#if defined(FIPS_MODULE)
+int evp_pkey_ctx_check_settable(const EVP_PKEY_CTX *ctx,
+    const OSSL_PARAM *params);
+#else
 static ossl_inline int evp_pkey_ctx_check_settable(const EVP_PKEY_CTX *ctx,
     const OSSL_PARAM *params)
 {
     return 1;
 }
-#else
-int evp_pkey_ctx_check_settable(const EVP_PKEY_CTX *ctx,
-    const OSSL_PARAM *params);
-#endif /* defined(FIPS_MODULE) */
+#endif /* !defined(FIPS_MODULE) */
 
 int evp_method_store_cache_flush(OSSL_LIB_CTX *libctx);
 int evp_method_store_remove_all_provided(const OSSL_PROVIDER *prov);
