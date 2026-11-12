@@ -2120,11 +2120,14 @@ static int test_bn2signed(int i)
         || !TEST_BN_eq(bn, bn2))
         goto err;
 
+    BN_free(bn2);
+    bn2 = NULL;
+
     /* Check the minimum signed little-endian width and reject one byte less. */
     if (test->mpi_len > 0) {
         if (!TEST_int_eq(BN_signed_bn2lebin(bn, scratch, mpi_len), mpi_len)
             || !TEST_true(copy_reversed(reversed, (const uint8_t *)test->mpi,
-                    test->mpi_len))
+                test->mpi_len))
             || !TEST_mem_eq(reversed, mpi_len, scratch, mpi_len)
             || !TEST_int_eq(BN_signed_bn2lebin(bn, scratch, mpi_len - 1), -1))
             goto err;
