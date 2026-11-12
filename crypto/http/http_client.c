@@ -71,6 +71,17 @@ struct ossl_http_req_ctx_st {
     time_t max_total_time; /* Maximum end time of total transfer, or 0 */
     char *redirection_url; /* Location obtained from HTTP status 301/302 */
     size_t max_hdr_lines; /* Max. number of response header lines, or 0 */
+    /*
+     * Response-wide parsing state. It must survive across calls to
+     * OSSL_HTTP_REQ_CTX_nbio() that return -1 due to BIO_should_retry(),
+     * so it cannot be kept in local variables.
+     */
+    int status_code; /* HTTP status code of response being received */
+    int got_text; /* Response Content-Type is (likely) text */
+    int found_expected_ct; /* Expected Content-Type was found in response */
+    int found_keep_alive; /* Response indicates persistent connection */
+    size_t resp_hdr_lines; /* Number of response header lines received */
+    size_t err_content_len; /* Length of error response content received */
 };
 
 /* HTTP client OSSL_HTTP_REQ_CTX_nbio() internal states, in typical order */
@@ -568,14 +579,11 @@ static int may_still_retry(time_t max_time, int *ptimeout)
  */
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 {
-    int i, found_expected_ct = 0, found_keep_alive = 0;
-    int status_code = 0;
-    int got_text = 1;
+    int i;
     long n;
-    size_t resp_len = 0;
+    size_t resp_len;
     const unsigned char *p;
     char *buf, *key, *value, *line_end = NULL;
-    size_t resp_hdr_lines = 0;
 
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -607,7 +615,8 @@ next_io:
                 if (OSSL_TRACE_ENABLED(HTTP))
                     OSSL_TRACE(HTTP, "]\n"); /* end of error response content */
                 /* in addition, throw error on inconsistent length: */
-                (void)check_set_resp_len("error response content", rctx, resp_len);
+                (void)check_set_resp_len("error response content", rctx,
+                    rctx->err_content_len);
                 return 0;
             }
             if (BIO_should_retry(rctx->rbio))
@@ -696,6 +705,13 @@ next_io:
         i = BIO_flush(rctx->wbio);
 
         if (i > 0) {
+            /* start of response: reset response-wide parsing state */
+            rctx->status_code = 0;
+            rctx->got_text = 1;
+            rctx->found_expected_ct = 0;
+            rctx->found_keep_alive = 0;
+            rctx->resp_hdr_lines = 0;
+            rctx->err_content_len = 0;
             rctx->state = OHS_FIRSTLINE;
             goto next_io;
         }
@@ -739,16 +755,18 @@ next_io:
         }
 
         if (rctx->state == OHS_ERROR_CONTENT) {
-            resp_len += n;
-            if (!check_max_len("error response content", rctx->max_resp_len, resp_len))
+            rctx->err_content_len += n;
+            if (!check_max_len("error response content", rctx->max_resp_len,
+                    rctx->err_content_len))
                 return 0;
             if (OSSL_TRACE_ENABLED(HTTP)) /* dump response content line */
-                OSSL_TRACE_STRING(HTTP, got_text, 1, (unsigned char *)buf, n);
+                OSSL_TRACE_STRING(HTTP, rctx->got_text, 1, (unsigned char *)buf, n);
             goto next_line;
         }
 
-        resp_hdr_lines++;
-        if (rctx->max_hdr_lines != 0 && rctx->max_hdr_lines < resp_hdr_lines) {
+        rctx->resp_hdr_lines++;
+        if (rctx->max_hdr_lines != 0
+            && rctx->max_hdr_lines < rctx->resp_hdr_lines) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_TOO_MANY_HDRLINES);
             rctx->state = OHS_ERROR;
             return 0;
@@ -770,8 +788,8 @@ next_io:
 
         /* First line in response header */
         if (rctx->state == OHS_FIRSTLINE) {
-            status_code = parse_http_line1(buf, &found_keep_alive);
-            switch (status_code) {
+            rctx->status_code = parse_http_line1(buf, &rctx->found_keep_alive);
+            switch (rctx->status_code) {
             case HTTP_STATUS_CODE_OK:
                 rctx->state = OHS_HEADERS;
                 goto next_line;
@@ -786,7 +804,7 @@ next_io:
                 /* fall through */
             default:
                 /* must return content if status >= 400 */
-                rctx->state = status_code < HTTP_STATUS_CODES_NONFATAL_ERROR
+                rctx->state = rctx->status_code < HTTP_STATUS_CODES_NONFATAL_ERROR
                     ? OHS_HEADERS_ERROR
                     : OHS_HEADERS;
                 goto next_line; /* continue parsing, also on HTTP error */
@@ -815,15 +833,15 @@ next_io:
                 return 0;
             }
             if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
-                got_text = HAS_CASE_PREFIX(value, "text/");
-                if (got_text
+                rctx->got_text = HAS_CASE_PREFIX(value, "text/");
+                if (rctx->got_text
                     && rctx->state == OHS_HEADERS
                     && rctx->expect_asn1
-                    && (status_code >= HTTP_STATUS_CODES_NONFATAL_ERROR
-                        || status_code == HTTP_STATUS_CODE_OK)) {
+                    && (rctx->status_code >= HTTP_STATUS_CODES_NONFATAL_ERROR
+                        || rctx->status_code == HTTP_STATUS_CODE_OK)) {
                     ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONTENT_TYPE_MISMATCH,
                         "expected ASN.1 content but got http code %d with Content-Type: %s",
-                        status_code, value);
+                        rctx->status_code, value);
                     rctx->state = OHS_HEADERS_ERROR;
                     goto next_line;
                 }
@@ -845,16 +863,16 @@ next_io:
                             rctx->expected_ct, value);
                         return 0;
                     }
-                    found_expected_ct = 1;
+                    rctx->found_expected_ct = 1;
                 }
             }
 
             /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
             if (OPENSSL_strcasecmp(key, "Connection") == 0) {
                 if (OPENSSL_strcasecmp(value, "keep-alive") == 0)
-                    found_keep_alive = 1;
+                    rctx->found_keep_alive = 1;
                 else if (OPENSSL_strcasecmp(value, "close") == 0)
-                    found_keep_alive = 0;
+                    rctx->found_keep_alive = 0;
             } else if (OPENSSL_strcasecmp(key, "Content-Length") == 0) {
                 size_t content_len = (size_t)strtoul(value, &line_end, 10);
 
@@ -882,7 +900,7 @@ next_io:
             OSSL_TRACE(HTTP, "]\n"); /* end of response header */
 
         if (rctx->keep_alive != 0 /* do not let server initiate keep_alive */
-            && !found_keep_alive /* otherwise there is no change */) {
+            && !rctx->found_keep_alive /* otherwise there is no change */) {
             if (rctx->keep_alive == 2) {
                 rctx->keep_alive = 0;
                 ERR_raise(ERR_LIB_HTTP, HTTP_R_SERVER_CANCELED_CONNECTION);
@@ -895,7 +913,7 @@ next_io:
             rctx->state = OHS_ERROR_CONTENT;
             if (OSSL_TRACE_ENABLED(HTTP)) {
                 OSSL_TRACE1(HTTP, "Receiving error response content (likely %s): [\n",
-                    got_text ? "text" : "ASN.1");
+                    rctx->got_text ? "text" : "ASN.1");
                 goto next_line;
             }
             /* discard response content when trace not enabled */
@@ -903,7 +921,7 @@ next_io:
             return 0;
         }
 
-        if (rctx->expected_ct != NULL && !found_expected_ct) {
+        if (rctx->expected_ct != NULL && !rctx->found_expected_ct) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
                 "expected=%s", rctx->expected_ct);
             return 0;

@@ -720,6 +720,124 @@ static int test_hdr_resp_hdr_limit_256(void)
     return test_http_resp_hdr_limit(256);
 }
 
+/*
+ * Response-wide parsing state must be preserved across calls to
+ * OSSL_HTTP_REQ_CTX_nbio() that return -1 due to BIO_should_retry().
+ * Each response is fed both at once and byte by byte via a non-blocking
+ * memory BIO, and the outcome must be the same in both cases.
+ */
+typedef struct {
+    const char *resp;
+    size_t resp_len;
+    size_t max_hdr_lines;
+    const char *expected_ct;
+    int expect_asn1;
+    int keep_alive;
+    int exp_ret;
+    int exp_reason; /* expected HTTP error reason code if exp_ret == 0 */
+} split_resp_test;
+
+#define RESP(s) s, sizeof(s) - 1
+
+static const split_resp_test split_resp_tests[] = {
+    /* 4 response header lines (including the empty one) exceed limit 2 */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "X-Test-A: 1\r\n"
+           "X-Test-B: 2\r\n"
+           "\r\n"),
+        2, NULL, 0, 0, 0, HTTP_R_RESPONSE_TOO_MANY_HDRLINES },
+    /* text Content-Type on status 200 while ASN.1 is expected */
+    { RESP("HTTP/1.1 200 OK\r\n"
+           "Content-Type: text/plain\r\n"
+           "Content-Length: 2\r\n"
+           "\r\n"
+           "\x30\x00"),
+        0, NULL, 1, 0, 0, HTTP_R_CONTENT_TYPE_MISMATCH },
+    /* expected Content-Type was given before end of headers */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: text/plain\r\n"
+           "X-Test: 1\r\n"
+           "\r\n"),
+        0, "text/plain", 0, 0, 1, 0 },
+    /* HTTP/1.1 implies keep-alive, as required by the client */
+    { RESP("HTTP/1.1 200 OK\r\n"
+           "Content-Type: text/plain\r\n"
+           "\r\n"),
+        0, NULL, 0, 2, 1, 0 },
+    /* ASN.1 response body is read after the headers */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: application/octet-stream\r\n"
+           "Content-Length: 2\r\n"
+           "\r\n"
+           "\x30\x00"),
+        0, NULL, 1, 0, 1, 0 },
+};
+
+static int test_http_split_resp(int idx)
+{
+    const split_resp_test *t = &split_resp_tests[idx / 2];
+    int byte_by_byte = idx % 2;
+    BIO *wbio = BIO_new(BIO_s_mem());
+    BIO *in = BIO_new(BIO_s_mem());
+    BIO *rbio = NULL;
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    size_t i, chunk;
+    unsigned long err;
+    int ret = -1, res = 0;
+
+    TEST_info("response #%d, %s", idx / 2, byte_by_byte ? "byte by byte" : "at once");
+    if (!TEST_ptr(wbio) || !TEST_ptr(in))
+        goto err;
+    BIO_set_mem_eof_return(in, -1); /* reading from empty BIO means retry */
+    /* BIO_gets() on a mem BIO does not signal retry, so put a buffer on top */
+    if (!TEST_ptr(rbio = BIO_new(BIO_f_buffer())))
+        goto err;
+    rbio = BIO_push(rbio, in);
+    in = NULL; /* now owned by rbio */
+
+    if (!TEST_ptr(rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 1024))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            NULL, NULL, RPATH))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, t->expected_ct,
+            t->expect_asn1, 0, t->keep_alive)))
+        goto err;
+    OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(rctx, t->max_hdr_lines);
+
+    /* send request; no response available yet */
+    if (!TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(rctx), -1))
+        goto err;
+
+    ERR_clear_error();
+    chunk = byte_by_byte ? 1 : t->resp_len;
+    for (i = 0; i < t->resp_len && ret == -1; i += chunk) {
+        if (!TEST_int_eq(BIO_write(BIO_next(rbio), t->resp + i, (int)chunk),
+                (int)chunk))
+            goto err;
+        ret = OSSL_HTTP_REQ_CTX_nbio(rctx);
+    }
+
+    if (!TEST_int_eq(ret, t->exp_ret))
+        goto err;
+    if (t->exp_ret == 0) {
+        err = ERR_peek_last_error();
+        if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_HTTP)
+            || !TEST_int_eq(ERR_GET_REASON(err), t->exp_reason))
+            goto err;
+    } else if (t->expect_asn1
+               && !TEST_size_t_eq(OSSL_HTTP_REQ_CTX_get_resp_len(rctx), 2)) {
+        goto err;
+    }
+    res = 1;
+
+err:
+    ERR_clear_error();
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free(in);
+    BIO_free_all(rbio);
+    return res;
+}
+
 static int test_http_adapt_proxy_empty_server(void)
 {
     const char *proxy = "http://proxy.local:8080";
@@ -781,6 +899,7 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
+    ADD_ALL_TESTS(test_http_split_resp, 2 * OSSL_NELEM(split_resp_tests));
     ADD_TEST(test_http_adapt_proxy_empty_server);
     return 1;
 }
