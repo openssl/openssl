@@ -2877,11 +2877,25 @@ static CRYPTO_free_fn memtrk_base_free;
 static size_t memtrk_live_bytes;
 static int memtrk_enabled;
 
+/* The next allocation of memtrk_fail_size bytes fails, once, if armed */
+static size_t memtrk_fail_size;
+static int memtrk_fail_armed;
+static int memtrk_fail_hits;
+
+static int memtrk_should_fail(size_t num)
+{
+    if (!memtrk_fail_armed || num != memtrk_fail_size)
+        return 0;
+    memtrk_fail_armed = 0;
+    memtrk_fail_hits++;
+    return 1;
+}
+
 static void *memtrk_malloc(size_t num, const char *file, int line)
 {
     unsigned char *p;
 
-    if (num == 0)
+    if (num == 0 || memtrk_should_fail(num))
         return NULL;
     p = memtrk_base_malloc(num + MEMTRK_HDR, file, line);
     if (p == NULL)
@@ -2915,6 +2929,8 @@ static void *memtrk_realloc(void *ptr, size_t num, const char *file, int line)
         memtrk_free(ptr, file, line);
         return NULL;
     }
+    if (memtrk_should_fail(num))
+        return NULL;
     p = (unsigned char *)ptr - MEMTRK_HDR;
     memcpy(&oldnum, p, sizeof(oldnum));
     p = memtrk_base_realloc(p, num + MEMTRK_HDR, file, line);
@@ -3150,34 +3166,18 @@ static int reasm_message_is(const REASM_TEST_FIXTURE *fx, unsigned int seq,
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(fx->ssl);
     pitem *item = pqueue_find_u64(&sc->d1->rcvd_messages, seq);
     hm_fragment *frag;
-    hm_piece *piece;
-    size_t pos = 0, i;
+    size_t i;
 
     if (!TEST_ptr(item))
         return 0;
     frag = (hm_fragment *)item->data;
-    if (!TEST_false(frag->incomplete))
+    if (!TEST_false(frag->incomplete) || !TEST_ptr(frag->buf))
         return 0;
 
-    /* Held in a buffer once enough of it has arrived */
-    if (frag->buf != NULL) {
-        for (i = 0; i < msg_len; i++)
-            if (!TEST_uchar_eq(frag->buf[i], fill))
-                return 0;
-        return 1;
-    }
-
-    OSSL_LIST_FOREACH (piece, hm_piece, &frag->pieces) {
-        const unsigned char *data = (const unsigned char *)(piece + 1);
-
-        if (!TEST_size_t_eq(piece->off, pos))
+    for (i = 0; i < msg_len; i++)
+        if (!TEST_uchar_eq(frag->buf[i], fill))
             return 0;
-        for (i = 0; i < piece->len; i++)
-            if (!TEST_uchar_eq(data[i], fill))
-                return 0;
-        pos += piece->len;
-    }
-    return TEST_size_t_eq(pos, msg_len);
+    return 1;
 }
 
 /*
@@ -3257,10 +3257,11 @@ end:
 #ifndef OPENSSL_NO_DTLS1_2
 
 /*
- * So many one byte fragments with gaps between them that what the pieces would
- * be charged comes to more than the message would cost in a buffer. The message
- * is then held in a buffer, so what is held for it stays near the length it
- * claims however many fragments follow, and all of them are kept.
+ * So many one byte fragments with gaps between them that what is saved for
+ * them, with the offset and length saved with each, comes to the length the
+ * message claims. The message is then held in a buffer, so what is held for it
+ * stays near the length it claims however many fragments follow, and all of
+ * them are kept.
  */
 static int test_dtls_reassembly_tiny_fragments_buffer(void)
 {
@@ -3268,15 +3269,16 @@ static int test_dtls_reassembly_tiny_fragments_buffer(void)
     SSL_CONNECTION *sc;
     pitem *item;
     hm_fragment *frag;
-    /* Enough for the pieces to cost the buffer, whatever the size of a pointer */
-    const size_t count = 6000;
-    size_t i;
+    size_t count, i;
     int testresult = 0;
 
     if (!memtrk_enabled)
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
+
+    /* Each is saved as 7 bytes: 6 of offset and length, and the byte itself */
+    count = reasm_max_len(&fx) / 7 + 100;
 
     for (i = 0; i < count; i++)
         if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, reasm_max_len(&fx), 1,
@@ -3330,13 +3332,81 @@ end:
     return testresult;
 }
 
+/* Whether the message with this sequence number is held in a buffer */
+static int reasm_held_in_buffer(const REASM_TEST_FIXTURE *fx, unsigned int seq)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(fx->ssl);
+    pitem *item = pqueue_find_u64(&sc->d1->rcvd_messages, seq);
+
+    return item != NULL && ((hm_fragment *)item->data)->buf != NULL;
+}
+
+/*
+ * A message with many small fragments saved, just short of what would make it
+ * be held in a buffer, is then sent the same fragment over and over. A
+ * duplicate adds no bytes, but what is saved for it counts, so they must not be
+ * free: once enough of them have arrived the message is held in a buffer, which
+ * a duplicate does not add to.
+ */
+static int test_dtls_reassembly_duplicate_fragments_buffer(void)
+{
+    REASM_TEST_FIXTURE fx;
+    const size_t limit = 30000;
+    size_t i, count;
+    int testresult = 0;
+
+    if (!memtrk_enabled)
+        return TEST_skip("allocation tracking not available");
+
+    /* How many one byte fragments, with gaps, are saved before the buffer */
+    if (!reasm_fx_new(&fx))
+        return 0;
+    for (count = 0; count < limit; count++) {
+        if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, reasm_max_len(&fx), 1,
+                count * 2, 1, 'a'))
+            goto end;
+        if (reasm_held_in_buffer(&fx, 1))
+            break;
+    }
+    reasm_fx_free(&fx);
+    if (!TEST_size_t_gt(count, 1) || !TEST_size_t_lt(count, limit))
+        return 0;
+
+    /* One fewer, so that the fragments are still saved */
+    if (!reasm_fx_new(&fx))
+        return 0;
+    for (i = 0; i < count; i++)
+        if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, reasm_max_len(&fx), 1,
+                i * 2, 1, 'a'))
+            goto end;
+    if (!TEST_int_eq(reasm_step(&fx), SSL_ERROR_WANT_READ)
+        || !TEST_false(reasm_held_in_buffer(&fx, 1)))
+        goto end;
+
+    for (i = 0; i < 500; i++)
+        if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, reasm_max_len(&fx), 1, 0,
+                1, 'a'))
+            goto end;
+
+    if (!TEST_int_eq(reasm_step(&fx), SSL_ERROR_WANT_READ)
+        || !TEST_true(reasm_held_in_buffer(&fx, 1))
+        || !TEST_size_t_lt(reasm_held(&fx),
+            reasm_max_len(&fx) + reasm_max_len(&fx) / 8 + REASM_SMALL))
+        goto end;
+
+    testresult = 1;
+end:
+    reasm_fx_free(&fx);
+    return testresult;
+}
+
 /*
  * A message of the largest permitted length is sent in fragments of 128 bytes
  * at every other 128 bytes, the rest being lost, and then again in fragments of
  * 192 bytes, as a sender whose fragment size changed would. The message must
  * complete, however the fragments of the second pass fall across the gaps left
- * by the first: once what is held for it would cost as much as a buffer it is
- * held in one, and no longer charged for the pieces it was received in.
+ * by the first: once what is saved for it could be all of it, it is held in a
+ * buffer, whatever the fragments saved were.
  */
 static int test_dtls_reassembly_refragmented_max_message(void)
 {
@@ -3375,35 +3445,43 @@ end:
 }
 
 /*
- * However little a message claims, it is held as pieces, and not in a buffer of
- * the length it claims, until what is held for it would cost as much as that
- * buffer. One byte received of a message which claims 1 KB, or a little over, is
- * held as a single piece.
+ * However little a message claims, what is received of it is saved, and not held
+ * in a buffer of the length it claims, until what is saved with the next
+ * fragment could be all of it. A fragment of one byte is saved with its 6 byte
+ * offset and length, so 7 bytes.
  *
- *   0: 1024 bytes claimed, 1 byte received
- *   1: 1025 bytes claimed, 1 byte received
+ *   0: 1024 bytes claimed, 1 byte received: saved
+ *   1: 7 bytes claimed, 1 byte received: held in a buffer
  */
-static int test_dtls_reassembly_small_message_pieces(int idx)
+static int test_dtls_reassembly_small_message_saved(int idx)
 {
     REASM_TEST_FIXTURE fx;
     SSL_CONNECTION *sc;
     pitem *item;
+    hm_fragment *frag;
     int testresult = 0;
 
     if (!reasm_fx_new(&fx))
         return 0;
 
-    if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, idx == 0 ? 1024 : 1025, 1, 0, 1,
+    if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, idx == 0 ? 1024 : 7, 1, 0, 1,
             'a'))
         goto end;
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(fx.ssl);
     if (!TEST_int_eq(reasm_step(&fx), SSL_ERROR_WANT_READ)
-        || !TEST_ptr(item = pqueue_find_u64(&sc->d1->rcvd_messages, 1))
-        || !TEST_true(((hm_fragment *)item->data)->incomplete)
-        || !TEST_ptr_null(((hm_fragment *)item->data)->buf)
-        || !TEST_size_t_eq(((hm_fragment *)item->data)->bytes, 1))
+        || !TEST_ptr(item = pqueue_find_u64(&sc->d1->rcvd_messages, 1)))
         goto end;
+
+    frag = (hm_fragment *)item->data;
+    if (!TEST_true(frag->incomplete))
+        goto end;
+    if (idx == 0) {
+        if (!TEST_ptr_null(frag->buf) || !TEST_size_t_eq(frag->saved_len, 7))
+            goto end;
+    } else if (!TEST_ptr(frag->buf) || !TEST_size_t_eq(frag->saved_len, 0)) {
+        goto end;
+    }
 
     testresult = 1;
 end:
@@ -3524,6 +3602,82 @@ static int test_dtls_reassembly_cleanup(int idx)
     if (!reasm_cleanup_cycle(idx, 1))
         return 0;
     return TEST_size_t_le(memtrk_live_bytes, before);
+}
+
+/*
+ * An allocation which fails while a fragment is being received must end the
+ * handshake with a fatal error. The body of the fragment has not been read, so
+ * a server which only reported the failure would take the body for a handshake
+ * header when it was called again.
+ *
+ *   0: the buffer a message is switched to, which a third fragment needs
+ *   1: the room for the fragments saved for a message, which a second needs
+ *   2: the buffer of a message which arrives whole, out of sequence
+ */
+static int test_dtls_reassembly_alloc_failure(int idx)
+{
+    REASM_TEST_FIXTURE fx;
+    SSL_CONNECTION *sc;
+    const size_t msg_len = 1000, frag_len = 400, whole_len = 777;
+    int testresult = 0;
+
+    if (!memtrk_enabled)
+        return TEST_skip("allocation tracking not available");
+    if (!reasm_fx_new(&fx))
+        return 0;
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(fx.ssl);
+
+    switch (idx) {
+    case 0:
+        /* Two fragments are saved: with the third what is saved could be it */
+        if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, msg_len, 1, 0, frag_len,
+                'a')
+            || !reasm_inject(&fx, SSL3_MT_CERTIFICATE, msg_len, 1, frag_len,
+                frag_len, 'a'))
+            goto end;
+        memtrk_fail_size = msg_len + (msg_len + 7) / 8;
+        break;
+    case 1:
+        if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, msg_len, 1, 0, frag_len,
+                'a'))
+            goto end;
+        /* Room for two records, the first of which doubles */
+        memtrk_fail_size = 2 * (6 + frag_len);
+        break;
+    case 2:
+        memtrk_fail_size = whole_len;
+        break;
+    }
+
+    memtrk_fail_hits = 0;
+    memtrk_fail_armed = 1;
+    switch (idx) {
+    case 0:
+        testresult = reasm_inject(&fx, SSL3_MT_CERTIFICATE, msg_len, 1,
+            2 * frag_len, 200, 'a');
+        break;
+    case 1:
+        testresult = reasm_inject(&fx, SSL3_MT_CERTIFICATE, msg_len, 1,
+            frag_len, frag_len, 'a');
+        break;
+    case 2:
+        testresult = reasm_inject(&fx, SSL3_MT_CERTIFICATE, whole_len, 1, 0,
+            whole_len, 'a');
+        break;
+    }
+    memtrk_fail_armed = 0;
+
+    if (!TEST_true(testresult)) {
+        testresult = 0;
+        goto end;
+    }
+    testresult = TEST_int_eq(memtrk_fail_hits, 1)
+        && TEST_int_eq(fx.err, SSL_ERROR_SSL)
+        && TEST_true(ossl_statem_in_error(sc));
+end:
+    memtrk_fail_armed = 0;
+    reasm_fx_free(&fx);
+    return testresult;
 }
 
 /*
@@ -3668,10 +3822,12 @@ int setup_tests(void)
     ADD_TEST(test_dtls_reassembly_future_messages_memory);
     ADD_TEST(test_dtls_reassembly_tiny_fragments_buffer);
     ADD_TEST(test_dtls_reassembly_duplicate_flood);
+    ADD_TEST(test_dtls_reassembly_duplicate_fragments_buffer);
     ADD_TEST(test_dtls_reassembly_refragmented_max_message);
-    ADD_ALL_TESTS(test_dtls_reassembly_small_message_pieces, 2);
+    ADD_ALL_TESTS(test_dtls_reassembly_small_message_saved, 2);
     ADD_ALL_TESTS(test_dtls_reassembly_complete_message_memory, 4);
     ADD_ALL_TESTS(test_dtls_reassembly_cleanup, 3);
+    ADD_ALL_TESTS(test_dtls_reassembly_alloc_failure, 3);
     ADD_MFAIL_NO_CHECK_TEST(test_dtls_reassembly_mfail);
     ADD_TEST(test_dtls_reassembly_handshake);
 #endif
