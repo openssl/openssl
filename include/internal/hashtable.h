@@ -11,6 +11,7 @@
 #define OPENSSL_HASHTABLE_H
 #pragma once
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -141,7 +142,8 @@ typedef struct ht_config_st {
  */
 static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t *buf, size_t len)
 {
-    if (key->keysize > key->bufsize || len > key->bufsize - key->keysize)
+    assert(key->keysize <= key->bufsize);
+    if (len > key->bufsize - key->keysize)
         return 0;
     memcpy(&key->keybuf[key->keysize], buf, len);
     key->keysize += len;
@@ -162,16 +164,14 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
  * Similar to HT_COPY_RAW_KEY but accepts a character buffer, and copies
  * data while converting case for case insensitive matches
  */
-#define HT_COPY_RAW_KEY_CASE(key, buf, len)                                                \
-    do {                                                                                   \
-        size_t tmplen = (size_t)(len);                                                     \
-        if ((key)->keysize > (key)->bufsize)                                               \
-            tmplen = 0;                                                                    \
-        else if (tmplen > (key)->bufsize - (key)->keysize)                                 \
-            tmplen = (key)->bufsize - (key)->keysize;                                      \
-        if (tmplen > 0)                                                                    \
-            ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, tmplen); \
-        (key)->keysize += tmplen;                                                          \
+#define HT_COPY_RAW_KEY_CASE(key, buf, len)                                            \
+    do {                                                                               \
+        size_t tmplen = (size_t)(len);                                                 \
+        assert((key)->keysize <= (key)->bufsize);                                      \
+        if (tmplen > (key)->bufsize - (key)->keysize)                                  \
+            tmplen = (key)->bufsize - (key)->keysize;                                  \
+        ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, tmplen); \
+        (key)->keysize += tmplen;                                                      \
     } while (0)
 
 #define HT_INIT_KEY_CACHED(key, hash)         \
@@ -359,8 +359,7 @@ static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, cons
      * we copy more space than we have available
      */
     if (key != NULL) {
-        if (key->keysize > key->bufsize)
-            return;
+        assert(key->keysize <= key->bufsize);
         if (len > key->bufsize - key->keysize)
             len = key->bufsize - key->keysize;
     }
