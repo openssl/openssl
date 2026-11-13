@@ -337,6 +337,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     OSSL_LIB_CTX *ctx, void *data)
 {
     MASTER_KEY_ENTRY *mkey;
+    SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) *ctx_table;
 
     ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
@@ -378,10 +379,16 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
 
         /*
          * Didn't find it, that's ok, just add it now
+         *
+         * Do not assign the result to |mkey[id].ctx_table| before checking
+         * it: reporting a failed allocation may re-enter this function for
+         * the error state key, which then creates and populates the table,
+         * and overwriting it with NULL here would leak that.
          */
-        mkey[id].ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
-        if (mkey[id].ctx_table == NULL)
+        ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
+        if (ctx_table == NULL)
             return 0;
+        mkey[id].ctx_table = ctx_table;
     }
 
     /*
