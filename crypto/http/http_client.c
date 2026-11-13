@@ -72,9 +72,9 @@ struct ossl_http_req_ctx_st {
     char *redirection_url; /* Location obtained from HTTP status 301/302 */
     size_t max_hdr_lines; /* Max. number of response header lines, or 0 */
     /*
-     * Response-wide parsing state. It must survive across calls to
-     * OSSL_HTTP_REQ_CTX_nbio() that return -1 due to BIO_should_retry(),
-     * so it cannot be kept in local variables.
+     * Parsing state of the response being received, reset when reading of
+     * the response starts and kept across OSSL_HTTP_REQ_CTX_nbio() calls
+     * that return -1
      */
     int status_code; /* HTTP status code of response being received */
     int got_text; /* Response Content-Type is (likely) text */
