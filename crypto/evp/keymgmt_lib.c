@@ -98,6 +98,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 {
     struct evp_keymgmt_util_try_import_data_st import_data;
     OP_CACHE_ELEM *op;
+    size_t gen;
 
     /* Export to where? */
     if (keymgmt == NULL)
@@ -119,23 +120,28 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             && pk->keymgmt->prov == keymgmt->prov))
         return pk->keydata;
 
+retry:
     if (!CRYPTO_THREAD_read_lock(pk->lock))
         return NULL;
     /*
-     * If the provider native "origin" hasn't changed since last time, we
-     * try to find our keymgmt in the operation cache.  If it has changed
-     * and our keymgmt isn't found, we will clear the cache further down.
+     * If this key is already exported to |keymgmt|, and the "origin" hasn't
+     * changed since that export, no more to do.  Entries exported before the
+     * last change are never freed here, because operation contexts may still
+     * be using them.  They stay in the cache, unused, until the key is
+     * released (see the comment on OP_CACHE_ELEM).
      */
-    if (pk->dirty_cnt == pk->dirty_cnt_copy) {
-        /* If this key is already exported to |keymgmt|, no more to do */
-        op = evp_keymgmt_util_find_operation_cache(pk, keymgmt, selection);
-        if (op != NULL && op->keymgmt != NULL) {
-            void *ret = op->keydata;
+    op = evp_keymgmt_util_find_operation_cache(pk, keymgmt, selection);
+    if (op != NULL && op->gen == pk->dirty_cnt) {
+        void *ret = op->keydata;
 
-            CRYPTO_THREAD_unlock(pk->lock);
-            return ret;
-        }
+        CRYPTO_THREAD_unlock(pk->lock);
+        return ret;
     }
+    /*
+     * Note the dirty count before reading the "origin".  The new entry is
+     * only cached if the count is the same when the export is done.
+     */
+    gen = pk->dirty_cnt;
     CRYPTO_THREAD_unlock(pk->lock);
 
     /* If the "origin" |keymgmt| doesn't support exporting, give up */
@@ -175,7 +181,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
     }
     /* Check to make sure some other thread didn't get there first */
     op = evp_keymgmt_util_find_operation_cache(pk, keymgmt, selection);
-    if (op != NULL && op->keydata != NULL) {
+    if (op != NULL && op->gen == pk->dirty_cnt) {
         void *ret = op->keydata;
 
         CRYPTO_THREAD_unlock(pk->lock);
@@ -190,11 +196,14 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
     }
 
     /*
-     * If the dirty counter changed since last time, then clear the
-     * operation cache.  In that case, we know that |i| is zero.
+     * The "origin" changed while we were exporting, so the export may
+     * not match the current key.  Discard it and export again.
      */
-    if (pk->dirty_cnt != pk->dirty_cnt_copy)
-        evp_keymgmt_util_clear_operation_cache(pk);
+    if (gen != pk->dirty_cnt) {
+        CRYPTO_THREAD_unlock(pk->lock);
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+        goto retry;
+    }
 
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, keymgmt, import_data.keydata,
@@ -203,9 +212,6 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
-
-    /* Synchronize the dirty count */
-    pk->dirty_cnt_copy = pk->dirty_cnt;
 
     CRYPTO_THREAD_unlock(pk->lock);
 
@@ -232,16 +238,18 @@ OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
     EVP_KEYMGMT *keymgmt,
     int selection)
 {
-    int i, end = sk_OP_CACHE_ELEM_num(pk->operation_cache);
+    int i;
     OP_CACHE_ELEM *p;
 
     /*
      * A comparison and sk_P_CACHE_ELEM_find() are avoided to not cause
      * problems when we've only a read lock.
      * A keymgmt is a match if the |keymgmt| pointers are identical or if the
-     * provider and the name ID match
+     * provider and the name ID match.
+     * The newest entry is found first, so that an entry exported from the
+     * current "origin" is preferred over older ones for the same keymgmt.
      */
-    for (i = 0; i < end; i++) {
+    for (i = sk_OP_CACHE_ELEM_num(pk->operation_cache) - 1; i >= 0; i--) {
         p = sk_OP_CACHE_ELEM_value(pk->operation_cache, i);
         if ((p->selection & selection) == selection
             && (keymgmt == p->keymgmt
@@ -270,6 +278,7 @@ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         p->keydata = keydata;
         p->keymgmt = keymgmt;
         p->selection = selection;
+        p->gen = pk->dirty_cnt;
 
         if (!EVP_KEYMGMT_up_ref(keymgmt)) {
             OPENSSL_free(p);

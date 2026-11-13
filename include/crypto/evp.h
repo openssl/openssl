@@ -334,10 +334,19 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
  * This requires that the "origin" backend (whether it's a legacy or a
  * provider "origin") implements exports, and that the target provider
  * has an EVP_KEYMGMT that implements import.
+ * Operation contexts hold the cached keydata without owning it, so for a
+ * provider "origin" entries are only freed when its key is released: when
+ * the EVP_PKEY is freed, or when its key is replaced (for example by
+ * generating or importing into an existing EVP_PKEY).  Replacing the key
+ * also frees the "origin" keydata, so it is not safe while operation
+ * contexts use that EVP_PKEY.
+ * |gen| is the "origin"'s dirty count when the entry was exported, and the
+ * entry is current only while that still matches.
  */
 typedef struct {
     EVP_KEYMGMT *keymgmt;
     void *keydata;
+    size_t gen;
     int selection;
 } OP_CACHE_ELEM;
 
@@ -454,8 +463,9 @@ struct evp_pkey_st {
     STACK_OF(OP_CACHE_ELEM) *operation_cache;
 
     /*
-     * We keep a copy of that "origin"'s dirty count, so we know if the
-     * operation cache needs flushing.
+     * For a legacy "origin", we keep a copy of its dirty count, so we know
+     * if the operation cache needs flushing.  Not used with a provider
+     * "origin", whose cache entries carry their own dirty count.
      */
     size_t dirty_cnt_copy;
 
