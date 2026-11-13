@@ -241,7 +241,7 @@ jobs:
         echo "CONTAINER_ID=$CONTAINER_ID" >> "$GITHUB_ENV"
     - name: install dependencies
       run:
-        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make"
+        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make cmake"
     - name: config
       run: |
         podman exec -t $CONTAINER_ID sh -c \
