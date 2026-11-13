@@ -21,6 +21,8 @@ plan skip_all => "test_app_s_server needs sockets"
     if disabled("sock");
 plan skip_all => "test_app_s_server needs TLS 1.2 or TLS 1.3"
     if alldisabled("tls1_2", "tls1_3");
+plan skip_all => "test_app_s_server needs ec, ecx or dh for TLS key exchange"
+    if alldisabled("ec", "ecx", "dh");
 plan skip_all => "test_app_s_server is not available on $^O"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
