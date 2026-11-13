@@ -424,83 +424,58 @@ $code.=<<___;
     xor      %cl,%r11b
     xor      %bl,%r10b
 
-    push %r9
-    push %r8
-
-    lea .Lkmasklut(%rip), %r8
-
-    movb    %r14b,%r9b
-    and \$0xf, %r14
+    # vblendvpd reads only the sign bit of each lane: shift bit i (i+4) of
+    # the mask byte into lane i of the low (high) half, so no load address
+    # depends on the mask.
+    vmovq   %r14, $Yi_xmm
+    vpbroadcastq $Yi_xmm, $Yi
     vpsubq  .Lmask52x4(%rip), $_R0,  $tmp
-    shl \$5, %r14
-    vmovapd (%r8,%r14), $tmp2
+    vpsllvq .Lkmask_shl_lo(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R0, $_R0
 
-    shr \$4, %r9b
-    and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R0h,  $tmp
-    shl \$5, %r9
-    vmovapd (%r8,%r9), $tmp2
+    vpsllvq .Lkmask_shl_hi(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R0h, $_R0h
 
-    movb    %r13b,%r9b
-    and \$0xf, %r13
+    vmovq   %r13, $Yi_xmm
+    vpbroadcastq $Yi_xmm, $Yi
     vpsubq  .Lmask52x4(%rip), $_R1,  $tmp
-    shl \$5, %r13
-    vmovapd (%r8,%r13), $tmp2
+    vpsllvq .Lkmask_shl_lo(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R1, $_R1
 
-    shr \$4, %r9b
-    and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R1h,  $tmp
-    shl \$5, %r9
-    vmovapd (%r8,%r9), $tmp2
+    vpsllvq .Lkmask_shl_hi(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R1h, $_R1h
 
-    movb    %r12b,%r9b
-    and \$0xf, %r12
+    vmovq   %r12, $Yi_xmm
+    vpbroadcastq $Yi_xmm, $Yi
     vpsubq  .Lmask52x4(%rip), $_R2,  $tmp
-    shl \$5, %r12
-    vmovapd (%r8,%r12), $tmp2
+    vpsllvq .Lkmask_shl_lo(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R2, $_R2
 
-    shr \$4, %r9b
-    and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R2h,  $tmp
-    shl \$5, %r9
-    vmovapd (%r8,%r9), $tmp2
+    vpsllvq .Lkmask_shl_hi(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R2h, $_R2h
 
-    movb    %r11b,%r9b
-    and \$0xf, %r11
+    vmovq   %r11, $Yi_xmm
+    vpbroadcastq $Yi_xmm, $Yi
     vpsubq  .Lmask52x4(%rip), $_R3,  $tmp
-    shl \$5, %r11
-    vmovapd (%r8,%r11), $tmp2
+    vpsllvq .Lkmask_shl_lo(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R3, $_R3
 
-    shr \$4, %r9b
-    and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R3h,  $tmp
-    shl \$5, %r9
-    vmovapd (%r8,%r9), $tmp2
+    vpsllvq .Lkmask_shl_hi(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R3h, $_R3h
 
-    movb    %r10b,%r9b
-    and \$0xf, %r10
+    vmovq   %r10, $Yi_xmm
+    vpbroadcastq $Yi_xmm, $Yi
     vpsubq  .Lmask52x4(%rip), $_R4,  $tmp
-    shl \$5, %r10
-    vmovapd (%r8,%r10), $tmp2
+    vpsllvq .Lkmask_shl_lo(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R4, $_R4
 
-    shr \$4, %r9b
-    and \$0xf, %r9
     vpsubq  .Lmask52x4(%rip), $_R4h,  $tmp
-    shl \$5, %r9
-    vmovapd (%r8,%r9), $tmp2
+    vpsllvq .Lkmask_shl_hi(%rip), $Yi, $tmp2
     vblendvpd $tmp2, $tmp, $_R4h, $_R4h
-
-    pop %r8
-    pop %r9
 
     vpand  .Lmask52x4(%rip), $_R0,  $_R0
     vpand  .Lmask52x4(%rip), $_R0h, $_R0h
@@ -514,6 +489,17 @@ $code.=<<___;
     vpand  .Lmask52x4(%rip), $_R4,  $_R4
     vpand  .Lmask52x4(%rip), $_R4h, $_R4h
 ___
+}
+
+# Zero the |$_bytes| below %rsp, where the macros above leave accumulator
+# digits. Clobbers $zero.
+sub clear_stack {
+my $_bytes = shift;
+$code.="    vpxor   $zero, $zero, $zero\n    lea     -$_bytes(%rsp), %rsp\n";
+for (my $off = 0; $off < $_bytes; $off += 32) {
+    $code.=sprintf("    vmovdqu $zero, %d(%%rsp)\n", $off + 32 > $_bytes ? $_bytes - 32 : $off);
+}
+$code.="    lea     $_bytes(%rsp), %rsp\n";
 }
 
 $code.=<<___;
@@ -598,6 +584,9 @@ $code.=<<___;
     vmovdqu   $R3_0h, `7*32`($res)
     vmovdqu   $R4_0,  `8*32`($res)
     vmovdqu   $R4_0h, `9*32`($res)
+___
+    &clear_stack(640);
+$code.=<<___;
 
     vzeroupper
     lea     (%rsp),%rax
@@ -651,87 +640,16 @@ $code.=<<___;
     .quad   0xffffffffffffffff
     .quad   0xffffffffffffffff
     .quad   0xffffffffffffffff
-.Lkmasklut:
-    #0000
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    #0001
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    #0010
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    #0011
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    #0100
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0101
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0110
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0111
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #1000
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1001
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1010
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1011
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1100
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1101
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1110
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1111
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
+.Lkmask_shl_lo:
+    .quad   63
+    .quad   62
+    .quad   61
+    .quad   60
+.Lkmask_shl_hi:
+    .quad   59
+    .quad   58
+    .quad   57
+    .quad   56
 ___
 
 ###############################################################################
@@ -879,6 +797,10 @@ $code.=<<___;
     vmovdqu   $R3_0h, `17*32`($res)
     vmovdqu   $R4_0,  `18*32`($res)
     vmovdqu   $R4_0h, `19*32`($res)
+___
+    # The first norm spill sits 32 bytes lower, below the pushes
+    &clear_stack(32+640);
+$code.=<<___;
 
     vzeroupper
     lea     (%rsp),%rax
