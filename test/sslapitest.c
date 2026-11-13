@@ -13140,6 +13140,12 @@ static int test_shutdown(int tst)
             || !TEST_ptr_ne(sess = SSL_get_session(clientssl), NULL)
             || !TEST_true(SSL_SESSION_is_resumable(sess)))
             goto end;
+        /*
+         * The client must not have written anything after its close_notify:
+         * a KeyUpdate or CertificateRequest received after that is ignored.
+         */
+        if (!TEST_int_eq(BIO_pending(SSL_get_rbio(serverssl)), 0))
+            goto end;
     } else {
         /*
          * tst == 6
