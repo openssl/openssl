@@ -692,6 +692,12 @@ int ossl_ssl_connection_reset(SSL *s)
             saved_created_at = sc->d1->created_at;
             saved_req_blocking_mode = sc->d1->req_blocking_mode;
             /*
+             * The record layer may hold a datagram taken from rx, and can
+             * only return it while rx is still attached. If ssl_init fails
+             * below, rx is freed and the datagram could not be returned.
+             */
+            RECORD_LAYER_clear(&sc->rlayer);
+            /*
              * Prevent dtls1_free from freeing rx and releasing the listener
              * reference - we'll restore them after ssl_init.
              */

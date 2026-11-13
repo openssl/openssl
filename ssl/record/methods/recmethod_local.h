@@ -377,6 +377,24 @@ struct ossl_record_layer_st {
     unsigned int use_urxe : 1;
 
     /*
+     * For DTLS listener objects keep track of the packet handle so it
+     * can be reused or released appropriately.
+     */
+    void *packet_handle;
+
+    /*
+     * For DTLS listener URXE-backed reads: pointer to the next unclaimed
+     * byte in the currently held URXE datagram, and how many bytes remain
+     * from there to the end of the datagram. A single datagram can carry
+     * more than one DTLS record, and rl->packet_length gets reset to 0
+     * between records (including internally, when a record is discarded
+     * before ever reaching the app), so these are tracked separately
+     * rather than derived from it.
+     */
+    unsigned char *urxe_next;
+    size_t urxe_left;
+
+    /*
      * Whether we are currently in a handshake or not. Only maintained for DTLS
      */
     int in_init;
@@ -532,6 +550,20 @@ const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl);
 void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
 int tls_release_read_buffer(OSSL_RECORD_LAYER *rl);
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/**
+ * @brief Hand off unread wire bytes when a URXE-backed layer stops being active.
+ *
+ * Writes the unread remainder of the held datagram to the layer's next BIO,
+ * then returns the datagram to its owner. The datagram is released even if
+ * the write fails.
+ *
+ * @param rl the record layer
+ * @returns 1 on success or if no datagram was held, 0 if the remainder could
+ *          not be written
+ */
+int tls_forward_urxe_remainder(OSSL_RECORD_LAYER *rl);
+#endif
 int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
     size_t firstlen, size_t nextlen);
 
