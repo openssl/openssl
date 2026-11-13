@@ -239,6 +239,21 @@ static int trust_1oid(X509_TRUST *trust, const X509 *x, int flags)
 
 static int trust_compat(X509_TRUST *trust, const X509 *x, int flags)
 {
+    int i;
+
+    /*
+     * Explicit COMPAT trust must honour rejection for all uses.  When called
+     * by obj_trust() with NULL, only perform its self-signed fallback: the
+     * caller has already checked the auxiliary attributes with its own flags.
+     */
+    if (trust != NULL && x->aux != NULL && x->aux->reject != NULL) {
+        for (i = 0; i < sk_ASN1_OBJECT_num(x->aux->reject); i++) {
+            ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(x->aux->reject, i);
+
+            if (OBJ_obj2nid(obj) == NID_anyExtendedKeyUsage)
+                return X509_TRUST_REJECTED;
+        }
+    }
     /* Call for side-effect of setting EXFLAG_SS for self-signed-certs */
     if (X509_check_purpose(x, -1, 0) != 1)
         return X509_TRUST_UNTRUSTED;
