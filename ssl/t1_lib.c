@@ -3333,6 +3333,11 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     slen += declen;
     p = sdec;
 
+    /*
+     * The ticket key callback may have called SSL_set_SSL_CTX(), which can
+     * free the context we started with, so fetch the current one here.
+     */
+    sctx = SSL_CONNECTION_GET_CTX(s);
     sess = d2i_SSL_SESSION_ex(NULL, &p, slen, sctx->libctx, sctx->propq);
     slen -= (int)(p - sdec);
     OPENSSL_free(sdec);

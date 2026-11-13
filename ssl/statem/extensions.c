@@ -1390,6 +1390,12 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
             s->session_ctx->ext.servername_arg);
 
     /*
+     * The callback may have called SSL_set_SSL_CTX(), which can free the
+     * context we started with. Use the current one from here on.
+     */
+    sctx = SSL_CONNECTION_GET_CTX(s);
+
+    /*
      * For servers, propagate the SNI hostname from the temporary
      * storage in the SSL to the persistent SSL_SESSION, now that we
      * know we accepted it.
@@ -1414,7 +1420,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
      * context, to avoid the confusing situation of having sess_accept_good
      * exceed sess_accept (zero) for the new context.
      */
-    if (SSL_IS_FIRST_HANDSHAKE(s) && sctx != s->session_ctx
+    if (s->server && SSL_IS_FIRST_HANDSHAKE(s) && sctx != s->session_ctx
         && s->hello_retry_request == SSL_HRR_NONE) {
         ssl_tsan_counter(sctx, &sctx->stats.sess_accept);
         ssl_tsan_decr(s->session_ctx, &s->session_ctx->stats.sess_accept);

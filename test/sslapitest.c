@@ -15571,6 +15571,287 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * A callback run during the handshake may switch the connection to another
+ * SSL_CTX with SSL_set_SSL_CTX(). Subsequent accesses to the current context
+ * must use the replacement: the switch drops the connection's reference to
+ * the old context, and frees it when that was the last one. These tests cover
+ * the current-context lookups in SNI, PSK and ticket processing.
+ */
+static SSL_CTX *ctx_switch_target;
+static int ctx_switch_count;
+static int ctx_switch_ex_index = -1;
+
+static void ctx_switch_free_cb(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+    int idx, long argl, void *argp)
+{
+    if (ptr != NULL)
+        (*(int *)ptr)++;
+}
+
+static int ctx_switch_to_target(SSL *s)
+{
+    if (ctx_switch_target == NULL || SSL_get_SSL_CTX(s) == ctx_switch_target)
+        return 1;
+    if (SSL_set_SSL_CTX(s, ctx_switch_target) == NULL)
+        return 0;
+    ctx_switch_count++;
+    return 1;
+}
+
+static int ctx_switch_sni_cb(SSL *s, int *al, void *arg)
+{
+    if (!ctx_switch_to_target(s)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int ctx_switch_tick_key_evp_cb(SSL *s, unsigned char key_name[16],
+    unsigned char iv[EVP_MAX_IV_LENGTH], EVP_CIPHER_CTX *ctx,
+    EVP_MAC_CTX *hctx, int enc)
+{
+    /* Switch while decrypting a ticket */
+    if (!enc && !ctx_switch_to_target(s))
+        return -1;
+    return tick_key_evp_cb(s, key_name, iv, ctx, hctx, enc);
+}
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+static const unsigned char ctx_switch_psk_key[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+};
+
+static int ctx_switch_find_session_cb(SSL *ssl, const unsigned char *identity,
+    size_t identity_len, SSL_SESSION **sess)
+{
+    if (!ctx_switch_to_target(ssl))
+        return 0;
+    return find_session_cb(ssl, identity, identity_len, sess);
+}
+#endif
+
+/*
+ * After a servername callback switches context, the handshake counts as
+ * accepted by the new server context rather than by the session context.
+ * A client context switch must leave the accept counts at zero and keep
+ * the connect counts on the session context.
+ * Test 0: TLSv1.2, server switches in the servername callback
+ * Test 1: TLSv1.3, server switches in the servername callback
+ * Test 2: TLSv1.2, client switches in the servername callback
+ * Test 3: TLSv1.3, client switches in the servername callback
+ * Test 4: TLSv1.2, client switches before the handshake
+ * Test 5: TLSv1.3, client switches before the handshake
+ */
+static int test_ctx_switch_accept_stats(int idx)
+{
+    SSL_CTX *sctx = NULL, *newctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int prot = idx % 2 == 0 ? TLS1_2_VERSION : TLS1_3_VERSION;
+    int server = idx < 2;
+    int before_handshake = idx >= 4;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (prot == TLS1_2_VERSION)
+        return TEST_skip("TLSv1.2 is disabled");
+#endif
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (prot == TLS1_3_VERSION)
+        return TEST_skip("No usable TLSv1.3");
+#endif
+
+    ctx_switch_count = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), prot, prot, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), prot, prot,
+            server ? &newctx : NULL, server ? NULL : &newctx, cert, privkey))
+        || (!before_handshake
+            && !TEST_true(SSL_CTX_set_tlsext_servername_callback(server ? sctx : cctx,
+                ctx_switch_sni_cb))))
+        goto end;
+
+    ctx_switch_target = newctx;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "localhost"))
+        || (before_handshake && !TEST_true(ctx_switch_to_target(clientssl)))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(ctx_switch_count, 1)
+        || !TEST_ptr_eq(SSL_get_SSL_CTX(server ? serverssl : clientssl), newctx)
+        || !TEST_long_eq(SSL_CTX_sess_accept(sctx), server ? 0 : 1)
+        || !TEST_long_eq(SSL_CTX_sess_accept_good(sctx), server ? 0 : 1)
+        || !TEST_long_eq(SSL_CTX_sess_accept(newctx), server ? 1 : 0)
+        || !TEST_long_eq(SSL_CTX_sess_accept_good(newctx), server ? 1 : 0)
+        || !TEST_long_eq(SSL_CTX_sess_accept(cctx), 0)
+        || !TEST_long_eq(SSL_CTX_sess_accept_good(cctx), 0)
+        || !TEST_long_eq(SSL_CTX_sess_connect(cctx), 1)
+        || !TEST_long_eq(SSL_CTX_sess_connect_good(cctx), 1)
+        || !TEST_long_eq(SSL_CTX_sess_connect(newctx), 0)
+        || !TEST_long_eq(SSL_CTX_sess_connect_good(newctx), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    ctx_switch_target = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(newctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * The connection holds the only reference to its current SSL_CTX when a
+ * callback switches it to another one, so the switch frees the old context
+ * while the handshake is still running.
+ * Test 0: TLSv1.3, the servername callback switches
+ * Test 1: TLSv1.3, the PSK find session callback switches
+ * Test 2: TLSv1.3, the ticket key callback switches while decrypting
+ * Test 3: TLSv1.2, the ticket key callback switches while decrypting
+ * Test 4: TLSv1.2, the servername callback switches
+ */
+static int test_ctx_switch_frees_old_ctx(int idx)
+{
+    SSL_CTX *sctx = NULL, *oldsctx = NULL, *newsctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL;
+    int prot = idx >= 3 ? TLS1_2_VERSION : TLS1_3_VERSION;
+    int sni = idx == 0 || idx == 4;
+    int oldctx_freed = 0;
+    int testresult = 0;
+
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (prot == TLS1_3_VERSION)
+        return TEST_skip("No usable TLSv1.3");
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (prot == TLS1_2_VERSION)
+        return TEST_skip("TLSv1.2 is disabled");
+#endif
+
+    ctx_switch_target = NULL;
+    ctx_switch_count = 0;
+
+    if (ctx_switch_ex_index == -1
+        && !TEST_int_ge(ctx_switch_ex_index = SSL_CTX_get_ex_new_index(0, NULL,
+                            NULL, NULL, ctx_switch_free_cb),
+            0))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), prot, prot, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+            prot, prot, &oldsctx, NULL, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+            prot, prot, &newsctx, NULL, cert, privkey))
+        || !TEST_true(SSL_CTX_set_ex_data(oldsctx, ctx_switch_ex_index,
+            &oldctx_freed)))
+        goto end;
+
+    if (sni) {
+        /* The callback of the current context runs, and that is oldsctx */
+        if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(oldsctx,
+                ctx_switch_sni_cb)))
+            goto end;
+    } else if (idx == 1) {
+#ifndef OSSL_NO_USABLE_TLS1_3
+        /* The PSK uses a SHA256 ciphersuite, so make sure we negotiate one */
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                "TLS_AES_128_GCM_SHA256")))
+            goto end;
+        SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+        SSL_CTX_set_psk_find_session_callback(sctx,
+            ctx_switch_find_session_cb);
+        srvid = pskid;
+        use_session_cb_cnt = 0;
+        find_session_cb_cnt = 0;
+#endif
+    } else {
+        /* Tickets use the keys of the session context, so set them there */
+        tick_key_renew = 0;
+        if (!TEST_true(SSL_CTX_set_tlsext_ticket_key_evp_cb(sctx,
+                ctx_switch_tick_key_evp_cb))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_ptr(sess = SSL_get1_session(clientssl)))
+            goto end;
+        shutdown_ssl_connection(serverssl, clientssl);
+        serverssl = clientssl = NULL;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || (sni && !TEST_true(SSL_set_tlsext_host_name(clientssl, "localhost")))
+        || (sess != NULL && !TEST_true(SSL_set_session(clientssl, sess)))
+        || !TEST_ptr(SSL_set_SSL_CTX(serverssl, oldsctx)))
+        goto end;
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+    if (idx == 1) {
+        const SSL_CIPHER *cipher;
+
+        cipher = SSL_CIPHER_find(clientssl, TLS13_AES_128_GCM_SHA256_BYTES);
+        clientpsk = SSL_SESSION_new();
+        if (!TEST_ptr(clientpsk)
+            || !TEST_ptr(cipher)
+            || !TEST_true(SSL_SESSION_set1_master_key(clientpsk,
+                ctx_switch_psk_key, sizeof(ctx_switch_psk_key)))
+            || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
+            || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk,
+                TLS1_3_VERSION))
+            || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+            goto end;
+        serverpsk = clientpsk;
+    }
+#endif
+
+    /* Leave the connection holding the only reference to oldsctx */
+    SSL_CTX_free(oldsctx);
+    oldsctx = NULL;
+    if (!TEST_int_eq(oldctx_freed, 0))
+        goto end;
+
+    ctx_switch_target = newsctx;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(ctx_switch_count, 1)
+        || !TEST_int_eq(oldctx_freed, 1)
+        || !TEST_ptr_eq(SSL_get_SSL_CTX(serverssl), newsctx)
+        || (sni && !TEST_str_eq(SSL_get_servername(serverssl, TLSEXT_NAMETYPE_host_name), "localhost"))
+        || (!sni && !TEST_true(SSL_session_reused(clientssl))))
+        goto end;
+
+    testresult = 1;
+end:
+    ctx_switch_target = NULL;
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(oldsctx);
+    SSL_CTX_free(newsctx);
+    SSL_CTX_free(cctx);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    if (idx == 1) {
+        SSL_SESSION_free(clientpsk);
+        SSL_SESSION_free(serverpsk);
+        clientpsk = serverpsk = NULL;
+    }
+#endif
+    return testresult;
+}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -19894,6 +20175,8 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_sigalg_ctx_switch, 4);
     ADD_ALL_TESTS(test_ctx_switch_more_custom_exts, 2);
+    ADD_ALL_TESTS(test_ctx_switch_accept_stats, 6);
+    ADD_ALL_TESTS(test_ctx_switch_frees_old_ctx, 5);
     ADD_ALL_TESTS(test_sigalg_ctx_switch_cert_cb, 2);
 #ifndef OPENSSL_NO_DEPRECATED_4_2
     ADD_TEST(test_copy_session_id_ctx_mismatch);

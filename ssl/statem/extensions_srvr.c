@@ -1346,7 +1346,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     SSL_SESSION *sess = NULL;
     unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     /*
@@ -1563,13 +1562,18 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             continue;
         }
 
-        md = ssl_md(sctx, sess->cipher->algorithm2);
+        /*
+         * The callbacks above may have called SSL_set_SSL_CTX(), which can
+         * free the context this function started with, so always look up
+         * the digests in the current one.
+         */
+        md = ssl_md(SSL_CONNECTION_GET_CTX(s), sess->cipher->algorithm2);
         if (md == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         if (!EVP_MD_is_a(md,
-                EVP_MD_get0_name(ssl_md(sctx,
+                EVP_MD_get0_name(ssl_md(SSL_CONNECTION_GET_CTX(s),
                     s->s3.tmp.new_cipher->algorithm2)))) {
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
