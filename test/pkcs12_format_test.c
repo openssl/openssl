@@ -1034,6 +1034,63 @@ err:
     return ret;
 }
 
+/*
+ * PKCS12_gen_mac() and PKCS12_newpass() on a PKCS#12 protected with PBMAC1.
+ * The HMAC digest (SHA-512) differs from the PBKDF2 PRF digest (SHA-256), so
+ * the MAC can only be recomputed if the HMAC digest is taken from the PBMAC1
+ * messageAuthScheme.
+ */
+static int pkcs12_pbmac1_gen_mac_newpass_test(void)
+{
+    int ret = 0;
+    unsigned char salt[16] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+    };
+    unsigned char mac[EVP_MAX_MD_SIZE];
+    unsigned int maclen = 0;
+    const ASN1_OCTET_STRING *macoct = NULL;
+    const unsigned char *cert_bytes = CERT1;
+    const unsigned char *key_bytes = KEY1;
+    X509 *cert = NULL;
+    EVP_PKEY *pkey = NULL;
+    PKCS12 *p12 = NULL;
+
+    if (!TEST_ptr(cert = d2i_X509(NULL, &cert_bytes, sizeof(CERT1)))
+        || !TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &key_bytes, sizeof(KEY1))))
+        goto err;
+
+    /* No MAC from PKCS12_create(), then a PBMAC1 MAC */
+    if (!TEST_ptr(p12 = PKCS12_create("pass", NULL, pkey, cert, NULL,
+                      NID_aes_256_cbc, NID_aes_256_cbc, 0, -1, 0))
+        || !TEST_true(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1,
+            salt, sizeof(salt), 0,
+            EVP_sha512(), "SHA256"))
+        || !TEST_true(PKCS12_verify_mac(p12, "pass", -1)))
+        goto err;
+
+    /* PKCS12_gen_mac() must reproduce the stored MAC */
+    PKCS12_get0_mac(&macoct, NULL, NULL, NULL, p12);
+    if (!TEST_ptr(macoct)
+        || !TEST_true(PKCS12_gen_mac(p12, "pass", -1, mac, &maclen))
+        || !TEST_mem_eq(mac, maclen, ASN1_STRING_get0_data(macoct),
+            ASN1_STRING_get_length(macoct)))
+        goto err;
+
+    /* PKCS12_newpass() recomputes the MAC with PKCS12_gen_mac() */
+    if (!TEST_true(PKCS12_newpass(p12, "pass", "newpass"))
+        || !TEST_true(PKCS12_verify_mac(p12, "newpass", -1))
+        || !TEST_false(PKCS12_verify_mac(p12, "pass", -1)))
+        goto err;
+
+    ret = 1;
+err:
+    PKCS12_free(p12);
+    EVP_PKEY_free(pkey);
+    X509_free(cert);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -1115,8 +1172,10 @@ int setup_tests(void)
     if (default_libctx)
         ADD_TEST(pkcs12_create_test);
 #endif
-    if (default_libctx)
+    if (default_libctx) {
         ADD_TEST(pkcs12_recreate_test);
+        ADD_TEST(pkcs12_pbmac1_gen_mac_newpass_test);
+    }
     ADD_ALL_TESTS(test_single_key_enc_pass, OSSL_NELEM(passwords));
     ADD_ALL_TESTS(test_single_key_enc_iter, OSSL_NELEM(iters));
     ADD_TEST(test_single_key_with_attrs);
