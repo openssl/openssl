@@ -37,6 +37,8 @@ These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
 This parameter sets the snmpEngineID value for the KDF.
 If a value is already set, the contents are replaced.
+The value must be between 5 and 32 octets long, and must not consist
+entirely of zero octets or entirely of 0xff octets.
 
 =item "fips-indicator" (B<OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
 
@@ -58,13 +60,13 @@ digest size and pass that buffer in the L<EVP_KDF_derive(3)> function along with
 
 =head1 EXAMPLES
 
-This example derives an 8 byte IV using SHA1 with a 1K "key" and appropriate
-"xcghash" and "session_id" values:
+This example derives a key using SHA1, an 8-byte password, and a 5-byte engine
+ID:
 
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
- unsigned char eid[1024] = "01234...";
- unsigned char pass[32] = "012345...";
+ unsigned char eid[] = { 0x80, 0x00, 0x02, 0xb8, 0x01 };
+ unsigned char pass[] = "01234567";
  unsigned char out[20];
  size_t outlen = sizeof(out);
  OSSL_PARAM params[6], *p = params;
@@ -76,7 +78,7 @@ This example derives an 8 byte IV using SHA1 with a 1K "key" and appropriate
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                          SN_sha1, strlen(SN_sha1));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-                                          pass, sizeof(pass));
+                                          pass, sizeof(pass) - 1);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
                                           eid, sizeof(eid));
  *p = OSSL_PARAM_construct_end();
