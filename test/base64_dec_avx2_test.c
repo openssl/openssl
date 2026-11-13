@@ -467,6 +467,36 @@ end:
     return ret;
 }
 
+/*
+ * An empty input is valid and must not touch the input pointer.
+ * EVP_EncodeBlock() writes only the NUL terminator, and EVP_DecodeBlock()
+ * writes nothing.
+ */
+static int test_block_empty(void)
+{
+    unsigned char in[1] = { 0 };
+    /* A non-NUL value to confirm that a NUL is written. */
+    unsigned char out[1] = { 0xff };
+    unsigned char decoded[1] = { 0xff };
+
+    if (!TEST_int_eq(EVP_EncodeBlock(out, NULL, 0), 0)
+        || !TEST_uchar_eq(out[0], 0))
+        return 0;
+
+    out[0] = 0xff; /* Reset to a non-NUL value. */
+    if (!TEST_int_eq(EVP_EncodeBlock(out, in, 0), 0)
+        || !TEST_uchar_eq(out[0], 0))
+        return 0;
+
+    if (!TEST_int_eq(EVP_DecodeBlock(NULL, NULL, 0), 0)
+        || !TEST_int_eq(EVP_DecodeBlock(decoded, NULL, 0), 0)
+        || !TEST_int_eq(EVP_DecodeBlock(NULL, in, 0), 0)
+        || !TEST_uchar_eq(decoded[0], 0xff))
+        return 0;
+
+    return 1;
+}
+
 static int test_decode_avx2_vs_scalar(int idx)
 {
     int size_idx = idx / WS_COUNT;
@@ -1213,6 +1243,9 @@ int setup_tests(void)
 {
     /* states up front whether the AVX2 path is reached at all */
     ADD_TEST(test_avx2_dispatch);
+
+    /* EVP_EncodeBlock()/EVP_DecodeBlock() accept empty input */
+    ADD_TEST(test_block_empty);
 
     /* Standard alphabet: test_sizes x WS patterns */
     ADD_ALL_TESTS(test_decode_avx2_vs_scalar, NUM_SIZES * WS_COUNT);

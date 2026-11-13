@@ -92,6 +92,9 @@ divisible by 4. Additionally a NUL terminator character will be added. For
 example if 16 bytes of input data is provided then 24 bytes of encoded data is
 created plus 1 byte for a NUL terminator (i.e. 25 bytes in total). The length of
 the data generated I<without> the NUL terminator is returned from the function.
+B<t> must not be NULL. B<f> must not be NULL unless B<n> is zero. B<n> must be
+nonnegative and small enough that the length of the encoded data fits in an
+int.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.
 
@@ -150,6 +153,8 @@ For every 4 input bytes exactly 3 output bytes will be produced.
 Padding bytes (B<=>) (even if internal) are decoded to 6 zero bits, the caller
 is responsible for taking trailing padding into account, by ignoring as many
 bytes at the tail of the returned output.
+B<t> and B<f> must not be NULL unless B<n> is zero, and B<n> must be
+nonnegative.
 EVP_DecodeBlock() will return the length of the data decoded or -1 on error.
 
 =head1 RETURN VALUES
@@ -184,7 +189,7 @@ and does not decode padding bytes (B<=>) to 6 zero bits.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
