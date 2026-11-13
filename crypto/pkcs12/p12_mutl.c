@@ -157,8 +157,9 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
         goto err;
     }
 
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, pbkdf2_salt->data, pbkdf2_salt->length,
-            ASN1_INTEGER_get(pbkdf2_param->iter), kdf_md, keylen, key)
+    if (ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, pbkdf2_salt->data,
+            pbkdf2_salt->length, ASN1_INTEGER_get(pbkdf2_param->iter),
+            kdf_md, keylen, key, ctx, propq)
         <= 0) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
         goto err;
