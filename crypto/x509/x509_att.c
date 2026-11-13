@@ -41,10 +41,13 @@ int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
 
     if (sk == NULL)
         return -1;
+    n = sk_X509_ATTRIBUTE_num(sk);
+    /* Nothing can follow lastpos; this also keeps lastpos + 1 in range */
+    if (lastpos >= n)
+        return -1;
     lastpos++;
     if (lastpos < 0)
         lastpos = 0;
-    n = sk_X509_ATTRIBUTE_num(sk);
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_ATTRIBUTE_value(sk, lastpos);
         if (OBJ_cmp(ex->object, obj) == 0)

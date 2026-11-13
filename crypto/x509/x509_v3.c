@@ -48,10 +48,13 @@ int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 
     if (sk == NULL)
         return -1;
+    n = sk_X509_EXTENSION_num(sk);
+    /* Nothing can follow lastpos; this also keeps lastpos + 1 in range */
+    if (lastpos >= n)
+        return -1;
     lastpos++;
     if (lastpos < 0)
         lastpos = 0;
-    n = sk_X509_EXTENSION_num(sk);
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_EXTENSION_value(sk, lastpos);
         if (OBJ_cmp(ex->object, obj) == 0)
@@ -68,10 +71,13 @@ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
 
     if (sk == NULL)
         return -1;
+    n = sk_X509_EXTENSION_num(sk);
+    /* Nothing can follow lastpos; this also keeps lastpos + 1 in range */
+    if (lastpos >= n)
+        return -1;
     lastpos++;
     if (lastpos < 0)
         lastpos = 0;
-    n = sk_X509_EXTENSION_num(sk);
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_EXTENSION_value(sk, lastpos);
         c = X509_EXTENSION_get_critical(ex);
