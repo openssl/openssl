@@ -2519,6 +2519,62 @@ err:
 }
 #endif /* OPENSSL_NO_KBKDF */
 
+#ifndef OPENSSL_NO_SNMPKDF
+static int test_kdf_snmpkdf_output_size(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char password[] = "maplesyrup";
+    unsigned char eid[12] = { 0 };
+    unsigned char out[33];
+    OSSL_PARAM params[4];
+    size_t digest_size;
+    size_t i;
+
+    eid[sizeof(eid) - 1] = 2;
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        password, sizeof(password) - 1);
+    params[2] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
+        eid, sizeof(eid));
+    params[3] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF)))
+        goto err;
+
+    if (!TEST_true(EVP_KDF_CTX_set_params(kctx, params)))
+        goto err;
+    digest_size = EVP_KDF_CTX_get_kdf_size(kctx);
+    if (!TEST_size_t_eq(digest_size, 32))
+        goto err;
+
+    memset(out, 0xAA, sizeof(out));
+    if (!TEST_int_eq(EVP_KDF_derive(kctx, out, digest_size - 1, params), 0))
+        goto err;
+    for (i = 0; i < sizeof(out); i++) {
+        if (!TEST_uint_eq(out[i], 0xAA))
+            goto err;
+    }
+
+    memset(out, 0xAA, sizeof(out));
+    if (!TEST_int_gt(EVP_KDF_derive(kctx, out, digest_size, params), 0))
+        goto err;
+    memset(out, 0xAA, sizeof(out));
+    if (!TEST_int_eq(EVP_KDF_derive(kctx, out, digest_size + 1, params), 0))
+        goto err;
+    for (i = 0; i < sizeof(out); i++) {
+        if (!TEST_uint_eq(out[i], 0xAA))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_SNMPKDF */
+
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_pbkdf1);
@@ -2547,6 +2603,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ctx_get_kdf);
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
     ADD_TEST(test_kdf_ctx_kdf);
+#endif
+#ifndef OPENSSL_NO_SNMPKDF
+    ADD_TEST(test_kdf_snmpkdf_output_size);
 #endif
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_tls1_prf_set_skey);
