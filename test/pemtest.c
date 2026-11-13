@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 
 #include "testutil.h"
@@ -124,6 +125,53 @@ err:
     return ret;
 }
 
+/*
+ * A block with nothing between its BEGIN and END lines, or only an empty
+ * line, fails with an error on the queue rather than an empty queue.
+ */
+static const char *no_content_pem[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "-----END CERTIFICATE-----\n",
+    "-----BEGIN CERTIFICATE-----\n"
+    "\n"
+    "-----END CERTIFICATE-----\n",
+};
+
+static int test_no_content(int idx)
+{
+    const char *pem = no_content_pem[idx];
+    BIO *b = NULL;
+    X509 *x = NULL;
+    char *name = NULL, *header = NULL;
+    unsigned char *data = NULL;
+    long len;
+    int ret = 0;
+
+    ERR_clear_error();
+    if (!TEST_ptr(b = BIO_new_mem_buf(pem, (int)strlen(pem)))
+        || !TEST_false(PEM_read_bio_ex(b, &name, &header, &data, &len, 0))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), PEM_R_NO_CONTENT))
+        goto err;
+    BIO_free(b);
+    ERR_clear_error();
+
+    /* Through PEM_read_bio_X509(), as SSL_CTX_use_certificate_chain_file() */
+    if (!TEST_ptr(b = BIO_new_mem_buf(pem, (int)strlen(pem)))
+        || !TEST_ptr_null(x = PEM_read_bio_X509(b, NULL, NULL, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), PEM_R_NO_CONTENT))
+        goto err;
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    X509_free(x);
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(data);
+    BIO_free(b);
+    return ret;
+}
+
 static int test_protected_params(void)
 {
     BIO *b;
@@ -160,6 +208,7 @@ int setup_tests(void)
     ADD_TEST(test_invalid);
     ADD_TEST(test_cert_key_cert);
     ADD_TEST(test_empty_payload);
+    ADD_ALL_TESTS(test_no_content, OSSL_NELEM(no_content_pem));
     ADD_TEST(test_protected_params);
     return 1;
 }
