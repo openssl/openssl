@@ -40,6 +40,8 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         goto err;
 
     i = EVP_EncodeBlock(sigret, m, m_len);
+    if (i < 0)
+        goto err;
     *siglen = i;
     ret = 1;
 err:
