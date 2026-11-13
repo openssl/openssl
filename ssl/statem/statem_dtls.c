@@ -918,7 +918,7 @@ int dtls1_has_buffered_ready_message(SSL_CONNECTION *s)
     if (item == NULL)
         return 0;
     frag = (hm_fragment *)item->data;
-    return frag->reassembly == NULL;
+    return !frag->incomplete;
 }
 
 static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
