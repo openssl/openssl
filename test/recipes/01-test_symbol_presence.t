@@ -144,7 +144,7 @@ foreach (sort keys %stlibname) {
               # of our business
               grep !m|^__|,
               # Only look at external definitions
-              grep m|.* [BDST] .*|,
+              grep m|.* [BDRST] .*|,
               @$_ ),
             keys %commons;
     }

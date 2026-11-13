@@ -8120,7 +8120,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
         OSSL_PARAM params[2];
         int decrypt_only = 0;
 
-        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_DECRYPT_ONLY,
+        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_DECRYPT_ONLY_STR,
             &decrypt_only);
         params[1] = OSSL_PARAM_construct_end();
         if (EVP_CIPHER_get_params((EVP_CIPHER *)ciph, params)

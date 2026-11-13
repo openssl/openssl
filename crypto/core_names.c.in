@@ -1,0 +1,29 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the \"License\").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/* clang-format off */
+{-
+use OpenSSL::paramnames qw(generate_param_name_array);
+-}
+
+#include <openssl/core_names.h>
+
+#if defined(OPENSSL_SYS_WINDOWS)
+const char *ossl_get_parameter_names_table(void)
+{
+#endif
+{-
+generate_param_name_array();
+-}
+#if defined(OPENSSL_SYS_WINDOWS)
+    return names_table;
+}
+#endif
+
+/* clang-format on */

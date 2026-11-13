@@ -5750,3 +5750,5 @@ PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
 PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data_ex                   ?	4_2_0	EXIST::FUNCTION:
+ossl_parameter_names_table              ?	4_2_0	EXIST:!WINDOWS:VARIABLE:
+ossl_get_parameter_names_table          ?	4_2_0	EXIST:WINDOWS:FUNCTION:

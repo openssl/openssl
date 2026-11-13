@@ -858,7 +858,7 @@ int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx)
          * So try to get the xoflen instead. This will return -1 if the
          * xof length has not been set.
          */
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &sz);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE_STR, &sz);
         if (EVP_MD_CTX_get_params(c, params) != 1
             || sz > INT_MAX
             || sz == 0)
