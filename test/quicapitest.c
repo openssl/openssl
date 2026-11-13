@@ -4688,22 +4688,34 @@ err:
 }
 
 /*
- * Streams rejected by the incoming stream policy are never placed on the accept
- * queue. Check that they are still garbage collected and that the peer is
- * granted credit for another stream, so that a peer which keeps opening streams
- * neither grows the stream map without bound nor exhausts its stream limit.
+ * Streams which the application can no longer use must eventually be garbage
+ * collected and the peer granted credit for another stream, so that a peer
+ * which keeps opening streams neither grows the stream map without bound nor
+ * exhausts its stream limit.
+ *
+ * Test 0: The incoming stream policy rejects each stream, and the peer has
+ *         written data on it.
+ * Test 1: The incoming stream policy rejects each stream, and the peer resets
+ *         it without writing any data. The RESET_STREAM frame both creates and
+ *         resets the stream, so no STOP_SENDING frame is ever sent for it.
+ * Test 2: Each stream is accepted, read to the end and freed by the
+ *         application.
  */
-static int test_reject_stream_gc(void)
+static int test_stream_gc(int idx)
 {
     /* Comfortably more than the default initial stream limit of 100. */
     static const int num_streams = 250;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
-    SSL *streamssl = NULL;
+    SSL *streamssl = NULL, *cstream = NULL;
     QUIC_CHANNEL *ch;
     QUIC_STREAM_MAP *qsm;
-    size_t written = 0;
-    int testresult = 0, ret, i;
+    uint64_t stream_flags = (idx == 0) ? 0 : SSL_STREAM_FLAG_UNI;
+    int policy = (idx == 2) ? SSL_INCOMING_STREAM_POLICY_ACCEPT
+                            : SSL_INCOMING_STREAM_POLICY_REJECT;
+    unsigned char buf[16];
+    size_t written = 0, readbytes = 0;
+    int testresult = 0, ret, i, j;
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx())
@@ -4722,24 +4734,66 @@ static int test_reject_stream_gc(void)
     if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
         || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE, 0, 0))
-        || !TEST_true(SSL_set_incoming_stream_policy(clientssl,
-            SSL_INCOMING_STREAM_POLICY_REJECT, 42))
+        || !TEST_true(SSL_set_incoming_stream_policy(clientssl, policy, 42))
         || !TEST_ptr(ch = ossl_quic_conn_get_channel(clientssl)))
         goto err;
 
     qsm = ossl_quic_channel_get_qsm(ch);
 
     for (i = 0; i < num_streams; i++) {
-        if (!TEST_ptr(streamssl = SSL_new_stream(serverssl, 0))
-            || !TEST_true(SSL_write_ex(streamssl, "x", 1, &written)))
+        if (!TEST_ptr(streamssl = SSL_new_stream(serverssl, stream_flags)))
             goto err;
+
+        switch (idx) {
+        case 0:
+            if (!TEST_true(SSL_write_ex(streamssl, "x", 1, &written)))
+                goto err;
+            break;
+        case 1:
+            if (!TEST_true(SSL_stream_reset(streamssl, NULL, 0)))
+                goto err;
+            break;
+        default:
+            if (!TEST_true(SSL_write_ex(streamssl, "x", 1, &written))
+                || !TEST_true(SSL_stream_conclude(streamssl, 0)))
+                goto err;
+            break;
+        }
         SSL_free(streamssl);
         streamssl = NULL;
 
         /*
-         * Let the client reject the stream and the server pick up both the
+         * Let the client process the stream and the server pick up both the
          * resulting frames and the MAX_STREAMS credit they release.
          */
+        if (!TEST_int_eq(SSL_handle_events(clientssl), 1)
+            || !TEST_int_eq(SSL_handle_events(serverssl), 1)
+            || !TEST_int_eq(SSL_handle_events(clientssl), 1))
+            goto err;
+
+        if (idx != 2)
+            continue;
+
+        /* Accept the stream, read it to the end and free it. */
+        if (!TEST_ptr(cstream = SSL_accept_stream(clientssl,
+                          SSL_ACCEPT_STREAM_NO_BLOCK)))
+            goto err;
+
+        for (j = 0;; j++) {
+            if (!TEST_int_lt(j, 10))
+                goto err;
+            if (SSL_read_ex(cstream, buf, sizeof(buf), &readbytes))
+                continue;
+            if (SSL_get_error(cstream, 0) == SSL_ERROR_ZERO_RETURN)
+                break;
+            if (!TEST_int_eq(SSL_get_error(cstream, 0), SSL_ERROR_WANT_READ)
+                || !TEST_int_eq(SSL_handle_events(serverssl), 1)
+                || !TEST_int_eq(SSL_handle_events(clientssl), 1))
+                goto err;
+        }
+        SSL_free(cstream);
+        cstream = NULL;
+
         if (!TEST_int_eq(SSL_handle_events(clientssl), 1)
             || !TEST_int_eq(SSL_handle_events(serverssl), 1)
             || !TEST_int_eq(SSL_handle_events(clientssl), 1))
@@ -4747,8 +4801,8 @@ static int test_reject_stream_gc(void)
     }
 
     /*
-     * Every rejected stream should have been collected by now, so the map must
-     * not have grown in proportion to the number of streams opened.
+     * Every stream should have been collected by now, so the map must not have
+     * grown in proportion to the number of streams opened.
      */
     if (!TEST_size_t_lt(OPENSSL_LH_num_items((OPENSSL_LHASH *)qsm->map),
             (size_t)num_streams / 10)
@@ -4757,6 +4811,7 @@ static int test_reject_stream_gc(void)
 
     testresult = 1;
 err:
+    SSL_free(cstream);
     SSL_free(streamssl);
     SSL_free(serverssl);
     SSL_free(clientssl);
@@ -5746,7 +5801,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_quic_version_neg_split_client_hello, 2);
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
-    ADD_TEST(test_reject_stream_gc);
+    ADD_ALL_TESTS(test_stream_gc, 3);
     ADD_TEST(test_client_hello_retry);
 #if OPENSSL_USE_IPV6
     ADD_TEST(test_quic_peer_addr_v6);
