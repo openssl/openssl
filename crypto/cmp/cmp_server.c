@@ -17,6 +17,8 @@
 struct ossl_cmp_srv_ctx_st {
     OSSL_CMP_CTX *ctx; /* CMP client context reused for transactionID etc. */
     void *custom_ctx; /* application-specific server context */
+    OSSL_CMP_PKIHEADER *first_hdr; /* header of 1st request in transaction */
+    X509 *first_client_cert; /* 1st request signer cert in transaction */
     int certReqId; /* of ir/cr/kur, OSSL_CMP_CERTREQID_NONE for p10cr */
     int polling; /* current transaction is in polling mode */
 
@@ -33,6 +35,7 @@ struct ossl_cmp_srv_ctx_st {
     int acceptUnprotected; /* Accept requests with no/invalid prot. */
     int acceptRAVerified; /* Accept ir/cr/kur with POPO RAVerified */
     int grantImplicitConfirm; /* Grant implicit confirmation if requested */
+    int enforceSameCredentials; /* Require same credentials in a transaction */
 
 }; /* OSSL_CMP_SRV_CTX */
 
@@ -41,6 +44,8 @@ void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx)
     if (srv_ctx == NULL)
         return;
 
+    OSSL_CMP_PKIHEADER_free(srv_ctx->first_hdr);
+    X509_free(srv_ctx->first_client_cert);
     OSSL_CMP_CTX_free(srv_ctx->ctx);
     OPENSSL_free(srv_ctx);
 }
@@ -155,6 +160,16 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     }
     srv_ctx->grantImplicitConfirm = val != 0;
+    return 1;
+}
+
+int OSSL_CMP_SRV_CTX_set_enforce_same_credentials(OSSL_CMP_SRV_CTX *srv_ctx, int val)
+{
+    if (srv_ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    srv_ctx->enforceSameCredentials = val != 0;
     return 1;
 }
 
@@ -609,19 +624,111 @@ static int assuming_new_transaction(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 /* Prepare for next transaction */
 static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
 {
+    OSSL_CMP_CTX *ctx = srv_ctx->ctx;
     int ret = 1;
 
-    srv_ctx->ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
+    ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
     srv_ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
     srv_ctx->polling = 0;
 
     if (srv_ctx->clean_transaction != NULL)
-        ret = srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID);
-    if (!OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL))
+        ret = srv_ctx->clean_transaction(srv_ctx, ctx->transactionID);
+    if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL))
         ret = 0;
-    if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
+    if (!OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
         ret = 0;
+    OSSL_CMP_PKIHEADER_free(srv_ctx->first_hdr);
+    srv_ctx->first_hdr = NULL;
+    X509_free(srv_ctx->first_client_cert);
+    srv_ctx->first_client_cert = NULL;
     return ret;
+}
+
+/**
+ * Check whether the sender, senderKID, and protection algorithm OID in |hdr|
+ * match those saved in |first_hdr|. Changes to parameters of the same protection
+ * algorithm, such as the PBM salt, are logged as warnings but accepted.
+ * Note that this does not check the actual credentials themselves,
+ * only the identifiers and protection algorithm.
+ * For signature-based protection, the relevant credentials are the sender
+ * key and certificate, which is checked by check_same_sender_cert().
+ * Return 1 if they match, else raise an error and return 0.
+ */
+static int check_same_credentials(const OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_PKIHEADER *hdr, const OSSL_CMP_PKIHEADER *first_hdr)
+{
+    if (GENERAL_NAME_cmp(hdr->sender, first_hdr->sender) != 0) {
+        char *first = X509_NAME_oneline(first_hdr->sender->d.directoryName, NULL, 0);
+        char *actual = X509_NAME_oneline(hdr->sender->d.directoryName, NULL, 0);
+
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_SENDER);
+        ossl_cmp_log2(ERROR, ctx,
+            "sender changed within transaction from %s to %s",
+            first != NULL ? first : "<unknown>",
+            actual != NULL ? actual : "<unknown>");
+        OPENSSL_free(first);
+        OPENSSL_free(actual);
+        return 0;
+    }
+    if ((hdr->senderKID == NULL) != (first_hdr->senderKID == NULL)
+        || (hdr->senderKID != NULL
+            && ASN1_OCTET_STRING_cmp(hdr->senderKID, first_hdr->senderKID) != 0)) {
+        char *first = first_hdr->senderKID == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, first_hdr->senderKID);
+        char *actual = hdr->senderKID == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, hdr->senderKID);
+
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CREDENTIALS_CHANGED);
+        ossl_cmp_log2(ERROR, ctx,
+            "senderKID changed within transaction from %s to %s",
+            first_hdr->senderKID == NULL ? "<absent>" : first != NULL ? first
+                                                                      : "<unknown>",
+            hdr->senderKID == NULL ? "<absent>" : actual != NULL ? actual
+                                                                 : "<unknown>");
+        OPENSSL_free(first);
+        OPENSSL_free(actual);
+        return 0;
+    }
+    if ((hdr->protectionAlg == NULL) != (first_hdr->protectionAlg == NULL)
+        || (hdr->protectionAlg != NULL
+            && X509_ALGOR_cmp(hdr->protectionAlg, first_hdr->protectionAlg) != 0)) {
+        char first[128] = "<absent>", actual[128] = "<absent>";
+        int only_parameters_changed = first_hdr->protectionAlg != NULL
+            && hdr->protectionAlg != NULL
+            && OBJ_cmp(first_hdr->protectionAlg->algorithm, hdr->protectionAlg->algorithm) == 0;
+
+        if (first_hdr->protectionAlg != NULL
+            && OBJ_obj2txt(first, sizeof(first), first_hdr->protectionAlg->algorithm, 0) <= 0)
+            OPENSSL_strlcpy(first, "<unknown>", sizeof(first));
+        if (hdr->protectionAlg != NULL
+            && OBJ_obj2txt(actual, sizeof(actual), hdr->protectionAlg->algorithm, 0) <= 0)
+            OPENSSL_strlcpy(actual, "<unknown>", sizeof(actual));
+        if (only_parameters_changed) {
+            ossl_cmp_log1(WARN, ctx, "protection algorithm %s parameters changed within transaction", first);
+            return 1;
+        }
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_ALGORITHM_CHANGED);
+        ossl_cmp_log2(ERROR, ctx, "protection algorithm changed within transaction from %s to %s", first, actual);
+        return 0;
+    }
+    return 1;
+}
+
+static int check_same_sender_cert(OSSL_CMP_SRV_CTX *srv_ctx)
+{
+    OSSL_CMP_CTX *ctx = srv_ctx->ctx;
+    X509 *cert = ctx->validatedSrvCert;
+
+    if (srv_ctx->first_client_cert != NULL) {
+        if (cert != NULL && X509_cmp(srv_ctx->first_client_cert, cert) == 0)
+            return 1;
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CERTIFICATE_CHANGED);
+        return 0;
+    }
+    if (cert != NULL) {
+        if (!X509_up_ref(cert))
+            return 0;
+        srv_ctx->first_client_cert = cert;
+    }
+    return 1;
 }
 
 /*
@@ -631,7 +738,9 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_CTX *ctx;
+    int backup_unprotectedSend;
     ASN1_OCTET_STRING *backup_secret;
+    X509_ALGOR *preferred_alg = NULL;
     OSSL_CMP_PKIHEADER *hdr;
     int req_type, rsp_type;
     int req_verified = 0;
@@ -644,6 +753,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     }
     ctx = srv_ctx->ctx;
+    backup_unprotectedSend = ctx->unprotectedSend;
     backup_secret = ctx->secretValue;
     req_type = OSSL_CMP_MSG_get_bodytype(req);
     ossl_cmp_log1(DEBUG, ctx,
@@ -653,6 +763,13 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
      * Some things need to be done already before validating the message in
      * order to be able to send an error message as far as needed and possible.
      */
+    /* On unprotected requests, do not respond MAC-based to prevent credential wear-out. */
+    if (req->header->protectionAlg == NULL) {
+        /* any changes here will be restored before return: */
+        ctx->secretValue = NULL;
+        if (ctx->pkey == NULL)
+            ctx->unprotectedSend = 1;
+    }
     if (hdr->sender->type != GEN_DIRNAME) {
         ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
         goto err;
@@ -671,7 +788,14 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
             goto err;
         }
+        if (srv_ctx->enforceSameCredentials
+            && (srv_ctx->first_hdr = ASN1_item_dup(ASN1_ITEM_rptr(OSSL_CMP_PKIHEADER), hdr)) == NULL)
+            goto err;
     } else {
+        if (srv_ctx->enforceSameCredentials && srv_ctx->first_hdr != NULL
+            && !check_same_credentials(ctx, hdr, srv_ctx->first_hdr))
+            goto err;
+
         /* transactionID should be already initialized */
         if (ctx->transactionID == NULL) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
@@ -686,12 +810,28 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
     }
 
+    /* set preference for protection of response to be the same as for req */
+    preferred_alg = req->header->protectionAlg;
+    if (preferred_alg != NULL /* can prefer only what is available: */
+        && (IS_MAC_ALG(preferred_alg) ? ctx->secretValue == NULL : ctx->pkey == NULL))
+        preferred_alg = NULL;
+    if (!ossl_cmp_ctx_set1_protectionAlg(ctx, preferred_alg))
+        goto err;
+
     req_verified = ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
         srv_ctx->acceptUnprotected);
-    if (ctx->secretValue != NULL && ctx->pkey != NULL
-        && ossl_cmp_hdr_get_protection_nid(hdr) != NID_id_PasswordBasedMAC)
-        ctx->secretValue = NULL; /* use MSG_SIG_ALG when protecting rsp */
-    if (!req_verified)
+    if (!req_verified) {
+        unsigned long err = ERR_peek_last_error();
+
+        /* On protection check failure, send error unprotected to avoid credential wear-out. */
+        if (ERR_GET_LIB(err) == ERR_LIB_CMP
+            && (ERR_GET_REASON(err) == CMP_R_ERROR_VALIDATING_PROTECTION
+                || ERR_GET_REASON(err) == CMP_R_MISSING_PROTECTION))
+            ctx->unprotectedSend = 1; /* will be restored before return */
+        goto err;
+    }
+
+    if (srv_ctx->enforceSameCredentials && !check_same_sender_cert(srv_ctx))
         goto err;
 
     if (req_type == OSSL_CMP_PKIBODY_POLLREQ) {
@@ -727,6 +867,7 @@ err:
             if (ctx->transactionID == NULL)
                 (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
             (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
+            /* could also use srv_ctx->first_hdr->transactionID and nonce */
         }
 
         if ((flags & ERR_TXT_STRING) == 0 || *data == '\0')
@@ -741,6 +882,7 @@ err:
         }
     }
     OSSL_CMP_CTX_print_errors(ctx);
+    ctx->unprotectedSend = backup_unprotectedSend;
     ctx->secretValue = backup_secret;
 
     rsp_type = rsp != NULL ? OSSL_CMP_MSG_get_bodytype(rsp) : OSSL_CMP_PKIBODY_ERROR;

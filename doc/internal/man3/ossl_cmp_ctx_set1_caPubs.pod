@@ -9,7 +9,8 @@ ossl_cmp_ctx_set0_statusString,
 ossl_cmp_ctx_set_failInfoCode,
 ossl_cmp_ctx_set0_newCert,
 ossl_cmp_ctx_set1_extraCertsIn,
-ossl_cmp_ctx_set1_recipNonce
+ossl_cmp_ctx_set1_recipNonce,
+ossl_cmp_ctx_set1_protectionAlg
 - internal functions for managing the CMP client context datastructure
 
 =head1 SYNOPSIS
@@ -27,6 +28,8 @@ ossl_cmp_ctx_set1_recipNonce
                                     STACK_OF(X509) *extraCertsIn);
  int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                   const ASN1_OCTET_STRING *nonce);
+ int ossl_cmp_ctx_set1_protectionAlg(OSSL_CMP_CTX *ctx,
+                                     const X509_ALGOR *alg);
 
 =head1 DESCRIPTION
 
@@ -52,6 +55,10 @@ The reference counts of those certificates handled successfully are increased.
 
 ossl_cmp_ctx_set1_recipNonce() sets the given recipient nonce in the context.
 
+ossl_cmp_ctx_set1_protectionAlg() sets the protectionAlg field of the context
+to a copy of the given algorithm, or clears it if I<alg> is NULL.
+For signature algs, the related I<prot_sig_md> caches the current I<ctx->digest>.
+
 =head1 NOTES
 
 CMP is defined in RFC 9810.
@@ -63,6 +70,8 @@ All functions return 1 on success, 0 on error.
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
+
+ossl_cmp_ctx_set1_protectionAlg() was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

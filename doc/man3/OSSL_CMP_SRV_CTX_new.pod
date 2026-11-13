@@ -21,7 +21,8 @@ OSSL_CMP_SRV_CTX_get0_custom_ctx,
 OSSL_CMP_SRV_CTX_set_send_unprotected_errors,
 OSSL_CMP_SRV_CTX_set_accept_unprotected,
 OSSL_CMP_SRV_CTX_set_accept_raverified,
-OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
+OSSL_CMP_SRV_CTX_set_grant_implicit_confirm,
+OSSL_CMP_SRV_CTX_set_enforce_same_credentials
 - generic functions to set up and control a CMP server
 
 =head1 SYNOPSIS
@@ -89,8 +90,8 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
                                                   int val);
  int OSSL_CMP_SRV_CTX_set_accept_unprotected(OSSL_CMP_SRV_CTX *srv_ctx, int val);
  int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx, int val);
- int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
-                                                 int val);
+ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx, int val);
+ int OSSL_CMP_SRV_CTX_set_enforce_same_credentials(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 
 =head1 DESCRIPTION
 
@@ -168,6 +169,18 @@ messages with POPO 'RAVerified'.
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm() enables granting implicit
 confirmation of newly enrolled certificates if requested.
 
+OSSL_CMP_SRV_CTX_set_enforce_same_credentials() enables checking that the
+sender name, senderKID, and protection algorithm OID remain unchanged in messages
+belonging to the same transaction. With signature-based protection,
+the sender certificate used for the first request must also be used for
+all later requests in the transaction.
+This implements RFC 9483 requirements on using same credentials,
+preventing other legitimate clients from taking over a transaction.
+Changes to the parameters of the same protection algorithm,
+such as the salt in PBM, are only logged as a warning and accepted.
+By default, these extra continuity and consistency checks are disabled
+for backward compatibility and because they are not required by RFC 9810.
+
 =head1 NOTES
 
 CMP is defined in RFC 9810 (and CRMF in RFC 4211).
@@ -207,6 +220,8 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_SRV_CTX_init_trans()
 supporting delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
+
+OSSL_CMP_SRV_CTX_set_enforce_same_credentials() was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

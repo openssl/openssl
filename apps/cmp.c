@@ -226,6 +226,7 @@ static int opt_send_unprot_err = 0;
 static int opt_accept_unprotected = 0;
 static int opt_accept_unprot_err = 0;
 static int opt_accept_raverified = 0;
+static int opt_enforce_same_credentials = 0;
 
 static X509_VERIFY_PARAM *vpm = NULL;
 
@@ -370,6 +371,7 @@ typedef enum OPTION_choice {
     OPT_ACCEPT_UNPROTECTED,
     OPT_ACCEPT_UNPROT_ERR,
     OPT_ACCEPT_RAVERIFIED,
+    OPT_ENFORCE_SAME_CREDENTIALS,
 
     OPT_V_ENUM
 } OPTION_CHOICE;
@@ -704,6 +706,8 @@ const OPTIONS cmp_options[] = {
         "Accept unprotected error messages from client" },
     { "accept_raverified", OPT_ACCEPT_RAVERIFIED, '-',
         "Accept RAVERIFIED as proof-of-possession (POPO)" },
+    { "enforce_same_credentials", OPT_ENFORCE_SAME_CREDENTIALS, '-',
+        "Require identical sender and protection credentials within a transaction" },
 
     OPT_V_OPTIONS,
     { NULL }
@@ -783,6 +787,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     { (char **)&opt_send_error }, { (char **)&opt_send_unprotected },
     { (char **)&opt_send_unprot_err }, { (char **)&opt_accept_unprotected },
     { (char **)&opt_accept_unprot_err }, { (char **)&opt_accept_raverified },
+    { (char **)&opt_enforce_same_credentials },
 
     { NULL }
 };
@@ -1404,6 +1409,8 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_ERRORS, 1);
     if (opt_accept_raverified)
         (void)OSSL_CMP_SRV_CTX_set_accept_raverified(srv_ctx, 1);
+    if (opt_enforce_same_credentials)
+        (void)OSSL_CMP_SRV_CTX_set_enforce_same_credentials(srv_ctx, 1);
 
     return srv_ctx;
 
@@ -3317,6 +3324,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_ACCEPT_RAVERIFIED:
             opt_accept_raverified = 1;
+            break;
+        case OPT_ENFORCE_SAME_CREDENTIALS:
+            opt_enforce_same_credentials = 1;
             break;
         }
     }
