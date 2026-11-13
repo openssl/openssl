@@ -239,9 +239,67 @@ fail:
     return 0;
 }
 
+/*
+ * EVP_EncodeFinal() leaves the last partial block of input in the context.
+ * When that input is a private key, as in PEM_write_bio(), it must not be
+ * left in freed memory, so EVP_ENCODE_CTX_free() has to clear the context.
+ */
+static CRYPTO_free_fn saved_free;
+static const EVP_ENCODE_CTX *watched_ctx;
+static const unsigned char partial_input[] = "partial block of secret input";
+static int input_left;
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    const unsigned char *p = ptr;
+    size_t i;
+
+    if (ptr != NULL && ptr == watched_ctx)
+        for (i = 0; i + sizeof(partial_input) <= sizeof(EVP_ENCODE_CTX); i++)
+            if (memcmp(p + i, partial_input, sizeof(partial_input)) == 0)
+                input_left = 1;
+    saved_free(ptr, file, line);
+}
+
+static int test_encode_ctx_free_clears_input(void)
+{
+    EVP_ENCODE_CTX *ctx = NULL;
+    unsigned char out[80];
+    int outl, ok = 0;
+
+    if (!TEST_ptr(ctx = EVP_ENCODE_CTX_new()))
+        return 0;
+    EVP_EncodeInit(ctx);
+    if (!TEST_true(EVP_EncodeUpdate(ctx, out, &outl, partial_input,
+            sizeof(partial_input)))
+        || !TEST_int_eq(outl, 0))
+        goto err;
+    EVP_EncodeFinal(ctx, out, &outl);
+    if (!TEST_int_gt(outl, 0))
+        goto err;
+
+    CRYPTO_get_mem_functions(NULL, NULL, &saved_free);
+    if (!CRYPTO_set_mem_functions(NULL, NULL, watch_free)) {
+        ok = TEST_skip("the allocator can no longer be replaced");
+        goto err;
+    }
+    watched_ctx = ctx;
+    input_left = 0;
+    EVP_ENCODE_CTX_free(ctx);
+    ctx = NULL;
+    watched_ctx = NULL;
+    CRYPTO_set_mem_functions(NULL, NULL, saved_free);
+
+    ok = TEST_false(input_left);
+err:
+    EVP_ENCODE_CTX_free(ctx);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_encode_line_length_reinforced);
+    ADD_TEST(test_encode_ctx_free_clears_input);
 
     return 1;
 }
