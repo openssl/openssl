@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 #if defined(OPENSSL_NO_SOCK) || defined(OPENSSL_NO_DGRAM)
 
 int main(void)
