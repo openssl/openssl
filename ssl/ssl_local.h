@@ -1927,10 +1927,40 @@ struct hm_header_st {
     struct dtls1_retransmit_state saved_retransmit_state;
 };
 
+/*
+ * A received handshake message, queued by message sequence number.
+ *
+ * It is held in one of two forms. Until enough of it has been received, the
+ * fragments received are saved as they arrive, each preceded by its offset and
+ * its length, in saved, which is saved_alloc bytes with saved_len in use. Nothing
+ * is done to bytes already held, so a duplicate is saved again. Once what is
+ * saved and the next fragment could be all of the message, it is held in buf
+ * instead, and what was saved is moved into it and released. buf is one
+ * allocation of msg_len bytes of message data, followed by a bitmap, at covered,
+ * in which a bit is set for each byte of the message received. From then on a
+ * duplicate adds nothing.
+ *
+ * What is saved is always less than the length the message claims, and the room
+ * for it never exceeds that, so what is held for a message follows the bytes
+ * received for it, up to that length, however it was fragmented. A message which
+ * arrives whole, in one fragment, is held in buf with no bitmap, and is
+ * complete.
+ *
+ * The message is complete once every byte of it is held, and incomplete is then
+ * 0. Only a message held in buf can be, when every bit of covered is set.
+ *
+ * A message which has been sent is kept for retransmission in fragment, and
+ * none of the above is used for it.
+ */
 typedef struct hm_fragment_st {
     struct hm_header_st msg_header;
     unsigned char *fragment;
-    unsigned char *reassembly;
+    unsigned char *saved;
+    size_t saved_len;
+    size_t saved_alloc;
+    unsigned char *buf;
+    unsigned char *covered;
+    int incomplete;
 } hm_fragment;
 
 typedef struct pqueue_st pqueue;
