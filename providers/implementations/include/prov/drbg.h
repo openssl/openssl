@@ -43,6 +43,27 @@
 typedef struct prov_drbg_st PROV_DRBG;
 
 /*
+ * What a DRBG remembers of the VMClock page between two looks, read and
+ * written under the DRBG's lock by ossl_prov_vmclock_changed().
+ */
+typedef struct prov_vmclock_state_st {
+    /* The generation as of the last look that could read the page. */
+    uint64_t epoch;
+    /* Set once a look has read the page: until then |epoch| holds nothing. */
+    int seen;
+    /* Set while the page is in mid-update and was for a whole read. */
+    int unreadable;
+    /*
+     * The reseeds still to follow a change, and the time their waits count
+     * from, set by ossl_prov_vmclock_reseeded() when the reseed that the
+     * change caused has completed.
+     */
+    int followups;
+    int followup_armed;
+    uint64_t followup_base;
+} PROV_VMCLOCK_STATE;
+
+/*
  * The state of all types of DRBGs.
  */
 struct prov_drbg_st {
@@ -77,6 +98,15 @@ struct prov_drbg_st {
      * DRBG in the child process.
      */
     int fork_id;
+    /*
+     * The VMClock page of our library context, NULL where there is none, and
+     * what we saw in it at our last check, read and written under our lock
+     * by ossl_prov_vmclock_changed(). A guest restored from a snapshot keeps
+     * its pid and its clock, so this is the one check that sees that restore;
+     * it never triggers where there is no VMClock device.
+     */
+    const volatile void *vmclock_page;
+    PROV_VMCLOCK_STATE vmclock_state;
     unsigned short flags; /* various external flags */
 
     /*
@@ -184,6 +214,34 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
 int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     unsigned int strength, int prediction_resistance,
     const unsigned char *adin, size_t adinlen);
+
+/**
+ * @brief Returns the VMClock page of a library context, mapping it on the
+ * first call.
+ * @param libctx the library context
+ * @returns the page, or NULL if there is no page the process can read
+ */
+const volatile void *ossl_prov_vmclock_page(OSSL_LIB_CTX *libctx);
+
+/**
+ * @brief Checks whether the VM generation counter has changed.
+ * @param page the page returned by ossl_prov_vmclock_page(), or NULL
+ * @param state what the caller last saw, updated by the call
+ * @returns 1 if the guest has since been restored from a snapshot or
+ * migrated, if the page has just become unreadable, being in mid-update for
+ * a whole read, if it has just become readable again, or if a reseed that
+ * follows an earlier change is due; 0 if nothing changed, if the page is
+ * still unreadable, on the first look, or if |page| is NULL
+ */
+int ossl_prov_vmclock_changed(const volatile void *page,
+    PROV_VMCLOCK_STATE *state);
+
+/**
+ * @brief Records that a reseed has completed, from which the waits for the
+ * reseeds that follow a change are counted.
+ * @param state the caller's state
+ */
+void ossl_prov_vmclock_reseeded(PROV_VMCLOCK_STATE *state);
 
 /* Seeding api */
 OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;
