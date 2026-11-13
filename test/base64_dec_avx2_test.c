@@ -26,7 +26,6 @@
  * PEM_read_bio_ex does.
  */
 
-#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
@@ -469,30 +468,30 @@ end:
 }
 
 /*
- * EVP_EncodeBlock() and EVP_DecodeBlock() must reject invalid arguments:
- * NULL output or input buffer, or negative length, by returning -1.
- * EVP_EncodeBlock() must also reject lengths for which the base64 output
- * length overflows, without reading the input.
+ * An empty input is valid and must not touch the input pointer.
+ * EVP_EncodeBlock() writes only the NUL terminator, and EVP_DecodeBlock()
+ * writes nothing.
  */
-static int test_block_invalid_args(void)
+static int test_block_empty(void)
 {
-    unsigned char in[4];
-    unsigned char out[9];
+    unsigned char in[1] = { 0 };
+    /* A non-NUL value to confirm that a NUL is written. */
+    unsigned char out[1] = { 0xff };
+    unsigned char decoded[1] = { 0xff };
 
-    /* "AAAA" is valid base64, ensuring the tests are otherwise well-formed. */
-    memset(in, 'A', sizeof(in));
-
-    /* EVP_EncodeBlock() */
-    if (!TEST_int_eq(EVP_EncodeBlock(NULL, in, (int)sizeof(in)), -1)
-        || !TEST_int_eq(EVP_EncodeBlock(out, NULL, (int)sizeof(in)), -1)
-        || !TEST_int_eq(EVP_EncodeBlock(out, in, -1), -1)
-        || !TEST_int_eq(EVP_EncodeBlock(out, in, (INT_MAX / 4) * 3 + 1), -1))
+    if (!TEST_int_eq(EVP_EncodeBlock(out, NULL, 0), 0)
+        || !TEST_uchar_eq(out[0], 0))
         return 0;
 
-    /* EVP_DecodeBlock() */
-    if (!TEST_int_eq(EVP_DecodeBlock(NULL, in, (int)sizeof(in)), -1)
-        || !TEST_int_eq(EVP_DecodeBlock(out, NULL, (int)sizeof(in)), -1)
-        || !TEST_int_eq(EVP_DecodeBlock(out, in, -1), -1))
+    out[0] = 0xff; /* Reset to a non-NUL value. */
+    if (!TEST_int_eq(EVP_EncodeBlock(out, in, 0), 0)
+        || !TEST_uchar_eq(out[0], 0))
+        return 0;
+
+    if (!TEST_int_eq(EVP_DecodeBlock(NULL, NULL, 0), 0)
+        || !TEST_int_eq(EVP_DecodeBlock(decoded, NULL, 0), 0)
+        || !TEST_int_eq(EVP_DecodeBlock(NULL, in, 0), 0)
+        || !TEST_uchar_eq(decoded[0], 0xff))
         return 0;
 
     return 1;
@@ -1245,8 +1244,8 @@ int setup_tests(void)
     /* states up front whether the AVX2 path is reached at all */
     ADD_TEST(test_avx2_dispatch);
 
-    /* EVP_EncodeBlock()/EVP_DecodeBlock() reject invalid arguments */
-    ADD_TEST(test_block_invalid_args);
+    /* EVP_EncodeBlock()/EVP_DecodeBlock() accept empty input */
+    ADD_TEST(test_block_empty);
 
     /* Standard alphabet: test_sizes x WS patterns */
     ADD_ALL_TESTS(test_decode_avx2_vs_scalar, NUM_SIZES * WS_COUNT);

@@ -229,12 +229,16 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 {
     int wrap_cnt = 0;
 
-    if (t == NULL || f == NULL || dlen < 0)
-        return -1;
-
+    OPENSSL_assert(t != NULL);
+    OPENSSL_assert(dlen >= 0);
     /* Ensure the base64 output length does not overflow. */
-    if (dlen > (INT_MAX / 4) * 3)
-        return -1;
+    OPENSSL_assert(dlen <= (INT_MAX / 4) * 3);
+    OPENSSL_assert(f != NULL || dlen == 0);
+
+    if (dlen == 0) {
+        *t = '\0';
+        return 0;
+    }
 
 #ifdef HAVE_AVX2
     if (HAVE_AVX2())
@@ -491,8 +495,11 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
 
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 {
-    if (t == NULL || f == NULL || n < 0)
-        return -1;
+    OPENSSL_assert(n >= 0);
+    OPENSSL_assert(n == 0 || (t != NULL && f != NULL));
+
+    if (n == 0)
+        return 0;
 
 #ifdef HAVE_AVX2
     if (HAVE_AVX2() && n >= 64) {

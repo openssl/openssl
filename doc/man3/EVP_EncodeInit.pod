@@ -92,8 +92,9 @@ divisible by 4. Additionally a NUL terminator character will be added. For
 example if 16 bytes of input data is provided then 24 bytes of encoded data is
 created plus 1 byte for a NUL terminator (i.e. 25 bytes in total). The length of
 the data generated I<without> the NUL terminator is returned from the function.
-If B<t> or B<f> is NULL, if B<n> is negative, or if the length of the encoded
-data would not fit in an int, -1 is returned to indicate an error.
+B<t> must not be NULL. B<f> must not be NULL unless B<n> is zero. B<n> must be
+nonnegative and small enough that the length of the encoded data fits in an
+int.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.
 
@@ -152,7 +153,8 @@ For every 4 input bytes exactly 3 output bytes will be produced.
 Padding bytes (B<=>) (even if internal) are decoded to 6 zero bits, the caller
 is responsible for taking trailing padding into account, by ignoring as many
 bytes at the tail of the returned output.
-If B<t> or B<f> is NULL or if B<n> is negative, an error is returned.
+B<t> and B<f> must not be NULL unless B<n> is zero, and B<n> must be
+nonnegative.
 EVP_DecodeBlock() will return the length of the data decoded or -1 on error.
 
 =head1 RETURN VALUES
@@ -166,7 +168,7 @@ B<ctx>.
 EVP_EncodeUpdate() returns 0 on error or 1 on success.
 
 EVP_EncodeBlock() returns the number of bytes encoded excluding the NUL
-terminator or -1 on error.
+terminator.
 
 EVP_DecodeUpdate() returns -1 on error and 0 or 1 on success. If 0 is returned
 then no more non-padding base64 characters are expected.
@@ -184,9 +186,6 @@ L<evp(7)>
 The EVP_DecodeUpdate() function was fixed in OpenSSL 3.5,
 so now it produces the number of bytes specified in B<outl*>
 and does not decode padding bytes (B<=>) to 6 zero bits.
-
-The EVP_EncodeBlock() and EVP_DecodeBlock() functions were changed
-in OpenSSL 4.2 to return -1 if called with invalid arguments.
 
 =head1 COPYRIGHT
 
