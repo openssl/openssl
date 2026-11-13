@@ -34,3 +34,11 @@ ENDIF
 IF[{- !$disabled{'ml-dsa'} || !$disabled{'ml-kem'} -}]
   SOURCE[$DECODER_GOAL]=ml_common_codecs.c
 ENDIF
+
+IF[{- !$disabled{'ml-dsa'} -}]
+  SOURCE[$DECODER_GOAL]=ml_dsa_composite_codecs.c
+  DEPEND[ml_dsa_composite_codecs.o]=../../common/include/prov/ml_dsa_composite.h
+  DEPEND[decode_der2key.o]=../../common/include/prov/ml_dsa_composite.h
+  DEPEND[encode_key2any.o]=../../common/include/prov/ml_dsa_composite.h
+  DEPEND[encode_key2text.o]=../../common/include/prov/ml_dsa_composite.h
+ENDIF
