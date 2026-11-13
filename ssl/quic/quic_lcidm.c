@@ -120,8 +120,9 @@ QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len)
         goto err;
 
     /* generate a random key for the hash tables hash function */
-    if (!RAND_bytes_ex(libctx, (unsigned char *)&lcidm->hash_key,
-            sizeof(uint64_t) * 2, 0))
+    if (RAND_bytes_ex(libctx, (unsigned char *)&lcidm->hash_key,
+            sizeof(uint64_t) * 2, 0)
+        <= 0)
         goto err;
 
     if ((lcidm->lcids = lh_QUIC_LCID_new(lcid_hash, lcid_comp)) == NULL)
