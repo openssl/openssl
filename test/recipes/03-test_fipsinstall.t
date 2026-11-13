@@ -48,7 +48,6 @@ my @commandline =
         ( 'sshkdf_digest_check',            'sshkdf-digest-check' ),
         ( 'sskdf_digest_check',             'sskdf-digest-check' ),
         ( 'x963kdf_digest_check',           'x963kdf-digest-check' ),
-        ( 'dsa_sign_disabled',              'dsa-sign-disabled' ),
         ( 'tdes_encrypt_disabled',          'tdes-encrypt-disabled' ),
         ( 'rsa_pkcs15_pad_disabled',        'rsa-pkcs15-pad-disabled' ),
         ( 'rsa_pss_saltlen_check',          'rsa-pss-saltlen-check' ),
@@ -321,18 +320,18 @@ SKIP: {
 
 # corrupt a Signature test - 140-3 requires a known answer test
 SKIP: {
-    skip "Skipping Signature DSA corruption test because of no dsa in this build", 1
-        if disabled("dsa") || disabled("fips-post");
+    skip "Skipping Signature ECDSA corruption test because of no ec in this build", 1
+        if disabled("ec") || disabled("fips-post");
 
     run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
              capture => 1, statusvar => \my $exit);
-    skip "FIPS provider version is too old for KAT DSA signature test", 1
+    skip "FIPS provider version is too old for KAT ECDSA signature test", 1
         if !$exit;
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
                 '-section_name', 'fips_sect', '-self_test_oninstall',
-                '-corrupt_desc', 'DSA',
+                '-corrupt_desc', 'ECDSA',
                 '-corrupt_type', 'KAT_Signature'])),
        "fipsinstall fails when the signature result is corrupted");
 }

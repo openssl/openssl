@@ -55,9 +55,6 @@ typedef enum {
     ST_ID_SIG_ED25519,
 #endif
 #endif
-#ifndef OPENSSL_NO_DSA
-    ST_ID_SIG_DSA_SHA256,
-#endif
 #ifndef OPENSSL_NO_ML_DSA
     ST_ID_SIG_ML_DSA_65,
 #endif
