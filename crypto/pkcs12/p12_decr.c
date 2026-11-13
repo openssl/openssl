@@ -84,7 +84,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
         goto err;
 
     if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
-        OPENSSL_free(out);
+        OPENSSL_clear_free(out, max_out_len);
         out = NULL;
         ERR_raise(ERR_LIB_PKCS12, ERR_R_EVP_LIB);
         goto err;
@@ -92,7 +92,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
 
     outlen = i;
     if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
-        OPENSSL_free(out);
+        OPENSSL_clear_free(out, max_out_len);
         out = NULL;
         ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR,
             passlen == 0 ? "empty password"
@@ -107,7 +107,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                     (int)mac_len, out + outlen)
                 <= 0) {
-                OPENSSL_free(out);
+                OPENSSL_clear_free(out, max_out_len);
                 out = NULL;
                 ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
                 goto err;
@@ -166,11 +166,9 @@ void *PKCS12_item_decrypt_d2i_ex(const X509_ALGOR *algor, const ASN1_ITEM *it,
     }
     OSSL_TRACE_END(PKCS12_DECRYPT);
     ret = ASN1_item_d2i(NULL, &p, outlen, it);
-    if (zbuf)
-        OPENSSL_cleanse(out, outlen);
     if (!ret)
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_DECODE_ERROR);
-    OPENSSL_free(out);
+    OPENSSL_clear_free(out, outlen);
     return ret;
 }
 
@@ -194,9 +192,9 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
     OSSL_LIB_CTX *ctx,
     const char *propq)
 {
-    ASN1_OCTET_STRING *oct = NULL;
+    ASN1_OCTET_STRING *oct = NULL, *ret = NULL;
     unsigned char *in = NULL;
-    int inlen;
+    int inlen = 0;
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
@@ -210,16 +208,14 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
     if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, in, inlen, &oct->data,
             &oct->length, 1, ctx, propq)) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
-        OPENSSL_free(in);
         goto err;
     }
-    if (zbuf)
-        OPENSSL_cleanse(in, inlen);
-    OPENSSL_free(in);
-    return oct;
+    ret = oct;
+    oct = NULL;
 err:
+    OPENSSL_clear_free(in, inlen);
     ASN1_OCTET_STRING_free(oct);
-    return NULL;
+    return ret;
 }
 
 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
