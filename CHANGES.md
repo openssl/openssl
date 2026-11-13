@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `openssl s_server -unix` exiting before accepting connections
+   on systems that cannot format a Unix-domain listener as a host and port.
+   <!-- https://github.com/openssl/openssl/pull/33684 -->
+
+   *Gustaf Neumann*
+
  * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
    `CRYPTO_new_ex_data()`.
 
