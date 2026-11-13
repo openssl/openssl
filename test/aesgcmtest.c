@@ -197,11 +197,131 @@ err:
     return ret;
 }
 
+/*
+ * Byte-at-a-time updates use the scalar block/gmult hooks. Compare them to
+ * bulk CTR/GHASH, including unaligned, in-place and partial-block updates.
+ */
+static int streaming_test(int idx)
+{
+    static const size_t lengths[] = { 0, 1, 15, 16, 17, 31, 32, 33,
+        127, 128, 129, 255, 256, 257, 511, 512, 513, 527,
+        639, 640, 641, 767, 768, 769, 1023, 1024, 1025,
+        2047, 2048, 2049, 3071, 3072, 3073, 4095, 4096, 4097,
+        4223, 4224, 4225, 4351, 4352, 4353, 8191, 8192, 8193 };
+    static const size_t splits[] = { 0, 1, 15, 16, 17, 31, 32, 127,
+        511, 512, 513, 1023, 3071, 3072, 3073, 4095, 4096, 4097,
+        4351, 4352, 4353 };
+    const EVP_CIPHER *cipher = idx == 0 ? EVP_aes_128_gcm()
+        : idx == 1                      ? EVP_aes_192_gcm()
+                                        : EVP_aes_256_gcm();
+    EVP_CIPHER_CTX *ctx = NULL, *copy = NULL;
+    unsigned char input[8195], reference[8195], actual[8195];
+    unsigned char iv[20], aad[33], expected_tag[16], tag[16];
+    size_t i, j, k, n, split, ivlen;
+    int outlen, finallen, ret = 0, inplace;
+
+    for (i = 0; i < sizeof(input); ++i)
+        input[i] = (unsigned char)i;
+    memset(iv, 0xa5, sizeof(iv));
+    memset(aad, 0x5a, sizeof(aad));
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_ptr(copy = EVP_CIPHER_CTX_new()))
+        goto end;
+
+    for (ivlen = 12; ivlen <= sizeof(iv); ivlen += 8) {
+        for (j = 0; j < OSSL_NELEM(lengths); ++j) {
+            n = lengths[j];
+            if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL))
+                || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx,
+                    EVP_CTRL_AEAD_SET_IVLEN, (int)ivlen, NULL))
+                || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, gcm_key, iv)))
+                goto end;
+            for (i = 0; i < sizeof(aad); ++i) {
+                if (!TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, aad + i, 1)))
+                    goto end;
+            }
+            for (i = 0; i < n; ++i) {
+                if (!TEST_true(EVP_EncryptUpdate(ctx, reference + 1 + i,
+                        &outlen, input + 1 + i, 1)))
+                    goto end;
+            }
+            if (!TEST_true(EVP_EncryptFinal_ex(ctx, reference + 1 + n, &finallen))
+                || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx,
+                    EVP_CTRL_AEAD_GET_TAG, sizeof(expected_tag), expected_tag)))
+                goto end;
+
+            for (k = 0; k < OSSL_NELEM(splits); ++k) {
+                split = splits[k] < n ? splits[k] : n;
+                for (inplace = 0; inplace <= 1; ++inplace) {
+                    memcpy(actual, input, sizeof(actual));
+                    if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL))
+                        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx,
+                            EVP_CTRL_AEAD_SET_IVLEN, (int)ivlen, NULL))
+                        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, gcm_key, iv))
+                        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen, aad, 1))
+                        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outlen,
+                            aad + 1, sizeof(aad) - 1))
+                        || !TEST_true(EVP_EncryptUpdate(ctx, actual + 1,
+                            &outlen, inplace ? actual + 1 : input + 1, (int)split))
+                        || !TEST_true(EVP_CIPHER_CTX_copy(copy, ctx))
+                        || !TEST_true(EVP_CIPHER_CTX_reset(ctx))
+                        || !TEST_true(EVP_EncryptUpdate(copy, actual + 1 + split,
+                            &outlen, inplace ? actual + 1 + split : input + 1 + split,
+                            (int)(n - split)))
+                        || !TEST_true(EVP_EncryptFinal_ex(copy, actual + 1 + n, &finallen))
+                        || !TEST_true(EVP_CIPHER_CTX_ctrl(copy,
+                            EVP_CTRL_AEAD_GET_TAG, sizeof(tag), tag))
+                        || !TEST_mem_eq(actual + 1, n, reference + 1, n)
+                        || !TEST_mem_eq(tag, sizeof(tag), expected_tag, sizeof(expected_tag)))
+                        goto end;
+
+                    if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL))
+                        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx,
+                            EVP_CTRL_AEAD_SET_IVLEN, (int)ivlen, NULL))
+                        || !TEST_true(EVP_DecryptInit_ex(ctx, NULL, NULL, gcm_key, iv))
+                        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outlen, aad, sizeof(aad)))
+                        || !TEST_true(EVP_DecryptUpdate(ctx, actual + 1, &outlen,
+                            inplace ? actual + 1 : reference + 1, (int)split))
+                        || !TEST_true(EVP_CIPHER_CTX_copy(copy, ctx))
+                        || !TEST_true(EVP_CIPHER_CTX_reset(ctx))
+                        || !TEST_true(EVP_DecryptUpdate(copy, actual + 1 + split, &outlen,
+                            inplace ? actual + 1 + split : reference + 1 + split,
+                            (int)(n - split)))
+                        || !TEST_true(EVP_CIPHER_CTX_ctrl(copy,
+                            EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag))
+                        || !TEST_true(EVP_DecryptFinal_ex(copy, actual + 1 + n, &finallen))
+                        || !TEST_mem_eq(actual + 1, n, input + 1, n))
+                        goto end;
+
+                    tag[0] ^= 1;
+                    if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL))
+                        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx,
+                            EVP_CTRL_AEAD_SET_IVLEN, (int)ivlen, NULL))
+                        || !TEST_true(EVP_DecryptInit_ex(ctx, NULL, NULL, gcm_key, iv))
+                        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outlen, aad, sizeof(aad)))
+                        || !TEST_true(EVP_DecryptUpdate(ctx, actual + 1, &outlen,
+                            reference + 1, (int)n))
+                        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx,
+                            EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag))
+                        || !TEST_false(EVP_DecryptFinal_ex(ctx, actual + 1 + n, &finallen)))
+                        goto end;
+                }
+            }
+        }
+    }
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(copy);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(kat_test);
     ADD_TEST(badkeylen_test);
     ADD_TEST(ivgen_test);
     ADD_TEST(setivinv_bounds_test);
+    ADD_ALL_TESTS(streaming_test, 3);
     return 1;
 }
