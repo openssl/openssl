@@ -269,11 +269,9 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             /*
              * grr.. we could get an error if MTU picked was wrong
              */
-            ret = BIO_flush(s->wbio);
-            if (ret <= 0) {
-                s->rwstate = SSL_WRITING;
+            ret = statem_flush(s);
+            if (ret <= 0)
                 return ret;
-            }
             if (s->d1->mtu >= overhead + min_len) {
                 curr_mtu = s->d1->mtu - overhead;
             } else {
