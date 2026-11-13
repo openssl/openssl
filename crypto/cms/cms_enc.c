@@ -86,6 +86,16 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
 
     if (enc) {
+        /*
+         * CFB1 and CFB8 map to the CFB128 OID, which would make a recipient
+         * use a different cipher than the one used for encryption.
+         */
+        if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_CFB_MODE
+            && EVP_CIPHER_CTX_get_nid(ctx) != EVP_CIPHER_CTX_get_type(ctx)) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
+            goto err;
+        }
+
         (void)ERR_set_mark();
         calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_get_type(ctx));
         (void)ERR_pop_to_mark();

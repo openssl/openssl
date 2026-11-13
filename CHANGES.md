@@ -49,6 +49,13 @@ OpenSSL 4.2
 
    *Matt Caswell*
 
+ * Fixed `CMS_encrypt()` accepting AES-CFB1 and AES-CFB8 while encoding them
+   with the AES-CFB128 identifier. These ciphers are now rejected because CMS
+   cannot identify them unambiguously.
+   <!-- https://github.com/openssl/openssl/issues/33537 -->
+
+   *Alaric Dailey*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
