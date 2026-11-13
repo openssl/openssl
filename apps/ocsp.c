@@ -52,14 +52,14 @@ pid_t fork(void)
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
     const EVP_MD *cert_id_md, X509 *issuer,
-    STACK_OF(OCSP_CERTID) *ids);
+    STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode);
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     const EVP_MD *cert_id_md, X509 *issuer,
-    STACK_OF(OCSP_CERTID) *ids);
+    STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode);
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     STACK_OF(OPENSSL_STRING) *names,
     STACK_OF(OCSP_CERTID) *ids, long nsec,
-    long maxage);
+    long maxage, int rfc9919_mode);
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
     EVP_PKEY *rkey, const EVP_MD *md,
@@ -95,7 +95,8 @@ typedef enum OPTION_choice {
     OPT_NO_NONCE,
     OPT_RESP_NO_CERTS,
     OPT_RESP_KEY_ID,
-    OPT_NO_RESP_KEY_ID
+    OPT_NO_RESP_KEY_ID,
+    OPT_RFC9919,
     OPT_NO_CERTS,
     OPT_NO_SIGNATURE_VERIFY,
     OPT_NO_CERT_VERIFY,
@@ -162,7 +163,8 @@ const OPTIONS ocsp_options[] = {
         "Do not load certificates from the default certificates directory" },
     { "no-CAstore", OPT_NOCASTORE, '-',
         "Do not load certificates from the default certificates store" },
-
+    { "rfc9919", OPT_RFC9919, '-',
+        "Enable RFC 9919 lightweight OCSP profile restrictions" },
     OPT_SECTION("Responder"),
     { "timeout", OPT_TIMEOUT, 'p',
         "Connection timeout (in seconds) to the OCSP responder" },
@@ -218,7 +220,7 @@ const OPTIONS ocsp_options[] = {
     { "resp_key_id", OPT_RESP_KEY_ID, '-',
         "Identify response by signing certificate key ID" },
     { "no_resp_key_id",OPT_NO_RESP_KEY_ID,'-',
-    	"Identify response by signer name instead of key ID, for legacy clients"}
+    	"Identify response by signer name instead of key ID, for legacy clients"},
     { "no_cert_verify", OPT_NO_CERT_VERIFY, '-',
         "Don't check signing certificate" },
     { "text", OPT_TEXT, '-', "Print text form of request and response" },
@@ -294,6 +296,7 @@ int ocsp_main(int argc, char **argv)
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, res, ret = 1;
+    int rfc9919_mode = 0;
     int req_timeout = -1;
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = OCSP_RESPID_KEY;
@@ -317,6 +320,9 @@ int ocsp_main(int argc, char **argv)
             ret = 0;
             opt_help(ocsp_options);
             goto end;
+        case OPT_RFC9919:
+            rfc9919_mode = 1;
+            break;
         case OPT_OUTFILE:
             outfile = opt_arg();
             break;
@@ -377,7 +383,7 @@ int ocsp_main(int argc, char **argv)
             break;
 	case OPT_NO_RESP_KEY_ID:
 	    rflags &= ~OCSP_RESPID_KEY;
-	    break
+	    break;
         case OPT_NO_CERTS:
             sign_flags |= OCSP_NOCERTS;
             break;
@@ -494,7 +500,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             if (cert_id_md == NULL)
                 cert_id_md = (EVP_MD *)EVP_sha256();
-            if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
+            if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids, rfc9919_mode))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
                 goto end;
@@ -504,7 +510,7 @@ int ocsp_main(int argc, char **argv)
             reset_unknown();
             if (cert_id_md == NULL)
                 cert_id_md = (EVP_MD *)EVP_sha256();
-            if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
+            if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids, rfc9919_mode))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
                 goto end;
@@ -621,7 +627,17 @@ int ocsp_main(int argc, char **argv)
             goto end;
         }
     }
-
+    /*
+  * RFC 9919 requires exactly one certificate per OCSP request.
+  * Enforce this when the profile is enabled, regardless of
+  * command-line option order or whether the request was loaded from a file.
+  */
+    if (rfc9919_mode && req != NULL
+            && OCSP_request_onereq_count(req) != 1) {
+        BIO_puts(bio_err,
+                 "Error: RFC 9919 requires exactly one certificate per request\n");
+        goto end;
+            }
     if (req == NULL && port != NULL) {
 #ifndef OPENSSL_NO_SOCK
         acbio = http_server_init(prog, port, -1);
@@ -899,7 +915,7 @@ done_resp:
         }
     }
 
-    if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage))
+    if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage, rfc9919_mode))
         ret = 1;
 
 end:
@@ -962,7 +978,7 @@ static int index_changed(CA_DB *rdb)
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
     const EVP_MD *cert_id_md, X509 *issuer,
-    STACK_OF(OCSP_CERTID) *ids)
+    STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode)
 {
     OCSP_CERTID *id = NULL;
 
@@ -970,7 +986,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
         BIO_puts(bio_err, "No issuer certificate specified\n");
         return 0;
     }
-    if (sk_OCSP_CERTID_num(ids) > 0) {
+    if (rfc9919_mode && sk_OCSP_CERTID_num(ids) > 0) {
         BIO_puts(bio_err,
 	    "Error: only one certificate per request is allowed "
 	    "(RFC 9919 lightweight OCSP profile)\n");
@@ -997,7 +1013,7 @@ err:
 
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     const EVP_MD *cert_id_md, X509 *issuer,
-    STACK_OF(OCSP_CERTID) *ids)
+    STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode)
 {
     OCSP_CERTID *id = NULL;
     const X509_NAME *iname;
@@ -1008,11 +1024,12 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
         BIO_puts(bio_err, "No issuer certificate specified\n");
         return 0;
     }
-    if  (sk_OCSP_CERTID_num(ids) > 0) {
-         BIO_puts(bio_err,
-            "Error: only one certificate per request is allowed"
-            "(RFC 9919 lightweight OCSP profile)\n");
-         return 0;
+    if  (rfc9919_mode && sk_OCSP_CERTID_num(ids) > 0) {
+        BIO_puts(bio_err,
+           "Error: only one certificate per request is allowed "
+           "(RFC 9919 lightweight OCSP profile)\n");
+        return 0;
+    }
     if (*req == NULL)
         *req = OCSP_REQUEST_new();
     if (*req == NULL)
@@ -1043,7 +1060,7 @@ err:
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     STACK_OF(OPENSSL_STRING) *names,
     STACK_OF(OCSP_CERTID) *ids, long nsec,
-    long maxage)
+    long maxage, int rfc9919_mode)
 {
     OCSP_CERTID *id;
     const char *name;
@@ -1075,8 +1092,8 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 	 * RFC 6960 treats it as optional, so OCSP_check_validity() below
 	 * will not itself reject a NULL nextupd --enforce it here.
 	*/
-        if (nextupd == NULL) {
-            BIOS_puts(out, "ERROR: No nextUpdate field in response.\n");
+        if (rfc9919_mode && nextupd == NULL) {
+            BIO_puts(out, "ERROR: No nextUpdate field in response.\n");
 	    ret = 0;
 	    continue;
 	}
