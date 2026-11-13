@@ -3140,8 +3140,11 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL_CONNECTION *s,
             /*
              * We already sent close_notify. This can only happen in TLSv1.3
              * post-handshake messages. We can't reasonably respond to this, so
-             * we just ignore it
+             * we just ignore it. The read transition already moved us to
+             * SSL_PHA_REQUESTED; undo that so that the write transition does
+             * not go on to send a Certificate.
              */
+            s->post_handshake_auth = SSL_PHA_EXT_SENT;
             return MSG_PROCESS_FINISHED_READING;
         }
 
