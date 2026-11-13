@@ -738,4 +738,49 @@ EVP_PKEY *PKEY_from_strings(const char **pem);
  */
 BIO *glue2bio(const char **pem, char **out);
 
+/**
+ * @brief Start checking that a secret is not left in freed memory.
+ *
+ * Until test_watch_freed_stop() is called, every block allocated through
+ * OPENSSL_malloc() and friends is remembered, and when one of them is freed
+ * it is searched for |secret|.  A block moved by realloc is forgotten
+ * without being searched.
+ *
+ * The watch hooks go in front of the allocator the test program started
+ * with.  On master that is the mfail allocator: the test driver installs it
+ * before the first allocation, which also keeps the allocator replaceable,
+ * and the hooks pass every call on to it.  So a watch can be used in an mfail
+ * test as well; injected allocation failures still reach the code under test,
+ * and blocks that failed to allocate are not watched.  Without mfail the
+ * allocator can only be replaced before the first allocation, so watching
+ * only works if the recipe sets OPENSSL_TEST_WATCH_FREED; the hooks are then
+ * installed at startup and pass everything to the C library until a watch
+ * starts.
+ *
+ * A test that installs its own allocator must not start a watch while it is
+ * installed, and must not replace the allocator during a watch.
+ *
+ * Allocations made inside a provider module that carries its own copy of
+ * libcrypto, such as the legacy module in a no-shared build, do not go
+ * through the hooks and are not watched.
+ *
+ * @param secret     the bytes to look for, not NULL
+ * @param secret_len the length of |secret|, not 0
+ * @returns 1 when watching.  0 if the allocator cannot be replaced; callers
+ *          should then skip the check.  -1, and callers should fail, if a
+ *          watch is already running, the arguments are invalid, or an
+ *          allocator other than the starting one is installed.
+ */
+int test_watch_freed_start(const void *secret, size_t secret_len);
+
+/**
+ * @brief Stop the watch started by test_watch_freed_start().
+ *
+ * @returns the number of freed blocks that still held the secret, or -1 if
+ *          no watch was running, more blocks were live than could be
+ *          watched, or the hooks were no longer installed when this was
+ *          called.
+ */
+int test_watch_freed_stop(void);
+
 #endif /* OSSL_TESTUTIL_H */
