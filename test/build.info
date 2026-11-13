@@ -990,7 +990,8 @@ IF[{- !$disabled{tests} -}]
   # are always available.
   IF[1]
     PROGRAMS{noinst}=asprintf_test \
-                     asn1_internal_test modes_internal_test x509_internal_test \
+                     asn1_internal_test err_internal_test \
+                     modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
@@ -1047,6 +1048,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[asprintf_test]=asprintf_test.c
     INCLUDE[asprintf_test]=../include ../apps/include
     DEPEND[asprintf_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[err_internal_test]=err_internal_test.c
+    INCLUDE[err_internal_test]=.. ../include ../apps/include
+    DEPEND[err_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[modes_internal_test]=modes_internal_test.c
     INCLUDE[modes_internal_test]=.. ../include ../apps/include
