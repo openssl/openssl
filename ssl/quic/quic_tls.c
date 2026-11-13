@@ -14,6 +14,7 @@
 #include "internal/quic_error.h"
 #include "internal/quic_types.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/err_internal.h"
 
 #define QUIC_TLS_FATAL(rl, ad, err)    \
     do {                               \
@@ -773,6 +774,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
     int ret, err;
     const unsigned char *alpn;
     unsigned int alpnlen;
+    ERR_STATE *es;
 
     if (qtls->inerror)
         return 0;
@@ -802,7 +804,8 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
      * NOTE: Ensure all escape paths from this function call
      * ERR_clear_to_mark(). The RAISE macros handle this in failure cases.
      */
-    ERR_set_mark();
+    es = ossl_err_get_state();
+    ossl_err_state_set_mark(es);
 
     if (!qtls->configured) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
@@ -859,7 +862,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         case SSL_ERROR_WANT_CLIENT_HELLO_CB:
         case SSL_ERROR_WANT_X509_LOOKUP:
         case SSL_ERROR_WANT_RETRY_VERIFY:
-            ERR_pop_to_mark();
+            ossl_err_state_pop_to_mark(es);
             return 1;
 
         default:
@@ -875,11 +878,11 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                 "no application protocol negotiated");
 
         qtls->complete = 1;
-        ERR_pop_to_mark();
+        ossl_err_state_pop_to_mark(es);
         return qtls->args.handshake_complete_cb(qtls->args.handshake_complete_cb_arg);
     }
 
-    ERR_pop_to_mark();
+    ossl_err_state_pop_to_mark(es);
     return 1;
 }
 #endif

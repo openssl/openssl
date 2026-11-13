@@ -31,6 +31,7 @@
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "internal/common.h"
+#include "internal/err_internal.h"
 #include "evp_local.h"
 
 #ifndef FIPS_MODULE
@@ -1073,19 +1074,21 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
     int cmd, int p1, void *p2)
 {
     int ret = 0;
+    ERR_STATE *es;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
     /* If unsupported, we don't want that reported here */
-    ERR_set_mark();
+    es = ossl_err_get_state();
+    ossl_err_state_set_mark(es);
     ret = evp_pkey_ctx_store_cached_data(ctx, keytype, optype,
         cmd, NULL, p2, p1);
     if (ret == -2) {
-        ERR_pop_to_mark();
+        ossl_err_state_pop_to_mark(es);
     } else {
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
         /*
          * If there was an error, there was an error.
          * If the operation isn't initialized yet, we also return, as

@@ -28,6 +28,7 @@
 #include "internal/cryptlib.h"
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/err_internal.h"
 #include <openssl/ocsp.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
@@ -2530,6 +2531,7 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
     size_t certidx;
     const SSL_CERT_LOOKUP *clu;
     int v_ok;
+    ERR_STATE *es = ossl_err_get_state();
 
     if (sc->session->peer_rpk == NULL) {
         SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER,
@@ -2540,15 +2542,15 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
     if (sc->rwstate == SSL_RETRY_VERIFY)
         sc->rwstate = SSL_NOTHING;
 
-    ERR_set_mark();
+    ossl_err_state_set_mark(es);
     v_ok = ssl_verify_rpk(sc, sc->session->peer_rpk);
     if (v_ok <= 0 && sc->verify_mode != SSL_VERIFY_NONE) {
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
         SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
             SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;
     }
-    ERR_pop_to_mark(); /* but we keep s->verify_result */
+    ossl_err_state_pop_to_mark(es); /* but we keep s->verify_result */
     if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
         return WORK_MORE_A;
     }
@@ -2706,6 +2708,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     const SSL_CERT_LOOKUP *clu;
     size_t certidx;
     int i;
+    ERR_STATE *es;
 
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
         return tls_post_process_server_rpk(s, wst);
@@ -2727,15 +2730,16 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * (less clean) historic behaviour of performing validation if any flag is
      * set. The *documented* interface remains the same.
      */
-    ERR_set_mark();
+    es = ossl_err_get_state();
+    ossl_err_state_set_mark(es);
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
     if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
             SSL_R_CERTIFICATE_VERIFY_FAILED);
         return WORK_ERROR;
     }
-    ERR_pop_to_mark(); /* but we keep s->verify_result */
+    ossl_err_state_pop_to_mark(es); /* but we keep s->verify_result */
     if (i > 0 && s->rwstate == SSL_RETRY_VERIFY)
         return WORK_MORE_A;
 

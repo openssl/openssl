@@ -18,6 +18,7 @@
 #include "internal/packet.h"
 #include "internal/ssl3_cbc.h"
 #include "internal/dtls_record_rx.h"
+#include "internal/err_internal.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
@@ -584,6 +585,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     PACKET pkt;
     unsigned char **macbufs = NULL;
     int ret = OSSL_RECORD_RETURN_FATAL;
+    ERR_STATE *es;
 
     rr = rl->rrec;
     rbuf = &rl->rbuf;
@@ -787,8 +789,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             return OSSL_RECORD_RETURN_FATAL;
         }
     }
-
-    ERR_set_mark();
+    es = ossl_err_get_state();
+    ossl_err_state_set_mark(es);
     enc_err = rl->funcs->cipher(rl, rr, num_recs, 0, macbufs, mac_size);
 
     /*-
@@ -800,7 +802,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (enc_err == 0) {
         if (rl->alert != SSL_AD_NO_ALERT) {
             /* RLAYERfatal() already got called */
-            ERR_clear_last_mark();
+            ossl_err_state_clear_last_mark(es);
             goto end;
         }
         if (num_recs == 1
@@ -815,7 +817,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
              * Remove any errors from the stack. Decryption failures are normal
              * behaviour.
              */
-            ERR_pop_to_mark();
+            ossl_err_state_pop_to_mark(es);
 
             thisrr = &rr[0];
 
@@ -834,12 +836,12 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             ret = 1;
             goto end;
         }
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
         RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
             SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
         goto end;
     } else {
-        ERR_clear_last_mark();
+        ossl_err_state_clear_last_mark(es);
     }
     OSSL_TRACE_BEGIN(TLS)
     {
@@ -1949,16 +1951,18 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             if (rl->isdtls && BIO_ADDR_family(&rl->peer) != AF_UNSPEC) {
                 BIO_MSG msg;
                 size_t processed = 0;
+                ERR_STATE *es;
 
                 memset(&msg, 0, sizeof(msg));
                 msg.data = (char *)&(TLS_BUFFER_get_buf(thiswb)[TLS_BUFFER_get_offset(thiswb)]);
                 msg.data_len = left;
                 msg.peer = &rl->peer;
 
-                ERR_set_mark();
+                es = ossl_err_get_state();
+                ossl_err_state_set_mark(es);
                 if (BIO_sendmmsg(rl->bio, &msg, sizeof(msg), 1, 0, &processed)
                     && processed == 1) {
-                    ERR_clear_last_mark();
+                    ossl_err_state_clear_last_mark(es);
                     tmpwrit = msg.data_len;
                     ret = OSSL_RECORD_RETURN_SUCCESS;
                     i = (int)tmpwrit;
@@ -1969,7 +1973,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                      * of BIO_should_retry() to check for transient errors.
                      */
                     if (BIO_err_is_non_fatal(err)) {
-                        ERR_pop_to_mark();
+                        ossl_err_state_pop_to_mark(es);
 
                         /*
                          * A connection in blocking mode waits for the socket to
@@ -1990,7 +1994,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                         i = 0;
                         tmpwrit = 0;
                     } else {
-                        ERR_clear_last_mark();
+                        ossl_err_state_clear_last_mark(es);
                         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                             "tls_retry_write_records BIO_sendmmsg failure");
                         ret = OSSL_RECORD_RETURN_FATAL;

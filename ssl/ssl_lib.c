@@ -32,6 +32,7 @@
 #include "internal/ktls.h"
 #include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/err_internal.h"
 #include "quic/quic_local.h"
 
 #ifndef OPENSSL_NO_SSLKEYLOG
@@ -8113,8 +8114,9 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
     const char *properties)
 {
     const EVP_CIPHER *ciph;
+    ERR_STATE *es = ossl_err_get_state();
 
-    ERR_set_mark();
+    ossl_err_state_set_mark(es);
     ciph = EVP_CIPHER_fetch(libctx, name, properties);
     if (ciph != NULL) {
         OSSL_PARAM params[2];
@@ -8130,7 +8132,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
             ciph = NULL;
         }
     }
-    ERR_pop_to_mark();
+    ossl_err_state_pop_to_mark(es);
     return ciph;
 }
 

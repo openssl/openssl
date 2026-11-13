@@ -20,6 +20,7 @@
 #include "crypto/x509.h"
 #include "internal/asn1.h"
 #include "internal/sizes.h"
+#include "internal/err_internal.h"
 
 static EVP_PKEY *
 d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
@@ -36,6 +37,7 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     const char *structure;
     PKCS8_PRIV_KEY_INFO *p8info;
     const ASN1_OBJECT *algoid;
+    ERR_STATE *es;
 
     if (keytype != EVP_PKEY_NONE) {
         key_name = evp_pkey_type2name(keytype);
@@ -44,9 +46,10 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     }
 
     /* This is just a probe. It might fail, so we ignore errors */
-    ERR_set_mark();
+    es = ossl_err_get_state();
+    ossl_err_state_set_mark(es);
     p8info = d2i_PKCS8_PRIV_KEY_INFO(NULL, pp, length);
-    ERR_pop_to_mark();
+    ossl_err_state_pop_to_mark(es);
     if (p8info != NULL) {
         int64_t v;
 
