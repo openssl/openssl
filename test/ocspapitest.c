@@ -159,6 +159,47 @@ err:
     return ret;
 }
 
+/*
+ * Setting the responder ID again, by name or by key, replaces whichever of
+ * the two was set before. Bit 0 of |idx| sets it by key the first time, bit 1
+ * the second time.
+ */
+static int test_respid_set_twice(int idx)
+{
+    int first_by_key = (idx & 1) != 0, second_by_key = (idx & 2) != 0;
+    OCSP_RESPID *rid = OCSP_RESPID_new();
+    OCSP_BASICRESP *bs = NULL;
+    X509 *signer = NULL, *tmp = NULL;
+    EVP_PKEY *key = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(rid)
+        || !TEST_true(get_cert_and_key(&signer, &key))
+        || !TEST_true(first_by_key ? OCSP_RESPID_set_by_key(rid, signer)
+                                   : OCSP_RESPID_set_by_name(rid, signer))
+        || !TEST_true(second_by_key ? OCSP_RESPID_set_by_key(rid, signer)
+                                    : OCSP_RESPID_set_by_name(rid, signer))
+        || !TEST_true(OCSP_RESPID_match(rid, signer)))
+        goto err;
+
+    /* OCSP_basic_sign() sets the responder ID of the response it signs */
+    if (!TEST_ptr(bs = make_dummy_resp())
+        || !TEST_true(OCSP_basic_sign(bs, signer, key, EVP_sha256(), NULL,
+            first_by_key ? OCSP_RESPID_KEY : 0))
+        || !TEST_true(OCSP_basic_sign(bs, signer, key, EVP_sha256(), NULL,
+            second_by_key ? OCSP_RESPID_KEY : 0))
+        || !TEST_true(OCSP_resp_get0_signer(bs, &tmp, NULL))
+        || !TEST_int_eq(X509_cmp(tmp, signer), 0))
+        goto err;
+    ret = 1;
+err:
+    OCSP_RESPID_free(rid);
+    OCSP_BASICRESP_free(bs);
+    X509_free(signer);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 static int test_access_description(int testcase)
 {
     ACCESS_DESCRIPTION *ad = ACCESS_DESCRIPTION_new();
@@ -275,6 +316,7 @@ int setup_tests(void)
         return 0;
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_resp_signer);
+    ADD_ALL_TESTS(test_respid_set_twice, 4);
     ADD_ALL_TESTS(test_access_description, 3);
     ADD_TEST(test_ocsp_url_svcloc_new);
     ADD_TEST(test_req_verify_signer_libctx);
