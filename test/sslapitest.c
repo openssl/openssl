@@ -11423,6 +11423,50 @@ end:
 }
 
 /*
+ * A TLS group registered by a provider with mintls/maxtls == -1 must not be
+ * used for handshakes and must therefore not be reported by
+ * SSL_CTX_get0_implemented_groups(). The tls-provider registers such a group
+ * ("xordisabledgroup") for this test.
+ */
+static int test_disabled_group_not_implemented(void)
+{
+    SSL_CTX *ctx = NULL;
+    STACK_OF(OPENSSL_CSTRING) *groups = NULL;
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+    int i, num, testresult = 0;
+    int found_disabled = 0;
+
+    if (!TEST_ptr(tlsprov))
+        goto end;
+
+    if (!TEST_ptr(groups = sk_OPENSSL_CSTRING_new_null())
+        || !TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method())))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_get0_implemented_groups(ctx, 1, groups)))
+        goto end;
+
+    num = sk_OPENSSL_CSTRING_num(groups);
+    for (i = 0; i < num; ++i) {
+        const char *name = sk_OPENSSL_CSTRING_value(groups, i);
+
+        if (strcmp(name, "xordisabledgroup") == 0)
+            found_disabled = 1;
+    }
+
+    if (!TEST_false(found_disabled))
+        goto end;
+
+    testresult = 1;
+
+end:
+    sk_OPENSSL_CSTRING_free(groups);
+    SSL_CTX_free(ctx);
+    OSSL_PROVIDER_unload(tlsprov);
+    return testresult;
+}
+
+/*
  * This function triggers encode, decode and sign functions
  * of the artificial "xorhmacsig" algorithm implemented in tls-provider
  * creating private key and certificate files for use in TLS testing.
@@ -16027,6 +16071,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pluggable_group, 2);
     ADD_ALL_TESTS(test_pluggable_signature, 6);
 #endif
+    ADD_TEST(test_disabled_group_not_implemented);
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_sigalg_ctx_switch, 4);
     ADD_ALL_TESTS(test_ctx_switch_more_custom_exts, 2);
