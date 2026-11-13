@@ -176,7 +176,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
 
     return (*v != NULL);
 err:
-    ERR_clear_last_mark();
+    ossl_err_state_clear_last_mark(es);
     return 0;
 }
 
