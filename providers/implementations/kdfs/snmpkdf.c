@@ -212,7 +212,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.eid != NULL) {
         unsigned char *eid = NULL;
         size_t eid_len = 0;
-        int i;
+        size_t i;
         int all_zero = 1;
         int all_ff = 1;
         const unsigned char *data = p.eid->data;
