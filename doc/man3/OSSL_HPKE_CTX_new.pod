@@ -124,6 +124,12 @@ The KEM identifier I<kem_id> is one of the following:
 
 =item 0x21 B<OSSL_HPKE_KEM_ID_X448>
 
+=item 0x647A B<OSSL_HPKE_KEM_ID_XWING>
+
+The X-Wing KEM combines ML-KEM-768 and X25519.  Its encapsulated key is
+1120 bytes and its public key is 1216 bytes.  X-Wing supports the base and
+PSK modes, but not the sender-authenticated modes.
+
 =back
 
 The KDF identifier I<kdf_id> is one of the following:
