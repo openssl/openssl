@@ -56,6 +56,8 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     const EVP_MD *cert_id_md, X509 *issuer,
     STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode);
+static int check_rfc9919_response(BIO *out, OCSP_BASICRESP *bs,
+    long nsec, long maxage);
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     STACK_OF(OPENSSL_STRING) *names,
     STACK_OF(OCSP_CERTID) *ids, long nsec,
@@ -294,6 +296,7 @@ int ocsp_main(int argc, char **argv)
     char *thost = NULL, *tport = NULL, *tpath = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
+    int nonce_explicit = 0;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, res, ret = 1;
     int rfc9919_mode = 0;
@@ -307,6 +310,16 @@ int ocsp_main(int argc, char **argv)
         || (vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
 
+    /*
+    * Determine RFC 9919 mode before processing certificate IDs,
+    * regardless of command-line option order.
+    */
+    for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-rfc9919") == 0) {
+            rfc9919_mode = 1;
+            break;
+        }
+    }
     opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, ocsp_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -371,9 +384,11 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_NONCE:
             add_nonce = 2;
+            nonce_explicit = 1;
             break;
         case OPT_NO_NONCE:
             add_nonce = 0;
+            nonce_explicit = 1;
             break;
         case OPT_RESP_NO_CERTS:
             rflags |= OCSP_NOCERTS;
@@ -499,7 +514,7 @@ int ocsp_main(int argc, char **argv)
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha256();
+                cert_id_md = (EVP_MD *)(rfc9919_mode ? EVP_sha256() : EVP_sha1());
             if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids, rfc9919_mode))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -509,7 +524,7 @@ int ocsp_main(int argc, char **argv)
         case OPT_SERIAL:
             reset_unknown();
             if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha256();
+                cert_id_md = (EVP_MD *)(rfc9919_mode ? EVP_sha256() : EVP_sha1());
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids, rfc9919_mode))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -592,7 +607,20 @@ int ocsp_main(int argc, char **argv)
             break;
         }
     }
+    /* Enforce SHA-256 certificate IDs in RFC 9919 mode. */
+    if (rfc9919_mode && cert_id_md != NULL
+        && !EVP_MD_is_a(cert_id_md, "SHA256")) {
+        BIO_puts(bio_err, "Error: RFC 9919 requires SHA-256 certificate IDs\n");
+        goto end;
+        }
 
+         /*
+         * RFC 9919 favors cacheable OCSP responses, so do not
+         * automatically add a nonce unless explicitly requested.
+         * Preserve the existing default outside RFC 9919 mode.
+         */
+    if (rfc9919_mode && !nonce_explicit)
+        add_nonce = 0;
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
@@ -632,12 +660,32 @@ int ocsp_main(int argc, char **argv)
   * Enforce this when the profile is enabled, regardless of
   * command-line option order or whether the request was loaded from a file.
   */
-    if (rfc9919_mode && req != NULL
-            && OCSP_request_onereq_count(req) != 1) {
-        BIO_puts(bio_err,
-                 "Error: RFC 9919 requires exactly one certificate per request\n");
-        goto end;
-            }
+
+    if (rfc9919_mode && req != NULL) {
+        OCSP_ONEREQ *one;
+        OCSP_CERTID *id;
+        ASN1_OBJECT *md_oid = NULL;
+
+        if (OCSP_request_onereq_count(req) != 1) {
+            BIO_puts(bio_err,
+                     "Error: RFC 9919 requires exactly one certificate per request\n");
+            goto end;
+        }
+
+        one = OCSP_request_onereq_get0(req, 0);
+        if (one == NULL)
+            goto end;
+
+        id = OCSP_onereq_get0_id(one);
+        if (id == NULL
+                || !OCSP_id_get0_info(NULL, &md_oid, NULL, NULL, id)
+                || md_oid == NULL
+                || OBJ_obj2nid(md_oid) != NID_sha256) {
+            BIO_puts(bio_err,
+                     "Error: RFC 9919 requires SHA-256 certificate IDs\n");
+            goto end;
+                }
+    }
     if (req == NULL && port != NULL) {
 #ifndef OPENSSL_NO_SOCK
         acbio = http_server_init(prog, port, -1);
@@ -886,7 +934,9 @@ done_resp:
         BIO_puts(bio_err, "Error parsing response\n");
         goto end;
     }
-
+    if (rfc9919_mode
+            && !check_rfc9919_response(bio_err, bs, nsec, maxage))
+        goto end;
     ret = 0;
 
     if (!noverify) {
@@ -1055,6 +1105,32 @@ err:
     OCSP_CERTID_free(id);
     BIO_puts(bio_err, "Error Creating OCSP request\n");
     return 0;
+}
+
+
+static int check_rfc9919_response(BIO *out, OCSP_BASICRESP *bs,
+                                  long nsec, long maxage)
+{
+    int i, count = OCSP_resp_count(bs);
+
+    if (count <= 0)
+        return 0;
+
+    for (i = 0; i < count; i++) {
+        OCSP_SINGLERESP *single = OCSP_resp_get0(bs, i);
+        ASN1_GENERALIZEDTIME *thisupd = NULL, *nextupd = NULL;
+
+        if (single == NULL
+                || OCSP_single_get0_status(single, NULL, NULL,
+                                           &thisupd, &nextupd) < 0
+                || thisupd == NULL || nextupd == NULL
+                || !OCSP_check_validity(thisupd, nextupd, nsec, maxage)) {
+            BIO_printf(out, "ERROR: Invalid RFC 9919 response entry %d\n", i);
+            return 0;
+                }
+    }
+
+    return 1;
 }
 
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
