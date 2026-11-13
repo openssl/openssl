@@ -2119,6 +2119,7 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
     uint32_t flags)
 {
     OSSL_TIME now, deadline;
+    OSSL_RTT_INFO rtt_info;
     int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
     int notify_other_threads = 0;
 
@@ -2235,11 +2236,13 @@ void ossl_quic_channel_subtick(QUIC_CHANNEL *ch, QUIC_TICK_RESULT *res,
             ch_update_ping_deadline(ch);
         }
 
+        ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(ch), &rtt_info);
+        if (!ossl_quic_stream_map_gc(&ch->qsm, rtt_info.smoothed_rtt))
+            ossl_quic_channel_raise_protocol_error(ch,
+                OSSL_QUIC_ERR_INTERNAL_ERROR, 0, "stream GC flow control error");
+
         /* Queue any data to be sent for transmission. */
         ch_tx(ch, &notify_other_threads);
-
-        /* Do stream GC. */
-        ossl_quic_stream_map_gc(&ch->qsm);
     }
 
     /* Determine the time at which we should next be ticked. */
@@ -4055,23 +4058,12 @@ void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
 
 void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs)
 {
-    OSSL_RTT_INFO rtt_info;
-
     ossl_quic_stream_map_stop_sending_recv_part(&ch->qsm, qs,
         ch->incoming_stream_auto_reject_aec);
 
     ossl_quic_stream_map_reset_stream_send_part(&ch->qsm, qs,
         ch->incoming_stream_auto_reject_aec);
     qs->deleted = 1;
-
-    /*
-     * A rejected stream is never placed on the accept queue, so it would
-     * otherwise never be retired and would consume the peer's stream credit
-     * for the lifetime of the connection.
-     */
-    ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(ch), &rtt_info);
-    ossl_quic_stream_map_retire_stream_credit(&ch->qsm, qs,
-        rtt_info.smoothed_rtt);
 
     ossl_quic_stream_map_update_state(&ch->qsm, qs);
 }

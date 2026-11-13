@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -106,6 +106,69 @@ static void cfq_free_cb_(unsigned char *buf, size_t buf_len, void *arg)
 #define TEST_KIND_LOSS 1
 #define TEST_KIND_DISCARD 2
 #define TEST_KIND_NUM 3
+
+/* Credit, STOP_SENDING and RESET_STREAM remain meaningful without a buffer. */
+static int test_null_send_buffer_loss(INFO *info, int idx)
+{
+    QUIC_TXPIM_PKT *pkt = NULL;
+    QUIC_TXPIM_CHUNK chunk = { 42, UINT64_MAX, 0, 0 };
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+    OSSL_QUIC_ACK_RANGE range = { 50, 50 };
+    size_t i, expected = 1;
+    int testresult = 0;
+
+    cur_time = ossl_seconds2time(1000);
+    regen_count = 0;
+    get_sstream_by_id_p = sstream_expect;
+    regen_frame_p = regen_expect;
+    ossl_quic_sstream_free(info->sstream[0]);
+    info->sstream[0] = NULL;
+    chunk.has_stop_sending = idx == 1 || idx == 3;
+    chunk.has_reset_stream = idx == 2 || idx == 3;
+    expected += chunk.has_stop_sending + chunk.has_reset_stream;
+
+    for (i = 0; i < 2; ++i) {
+        if (!TEST_ptr(pkt = ossl_quic_txpim_pkt_alloc(info->txpim)))
+            goto err;
+        pkt->ackm_pkt.pkt_num = i == 0 ? 0 : 50;
+        pkt->ackm_pkt.pkt_space = QUIC_PN_SPACE_APP;
+        pkt->ackm_pkt.largest_acked = QUIC_PN_INVALID;
+        pkt->ackm_pkt.num_bytes = 50;
+        pkt->ackm_pkt.time = cur_time;
+        pkt->ackm_pkt.is_inflight = 1;
+        pkt->ackm_pkt.is_ack_eliciting = 1;
+        if (i == 0
+            && !TEST_true(ossl_quic_txpim_pkt_append_chunk(pkt, &chunk)))
+            goto err;
+        if (!TEST_true(ossl_quic_fifd_pkt_commit(&info->fifd, pkt)))
+            goto err;
+        pkt = NULL;
+        step_time(100);
+    }
+    ack.ack_ranges = &range;
+    ack.num_ack_ranges = 1;
+    if (!TEST_true(ossl_ackm_on_rx_ack_frame(info->ackm, &ack,
+            QUIC_PN_SPACE_APP, cur_time))
+        || !TEST_size_t_eq(regen_count, expected)
+        || !TEST_uint64_t_eq(regen_frame_type[expected - 1], OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA)
+        || !TEST_size_t_eq(ossl_quic_txpim_get_in_use(info->txpim), 0))
+        goto err;
+    i = 0;
+    if (chunk.has_stop_sending
+        && !TEST_uint64_t_eq(regen_frame_type[i++], OSSL_QUIC_FRAME_TYPE_STOP_SENDING))
+        goto err;
+    if (chunk.has_reset_stream
+        && !TEST_uint64_t_eq(regen_frame_type[i++], OSSL_QUIC_FRAME_TYPE_RESET_STREAM))
+        goto err;
+    for (i = 0; i < expected; ++i)
+        if (!TEST_uint64_t_eq(regen_stream_id[i], 42))
+            goto err;
+    testresult = 1;
+err:
+    if (pkt != NULL)
+        ossl_quic_txpim_pkt_release(info->txpim, pkt);
+    return testresult;
+}
 
 static int test_generic(INFO *info, int kind)
 {
@@ -353,12 +416,16 @@ static int test_fifd(int idx)
 
     ossl_statm_update_rtt(&info.statm, ossl_time_zero(), ossl_ms2time(1));
 
-    if (!TEST_true(test_generic(&info, idx))
+    if (!TEST_true(idx < TEST_KIND_NUM ? test_generic(&info, idx)
+                                     : test_null_send_buffer_loss(&info, idx - TEST_KIND_NUM))
         || !TEST_false(cb_fail))
         goto err;
 
     testresult = 1;
 err:
+    if (info.ackm != NULL)
+        for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
+            ossl_ackm_on_pkt_space_discarded(info.ackm, i);
     ossl_quic_fifd_cleanup(&info.fifd);
     ossl_quic_cfq_free(info.cfq);
     ossl_quic_txpim_free(info.txpim);
@@ -374,6 +441,6 @@ err:
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_fifd, TEST_KIND_NUM);
+    ADD_ALL_TESTS(test_fifd, TEST_KIND_NUM + 4);
     return 1;
 }
