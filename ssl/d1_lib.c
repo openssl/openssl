@@ -2633,6 +2633,23 @@ int ossl_dtls_listener_has_pending_input(SSL *s)
     return ret;
 }
 
+/*
+ * Run one tick for an accept call. A failed tick must leave an error for the
+ * caller. Only an error raised since this call began counts, so that a stale
+ * entry already on the queue cannot suppress the internal error.
+ */
+static int dtls_accept_tick(DTLS_LISTENER *dl)
+{
+    int ret;
+
+    ERR_set_mark();
+    ret = ossl_dtls_tick(dl);
+    if (ret < 0 && ERR_count_to_mark() == 0)
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    ERR_clear_last_mark();
+    return ret;
+}
+
 SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
 {
     DTLS_LISTENER *dl;
@@ -2684,12 +2701,8 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
          * return whatever is in the queue
          */
         if (dl->net_rbio != NULL) {
-            if (ossl_dtls_tick(dl) < 0) {
-                /* Preserve the tick's diagnostic, including retained BIO errors. */
-                if (ERR_peek_last_error() == 0)
-                    ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            if (dtls_accept_tick(dl) < 0)
                 return NULL;
-            }
         }
         ossl_crypto_mutex_lock(dl->mutex);
         conn = sk_SSL_shift(dl->incoming_connections);
@@ -2713,12 +2726,8 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
      * without waiting in between, this loop would spin.
      */
     for (;;) {
-        if (ossl_dtls_tick(dl) < 0) {
-            /* Preserve the tick's diagnostic, including retained BIO errors. */
-            if (ERR_peek_last_error() == 0)
-                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        if (dtls_accept_tick(dl) < 0)
             break;
-        }
 
         ossl_crypto_mutex_lock(dl->mutex);
         conn = sk_SSL_shift(dl->incoming_connections);

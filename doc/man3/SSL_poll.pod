@@ -339,14 +339,14 @@ This limitation may be revised in a future release of OpenSSL.
 
 =head1 CALLS FROM CALLBACKS
 
-An application callback that libssl invokes while SSL_poll() is running, such
-as the callback set by SSL_CTX_set_new_pending_conn_cb(), must not call
-SSL_poll() with a NULL I<timeout> on a DTLS object that shares a listener with
-an object being polled by the outer call. The inner call can wait for a
-registration held by the outer call, which cannot be released until the
-callback returns, so the inner call never returns.
+SSL_poll() must not be called from inside any callback that libssl invokes, such
+as the callback set by SSL_CTX_set_new_pending_conn_cb().
 
-An inner call with a finite I<timeout> returns when that timeout expires.
+A callback can run while an outer SSL_poll() call is still in progress. The
+inner call can then wait for state held by the outer call, which cannot be
+released until the callback returns, so the inner call can never return. An
+inner call with a finite I<timeout> returns when that timeout expires, but
+still must not be made.
 
 =head1 THREAD CANCELLATION
 

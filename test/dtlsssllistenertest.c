@@ -9945,6 +9945,75 @@ end:
     SSL_CTX_free(sctx);
     return testresult;
 }
+
+/* Fails every receive permanently, without queueing an error */
+static int silent_fatal_recv_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
+{
+    *msgs_processed = 0;
+    return 0;
+}
+
+/*
+ * A failed accept must leave an error saying why. The network BIO here fails
+ * its receive without raising anything, while an unrelated error is already
+ * on the queue. The accept must still report its own failure last, not leave
+ * the unrelated entry to be read as the cause.
+ */
+static int test_dtls_accept_failure_stale_error(int idx)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *listener = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO_METHOD *meth = NULL;
+    BIO *sockbio, *filter = NULL;
+    uint64_t flags = idx == 0 ? SSL_ACCEPT_CONNECTION_NO_BLOCK : 0;
+    unsigned long err;
+    int server_fd = -1, testresult = 0;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD, &listener, &server_addr,
+            &server_fd)))
+        goto end;
+
+    if (!TEST_ptr(meth = BIO_meth_new(BIO_TYPE_FAILING_RECV_FILTER,
+                      "Silent failing datagram recv filter"))
+        || !TEST_true(BIO_meth_set_ctrl(meth, failing_send_ctrl))
+        || !TEST_true(BIO_meth_set_recvmmsg(meth, silent_fatal_recv_recvmmsg))
+        || !TEST_ptr(sockbio = SSL_get_rbio(listener))
+        || !TEST_ptr(filter = BIO_new(meth)))
+        goto end;
+    BIO_set_init(filter, 1);
+    if (!TEST_true(BIO_up_ref(sockbio)))
+        goto end;
+    BIO_push(filter, sockbio);
+    SSL_set0_rbio(listener, filter);
+    filter = NULL;
+
+    ERR_clear_error();
+    ERR_raise(ERR_LIB_USER, ERR_R_PASSED_INVALID_ARGUMENT);
+
+    if (!TEST_ptr_null(SSL_accept_connection(listener, flags)))
+        goto end;
+
+    err = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(err), ERR_R_INTERNAL_ERROR))
+        goto end;
+
+    testresult = 1;
+end:
+    ERR_clear_error();
+    BIO_free(filter);
+    SSL_free(listener);
+    BIO_meth_free(meth);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
 #endif /* !OPENSSL_NO_DTLS1_2 || !OPENSSL_NO_DTLS1_3 */
 
 #ifndef OPENSSL_NO_DTLS1_3
@@ -10220,6 +10289,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_listener_redrive_driven_earlier, 4);
     ADD_ALL_TESTS(test_dtls_listener_conn_poll_pending_input, 4);
     ADD_TEST(test_dtls_listener_fatal_no_pending_input);
+    ADD_ALL_TESTS(test_dtls_accept_failure_stale_error, 2);
 #endif
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_dtls13_listener_conn_read_timeout);
