@@ -105,3 +105,52 @@ Ctrl.eid = hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef01234
 Ctrl.pass = pass:IFUcNbM
 Output = 6ab11fc4cada4ce96f4cc5cf8f37acfb18c1d992
 Result = KDF_CTRL_ERROR
+
+# Minimum-length EID
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:800002b801
+Ctrl.pass = pass:IFUcNbMl
+Output = f9d713562de01cb71b987587f8848f5502ccbc9b
+
+# EID length <= 5
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000002B8
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Result = KDF_CTRL_ERROR
+
+# EID length >= 32
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Result = KDF_CTRL_ERROR
+
+# EID consisting of all zero bytes
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:000000000000
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Result = KDF_CTRL_ERROR
+
+# EID all consisting entirely of oxFF bytes
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA1
+Ctrl.eid = hexeid:FFFFFFFFFFFF
+Ctrl.pass = pass:gdRkZksOndMLQCLmDdrWCMFBZQrerfTX
+Result = KDF_CTRL_ERROR
+
+# FIPS SNMPKDF permits only SHA-1 and SHA-2 digests
+Availablein = fips
+FIPSversion = >=4.0.0
+KDF = SNMPKDF
+Ctrl.digest = digest:SHA3-256
+Ctrl.eid = hexeid:800002b801
+Ctrl.pass = pass:IFUcNbMl
+Result = KDF_CTRL_ERROR
