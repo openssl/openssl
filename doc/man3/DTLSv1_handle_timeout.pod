@@ -33,7 +33,9 @@ Returns 0 if there was no pending timeout event, or if the SSL object is not a
 DTLS or QUIC object.
 
 Returns -1 if there was a pending timeout event but it could not be handled
-successfully.
+successfully. It also returns -1 if the SSL object was created by a DTLS
+listener whose network receive has failed permanently, whether or not a
+timeout event was pending; see L<SSL_new_listener(3)/DTLS LISTENER USAGE>.
 
 =head1 SEE ALSO
 

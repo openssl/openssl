@@ -337,6 +337,17 @@ stream SSL objects, are supported.
 
 This limitation may be revised in a future release of OpenSSL.
 
+=head1 CALLS FROM CALLBACKS
+
+SSL_poll() must not be called from inside any callback that libssl invokes, such
+as the callback set by SSL_CTX_set_new_pending_conn_cb().
+
+A callback can run while an outer SSL_poll() call is still in progress. The
+inner call can then wait for state held by the outer call, which cannot be
+released until the callback returns, so the inner call can never return. An
+inner call with a finite I<timeout> returns when that timeout expires, but
+still must not be made.
+
 =head1 THREAD CANCELLATION
 
 A finite I<timeout> limits ordinary waiting by SSL_poll(), but does not make the
