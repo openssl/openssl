@@ -33,7 +33,16 @@ OpenSSL 4.1
 
 ### Changes between 4.1.0 and 4.1.1 [xx XXX xxxx]
 
- * none yet
+ * Add `OPENSSL_loongarchcap` environment variable getting.
+
+   The change allows you to dynamically select the Loongson chip extensions that
+   OpenSSL can use via the OPENSSL_loongarchcap environment variable. For
+   [Loonsgon LS3C6000](https://www.loongson.cn/EN/product/show?id=40)
+   processors, this allows switching between LASX (256-bit), LSX (128-bit)
+   vector extensions and a universal implementation (without CPU extensions) in
+   the following cryptographic algorithms: ChaCha20/AES128/AES256/SHA256/SHA512.
+
+   *Pavel Zykov (JSC InfoTeCS)*
 
 ### Changes between 4.0 and 4.1.0 [23 Oct 2026]
 
