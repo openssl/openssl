@@ -144,7 +144,7 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
 
         assert(i < 2);
 
-        if (total_len + src_len > max_len)
+        if (src_len > max_len - total_len)
             src_len = (size_t)(max_len - total_len);
 
         iov[num_iov_].buf = src;
