@@ -7476,6 +7476,39 @@ static int test_ecx_short_keys(int tst)
 
     return 1;
 }
+
+/*
+ * Test that EVP_PKEY_fromdata() with a public-key selection and only a
+ * private key supplied fails instead of dereferencing the absent private
+ * key while deriving the public key.
+ */
+static int test_ecx_fromdata_pub_only_priv_param(int tst)
+{
+    static const size_t privlens[] = { 32, 56, 32, 57 };
+    unsigned char priv[57] = { 1 };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, priv, privlens[tst]),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(
+                        testctx, OBJ_nid2sn(ecxnids[tst]), testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0))
+        goto err;
+
+    if (!TEST_int_le(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY,
+                                      params), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
 #endif
 
 typedef enum OPTION_choice {
@@ -9958,6 +9991,7 @@ int setup_tests(void)
 
 #ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
+    ADD_ALL_TESTS(test_ecx_fromdata_pub_only_priv_param, OSSL_NELEM(ecxnids));
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
 #endif
 
