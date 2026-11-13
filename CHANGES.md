@@ -127,6 +127,13 @@ OpenSSL 4.2
 
    *Dr Paul Dale*
 
+ * Fixed caching of validated CMP client certificate in the server.
+   Caching was possible beyond a transaction, which made little sense,
+   would be against the spirit of no_cache_extracerts, and enabled
+   long-lasting server runs to accept certs that become expired or revoked.
+
+   *David von Oheimb*
+
  * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
    newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
 

@@ -742,11 +742,14 @@ The flags start with OSSL_CMP_CTX_FAILINFO, for example:
 OSSL_CMP_CTX_FAILINFO_badAlg. Returns -1 if the failInfoCode field is unset.
 
 OSSL_CMP_CTX_get0_validatedSrvCert() returns
-the successfully validated certificate, if any, that the CMP server used
+the successfully validated certificate, if any, that the peer used
 in the current transaction for signature-based response message protection,
-or NULL if the server used MAC-based protection.
-The value is relevant only at the end of a successful transaction.
+or NULL if it used MAC-based protection.
+The value is relevant only for client contexts at the end of a successful transaction.
 It may be used to check the authorization of the server based on its cert.
+For a server context, the validated client certificate is cleared when the
+transaction ends, before OSSL_CMP_SRV_process_request() returns the response
+that terminates the transaction.
 
 OSSL_CMP_CTX_get0_newCert() returns the pointer to the newly obtained
 certificate in case it is available, else NULL.

@@ -109,6 +109,10 @@ then the function has closed the current transaction,
 which may be due to normal successful end of the transaction or due to an error.
 Otherwise, it should be called again with the next request message of the same
 transaction (which can be a certificate confirmation or a poll request message).
+When a transaction ends, OSSL_CMP_SRV_process_request() clears the validated
+client certificate, the received extra certificates, the status string, and
+the failure information code from the associated B<OSSL_CMP_CTX> before
+returning the response that terminates the transaction.
 The function should not be called by multiple threads sharing
 the same I<srv_ctx> without explicitly serialising the calls;
 calling it in parallel leads to undefined behavior.

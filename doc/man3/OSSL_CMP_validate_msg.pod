@@ -51,8 +51,9 @@ Note that using this option is dangerous as the certificate obtained this way
 has not been authenticated (at least not at CMP level).
 Taking it over as a trust anchor implements trust-on-first-use (TOFU).
 
-Any cert that has been found as described above is cached and tried first when
+Any cert that has been found as described above is cached and reused when
 validating the signatures of subsequent messages in the same transaction.
+Other certificates possibly presented later within this transaction are ignored.
 
 OSSL_CMP_validate_cert_path() attempts to validate the given certificate and its
 path using the given store of trusted certs (possibly including CRLs and a cert
