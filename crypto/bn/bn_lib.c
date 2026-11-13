@@ -1185,21 +1185,23 @@ void bn_correct_top_consttime(BIGNUM *a)
     a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
+/*
+ * Normalise |a| so that |a->top| is the minimal number of words holding the
+ * value.  This is done in constant time with respect to the data contents:
+ * the early-exit loop of previous implementations leaked, through its
+ * running time, the position of the most significant non-zero limb -- i.e.
+ * the bit width -- of the operand.  For operands derived from secret keys
+ * (RSA private key operation results, EC scalars, nonces, ...) that leak is
+ * exploitable (see Manger's attack on RSA, and the discussion in the
+ * BoringSSL write-up referenced in GitHub issue #6640).
+ *
+ * bn_correct_top_consttime() scans |a->dmax| words without branching on the
+ * data and computes the same minimal |top|, so it is a drop-in replacement;
+ * the only cost is scanning up to |dmax| words instead of stopping early,
+ * which is negligible next to the arithmetic that precedes any such call.
+ */
 void bn_correct_top(BIGNUM *a)
 {
-    BN_ULONG *ftl;
-    int tmp_top = a->top;
-
-    if (ossl_likely(tmp_top > 0)) {
-        for (ftl = &(a->d[tmp_top]); tmp_top > 0; tmp_top--) {
-            ftl--;
-            if (*ftl != 0)
-                break;
-        }
-        a->top = tmp_top;
-    }
-    if (a->top == 0)
-        a->neg = 0;
-    a->flags &= ~BN_FLG_FIXED_TOP;
+    bn_correct_top_consttime(a);
     bn_pollute(a);
 }

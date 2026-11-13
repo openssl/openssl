@@ -403,9 +403,10 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     ret = ossl_bn_gen_dsa_nonce_fixed_top(out, range, priv, message,
         message_len, ctx);
     /*
-     * This call makes the BN_generate_dsa_nonce non-const-time, thus we
-     * do not use it internally. But fixed_top BNs currently cannot be returned
-     * from public API calls.
+     * bn_correct_top() is constant-time (it delegates to
+     * bn_correct_top_consttime(), see GitHub issue #6640), so normalization
+     * no longer leaks the value.  But fixed_top BNs currently cannot be
+     * returned from public API calls.
      */
     bn_correct_top(out);
     return ret;
