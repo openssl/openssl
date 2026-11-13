@@ -647,6 +647,8 @@ static int deferred_find_session_cb(SSL *ssl, const unsigned char *identity,
  * ClientHello with a HelloRetryRequest:
  * 0: the PSK is known for the second ClientHello and the handshake completes
  * 1: the PSK is still unknown then, which the cookie no longer excuses
+ * 2: as 0 with a PSK-only key exchange, so the second key_share is not used
+ * 3: as 2 on a server that also has a certificate
  */
 static int test_cookie_exchange_deferred_psk(int idx)
 {
@@ -656,7 +658,8 @@ static int test_cookie_exchange_deferred_psk(int idx)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_3_VERSION, 0,
-            &sctx, &cctx, NULL, NULL)))
+            &sctx, &cctx, idx == 3 ? cert : NULL,
+            idx == 3 ? privkey : NULL)))
         return 0;
 
     SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
@@ -666,6 +669,11 @@ static int test_cookie_exchange_deferred_psk(int idx)
         verify_stateless_cookie_cb);
     SSL_CTX_set_client_hello_cb(sctx, count_client_hello_cb, NULL);
     SSL_CTX_set_psk_find_session_callback(sctx, deferred_find_session_cb);
+    if (idx >= 2) {
+        SSL_CTX_set_options(sctx,
+            SSL_OP_ALLOW_NO_DHE_KEX | SSL_OP_PREFER_NO_DHE_KEX);
+        SSL_CTX_set_options(cctx, SSL_OP_ALLOW_NO_DHE_KEX);
+    }
     SSL_CTX_set_psk_use_session_callback(cctx, deferred_use_session_cb);
     if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -691,7 +699,7 @@ static int test_cookie_exchange_deferred_psk(int idx)
         || !TEST_int_eq(client_hello_cookie_count, 0))
         goto end;
 
-    deferred_psk_known = (idx == 0);
+    deferred_psk_known = (idx != 1);
 
     if (idx == 1) {
         /* The second ClientHello is held to the usual PSK checks */
@@ -2998,7 +3006,7 @@ int setup_tests(void)
     ADD_TEST(test_cookie);
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_ALL_TESTS(test_cookie_exchange, 5);
-    ADD_ALL_TESTS(test_cookie_exchange_deferred_psk, 2);
+    ADD_ALL_TESTS(test_cookie_exchange_deferred_psk, 4);
 #endif
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
