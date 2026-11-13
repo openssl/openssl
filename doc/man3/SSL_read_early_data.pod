@@ -116,6 +116,10 @@ complete the handshake by calling a function such as L<SSL_connect(3)> or
 L<SSL_do_handshake(3)>. Alternatively you can call a standard write function
 such as L<SSL_write_ex(3)>, which will transparently complete the connection and
 write the requested data.
+Once the client has completed the handshake or written ordinary application
+data, it has left the early data write sequence, and a subsequent
+SSL_write_early_data() call fails; calling it at that point is a programming
+error.
 
 A server may choose to ignore early data that has been sent to it. Once the
 connection has been completed you can determine whether the server accepted or
@@ -123,6 +127,10 @@ rejected the early data by calling SSL_get_early_data_status(). This will return
 SSL_EARLY_DATA_ACCEPTED if the data was accepted, SSL_EARLY_DATA_REJECTED if it
 was rejected or SSL_EARLY_DATA_NOT_SENT if no early data was sent. This function
 may be called by either the client or the server.
+A client cannot distinguish early data that it declined to send locally (for
+example because 0-RTT was not viable for the offered PSK; see L</NOTES>) from
+early data that the server rejected.
+Both cases are reported as SSL_EARLY_DATA_REJECTED.
 
 A server uses the SSL_read_early_data() function to receive early data on a
 connection for which early data has been enabled using

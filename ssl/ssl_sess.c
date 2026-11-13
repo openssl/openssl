@@ -279,8 +279,16 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *sess = ssl_session_dup_intern(src, ticket);
 
-    if (sess != NULL)
+    if (sess != NULL) {
         sess->not_resumable = 0;
+        /*
+         * A duplicated session can land in the stateful session cache, and is
+         * not necessarily a live session just built for an external PSK.  The
+         * caller must explicitly set this field non-zero after duplication as
+         * needed.
+         */
+        sess->psk_external = 0;
+    }
 
     return sess;
 }
@@ -648,7 +656,13 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err; /* treat like cache miss */
     }
 
-    if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
+    /*
+     * sid_ctx exists to keep multiple services that happen to share one
+     * session cache from resuming each other's sessions.  This check is not
+     * relevant to external PSK sessions that are not restored from a cache.
+     */
+    if (!ret->psk_external
+        && (s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
         /*
          * We can't be sure if this session is being used out of context,
          * which is especially important for SSL_VERIFY_PEER. The application
@@ -1227,30 +1241,24 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
-    if (sc == NULL)
+    if (sc == NULL || ext_len < 0 || ext_len > 0xffff)
         return 0;
-
-    if (sc->version >= TLS1_VERSION) {
-        OPENSSL_free(sc->ext.session_ticket);
-        sc->ext.session_ticket = NULL;
+    OPENSSL_free(sc->ext.session_ticket);
+    if (ext_data != NULL) {
         sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
         if (sc->ext.session_ticket == NULL)
             return 0;
-
-        if (ext_data != NULL) {
-            sc->ext.session_ticket->length = ext_len;
-            sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
-            memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
-        } else {
-            sc->ext.session_ticket->length = 0;
-            sc->ext.session_ticket->data = NULL;
-        }
-
-        return 1;
+        sc->ext.session_ticket->length = ext_len;
+        sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
+        memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
+    } else {
+        sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT));
+        if (sc->ext.session_ticket == NULL)
+            return 0;
+        sc->ext.session_ticket->data = NULL;
+        sc->ext.session_ticket->length = 0;
     }
-
-    return 0;
+    return 1;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_4
