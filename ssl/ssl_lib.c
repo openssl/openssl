@@ -1896,6 +1896,11 @@ void SSL_set_read_ahead(SSL *s, int yes)
     if (sc == NULL)
         return;
 
+#ifndef OPENSSL_NO_KTLS
+    if (sc->rlayer.rrlmethod == &ossl_ktls_record_method)
+        return;
+#endif
+
     RECORD_LAYER_set_read_ahead(&sc->rlayer, yes);
 
     *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
