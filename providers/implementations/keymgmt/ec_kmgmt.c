@@ -1060,7 +1060,7 @@ static int ec_gen_set_template(void *genctx, void *templ)
     if ((param) != NULL) {                                       \
         if ((param)->data_type != OSSL_PARAM_OCTET_STRING)       \
             goto err;                                            \
-        OPENSSL_free(val);                                       \
+        OPENSSL_clear_free(val, len);                            \
         len = (param)->data_size;                                \
         val = OPENSSL_memdup((param)->data, (param)->data_size); \
         if (val == NULL)                                         \
