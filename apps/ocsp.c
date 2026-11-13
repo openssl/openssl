@@ -68,7 +68,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     STACK_OF(OPENSSL_STRING) *sigopts,
     STACK_OF(X509) *rother, unsigned long flags,
     int nmin, int ndays, int badsig,
-    const EVP_MD *resp_md);
+    const EVP_MD *resp_md, int rfc9919_mode);
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
@@ -841,7 +841,7 @@ redo_accept:
     if (rdb != NULL) {
         make_ocsp_response(bio_err, &resp, req, rdb, rca_certs, rsigner, rkey,
             rsign_md, rsign_sigopts, rother, rflags, nmin, ndays,
-            badsig, resp_certid_md);
+            badsig, resp_certid_md, rfc9919_mode);
         if (resp == NULL)
             goto end;
         if (cbio != NULL)
@@ -1215,7 +1215,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     STACK_OF(OPENSSL_STRING) *sigopts,
     STACK_OF(X509) *rother, unsigned long flags,
     int nmin, int ndays, int badsig,
-    const EVP_MD *resp_md)
+    const EVP_MD *resp_md, int rfc9919_mode)
 {
     ASN1_TIME *thisupd = NULL, *nextupd = NULL;
     OCSP_CERTID *cid;
@@ -1237,9 +1237,18 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         goto end;
     }
     thisupd = X509_gmtime_adj(NULL, 0);
+    if (rfc9919_mode && ndays == -1) {
+        /* Default to a 60-minute validity period in RFC 9919 mode. */
+        ndays = 0;
+        nmin = 60;
+    }
     if (ndays != -1)
         nextupd = X509_time_adj_ex(NULL, ndays, nmin * 60, NULL);
-
+    if (thisupd == NULL || (rfc9919_mode && nextupd == NULL)) {
+        BIO_puts(err, "Error generating RFC 9919 response timestamps\n");
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
+        goto end;
+    }
     /* Examine each certificate id in the request */
     for (i = 0; i < id_count; i++) {
         OCSP_ONEREQ *one;
