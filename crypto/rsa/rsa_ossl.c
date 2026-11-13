@@ -1156,12 +1156,12 @@ tail:
         }
     }
     /*
-     * It's unfortunate that we have to bn_correct_top(r0). What hopefully
-     * saves the day is that correction is highly unlike, and private key
-     * operations are customarily performed on blinded message. Which means
-     * that attacker won't observe correlation with chosen plaintext.
-     * Secondly, remaining code would still handle it in same computational
-     * time and even conceal memory access pattern around corrected top.
+     * bn_correct_top(r0) is now constant-time (it delegates to
+     * bn_correct_top_consttime(), see GitHub issue #6640), so it no longer
+     * leaks the bit width of the recovered message through its running
+     * time.  The remaining code handles the result in the same
+     * computational time and conceals memory access pattern around the
+     * corrected top.
      */
     bn_correct_top(r0);
     ret = 1;

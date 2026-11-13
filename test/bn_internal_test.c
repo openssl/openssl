@@ -21,6 +21,7 @@
 #include "testutil.h"
 #include "bn_prime.h"
 #include "crypto/bn.h"
+#include "crypto/bn/bn_local.h" /* for struct bignum_st access in test_correct_top_consttime */
 
 static BN_CTX *ctx;
 
@@ -86,6 +87,72 @@ err:
     return ret;
 }
 
+/*
+ * bn_correct_top() delegates to bn_correct_top_consttime() so that
+ * normalisation does not leak the position of the most significant non-zero
+ * limb through its running time (GitHub issue #6640).  Verify that both
+ * produce exactly the same minimal |top| / |neg| / limbs, including when
+ * stale non-zero words sit above the current |top| and for zero.
+ */
+static int test_correct_top_consttime(void)
+{
+    int ret = 0, i;
+    BIGNUM *a = NULL, *b = NULL;
+
+    if (!TEST_ptr(a = BN_new()) || !TEST_ptr(b = BN_new()))
+        goto err;
+
+    for (i = 0; i < 64; i++) {
+        int bits = 1 + (i * 8) % 512;
+
+        if (!TEST_true(BN_rand(a, bits, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY)))
+            goto err;
+
+        /*
+         * Give |b| the same value and |top| as |a|, but extra capacity
+         * holding non-zero garbage above |top|.  Both functions only scan
+         * the words below |top|, so the garbage must be ignored.
+         */
+        if (!TEST_ptr(bn_wexpand(b, a->top + 3)))
+            goto err;
+        memcpy(b->d, a->d, sizeof(BN_ULONG) * a->top);
+        memset(b->d + a->top, 0xff, sizeof(BN_ULONG) * 3);
+        b->top = a->top;
+        b->neg = a->neg;
+
+        bn_correct_top(a);
+        bn_correct_top_consttime(b);
+
+        if (!TEST_int_eq(a->top, b->top)
+                || !TEST_int_eq(a->neg, b->neg)
+                || !TEST_BN_eq(a, b))
+            goto err;
+    }
+
+    /* zero: both must yield |top == 0| and |neg == 0| */
+    BN_zero(a);
+    if (!TEST_ptr(bn_wexpand(b, 5)))
+        goto err;
+    memset(b->d, 0xff, sizeof(BN_ULONG) * 5);
+    b->top = 0;
+    b->neg = 1;
+
+    bn_correct_top(a);
+    bn_correct_top_consttime(b);
+
+    if (!TEST_int_eq(a->top, 0)
+            || !TEST_int_eq(b->top, 0)
+            || !TEST_int_eq(b->neg, 0)
+            || !TEST_BN_eq(a, b))
+        goto err;
+
+    ret = 1;
+err:
+    BN_free(a);
+    BN_free(b);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(ctx = BN_CTX_new()))
@@ -94,6 +161,7 @@ int setup_tests(void)
     ADD_TEST(test_is_prime_enhanced);
     ADD_ALL_TESTS(test_is_composite_enhanced, (int)OSSL_NELEM(composites));
     ADD_TEST(test_bn_small_factors);
+    ADD_TEST(test_correct_top_consttime);
 
     return 1;
 }
