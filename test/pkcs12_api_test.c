@@ -649,7 +649,9 @@ static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
                       NID_undef, NID_undef, 0, -1, 0,
                       testctx, NULL, NULL, NULL)))
         goto err;
-    ret = TEST_true(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1, NULL, 0, 0, NULL, NULL));
+    /* The generated salt must be the one used to verify the MAC */
+    ret = TEST_true(PKCS12_set_pbmac1_pbkdf2(p12, "pass", -1, NULL, 0, 0, NULL, NULL))
+        && TEST_true(PKCS12_verify_mac(p12, "pass", -1));
 err:
     PKCS12_free(p12);
     EVP_PKEY_free(key);

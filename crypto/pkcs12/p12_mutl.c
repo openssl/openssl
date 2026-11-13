@@ -499,15 +499,20 @@ int PKCS12_set_pbmac1_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
             ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_SALT_LENGTH);
             goto err;
         }
-        if (saltlen > 0) {
-            known_salt = OPENSSL_malloc(saltlen);
-            if (known_salt == NULL)
-                goto err;
+        /*
+         * Generate the salt here, so that the PBKDF2 parameters and the
+         * MacData use the same one. Left to themselves, both would generate
+         * a different salt of their own.
+         */
+        if (saltlen == 0)
+            saltlen = PKCS12_SALT_LEN;
+        known_salt = OPENSSL_malloc(saltlen);
+        if (known_salt == NULL)
+            goto err;
 
-            if (RAND_bytes_ex(libctx, known_salt, saltlen, 0) <= 0) {
-                ERR_raise(ERR_LIB_PKCS12, ERR_R_RAND_LIB);
-                goto err;
-            }
+        if (RAND_bytes_ex(libctx, known_salt, saltlen, 0) <= 0) {
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_RAND_LIB);
+            goto err;
         }
     }
 
