@@ -130,6 +130,7 @@ my $guess_patterns = [
       sub {
           my $hw = `/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model`;
           $hw =~  s@.*(.)86-class.*@i${1}86@;
+          chomp $hw;
           return "${hw}-whatever-netbsd";
       }
     ],
