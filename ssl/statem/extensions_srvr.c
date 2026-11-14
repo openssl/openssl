@@ -813,6 +813,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     const size_t *srvrtuples;
     uint16_t *first_group_in_tuple;
     size_t clnt_num_groups, srvr_num_groups, srvr_num_tuples;
+    size_t srvr_groups_remaining;
     PACKET *encoded_pubkey_arr = NULL;
     uint16_t *keyshares_arr = NULL;
     size_t keyshares_cnt = 0;
@@ -842,8 +843,8 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     /* Get list of server supported groups and the group tuples */
-    tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
-    tls1_get_group_tuples(s, &srvrtuples, &srvr_num_tuples);
+    tls1_get_supported_groups_and_tuples(s, &srvrgroups, &srvr_num_groups,
+        &srvrtuples, &srvr_num_tuples);
     /* Get the clients list of supported groups. */
     tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
 
@@ -899,9 +900,22 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
      * Remark: Selection priority different for client- or server-preference
      */
     first_group_in_tuple = (uint16_t *)srvrgroups;
+    srvr_groups_remaining = srvr_num_groups;
     for (current_tuple = 0; current_tuple < srvr_num_tuples; current_tuple++) {
         size_t number_of_groups_in_tuple = srvrtuples[current_tuple];
         int prio_group_idx = 0, candidate_group_idx = 0;
+
+        /*
+         * The tuple sizes must partition srvrgroups exactly. A tuple larger
+         * than the groups still left means the group and tuple lists have
+         * come from different sources, which is an internal error: stop here
+         * rather than reading past the end of srvrgroups.
+         */
+        if (!ossl_assert(number_of_groups_in_tuple <= srvr_groups_remaining)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        srvr_groups_remaining -= number_of_groups_in_tuple;
 
         /* Server or client preference ? */
         if (s->options & SSL_OP_SERVER_PREFERENCE) {
