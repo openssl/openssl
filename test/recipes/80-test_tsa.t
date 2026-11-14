@@ -85,7 +85,7 @@ sub verify_fail {
 
 # main functions
 
-plan tests => 27;
+plan tests => 28;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -102,23 +102,23 @@ indir "tsa" => sub
 
  SKIP: {
      $ENV{TSDNSECT} = "ts_ca_dn";
-     skip "failed", 19
+     skip "failed", 20
          unless ok(run(app(["openssl", "req", "-config", $openssl_conf,
                             "-new", "-x509", "-noenc",
                             "-out", "tsaca.pem", "-key", $tsacakey])),
                    'creating a new CA for the TSA tests');
 
-     skip "failed", 18
+     skip "failed", 19
          unless subtest 'creating tsa_cert1.pem TSA server cert' => sub {
              create_tsa_cert("1", "tsa_cert")
      };
 
-     skip "failed", 17
+     skip "failed", 18
          unless subtest 'creating tsa_cert2.pem non-TSA server cert' => sub {
              create_tsa_cert("2", "non_tsa_cert")
      };
 
-     skip "failed", 16
+     skip "failed", 17
          unless ok(run(app([@QUERY, "-data", $testtsa,
                             "-tspolicy", "tsa_policy1", "-cert",
                             "-out", "req1.tsq"])),
@@ -142,6 +142,9 @@ indir "tsa" => sub
      subtest 'verifying valid response' => sub {
          verify_ok($testtsa, "req1.tsq", "resp1.tsr", "tsa_cert1.pem")
      };
+
+     ok(run(test(["ts_verify_test", "resp1.tsr", $testtsa])),
+        'a BIO read error is not accepted as end of timestamped data');
 
      skip "failed", 11
          unless subtest 'verifying valid token' => sub {
