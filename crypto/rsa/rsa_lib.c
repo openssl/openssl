@@ -779,9 +779,14 @@ int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
             return 0;
 
         for (i = 2; i < pnum; i++) {
-            BIGNUM *prime = sk_BIGNUM_pop(primes);
-            BIGNUM *exp = sk_BIGNUM_pop(exps);
-            BIGNUM *coeff = sk_BIGNUM_pop(coeffs);
+            /*
+             * The components arrive in natural order (r1..rn, dmp1, dmq1,
+             * d3..dn, iqmp, t3..tn) and prime_infos must end up in that same
+             * ascending order, so read the stacks front to back.
+             */
+            BIGNUM *prime = sk_BIGNUM_value(primes, i - 2);
+            BIGNUM *exp = sk_BIGNUM_value(exps, i - 2);
+            BIGNUM *coeff = sk_BIGNUM_value(coeffs, i - 2);
             RSA_PRIME_INFO *pinfo = NULL;
 
             if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
@@ -799,6 +804,14 @@ int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
             BN_set_flags(pinfo->t, BN_FLG_CONSTTIME);
             (void)sk_RSA_PRIME_INFO_push(prime_infos, pinfo);
         }
+
+        /*
+         * Every remaining component has been moved into prime_infos; clear
+         * the stacks so the caller does not free the transferred BIGNUMs.
+         */
+        OPENSSL_sk_zero(primes);
+        OPENSSL_sk_zero(exps);
+        OPENSSL_sk_zero(coeffs);
 
         r->prime_infos = prime_infos;
 
