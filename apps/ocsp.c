@@ -80,6 +80,13 @@ static char *prog;
 static int index_changed(CA_DB *);
 #endif
 
+#ifndef OPENSSL_NO_SOCK
+static char *ocsp_cache_path(const char *dir, const char *host,
+    const char *port, const char *path, int use_ssl, OCSP_REQUEST *req);
+static OCSP_RESPONSE *ocsp_cache_load(const char *file);
+static void ocsp_cache_store(const char *file, OCSP_RESPONSE *resp);
+#endif
+
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_OUTFILE,
@@ -99,6 +106,7 @@ typedef enum OPTION_choice {
     OPT_RESP_KEY_ID,
     OPT_NO_RESP_KEY_ID,
     OPT_RFC9919,
+    OPT_RESP_CACHE,
     OPT_NO_CERTS,
     OPT_NO_SIGNATURE_VERIFY,
     OPT_NO_CERT_VERIFY,
@@ -167,6 +175,8 @@ const OPTIONS ocsp_options[] = {
         "Do not load certificates from the default certificates store" },
     { "rfc9919", OPT_RFC9919, '-',
         "Enable RFC 9919 lightweight OCSP profile restrictions" },
+    { "resp_cache", OPT_RESP_CACHE, '/',
+        "RFC 9919: directory for locally cached OCSP responses" },
     OPT_SECTION("Responder"),
     { "timeout", OPT_TIMEOUT, 'p',
         "Connection timeout (in seconds) to the OCSP responder" },
@@ -301,6 +311,9 @@ int ocsp_main(int argc, char **argv)
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, res, ret = 1;
     int rfc9919_mode = 0;
+    const char *cache_dir = NULL;
+    char *cache_path = NULL;
+    int from_cache = 0;
     int req_timeout = -1;
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
@@ -336,6 +349,9 @@ int ocsp_main(int argc, char **argv)
             goto end;
         case OPT_RFC9919:
             rfc9919_mode = 1;
+            break;
+        case OPT_RESP_CACHE:
+            cache_dir = opt_arg();
             break;
         case OPT_OUTFILE:
             outfile = opt_arg();
@@ -616,7 +632,11 @@ int ocsp_main(int argc, char **argv)
         BIO_puts(bio_err, "Error: RFC 9919 requires SHA-256 certificate IDs\n");
         goto end;
         }
-
+    /* Check that the */
+    if (cache_dir != NULL && !rfc9919_mode) {
+        BIO_printf(bio_err, "%s: -resp_cache requires -rfc9919\n", prog);
+        goto end;
+    }
          /*
          * RFC 9919 favors cacheable OCSP responses, so do not
          * automatically add a nonce unless explicitly requested.
@@ -854,31 +874,43 @@ redo_accept:
     } else if (host != NULL) {
 #ifndef OPENSSL_NO_SOCK
         int get_attempted = 0;
-
+        /*
+         * RFC 9919 s7.1: serve from the local cache while fresh. A request
+         * carrying a nonce cannot match a cached response, so it bypasses.
+         */
+        if (cache_dir != NULL
+            && OCSP_REQUEST_get_ext_by_NID(req, NID_id_pkix_OCSP_Nonce, -1) < 0
+            && (cache_path = ocsp_cache_path(cache_dir, host, port, path,
+                    use_ssl, req)) != NULL
+            && (resp = ocsp_cache_load(cache_path)) != NULL)
+            from_cache = 1;
+        
+        if (!from_cache) {
         /*
         * RFC 9919: Attempt HTTP GET when the complete
         * encoded request URL is <= 255 bytes.
         */
 
-        if (rfc9919_mode) {
-        resp = process_responder_get(
-            req,
-            host,
-            port,
-            path,
-            opt_proxy,
-            opt_no_proxy,
-            use_ssl,
-            headers,
-            req_timeout,
-            &get_attempted);
-    }
-        if (!get_attempted) {
-            resp = process_responder(req, host, port, path, opt_proxy, opt_no_proxy,
-                use_ssl, headers, req_timeout);
+            if (rfc9919_mode) {
+                resp = process_responder_get(
+                req,
+                host,
+                port,
+                path,
+                opt_proxy,
+                opt_no_proxy,
+                use_ssl,
+                headers,
+                req_timeout,
+                &get_attempted);
+            }
+            if (!get_attempted) {
+                resp = process_responder(req, host, port, path, opt_proxy, opt_no_proxy,
+                    use_ssl, headers, req_timeout);
+            }
+            if (resp == NULL)
+                goto end;
         }
-        if (resp == NULL)
-            goto end;
 #else
         BIO_puts(bio_err,
             "Error creating connect BIO - sockets not supported\n");
@@ -989,6 +1021,11 @@ done_resp:
             ret = 1;
         } else {
             BIO_puts(bio_err, "Response verify OK\n");
+#ifndef OPENSSL_NO_SOCK
+            /* RFC 9919 s7.1: cache authoritative (verified) responses only */
+            if (cache_path != NULL && !from_cache)
+                ocsp_cache_store(cache_path, resp);
+#endif
         }
     }
 
@@ -1556,6 +1593,102 @@ static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp)
     return 0;
 #endif
 }
+#ifndef OPENSSL_NO_SOCK
+/* seconds from 'from' to 'to'; negative if 'to' is earlier */
+static int ocsp_secs(const ASN1_TIME *from, const ASN1_TIME *to, long *secs)
+{
+    int d, s;
+
+    if (!ASN1_TIME_diff(&d, &s, from, to))
+        return 0;
+    *secs = (long)d * 86400 + s;
+    return 1;
+}
+
+/* <dir>/<hex SHA-256 of "responder-URL" NUL request-DER>.der */
+static char *ocsp_cache_path(const char *dir, const char *host,
+    const char *port, const char *path, int use_ssl, OCSP_REQUEST *req)
+{
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    unsigned char *der = NULL, md[EVP_MAX_MD_SIZE];
+    unsigned int mdlen = 0;
+    char id[1024], *out = NULL;
+    int derlen, idlen, n, i;
+    size_t outlen;
+
+    idlen = BIO_snprintf(id, sizeof(id), "%s://%s:%s/%s",
+        use_ssl == 1 ? "https" : "http", host,
+        port != NULL ? port : "", path != NULL ? path : "");
+    derlen = i2d_OCSP_REQUEST(req, &der);
+    if (ctx == NULL || idlen < 0 || derlen <= 0
+        || !EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)
+        || !EVP_DigestUpdate(ctx, id, (size_t)idlen + 1) /* includes NUL */
+        || !EVP_DigestUpdate(ctx, der, (size_t)derlen)
+        || !EVP_DigestFinal_ex(ctx, md, &mdlen))
+        goto end;
+
+    outlen = strlen(dir) + 1 + 2 * mdlen + sizeof(".der");
+    if ((out = OPENSSL_malloc(outlen)) == NULL)
+        goto end;
+    n = BIO_snprintf(out, outlen, "%s/", dir);
+    for (i = 0; i < (int)mdlen; i++)
+        n += BIO_snprintf(out + n, outlen - n, "%02x", md[i]);
+    BIO_snprintf(out + n, outlen - n, ".der");
+end:
+    OPENSSL_free(der);
+    EVP_MD_CTX_free(ctx);
+    return out;
+}
+
+/*
+ * Return the cached response only while it is fresh by its signed times
+ * (RFC 9919 s8.5): not before thisUpdate, and younger than half of
+ * nextUpdate - thisUpdate. Anything else is a plain miss, never an error.
+ */
+static OCSP_RESPONSE *ocsp_cache_load(const char *file)
+{
+    BIO *in = BIO_new_file(file, "rb");
+    OCSP_RESPONSE *resp = NULL;
+    OCSP_BASICRESP *bs = NULL;
+    ASN1_GENERALIZEDTIME *thisupd = NULL, *nextupd = NULL;
+    ASN1_TIME *now = NULL;
+    long age, window;
+    int ok = 0;
+
+    if (in == NULL)
+        return NULL;
+    if ((resp = d2i_OCSP_RESPONSE_bio(in, NULL)) != NULL
+        && OCSP_response_status(resp) == OCSP_RESPONSE_STATUS_SUCCESSFUL
+        && (bs = OCSP_response_get1_basic(resp)) != NULL
+        && OCSP_resp_count(bs) == 1
+        && OCSP_single_get0_status(OCSP_resp_get0(bs, 0), NULL, NULL,
+               &thisupd, &nextupd) >= 0
+        && thisupd != NULL && nextupd != NULL
+        && (now = X509_gmtime_adj(NULL, 0)) != NULL
+        && ocsp_secs(thisupd, now, &age)
+        && ocsp_secs(thisupd, nextupd, &window))
+        ok = age >= 0 && age < window / 2;
+    ASN1_TIME_free(now);
+    OCSP_BASICRESP_free(bs);
+    BIO_free(in);
+    if (!ok) {
+        OCSP_RESPONSE_free(resp);
+        resp = NULL;
+        ERR_clear_error(); /* a miss must not leave parse errors queued */
+    }
+    return resp;
+}
+
+static void ocsp_cache_store(const char *file, OCSP_RESPONSE *resp)
+{
+    BIO *out = BIO_new_file(file, "wb");
+
+    /* a torn write from a concurrent run fails to parse later: a miss */
+    if (out == NULL || i2d_OCSP_RESPONSE_bio(out, resp) <= 0)
+        BIO_printf(bio_err, "Warning: cannot write OCSP cache file %s\n", file);
+    BIO_free(out);
+}
+#endif
 
 #ifndef OPENSSL_NO_SOCK
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req, const char *host,
