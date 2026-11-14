@@ -210,9 +210,18 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
 #define OCSP_set_max_response_length OSSL_HTTP_REQ_CTX_set_max_response_length
 #endif
 
+/**
+ * @brief Create an OCSP certificate identifier from a certificate and issuer.
+ * If dgst is NULL, SHA-256 is used.
+ * @see OCSP_cert_to_id(3)
+ */
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
     const X509 *issuer);
 
+/**
+ * @brief Create an OCSP certificate identifier from its component fields.
+ * @see OCSP_cert_id_new(3)
+ */
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
     const X509_NAME *issuerName,
     const ASN1_BIT_STRING *issuerKey,

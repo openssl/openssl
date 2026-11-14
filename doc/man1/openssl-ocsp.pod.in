@@ -21,6 +21,8 @@ B<openssl> B<ocsp>
 [B<-sign_other> I<file>]
 [B<-nonce>]
 [B<-no_nonce>]
+[B<-rfc9919>]
+[B<-resp_cache> I<directory>]
 [B<-req_text>]
 [B<-resp_text>]
 [B<-text>]
@@ -66,6 +68,7 @@ B<openssl> B<ocsp>
 [B<-nmin> I<n>]
 [B<-ndays> I<n>]
 [B<-resp_key_id>]
+[B<-no_resp_key_id>]
 [B<-nrequest> I<n>]
 [B<-multi> I<process-count>]
 [B<-rcid> I<digest>]
@@ -77,7 +80,9 @@ B<openssl> B<ocsp>
 =head1 DESCRIPTION
 
 The Online Certificate Status Protocol (OCSP) enables applications to
-determine the (revocation) state of an identified certificate (RFC 2560).
+determine the (revocation) state of an identified certificate (RFC 6960).
+The B<-rfc9919> option selects lightweight OCSP behaviour described in
+RFC 9919.
 
 This command performs many common OCSP tasks. It can be used
 to print out requests and responses, create requests and send queries
@@ -87,6 +92,46 @@ to an OCSP responder and behave like a mini OCSP server itself.
 
 This command operates as either a client or a server.
 The options are described below, divided into those two modes.
+
+=head2 General Options
+
+=over 4
+
+=item B<-rfc9919>
+
+Enable the RFC 9919 lightweight OCSP profile handling implemented by this
+command. The option can be used in client or responder mode.
+
+In client mode, newly created certificate identifiers use SHA-256 by default.
+The request must contain exactly one certificate identifier, and its digest
+must be SHA-256; these constraints also apply to requests read using
+B<-reqin>. An automatically generated nonce is omitted unless B<-nonce> is
+explicitly specified. The client attempts an HTTP GET request when the full
+encoded URL is 255 bytes or less, and uses POST for longer URLs. A failed
+GET request is not automatically retried using POST.
+
+For successful responses, client-side checks require B<thisUpdate> and
+B<nextUpdate> and validate their freshness. Normal signature and responder
+certificate verification remains subject to the verification options.
+
+In responder mode, the signer is identified by its key by default unless
+B<-no_resp_key_id> is specified. Generated responses include B<nextUpdate>,
+using a 60-minute interval if B<-ndays> is not specified. Requests containing
+multiple certificate identifiers or disallowed extensions are rejected. The
+responder returns an C<unauthorized> response when it cannot provide status
+information from its configured CA and index records. Cacheable successful
+HTTP responses include cache control headers: C<Date> uses the current
+server time, C<Last-Modified> uses B<producedAt>, and C<Expires> uses
+B<nextUpdate>. The C<ETag> is based on the SHA-256 digest of the DER-encoded
+response, and C<Cache-Control> uses a C<max-age> equal to half of the
+B<thisUpdate>-to-B<nextUpdate> interval.
+
+This option does not change the behaviour of OCSP operations which do not
+select the lightweight profile, except for the library-level default digest
+described in L<OCSP_cert_to_id(3)>. It does not by itself establish that the
+whole deployment conforms to RFC 9919.
+
+=back
 
 =head2 OCSP Client Options
 
@@ -148,8 +193,25 @@ The input can be in PEM, DER, or PKCS#12 format.
 Add an OCSP nonce extension to a request or disable OCSP nonce addition.
 Normally if an OCSP request is input using the B<-reqin> option no
 nonce is added: using the B<-nonce> option will force addition of a nonce.
-If an OCSP request is being created (using B<-cert> and B<-serial> options)
-a nonce is automatically added specifying B<-no_nonce> overrides this.
+If an OCSP request is being created (using B<-cert> or B<-serial> options),
+a nonce is automatically added unless B<-no_nonce> is specified. With
+B<-rfc9919>, the default is reversed: no nonce is added unless B<-nonce>
+is explicitly specified. Nonces prevent reuse of previously cached responses.
+
+=item B<-resp_cache> I<directory>
+
+Use I<directory> for a local disk cache of OCSP responses. This option
+requires B<-rfc9919> and applies to requests made to an HTTP(S) responder.
+The directory must already exist and be writable to store responses.
+
+Cache filenames are derived from a SHA-256 digest of the responder address
+and DER-encoded request. Requests containing a nonce bypass the cache.
+Cached entries are reused only within the first half of their
+B<thisUpdate>-to-B<nextUpdate> interval. A cached response is subjected to
+normal response verification before use unless verification has been disabled.
+New responses are stored only when responder verification reports success.
+The usual verification-disabling options weaken those guarantees and should
+not be combined with a cache that is relied upon for security.
 
 =item B<-req_text>, B<-resp_text>, B<-text>
 
@@ -284,19 +346,16 @@ only be used for testing purposes.
 
 =item B<-validity_period> I<nsec>, B<-status_age> I<age>
 
-These options specify the range of times, in seconds, which will be tolerated
-in an OCSP response. Each certificate status response includes a B<notBefore>
-time and an optional B<notAfter> time. The current time should fall between
-these two values, but the interval between the two times may be only a few
-seconds. In practice the OCSP responder and clients clocks may not be precisely
-synchronised and so such a check may fail. To avoid this the
-B<-validity_period> option can be used to specify an acceptable error range in
-seconds, the default value is 5 minutes.
+These options control how OCSP response timestamps are validated.
+The B<thisUpdate> field indicates when the status was known to be correct;
+B<nextUpdate> indicates when more recent information will be available.
+B<-validity_period> allows for clock skew in seconds; its default is
+300 seconds (five minutes).
 
-If the B<notAfter> time is omitted from a response then this means that new
-status information is immediately available. In this case the age of the
-B<notBefore> field is checked to see it is not older than I<age> seconds old.
-By default this additional check is not performed.
+When B<nextUpdate> is absent, B<-status_age> can limit the age of
+B<thisUpdate> to I<age> seconds. By default there is no such age limit.
+In B<-rfc9919> mode, B<nextUpdate> is required and a response without it
+is rejected irrespective of B<-status_age>.
 
 =item B<-rcid> I<digest>
 
@@ -308,7 +367,9 @@ be used. The default is the same digest algorithm used in the request.
 
 This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.
-The default is SHA-1. This option may be used multiple times to specify the
+The default is SHA-1 when B<-rfc9919> is not selected, and SHA-256 when
+B<-rfc9919> is selected. In the latter mode other certificate identifier
+digests are rejected. This option may be used multiple times to specify the
 digest used by subsequent certificate identifiers.
 
 {- $OpenSSL::safe::opt_trust_item -}
@@ -381,10 +442,13 @@ for testing.
 
 Don't include any certificates in the OCSP response.
 
-=item B<-resp_key_id>
+=item B<-resp_key_id>, B<-no_resp_key_id>
 
-Identify the signer certificate using the key ID, default is to use the
-subject name.
+Identify the responder using its key identifier or its subject name,
+respectively. The default is the subject name except when B<-rfc9919> is
+selected, where the key identifier is the default. B<-no_resp_key_id>
+explicitly overrides that default; using it may make a new responder
+non-conforming to the RFC 9919 profile.
 
 =item B<-port> I<portnum>
 
@@ -415,19 +479,20 @@ required unix system-calls).
 
 =item B<-nmin> I<minutes>, B<-ndays> I<days>
 
-Number of minutes or days when fresh revocation information is available:
-used in the B<nextUpdate> field. If neither option is present then the
-B<nextUpdate> field is omitted meaning fresh revocation information is
-immediately available.
+Number of minutes or days until fresh revocation information is available:
+used in the B<nextUpdate> field. Normally, if neither option is present,
+B<nextUpdate> is omitted. With B<-rfc9919>, B<nextUpdate> is always
+included. The current implementation uses a 60-minute interval when
+B<-ndays> is not specified, even when B<-nmin> is specified alone.
 
 =back
 
 =head1 OCSP RESPONSE VERIFICATION
 
-OCSP Response follows the rules specified in RFC2560.
+OCSP response verification follows the rules specified in RFC 6960.
 
 Initially the OCSP responder certificate is located and the signature on
-the OCSP request checked using the responder certificate's public key.
+the OCSP response is checked using the responder certificate's public key.
 
 Then a normal certificate verify is performed on the OCSP responder certificate
 building up a certificate chain in the process. The locations of the trusted
@@ -473,7 +538,7 @@ is a 'global VA') B<-VAfile> options need to be used.
 
 The OCSP server is only useful for test and demonstration purposes: it is
 not really usable as a full OCSP responder. It contains only a very
-simple HTTP request handling and can only handle the POST form of OCSP
+simple HTTP request handling and can handle both GET and POST OCSP
 queries. It also handles requests serially meaning it cannot respond to
 new requests until it has processed the current one. The text index file
 format of revocation is also inefficient for large quantities of revocation
@@ -493,6 +558,12 @@ response to a file, print it out in text form, and verify the response:
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \
      -url http://ocsp.myhost.com/ -resp_text -respout resp.der
+
+Query a responder using the RFC 9919 profile, with an optional local
+response cache:
+
+ openssl ocsp -rfc9919 -issuer issuer.pem -cert c1.pem \
+     -url http://ocsp.myhost.com/ -resp_cache ./ocsp-cache
 
 Read in an OCSP response and print out text form:
 
@@ -526,7 +597,7 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

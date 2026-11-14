@@ -641,7 +641,7 @@ int ocsp_main(int argc, char **argv)
         BIO_puts(bio_err, "Error: RFC 9919 requires SHA-256 certificate IDs\n");
         goto end;
         }
-    /* Check that the */
+    /* Response caching is available only in RFC 9919 mode. */
     if (cache_dir != NULL && !rfc9919_mode) {
         BIO_printf(bio_err, "%s: -resp_cache requires -rfc9919\n", prog);
         goto end;
@@ -1099,6 +1099,16 @@ static int index_changed(CA_DB *rdb)
 
 #endif
 
+/**
+ * @brief Add a certificate identifier to a request.
+ * @param req request created on demand and updated on success
+ * @param cert certificate whose status is requested
+ * @param cert_id_md certificate identifier digest
+ * @param issuer issuer certificate
+ * @param ids list of certificate identifiers
+ * @param rfc9919_mode reject a second identifier when nonzero
+ * @returns 1 on success, 0 on failure
+ */
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
     const EVP_MD *cert_id_md, X509 *issuer,
     STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode)
@@ -1134,6 +1144,16 @@ err:
     return 0;
 }
 
+/**
+ * @brief Add a serial-number certificate identifier to a request.
+ * @param req request created on demand and updated on success
+ * @param serial certificate serial number in text form
+ * @param cert_id_md certificate identifier digest
+ * @param issuer issuer certificate
+ * @param ids list of certificate identifiers
+ * @param rfc9919_mode reject a second identifier when nonzero
+ * @returns 1 on success, 0 on failure
+ */
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     const EVP_MD *cert_id_md, X509 *issuer,
     STACK_OF(OCSP_CERTID) *ids, int rfc9919_mode)
@@ -1181,6 +1201,15 @@ err:
 }
 
 
+/**
+ * @brief Validate RFC 9919 response freshness for every SingleResponse.
+ * Both thisUpdate and nextUpdate are required in this profile.
+ * @param out diagnostic output BIO
+ * @param bs basic OCSP response to check
+ * @param nsec permitted clock skew in seconds
+ * @param maxage maximum age in seconds, or -1 for no additional limit
+ * @returns 1 if all entries pass, 0 otherwise
+ */
 static int check_rfc9919_response(BIO *out, OCSP_BASICRESP *bs,
                                   long nsec, long maxage)
 {
@@ -1206,6 +1235,19 @@ static int check_rfc9919_response(BIO *out, OCSP_BASICRESP *bs,
     return 1;
 }
 
+/**
+ * @brief Print statuses and check their validity for requested certificates.
+ * In RFC 9919 mode, a missing nextUpdate is an error.
+ * @param out output BIO
+ * @param bs basic OCSP response
+ * @param req matching OCSP request
+ * @param names names used for the printed results
+ * @param ids requested certificate identifiers
+ * @param nsec permitted clock skew in seconds
+ * @param maxage maximum response age in seconds
+ * @param rfc9919_mode enforce the lightweight profile if nonzero
+ * @returns 1 on success, 0 on failure
+ */
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     STACK_OF(OPENSSL_STRING) *names,
     STACK_OF(OCSP_CERTID) *ids, long nsec,
@@ -1282,6 +1324,27 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     return ret;
 }
 
+/**
+ * @brief Create an OCSP response from the responder's CA and index records.
+ * In RFC 9919 mode, enforce the lightweight request constraints and create
+ * a nextUpdate timestamp. Return unauthorized if status cannot be supplied.
+ * @param err diagnostic output BIO
+ * @param resp receives an allocated OCSP response
+ * @param req incoming request
+ * @param db responder certificate status database
+ * @param ca issuer certificates
+ * @param rcert responder signing certificate
+ * @param rkey responder signing key
+ * @param rmd response signing digest
+ * @param sigopts responder signature options
+ * @param rother additional responder certificates
+ * @param flags response signing flags
+ * @param nmin minutes until nextUpdate
+ * @param ndays days until nextUpdate, or -1 when unspecified
+ * @param badsig whether to corrupt the signature for tests
+ * @param resp_md optional certificate identifier digest override
+ * @param rfc9919_mode enforce RFC 9919 constraints if nonzero
+ */
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
     EVP_PKEY *rkey, const EVP_MD *rmd,
@@ -1591,6 +1654,13 @@ end:
 }
 #endif /* OPENSSL_NO_SOCK */
 
+/**
+ * @brief Send an OCSP response, adding cache headers when eligible.
+ * @param cbio HTTP connection BIO
+ * @param resp OCSP response to send
+ * @param rfc9919_mode enable RFC 9919 cache headers if nonzero
+ * @returns 1 on success, 0 on failure
+ */
 static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp,
                               int rfc9919_mode)
 {
@@ -1784,15 +1854,23 @@ end:
 #endif
 
 #ifndef OPENSSL_NO_SOCK
-/*
- *  * RFC 9919: Construct and send an OCSP GET request.   
- *
- * Returns NULL without attempting GET when the complete URL
- * exceeds 255 bytes. In that case the caller must use POST.
- *
- * attempted is set to 1 when a GET request is actually attempted.
+/**
+ * @brief Send an OCSP request using HTTP GET when its URL is short enough.
+ * The request is DER encoded, Base64 encoded, and URI percent encoded.
+ * A URL longer than 255 bytes is left for the caller to send using POST.
+ * A failed attempted GET is not retried automatically using POST.
+ * @param req OCSP request
+ * @param host responder hostname
+ * @param port responder port, or NULL
+ * @param path responder path, or NULL
+ * @param proxy HTTP(S) proxy URL, or NULL
+ * @param no_proxy addresses bypassing the proxy, or NULL
+ * @param use_ssl nonzero to use HTTPS
+ * @param headers additional HTTP headers
+ * @param req_timeout request timeout
+ * @param attempted set to 1 if GET is attempted, 0 if no GET was sent
+ * @returns allocated OCSP response, or NULL on failure or POST fallback
  */
-
 static OCSP_RESPONSE *process_responder_get(
     OCSP_REQUEST *req,
     const char *host,

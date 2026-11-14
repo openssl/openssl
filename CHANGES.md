@@ -33,6 +33,16 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added an opt-in lightweight OCSP profile to the `openssl ocsp` command
+   using `-rfc9919`. The command supports SHA-256 certificate identifiers,
+   profile-specific request and freshness checks, HTTP GET for short OCSP
+   requests, responder cache headers, and optional local response caching
+   using `-resp_cache`.
+
+ * Changed `OCSP_cert_to_id()` to use SHA-256 instead of SHA-1 when its
+   digest argument is NULL. Applications that depend on SHA-1 certificate
+   identifiers must now request SHA-1 explicitly.
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build

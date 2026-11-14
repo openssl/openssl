@@ -29,6 +29,12 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
+  * Added an opt-in RFC 9919 lightweight OCSP mode to `openssl ocsp`, including
+    SHA-256 certificate identifiers, HTTP GET support and response caching.
+
+  * Changed the default certificate identifier digest of `OCSP_cert_to_id()`
+    from SHA-1 to SHA-256 when no digest is supplied.
+
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 

@@ -85,19 +85,29 @@ int http_server_send_asn1_resp(const char *prog, BIO *cbio, int keep_alive,
     const char *content_type,
     const ASN1_ITEM *it, const ASN1_VALUE *resp);
 
-/* Same, plus pre-formatted extra header lines needed for rfc 9919 (each ending in "\r\n"), or NULL */
+/**
+ * @brief Send an ASN.1 HTTP response with optional additional headers.
+ * @param prog application name for diagnostics
+ * @param cbio destination BIO
+ * @param keep_alive whether to keep the connection open
+ * @param content_type HTTP Content-Type value
+ * @param extra_hdrs pre-formatted header lines, each ending in CRLF, or NULL
+ * @param it ASN.1 type of resp
+ * @param resp response value
+ * @returns 1 on success, 0 on failure
+ */
 int http_server_send_asn1_resp_hdrs(const char *prog, BIO *cbio, int keep_alive,
     const char *content_type, const char *extra_hdrs,
     const ASN1_ITEM *it, const ASN1_VALUE *resp);
 /* Buffer size for http_date(): 29 chars plus NUL */
 # define HTTP_DATE_MAX 30
 
-/*-
- * Format a time as an RFC 9110 HTTP-date (IMF-fixdate),
- * e.g. "Sun, 06 Nov 1994 08:49:37 GMT".
- * t: the time to format, or NULL for the current time
- * out: destination buffer, at least HTTP_DATE_MAX bytes
- * returns 1 on success, 0 on failure
+/**
+ * @brief Format an ASN.1 time as an RFC 9110 HTTP-date (IMF-fixdate).
+ * @param t time to format, or NULL for the current time
+ * @param out destination buffer
+ * @param n size of out in bytes; must be at least HTTP_DATE_MAX
+ * @returns 1 on success, 0 on failure
  */
 int http_date(const ASN1_TIME *t, char *out, size_t n);
 /*-
