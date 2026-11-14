@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,9 +61,9 @@ int ossl_DER_w_boolean(WPACKET *pkt, int tag, int b)
 {
     return int_start_context(pkt, tag)
         && WPACKET_start_sub_packet(pkt)
-        && (!b || WPACKET_put_bytes_u8(pkt, 0xFF))
-        && !WPACKET_close(pkt)
-        && !WPACKET_put_bytes_u8(pkt, DER_P_BOOLEAN)
+        && WPACKET_put_bytes_u8(pkt, (b) ? 0xFF : 0x00)
+        && WPACKET_close(pkt)
+        && WPACKET_put_bytes_u8(pkt, DER_P_BOOLEAN)
         && int_end_context(pkt, tag);
 }
 
