@@ -95,6 +95,12 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
     size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_end(void);
 
+/**
+ * @brief Turn rejection of unrecognised parameter keys on or off.
+ * @see OSSL_PARAM_set_strict(3), OSSL_PARAM(3)
+ */
+int OSSL_PARAM_set_strict(int strict);
+
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
     const OSSL_PARAM *paramdefs,
     const char *key, const char *value,

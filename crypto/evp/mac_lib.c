@@ -16,6 +16,7 @@
 #include <openssl/types.h>
 #include "internal/nelem.h"
 #include "crypto/evp.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
@@ -119,6 +120,9 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
     }
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_MAC_CTX_settable_params(ctx)))
+        return 0;
     /* The implementation may have been partially re-keyed: start over */
     if (!ctx->meth->init(ctx->algctx, key, keylen, params)) {
         ctx->state = EVP_MAC_STATE_NEW;
@@ -136,6 +140,9 @@ int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
     }
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_MAC_CTX_settable_params(ctx)))
+        return 0;
     if (!ctx->meth->init_skey(ctx->algctx, skey->keydata, params)) {
         ctx->state = EVP_MAC_STATE_NEW;
         return 0;
@@ -251,6 +258,9 @@ int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 
 int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 {
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_MAC_CTX_settable_params(ctx)))
+        return 0;
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->algctx, params);
     return 1;
