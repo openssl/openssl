@@ -297,12 +297,13 @@ int ocsp_main(int argc, char **argv)
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int nonce_explicit = 0;
+    int resp_key_id_explicit = 0;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, res, ret = 1;
     int rfc9919_mode = 0;
     int req_timeout = -1;
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
-    unsigned long sign_flags = 0, verify_flags = 0, rflags = OCSP_RESPID_KEY;
+    unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
 
     if ((reqnames = sk_OPENSSL_STRING_new_null()) == NULL
@@ -395,9 +396,11 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_RESP_KEY_ID:
             rflags |= OCSP_RESPID_KEY;
+	    resp_key_id_explicit = 1;
             break;
 	case OPT_NO_RESP_KEY_ID:
 	    rflags &= ~OCSP_RESPID_KEY;
+	    resp_key_id_explicit = 1;
 	    break;
         case OPT_NO_CERTS:
             sign_flags |= OCSP_NOCERTS;
@@ -621,6 +624,8 @@ int ocsp_main(int argc, char **argv)
          */
     if (rfc9919_mode && !nonce_explicit)
         add_nonce = 0;
+    if (rfc9919_mode && !resp_key_id_explicit)
+        rflags |= OCSP_RESPID_KEY;
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
@@ -848,8 +853,30 @@ redo_accept:
             send_ocsp_response(cbio, resp);
     } else if (host != NULL) {
 #ifndef OPENSSL_NO_SOCK
-        resp = process_responder(req, host, port, path, opt_proxy, opt_no_proxy,
-            use_ssl, headers, req_timeout);
+        int get_attempted = 0;
+
+        /*
+        * RFC 9919: Attempt HTTP GET when the complete
+        * encoded request URL is <= 255 bytes.
+        */
+
+        if (rfc9919_mode) {
+        resp = process_responder_get(
+            req,
+            host,
+            port,
+            path,
+            opt_proxy,
+            opt_no_proxy,
+            use_ssl,
+            headers,
+            req_timeout,
+            &get_attempted);
+    }
+        if (!get_attempted) {
+            resp = process_responder(req, host, port, path, opt_proxy, opt_no_proxy,
+                use_ssl, headers, req_timeout);
+        }
         if (resp == NULL)
             goto end;
 #else
@@ -1226,9 +1253,37 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 
     id_count = OCSP_request_onereq_count(req);
 
-    if (id_count <= 0) {
+    if (id_count <= 0
+            || (rfc9919_mode && id_count > 1)) {
         *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
         goto end;
+    }
+
+    if (rfc9919_mode) {
+        int j;
+        if (OCSP_ONEREQ_get_ext_count(OCSP_request_onereq_get0(req, 0)) > 0) {
+            BIO_puts(err,
+                "Rejecting request: disallowed singleRequestExtensions present\n");
+            *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
+            goto end;
+        }
+        /*
+	 * RFC 9919 3.1.1: clients SHOULD NOT include  requestExtensions
+	 * except the nonce. This is a SHOULD NOT, not a MUST NOT, so
+	 * reject only non-nonce extensions rather than any extension
+	 */
+        for (j=0; j < OCSP_REQUEST_get_ext_count(req); j++) {
+            const X509_EXTENSION *ext = OCSP_REQUEST_get_ext(req, j);
+            ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+
+            if (OBJ_obj2nid(obj) != NID_id_pkix_OCSP_Nonce) {
+                BIO_puts(err,
+                    "Rejecting request: disallowed requestExtensions present\n");
+                *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
+                    NULL);
+                goto end;
+            }
+        }
     }
 
     bs = OCSP_BASICRESP_new();
@@ -1298,12 +1353,21 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         cid = (cid_resp_md != NULL) ? cid_resp_md : cid;
 
         if (!found) {
+            if (rfc9919_mode) {
+                *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_UNAUTHORIZED, NULL);
+                goto end;
+            }
             OCSP_basic_add1_status(bs, cid,
                 V_OCSP_CERTSTATUS_UNKNOWN,
                 0, NULL, thisupd, nextupd);
             continue;
         }
         if (inf == NULL) {
+            if (rfc9919_mode) {
+                OCSP_CERTID_free(cid_resp_md);
+                *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_UNAUTHORIZED, NULL);
+                goto end;
+            }
             OCSP_basic_add1_status(bs, cid,
                 V_OCSP_CERTSTATUS_UNKNOWN,
                 0, NULL, thisupd, nextupd);
@@ -1464,6 +1528,146 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req, const char *host,
 
 end:
     SSL_CTX_free(ctx);
+    return resp;
+}
+#endif
+
+#ifndef OPENSSL_NO_SOCK
+/*
+ *  * RFC 9919: Construct and send an OCSP GET request.   
+ *
+ * Returns NULL without attempting GET when the complete URL
+ * exceeds 255 bytes. In that case the caller must use POST.
+ *
+ * attempted is set to 1 when a GET request is actually attempted.
+ */
+
+static OCSP_RESPONSE *process_responder_get(
+    OCSP_REQUEST *req,
+    const char *host,
+    const char *port,
+    const char *path,
+    const char *proxy,
+    const char *no_proxy,
+    int use_ssl,
+    STACK_OF(CONF_VALUE) *headers,
+    int req_timeout,
+    int *attempted)
+{
+    unsigned char *der = NULL;
+    unsigned char *b64 = NULL;
+    char *url = NULL;
+    char *p;
+    SSL_CTX *ctx = NULL;
+    OCSP_RESPONSE *resp = NULL;
+    int der_len, b64_len;
+    size_t base_len, encoded_len = 0;
+    size_t i, url_len;
+    const char *scheme = use_ssl == 1 ? "https" : "http";
+    const char *req_path = path != NULL ? path : "/";
+
+    *attempted = 0;
+
+    /* DER-encode the OCSP request. */
+    der_len = i2d_OCSP_REQUEST(req, &der);
+    if (der_len <= 0)
+        goto end;
+
+    /* Base64-encode the DER request. */
+    b64 = OPENSSL_malloc(4 * ((der_len + 2) / 3) + 1);
+    if (b64 == NULL)
+        goto end;
+
+    b64_len = EVP_EncodeBlock(b64, der, der_len);
+    if (b64_len<=0)
+        goto end;
+
+    /*
+     * RFC 3986 URL encoding:
+     * '+' becomes %2B
+     * '/' becomes %2F
+     * '=' becomes %3D
+     */
+    for (i = 0; i < (size_t)b64_len; i++) {
+        if (b64[i] == '+' || b64[i] == '/' || b64[i] == '=')
+            encoded_len +=3;
+        else
+            encoded_len++;
+    }
+    /* Append a path separator when necessary. */
+    base_len = strlen(scheme) + 3 + strlen(host)
+        + (port != NULL ? strlen(port) + 1 : 0)
+        + strlen(req_path)
+        + (req_path[strlen(req_path) - 1] == '/' ? 0 : 1);
+    url_len = base_len + encoded_len;
+
+    /*
+     * RFC 9919 Section 6:
+     * GET MUST be used when the complete encoded URL
+     * is less than or equal to 255 bytes.
+     */
+    if (url_len > 255)
+        goto end;
+    url = OPENSSL_malloc(url_len + 1);
+    if (url == NULL)
+        goto end;
+
+    if (port != NULL) {
+        BIO_snprintf(url, url_len + 1, "%s://%s:%s%s%s",
+            scheme, host, port, req_path,
+            req_path[strlen(req_path) - 1] == '/' ? "" : "/");
+    } else {
+        BIO_snprintf(url, url_len + 1, "%s://%s%s%s",
+            scheme, host, req_path,
+            req_path[strlen(req_path) - 1] == '/' ? "" : "/");
+    }
+    /* Append the URL-encoded Base64 request. */
+    p = url + strlen(url);
+
+    for (i = 0; i < (size_t)b64_len; i++) {
+        if (b64[i] == '+') {
+            memcpy(p, "%2B", 3);
+            p += 3;
+        } else if (b64[i] == '/') {
+            memcpy(p, "%2F", 3);
+            p += 3;
+        } else if (b64[i] == '=') {
+            memcpy(p, "%3D", 3);
+            p += 3;
+        } else {
+            *p++ = b64[i];
+        }
+    }
+    *p = '\0';
+    /* Create TLS context for HTTPS connections. */
+    if (use_ssl == 1) {
+        ctx = SSL_CTX_new(TLS_client_method());
+        if (ctx == NULL)
+            goto end;
+    }
+
+    *attempted = 1;
+
+    /* Perform ASN.1 HTTP GET. */
+    resp = (OCSP_RESPONSE *)app_http_get_asn1(
+        url,
+        proxy,
+        no_proxy,
+        ctx,
+        headers,
+        req_timeout,
+        "application/ocsp-response",
+        ASN1_ITEM_rptr(OCSP_RESPONSE));
+
+    if (resp == NULL)
+        BIO_printf(bio_err, "Error querying OCSP responder using GET\n");
+
+end:
+    OPENSSL_free(der);
+    OPENSSL_free(b64);
+    OPENSSL_free(url);
+    SSL_CTX_free(ctx);
+
     return resp;
 }
 #endif
