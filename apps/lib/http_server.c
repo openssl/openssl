@@ -190,6 +190,36 @@ void spawn_loop(const char *prog)
 }
 #endif
 
+int http_date(const ASN1_TIME *t, char *out, size_t n)
+{
+    /* hardcoded names: strftime() would be locale-dependent */
+    static const char *wd[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    static const char *mo[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    ASN1_TIME *epoch = NULL, *now = NULL;
+    int days, secs, r, ok = 0;
+    time_t tt;
+    struct tm tm;
+
+    if (out == NULL || n < HTTP_DATE_MAX)
+        return 0;
+    if (t == NULL && (t = now = X509_gmtime_adj(NULL, 0)) == NULL)
+        return 0;
+    if ((epoch = ASN1_TIME_set(NULL, 0)) != NULL
+        && ASN1_TIME_diff(&days, &secs, epoch, t)) {
+        tt = (time_t)days * 86400 + secs;
+        if (OPENSSL_gmtime(&tt, &tm) != NULL) {
+            r = snprintf(out, n, "%s, %02d %s %04d %02d:%02d:%02d GMT",
+                wd[tm.tm_wday], tm.tm_mday, mo[tm.tm_mon], tm.tm_year + 1900,
+                tm.tm_hour, tm.tm_min, tm.tm_sec);
+            ok = r > 0 && (size_t)r < n;
+        }
+    }
+    ASN1_TIME_free(epoch);
+    ASN1_TIME_free(now);
+    return ok;
+}
+
 #ifndef OPENSSL_NO_SOCK
 BIO *http_server_init(const char *prog, const char *port, int verb)
 {
@@ -499,6 +529,35 @@ fatal:
     *pcbio = NULL;
     ret = -1;
     goto out;
+}
+
+/* Updated version of asn1_resp with extra headers for caching described in rfc 9919*/
+int http_server_send_asn1_resp_hdrs(const char *prog, BIO *cbio, int keep_alive,
+    const char *content_type, const char *extra_hdrs,
+    const ASN1_ITEM *it, const ASN1_VALUE *resp)
+{
+    char buf[1024], *p;
+    int ret = snprintf(buf, sizeof(buf), HTTP_1_0 " 200 OK\r\n%s"
+                                                  "Content-type: %s\r\n"
+                                                  "Content-Length: %d\r\n%s",
+        keep_alive ? "Connection: keep-alive\r\n" : "",
+        content_type,
+        ASN1_item_i2d(resp, NULL, it),
+        extra_hdrs != NULL ? extra_hdrs : "");
+    
+    if (ret < 0 || (size_t)ret >= sizeof(buf))
+        return 0;
+    if (log_get_verbosity() < LOG_TRACE && (p = strchr(buf, '\r')) != NULL)
+        trace_log_message(-1, prog, LOG_INFO,
+            "sending response, 1st line: %.*s", (int)(p - buf),
+            buf);
+    log_HTTP1(prog, LOG_TRACE, "sending response header:\n%s", buf);
+
+    ret = BIO_printf(cbio, "%s\r\n", buf) > 0
+        && ASN1_item_i2d_bio(it, cbio, resp) > 0;
+
+    (void)BIO_flush(cbio);
+    return ret;
 }
 
 /* assumes that cbio does not do an encoding that changes the output length */

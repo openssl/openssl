@@ -1483,9 +1483,68 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 #endif
 }
 
+#ifndef OPENSSL_NO_SOCK
+/*
+ * Build the RFC 9919 (s6, s7.2) cache headers for a successful, single-cert
+ * response into buf, as CRLF-terminated lines.
+ * Returns 1 on success, 0 if no headers should be sent (non-successful
+ * status, missing nextUpdate, or any formatting failure).
+ */
+static int build_cache_headers(OCSP_RESPONSE *resp, char *buf, size_t len)
+{
+    OCSP_BASICRESP *bs = NULL;
+    ASN1_GENERALIZEDTIME *thisupd = NULL, *nextupd = NULL;
+    const ASN1_GENERALIZEDTIME *produced;
+    unsigned char *der = NULL, md[32];
+    char date[HTTP_DATE_MAX], lastmod[HTTP_DATE_MAX], expires[HTTP_DATE_MAX];
+    char etag[65];
+    int derlen, days, secs, i, r, ok = 0;
+    long window, maxage;
+
+    if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL
+        || (bs = OCSP_response_get1_basic(resp)) == NULL
+        || OCSP_resp_count(bs) != 1 /* RFC 9919 mode: exactly one cert */
+        /* returns the cert status (GOOD == 0), or -1 on error */
+        || OCSP_single_get0_status(OCSP_resp_get0(bs, 0), NULL, NULL,
+               &thisupd, &nextupd) < 0
+        || thisupd == NULL || nextupd == NULL
+        || (produced = OCSP_resp_get0_produced_at(bs)) == NULL
+        || !ASN1_TIME_diff(&days, &secs, thisupd, nextupd)
+        || (derlen = i2d_OCSP_RESPONSE(resp, &der)) <= 0
+        || !EVP_Q_digest(app_get0_libctx(), "SHA256", app_get0_propq(),
+               der, derlen, md, NULL)
+        || !http_date(NULL, date, sizeof(date)) /* NULL = now */
+        || !http_date(produced, lastmod, sizeof(lastmod))
+        || !http_date(nextupd, expires, sizeof(expires)))
+        goto end;
+
+    for (i = 0; i < 32; i++)
+        snprintf(etag + 2 * i, 3, "%02x", md[i]);
+
+    /* max-age must land strictly between thisUpdate and nextUpdate */
+    window = (long)days * 86400 + secs;
+    maxage = window > 1 ? window / 2 : 0;
+
+    r = snprintf(buf, len,
+        "Date: %s\r\n"
+        "Last-Modified: %s\r\n"
+        "Expires: %s\r\n"
+        "ETag: \"%s\"\r\n"
+        "Cache-Control: max-age=%ld, public, no-transform, must-revalidate\r\n",
+        date, lastmod, expires, etag, maxage);
+    ok = r > 0 && (size_t)r < len;
+
+end:
+    OPENSSL_free(der);
+    OCSP_BASICRESP_free(bs);
+    return ok;
+}
+#endif /* OPENSSL_NO_SOCK */
+
 static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp)
 {
 #ifndef OPENSSL_NO_SOCK
+
     return http_server_send_asn1_resp(prog, cbio,
         0 /* no keep-alive */,
         "application/ocsp-response",
