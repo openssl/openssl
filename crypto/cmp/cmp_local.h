@@ -58,7 +58,7 @@ struct ossl_cmp_ctx_st {
     int nonmatchedErrorNonces; /* accept missing/wrong transactionID or recipNonce in error msgs */
     int noCacheExtraCerts;
     X509 *srvCert; /* certificate used to identify the server */
-    X509 *validatedSrvCert; /* caches any already validated sender cert */
+    X509 *validatedPeerCert; /* caches first validated sender cert in transaction */
     X509_NAME *expected_sender; /* expected sender in header of response */
     X509_STORE *trusted; /* trust store maybe w CRLs and cert verify callback */
     STACK_OF(X509) *untrusted; /* untrusted (intermediate CA) certs */
@@ -852,7 +852,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 #define ossl_cmp_info(ctx, msg) ossl_cmp_log(INFO, ctx, msg)
 #define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 #define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
-int ossl_cmp_ctx_set1_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
+int ossl_cmp_ctx_set1_validatedPeerCert(OSSL_CMP_CTX *ctx, X509 *cert);
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
     OSSL_CMP_PKIFREETEXT *text);
