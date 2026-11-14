@@ -156,12 +156,31 @@ DECLARE_ASN1_FUNCTIONS(ECPKPARAMETERS)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECPKPARAMETERS, ECPKPARAMETERS)
 IMPLEMENT_ASN1_FUNCTIONS(ECPKPARAMETERS)
 
-ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+/* Minor tweak to operation: zero private key data.
+ * Mirrors the ASN1_OP_FREE_PRE handling in crypto/asn1/p8_pkey.c
+ * (PKCS8_PRIV_KEY_INFO), so an SEC1 EC private key is cleansed on
+ * free instead of leaving key material in freed memory. */
+static int ec_privatekey_cb(int operation, ASN1_VALUE **pval,
+                            const ASN1_ITEM *it, void *exarg)
+{
+    EC_PRIVATEKEY *ec_key;
+
+    if (operation == ASN1_OP_FREE_PRE) {
+        /* The structure is still valid during ASN1_OP_FREE_PRE */
+        ec_key = (EC_PRIVATEKEY *)*pval;
+        if (ec_key != NULL && ec_key->privateKey != NULL)
+            OPENSSL_cleanse(ec_key->privateKey->data,
+                            ec_key->privateKey->length);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(EC_PRIVATEKEY, ec_privatekey_cb) = {
     ASN1_EMBED(EC_PRIVATEKEY, version, INT32),
     ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
     ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
     ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-} static_ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+} static_ASN1_SEQUENCE_END_cb(EC_PRIVATEKEY, EC_PRIVATEKEY)
 
 DECLARE_ASN1_FUNCTIONS(EC_PRIVATEKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(EC_PRIVATEKEY, EC_PRIVATEKEY)
