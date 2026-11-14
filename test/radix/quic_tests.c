@@ -4676,6 +4676,27 @@ DEF_SCRIPT(script_74, "Version negotiation: QUIC_VERSION_1 ignored")
 #define BIO_TYPE_SCRIPT_75_FILTER (0x80 | BIO_TYPE_FILTER)
 static BIO_METHOD *script_75_filter_meth;
 static uint32_t script_75_word0;
+static const QUIC_CONN_ID *init_dcid;
+
+DEF_FUNC(get_init_dcid)
+{
+    int ok = 0;
+    SSL *client;
+    QUIC_CHANNEL *ch;
+
+    REQUIRE_SSL(client);
+    ch = ossl_quic_conn_get_channel(client);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    init_dcid = ossl_quic_channel_get_init_dcid(ch);
+    if (!TEST_ptr(init_dcid))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
 
 static int script_75_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags, size_t *msgs_processed)
@@ -4694,8 +4715,8 @@ static int script_75_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         hdr.version = 0;
         hdr.fixed = 1;
         hdr.dst_conn_id.id_len = 0;
-        hdr.src_conn_id.id_len = 8;
-        memset(hdr.src_conn_id.id, 0x55, 8);
+        hdr.src_conn_id.id_len = init_dcid->id_len;
+        memcpy(hdr.src_conn_id.id, init_dcid->id, init_dcid->id_len);
 
         if (!TEST_true(WPACKET_init_static_len(&wpkt, msg[0].data,
                 msg[0].data_len, 0)))
@@ -4779,6 +4800,8 @@ DEF_SCRIPT(script_75, "Version negotiation: Unknown version causes connection ab
     OP_FUNC(script_75_arm_version_neg);
 
     OP_NEW_SSL_C(C);
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(get_init_dcid);
     OP_SET_PEER_ADDR_FROM(C, L);
     OP_CONNECT_WAIT_OR_FAIL(C);
 
@@ -6124,6 +6147,40 @@ DEF_SCRIPT(key_update_retained_keys,
     }
 }
 
+DEF_FUNC(corrupt_dcid)
+{
+    static QUIC_CONN_ID corrupt_dcid;
+
+    memcpy(&corrupt_dcid, init_dcid, sizeof(QUIC_CONN_ID));
+    corrupt_dcid.id[0] = corrupt_dcid.id[0] ^ 0x55;
+    init_dcid = &corrupt_dcid;
+
+    return 1;
+}
+
+DEF_SCRIPT(ver_neg_check_dcid, "version negotiation must come with matching dcid")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+
+    OP_SELECT_SSL(0, L);
+    OP_FUNC(script_75_arm_version_neg);
+
+    OP_NEW_SSL_C(C);
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(get_init_dcid);
+    OP_FUNC(corrupt_dcid);
+    OP_SET_PEER_ADDR_FROM(C, L);
+    OP_CONNECT_WAIT(C);
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+}
+
 /*
  * List of Test Scripts
  * ============================================================================
@@ -6247,4 +6304,5 @@ static SCRIPT_INFO *const scripts[] = {
     USE(new_connid),
     USE(forbidden_frame_types),
     USE(key_update_retained_keys),
+    USE(ver_neg_check_dcid),
 };
