@@ -14,6 +14,7 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/usdt.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -180,6 +181,8 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
+
+    OSSL_USDT_new_child(ctx, ctx->op.encap.algctx);
 
     switch (operation) {
     case EVP_PKEY_OP_ENCAPSULATE:

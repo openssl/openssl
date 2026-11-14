@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/usdt.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -101,12 +102,14 @@ static int ecx_init(void *vecxctx, void *vkey, const char *algname)
 static int x25519_init(void *vecxctx, void *vkey,
     ossl_unused const OSSL_PARAM params[])
 {
+    OSSL_USDT_new_context_with_data(vecxctx, "pk::derive", { "pk::curve", OSSL_USDT_STRING("x25519") });
     return ecx_init(vecxctx, vkey, "X25519");
 }
 
 static int x448_init(void *vecxctx, void *vkey,
     ossl_unused const OSSL_PARAM params[])
 {
+    OSSL_USDT_new_context_with_data(vecxctx, "pk::derive", { "pk::curve", OSSL_USDT_STRING("x448") });
     return ecx_init(vecxctx, vkey, "X448");
 }
 
