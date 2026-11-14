@@ -195,10 +195,14 @@ push @defltfiles, qw(evppkey_ecx_kem.txt) unless $no_ecx;
 push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless ($no_dsa || $no_determinstic_nonce);
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 # ML DSA Composite algorithms are not in the FIPS provider — default provider only.
-# keygen/sigver include ECDSA stanzas; skip them in no-ec builds.
+# The data is split by classical algorithm; the ECDSA files are skipped in no-ec builds.
 push @defltfiles, qw(
-                      evppkey_ml_dsa_composite_keygen.txt
-                      evppkey_ml_dsa_composite_sigver.txt
+                      evppkey_ml_dsa_composite_keygen_rsa.txt
+                      evppkey_ml_dsa_composite_sigver_rsa.txt
+                     ) unless $no_ml_dsa_composite;
+push @defltfiles, qw(
+                      evppkey_ml_dsa_composite_keygen_ec.txt
+                      evppkey_ml_dsa_composite_sigver_ec.txt
                      ) unless $no_ml_dsa_composite || $no_ec;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;

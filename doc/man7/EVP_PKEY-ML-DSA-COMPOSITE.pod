@@ -61,10 +61,11 @@ B<ML-DSA-44> variants, B<SHA-512> for the B<ML-DSA-87> variants) is used to
 compute PH(M), the pre-hash of the message that both component signatures
 are ultimately computed over (see L<EVP_SIGNATURE-ML-DSA-COMPOSITE(7)>).
 
-Support for a given composite algorithm requires the classical component's
-algorithm (B<RSA> or B<EC>) to also be enabled at build time; see
+Support for the ECDSA composite algorithms, B<ML-DSA-44-ECDSA-P256-SHA256> and
+B<ML-DSA-87-ECDSA-P384-SHA512>, requires B<EC> to be enabled at build time, so
+they are not available with B<no-ec>. See
 L</CONFORMING TO> and L<openssl(1)/Configuration Options> for related
-B<no-rsa>, B<no-ec> and B<no-ml-dsa-composite> build options.
+B<no-ec> and B<no-ml-dsa-composite> build options.
 
 =head2 Keygen Parameters
 

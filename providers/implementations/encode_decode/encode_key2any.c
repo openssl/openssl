@@ -1807,12 +1807,14 @@ static int ml_dsa_composite_pki_priv_to_der(const void *vkey, unsigned char **pd
 /* evp_type and pem_type defines for composite variants */
 #define mldsa44_rsa2048_pss_sha256_evp_type NID_ML_DSA_44_RSA2048_PSS_SHA256
 #define mldsa44_rsa2048_pss_sha256_pem_type LN_ML_DSA_44_RSA2048_PSS_SHA256
+#define mldsa87_rsa4096_pss_sha512_evp_type NID_ML_DSA_87_RSA4096_PSS_SHA512
+#define mldsa87_rsa4096_pss_sha512_pem_type LN_ML_DSA_87_RSA4096_PSS_SHA512
+#ifndef OPENSSL_NO_EC
 #define mldsa44_ecdsa_p256_sha256_evp_type NID_ML_DSA_44_ECDSA_P256_SHA256
 #define mldsa44_ecdsa_p256_sha256_pem_type LN_ML_DSA_44_ECDSA_P256_SHA256
 #define mldsa87_ecdsa_p384_sha512_evp_type NID_ML_DSA_87_ECDSA_P384_SHA512
 #define mldsa87_ecdsa_p384_sha512_pem_type LN_ML_DSA_87_ECDSA_P384_SHA512
-#define mldsa87_rsa4096_pss_sha512_evp_type NID_ML_DSA_87_RSA4096_PSS_SHA512
-#define mldsa87_rsa4096_pss_sha512_pem_type LN_ML_DSA_87_RSA4096_PSS_SHA512
+#endif
 
 MAKE_ENCODER(mldsa44_rsa2048_pss_sha256, ml_dsa_composite, EncryptedPrivateKeyInfo, der);
 MAKE_ENCODER(mldsa44_rsa2048_pss_sha256, ml_dsa_composite, EncryptedPrivateKeyInfo, pem);
@@ -1821,6 +1823,7 @@ MAKE_ENCODER(mldsa44_rsa2048_pss_sha256, ml_dsa_composite, PrivateKeyInfo, pem);
 MAKE_ENCODER(mldsa44_rsa2048_pss_sha256, ml_dsa_composite, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(mldsa44_rsa2048_pss_sha256, ml_dsa_composite, SubjectPublicKeyInfo, pem);
 
+#ifndef OPENSSL_NO_EC
 MAKE_ENCODER(mldsa44_ecdsa_p256_sha256, ml_dsa_composite, EncryptedPrivateKeyInfo, der);
 MAKE_ENCODER(mldsa44_ecdsa_p256_sha256, ml_dsa_composite, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(mldsa44_ecdsa_p256_sha256, ml_dsa_composite, PrivateKeyInfo, der);
@@ -1834,6 +1837,7 @@ MAKE_ENCODER(mldsa87_ecdsa_p384_sha512, ml_dsa_composite, PrivateKeyInfo, der);
 MAKE_ENCODER(mldsa87_ecdsa_p384_sha512, ml_dsa_composite, PrivateKeyInfo, pem);
 MAKE_ENCODER(mldsa87_ecdsa_p384_sha512, ml_dsa_composite, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(mldsa87_ecdsa_p384_sha512, ml_dsa_composite, SubjectPublicKeyInfo, pem);
+#endif
 
 MAKE_ENCODER(mldsa87_rsa4096_pss_sha512, ml_dsa_composite, EncryptedPrivateKeyInfo, der);
 MAKE_ENCODER(mldsa87_rsa4096_pss_sha512, ml_dsa_composite, EncryptedPrivateKeyInfo, pem);

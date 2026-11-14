@@ -92,6 +92,7 @@ static const ML_DSA_COMPOSITE_ALG_INFO ml_dsa_composite_alg_table[] = {
         ossl_der_oid_id_mldsa44_rsa2048_pss_sha256,
         DER_OID_SZ_id_mldsa44_rsa2048_pss_sha256,
         "SHA-256", 32, "SHA-256", ML_DSA_COMPOSITE_CLASSIC_RSA_PSS, 32 },
+#ifndef OPENSSL_NO_EC
     { "ML-DSA-44-ECDSA-P256-SHA256",
         "COMPSIG-MLDSA44-ECDSA-P256-SHA256",
         ossl_der_oid_id_mldsa44_ecdsa_p256_sha256,
@@ -102,6 +103,7 @@ static const ML_DSA_COMPOSITE_ALG_INFO ml_dsa_composite_alg_table[] = {
         ossl_der_oid_id_mldsa87_ecdsa_p384_sha512,
         DER_OID_SZ_id_mldsa87_ecdsa_p384_sha512,
         "SHA-512", 64, "SHA-384", ML_DSA_COMPOSITE_CLASSIC_ECDSA, 0 },
+#endif
     { "ML-DSA-87-RSA4096-PSS-SHA512",
         "COMPSIG-MLDSA87-RSA4096-PSS-SHA512",
         ossl_der_oid_id_mldsa87_rsa4096_pss_sha512,
@@ -187,12 +189,14 @@ static int ml_dsa_composite_classic_sign(PROV_ML_DSA_COMPOSITE_CTX *ctx,
         return 0;
 
     switch (info->classic_type) {
+#ifndef OPENSSL_NO_EC
     case ML_DSA_COMPOSITE_CLASSIC_ECDSA:
         if (!EVP_DigestSignInit_ex(md_ctx, NULL, info->classic_hash,
                 ctx->libctx, NULL,
                 ctx->key->classic_key, NULL))
             goto err;
         break;
+#endif
 
     case ML_DSA_COMPOSITE_CLASSIC_RSA_PSS:
         if (!EVP_DigestSignInit_ex(md_ctx, &pctx, info->classic_hash,
@@ -454,12 +458,14 @@ static int ml_dsa_composite_verify_ph(PROV_ML_DSA_COMPOSITE_CTX *ctx,
         goto err;
 
     switch (info->classic_type) {
+#ifndef OPENSSL_NO_EC
     case ML_DSA_COMPOSITE_CLASSIC_ECDSA:
         if (!EVP_DigestVerifyInit_ex(md_ctx, NULL, info->classic_hash,
                 ctx->libctx, NULL,
                 ctx->key->classic_key, NULL))
             goto err;
         break;
+#endif
 
     case ML_DSA_COMPOSITE_CLASSIC_RSA_PSS:
         if (!EVP_DigestVerifyInit_ex(md_ctx, &pctx, info->classic_hash,
@@ -848,9 +854,11 @@ static int ml_dsa_composite_digest_verify(void *vctx, const uint8_t *sig,
 
 MAKE_ML_DSA_COMPOSITE_FUNCTIONS(mldsa44_rsa2048_pss_sha256,
     "ML-DSA-44-RSA2048-PSS-SHA256");
+#ifndef OPENSSL_NO_EC
 MAKE_ML_DSA_COMPOSITE_FUNCTIONS(mldsa44_ecdsa_p256_sha256,
     "ML-DSA-44-ECDSA-P256-SHA256");
 MAKE_ML_DSA_COMPOSITE_FUNCTIONS(mldsa87_ecdsa_p384_sha512,
     "ML-DSA-87-ECDSA-P384-SHA512");
+#endif
 MAKE_ML_DSA_COMPOSITE_FUNCTIONS(mldsa87_rsa4096_pss_sha512,
     "ML-DSA-87-RSA4096-PSS-SHA512");

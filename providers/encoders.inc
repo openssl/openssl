@@ -384,6 +384,7 @@ ENCODER_w_structure("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, 
 ENCODER_w_structure("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, yes, pem, SubjectPublicKeyInfo),
 ENCODER_TEXT("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, yes),
 
+#  ifndef OPENSSL_NO_EC
 ENCODER_w_structure("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, yes, der, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, yes, pem, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, yes, der, PrivateKeyInfo),
@@ -399,6 +400,7 @@ ENCODER_w_structure("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, ye
 ENCODER_w_structure("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, yes, pem, SubjectPublicKeyInfo),
 ENCODER_TEXT("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, yes),
+#  endif
 
 ENCODER_w_structure("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, yes, der, EncryptedPrivateKeyInfo),
 ENCODER_w_structure("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, yes, pem, EncryptedPrivateKeyInfo),

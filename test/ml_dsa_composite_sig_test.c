@@ -131,8 +131,10 @@ err:
 /* Table of ml dsa composite algorithm names */
 static const char *ml_dsa_composite_alg_names[] = {
     "ML-DSA-44-RSA2048-PSS-SHA256",
+#ifndef OPENSSL_NO_EC
     "ML-DSA-44-ECDSA-P256-SHA256",
     "ML-DSA-87-ECDSA-P384-SHA512",
+#endif
     "ML-DSA-87-RSA4096-PSS-SHA512",
 };
 #define NUM_ML_DSA_COMPOSITE_ALGS (int)(sizeof(ml_dsa_composite_alg_names) / sizeof(ml_dsa_composite_alg_names[0]))
@@ -150,12 +152,6 @@ static int ml_dsa_composite_drbg_sign_verify_test(int tst_id)
     const char *alg = ml_dsa_composite_alg_names[tst_id];
     EVP_PKEY *key = NULL;
 
-#ifdef OPENSSL_NO_EC
-    if (strstr(alg, "ECDSA") != NULL) {
-        TEST_note("Skipping %s - EC not available", alg);
-        return 1;
-    }
-#endif
     if (!TEST_ptr(key = do_gen_key(alg)))
         goto err;
 
@@ -178,8 +174,8 @@ static int ml_dsa_composite_keygen_drbg_test(void)
     int ret = 0;
     EVP_PKEY *k1 = NULL, *k2 = NULL, *k3 = NULL, *k1_dup = NULL;
 
-    if (!TEST_ptr(k1 = do_gen_key("ML-DSA-44-RSA2048-PSS-SHA256"))
-        || !TEST_ptr(k2 = do_gen_key("ML-DSA-44-RSA2048-PSS-SHA256"))
+    if (!TEST_ptr(k1 = do_gen_key(ml_dsa_composite_alg_names[0]))
+        || !TEST_ptr(k2 = do_gen_key(ml_dsa_composite_alg_names[0]))
         /* same algorithm, different keys */
         || !TEST_int_eq(EVP_PKEY_eq(k1, k2), 0)
         /* dup must produce an equal key */
@@ -187,12 +183,11 @@ static int ml_dsa_composite_keygen_drbg_test(void)
         || !TEST_int_eq(EVP_PKEY_eq(k1, k1_dup), 1))
         goto err;
 
-#ifndef OPENSSL_NO_EC
-    if (!TEST_ptr(k3 = do_gen_key("ML-DSA-44-ECDSA-P256-SHA256"))
+    /* every build has at least two algorithms, whichever family is enabled */
+    if (!TEST_ptr(k3 = do_gen_key(ml_dsa_composite_alg_names[1]))
         /* different algorithm must return -1 */
         || !TEST_int_eq(EVP_PKEY_eq(k1, k3), -1))
         goto err;
-#endif
 
     ret = 1;
 err:
@@ -246,8 +241,8 @@ err:
 
 /*
  * A signature produced by one ml dsa composite algorithm must not verify under a
- * different ml dsa composite algorithm that happens to share the same ML-DSA level
- * (cross-algorithm mismatch).
+ * different ml dsa composite algorithm (cross-algorithm mismatch).  Uses the
+ * first two algorithms available in this build, which may differ in ML-DSA level.
  */
 static int ml_dsa_composite_cross_alg_mismatch_test(void)
 {
@@ -257,13 +252,9 @@ static int ml_dsa_composite_cross_alg_mismatch_test(void)
     EVP_SIGNATURE *sig_a = NULL, *sig_b = NULL;
     uint8_t *sig = NULL;
     size_t sig_len = 0;
-    const char *alg_a = "ML-DSA-44-RSA2048-PSS-SHA256";
-    const char *alg_b = "ML-DSA-44-ECDSA-P256-SHA256";
+    const char *alg_a = ml_dsa_composite_alg_names[0];
+    const char *alg_b = ml_dsa_composite_alg_names[1];
 
-#ifdef OPENSSL_NO_EC
-    TEST_note("Skipping ml_dsa_composite_cross_alg_mismatch_test - requires EC (ECDSA-P256)");
-    return 1;
-#endif
     if (!TEST_ptr(key_a = do_gen_key(alg_a))
         || !TEST_ptr(key_b = do_gen_key(alg_b))
         || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key_a, NULL))
@@ -315,12 +306,6 @@ static int ml_dsa_composite_tampered_sig_test(int tst_id)
     uint8_t *sig = NULL;
     size_t sig_len = 0;
 
-#ifdef OPENSSL_NO_EC
-    if (strstr(alg, "ECDSA") != NULL) {
-        TEST_note("Skipping %s - EC not available", alg);
-        return 1;
-    }
-#endif
     if (!TEST_ptr(key = do_gen_key(alg))
         || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL))
         || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, alg, NULL))
@@ -455,6 +440,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC
 /*
  * Importing an ML-DSA-87-ECDSA-P384-SHA512 private key whose embedded EC
  * component is on a different curve (P-256, not P-384) must be rejected:
@@ -470,11 +456,6 @@ static int ml_dsa_composite_ec_curve_downgrade_test(void)
     unsigned char *ec_priv = NULL, *blob = NULL;
     size_t ec_priv_len = 0, blob_len;
     OSSL_PARAM import_params[2];
-
-#ifdef OPENSSL_NO_EC
-    TEST_note("Skipping ml_dsa_composite_ec_curve_downgrade_test - requires EC");
-    return 1;
-#endif
 
     if (!TEST_int_eq(RAND_bytes_ex(lib_ctx, seed, sizeof(seed), 0), 1))
         goto err;
@@ -521,6 +502,7 @@ err:
     OPENSSL_free(blob);
     return ret;
 }
+#endif /* OPENSSL_NO_EC */
 
 /*
  * Importing an ML-DSA-44-RSA2048-PSS-SHA256 public key whose ML-DSA component
@@ -623,7 +605,7 @@ static long find_bytes(const unsigned char *hay, long hay_len,
 static int ml_dsa_composite_spki_bad_unused_bits_test(void)
 {
     int ret = 0;
-    const char *alg = "ML-DSA-44-RSA2048-PSS-SHA256";
+    const char *alg = ml_dsa_composite_alg_names[0];
     EVP_PKEY *key = NULL, *decoded = NULL;
     OSSL_ENCODER_CTX *ectx = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
@@ -713,13 +695,6 @@ static int ml_dsa_composite_streaming_sign_verify_test(int tst_id)
     size_t msg_len = sizeof(test_msg) - 1;
     size_t half = msg_len / 2;
 
-#ifdef OPENSSL_NO_EC
-    if (strstr(alg, "ECDSA") != NULL) {
-        TEST_note("Skipping %s - EC not available", alg);
-        return 1;
-    }
-#endif
-
     if (!TEST_ptr(key = do_gen_key(alg))
         || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL))
         || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, alg, NULL))
@@ -774,13 +749,6 @@ static int ml_dsa_composite_streaming_tampered_sig_test(int tst_id)
     EVP_SIGNATURE *sig_alg = NULL;
     uint8_t *sig = NULL;
     size_t sig_len = 0;
-
-#ifdef OPENSSL_NO_EC
-    if (strstr(alg, "ECDSA") != NULL) {
-        TEST_note("Skipping %s - EC not available", alg);
-        return 1;
-    }
-#endif
 
     if (!TEST_ptr(key = do_gen_key(alg))
         || !TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, key, NULL))
@@ -843,13 +811,6 @@ static int ml_dsa_composite_external_prehash_test(int tst_id)
     size_t prehash_len = sizeof(prehash);
     int have_prehash = 1;
     OSSL_PARAM params[2];
-
-#ifdef OPENSSL_NO_EC
-    if (strstr(alg, "ECDSA") != NULL) {
-        TEST_note("Skipping %s - EC not available", alg);
-        return 1;
-    }
-#endif
 
     params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH,
         &have_prehash);
@@ -960,7 +921,9 @@ int setup_tests(void)
     ADD_TEST(ml_dsa_composite_cross_alg_mismatch_test);
     ADD_ALL_TESTS(ml_dsa_composite_tampered_sig_test, NUM_ML_DSA_COMPOSITE_ALGS);
     ADD_TEST(ml_dsa_composite_rsa_size_downgrade_test);
+#ifndef OPENSSL_NO_EC
     ADD_TEST(ml_dsa_composite_ec_curve_downgrade_test);
+#endif
     ADD_TEST(ml_dsa_composite_mldsa_level_downgrade_test);
     ADD_TEST(ml_dsa_composite_spki_bad_unused_bits_test);
 

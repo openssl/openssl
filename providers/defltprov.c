@@ -506,12 +506,14 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_MLDSA44_RSA2048_PSS_SHA256, "provider=default",
         ossl_mldsa44_rsa2048_pss_sha256_signature_functions,
         PROV_DESCS_MLDSA44_RSA2048_PSS_SHA256 },
+#ifndef OPENSSL_NO_EC
     { PROV_NAMES_MLDSA44_ECDSA_P256_SHA256, "provider=default",
         ossl_mldsa44_ecdsa_p256_sha256_signature_functions,
         PROV_DESCS_MLDSA44_ECDSA_P256_SHA256 },
     { PROV_NAMES_MLDSA87_ECDSA_P384_SHA512, "provider=default",
         ossl_mldsa87_ecdsa_p384_sha512_signature_functions,
         PROV_DESCS_MLDSA87_ECDSA_P384_SHA512 },
+#endif
     { PROV_NAMES_MLDSA87_RSA4096_PSS_SHA512, "provider=default",
         ossl_mldsa87_rsa4096_pss_sha512_signature_functions,
         PROV_DESCS_MLDSA87_RSA4096_PSS_SHA512 },
@@ -637,8 +639,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_ML_DSA_87 },
 #ifndef OPENSSL_NO_ML_DSA_COMPOSITE
     { PROV_NAMES_MLDSA44_RSA2048_PSS_SHA256, "provider=default", ossl_mldsa44_rsa2048_pss_sha256_keymgmt_functions, PROV_DESCS_MLDSA44_RSA2048_PSS_SHA256 },
+#ifndef OPENSSL_NO_EC
     { PROV_NAMES_MLDSA44_ECDSA_P256_SHA256, "provider=default", ossl_mldsa44_ecdsa_p256_sha256_keymgmt_functions, PROV_DESCS_MLDSA44_ECDSA_P256_SHA256 },
     { PROV_NAMES_MLDSA87_ECDSA_P384_SHA512, "provider=default", ossl_mldsa87_ecdsa_p384_sha512_keymgmt_functions, PROV_DESCS_MLDSA87_ECDSA_P384_SHA512 },
+#endif
     { PROV_NAMES_MLDSA87_RSA4096_PSS_SHA512, "provider=default", ossl_mldsa87_rsa4096_pss_sha512_keymgmt_functions, PROV_DESCS_MLDSA87_RSA4096_PSS_SHA512 },
 #endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
 #endif /* OPENSSL_NO_ML_DSA */

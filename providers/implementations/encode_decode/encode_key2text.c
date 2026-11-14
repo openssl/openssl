@@ -770,7 +770,9 @@ MAKE_TEXT_ENCODER(lms, lms);
 
 #ifndef OPENSSL_NO_ML_DSA_COMPOSITE
 MAKE_TEXT_ENCODER(mldsa44_rsa2048_pss_sha256, ml_dsa_composite);
+#ifndef OPENSSL_NO_EC
 MAKE_TEXT_ENCODER(mldsa44_ecdsa_p256_sha256, ml_dsa_composite);
 MAKE_TEXT_ENCODER(mldsa87_ecdsa_p384_sha512, ml_dsa_composite);
+#endif
 MAKE_TEXT_ENCODER(mldsa87_rsa4096_pss_sha512, ml_dsa_composite);
 #endif /* OPENSSL_NO_ML_DSA_COMPOSITE */

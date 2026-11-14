@@ -20,10 +20,10 @@ BEGIN {
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
+my $no_ec = disabled('ec');
+
 plan skip_all => 'ML DSA Composite signatures are not supported in this build'
     if disabled('ml-dsa-composite');
-
-my $no_ec = disabled('ec');
 
 # Remove EC-dependent ml dsa composites when EC is disabled
 my @ml_dsa_composite_pems = (

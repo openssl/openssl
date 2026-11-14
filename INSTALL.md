@@ -1225,7 +1225,8 @@ The `ripemd` algorithm is deprecated and if used is synonymous with `rmd160`.
 
 The `ml-dsa-composite` algorithms (composite post-quantum/classical signature
 schemes combining `ml-dsa` with `rsa` or `ec`) are automatically disabled
-when `ml-dsa` is disabled.
+when `ml-dsa` is disabled. The ECDSA composites (`ML-DSA-44-ECDSA-P256-SHA256`
+and `ML-DSA-87-ECDSA-P384-SHA512`) are also left out when `ec` is disabled.
 
 Compiler-specific options
 -------------------------

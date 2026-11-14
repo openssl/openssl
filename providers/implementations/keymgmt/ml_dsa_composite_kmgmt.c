@@ -1059,6 +1059,8 @@ err:
 
 /* alg                                  ml_dsa_evp_type    classic_alg  bits  ec_curve          */
 MAKE_KEYMGMT_FUNCTIONS(mldsa44_rsa2048_pss_sha256, EVP_PKEY_ML_DSA_44, "RSA", 2048, NULL);
+#ifndef OPENSSL_NO_EC
 MAKE_KEYMGMT_FUNCTIONS(mldsa44_ecdsa_p256_sha256, EVP_PKEY_ML_DSA_44, "EC", 256, "P-256");
 MAKE_KEYMGMT_FUNCTIONS(mldsa87_ecdsa_p384_sha512, EVP_PKEY_ML_DSA_87, "EC", 384, "P-384");
+#endif
 MAKE_KEYMGMT_FUNCTIONS(mldsa87_rsa4096_pss_sha512, EVP_PKEY_ML_DSA_87, "RSA", 4096, NULL);

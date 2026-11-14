@@ -1216,8 +1216,10 @@ done:
     }
 
 MAKE_ML_DSA_COMPOSITE_D2I(mldsa44_rsa2048_pss_sha256, EVP_PKEY_ML_DSA_44, "RSA", 2048, NULL)
+#ifndef OPENSSL_NO_EC
 MAKE_ML_DSA_COMPOSITE_D2I(mldsa44_ecdsa_p256_sha256, EVP_PKEY_ML_DSA_44, "EC", 0, "P-256")
 MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_ecdsa_p384_sha512, EVP_PKEY_ML_DSA_87, "EC", 0, "P-384")
+#endif
 MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_rsa4096_pss_sha512, EVP_PKEY_ML_DSA_87, "RSA", 4096, NULL)
 
 /* Supporting #defines consumed by DO_SubjectPublicKeyInfo / DO_PrivateKeyInfo macros */
@@ -1229,6 +1231,7 @@ MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_rsa4096_pss_sha512, EVP_PKEY_ML_DSA_87, "RSA",
 #define mldsa44_rsa2048_pss_sha256_adjust NULL
 #define mldsa44_rsa2048_pss_sha256_free (free_key_fn *)ossl_ml_dsa_composite_key_free
 
+#ifndef OPENSSL_NO_EC
 #define mldsa44_ecdsa_p256_sha256_evp_type NID_ML_DSA_44_ECDSA_P256_SHA256
 #define mldsa44_ecdsa_p256_sha256_d2i_private_key NULL
 #define mldsa44_ecdsa_p256_sha256_d2i_public_key NULL
@@ -1244,6 +1247,7 @@ MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_rsa4096_pss_sha512, EVP_PKEY_ML_DSA_87, "RSA",
 #define mldsa87_ecdsa_p384_sha512_check NULL
 #define mldsa87_ecdsa_p384_sha512_adjust NULL
 #define mldsa87_ecdsa_p384_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+#endif
 
 #define mldsa87_rsa4096_pss_sha512_evp_type NID_ML_DSA_87_RSA4096_PSS_SHA512
 #define mldsa87_rsa4096_pss_sha512_d2i_private_key NULL
@@ -1587,10 +1591,12 @@ MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, SubjectPublicKeyInfo);
 #ifndef OPENSSL_NO_ML_DSA_COMPOSITE
 MAKE_DECODER("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, mldsa44_rsa2048_pss_sha256, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, mldsa44_rsa2048_pss_sha256, SubjectPublicKeyInfo);
+#ifndef OPENSSL_NO_EC
 MAKE_DECODER("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, mldsa44_ecdsa_p256_sha256, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, mldsa44_ecdsa_p256_sha256, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, mldsa87_ecdsa_p384_sha512, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, mldsa87_ecdsa_p384_sha512, SubjectPublicKeyInfo);
+#endif
 MAKE_DECODER("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, mldsa87_rsa4096_pss_sha512, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, mldsa87_rsa4096_pss_sha512, SubjectPublicKeyInfo);
 #endif
