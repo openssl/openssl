@@ -9,14 +9,11 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include "internal/hashtable.h"
 #include "internal/refcount.h"
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 #include <openssl/x509v3.h>
 #include "x509_local.h"
-
-#define X509_OBJS_HT_BUCKETS 8
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
@@ -182,37 +179,63 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
     return ret;
 }
 
-static void objs_ht_free(HT_VALUE *v)
+/* Free the table of names, its per-name stacks and the objects in them. */
+static void objs_ht_free(OSSL_HTABLE(x509_objs) *ht)
 {
-    STACK_OF(X509_OBJECT) *objs = v->value;
+    X509_NAME_OBJS *e, *en;
+    size_t i, n;
 
-    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    if (ht == NULL)
+        return;
+    n = ossl_htable_x509_objs_num_buckets(ht);
+    for (i = 0; i < n; i++)
+        OSSL_HTABLE_FOREACH_DELSAFE (e, en, x509_objs, ht, i) {
+            sk_X509_OBJECT_pop_free(e->objs, X509_OBJECT_free);
+            OPENSSL_free(e);
+        }
+    ossl_htable_x509_objs_cleanup(ht);
+    OPENSSL_free(ht);
 }
 
-static void objs_ht_init_key(OBJS_KEY *key, const X509_NAME *xn)
+/*
+ * Call |cb| for the objects of every name until it returns 0. The store
+ * must be locked.
+ */
+static void objs_ht_foreach_until(OSSL_HTABLE(x509_objs) *ht,
+    int (*cb)(STACK_OF(X509_OBJECT) *objs, void *arg), void *arg)
 {
-    /* Empty names have no canonical buffer, but the hash table copies the key. */
-    HT_INIT_KEY(key);
-    key->key_header.keybuf = xn->canon_enc != NULL ? xn->canon_enc : (unsigned char *)"";
-    key->key_header.keysize = xn->canon_enclen;
+    X509_NAME_OBJS *e;
+    size_t i, n = ossl_htable_x509_objs_num_buckets(ht);
+
+    for (i = 0; i < n; i++)
+        OSSL_HTABLE_FOREACH (e, x509_objs, ht, i)
+            if (!cb(e->objs, arg))
+                return;
+}
+
+/*
+ * The key of |xn| in the table of names, its canonical encoding, which must
+ * be up to date. An empty name has no canonical buffer and a key of no bytes.
+ * The hash was computed along with the canonical encoding, so a lookup does
+ * not hash the name again.
+ */
+static uint64_t objs_ht_key(const X509_NAME *xn, const unsigned char **key,
+    size_t *len)
+{
+    *key = xn->canon_enc != NULL ? xn->canon_enc : (const unsigned char *)"";
+    *len = xn->canon_enc != NULL ? (size_t)xn->canon_enclen : 0;
+    return xn->canon_hash;
 }
 
 X509_STORE *X509_STORE_new(void)
 {
     X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
-    HT_CONFIG htconf = {
-        .ht_free_fn = objs_ht_free,
-        .collision_check = 1,
-        .init_neighborhoods = X509_OBJS_HT_BUCKETS,
-        .no_rcu = 1,
-    };
 
     if (ret == NULL)
         return NULL;
-    if ((ret->objs_ht = ossl_ht_new(&htconf)) == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+    if ((ret->objs_ht = OPENSSL_malloc(sizeof(*ret->objs_ht))) == NULL)
         goto err;
-    }
+    ossl_htable_x509_objs_init(ret->objs_ht);
     if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
@@ -246,7 +269,7 @@ err:
     X509_VERIFY_PARAM_free(ret->param);
     sk_X509_OBJECT_free(ret->objs);
     sk_X509_LOOKUP_free(ret->get_cert_methods);
-    ossl_ht_free(ret->objs_ht);
+    objs_ht_free(ret->objs_ht);
     CRYPTO_THREAD_lock_free(ret->lock);
     OPENSSL_free(ret);
     return NULL;
@@ -279,7 +302,7 @@ void X509_STORE_free(X509_STORE *xs)
     X509_VERIFY_PARAM_free(xs->param);
     CRYPTO_THREAD_lock_free(xs->lock);
     CRYPTO_FREE_REF(&xs->references);
-    ossl_ht_free(xs->objs_ht);
+    objs_ht_free(xs->objs_ht);
     OPENSSL_free(xs);
 }
 
@@ -343,8 +366,10 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
 STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     const X509_NAME *xn)
 {
-    HT_VALUE *v;
-    OBJS_KEY key;
+    X509_NAME_OBJS *e;
+    const unsigned char *key;
+    size_t keylen;
+    uint64_t hash;
     int ret;
 
     if (xn->canon_enc == NULL || xn->modified) {
@@ -353,21 +378,22 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
             return NULL;
     }
 
-    objs_ht_init_key(&key, xn);
-    v = ossl_ht_get(store->objs_ht, TO_HT_KEY(&key));
-    if (v == NULL)
-        return NULL;
-    v = ossl_rcu_deref(&v);
+    hash = objs_ht_key(xn, &key, &keylen);
+    OSSL_HTABLE_FIND(e, x509_objs, store->objs_ht, hash,
+        e->keylen == keylen
+            && (keylen == 0 || memcmp(e->key, key, keylen) == 0));
 
-    return v->value;
+    return e != NULL ? e->objs : NULL;
 }
 
 static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn,
     STACK_OF(X509_OBJECT) *objs, X509_OBJECT *obj)
 {
     int ret = 0, added = 0;
-    OBJS_KEY key;
-    HT_VALUE val = { 0 };
+    X509_NAME_OBJS *e;
+    const unsigned char *key;
+    size_t keylen;
+    uint64_t hash;
 
     if (objs != NULL) {
         added = sk_X509_OBJECT_push(objs, obj) != 0;
@@ -380,31 +406,31 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
             return 0;
     }
 
-    objs = sk_X509_OBJECT_new(x509_object_cmp);
-    if (objs == NULL)
+    /* The first object of this name: a new entry in the table of names */
+    hash = objs_ht_key(xn, &key, &keylen);
+    if ((e = OPENSSL_malloc(sizeof(*e) + keylen)) == NULL)
         return 0;
+    ossl_queue_x509_objs_init_elem(e);
+    e->keylen = keylen;
+    if (keylen > 0)
+        memcpy(e->key, key, keylen);
 
-    added = sk_X509_OBJECT_push(objs, obj) != 0;
-    if (added == 0) {
-        sk_X509_OBJECT_free(objs);
+    e->objs = sk_X509_OBJECT_new(x509_object_cmp);
+    if (e->objs == NULL || sk_X509_OBJECT_push(e->objs, obj) == 0) {
+        sk_X509_OBJECT_free(e->objs);
+        OPENSSL_free(e);
         return 0;
     }
 
-    objs_ht_init_key(&key, xn);
-    val.value = (void *)objs;
-    ret = ossl_ht_insert(store->objs_ht, TO_HT_KEY(&key), &val, NULL);
-    if (ret != 1) {
-        sk_X509_OBJECT_free(objs);
-        return 0;
-    }
+    /* Cannot fail */
+    ossl_htable_x509_objs_add(store->objs_ht, e, hash);
 
     return 1;
 }
 
-static int obj_ht_foreach_certs(HT_VALUE *v, void *arg)
+static int obj_ht_foreach_certs(STACK_OF(X509_OBJECT) *objs, void *arg)
 {
     STACK_OF(X509) **sk = arg;
-    STACK_OF(X509_OBJECT) *objs = v->value;
     int i, r;
 
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
@@ -758,10 +784,9 @@ static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_4_0
-static int obj_ht_to_stack(HT_VALUE *v, void *arg)
+static int obj_ht_to_stack(STACK_OF(X509_OBJECT) *objs, void *arg)
 {
     STACK_OF(X509_OBJECT) **sk = arg;
-    STACK_OF(X509_OBJECT) *objs = v->value;
     X509_OBJECT *obj;
     int i;
 
@@ -779,9 +804,8 @@ err:
     return 0;
 }
 
-static int obj_ht_zero_stacks(HT_VALUE *v, void *arg)
+static int obj_ht_zero_stacks(STACK_OF(X509_OBJECT) *objs, void *arg)
 {
-    STACK_OF(X509_OBJECT) *objs = v->value;
 
     sk_X509_OBJECT_zero(objs);
 
@@ -793,11 +817,11 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
     X509_STORE *store = (X509_STORE *)xs;
 
     if (xs->objs_ht != NULL) {
-        ossl_ht_foreach_until(xs->objs_ht, obj_ht_to_stack, &store->objs);
+        objs_ht_foreach_until(xs->objs_ht, obj_ht_to_stack, &store->objs);
         if (sk_X509_OBJECT_num(store->objs) > 0
-            || ossl_ht_count(xs->objs_ht) == 0) {
-            ossl_ht_foreach_until(xs->objs_ht, obj_ht_zero_stacks, NULL);
-            ossl_ht_free(xs->objs_ht);
+            || ossl_htable_is_empty(xs->objs_ht)) {
+            objs_ht_foreach_until(xs->objs_ht, obj_ht_zero_stacks, NULL);
+            objs_ht_free(xs->objs_ht);
             store->objs_ht = NULL;
         } else {
             return NULL;
@@ -808,10 +832,9 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
 }
 #endif
 
-static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
+static int obj_ht_foreach_object(STACK_OF(X509_OBJECT) *objs, void *arg)
 {
     STACK_OF(X509_OBJECT) **sk = arg;
-    STACK_OF(X509_OBJECT) *objs = v->value;
     X509_OBJECT *dup, *obj;
     int i;
 
@@ -851,7 +874,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
             X509_STORE_unlock(store);
             return NULL;
         }
-        ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_object, &objs);
+        objs_ht_foreach_until(store->objs_ht, obj_ht_foreach_object, &objs);
     } else {
         objs = sk_X509_OBJECT_deep_copy(store->objs, x509_object_dup,
             X509_OBJECT_free);
@@ -876,7 +899,7 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
         goto out_free;
 
     if (store->objs_ht != NULL) {
-        ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_certs, &sk);
+        objs_ht_foreach_until(store->objs_ht, obj_ht_foreach_certs, &sk);
     } else {
         for (int i = 0; i < sk_X509_OBJECT_num(store->objs); i++) {
             X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(store->objs, i));

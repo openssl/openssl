@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+#include <string.h>
 #include <openssl/evp.h>
 #include "internal/namemap.h"
 #include "testutil.h"
@@ -51,6 +53,77 @@ static int test_namemap(OSSL_NAMEMAP *nm)
         && TEST_int_eq(num3, check3)
         && TEST_int_eq(num4, check4)
         && TEST_int_eq(false1, 0);
+}
+
+/*
+ * The number of names has no limit, whatever the size of the name->number
+ * table, and every one of them stays findable under any letter case.
+ */
+static int test_namemap_many(void)
+{
+    OSSL_NAMEMAP *nm = ossl_namemap_new(NULL);
+    char name[32], alias[32];
+    int i, num, ok = 0;
+    const int count = 5000;
+
+    if (!TEST_ptr(nm))
+        return 0;
+    for (i = 0; i < count; i++) {
+        snprintf(name, sizeof(name), "name-%d", i);
+        snprintf(alias, sizeof(alias), "Alias.%d", i);
+        if (!TEST_int_eq(num = ossl_namemap_add_name(nm, 0, name), i + 1)
+            || !TEST_int_eq(ossl_namemap_add_name(nm, num, alias), num))
+            goto end;
+    }
+    for (i = 0; i < count; i++) {
+        snprintf(name, sizeof(name), "NAME-%d", i);
+        snprintf(alias, sizeof(alias), "alias.%d", i);
+        if (!TEST_int_eq(ossl_namemap_name2num(nm, name), i + 1)
+            || !TEST_int_eq(ossl_namemap_name2num(nm, alias), i + 1)
+            || !TEST_int_eq(ossl_namemap_name2num_n(nm, name, 4), 0))
+            goto end;
+        snprintf(name, sizeof(name), "name-%d", i);
+        if (!TEST_str_eq(ossl_namemap_num2name(nm, i + 1, 0), name))
+            goto end;
+    }
+    ok = TEST_int_eq(ossl_namemap_name2num(nm, "name-5000"), 0);
+end:
+    ossl_namemap_free(nm);
+    return ok;
+}
+
+/* Names are told apart by their first 64 characters only. */
+static int test_namemap_long(void)
+{
+    OSSL_NAMEMAP *nm = ossl_namemap_new(NULL);
+    char n63[64], n64[65], n70a[71], n70b[71];
+    int num63, num64, ok;
+
+    memset(n63, 'a', 63);
+    n63[63] = '\0';
+    memset(n64, 'a', 64);
+    n64[64] = '\0';
+    memset(n70a, 'a', 70);
+    n70a[70] = '\0';
+    memset(n70b, 'A', 64);
+    memcpy(n70b + 64, "bcdefg", 7);
+
+    ok = TEST_ptr(nm)
+        && TEST_int_ne(num63 = ossl_namemap_add_name(nm, 0, n63), 0)
+        && TEST_int_ne(num64 = ossl_namemap_add_name(nm, 0, n70a), 0)
+        && TEST_int_ne(num63, num64)
+        /* The same first 64 characters: the same name */
+        && TEST_int_eq(ossl_namemap_add_name(nm, 0, n64), num64)
+        && TEST_int_eq(ossl_namemap_name2num(nm, n64), num64)
+        && TEST_int_eq(ossl_namemap_name2num(nm, n70b), num64)
+        && TEST_int_eq(ossl_namemap_name2num_n(nm, n70b, 64), num64)
+        && TEST_int_eq(ossl_namemap_name2num_n(nm, n70b, 63), num63)
+        && TEST_int_eq(ossl_namemap_name2num(nm, n63), num63)
+        /* The name is kept whole all the same */
+        && TEST_str_eq(ossl_namemap_num2name(nm, num64, 0), n70a)
+        && TEST_ptr_null(ossl_namemap_num2name(nm, num64, 1));
+    ossl_namemap_free(nm);
+    return ok;
 }
 
 static int test_namemap_independent(void)
@@ -195,6 +268,8 @@ int setup_tests(void)
 {
     ADD_TEST(test_namemap_empty);
     ADD_TEST(test_namemap_independent);
+    ADD_TEST(test_namemap_many);
+    ADD_TEST(test_namemap_long);
     ADD_TEST(test_namemap_stored);
     ADD_TEST(test_digestbyname);
     ADD_TEST(test_cipherbyname);

@@ -13,7 +13,7 @@
 #include <openssl/x509_vfy.h>
 
 #include "internal/refcount.h"
-#include "internal/hashtable.h"
+#include "internal/htable.h"
 
 #include <crypto/asn1.h>
 
@@ -127,9 +127,19 @@ struct x509_lookup_st {
     X509_STORE *store_ctx; /* who owns us */
 };
 
-typedef struct {
-    HT_KEY key_header;
-} OBJS_KEY;
+/*
+ * The objects of an X509_STORE that share a name (a certificate's subject, a
+ * CRL's issuer): an element of the store's table of names.
+ */
+typedef struct x509_name_objs_st {
+    OSSL_HTABLE_MEMBER(x509_objs);
+    STACK_OF(X509_OBJECT) *objs;
+    size_t keylen;
+    unsigned char key[1]; /* the name's canonical encoding, |keylen| bytes */
+} X509_NAME_OBJS;
+
+DEFINE_QUEUE_OF(x509_objs, X509_NAME_OBJS);
+DEFINE_HTABLE_DYN_OF(x509_objs, X509_NAME_OBJS, 3, 24);
 
 /*
  * This is used to hold everything.  It is used for all certificate
@@ -140,7 +150,7 @@ struct x509_store_st {
     /* The following is a cache of trusted certs */
     int cache; /* if true, stash any hits */
     /* Maps X509_NAME -> STACK_OF(X509_OBJECT) */
-    HT *objs_ht;
+    OSSL_HTABLE(x509_objs) *objs_ht;
     /*
      * Deprecated. Used only in the X509_STORE_get0_objects() for backward
      * compatibility.

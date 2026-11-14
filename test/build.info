@@ -82,7 +82,7 @@ IF[{- !$disabled{tests} -}]
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
           engine_stubs_test base64_simdutf_test base64_dec_avx2_test bio_eof_test \
-          ech_test ossl_rbtree_test
+          ech_test ossl_rbtree_test queue_test htable_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -1157,6 +1157,15 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[list_test]=../include ../apps/include
     DEPEND[list_test]=libtestutil.a
 
+    SOURCE[queue_test]=queue_test.c
+    INCLUDE[queue_test]=../include ../apps/include
+    DEPEND[queue_test]=../libcrypto libtestutil.a
+
+    SOURCE[htable_test]=htable_test.c
+    INCLUDE[htable_test]=.. ../include ../apps/include
+    DEPEND[htable_test]=../libcrypto.a libtestutil.a
+    DEPEND[htable_test.o]=../crypto/objects/obj_dat.h
+
     SOURCE[hmactest]=hmactest.c
     INCLUDE[hmactest]=../include ../apps/include
     DEPEND[hmactest]=../libcrypto.a libtestutil.a
@@ -1504,6 +1513,12 @@ ENDIF
     INCLUDE[timing_load_creds]=../include
     DEPEND[timing_load_creds]=../libcrypto
   ENDIF
+
+  # Times the namemap and the X509_STORE; not run by "make test"
+  PROGRAMS{noinst}=timing_namemap_x509store
+  SOURCE[timing_namemap_x509store]=timing_namemap_x509store.c
+  INCLUDE[timing_namemap_x509store]=.. ../include ../apps/include
+  DEPEND[timing_namemap_x509store]=../libcrypto.a
 
   IF[{- !$disabled{'quic'} -}]
     PROGRAMS{noinst}=quic_wire_test quic_ackm_test quic_record_test
