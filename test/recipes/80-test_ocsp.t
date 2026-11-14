@@ -71,7 +71,7 @@ sub test_ocsp {
     return $output;
 }
 
-plan tests => 16;
+plan tests => 17;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
@@ -336,5 +336,45 @@ subtest "=== OCSP offline request/responder/verify round-trip ===" => sub {
 
         $roundtrip->("GOOD (by cert)", ['-cert', $ee], "good");
         $roundtrip->("UNKNOWN (by serial)", ['-serial', '0x1234'], "unknown");
+    }
+};
+
+
+subtest "=== RFC 9919 REQUEST TESTS ===" => sub {
+    plan tests => 4;
+
+    my $issuer = catfile($ocspdir, "intermediate-cert.pem");
+    my $ee = catfile($ocspdir, "server-cert.pem");
+
+    SKIP: {
+        skip "EC is not supported by this OpenSSL build", 4
+            if disabled("ec");
+
+        ok(run(app(['openssl', 'ocsp', '-rfc9919',
+                    '-issuer', $issuer, '-cert', $ee,
+                    '-reqout', 'rfc9919-req.der'])),
+           "RFC 9919 request generation succeeds");
+
+        ok(run(app(['openssl', 'ocsp',
+                    '-reqin', 'rfc9919-req.der',
+                    '-req_text'],
+                   stdout => 'rfc9919-req.txt')),
+           "RFC 9919 request can be decoded");
+
+        my $request_text = '';
+        if (open my $fh, '<', 'rfc9919-req.txt') {
+            local $/;
+            $request_text = <$fh>;
+            close $fh;
+        }
+
+        like($request_text, qr/sha256/i,
+             "RFC 9919 request uses SHA-256");
+
+        ok(!run(app(['openssl', 'ocsp', '-rfc9919',
+                     '-issuer', $issuer,
+                     '-cert', $ee, '-cert', $ee,
+                     '-reqout', 'rfc9919-multi.der'])),
+           "RFC 9919 rejects multiple certificates");
     }
 };
