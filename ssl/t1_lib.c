@@ -5086,25 +5086,13 @@ __owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
     return EVP_PKEY_set1_encoded_public_key(pkey, enckey, enckeylen);
 }
 
-/*
- * In the SecP256r1MLKEM512, SecP256r1MLKEM768, SecP384r1MLKEM1024 and
- * curveSM2MLKEM768 groups both the client's key share and the server's
- * ciphertext start with an ECDH share, which TLS 1.3 requires to be an
- * uncompressed point (RFC 8446 section 4.2.8.2). The generic EC decoder used
- * for it also accepts other SEC1 forms, so check the point format here.
- * Returns 1 if |enc| is acceptable, 0 otherwise.
- */
-int tls13_hybrid_ec_point_format_ok(uint16_t group_id,
-    const unsigned char *enc,
-    size_t enclen)
+int ossl_tls13_hybrid_ec_point_format_ok(uint16_t group_id,
+    const uint8_t *enc,
+    size_t enc_len)
 {
-    switch (group_id) {
-    case OSSL_TLS_GROUP_ID_SecP256r1MLKEM512:
-    case OSSL_TLS_GROUP_ID_SecP256r1MLKEM768:
-    case OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024:
-    case OSSL_TLS_GROUP_ID_curveSM2MLKEM768:
-        return enclen > 0 && enc[0] == 0x04;
-    default:
+    if (!is_ec_first_hybrid_group(group_id))
         return 1;
-    }
+
+    /* The generic EC decoder also accepts the other SEC1 point formats */
+    return enc_len > 0 && enc[0] == 0x04;
 }
