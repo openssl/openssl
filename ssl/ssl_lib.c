@@ -5513,6 +5513,36 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
                 else
                     return SSL_ERROR_SYSCALL;
             }
+
+#ifndef OPENSSL_NO_DTLS
+            /*
+             * Connections created by a DTLS listener send with BIO_sendmmsg()
+             * on the listener's shared BIO. That path does not set retry
+             * flags on the BIO, since the BIO is shared with every other
+             * connection, so none of the checks above can see that the send
+             * needs to be retried. rwstate being SSL_WRITING is what records
+             * it. A permanent failure is reported through error_state, which
+             * was checked first.
+             *
+             * During initialization the send goes through BIO_f_buffer, which
+             * sets the retry flags on itself for a temporary failure, so
+             * that is reported by the checks above. A permanent failure of
+             * that send leaves the retry flags clear, and is not recorded in
+             * error_state, other than for a blocking connection whose wait
+             * for the socket failed. It is left to fall through to
+             * SSL_ERROR_SYSCALL below, so SSL_WRITING alone isn't enough to
+             * report a retry and the SSL_in_init guard is needed. This also
+             * applies when KeyUpdate or an additional session ticket puts an
+             * established connection back into initialization.
+             *
+             * A blocking connection waits and sends again instead of
+             * reporting a retry.
+             */
+            if (SSL_CONNECTION_IS_DTLS(sc)
+                && sc->d1 != NULL && sc->d1->listener != NULL
+                && !SSL_in_init(s) && !ossl_dtls_blocking(s))
+                return SSL_ERROR_WANT_WRITE;
+#endif
         }
     }
 

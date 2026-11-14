@@ -24,7 +24,7 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
     size_t *msgs_processed);
 static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
-    const char *data, int len);
+    const char *data, int len, int clear_nonfatal);
 
 #define DEFAULT_BUFFER_SIZE 4096
 
@@ -198,7 +198,7 @@ start:
         /* we now have a full buffer needing flushing */
         for (;;) {
             i = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
-                ctx->obuf_len);
+                ctx->obuf_len, 0);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
 
@@ -221,7 +221,7 @@ start:
 
     /* we now have inl bytes to write */
     while (inl >= ctx->obuf_size) {
-        i = buffer_send_next(b, ctx, in, inl);
+        i = buffer_send_next(b, ctx, in, inl, 0);
         if (i <= 0) {
             BIO_copy_next_retry(b);
             if (i < 0)
@@ -392,7 +392,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             BIO_clear_retry_flags(b);
             if (ctx->obuf_len > 0) {
                 r = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
-                    ctx->obuf_len);
+                    ctx->obuf_len, 1);
                 BIO_copy_next_retry(b);
                 if (r <= 0)
                     return (long)r;
@@ -508,9 +508,20 @@ static int buffer_puts(BIO *b, const char *str)
  *
  * Returns the number of bytes sent - the full len for the datagram case, which
  * is all-or-nothing - or 0 / a negative value on a transient or fatal error.
+ * BIO_sendmmsg() does not set retry flags, since the network BIO is shared, so
+ * a transient failure, as BIO_err_is_non_fatal() decides, is reported by
+ * setting the retry flags on this BIO.
+ *
+ * What happens to the error on the queue depends on who is waiting for it:
+ * - A fatal error is always left queued.
+ * - A transient error is removed if clear_nonfatal is set. The flush path does
+ *   this, as its callers look at the retry flags.
+ * - Otherwise it is left queued. A send made while buffering a write does
+ *   this, as the caller of BIO_sendmmsg() tells a retry from a failure by
+ *   reading the error.
  */
 static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
-    const char *data, int len)
+    const char *data, int len, int clear_nonfatal)
 {
 #ifndef OPENSSL_NO_SOCK
     if (ctx->peer != NULL) {
@@ -523,10 +534,28 @@ static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
         msg.peer = ctx->peer;
 
         /* Datagrams are all-or-nothing: either the whole chunk goes or none. */
-        if (!BIO_sendmmsg(b->next_bio, &msg, sizeof(msg), 1, 0, &processed)
-            || processed != 1)
-            return -1;
-        return len;
+        ERR_set_mark();
+        if (BIO_sendmmsg(b->next_bio, &msg, sizeof(msg), 1, 0, &processed)
+            && processed == 1) {
+            ERR_clear_last_mark();
+            return len;
+        }
+
+        if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+            /*
+             * Only an explicit flush is reported through the retry flags.
+             * A send made while buffering a write is reported to the caller
+             * of BIO_sendmmsg(), which reads the error from the queue.
+             */
+            if (clear_nonfatal)
+                ERR_pop_to_mark();
+            else
+                ERR_clear_last_mark();
+            BIO_set_retry_write(b);
+        } else {
+            ERR_clear_last_mark();
+        }
+        return -1;
     }
 #endif
     return BIO_write(b->next_bio, data, len);
@@ -537,9 +566,11 @@ static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
  *
  * Listener-created DTLS connections share a single network BIO and so cannot
  * use BIO_write(). Instead the record layer sends each record via BIO_sendmmsg(),
- * which lands here. We record the peer address and then buffer the data exactly
- * like buffer_write() does, so that multiple handshake records accumulate and are
- * packed into a single datagram when the state machine flushes.
+ * which lands here. We record the peer address and then buffer the data like
+ * buffer_write() does, so that multiple handshake records accumulate and are
+ * packed into a single datagram when the state machine flushes. Each message is
+ * buffered whole: one which does not fit in the space left sends the buffered
+ * data first.
  */
 static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
@@ -576,6 +607,7 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         }
     }
 
+    ERR_set_mark();
     for (i = 0; i < num_msg; i++) {
         BIO_MSG *m = (BIO_MSG *)((char *)msg + i * stride);
         int ret;
@@ -587,12 +619,41 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         if (m->data_len > INT_MAX)
             break;
 
+        /*
+         * A message is never split between datagrams. If it does not fit in
+         * the space left, the data buffered so far is sent first, as a
+         * datagram of its own, and the message is only taken once that has
+         * gone. If the send fails the message has not been consumed.
+         */
+        if (ctx->obuf_len > 0
+            && (size_t)(ctx->obuf_size - (ctx->obuf_len + ctx->obuf_off))
+                < m->data_len) {
+            BIO_clear_retry_flags(b);
+            ret = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
+                ctx->obuf_len, 0);
+            if (ret <= 0) {
+                BIO_copy_next_retry(b);
+                break;
+            }
+            ctx->obuf_off = 0;
+            ctx->obuf_len = 0;
+        }
+
         ret = buffer_write(b, m->data, (int)m->data_len);
         if (ret <= 0)
             break;
 
         ++(*msgs_processed);
     }
+
+    /*
+     * The error from a message which was not taken is only left for the caller
+     * if no message was, as it is otherwise reported by the count.
+     */
+    if (*msgs_processed > 0)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
 
     return (*msgs_processed > 0) ? 1 : 0;
 #else

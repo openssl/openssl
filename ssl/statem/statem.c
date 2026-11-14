@@ -1028,7 +1028,23 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
 int statem_flush(SSL_CONNECTION *s)
 {
     s->rwstate = SSL_WRITING;
-    if (BIO_flush(s->wbio) <= 0) {
+    while (BIO_flush(s->wbio) <= 0) {
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+        /*
+         * A blocking connection created by a DTLS listener waits for the
+         * socket to become writable and flushes again, rather than reporting
+         * a retry. If the wait cannot be performed the listener has failed,
+         * so a retry would never succeed: report a permanent error.
+         */
+        if (SSL_CONNECTION_IS_DTLS(s) && s->d1 != NULL
+            && s->d1->listener != NULL && BIO_should_retry(s->wbio)
+            && ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s))) {
+            if (ossl_dtls_conn_wait_for_write(SSL_CONNECTION_GET_SSL(s)))
+                continue;
+            BIO_clear_retry_flags(s->wbio);
+            s->statem.error_state = ERROR_STATE_SYSCALL;
+        }
+#endif
         return 0;
     }
     s->rwstate = SSL_NOTHING;

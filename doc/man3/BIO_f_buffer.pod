@@ -78,14 +78,27 @@ L<BIO_sendmmsg(3)>.
 
 B<Coalescing, not buffering.> Unlike a caller that might expect N individually
 buffered messages to be replayed as N separate messages on flush, the buffering
-BIO I<concatenates> the payload bytes of all messages into its single write
-buffer. When the buffer is flushed (either because it is full or because
-BIO_flush() is called), all accumulated bytes are delivered to the next BIO as a
-single datagram via BIO_sendmmsg(). The same applies within a single call: if
-B<num_msg> is greater than 1, the payload data of every message in the array is
-appended to the write buffer in order, and they will all be emitted together in
-the next flush. Callers should take care that the total coalesced size does not
-exceed the maximum datagram size of the underlying transport.
+BIO I<concatenates> the payload bytes of messages into its single write
+buffer. When the buffer is flushed, all accumulated bytes are delivered to the
+next BIO as a single datagram via BIO_sendmmsg(). The same applies within a
+single call: if B<num_msg> is greater than 1, the payload data of every message
+in the array is appended to the write buffer in order, and they will all be
+emitted together in the next flush. Callers should take care that the total
+coalesced size does not exceed the maximum datagram size of the underlying
+transport.
+
+A message is never split between datagrams. If a message does not fit in the
+space left in the write buffer, the data already buffered is sent first, as a
+datagram of its own, and the message is then buffered or, if it is larger than
+the buffer, sent directly. If sending the buffered data fails, the message is
+not taken. If no message in the call was taken, BIO_sendmmsg() fails with
+B<msgs_processed> set to 0, and a transient failure is reported by
+BIO_R_NON_FATAL being left on the error queue and the retry flags being set on
+the buffering BIO, so that the same call can be repeated. If earlier messages in
+the call were taken, BIO_sendmmsg() instead returns success with
+B<msgs_processed> set to the number taken, and the rest are to be sent again. A
+failure of BIO_flush() which can be retried is reported by the retry flags
+alone.
 
 B<Peer address.> The destination address is taken from the peer field of the
 first message of the first call after a flush. It remains fixed for the entire
