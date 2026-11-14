@@ -1530,11 +1530,15 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 }
 
 #ifndef OPENSSL_NO_SOCK
-/*
- * Build the RFC 9919 (s6, s7.2) cache headers for a successful, single-cert
- * response into buf, as CRLF-terminated lines.
- * Returns 1 on success, 0 if no headers should be sent (non-successful
- * status, missing nextUpdate, or any formatting failure).
+/**
+ * @brief Build HTTP caching headers for an RFC 9919 OCSP response.
+ * Only a successful response with one entry and usable timestamps is
+ * eligible. The headers use CRLF line endings and include an ETag based
+ * on the SHA-256 digest of the encoded OCSP response.
+ * @param resp encoded response source
+ * @param buf destination for the header lines
+ * @param len capacity of buf in bytes
+ * @returns 1 if the headers were generated, 0 otherwise
  */
 static int build_cache_headers(OCSP_RESPONSE *resp, char *buf, size_t len)
 {
@@ -1623,7 +1627,13 @@ static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp,
 #endif
 }
 #ifndef OPENSSL_NO_SOCK
-/* seconds from 'from' to 'to'; negative if 'to' is earlier */
+/**
+ * @brief Calculate the signed interval between two ASN.1 times.
+ * @param from start of the interval
+ * @param to end of the interval
+ * @param secs receives the interval in seconds; may be negative
+ * @returns 1 on success, 0 on failure
+ */
 static int ocsp_secs(const ASN1_TIME *from, const ASN1_TIME *to, long *secs)
 {
     int d, s;
@@ -1634,7 +1644,18 @@ static int ocsp_secs(const ASN1_TIME *from, const ASN1_TIME *to, long *secs)
     return 1;
 }
 
-/* <dir>/<hex SHA-256 of "responder-URL" NUL request-DER>.der */
+/**
+ * @brief Derive a local cache filename for a responder and OCSP request.
+ * The filename is a SHA-256 digest of the responder URL, a NUL separator,
+ * and the DER-encoded request, followed by the .der suffix.
+ * @param dir caller-supplied cache directory
+ * @param host responder hostname
+ * @param port responder port, or NULL
+ * @param path responder path, or NULL
+ * @param use_ssl nonzero for HTTPS
+ * @param req OCSP request to identify
+ * @returns allocated path to be freed with OPENSSL_free(), or NULL
+ */
 static char *ocsp_cache_path(const char *dir, const char *host,
     const char *port, const char *path, int use_ssl, OCSP_REQUEST *req)
 {
@@ -1669,10 +1690,13 @@ end:
     return out;
 }
 
-/*
- * Return the cached response only while it is fresh by its signed times
- * (RFC 9919 s8.5): not before thisUpdate, and younger than half of
- * nextUpdate - thisUpdate. Anything else is a plain miss, never an error.
+/**
+ * @brief Load a cached OCSP response within its freshness window.
+ * Reject entries lacking usable timestamps. A cache miss, parse failure,
+ * or stale entry returns NULL; normal signature verification still follows
+ * in the caller before the response can be trusted.
+ * @param file path of the cached DER-encoded response
+ * @returns a newly allocated response or NULL on cache miss
  */
 static OCSP_RESPONSE *ocsp_cache_load(const char *file)
 {
@@ -1708,6 +1732,12 @@ static OCSP_RESPONSE *ocsp_cache_load(const char *file)
     return resp;
 }
 
+/**
+ * @brief Write a verified OCSP response to the on-disk cache.
+ * The caller must have verified the response before calling this helper.
+ * @param file destination cache file
+ * @param resp DER-encoded response source
+ */
 static void ocsp_cache_store(const char *file, OCSP_RESPONSE *resp)
 {
     BIO *out = BIO_new_file(file, "wb");
