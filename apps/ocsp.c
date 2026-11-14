@@ -73,7 +73,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     int timeout);
-static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp);
+static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp, int rfc9919_mode);
 
 #ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *process_responder_get(
@@ -814,7 +814,7 @@ redo_accept:
                 resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
                     NULL);
                 if (resp != NULL)
-                    send_ocsp_response(cbio, resp);
+                    send_ocsp_response(cbio, resp, rfc9919_mode);
             }
             goto done_resp;
         }
@@ -879,7 +879,7 @@ redo_accept:
         if (resp == NULL)
             goto end;
         if (cbio != NULL)
-            send_ocsp_response(cbio, resp);
+            send_ocsp_response(cbio, resp, rfc9919_mode);
     } else if (host != NULL) {
 #ifndef OPENSSL_NO_SOCK
         int get_attempted = 0;
@@ -1587,11 +1587,31 @@ end:
 }
 #endif /* OPENSSL_NO_SOCK */
 
-static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp)
+static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp,
+                              int rfc9919_mode)
 {
 #ifndef OPENSSL_NO_SOCK
+    char headers[512];
+    const char *extra_headers = NULL;
 
-    return http_server_send_asn1_resp(prog, cbio,
+    if (rfc9919_mode
+        && build_cache_headers((OCSP_RESPONSE *)resp,
+                               headers, sizeof(headers))) {
+        extra_headers = headers;
+                               }
+
+    if (extra_headers != NULL) {
+        return http_server_send_asn1_resp_hdrs(
+            prog, cbio,
+            0 /* no keep-alive */,
+            "application/ocsp-response",
+            extra_headers,
+            ASN1_ITEM_rptr(OCSP_RESPONSE),
+            (const ASN1_VALUE *)resp);
+    }
+
+    return http_server_send_asn1_resp(
+        prog, cbio,
         0 /* no keep-alive */,
         "application/ocsp-response",
         ASN1_ITEM_rptr(OCSP_RESPONSE),
@@ -1625,11 +1645,11 @@ static char *ocsp_cache_path(const char *dir, const char *host,
     int derlen, idlen, n, i;
     size_t outlen;
 
-    idlen = BIO_snprintf(id, sizeof(id), "%s://%s:%s/%s",
+    idlen = snprintf(id, sizeof(id), "%s://%s:%s/%s",
         use_ssl == 1 ? "https" : "http", host,
         port != NULL ? port : "", path != NULL ? path : "");
     derlen = i2d_OCSP_REQUEST(req, &der);
-    if (ctx == NULL || idlen < 0 || derlen <= 0
+    if (ctx == NULL || idlen < 0 || (size_t)idlen >= sizeof(id) || derlen <= 0
         || !EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)
         || !EVP_DigestUpdate(ctx, id, (size_t)idlen + 1) /* includes NUL */
         || !EVP_DigestUpdate(ctx, der, (size_t)derlen)
@@ -1639,10 +1659,10 @@ static char *ocsp_cache_path(const char *dir, const char *host,
     outlen = strlen(dir) + 1 + 2 * mdlen + sizeof(".der");
     if ((out = OPENSSL_malloc(outlen)) == NULL)
         goto end;
-    n = BIO_snprintf(out, outlen, "%s/", dir);
+    n = snprintf(out, outlen, "%s/", dir);
     for (i = 0; i < (int)mdlen; i++)
-        n += BIO_snprintf(out + n, outlen - n, "%02x", md[i]);
-    BIO_snprintf(out + n, outlen - n, ".der");
+        n += snprintf(out + n, outlen - n, "%02x", md[i]);
+    snprintf(out + n, outlen - n, ".der");
 end:
     OPENSSL_free(der);
     EVP_MD_CTX_free(ctx);
