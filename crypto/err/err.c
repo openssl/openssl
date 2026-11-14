@@ -206,21 +206,28 @@ void OSSL_ERR_STATE_free(ERR_STATE *state)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+    void *err_state;
+    int ret = 0;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL)
+        || !err_shelve_state(&err_state))
         return 0;
     err_string_lock = CRYPTO_THREAD_lock_new();
     if (err_string_lock == NULL)
-        return 0;
+        goto end;
 #ifndef OPENSSL_NO_ERR
     int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
         err_string_data_cmp);
     if (int_error_hash == NULL) {
         CRYPTO_THREAD_lock_free(err_string_lock);
         err_string_lock = NULL;
-        return 0;
+        goto end;
     }
 #endif
-    return 1;
+    ret = 1;
+end:
+    err_unshelve_state(err_state);
+    return ret;
 }
 
 void err_cleanup(void)
@@ -250,12 +257,19 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
-    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+    void *err_state;
+
+    if (!err_shelve_state(&err_state))
         return 0;
+    if (!CRYPTO_THREAD_write_lock(err_string_lock)) {
+        err_unshelve_state(err_state);
+        return 0;
+    }
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
             (ERR_STRING_DATA *)str);
     CRYPTO_THREAD_unlock(err_string_lock);
+    err_unshelve_state(err_state);
     return 1;
 }
 #endif
@@ -704,8 +718,7 @@ int err_shelve_state(void **state)
     int saveerrno = get_last_sys_error();
 
     /*
-     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
-     * via ossl_init_load_crypto_nodelete(), by which point the requested
+     * When called indirectly from OPENSSL_init_crypto(), the requested
      * "base" initialization has already been performed, so the below call is a
      * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
      *
