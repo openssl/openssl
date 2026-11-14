@@ -892,7 +892,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          */
         if (s->num_tickets <= s->sent_tickets
             || ((s->options & SSL_OP_NO_TICKET) != 0
-                && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
+                && (s->session_ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
             || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
             || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0))
@@ -2949,6 +2949,18 @@ int tls_handle_alpn(SSL_CONNECTION *s)
     return 1;
 }
 
+/* Return 1 if the server has a certificate of any type configured, else 0 */
+static int have_any_cert(SSL_CONNECTION *s)
+{
+    size_t i;
+
+    for (i = 0; i < s->ssl_pkey_num; i++) {
+        if (ssl_has_cert(s, (int)i))
+            return 1;
+    }
+    return 0;
+}
+
 WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
 {
     const SSL_CIPHER *cipher;
@@ -2973,7 +2985,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 int rv = s->cert->cert_cb(ussl, s->cert->cert_cb_arg);
 
                 if (rv == 0) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR);
+                    /*
+                     * A callback failure is normally an internal error.  If
+                     * the client offered only unknown PSK identities and there
+                     * is no certificate to fall back on, use decrypt_error as
+                     * if a binder had failed.  See tls_parse_ctos_psk().  The
+                     * reason stays SSL_R_CERT_CB_ERROR.
+                     */
+                    if (s->ext.psk_unknown_identity && !have_any_cert(s))
+                        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_CERT_CB_ERROR);
+                    else
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR);
                     goto err;
                 }
                 if (rv < 0) {
@@ -2996,6 +3018,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 s->s3.tmp.new_cipher = cipher;
             }
             if (!s->hit) {
+                if (s->ext.psk_unknown_identity && !have_any_cert(s)) {
+                    /*
+                     * No certificate to fall back on: use decrypt_error to
+                     * keep the alert the same as if the binder failed.
+                     * See RFC9846 Appendix F.6.  Note we make no attempt to
+                     * do this in constant time compared to verifying the
+                     * binder.  None of this code is constant time anyway.
+                     */
+                    SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+                    goto err;
+                }
                 if (!tls_choose_sigalg(s, 1)) {
                     /* SSLfatal already called */
                     goto err;

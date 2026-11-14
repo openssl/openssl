@@ -1894,6 +1894,14 @@ struct ssl_connection_st {
         bool early_data_suppressed;
 
         /*
+         * Did the server fail to find any of the client's offered PSK
+         * identities?  Server side, TLS 1.3 only.  If the server ends up with
+         * no certificate to authenticate with, the handshake fails as if a
+         * binder had failed to verify.
+         */
+        bool psk_unknown_identity;
+
+        /*
          * Cached result of the resumption ticket age/lifetime check for the
          * ClientHello under construction. Time-dependent, double-checked
          * within the same flight (see tls13_check_tick_lifetime_hint()).

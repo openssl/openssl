@@ -1349,6 +1349,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
+    s->ext.psk_unknown_identity = 0;
+
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
      * ignore this extension
@@ -1394,6 +1396,11 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
             return 0;
         }
+        /*
+         * The callback may have switched the connection to another context,
+         * which can free the one we looked up above.
+         */
+        sctx = SSL_CONNECTION_GET_CTX(s);
 
 #ifndef OPENSSL_NO_PSK
         if (sess == NULL
@@ -1598,18 +1605,28 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
         for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
             ;
-        if (j < s->ssl_pkey_num) {
-            /* A certificate exists. Fallback to a full handshake */
-            return 1;
+        if (j == s->ssl_pkey_num
+            && s->cert->cert_cb == NULL
+            && sctx->ext.servername_cb == NULL
+            && s->session_ctx->ext.servername_cb == NULL) {
+            /*
+             * No certificate, and no callback that could supply one later, so
+             * there is nothing to fall back to.  Use decrypt_error here to keep
+             * the alert the same as if the binder failed.  See RFC9846
+             * Appendix F.6.  Note we make no attempt to do this in constant
+             * time compared to verifying the binder.  None of this code is
+             * constant time anyway.
+             */
+            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+            goto err;
         }
         /*
-         * decrypt_error here to keep the alert the same as if the binder
-         * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
-         * in constant time compared to verifying the binder. None of this code
-         * is constant time anyway.
+         * Fall back to a full handshake.  If there is no certificate yet, a
+         * callback may still supply one, so tls_post_process_client_hello()
+         * makes the final decision once the callbacks have run.
          */
-        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
+        s->ext.psk_unknown_identity = 1;
+        return 1;
     }
 
     binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
