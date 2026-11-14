@@ -97,13 +97,13 @@ typedef DGRAM_URXE QUIC_URXE;
 typedef DGRAM_URXE_LIST QUIC_URXE_LIST;
 
 /* Accessors for URXE buffer. */
-static ossl_unused ossl_inline unsigned char *
+static ossl_inline unsigned char *
 ossl_quic_urxe_data(const QUIC_URXE *e)
 {
     return (unsigned char *)&e[1];
 }
 
-static ossl_unused ossl_inline unsigned char *
+static ossl_inline unsigned char *
 ossl_quic_urxe_data_end(const QUIC_URXE *e)
 {
     return ossl_quic_urxe_data(e) + e->data_len;
@@ -112,19 +112,19 @@ ossl_quic_urxe_data_end(const QUIC_URXE *e)
 /*
  * List management helpers. These delegate to the DGRAM_URXE list functions.
  */
-static ossl_unused ossl_inline void
+static ossl_inline void
 ossl_quic_urxe_remove(QUIC_URXE_LIST *l, QUIC_URXE *e)
 {
     ossl_dgram_urxe_remove(l, e);
 }
 
-static ossl_unused ossl_inline void
+static ossl_inline void
 ossl_quic_urxe_insert_head(QUIC_URXE_LIST *l, QUIC_URXE *e)
 {
     ossl_dgram_urxe_insert_head(l, e);
 }
 
-static ossl_unused ossl_inline void
+static ossl_inline void
 ossl_quic_urxe_insert_tail(QUIC_URXE_LIST *l, QUIC_URXE *e)
 {
     ossl_dgram_urxe_insert_tail(l, e);

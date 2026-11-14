@@ -268,13 +268,13 @@ int ossl_dgram_demux_has_pending(const DGRAM_DEMUX *demux);
  * Accessor for URXE data buffer. This returns a pointer to the data buffer
  * that follows the URXE structure.
  */
-static ossl_unused ossl_inline unsigned char *
+static ossl_inline unsigned char *
 ossl_dgram_urxe_data(const DGRAM_URXE *e)
 {
     return (unsigned char *)&e[1];
 }
 
-static ossl_unused ossl_inline unsigned char *
+static ossl_inline unsigned char *
 ossl_dgram_urxe_data_end(const DGRAM_URXE *e)
 {
     return ossl_dgram_urxe_data(e) + e->data_len;
