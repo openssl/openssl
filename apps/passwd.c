@@ -837,7 +837,10 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         hash = md5crypt(passwd, "", *salt_p);
     if (mode == passwd_sha256 || mode == passwd_sha512)
         hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p);
-    assert(hash != NULL);
+    if (hash == NULL) {
+        BIO_printf(bio_err, "Error computing password hash\n");
+        goto end;
+    }
 
     if (table && !reverse)
         BIO_printf(out, "%s\t%s\n", passwd, hash);
