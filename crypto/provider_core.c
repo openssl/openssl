@@ -26,6 +26,7 @@
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
+#include "internal/property.h"
 #include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
@@ -241,10 +242,102 @@ static void provider_deactivate_free(OSSL_PROVIDER *prov)
     ossl_provider_free(prov);
 }
 
+/*
+ * Deinitialise a provider: run its teardown callback and release the
+ * resources tied to being initialised.  This is normally done late, when
+ * the last provider reference is dropped (see ossl_provider_free), but is
+ * forced early when the provider store itself is destroyed.
+ */
+static void provider_deinit(OSSL_PROVIDER *prov)
+{
+    if (prov->flag_initialized) {
+        ossl_provider_teardown(prov);
+#ifndef OPENSSL_NO_ERR
+#ifndef FIPS_MODULE
+        if (prov->error_strings != NULL) {
+            ERR_unload_strings(prov->error_lib, prov->error_strings);
+            OPENSSL_free(prov->error_strings);
+            prov->error_strings = NULL;
+        }
+#endif
+#endif
+        OPENSSL_free(prov->operation_bits);
+        prov->operation_bits = NULL;
+        prov->operation_bits_sz = 0;
+        prov->flag_initialized = 0;
+    }
+}
+
 #ifndef FIPS_MODULE
 static void ossl_provider_child_cb_free(OSSL_PROVIDER_CHILD_CB *cb)
 {
     OPENSSL_free(cb);
+}
+
+/**
+ * @brief Drop parent method-store references to a child-context owner.
+ * @param prov Provider in a library context being destroyed with no users left.
+ *
+ * All parent stores must remain alive until the provider's child contexts have
+ * released methods borrowed from them.
+ */
+static void provider_store_purge_child_owner_methods(OSSL_PROVIDER *prov)
+{
+    OSSL_LIB_CTX *libctx = prov->libctx;
+
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX),
+        prov);
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_STORE_INDEX),
+        prov);
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_ENCODER_STORE_INDEX),
+        prov);
+    ossl_method_store_remove_all_provided_teardown(
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX),
+        prov);
+}
+
+void ossl_provider_store_free_child_owners(void *vstore)
+{
+    struct provider_store_st *store = vstore;
+    OSSL_PROVIDER_CHILD_CB *child_cb;
+    OSSL_PROVIDER *prov;
+    int i;
+
+    if (store == NULL)
+        return;
+
+    /* Child contexts may hold methods borrowed from this parent context. */
+    while ((child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, 0))
+        != NULL) {
+        prov = child_cb->prov;
+
+        for (i = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs) - 1;
+            i >= 0; i--) {
+            child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
+            if (child_cb->prov == prov) {
+                sk_OSSL_PROVIDER_CHILD_CB_delete(store->child_cbs, i);
+                ossl_provider_child_cb_free(child_cb);
+            }
+        }
+
+        if (sk_OSSL_PROVIDER_delete_ptr(store->providers, prov) == NULL)
+            continue;
+
+        provider_store_purge_child_owner_methods(prov);
+        /*
+         * Force the provider's teardown now, while this context's method
+         * stores are still intact, rather than late, when its last
+         * reference is dropped.  The teardown releases the provider's
+         * child library contexts, whose contents (e.g. thread state
+         * DRBGs) may still reference methods cached in this context's
+         * stores.
+         */
+        provider_deinit(prov);
+        provider_deactivate_free(prov);
+    }
 }
 #endif
 
@@ -619,7 +712,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         return NULL;
     }
 
-    prov->libctx = libctx;
+    /* Keep the concrete owner selected when the provider store was resolved. */
+    prov->libctx = store->libctx;
 #ifndef FIPS_MODULE
     prov->error_lib = ERR_get_next_error_library();
 #endif
@@ -752,22 +846,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * provider's services.  Therefore, we deinit late.
          */
         if (ref == 0) {
-            if (prov->flag_initialized) {
-                ossl_provider_teardown(prov);
-#ifndef OPENSSL_NO_ERR
-#ifndef FIPS_MODULE
-                if (prov->error_strings != NULL) {
-                    ERR_unload_strings(prov->error_lib, prov->error_strings);
-                    OPENSSL_free(prov->error_strings);
-                    prov->error_strings = NULL;
-                }
-#endif
-#endif
-                OPENSSL_free(prov->operation_bits);
-                prov->operation_bits = NULL;
-                prov->operation_bits_sz = 0;
-                prov->flag_initialized = 0;
-            }
+            provider_deinit(prov);
 
 #ifndef FIPS_MODULE
             /*
