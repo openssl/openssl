@@ -149,36 +149,161 @@ void dtls1_sent_msg_free(dtls_sent_msg *msg)
     OPENSSL_free(msg);
 }
 
-static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
+/* A received message with nothing held for it yet */
+static hm_fragment *dtls1_hm_fragment_new(void)
 {
-    const size_t bitmask_len = (reassembly ? RSMBLY_BITMASK_SIZE(frag_len) : 0);
-    hm_fragment *frag = OPENSSL_malloc(sizeof(*frag) + frag_len + bitmask_len);
-
-    if (frag == NULL)
-        return NULL;
-
-    memset(frag, 0, sizeof(*frag));
-
-    /* zero length fragment gets zero frag->fragment */
-    if (frag_len > 0)
-        frag->fragment = (unsigned char *)(frag + 1);
-
-    /* Initialize reassembly bitmask if necessary */
-    if (bitmask_len > 0) {
-        if (frag->fragment == NULL)
-            frag->reassembly = (unsigned char *)(frag + 1);
-        else
-            frag->reassembly = frag->fragment + frag_len;
-
-        memset(frag->reassembly, 0, bitmask_len);
-    }
-
-    return frag;
+    return OPENSSL_zalloc(sizeof(hm_fragment));
 }
 
 void dtls1_hm_fragment_free(hm_fragment *frag)
 {
+    if (frag == NULL)
+        return;
+
+    OPENSSL_free(frag->saved);
+    OPENSSL_free(frag->buf);
     OPENSSL_free(frag);
+}
+
+/* Each saved fragment is preceded by its offset and its length, 3 bytes each */
+#define HM_SAVED_HDR_LEN 6
+
+/* The least a message's saved fragments are given room for */
+#define HM_SAVED_MIN_ALLOC 256
+
+/*
+ * Hold the message in a buffer of the length it claims, with a bitmap of the
+ * bytes received, and move the saved fragments into it. Nothing changes if the
+ * buffer cannot be allocated.
+ */
+static int dtls1_hm_fragment_flatten(SSL_CONNECTION *s, hm_fragment *frag)
+{
+    const size_t msg_len = frag->msg_header.msg_len;
+    const size_t map_len = RSMBLY_BITMASK_SIZE(msg_len);
+    unsigned char *buf = OPENSSL_malloc(msg_len + map_len);
+    unsigned char *covered;
+    size_t pos = 0;
+
+    if (buf == NULL) {
+        /*
+         * The body of the fragment being received has not been read, which
+         * leaves the record in the middle of it, so the connection cannot go
+         * on.
+         */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+
+    covered = buf + msg_len;
+    memset(covered, 0, map_len);
+
+    /* Each was checked to lie within the message when it was saved */
+    while (pos < frag->saved_len) {
+        const unsigned char *p = frag->saved + pos;
+        unsigned long off, len;
+
+        n2l3(p, off);
+        n2l3(p, len);
+        memcpy(buf + off, p, len);
+        RSMBLY_BITMASK_MARK(covered, (long)off, (long)(off + len));
+        pos += HM_SAVED_HDR_LEN + len;
+    }
+
+    OPENSSL_free(frag->saved);
+    frag->saved = NULL;
+    frag->saved_len = 0;
+    frag->saved_alloc = 0;
+    frag->buf = buf;
+    frag->covered = covered;
+    return 1;
+}
+
+/* Read and discard the body of a fragment which is not being kept */
+static int dtls1_discard_fragment_body(SSL_CONNECTION *s, size_t frag_len)
+{
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    unsigned char devnull[256];
+    size_t readbytes;
+
+    while (frag_len) {
+        if (ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL, devnull,
+                frag_len > sizeof(devnull) ? sizeof(devnull) : frag_len, 0,
+                &readbytes)
+            <= 0)
+            return 0;
+        frag_len -= readbytes;
+    }
+    return 1;
+}
+
+/*
+ * Read the body of a fragment which starts at off. Held in a buffer, the body is
+ * read into it where it belongs. Otherwise it is appended to the saved
+ * fragments, with no check for bytes already held: the caller has made the
+ * message be held in a buffer by the time what is saved could be all of it, so
+ * the saved fragments, and the room kept for them, stay within the length the
+ * message claims.
+ */
+static int dtls1_hm_fragment_read(SSL_CONNECTION *s, hm_fragment *frag,
+    size_t off, size_t len)
+{
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    const size_t msg_len = frag->msg_header.msg_len;
+    size_t readbytes, got, need;
+    unsigned char *p;
+
+    if (frag->buf != NULL) {
+        unsigned char *covered = frag->covered;
+
+        if (ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
+                frag->buf + off, len, 0, &readbytes)
+                <= 0
+            || readbytes != len)
+            return 0;
+
+        RSMBLY_BITMASK_MARK(covered, (long)off, (long)(off + len));
+        return 1;
+    }
+
+    need = frag->saved_len + HM_SAVED_HDR_LEN + len;
+    if (!ossl_assert(need <= msg_len))
+        return 0;
+
+    if (need > frag->saved_alloc) {
+        /* Grow geometrically, so that many small fragments cost little */
+        size_t alloc = frag->saved_alloc * 2;
+        unsigned char *saved;
+
+        if (alloc < HM_SAVED_MIN_ALLOC)
+            alloc = HM_SAVED_MIN_ALLOC;
+        if (alloc < need)
+            alloc = need;
+        if (alloc > msg_len)
+            alloc = msg_len;
+
+        saved = OPENSSL_realloc(frag->saved, alloc);
+        if (saved == NULL) {
+            /* The body has not been read, so the connection cannot go on */
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+            return 0;
+        }
+        frag->saved = saved;
+        frag->saved_alloc = alloc;
+    }
+
+    p = frag->saved + frag->saved_len;
+    for (got = 0; got < len; got += readbytes) {
+        readbytes = 0;
+        if (ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
+                p + HM_SAVED_HDR_LEN + got, len - got, 0, &readbytes)
+            <= 0)
+            return 0;
+    }
+
+    l2n3(off, p);
+    l2n3(len, p);
+    frag->saved_len = need;
+    return 1;
 }
 
 static int dtls1_write_hm_header(unsigned char *msgheaderstart,
@@ -724,7 +849,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
     } while (item == NULL);
 
     /* Don't return if reassembly still in progress */
-    if (frag->reassembly != NULL)
+    if (frag->incomplete)
         return 0;
 
     if (s->d1->handshake_read_seq == frag->msg_header.seq || chretran) {
@@ -735,10 +860,15 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
         /* Calls SSLfatal() as required */
         ret = dtls1_preprocess_fragment(s, &frag->msg_header);
 
-        if (ret && frag->msg_header.frag_len > 0) {
+        if (ret) {
             unsigned char *p = (unsigned char *)s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
-            memcpy(&p[frag->msg_header.frag_off], frag->fragment,
-                frag->msg_header.frag_len);
+
+            /*
+             * A complete message is held in a buffer, unless it has no bytes.
+             * It is copied here, now that the handshake buffer is wanted.
+             */
+            if (frag->buf != NULL)
+                memcpy(p, frag->buf, frag->msg_header.msg_len);
         }
 
         dtls1_hm_fragment_free(frag);
@@ -788,7 +918,7 @@ int dtls1_has_buffered_ready_message(SSL_CONNECTION *s)
     if (item == NULL)
         return 0;
     frag = (hm_fragment *)item->data;
-    return frag->reassembly == NULL;
+    return !frag->incomplete;
 }
 
 static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
@@ -796,10 +926,8 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
 {
     hm_fragment *frag = NULL;
     pitem *item = NULL;
-    int i = -1, is_complete;
     size_t frag_len = msg_hdr->frag_len;
-    size_t readbytes;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    int is_complete;
 
     if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len
         || msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
@@ -813,12 +941,13 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     item = pqueue_find_u64(&s->d1->rcvd_messages, msg_hdr->seq);
 
     if (item == NULL) {
-        frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
+        frag = dtls1_hm_fragment_new();
         if (frag == NULL)
             goto err;
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
         frag->msg_header.frag_len = frag->msg_header.msg_len;
         frag->msg_header.frag_off = 0;
+        frag->incomplete = 1;
     } else {
         frag = (hm_fragment *)item->data;
         if (frag->msg_header.msg_len != msg_hdr->msg_len) {
@@ -829,41 +958,44 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     }
 
     /*
-     * If message is already reassembled, this must be a retransmit and can
-     * be dropped. In this case item != NULL and so frag does not need to be
-     * freed.
+     * If the message is already complete, this must be a retransmit and can be
+     * dropped. In this case item != NULL and so frag does not need to be freed.
      */
-    if (frag->reassembly == NULL) {
-        unsigned char devnull[256];
-
-        while (frag_len) {
-            i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
-                devnull,
-                frag_len > sizeof(devnull) ? sizeof(devnull) : frag_len, 0, &readbytes);
-            if (i <= 0)
-                goto err;
-            frag_len -= readbytes;
-        }
+    if (!frag->incomplete) {
+        if (!dtls1_discard_fragment_body(s, frag_len))
+            goto err;
         return DTLS1_HM_FRAGMENT_RETRY;
     }
 
-    /* read the body of the fragment (header has already been read */
-    i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
-        frag->fragment + msg_hdr->frag_off,
-        frag_len, 0, &readbytes);
-    if (i <= 0 || readbytes != frag_len)
+    /*
+     * Fragments are saved as received, duplicates included, until what is saved
+     * and this fragment could be all of the message. It is then held in a buffer
+     * of the length it claims, which a duplicate no longer adds to. What is held
+     * for a message is therefore never more than about the bytes received for
+     * it, or the length it claims if that is less, however it is fragmented.
+     */
+    if (frag->buf == NULL
+        && frag->saved_len + HM_SAVED_HDR_LEN + frag_len >= msg_hdr->msg_len
+        && !dtls1_hm_fragment_flatten(s, frag))
         goto err;
 
-    RSMBLY_BITMASK_MARK(frag->reassembly, (long)msg_hdr->frag_off,
-        (long)(msg_hdr->frag_off + frag_len));
+    /* Read the body of the fragment (the header has already been read) */
+    if (!dtls1_hm_fragment_read(s, frag, msg_hdr->frag_off, frag_len))
+        goto err;
 
     if (!ossl_assert(msg_hdr->msg_len > 0))
         goto err;
-    RSMBLY_BITMASK_IS_COMPLETE(frag->reassembly, (long)msg_hdr->msg_len,
-        is_complete);
 
-    if (is_complete)
-        frag->reassembly = NULL;
+    /*
+     * What is saved is always less than the message, so only a message held in
+     * a buffer can be complete, once every bit of the bitmap is set.
+     */
+    if (frag->buf != NULL) {
+        RSMBLY_BITMASK_IS_COMPLETE(frag->covered, (long)msg_hdr->msg_len,
+            is_complete);
+        if (is_complete)
+            frag->incomplete = 0;
+    }
 
     if (item == NULL) {
         item = pitem_new_u64(msg_hdr->seq, frag);
@@ -992,18 +1124,25 @@ int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         if (frag_len > dtls1_max_handshake_message_len(s))
             goto err;
 
-        frag = dtls1_hm_fragment_new(frag_len, 0);
+        frag = dtls1_hm_fragment_new();
         if (frag == NULL)
             goto err;
 
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 
         if (frag_len) {
+            /* A whole message is held in a buffer, with no bitmap needed */
+            frag->buf = OPENSSL_malloc(frag_len);
+            if (frag->buf == NULL) {
+                /* The body has not been read, so the connection cannot go on */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
             /*
              * read the body of the fragment (header has already been read
              */
             i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
-                frag->fragment, frag_len, 0,
+                frag->buf, frag_len, 0,
                 &readbytes);
             if (i <= 0 || readbytes != frag_len)
                 goto err;

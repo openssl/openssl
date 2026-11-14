@@ -756,7 +756,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[dtlstest]=dtlstest.c helpers/ssltestlib.c
   INCLUDE[dtlstest]=.. ../include ../apps/include
-  DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[dtlstest]=../libcrypto.a ../libssl.a libtestutil.a
 
   IF[{- !$disabled{dtls} -}]
     SOURCE[dtls_ccs_reorder_test]=dtls_ccs_reorder_test.c helpers/ssltestlib.c
