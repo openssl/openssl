@@ -24,7 +24,7 @@ plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop
 plan skip_all => "Test only supported in a dso build" if disabled("dso");
 plan skip_all => "Test is disabled in an address sanitizer build" unless disabled("asan");
 
-plan tests => 4;
+plan tests => 5;
 
 my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
@@ -40,3 +40,11 @@ ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl])),
 
 ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl])),
    "running shlibloadtest -dso_ref");
+
+SKIP: {
+    skip "TLS key capacity check requires Linux threads and no-pinshared", 1
+        unless config('target') =~ /^linux-/ && !disabled('threads')
+            && disabled('pinshared');
+    ok(run(test(["shlibloadtest", "-cleanup", $libcrypto, $libssl])),
+       "libcrypto unload restores thread-local key capacity");
+}

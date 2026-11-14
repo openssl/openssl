@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
+#include "internal/threads_common.h"
 #include "crypto/dso_conf.h"
 #include "internal/dso.h"
 #include "crypto/store.h"
@@ -336,6 +337,8 @@ void ossl_cleanup_destructor(void)
 #ifdef S390X_MOD_EXP
     OPENSSL_s390x_cleanup();
 #endif
+
+    ossl_thread_cleanup_global();
 
     base_inited = 0;
 }
