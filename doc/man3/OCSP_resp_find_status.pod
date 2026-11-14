@@ -56,8 +56,13 @@ OCSP_check_validity, OCSP_basic_verify
 
 =head1 DESCRIPTION
 
-OCSP_resp_find_status() searches I<bs> for an OCSP response for I<id>. If it is
-successful the fields of the response are returned in I<*status>, I<*reason>,
+OCSP_resp_find_status() searches I<bs> for exactly one OCSP response for I<id>.
+If more than one response matches I<id>, the function fails even if the
+matching responses contain identical status information. Matching uses the
+complete certificate ID, including the hash algorithm, issuer name hash,
+issuer key hash and serial number. Responses for other certificate IDs do
+not affect the lookup.
+If successful the fields of the response are returned in I<*status>, I<*reason>,
 I<*revtime>, I<*thisupd> and I<*nextupd>.  The I<*status> value will be one of
 B<V_OCSP_CERTSTATUS_GOOD>, B<V_OCSP_CERTSTATUS_REVOKED> or
 B<V_OCSP_CERTSTATUS_UNKNOWN>. The I<*reason> and I<*revtime> fields are only
@@ -142,7 +147,10 @@ trust for OCSP signing in the root CA certificate.
 
 =head1 RETURN VALUES
 
-OCSP_resp_find_status() returns 1 if I<id> is found in I<bs> and 0 otherwise.
+OCSP_resp_find_status() returns 1 if exactly one response for I<id> is found in
+I<bs> and 0 otherwise. On failure, the output parameters are left unchanged.
+If more than one response matches I<id>, an error with reason
+B<ERR_R_PASSED_INVALID_ARGUMENT> is added to the error queue.
 
 OCSP_resp_count() returns the total number of B<OCSP_SINGLERESP> fields in I<bs>
 or -1 on error.
@@ -184,6 +192,8 @@ or -1 on a fatal error such as malloc failure.
 Applications will typically call OCSP_resp_find_status() using the certificate
 ID of interest and then check its validity using OCSP_check_validity(). They
 can then take appropriate action based on the status of the certificate.
+Applications that need to inspect multiple responses for the same certificate
+ID can enumerate them with OCSP_resp_find() and OCSP_resp_get0().
 
 An OCSP response for a certificate contains B<thisUpdate> and B<nextUpdate>
 fields. Normally the current time should be between these two values. To
@@ -207,6 +217,11 @@ L<OCSP_REQUEST_new(3)>,
 L<OCSP_response_status(3)>,
 L<OCSP_sendreq_new(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>
+
+=head1 HISTORY
+
+Before OpenSSL 4.2, OCSP_resp_find_status() returned the status information from
+the first matching response when multiple responses matched the certificate ID.
 
 =head1 COPYRIGHT
 
