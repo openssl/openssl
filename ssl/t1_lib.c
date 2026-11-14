@@ -5085,3 +5085,14 @@ __owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
 
     return EVP_PKEY_set1_encoded_public_key(pkey, enckey, enckeylen);
 }
+
+int ossl_tls13_hybrid_ec_point_format_ok(uint16_t group_id,
+    const uint8_t *enc,
+    size_t enc_len)
+{
+    if (!is_ec_first_hybrid_group(group_id))
+        return 1;
+
+    /* The generic EC decoder also accepts the other SEC1 point formats */
+    return enc_len > 0 && enc[0] == 0x04;
+}
