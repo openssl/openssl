@@ -51,6 +51,25 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     int flags, QUIC_TSERVER **qtserv, SSL **cssl,
     QTEST_FAULT **fault, BIO **tracebio);
 
+/**
+ * @brief As qtest_create_quic_objects() but the server is a QUIC listener.
+ * @param libctx library context
+ * @param clientctx client SSL_CTX
+ * @param serverctx server SSL_CTX, or NULL to create one
+ * @param certfile server certificate file
+ * @param keyfile server private key file
+ * @param flags QTEST_FLAG_* values or'd together, or 0
+ * @param listener receives the listener
+ * @param cssl receives the client; created if *cssl is NULL
+ * @param fault receives the fault injector, or NULL if not needed
+ * @param tracebio receives the client trace BIO, or NULL
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_create_quic_objects_ex(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+    SSL_CTX *serverctx, char *certfile, char *keyfile,
+    int flags, SSL **listener, SSL **cssl,
+    QTEST_FAULT **fault, BIO **tracebio);
+
 /* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */
 void qtest_add_time(uint64_t millis);
 
@@ -77,11 +96,29 @@ int qtest_supports_blocking(void);
  */
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
+/**
+ * @brief Run the handshake between the client and a listener.
+ * @param listener listener
+ * @param clientssl client
+ * @param sconn receives the accepted server connection; caller frees it
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_create_quic_connection_ssl(SSL *listener, SSL *clientssl,
+    SSL **sconn);
+
 /*
  * Check if both client and server have no data to read and are waiting on a
  * timeout. If so, wait until the timeout has expired.
  */
 int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv);
+
+/**
+ * @brief Listener variant of qtest_wait_for_timeout().
+ * @param s client
+ * @param listener listener
+ * @returns 1 on success, 0 if there is no timeout to wait for
+ */
+int qtest_wait_for_timeout_ssl(SSL *s, SSL *listener);
 
 /*
  * Same as qtest_create_quic_connection but will stop (successfully) if the
@@ -90,15 +127,43 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv);
 int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
     int wanterr);
 
+/**
+ * @brief As qtest_create_quic_connection_ssl() but stops successfully if the
+ * client reports SSL_get_error() value |wanterr|.
+ * @param listener listener
+ * @param clientssl client
+ * @param sconn receives the accepted server connection; caller frees it
+ * @param wanterr SSL_ERROR_* value to stop at
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_create_quic_connection_ssl_ex(SSL *listener, SSL *clientssl,
+    SSL **sconn, int wanterr);
+
 /*
  * Shutdown the client SSL object gracefully
  */
 int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl);
 
+/**
+ * @brief Listener variant of qtest_shutdown().
+ * @param listener listener
+ * @param clientssl client
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_shutdown_ssl(SSL *listener, SSL *clientssl);
+
 /*
  * Confirm that the server has received the given transport error code.
  */
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code);
+
+/**
+ * @brief Listener variant of qtest_check_server_transport_err().
+ * @param sconn server connection
+ * @param code expected error code
+ * @returns 1 if it was, 0 otherwise
+ */
+int qtest_check_server_transport_err_ssl(SSL *sconn, uint64_t code);
 
 /*
  * Confirm the server has received a protocol error. Equivalent to calling
@@ -106,11 +171,25 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code);
  */
 int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv);
 
+/**
+ * @brief qtest_check_server_transport_err_ssl() for PROTOCOL_VIOLATION.
+ * @param sconn server connection
+ * @returns 1 if it was, 0 otherwise
+ */
+int qtest_check_server_protocol_err_ssl(SSL *sconn);
+
 /*
  * Confirm the server has received a frame encoding error. Equivalent to calling
  * qtest_check_server_transport_err with a code of QUIC_ERR_FRAME_ENCODING_ERROR
  */
 int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv);
+
+/**
+ * @brief qtest_check_server_transport_err_ssl() for FRAME_ENCODING_ERROR.
+ * @param sconn server connection
+ * @returns 1 if it was, 0 otherwise
+ */
+int qtest_check_server_frame_encoding_err_ssl(SSL *sconn);
 
 /*
  * Enable tests to listen for pre-encryption QUIC packets being sent

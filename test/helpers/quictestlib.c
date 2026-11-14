@@ -18,6 +18,9 @@
 #include "../threadstest.h"
 #endif
 #include "internal/quic_ssl.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_port.h"
+#include "internal/statem.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_error.h"
@@ -35,6 +38,10 @@ struct noise_args_data_st {
 
 struct qtest_fault {
     QUIC_TSERVER *qtserv;
+    /* Latest server channel when using a listener */
+    QUIC_CHANNEL *ch;
+    unsigned int want_pplain_mutator : 1;
+    unsigned int want_handshake_mutator : 1;
 
     /* Plain packet mutations */
     /* Header for the plaintext packet */
@@ -80,6 +87,10 @@ static CRYPTO_MUTEX *client_ready_mutex = NULL;
 
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
+static int fault_on_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg);
+static int select_alpn(SSL *ssl, const unsigned char **out,
+    unsigned char *out_len, const unsigned char *in,
+    unsigned int in_len, void *arg);
 static OSSL_TIME qtest_get_time(void);
 static void qtest_reset_time(void);
 
@@ -128,10 +139,11 @@ static void noise_msg_callback(int write_p, int version, int content_type,
 #endif
 }
 
-int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+/* Exactly one of |qtserv| or |listener| must be non-NULL */
+static int create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     SSL_CTX *serverctx, char *certfile, char *keyfile,
-    int flags, QUIC_TSERVER **qtserv, SSL **cssl,
-    QTEST_FAULT **fault, BIO **tracebio)
+    int flags, QUIC_TSERVER **qtserv, SSL **listener,
+    SSL **cssl, QTEST_FAULT **fault, BIO **tracebio)
 {
     /* ALPN value as recognised by QUIC_TSERVER */
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
@@ -141,6 +153,8 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     struct in_addr ina = { 0 };
     BIO *tmpbio = NULL;
     QTEST_DATA *bdata = NULL;
+    int own_bdata = 1;
+    SSL_CTX *sctx = NULL;
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
     if (client_ready_cond == NULL) {
@@ -163,7 +177,10 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     if (bdata == NULL)
         return 0;
 
-    *qtserv = NULL;
+    if (qtserv != NULL)
+        *qtserv = NULL;
+    else
+        *listener = NULL;
 
     if (fault != NULL) {
         *fault = OPENSSL_zalloc(sizeof(**fault));
@@ -326,6 +343,7 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
 
     BIO_set_data(fisbio, bdata);
+    own_bdata = 0;
 
     if (!BIO_up_ref(sbio))
         goto err;
@@ -334,13 +352,6 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
         goto err;
     }
 
-    tserver_args.libctx = libctx;
-    tserver_args.net_rbio = sbio;
-    tserver_args.net_wbio = fisbio;
-    tserver_args.alpn = NULL;
-    if (serverctx != NULL && !TEST_true(SSL_CTX_up_ref(serverctx)))
-        goto err;
-    tserver_args.ctx = serverctx;
     if (fake_now_lock == NULL) {
         fake_now_lock = CRYPTO_THREAD_lock_new();
         if (fake_now_lock == NULL)
@@ -349,48 +360,140 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     if ((flags & QTEST_FLAG_FAKE_TIME) != 0) {
         using_fake_time = 1;
         qtest_reset_time();
-        tserver_args.now_cb = fake_now_cb;
         (void)ossl_quic_set_override_now_cb(*cssl, fake_now_cb, NULL);
     } else {
         using_fake_time = 0;
     }
 
-    if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
-                      keyfile)))
-        goto err;
+    if (qtserv != NULL) {
+        tserver_args.libctx = libctx;
+        tserver_args.net_rbio = sbio;
+        tserver_args.net_wbio = fisbio;
+        tserver_args.alpn = NULL;
+        if (serverctx != NULL && !TEST_true(SSL_CTX_up_ref(serverctx)))
+            goto err;
+        tserver_args.ctx = serverctx;
+        if (using_fake_time)
+            tserver_args.now_cb = fake_now_cb;
 
-    bdata->short_conn_id_len = ossl_quic_tserver_get_short_header_conn_id_len(*qtserv);
-    /* Ownership of fisbio and sbio is now held by *qtserv */
-    sbio = NULL;
-    fisbio = NULL;
+        if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
+                          keyfile)))
+            goto err;
 
-    if ((flags & QTEST_FLAG_NOISE) != 0)
-        ossl_quic_tserver_set_msg_callback(*qtserv, noise_msg_callback,
-            &(*fault)->noiseargs);
+        bdata->short_conn_id_len = ossl_quic_tserver_get_short_header_conn_id_len(*qtserv);
+        /* Ownership of fisbio and sbio is now held by *qtserv */
+        sbio = NULL;
+        fisbio = NULL;
 
-    if (fault != NULL)
-        (*fault)->qtserv = *qtserv;
+        if ((flags & QTEST_FLAG_NOISE) != 0)
+            ossl_quic_tserver_set_msg_callback(*qtserv, noise_msg_callback,
+                &(*fault)->noiseargs);
+
+        if (fault != NULL)
+            (*fault)->qtserv = *qtserv;
+    } else {
+        QUIC_PORT *port;
+
+        if (serverctx != NULL) {
+            if (!TEST_true(SSL_CTX_up_ref(serverctx)))
+                goto err;
+            sctx = serverctx;
+        } else {
+            sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method());
+            if (!TEST_ptr(sctx))
+                goto err;
+        }
+
+        if (certfile != NULL
+            && !TEST_int_eq(SSL_CTX_use_certificate_file(sctx, certfile,
+                                SSL_FILETYPE_PEM),
+                1))
+            goto err;
+        if (keyfile != NULL
+            && !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, keyfile,
+                                SSL_FILETYPE_PEM),
+                1))
+            goto err;
+        SSL_CTX_set_alpn_select_cb(sctx, select_alpn, NULL);
+
+        if (!TEST_ptr(*listener = SSL_new_listener(sctx, 0)))
+            goto err;
+
+        SSL_set0_rbio(*listener, sbio);
+        SSL_set0_wbio(*listener, fisbio);
+        /* Ownership of fisbio and sbio is now held by *listener */
+        sbio = NULL;
+        fisbio = NULL;
+
+        if (!TEST_true(SSL_set_blocking_mode(*listener, 0)))
+            goto err;
+
+        if (using_fake_time
+            && !TEST_true(ossl_quic_set_override_now_cb(*listener,
+                fake_now_cb, NULL)))
+            goto err;
+
+        if (!TEST_ptr(port = ossl_quic_listener_get_port(*listener)))
+            goto err;
+        bdata->short_conn_id_len = ossl_quic_port_get_rx_short_dcid_len(port);
+
+        /* Server channels don't exist yet, so set up faults when created */
+        if (fault != NULL)
+            ossl_quic_port_set_new_channel_cb(port, fault_on_new_channel,
+                *fault);
+
+        SSL_CTX_free(sctx);
+        sctx = NULL;
+    }
 
     BIO_ADDR_free(peeraddr);
 
     return 1;
 err:
     SSL_CTX_free(tserver_args.ctx);
+    SSL_CTX_free(sctx);
     BIO_ADDR_free(peeraddr);
     BIO_free_all(cbio);
     BIO_free_all(fisbio);
     BIO_free_all(sbio);
     SSL_free(*cssl);
     *cssl = NULL;
-    ossl_quic_tserver_free(*qtserv);
-    if (fault != NULL)
+    if (qtserv != NULL) {
+        ossl_quic_tserver_free(*qtserv);
+        *qtserv = NULL;
+    } else {
+        SSL_free(*listener);
+        *listener = NULL;
+    }
+    if (fault != NULL) {
         OPENSSL_free(*fault);
-    OPENSSL_free(bdata);
+        *fault = NULL;
+    }
+    if (own_bdata)
+        OPENSSL_free(bdata);
     BIO_free(tmpbio);
     if (tracebio != NULL)
         *tracebio = NULL;
 
     return 0;
+}
+
+int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+    SSL_CTX *serverctx, char *certfile, char *keyfile,
+    int flags, QUIC_TSERVER **qtserv, SSL **cssl,
+    QTEST_FAULT **fault, BIO **tracebio)
+{
+    return create_quic_objects(libctx, clientctx, serverctx, certfile, keyfile,
+        flags, qtserv, NULL, cssl, fault, tracebio);
+}
+
+int qtest_create_quic_objects_ex(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+    SSL_CTX *serverctx, char *certfile, char *keyfile,
+    int flags, SSL **listener, SSL **cssl,
+    QTEST_FAULT **fault, BIO **tracebio)
+{
+    return create_quic_objects(libctx, clientctx, serverctx, certfile, keyfile,
+        flags, NULL, listener, cssl, fault, tracebio);
 }
 
 void qtest_add_time(uint64_t millis)
@@ -459,7 +562,11 @@ int qtest_supports_blocking(void)
 static int globserverret = 0;
 static TSAN_QUALIFIER int abortserverthread = 0;
 static QUIC_TSERVER *globtserv;
+static SSL *globlistener;
+static SSL **globsconn;
 static const thread_t thread_zero;
+static int create_quic_connection(QUIC_TSERVER *qtserv, SSL *listener,
+    SSL *clientssl, SSL **sconn, int wanterr);
 static void run_server_thread(void)
 {
     /*
@@ -467,23 +574,27 @@ static void run_server_thread(void)
      * but should be acceptable because it is local and we expect this to be
      * fast
      */
-    globserverret = qtest_create_quic_connection(globtserv, NULL);
+    globserverret = create_quic_connection(globtserv, globlistener, NULL,
+        globsconn, SSL_ERROR_NONE);
 }
 #endif
 
-int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
+static int wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv, SSL *listener)
 {
     struct timeval tv;
     OSSL_TIME ctimeout, stimeout, mintimeout, now;
-    int cinf;
+    int cinf, sinf;
+    BIO *srbio;
 
     /* We don't need to wait in blocking mode */
     if (s == NULL || SSL_get_blocking_mode(s))
         return 1;
 
+    srbio = qtserv != NULL ? ossl_quic_tserver_get0_rbio(qtserv)
+                           : SSL_get_rbio(listener);
+
     /* Don't wait if either BIO has data waiting */
-    if (BIO_pending(SSL_get_rbio(s)) > 0
-        || BIO_pending(ossl_quic_tserver_get0_rbio(qtserv)) > 0)
+    if (BIO_pending(SSL_get_rbio(s)) > 0 || BIO_pending(srbio) > 0)
         return 1;
 
     /*
@@ -502,7 +613,14 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
         now = ossl_time_now();
 
     ctimeout = cinf ? ossl_time_infinite() : ossl_time_from_timeval(tv);
-    stimeout = ossl_time_subtract(ossl_quic_tserver_get_deadline(qtserv), now);
+    if (qtserv != NULL) {
+        stimeout = ossl_time_subtract(ossl_quic_tserver_get_deadline(qtserv),
+            now);
+    } else {
+        if (!SSL_get_event_timeout(listener, &tv, &sinf))
+            return 0;
+        stimeout = sinf ? ossl_time_infinite() : ossl_time_from_timeval(tv);
+    }
     mintimeout = ossl_time_min(ctimeout, stimeout);
     if (ossl_time_is_infinite(mintimeout))
         return 0;
@@ -515,8 +633,27 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     return 1;
 }
 
-int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
-    int wanterr)
+int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
+{
+    return wait_for_timeout(s, qtserv, NULL);
+}
+
+int qtest_wait_for_timeout_ssl(SSL *s, SSL *listener)
+{
+    return wait_for_timeout(s, NULL, listener);
+}
+
+static void tick_server(QUIC_TSERVER *qtserv, SSL *listener)
+{
+    if (qtserv != NULL)
+        ossl_quic_tserver_tick(qtserv);
+    else
+        (void)SSL_handle_events(listener);
+}
+
+/* Both servers NULL means the server is ticked by another thread */
+static int create_quic_connection(QUIC_TSERVER *qtserv, SSL *listener,
+    SSL *clientssl, SSL **sconn, int wanterr)
 {
     int retc = -1, rets = 0, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
@@ -541,7 +678,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
     }
 #endif
 
-    if (!TEST_ptr(qtserv)) {
+    if (!TEST_true(qtserv != NULL || listener != NULL)) {
         goto err;
     } else if (clientssl == NULL) {
         retc = 1;
@@ -552,10 +689,13 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
          * connection
          */
         globtserv = qtserv;
+        globlistener = listener;
+        globsconn = sconn;
         if (!TEST_true(run_thread(&t, run_server_thread)))
             goto err;
 
         qtserv = NULL;
+        listener = NULL;
         rets = 1;
 #else
         TEST_error("No thread support in this build");
@@ -580,7 +720,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
                 if (err == wanterr) {
                     retc = 1;
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-                    if (qtserv == NULL && rets > 0)
+                    if (qtserv == NULL && listener == NULL && rets > 0)
                         tsan_store(&abortserverthread, 1);
                     else
 #endif
@@ -599,7 +739,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
         qtest_add_time(1);
         if (clientssl != NULL)
             SSL_handle_events(clientssl);
-        if (qtserv != NULL) {
+        if (qtserv != NULL || listener != NULL) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
             ossl_crypto_mutex_lock(client_ready_mutex);
             for (;;) {
@@ -609,13 +749,23 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
             }
             ossl_crypto_mutex_unlock(client_ready_mutex);
 #endif
-            ossl_quic_tserver_tick(qtserv);
+            tick_server(qtserv, listener);
+            if (listener != NULL && *sconn == NULL)
+                *sconn = SSL_accept_connection(listener, 0);
         }
 
         if (!servererr && rets <= 0) {
-            servererr = ossl_quic_tserver_is_term_any(qtserv);
-            if (!servererr)
-                rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
+            if (qtserv != NULL) {
+                servererr = ossl_quic_tserver_is_term_any(qtserv);
+                if (!servererr)
+                    rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
+            } else if (listener != NULL && *sconn != NULL) {
+                QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(*sconn);
+
+                servererr = ossl_quic_channel_is_term_any(ch);
+                if (!servererr)
+                    rets = ossl_quic_channel_is_handshake_confirmed(ch);
+            }
         }
 
         if (clienterr && servererr)
@@ -627,7 +777,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
         }
 
         if ((retc <= 0 && !clienterr) || (rets <= 0 && !servererr)) {
-            if (!qtest_wait_for_timeout(clientssl, qtserv))
+            if (!wait_for_timeout(clientssl, qtserv, listener))
                 goto err;
         }
     } while ((retc <= 0 && !clienterr)
@@ -637,7 +787,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
 #endif
                 ));
 
-    if (qtserv == NULL && rets > 0) {
+    if (qtserv == NULL && listener == NULL && rets > 0) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
         /*
          * Make sure we unblock the server before we wait on completion here
@@ -661,9 +811,34 @@ err:
     return ret;
 }
 
+int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
+    int wanterr)
+{
+    if (!TEST_ptr(qtserv))
+        return 0;
+
+    return create_quic_connection(qtserv, NULL, clientssl, NULL, wanterr);
+}
+
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
 {
     return qtest_create_quic_connection_ex(qtserv, clientssl, SSL_ERROR_NONE);
+}
+
+int qtest_create_quic_connection_ssl_ex(SSL *listener, SSL *clientssl,
+    SSL **sconn, int wanterr)
+{
+    if (!TEST_ptr(listener) || !TEST_ptr(sconn))
+        return 0;
+
+    return create_quic_connection(NULL, listener, clientssl, sconn, wanterr);
+}
+
+int qtest_create_quic_connection_ssl(SSL *listener, SSL *clientssl,
+    SSL **sconn)
+{
+    return qtest_create_quic_connection_ssl_ex(listener, clientssl, sconn,
+        SSL_ERROR_NONE);
 }
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
@@ -677,12 +852,12 @@ static void run_server_shutdown_thread(void)
      * fast
      */
     do {
-        ossl_quic_tserver_tick(globtserv);
+        tick_server(globtserv, globlistener);
     } while (!tsan_load(&shutdowndone));
 }
 #endif
 
-int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
+static int quic_shutdown(QUIC_TSERVER *qtserv, SSL *listener, SSL *clientssl)
 {
     int tickserver = 1;
     int ret = 0;
@@ -706,6 +881,7 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
          * connection
          */
         globtserv = qtserv;
+        globlistener = listener;
         shutdowndone = 0;
         if (!TEST_true(run_thread(&t, run_server_shutdown_thread)))
             return 0;
@@ -730,7 +906,7 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
             break;
 
         if (tickserver)
-            ossl_quic_tserver_tick(qtserv);
+            tick_server(qtserv, listener);
     }
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
@@ -742,6 +918,16 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 #endif
 
     return ret;
+}
+
+int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
+{
+    return quic_shutdown(qtserv, NULL, clientssl);
+}
+
+int qtest_shutdown_ssl(SSL *listener, SSL *clientssl)
+{
+    return quic_shutdown(NULL, listener, clientssl);
 }
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
@@ -774,6 +960,33 @@ int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
 int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv)
 {
     return qtest_check_server_transport_err(qtserv, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR);
+}
+
+int qtest_check_server_transport_err_ssl(SSL *sconn, uint64_t code)
+{
+    SSL_CONN_CLOSE_INFO info;
+
+    (void)SSL_handle_events(sconn);
+
+    if (!TEST_int_eq(SSL_get_conn_close_info(sconn, &info, sizeof(info)), 1)
+        || !TEST_false(info.flags & SSL_CONN_CLOSE_FLAG_LOCAL)
+        || !TEST_true(info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT)
+        || !TEST_uint64_t_eq(info.error_code, code))
+        return 0;
+
+    return 1;
+}
+
+int qtest_check_server_protocol_err_ssl(SSL *sconn)
+{
+    return qtest_check_server_transport_err_ssl(sconn,
+        OSSL_QUIC_ERR_PROTOCOL_VIOLATION);
+}
+
+int qtest_check_server_frame_encoding_err_ssl(SSL *sconn)
+{
+    return qtest_check_server_transport_err_ssl(sconn,
+        OSSL_QUIC_ERR_FRAME_ENCODING_ERROR);
 }
 
 void qtest_fault_free(QTEST_FAULT *fault)
@@ -872,10 +1085,18 @@ int qtest_fault_set_packet_plain_listener(QTEST_FAULT *fault,
     fault->pplaincb = pplaincb;
     fault->pplaincbarg = pplaincbarg;
 
-    return ossl_quic_tserver_set_plain_packet_mutator(fault->qtserv,
-        packet_plain_mutate,
-        packet_plain_finish,
-        fault);
+    if (fault->qtserv != NULL)
+        return ossl_quic_tserver_set_plain_packet_mutator(fault->qtserv,
+            packet_plain_mutate,
+            packet_plain_finish,
+            fault);
+
+    fault->want_pplain_mutator = 1;
+    if (fault->ch == NULL)
+        return 1;
+
+    return ossl_quic_channel_set_mutator(fault->ch, packet_plain_mutate,
+        packet_plain_finish, fault);
 }
 
 /* To be called from a packet_plain_listener callback */
@@ -1010,6 +1231,46 @@ static void handshake_finish(void *arg)
     fault->handbuf = NULL;
 }
 
+static int set_handshake_mutator(QTEST_FAULT *fault)
+{
+    if (fault->qtserv != NULL)
+        return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
+            handshake_mutate,
+            handshake_finish,
+            fault);
+
+    fault->want_handshake_mutator = 1;
+    if (fault->ch == NULL)
+        return 1;
+
+    return ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(fault->ch),
+        handshake_mutate, handshake_finish, fault);
+}
+
+static int fault_on_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg)
+{
+    QTEST_FAULT *fault = arg;
+
+    fault->ch = ch;
+
+    if (fault->want_pplain_mutator
+        && !ossl_quic_channel_set_mutator(ch, packet_plain_mutate,
+            packet_plain_finish, fault))
+        return 0;
+
+    if (fault->want_handshake_mutator
+        && !ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(ch),
+            handshake_mutate, handshake_finish, fault))
+        return 0;
+
+    if (fault->noiseargs.sbio != NULL) {
+        ossl_quic_channel_set_msg_callback(ch, noise_msg_callback, conn);
+        ossl_quic_channel_set_msg_callback_arg(ch, &fault->noiseargs);
+    }
+
+    return 1;
+}
+
 int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
     qtest_fault_on_handshake_cb handshakecb,
     void *handshakecbarg)
@@ -1017,10 +1278,7 @@ int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
     fault->handshakecb = handshakecb;
     fault->handshakecbarg = handshakecbarg;
 
-    return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
-        handshake_mutate,
-        handshake_finish,
-        fault);
+    return set_handshake_mutator(fault);
 }
 
 int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
@@ -1030,10 +1288,7 @@ int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
     fault->encextcb = encextcb;
     fault->encextcbarg = encextcbarg;
 
-    return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
-        handshake_mutate,
-        handshake_finish,
-        fault);
+    return set_handshake_mutator(fault);
 }
 
 /* To be called from a handshake_listener callback */

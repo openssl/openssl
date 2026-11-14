@@ -248,6 +248,23 @@ uint64_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port);
 
 void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, uint64_t max_pending_channels);
 
+/*
+ * Test-only. Called for each new incoming channel that has a TLS object
+ * (i.e. not one deferred for SSL_listen_ex()) before it processes any
+ * packet. Returning 0 discards the channel.
+ */
+typedef int (*ossl_quic_port_new_channel_cb_fn)(SSL *conn, QUIC_CHANNEL *ch,
+    void *arg);
+/**
+ * @brief Set the test-only new channel hook.
+ * @param port port
+ * @param cb callback, or NULL to clear
+ * @param arg passed to |cb|
+ */
+void ossl_quic_port_set_new_channel_cb(QUIC_PORT *port,
+    ossl_quic_port_new_channel_cb_fn cb,
+    void *arg);
+
 #endif
 
 #endif
