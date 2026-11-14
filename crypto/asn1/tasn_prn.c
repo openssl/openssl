@@ -383,7 +383,10 @@ static int asn1_print_integer(BIO *out, const ASN1_INTEGER *str)
 {
     char *s;
     int ret = 1;
-    s = i2s_ASN1_INTEGER(NULL, str);
+    if ((str->type & ~V_ASN1_NEG) == V_ASN1_ENUMERATED)
+        s = i2s_ASN1_ENUMERATED(NULL, str);
+    else
+        s = i2s_ASN1_INTEGER(NULL, str);
     if (s == NULL)
         return 0;
     if (BIO_puts(out, s) <= 0)
