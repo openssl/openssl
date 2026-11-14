@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -52,6 +53,30 @@ err:
     X509_REQ_free(req);
     BIO_free(bio);
     OPENSSL_free(certFilePath);
+    return ret;
+}
+
+/*
+ * A newly created CSR must already have its mandatory PKCS#10 version set
+ * to v1(0) so that signing it produces a request that can be verified.
+ */
+static int test_x509_req_new_version(void)
+{
+    X509_REQ *req = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(req = X509_REQ_new())
+        || !TEST_long_eq(X509_REQ_get_version(req), X509_REQ_VERSION_1)
+        || !TEST_ptr(pkey = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_true(X509_REQ_set_pubkey(req, pkey))
+        || !TEST_int_gt(X509_REQ_sign(req, pkey, EVP_sha256()), 0)
+        || !TEST_int_gt(X509_REQ_verify(req, pkey), 0))
+        goto err;
+    ret = 1;
+err:
+    X509_REQ_free(req);
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
@@ -143,6 +168,7 @@ int setup_tests(void)
     if (!TEST_ptr(certsDir = test_get_argument(0)))
         return 0;
 
+    ADD_TEST(test_x509_req_new_version);
     ADD_TEST(test_x509_req_detect_invalid_version);
     ADD_TEST(test_x509_req_add_exts);
     return 1;
