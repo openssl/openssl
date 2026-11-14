@@ -424,11 +424,6 @@ int CMS_RecipientInfo_kemri_set_ukm(CMS_RecipientInfo *ri,
     const unsigned char *ukm,
     int ukmLength);
 
-/* Backward compatibility for spelling errors. */
-#define CMS_R_UNKNOWN_DIGEST_ALGORITM CMS_R_UNKNOWN_DIGEST_ALGORITHM
-#define CMS_R_UNSUPPORTED_RECPIENTINFO_TYPE \
-    CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE
-
 #ifdef __cplusplus
 }
 #endif
