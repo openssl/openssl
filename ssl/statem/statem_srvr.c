@@ -574,10 +574,44 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
             st->hand_state = TLS_ST_OK;
             return WRITE_TRAN_CONTINUE;
         }
-        if (s->num_tickets > s->sent_tickets)
-            st->hand_state = TLS_ST_SW_SESSION_TICKET;
-        else
+        /*
+         * Do not issue TLS 1.3 session tickets if the server has explicitly
+         * disabled them via SSL_OP_NO_TICKET and also disabled the session
+         * cache with SSL_SESS_CACHE_OFF. Together, these settings clearly
+         * indicate an intent to suppress session resumption; sending
+         * NewSessionTicket messages in this case would be wasteful and
+         * misleading.
+         *
+         * From the server’s perspective, a client that does not advertise
+         * psk_key_exchange_modes in TLS 1.3, or that sends it with RFC 9149
+         * parameters such as new_session_count = 0 or resumption_count = 0, is
+         * effectively signaling no interest in session tickets or resumption.
+         *
+         * RFC 9846 section 4.3.9: Servers MUST NOT select a key exchange mode
+         * that is not listed by the client. This extension also restricts the
+         * modes for use with PSK resumption. Servers SHOULD NOT send
+         * NewSessionTicket with tickets that are not compatible with the
+         * advertised modes; however, if a server does so, the impact will just
+         * be that the client's attempts at resumption fail.
+         *
+         * Note: Although RFC 9149 allows clients to signal no interest in
+         * session tickets or resumption (e.g. new_session_count = 0 or
+         * resumption_count = 0), this implementation does not currently
+         * interpret or enforce those parameters.
+         *
+         * Also skip issuance when SSL_VERIFY_PEER is set with no sid_ctx
+         * configured: any ticket minted here would be rejected by
+         * ssl_get_prev_session() in that configuration.
+         */
+        if (s->num_tickets <= s->sent_tickets
+            || ((s->options & SSL_OP_NO_TICKET) != 0
+                && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
+                    == 0)
+            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
+            || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0))
             st->hand_state = TLS_ST_OK;
+        else
+            st->hand_state = TLS_ST_SW_SESSION_TICKET;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
@@ -3971,7 +4005,7 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
     /*
      * Ticket lifetime hint:
      * In TLSv1.3 we reset the "time" field above, and always specify the
-     * timeout, limited to a 1 week period per RFC8446.
+     * timeout, limited to a 1 week period per RFC9846.
      * For TLSv1.2 this is advisory only and we leave this unspecified for
      * resumed session (for simplicity).
      */
@@ -4334,6 +4368,18 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
                 goto err;
             }
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
+        } else {
+            /*
+             * No ALPN was negotiated on this handshake. If we resumed a
+             * session that had previously negotiated ALPN, the stale value
+             * must be cleared from the (copied) session before it is stored
+             * in the new ticket. Otherwise a subsequent 0-RTT attempt using
+             * that ticket would incorrectly assume an ALPN protocol had been
+             * negotiated. See tls_handle_alpn().
+             */
+            OPENSSL_free(s->session->ext.alpn_selected);
+            s->session->ext.alpn_selected = NULL;
+            s->session->ext.alpn_selected_len = 0;
         }
         s->session->ext.max_early_data = s->max_early_data;
     }

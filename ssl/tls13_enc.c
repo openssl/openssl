@@ -525,26 +525,37 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             labellen = sizeof(client_early_traffic) - 1;
             log_label = CLIENT_EARLY_LABEL;
 
+            /*
+             * Client: never install early-write keys from an underived (zero)
+             * s->early_secret. It is set only when the first-offered PSK's
+             * binder derived it this ClientHello flight (see
+             * s->ext.early_secret_derived). If it is not set, the PSK offer and
+             * the early_data decision diverged; fail closed rather than protect
+             * 0-RTT under a secret a passive observer could reconstruct.
+             */
+            if ((which & SSL3_CC_CLIENT) != 0 && !s->ext.early_secret_derived) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
             handlen = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
             if (handlen <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_HANDSHAKE_LENGTH);
                 goto err;
             }
 
+            /*
+             * 0-RTT keys off the recorded first-offered PSK, which may be the
+             * external psksession rather than s->session.
+             */
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
-                && s->max_early_data > 0
-                && s->session->ext.max_early_data == 0) {
-                /*
-                 * If we are attempting to send early data, and we've decided to
-                 * actually do it but max_early_data in s->session is 0 then we
-                 * must be using an external PSK.
-                 */
-                if (!ossl_assert(s->psksession != NULL
-                        && s->max_early_data == s->psksession->ext.max_early_data)) {
+                && s->ext.early_data_session != NULL) {
+                if (!ossl_assert(s->max_early_data
+                        == s->ext.early_data_session->ext.max_early_data)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+                sslcipher = SSL_SESSION_get0_cipher(s->ext.early_data_session);
             }
             if (sslcipher == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
@@ -605,6 +616,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                 /* SSLfatal() already called */
                 goto err;
             }
+            s->ext.early_exporter_ready = 1;
         } else if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
@@ -902,11 +914,12 @@ int tls13_export_keying_material_early(SSL_CONNECTION *s,
     if (ctx == NULL || !ossl_statem_export_early_allowed(s))
         goto err;
 
-    if (!s->server && s->max_early_data > 0
-        && s->session->ext.max_early_data == 0)
-        sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+    if (!s->server && s->ext.early_data_session != NULL)
+        sslcipher = SSL_SESSION_get0_cipher(s->ext.early_data_session);
     else
         sslcipher = SSL_SESSION_get0_cipher(s->session);
+    if (sslcipher == NULL)
+        goto err;
 
     md = ssl_md(SSL_CONNECTION_GET_CTX(s), sslcipher->algorithm2);
 
