@@ -248,18 +248,27 @@ Linking native applications
 This section applies to all native builds.
 
 If you link with static OpenSSL libraries, then you're expected to
-additionally link your application with `WS2_32.LIB`, `GDI32.LIB`,
-`ADVAPI32.LIB`, `CRYPT32.LIB` and `USER32.LIB`. Those developing
-non-interactive service applications might feel concerned about
-linking with `GDI32.LIB` and `USER32.LIB`, as they are justly associated
-with interactive desktop, which is not available to service
-processes. The toolkit is designed to detect in which context it's
-currently executed, GUI, console app or service, and act accordingly,
-namely whether to actually make GUI calls. Additionally, those
-who wish to `/DELAYLOAD:GDI32.DLL` and `/DELAYLOAD:USER32.DLL` and
-actually keep them off service process should consider implementing
-and exporting from .exe image in question own `_OPENSSL_isservice` not
-relying on `USER32.DLL`. E.g., on Windows Vista and later you could:
+additionally link your application with `WS2_32.LIB`, `ADVAPI32.LIB`
+and `CRYPT32.LIB`.
+
+The OpenSSL libraries do not import anything from `USER32.DLL` or
+`GDI32.DLL`, so loading them does not load either DLL. The few
+`USER32.DLL` functions the toolkit uses, to detect in which context
+it's currently executed, GUI, console app or service, and to show a
+message box when it aborts, are looked up when first needed. This
+also lets OpenSSL load in processes that cannot use `USER32.DLL`,
+such as processes that disable Win32k system calls. If `USER32.DLL`
+cannot be loaded, `OPENSSL_isservice()` returns -1 and fatal error
+messages are sent to `OutputDebugString()`.
+
+Detecting whether the process is a service loads `USER32.DLL`.
+Services that want to avoid that should consider implementing and
+exporting from the .exe image in question their own
+`_OPENSSL_isservice` not relying on `USER32.DLL`. This only replaces
+the detection: in a process it reports as not being a service, a
+fatal error can still load `USER32.DLL` to show a message box when
+standard error is not available. E.g., on Windows Vista and later you
+could:
 
        __declspec(dllexport) __cdecl BOOL _OPENSSL_isservice(void)
        {
