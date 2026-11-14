@@ -305,6 +305,20 @@ __owur int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
 
 /* Server Extension processing */
 __owur int tls_hrr_cookie_required(const SSL_CONNECTION *s);
+/**
+ * @brief Is a DTLS 1.3 server still waiting for a valid HelloRetryRequest
+ * cookie?
+ *
+ * True from the start of the handshake until a ClientHello carries a cookie
+ * that verifies. A ClientHello processed in that state is answered by a
+ * HelloRetryRequest or fails, so no PSK and no certificate is needed for it.
+ * Always false for TLS, for DTLS 1.2 and when no cookie is required.
+ *
+ * @param s The connection.
+ * @returns 1 if a cookie is required and none has been validated yet, 0
+ * otherwise.
+ */
+__owur int tls_hrr_cookie_pending(const SSL_CONNECTION *s);
 int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);

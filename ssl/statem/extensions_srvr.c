@@ -823,18 +823,22 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     int ret = 0;
 
     s->s3.group_id_candidate = 0;
-    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
-        return 1;
 
     /*
      * If prior Client Hello in HRR set the peer_temp clear it out to process
-     * the key share in the second client hello
+     * the key share in the second client hello. Do this also when that key
+     * share is not used: a PSK that is accepted only on the second client
+     * hello, with a PSK-only key exchange, must not leave the first key share
+     * behind, or the handshake secret is never generated.
      */
     if (s->s3.peer_tmp != NULL) {
         EVP_PKEY_free(s->s3.peer_tmp);
         s->s3.peer_tmp = NULL;
         s->s3.group_id = 0;
     }
+
+    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
+        return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1595,6 +1599,17 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     if (sess == NULL) {
         size_t j;
+
+        /*
+         * A PSK-only server that validates the client's address statelessly
+         * may not be able to look the identity up before the cookie is
+         * valid. Defer the decision to the retried ClientHello, which is
+         * subject to the same checks below. This comes after the lookup on
+         * purpose: a PSK that is found is used as before, and that decides
+         * how the key_share of this ClientHello is handled.
+         */
+        if (tls_hrr_cookie_pending(s))
+            return 1;
 
         for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
             ;
