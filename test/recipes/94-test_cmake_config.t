@@ -38,6 +38,13 @@ plan skip_all => "not run under memory sanitizer"
 plan skip_all => "not run under undefined behavior sanitizer"
     unless disabled("ubsan");
 
+# A fuzz build's static libraries carry the fuzzer compiler's
+# instrumentation (__afl_area_ptr, __sanitizer_cov_trace_pc_guard_*),
+# which a plain host-compiler consumer link cannot satisfy, just like
+# the sanitizer runtimes above.
+plan skip_all => "not run under fuzz instrumentation"
+    if config('options') =~ /enable-fuzz-afl|enable-fuzz-libfuzzer/;
+
 # We require cmake 3.22 or later
 my $cmake_version_output = `cmake --version`;
 my ($cmake_major, $cmake_minor) =
