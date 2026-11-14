@@ -11,5 +11,7 @@
 
 pkixAlgs OBJECT IDENTIFIER ::= { 1 3 6 1 5 5 7 6 }
 
-id-mldsa65-rsa3072-pkcs15-sha512 OBJECT IDENTIFIER ::= { pkixAlgs 42 } 
-id-mldsa65-ecdsa-p256-sha512 OBJECT IDENTIFIER ::= { pkixAlgs 45 } 
+id-mldsa44-rsa2048-pss-sha256 OBJECT IDENTIFIER ::= { pkixAlgs 37 }
+id-mldsa44-ecdsa-p256-sha256 OBJECT IDENTIFIER ::= { pkixAlgs 40 }
+id-mldsa87-ecdsa-p384-sha512 OBJECT IDENTIFIER ::= { pkixAlgs 49 }
+id-mldsa87-rsa4096-pss-sha512 OBJECT IDENTIFIER ::= { pkixAlgs 53 }

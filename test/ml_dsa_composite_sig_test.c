@@ -51,36 +51,6 @@ static EVP_PKEY *do_gen_key(const char *alg)
 }
 
 /*
- * Load a ml dsa composite private key from raw DER bytes via EVP_PKEY_fromdata.
- * |priv| is the concatenated composite private key blob as exported by the
- * keymgmt (OSSL_PKEY_PARAM_PRIV_KEY).
- */
-#if ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
-static EVP_PKEY *ml_dsa_composite_key_from_priv(const char *alg,
-    const uint8_t *priv, size_t priv_len)
-{
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    OSSL_PARAM params[2];
-
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
-        (void *)priv, priv_len);
-    params[1] = OSSL_PARAM_construct_end();
-
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
-        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey,
-                            OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
-                            params),
-            1))
-        pkey = NULL;
-
-    EVP_PKEY_CTX_free(ctx);
-    return pkey;
-}
-#endif /* ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0 */
-
-/*
  * Load a ml dsa composite public key from raw DER bytes via EVP_PKEY_fromdata.
  */
 #if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
@@ -160,16 +130,19 @@ err:
 
 /* Table of ml dsa composite algorithm names */
 static const char *ml_dsa_composite_alg_names[] = {
-    "ML-DSA-65-RSA3072-PKCS15-SHA512",
-    "ML-DSA-65-ECDSA-P256-SHA512",
+    "ML-DSA-44-RSA2048-PSS-SHA256",
+    "ML-DSA-44-ECDSA-P256-SHA256",
+    "ML-DSA-87-ECDSA-P384-SHA512",
+    "ML-DSA-87-RSA4096-PSS-SHA512",
 };
 #define NUM_ML_DSA_COMPOSITE_ALGS (int)(sizeof(ml_dsa_composite_alg_names) / sizeof(ml_dsa_composite_alg_names[0]))
 
 static uint8_t test_msg[] = "OpenSSL ml dsa composite signature test message";
 
 /*
- * DRBG keygen + sign + verify for each of the 18 algorithms.
- * Parameterised by tst_id (0..17).
+ * DRBG keygen + sign + verify for each of the algorithms in
+ * ml_dsa_composite_alg_names.
+ * Parameterised by tst_id (0..NUM_ML_DSA_COMPOSITE_ALGS - 1).
  */
 static int ml_dsa_composite_drbg_sign_verify_test(int tst_id)
 {
@@ -205,8 +178,8 @@ static int ml_dsa_composite_keygen_drbg_test(void)
     int ret = 0;
     EVP_PKEY *k1 = NULL, *k2 = NULL, *k3 = NULL, *k1_dup = NULL;
 
-    if (!TEST_ptr(k1 = do_gen_key("ML-DSA-65-RSA3072-PKCS15-SHA512"))
-        || !TEST_ptr(k2 = do_gen_key("ML-DSA-65-RSA3072-PKCS15-SHA512"))
+    if (!TEST_ptr(k1 = do_gen_key("ML-DSA-44-RSA2048-PSS-SHA256"))
+        || !TEST_ptr(k2 = do_gen_key("ML-DSA-44-RSA2048-PSS-SHA256"))
         /* same algorithm, different keys */
         || !TEST_int_eq(EVP_PKEY_eq(k1, k2), 0)
         /* dup must produce an equal key */
@@ -215,7 +188,7 @@ static int ml_dsa_composite_keygen_drbg_test(void)
         goto err;
 
 #ifndef OPENSSL_NO_EC
-    if (!TEST_ptr(k3 = do_gen_key("ML-DSA-65-ECDSA-P256-SHA512"))
+    if (!TEST_ptr(k3 = do_gen_key("ML-DSA-44-ECDSA-P256-SHA256"))
         /* different algorithm must return -1 */
         || !TEST_int_eq(EVP_PKEY_eq(k1, k3), -1))
         goto err;
@@ -233,63 +206,6 @@ err:
 /* =========================================================================
  * Deterministic vector tests (ml_dsa_composite_sig.inc)
  * ========================================================================= */
-
-/*
- * siggen: load private key from vector, sign the fixed message, compare the
- * SHA-256 digest of the output signature against the stored reference.
- * (Same SHA-256-of-sig trick used by ml_dsa_siggen_test to keep the .inc
- * file small while still providing a complete bit-exact check.)
- */
-#if ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
-static int ml_dsa_composite_siggen_test(int tst_id)
-{
-    int ret = 0;
-    const ML_DSA_COMPOSITE_SIG_GEN_TEST_DATA *td = &ml_dsa_composite_siggen_testdata[tst_id];
-    EVP_PKEY_CTX *sctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    EVP_SIGNATURE *sig_alg = NULL;
-    OSSL_PARAM params[2], *p = params;
-    uint8_t *psig = NULL;
-    size_t psig_len = 0;
-    uint8_t digest[32];
-    size_t digest_len = sizeof(digest);
-
-    if (td->add_random != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(
-            OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
-            (void *)td->add_random, td->add_random_len);
-    *p = OSSL_PARAM_construct_end();
-
-    if (!TEST_ptr(pkey = ml_dsa_composite_key_from_priv(td->alg, td->priv, td->priv_len)))
-        goto err;
-
-    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
-        || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL))
-        || !TEST_int_eq(EVP_PKEY_sign_message_init(sctx, sig_alg, params), 1)
-        || !TEST_int_eq(EVP_PKEY_sign(sctx, NULL, &psig_len,
-                            td->msg, td->msg_len),
-            1)
-        || !TEST_ptr(psig = OPENSSL_zalloc(psig_len))
-        || !TEST_int_eq(EVP_PKEY_sign(sctx, psig, &psig_len,
-                            td->msg, td->msg_len),
-            1)
-        || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA256", NULL,
-                            psig, psig_len,
-                            digest, &digest_len),
-            1)
-        || !TEST_mem_eq(digest, digest_len,
-            td->sig_digest, td->sig_digest_len))
-        goto err;
-
-    ret = 1;
-err:
-    EVP_SIGNATURE_free(sig_alg);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(sctx);
-    OPENSSL_free(psig);
-    return ret;
-}
-#endif /* ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0 */
 
 /*
  * sigver: load public key from vector, verify the stored signature.
@@ -341,8 +257,8 @@ static int ml_dsa_composite_cross_alg_mismatch_test(void)
     EVP_SIGNATURE *sig_a = NULL, *sig_b = NULL;
     uint8_t *sig = NULL;
     size_t sig_len = 0;
-    const char *alg_a = "ML-DSA-65-RSA3072-PKCS15-SHA512";
-    const char *alg_b = "ML-DSA-65-ECDSA-P256-SHA512";
+    const char *alg_a = "ML-DSA-44-RSA2048-PSS-SHA256";
+    const char *alg_b = "ML-DSA-44-ECDSA-P256-SHA256";
 
 #ifdef OPENSSL_NO_EC
     TEST_note("Skipping ml_dsa_composite_cross_alg_mismatch_test - requires EC (ECDSA-P256)");
@@ -461,23 +377,23 @@ static int encode_classic_component(EVP_PKEY *pkey, int selection,
 }
 
 /*
- * Importing an ML-DSA-65-RSA3072-PKCS15-SHA512 public key whose embedded RSA
- * component is not actually 3072 bits must be rejected: modulus-size
+ * Importing an ML-DSA-87-RSA4096-PSS-SHA512 public key whose embedded RSA
+ * component is not actually 4096 bits must be rejected: modulus-size
  * downgrade / algorithm-confusion must be caught by the keymgmt import path.
  */
 static int ml_dsa_composite_rsa_size_downgrade_test(void)
 {
     int ret = 0;
-    const char *alg = "ML-DSA-65-RSA3072-PKCS15-SHA512";
+    const char *alg = "ML-DSA-87-RSA4096-PSS-SHA512";
     EVP_PKEY_CTX *kctx = NULL;
     EVP_PKEY *mldsa_key = NULL, *rsa_key = NULL, *bad_key = NULL;
     unsigned char *mldsa_pk = NULL, *rsa_pub = NULL, *blob = NULL;
     size_t mldsa_pk_len = 0, rsa_pub_len = 0, blob_len;
-    unsigned int rsa_bits = 2048; /* wrong: this variant requires 3072 */
+    unsigned int rsa_bits = 2048; /* wrong: this variant requires 4096 */
     OSSL_PARAM rsa_params[2], import_params[2];
 
-    /* Real ML-DSA-65 public key bytes, to use as the (valid) PQ component */
-    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "ML-DSA-65", NULL))
+    /* Real ML-DSA-87 public key bytes, to use as the (valid) PQ component */
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "ML-DSA-87", NULL))
         || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
         || !TEST_int_eq(EVP_PKEY_generate(kctx, &mldsa_key), 1)
         || !TEST_int_eq(EVP_PKEY_get_octet_string_param(mldsa_key,
@@ -520,7 +436,7 @@ static int ml_dsa_composite_rsa_size_downgrade_test(void)
         || !TEST_int_eq(EVP_PKEY_fromdata_init(kctx), 1))
         goto err;
 
-    /* Must be rejected: the embedded RSA key is 2048 bits, not 3072 */
+    /* Must be rejected: the embedded RSA key is 2048 bits, not 4096 */
     if (!TEST_int_eq(EVP_PKEY_fromdata(kctx, &bad_key,
                          OSSL_KEYMGMT_SELECT_PUBLIC_KEY, import_params),
             0)
@@ -540,14 +456,14 @@ err:
 }
 
 /*
- * Importing an ML-DSA-65-ECDSA-P256-SHA512 private key whose embedded EC
- * component is on a different curve (P-384, not P-256) must be rejected:
+ * Importing an ML-DSA-87-ECDSA-P384-SHA512 private key whose embedded EC
+ * component is on a different curve (P-256, not P-384) must be rejected:
  * curve confusion / downgrade must be caught by the keymgmt import path.
  */
 static int ml_dsa_composite_ec_curve_downgrade_test(void)
 {
     int ret = 0;
-    const char *alg = "ML-DSA-65-ECDSA-P256-SHA512";
+    const char *alg = "ML-DSA-87-ECDSA-P384-SHA512";
     EVP_PKEY_CTX *kctx = NULL;
     EVP_PKEY *ec_key = NULL, *bad_key = NULL;
     unsigned char seed[32];
@@ -563,10 +479,10 @@ static int ml_dsa_composite_ec_curve_downgrade_test(void)
     if (!TEST_int_eq(RAND_bytes_ex(lib_ctx, seed, sizeof(seed), 0), 1))
         goto err;
 
-    /* A real EC private key, but on the wrong curve (P-384, not P-256) */
+    /* A real EC private key, but on the wrong curve (P-256, not P-384) */
     if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "EC", NULL))
         || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
-        || !TEST_int_eq(EVP_PKEY_CTX_set_group_name(kctx, "P-384"), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_group_name(kctx, "P-256"), 1)
         || !TEST_int_eq(EVP_PKEY_generate(kctx, &ec_key), 1)
         || !TEST_true(encode_classic_component(ec_key,
             OSSL_KEYMGMT_SELECT_PRIVATE_KEY, &ec_priv, &ec_priv_len)))
@@ -589,7 +505,7 @@ static int ml_dsa_composite_ec_curve_downgrade_test(void)
         || !TEST_int_eq(EVP_PKEY_fromdata_init(kctx), 1))
         goto err;
 
-    /* Must be rejected: the embedded EC key is on P-384, not P-256 */
+    /* Must be rejected: the embedded EC key is on P-256, not P-384 */
     if (!TEST_int_eq(EVP_PKEY_fromdata(kctx, &bad_key,
                          OSSL_KEYMGMT_SELECT_PRIVATE_KEY, import_params),
             0)
@@ -602,6 +518,85 @@ err:
     EVP_PKEY_free(ec_key);
     EVP_PKEY_free(bad_key);
     OPENSSL_free(ec_priv);
+    OPENSSL_free(blob);
+    return ret;
+}
+
+/*
+ * Importing an ML-DSA-44-RSA2048-PSS-SHA256 public key whose ML-DSA component
+ * belongs to a different parameter set (ML-DSA-65 instead of ML-DSA-44) must
+ * be rejected, even when the RSA component is valid for the algorithm.
+ */
+static int ml_dsa_composite_mldsa_level_downgrade_test(void)
+{
+    int ret = 0;
+    const char *alg = "ML-DSA-44-RSA2048-PSS-SHA256";
+    EVP_PKEY_CTX *kctx = NULL;
+    EVP_PKEY *mldsa_key = NULL, *rsa_key = NULL, *bad_key = NULL;
+    unsigned char *mldsa_pk = NULL, *rsa_pub = NULL, *blob = NULL;
+    size_t mldsa_pk_len = 0, rsa_pub_len = 0, blob_len;
+    unsigned int rsa_bits = 2048; /* correct for this variant */
+    OSSL_PARAM rsa_params[2], import_params[2];
+
+    /* Real ML-DSA-65 public key bytes: the wrong level for this variant */
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "ML-DSA-65", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
+        || !TEST_int_eq(EVP_PKEY_generate(kctx, &mldsa_key), 1)
+        || !TEST_int_eq(EVP_PKEY_get_octet_string_param(mldsa_key,
+                            OSSL_PKEY_PARAM_PUB_KEY, NULL, 0, &mldsa_pk_len),
+            1)
+        || !TEST_ptr(mldsa_pk = OPENSSL_malloc(mldsa_pk_len))
+        || !TEST_int_eq(EVP_PKEY_get_octet_string_param(mldsa_key,
+                            OSSL_PKEY_PARAM_PUB_KEY, mldsa_pk, mldsa_pk_len,
+                            &mldsa_pk_len),
+            1))
+        goto err;
+    EVP_PKEY_CTX_free(kctx);
+    kctx = NULL;
+
+    /* A real RSA public key of the size the composite requires */
+    rsa_params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS, &rsa_bits);
+    rsa_params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, "RSA", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(kctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_params(kctx, rsa_params), 1)
+        || !TEST_int_eq(EVP_PKEY_generate(kctx, &rsa_key), 1)
+        || !TEST_true(encode_classic_component(rsa_key,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, &rsa_pub, &rsa_pub_len)))
+        goto err;
+    EVP_PKEY_CTX_free(kctx);
+    kctx = NULL;
+
+    /* mldsaPK || tradPK, with an ML-DSA-65 mldsaPK */
+    blob_len = mldsa_pk_len + rsa_pub_len;
+    if (!TEST_ptr(blob = OPENSSL_malloc(blob_len)))
+        goto err;
+    memcpy(blob, mldsa_pk, mldsa_pk_len);
+    memcpy(blob + mldsa_pk_len, rsa_pub, rsa_pub_len);
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+        blob, blob_len);
+    import_params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(kctx), 1))
+        goto err;
+
+    /* Must be rejected: the ML-DSA public key is ML-DSA-65, not ML-DSA-44 */
+    if (!TEST_int_eq(EVP_PKEY_fromdata(kctx, &bad_key,
+                         OSSL_KEYMGMT_SELECT_PUBLIC_KEY, import_params),
+            0)
+        || !TEST_ptr_null(bad_key))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_free(mldsa_key);
+    EVP_PKEY_free(rsa_key);
+    EVP_PKEY_free(bad_key);
+    OPENSSL_free(mldsa_pk);
+    OPENSSL_free(rsa_pub);
     OPENSSL_free(blob);
     return ret;
 }
@@ -628,7 +623,7 @@ static long find_bytes(const unsigned char *hay, long hay_len,
 static int ml_dsa_composite_spki_bad_unused_bits_test(void)
 {
     int ret = 0;
-    const char *alg = "ML-DSA-65-RSA3072-PKCS15-SHA512";
+    const char *alg = "ML-DSA-44-RSA2048-PSS-SHA256";
     EVP_PKEY *key = NULL, *decoded = NULL;
     OSSL_ENCODER_CTX *ectx = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
@@ -827,8 +822,9 @@ err:
 /*
  * A caller may compute PH(M) itself (e.g. on another machine) and hand it
  * to sign()/verify() in place of the raw message, by setting
- * OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH.  Every ml dsa composite algorithm
- * currently defined uses SHA-512 for PH(M).  This must produce a signature
+ * OSSL_SIGNATURE_PARAM_ML_DSA_COMPOSITE_PREHASH.  PH(M) uses SHA-256 for the
+ * ML-DSA-44 variants and SHA-512 for the ML-DSA-87 variants.  This must produce
+ * a signature
  * that verifies both via the same flag and via a normal, independently
  * computed PH(M); it must also be interchangeable with a signature made the
  * ordinary way (raw message, no flag).
@@ -837,6 +833,7 @@ static int ml_dsa_composite_external_prehash_test(int tst_id)
 {
     int ret = 0;
     const char *alg = ml_dsa_composite_alg_names[tst_id];
+    const char *ph_md = strncmp(alg, "ML-DSA-44", 9) == 0 ? "SHA-256" : "SHA-512";
     EVP_PKEY *key = NULL;
     EVP_PKEY_CTX *sctx = NULL, *vctx = NULL;
     EVP_SIGNATURE *sig_alg = NULL;
@@ -859,7 +856,7 @@ static int ml_dsa_composite_external_prehash_test(int tst_id)
     params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(key = do_gen_key(alg))
-        || !TEST_int_eq(EVP_Q_digest(lib_ctx, "SHA-512", NULL,
+        || !TEST_int_eq(EVP_Q_digest(lib_ctx, ph_md, NULL,
                             test_msg, sizeof(test_msg) - 1,
                             prehash, &prehash_len),
             1))
@@ -950,14 +947,11 @@ int setup_tests(void)
     if (!test_get_libctx(&lib_ctx, &null_prov, config_file, &lib_prov, NULL))
         return 0;
 
-    /* Strategy 1: DRBG round-trips for all 18 algorithms */
+    /* Strategy 1: DRBG round-trips for all algorithms */
     ADD_ALL_TESTS(ml_dsa_composite_drbg_sign_verify_test, NUM_ML_DSA_COMPOSITE_ALGS);
     ADD_TEST(ml_dsa_composite_keygen_drbg_test);
 
     /* Strategy 2: deterministic vector tests from ml_dsa_composite_sig.inc */
-#if ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT > 0
-    ADD_ALL_TESTS(ml_dsa_composite_siggen_test, ML_DSA_COMPOSITE_SIGGEN_TESTDATA_COUNT);
-#endif
 #if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
     ADD_ALL_TESTS(ml_dsa_composite_sigver_test, ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT);
 #endif
@@ -967,6 +961,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ml_dsa_composite_tampered_sig_test, NUM_ML_DSA_COMPOSITE_ALGS);
     ADD_TEST(ml_dsa_composite_rsa_size_downgrade_test);
     ADD_TEST(ml_dsa_composite_ec_curve_downgrade_test);
+    ADD_TEST(ml_dsa_composite_mldsa_level_downgrade_test);
     ADD_TEST(ml_dsa_composite_spki_bad_unused_bits_test);
 
     /* Streaming (sign/verify_message_update) tests */

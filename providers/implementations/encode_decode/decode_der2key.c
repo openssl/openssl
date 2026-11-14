@@ -1215,25 +1215,43 @@ done:
         return key;                                                                                     \
     }
 
-MAKE_ML_DSA_COMPOSITE_D2I(mldsa65_rsa3072_pkcs15_sha512, EVP_PKEY_ML_DSA_65, "RSA", 3072, NULL)
-MAKE_ML_DSA_COMPOSITE_D2I(mldsa65_ecdsa_p256_sha512, EVP_PKEY_ML_DSA_65, "EC", 0, "P-256")
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa44_rsa2048_pss_sha256, EVP_PKEY_ML_DSA_44, "RSA", 2048, NULL)
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa44_ecdsa_p256_sha256, EVP_PKEY_ML_DSA_44, "EC", 0, "P-256")
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_ecdsa_p384_sha512, EVP_PKEY_ML_DSA_87, "EC", 0, "P-384")
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_rsa4096_pss_sha512, EVP_PKEY_ML_DSA_87, "RSA", 4096, NULL)
 
 /* Supporting #defines consumed by DO_SubjectPublicKeyInfo / DO_PrivateKeyInfo macros */
-#define mldsa65_rsa3072_pkcs15_sha512_evp_type NID_ML_DSA_65_RSA3072_PKCS15_SHA512
-#define mldsa65_rsa3072_pkcs15_sha512_d2i_private_key NULL
-#define mldsa65_rsa3072_pkcs15_sha512_d2i_public_key NULL
-#define mldsa65_rsa3072_pkcs15_sha512_d2i_key_params NULL
-#define mldsa65_rsa3072_pkcs15_sha512_check NULL
-#define mldsa65_rsa3072_pkcs15_sha512_adjust NULL
-#define mldsa65_rsa3072_pkcs15_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+#define mldsa44_rsa2048_pss_sha256_evp_type NID_ML_DSA_44_RSA2048_PSS_SHA256
+#define mldsa44_rsa2048_pss_sha256_d2i_private_key NULL
+#define mldsa44_rsa2048_pss_sha256_d2i_public_key NULL
+#define mldsa44_rsa2048_pss_sha256_d2i_key_params NULL
+#define mldsa44_rsa2048_pss_sha256_check NULL
+#define mldsa44_rsa2048_pss_sha256_adjust NULL
+#define mldsa44_rsa2048_pss_sha256_free (free_key_fn *)ossl_ml_dsa_composite_key_free
 
-#define mldsa65_ecdsa_p256_sha512_evp_type NID_ML_DSA_65_ECDSA_P256_SHA512
-#define mldsa65_ecdsa_p256_sha512_d2i_private_key NULL
-#define mldsa65_ecdsa_p256_sha512_d2i_public_key NULL
-#define mldsa65_ecdsa_p256_sha512_d2i_key_params NULL
-#define mldsa65_ecdsa_p256_sha512_check NULL
-#define mldsa65_ecdsa_p256_sha512_adjust NULL
-#define mldsa65_ecdsa_p256_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+#define mldsa44_ecdsa_p256_sha256_evp_type NID_ML_DSA_44_ECDSA_P256_SHA256
+#define mldsa44_ecdsa_p256_sha256_d2i_private_key NULL
+#define mldsa44_ecdsa_p256_sha256_d2i_public_key NULL
+#define mldsa44_ecdsa_p256_sha256_d2i_key_params NULL
+#define mldsa44_ecdsa_p256_sha256_check NULL
+#define mldsa44_ecdsa_p256_sha256_adjust NULL
+#define mldsa44_ecdsa_p256_sha256_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+
+#define mldsa87_ecdsa_p384_sha512_evp_type NID_ML_DSA_87_ECDSA_P384_SHA512
+#define mldsa87_ecdsa_p384_sha512_d2i_private_key NULL
+#define mldsa87_ecdsa_p384_sha512_d2i_public_key NULL
+#define mldsa87_ecdsa_p384_sha512_d2i_key_params NULL
+#define mldsa87_ecdsa_p384_sha512_check NULL
+#define mldsa87_ecdsa_p384_sha512_adjust NULL
+#define mldsa87_ecdsa_p384_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+
+#define mldsa87_rsa4096_pss_sha512_evp_type NID_ML_DSA_87_RSA4096_PSS_SHA512
+#define mldsa87_rsa4096_pss_sha512_d2i_private_key NULL
+#define mldsa87_rsa4096_pss_sha512_d2i_public_key NULL
+#define mldsa87_rsa4096_pss_sha512_d2i_key_params NULL
+#define mldsa87_rsa4096_pss_sha512_check NULL
+#define mldsa87_rsa4096_pss_sha512_adjust NULL
+#define mldsa87_rsa4096_pss_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
 
 #endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
 
@@ -1567,10 +1585,14 @@ MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, SubjectPublicKeyInfo);
 #endif
 
 #ifndef OPENSSL_NO_ML_DSA_COMPOSITE
-MAKE_DECODER("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, mldsa65_rsa3072_pkcs15_sha512, PrivateKeyInfo);
-MAKE_DECODER("ML-DSA-65-RSA3072-PKCS15-SHA512", mldsa65_rsa3072_pkcs15_sha512, mldsa65_rsa3072_pkcs15_sha512, SubjectPublicKeyInfo);
-MAKE_DECODER("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, mldsa65_ecdsa_p256_sha512, PrivateKeyInfo);
-MAKE_DECODER("ML-DSA-65-ECDSA-P256-SHA512", mldsa65_ecdsa_p256_sha512, mldsa65_ecdsa_p256_sha512, SubjectPublicKeyInfo);
+MAKE_DECODER("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, mldsa44_rsa2048_pss_sha256, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, mldsa44_rsa2048_pss_sha256, SubjectPublicKeyInfo);
+MAKE_DECODER("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, mldsa44_ecdsa_p256_sha256, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, mldsa44_ecdsa_p256_sha256, SubjectPublicKeyInfo);
+MAKE_DECODER("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, mldsa87_ecdsa_p384_sha512, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, mldsa87_ecdsa_p384_sha512, SubjectPublicKeyInfo);
+MAKE_DECODER("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, mldsa87_rsa4096_pss_sha512, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, mldsa87_rsa4096_pss_sha512, SubjectPublicKeyInfo);
 #endif
 
 #ifndef OPENSSL_NO_LMS

@@ -568,8 +568,9 @@ Support for the B<ML-DSA>, B<ML-KEM> and B<SLH-DSA> algorithms was added in Open
 
 Support for the B<LMS> algorithm was added in OpenSSL 3.6.
 
-Support for the B<ML-DSA-65-RSA3072-PKCS15-SHA512> and
-B<ML-DSA-65-ECDSA-P256-SHA512> composite algorithms was added in OpenSSL 4.1.
+Support for the B<ML-DSA-44-RSA2048-PSS-SHA256>,
+B<ML-DSA-44-ECDSA-P256-SHA256>, B<ML-DSA-87-ECDSA-P384-SHA512> and
+B<ML-DSA-87-RSA4096-PSS-SHA512> composite algorithms was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -127,10 +127,14 @@ DECODER_w_structure("ML-DSA-87", der, SubjectPublicKeyInfo, ml_dsa_87, yes, "SPK
 #endif /* OPENSSL_NO_ML_DSA */
 
 #ifndef OPENSSL_NO_ML_DSA_COMPOSITE
-DECODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512",        der, PrivateKeyInfo,       mldsa65_rsa3072_pkcs15_sha512,      no, "PKItoMLDSA65-RSA3072-PKCS15-SHA512-DER"),
-DECODER_w_structure("ML-DSA-65-RSA3072-PKCS15-SHA512",        der, SubjectPublicKeyInfo, mldsa65_rsa3072_pkcs15_sha512,      no, "SPKItoMLDSA65-RSA3072-PKCS15-SHA512-DER"),
-DECODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512",            der, PrivateKeyInfo,       mldsa65_ecdsa_p256_sha512,          no, "PKItoMLDSA65-ECDSA-P256-SHA512-DER"),
-DECODER_w_structure("ML-DSA-65-ECDSA-P256-SHA512",            der, SubjectPublicKeyInfo, mldsa65_ecdsa_p256_sha512,          no, "SPKItoMLDSA65-ECDSA-P256-SHA512-DER"),
+DECODER_w_structure("ML-DSA-44-RSA2048-PSS-SHA256",           der, PrivateKeyInfo,       mldsa44_rsa2048_pss_sha256,         no, "PKItoMLDSA44-RSA2048-PSS-SHA256-DER"),
+DECODER_w_structure("ML-DSA-44-RSA2048-PSS-SHA256",           der, SubjectPublicKeyInfo, mldsa44_rsa2048_pss_sha256,         no, "SPKItoMLDSA44-RSA2048-PSS-SHA256-DER"),
+DECODER_w_structure("ML-DSA-44-ECDSA-P256-SHA256",            der, PrivateKeyInfo,       mldsa44_ecdsa_p256_sha256,          no, "PKItoMLDSA44-ECDSA-P256-SHA256-DER"),
+DECODER_w_structure("ML-DSA-44-ECDSA-P256-SHA256",            der, SubjectPublicKeyInfo, mldsa44_ecdsa_p256_sha256,          no, "SPKItoMLDSA44-ECDSA-P256-SHA256-DER"),
+DECODER_w_structure("ML-DSA-87-ECDSA-P384-SHA512",            der, PrivateKeyInfo,       mldsa87_ecdsa_p384_sha512,          no, "PKItoMLDSA87-ECDSA-P384-SHA512-DER"),
+DECODER_w_structure("ML-DSA-87-ECDSA-P384-SHA512",            der, SubjectPublicKeyInfo, mldsa87_ecdsa_p384_sha512,          no, "SPKItoMLDSA87-ECDSA-P384-SHA512-DER"),
+DECODER_w_structure("ML-DSA-87-RSA4096-PSS-SHA512",           der, PrivateKeyInfo,       mldsa87_rsa4096_pss_sha512,         no, "PKItoMLDSA87-RSA4096-PSS-SHA512-DER"),
+DECODER_w_structure("ML-DSA-87-RSA4096-PSS-SHA512",           der, SubjectPublicKeyInfo, mldsa87_rsa4096_pss_sha512,         no, "SPKItoMLDSA87-RSA4096-PSS-SHA512-DER"),
 #endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
 
 #ifndef OPENSSL_NO_LMS

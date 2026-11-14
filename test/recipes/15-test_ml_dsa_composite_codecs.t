@@ -27,10 +27,14 @@ my $no_ec = disabled('ec');
 
 # Remove EC-dependent ml dsa composites when EC is disabled
 my @ml_dsa_composite_pems = (
-    [ "ML-DSA-65-RSA3072-PKCS15-SHA512", "testmldsacomposite65-rsa3072pkcs15",
-      "draft-mldsa65-rsa3072pkcs15" ],
-    [ "ML-DSA-65-ECDSA-P256-SHA512",     "testmldsacomposite65-ecdsa-p256",
-      "draft-mldsa65-ecdsa-p256" ],
+    [ "ML-DSA-44-RSA2048-PSS-SHA256", "testmldsacomposite44-rsa2048pss",
+      "draft-mldsa44-rsa2048pss" ],
+    [ "ML-DSA-44-ECDSA-P256-SHA256",  "testmldsacomposite44-ecdsa-p256",
+      "draft-mldsa44-ecdsa-p256" ],
+    [ "ML-DSA-87-ECDSA-P384-SHA512",  "testmldsacomposite87-ecdsa-p384",
+      "draft-mldsa87-ecdsa-p384" ],
+    [ "ML-DSA-87-RSA4096-PSS-SHA512", "testmldsacomposite87-rsa4096pss",
+      "draft-mldsa87-rsa4096pss" ],
 );
 @ml_dsa_composite_pems = grep { $_->[0] !~ /ECDSA/ } @ml_dsa_composite_pems if $no_ec;
 

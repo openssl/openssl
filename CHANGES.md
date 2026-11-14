@@ -101,10 +101,11 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
- * Added 2 composite post-quantum signature algorithms combining ML-DSA 65 with
-   RSA3072-PKCS15 and ECDSA-P256 as defined in
+ * Added 4 composite post-quantum signature algorithms combining ML-DSA with
+   RSA-PSS or ECDSA as defined in
    [draft-ietf-lamps-pq-composite-sigs](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs):
-   id-MLDSA65-ECDSA-P256-SHA256,id-MLDSA65-RSA3072-PKCS15-SHA512.
+   id-MLDSA44-RSA2048-PSS-SHA256, id-MLDSA44-ECDSA-P256-SHA256,
+   id-MLDSA87-ECDSA-P384-SHA512, id-MLDSA87-RSA4096-PSS-SHA512.
    These algorithms are available in the default provider only.
 
    *Felipe Ventura*
