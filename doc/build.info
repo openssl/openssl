@@ -4801,6 +4801,18 @@ DEPEND[html/man7/EVP_MAC-Siphash.html]=man7/EVP_MAC-Siphash.pod
 GENERATE[html/man7/EVP_MAC-Siphash.html]=man7/EVP_MAC-Siphash.pod
 DEPEND[man/man7/EVP_MAC-Siphash.7]=man7/EVP_MAC-Siphash.pod
 GENERATE[man/man7/EVP_MAC-Siphash.7]=man7/EVP_MAC-Siphash.pod
+DEPEND[html/man7/EVP_MD-ASCON-CXOF128.html]=man7/EVP_MD-ASCON-CXOF128.pod
+GENERATE[html/man7/EVP_MD-ASCON-CXOF128.html]=man7/EVP_MD-ASCON-CXOF128.pod
+DEPEND[man/man7/EVP_MD-ASCON-CXOF128.7]=man7/EVP_MD-ASCON-CXOF128.pod
+GENERATE[man/man7/EVP_MD-ASCON-CXOF128.7]=man7/EVP_MD-ASCON-CXOF128.pod
+DEPEND[html/man7/EVP_MD-ASCON-HASH256.html]=man7/EVP_MD-ASCON-HASH256.pod
+GENERATE[html/man7/EVP_MD-ASCON-HASH256.html]=man7/EVP_MD-ASCON-HASH256.pod
+DEPEND[man/man7/EVP_MD-ASCON-HASH256.7]=man7/EVP_MD-ASCON-HASH256.pod
+GENERATE[man/man7/EVP_MD-ASCON-HASH256.7]=man7/EVP_MD-ASCON-HASH256.pod
+DEPEND[html/man7/EVP_MD-ASCON-XOF128.html]=man7/EVP_MD-ASCON-XOF128.pod
+GENERATE[html/man7/EVP_MD-ASCON-XOF128.html]=man7/EVP_MD-ASCON-XOF128.pod
+DEPEND[man/man7/EVP_MD-ASCON-XOF128.7]=man7/EVP_MD-ASCON-XOF128.pod
+GENERATE[man/man7/EVP_MD-ASCON-XOF128.7]=man7/EVP_MD-ASCON-XOF128.pod
 DEPEND[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 GENERATE[html/man7/EVP_MD-BLAKE2.html]=man7/EVP_MD-BLAKE2.pod
 DEPEND[man/man7/EVP_MD-BLAKE2.7]=man7/EVP_MD-BLAKE2.pod
@@ -5328,6 +5340,9 @@ html/man7/EVP_MAC-HMAC.html \
 html/man7/EVP_MAC-KMAC.html \
 html/man7/EVP_MAC-Poly1305.html \
 html/man7/EVP_MAC-Siphash.html \
+html/man7/EVP_MD-ASCON-CXOF128.html \
+html/man7/EVP_MD-ASCON-HASH256.html \
+html/man7/EVP_MD-ASCON-XOF128.html \
 html/man7/EVP_MD-BLAKE2.html \
 html/man7/EVP_MD-KECCAK.html \
 html/man7/EVP_MD-MD2.html \
@@ -5496,6 +5511,9 @@ man/man7/EVP_MAC-HMAC.7 \
 man/man7/EVP_MAC-KMAC.7 \
 man/man7/EVP_MAC-Poly1305.7 \
 man/man7/EVP_MAC-Siphash.7 \
+man/man7/EVP_MD-ASCON-CXOF128.7 \
+man/man7/EVP_MD-ASCON-HASH256.7 \
+man/man7/EVP_MD-ASCON-XOF128.7 \
 man/man7/EVP_MD-BLAKE2.7 \
 man/man7/EVP_MD-KECCAK.7 \
 man/man7/EVP_MD-MD2.7 \

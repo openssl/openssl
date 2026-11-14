@@ -176,6 +176,14 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
+ * Added the Ascon-Hash256 hash function and the Ascon-XOF128 and Ascon-CXOF128
+   extendable output functions as specified in NIST SP 800-232. Ascon-Hash256
+   produces a fixed 256-bit output; the two XOFs produce output of any length,
+   and Ascon-CXOF128 additionally takes a customization string for domain
+   separation.
+
+   *Dominic Cunningham, Billy Bob Brumley*
+
  * The TLS 1.3 server now enforces the RFC 8446 section 9.2 requirement that
    a ClientHello containing a supported_groups extension also contains a
    key_share extension and vice versa, aborting the handshake with a
