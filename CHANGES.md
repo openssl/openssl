@@ -49,6 +49,10 @@ OpenSSL 4.2
 
    *Matt Caswell*
 
+ * Added optimized ML-KEM NTT and inverse NTT implementations for AArch64.
+
+   *Shane Lontis*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
