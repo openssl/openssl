@@ -402,6 +402,66 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_ECX
+/*
+ * DER-encoding of a throw-away ED25519 public key, that will not match
+ * the CA key
+ */
+static const unsigned char edkey[] = {
+    0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00,
+    0x94, 0xd9, 0xa3, 0xe4, 0xbb, 0x53, 0x2c, 0x5c, 0x34, 0x63, 0xc1, 0xb3,
+    0x69, 0xae, 0x1c, 0xc9, 0x3f, 0xd7, 0xf7, 0xe7, 0x1c, 0x2f, 0xfa, 0x34,
+    0x18, 0x24, 0x20, 0x18, 0x94, 0xcd, 0x29, 0x10
+};
+static int edlen = sizeof(edkey);
+
+static int run_trusted_ee_test(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    X509 *cacert = NULL;
+    STACK_OF(X509) *chain = NULL;
+    int ret = 0;
+
+    /* Create a DANE-enabled SSL handle, with */
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
+        || !TEST_int_gt(SSL_CTX_dane_enable(ctx), 0)
+        || !TEST_true(SSL_CTX_load_verify_file(ctx, CAfile))
+        || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha512(), 2, 1), 0)
+        || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha256(), 1, 2), 0)
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_int_gt(SSL_dane_enable(ssl, NULL), 0))
+        goto end;
+    SSL_set_connect_state(ssl);
+
+    if (!TEST_ptr(cacert = load_cert_pem(CAfile, NULL))
+        || !TEST_ptr(chain = sk_X509_new_reserve(NULL, 1))
+        || !TEST_int_gt(sk_X509_push(chain, cacert), 0))
+        goto end;
+
+    /*
+     * Register a non-matching DANE-TA(2) SPKI(1) Full(0) TLSA RR,
+     * and a PKIX-EE(1) RR to enable trust store matching.
+     */
+    if (!TEST_int_gt(SSL_dane_tlsa_add(ssl, 2, 1, 0, edkey, edlen), 0)
+        || !TEST_int_gt(SSL_dane_tlsa_add(ssl, 1, 1, 0, edkey, edlen), 0))
+        goto end;
+
+    /* Now "verify" the CA certificate, this should fail (return 0). */
+    if (!TEST_int_eq(verify_chain(ssl, chain), 0))
+        goto end;
+    ret = 1;
+
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    sk_X509_free(chain);
+    X509_free(cacert);
+
+    return ret;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("basedomain CAfile tlsafile\n")
 
 int setup_tests(void)
@@ -417,6 +477,9 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(run_tlsatest);
+#ifndef OPENSSL_NO_ECX
+    ADD_TEST(run_trusted_ee_test);
+#endif
     return 1;
 }
 
