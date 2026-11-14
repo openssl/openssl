@@ -526,6 +526,70 @@ static int test_cmp_pkimessage_create(int bodytype)
     return result;
 }
 
+static OSSL_CMP_MSG *new_write_test_msg(void)
+{
+    OSSL_CMP_CTX *ctx = NULL;
+    OSSL_CMP_MSG *msg = NULL;
+
+    if (!TEST_ptr(ctx = OSSL_CMP_CTX_new(libctx, NULL))
+        || !TEST_true(SET_OPT_UNPROTECTED_SEND(ctx, 1)))
+        goto err;
+    msg = ossl_cmp_msg_create(ctx, OSSL_CMP_PKIBODY_GENM);
+
+err:
+    OSSL_CMP_CTX_free(ctx);
+    return msg;
+}
+
+static int test_cmp_msg_write_returns_encoded_length(void)
+{
+    static const char filename[] = "cmp_msg_test.der";
+    OSSL_CMP_MSG *msg = NULL;
+    int expected_len, written, ret = 0;
+
+    if (!TEST_ptr(msg = new_write_test_msg())
+        || !TEST_int_gt(expected_len = i2d_OSSL_CMP_MSG(msg, NULL), 1)
+        || !TEST_int_eq(written = OSSL_CMP_MSG_write(filename, msg),
+            expected_len))
+        goto err;
+
+    ret = 1;
+err:
+    remove(filename);
+    OSSL_CMP_MSG_free(msg);
+    return ret;
+}
+
+static int test_cmp_msg_write_error_is_negative(void)
+{
+    static const char full_device[] = "/dev/full";
+    OSSL_CMP_MSG *msg = NULL;
+    BIO *probe = NULL;
+    int write_ret, flush_ret;
+    int ret = 0;
+
+    if ((probe = BIO_new_file(full_device, "wb")) == NULL) {
+        BIO_free(probe);
+        ERR_clear_error();
+        return TEST_skip("no device that fails writes");
+    }
+    write_ret = BIO_write(probe, "x", 1);
+    flush_ret = BIO_flush(probe);
+    BIO_free(probe);
+    ERR_clear_error();
+    if (write_ret > 0 && flush_ret > 0)
+        return TEST_skip("no device that fails writes");
+
+    if (!TEST_ptr(msg = new_write_test_msg())
+        || !TEST_int_lt(OSSL_CMP_MSG_write(full_device, msg), 0))
+        goto err;
+    ret = 1;
+
+err:
+    OSSL_CMP_MSG_free(msg);
+    return ret;
+}
+
 void cleanup_tests(void)
 {
     EVP_PKEY_free(newkey);
@@ -582,6 +646,8 @@ int setup_tests(void)
     ADD_TEST(test_cmp_create_genm);
     ADD_TEST(test_cmp_create_certrep);
     ADD_TEST(test_cmp_create_pollrep);
+    ADD_TEST(test_cmp_msg_write_returns_encoded_length);
+    ADD_TEST(test_cmp_msg_write_error_is_negative);
     ADD_ALL_TESTS_NOSUBTEST(test_cmp_pkimessage_create,
         OSSL_CMP_PKIBODY_POLLREP + 1);
     return 1;
