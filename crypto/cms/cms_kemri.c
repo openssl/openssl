@@ -349,13 +349,13 @@ int ossl_cms_RecipientInfo_kemri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encapsulate(kemri->pctx, kem_ct, &kem_ct_len, kem_secret, &kem_secret_len) <= 0)
         goto err;
 
-    ASN1_STRING_set0(kemri->kemct, kem_ct, (int)kem_ct_len);
+    ossl_asn1_string_set0(kemri->kemct, kem_ct, (int)kem_ct_len);
     kem_ct = NULL;
 
     if (!cms_kek_cipher(&enckey, &enckeylen, kem_secret, kem_secret_len, ec->key, ec->keylen,
             kemri, 1))
         goto err;
-    ASN1_STRING_set0(kemri->encryptedKey, enckey, (int)enckeylen);
+    ossl_asn1_string_set0(kemri->encryptedKey, enckey, (int)enckeylen);
 
     rv = 1;
 err:

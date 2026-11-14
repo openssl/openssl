@@ -214,7 +214,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
         /* Set bio as read only so its content can't be clobbered */
         BIO_set_flags(mbio, BIO_FLAGS_MEM_RDONLY);
         BIO_set_mem_eof_return(mbio, 0);
-        ASN1_STRING_set0(*pos, cont, contlen);
+        ossl_asn1_string_set0(*pos, cont, contlen);
         cms->contentIncomplete = 0;
     }
 

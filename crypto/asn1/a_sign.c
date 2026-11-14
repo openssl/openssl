@@ -95,7 +95,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
-    ASN1_STRING_set0(signature, buf_out, outl);
+    ossl_asn1_string_set0(signature, buf_out, outl);
     buf_out = NULL;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
@@ -291,7 +291,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
-    ASN1_STRING_set0(signature, buf_out, (int)outl);
+    ossl_asn1_string_set0(signature, buf_out, (int)outl);
     buf_out = NULL;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
