@@ -106,6 +106,15 @@ a retry instead of blocking.
 See L<BIO_should_retry(3)> for details of how to
 determine the cause of a retry and other I/O issues.
 
+BIO_gets() and BIO_get_line() may return part of a line if a retry is
+needed after some bytes have been read. Callers that require a terminating
+'\n' should collect the bytes across calls and check for it before treating
+the line as complete.
+If BIO_get_line() returns an error after consuming bytes, those bytes
+aren't retained for a subsequent call. The same applies to BIO_gets() on a
+connect BIO. Other BIO_gets() implementations may return the partial byte
+count instead.
+
 If the "gets" method is not supported by a BIO then BIO_get_line() can be used.
 It is also possible to make BIO_gets() usable even if the "gets" method is not
 supported by adding a buffering BIO L<BIO_f_buffer(3)> to the chain.

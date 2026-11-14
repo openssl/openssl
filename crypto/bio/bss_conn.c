@@ -759,7 +759,15 @@ int conn_gets(BIO *bio, char *buf, int size)
             break;
     }
     *ptr = '\0';
-    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0 ? (int)(ptr - buf) : ret;
+    /*
+     * If the last read needs to be retried, bytes already consumed from the
+     * socket must still be reported to the caller, else they are lost. Hard
+     * errors are reported as such.
+     */
+    if (ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0
+        || (ptr > buf && BIO_should_retry(bio)))
+        return (int)(ptr - buf);
+    return ret;
 }
 
 static int conn_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride, size_t num_msgs,
