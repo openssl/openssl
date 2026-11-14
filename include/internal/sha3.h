@@ -25,6 +25,10 @@ typedef struct keccak_st KECCAK1600_CTX;
 typedef size_t(sha3_absorb_fn)(KECCAK1600_CTX *vctx, const unsigned char *in, size_t inlen);
 typedef int(sha3_final_fn)(KECCAK1600_CTX *vctx, unsigned char *out, size_t outlen);
 typedef int(sha3_squeeze_fn)(KECCAK1600_CTX *vctx, unsigned char *out, size_t outlen);
+typedef size_t(keccak_absorb_fn)(uint64_t A[5][5],
+    const unsigned char *in, size_t inlen, size_t rate);
+typedef void(keccak_squeeze_fn)(uint64_t A[5][5], unsigned char *out,
+    size_t outlen, size_t rate, int next);
 
 typedef struct prov_sha3_meth_st {
     sha3_absorb_fn *absorb;
@@ -61,9 +65,52 @@ int ossl_sha3_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
 size_t ossl_sha3_absorb_default(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len);
 int ossl_sha3_final_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
 int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
+/**
+ * @brief Squeeze bytes using block-oriented Keccak callbacks.
+ *
+ * Pads and absorbs buffered input on the first squeeze, then buffers unused
+ * output bytes for later calls. The caller updates ctx->xof_state after success.
+ *
+ * @param ctx sponge context with the block size and padding set
+ * @param out output buffer for outlen bytes
+ * @param outlen number of bytes to produce
+ * @param absorb callback that absorbs complete rate blocks
+ * @param squeeze callback that squeezes blocks using the same permutation
+ * @returns 1
+ */
+int ossl_keccak_block_squeeze(KECCAK1600_CTX *ctx, unsigned char *out,
+    size_t outlen, keccak_absorb_fn *absorb, keccak_squeeze_fn *squeeze);
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);
+/**
+ * @brief Absorb complete blocks using Keccak-p[1600,12].
+ *
+ * Does not pad or buffer the remaining input bytes.
+ *
+ * @param A sponge state, updated in place
+ * @param inp input buffer containing len bytes
+ * @param len number of available input bytes
+ * @param r rate in bytes, a positive multiple of 8 less than 200
+ * @returns number of unabsorbed input bytes, less than r
+ */
+size_t ossl_keccak1600_p12_absorb(uint64_t A[5][5],
+    const unsigned char *inp, size_t len, size_t r);
+/**
+ * @brief Squeeze bytes using Keccak-p[1600,12].
+ *
+ * The state must already include the padded input. No offset within the final
+ * output block is retained, so calls preceding another squeeze must produce
+ * whole rate blocks. The assembler implementations require len > 0.
+ *
+ * @param A sponge state, updated in place
+ * @param out output buffer for len bytes
+ * @param len positive number of bytes to produce
+ * @param r rate in bytes, a positive multiple of 8 less than 200
+ * @param next 0 to output the current state first, or 1 to permute it first
+ */
+void ossl_keccak1600_p12_squeeze(uint64_t A[5][5], unsigned char *out,
+    size_t len, size_t r, int next);
 
 /* Multi-buffer (x4) Keccak-f[1600] context and API */
 #if defined(KECCAK1600_ASM)                                                               \
