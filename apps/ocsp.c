@@ -74,6 +74,15 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     int timeout);
 static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp);
+
+#ifndef OPENSSL_NO_SOCK
+static OCSP_RESPONSE *process_responder_get(
+    OCSP_REQUEST *req, const char *host, const char *port,
+    const char *path, const char *proxy, const char *no_proxy,
+    int use_ssl, STACK_OF(CONF_VALUE) *headers,
+    int req_timeout, int *attempted);
+#endif
+
 static char *prog;
 
 #ifndef OPENSSL_NO_POSIX_IO
@@ -1311,7 +1320,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 	 */
         for (j=0; j < OCSP_REQUEST_get_ext_count(req); j++) {
             const X509_EXTENSION *ext = OCSP_REQUEST_get_ext(req, j);
-            ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+            const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
 
             if (OBJ_obj2nid(obj) != NID_id_pkix_OCSP_Nonce) {
                 BIO_puts(err,
@@ -1805,11 +1814,11 @@ static OCSP_RESPONSE *process_responder_get(
         goto end;
 
     if (port != NULL) {
-        BIO_snprintf(url, url_len + 1, "%s://%s:%s%s%s",
+        snprintf(url, url_len + 1, "%s://%s:%s%s%s",
             scheme, host, port, req_path,
             req_path[strlen(req_path) - 1] == '/' ? "" : "/");
     } else {
-        BIO_snprintf(url, url_len + 1, "%s://%s%s%s",
+        snprintf(url, url_len + 1, "%s://%s%s%s",
             scheme, host, req_path,
             req_path[strlen(req_path) - 1] == '/' ? "" : "/");
     }
