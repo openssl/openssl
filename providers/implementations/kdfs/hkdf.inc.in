@@ -40,6 +40,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_KDF_PARAM_SALT',                    'salt',   'octet_string'],
                           ['OSSL_KDF_PARAM_INFO',                    'info',   'octet_string'],
                           ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
+                          ['OSSL_KDF_PURPOSE_CLIENT_KEY', 'client_key_type', 'utf8_string'],
+                          ['OSSL_KDF_PURPOSE_SERVER_KEY', 'server_key_type', 'utf8_string'],
                          )); -}
 
 {- produce_param_decoder('hkdf_fixed_digest_set_ctx_params',
@@ -52,9 +54,14 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 {- produce_param_decoder('kdf_tls1_3_set_ctx_params',
                          (@HKDF_COMMON_SET_CTX_PARAMS,
                           @HKDF_DIGEST_SET_CTX_PARAMS,
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_PREFIX',            'prefix', 'octet_string'],
-                          ['OSSL_KDF_PARAM_LABEL',             'label',  'octet_string'],
-                          ['OSSL_KDF_PARAM_DATA',              'data',   'octet_string'],
+                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',          'int', 'fips'],
+                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',          'int', 'fips'],
+                          ['OSSL_KDF_PARAM_PREFIX',            'prefix',         'octet_string'],
+                          ['OSSL_KDF_PARAM_LABEL',             'label',          'octet_string'],
+                          ['OSSL_KDF_PARAM_DATA',              'data',           'octet_string'],
+                          ['OSSL_KDF_PARAM_CIPHER_KEY_LEN',    'cipher_key_len', 'size_t'],
+                          ['OSSL_KDF_PARAM_IV_LEN',            'iv_len',         'size_t'],
+                          ['OSSL_KDF_PARAM_CIPHER',            'cipher',         'utf8_string'],
                          )); -}
+
+
