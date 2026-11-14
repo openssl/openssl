@@ -320,11 +320,6 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     return 1;
 }
 
-void err_free_strings_int(void)
-{
-    /* obsolete */
-}
-
 /********************************************************/
 
 void ERR_clear_error(void)
