@@ -69,7 +69,11 @@ char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
     }
     p = der_spki;
     i2d_NETSCAPE_SPKI(spki, &p);
-    EVP_EncodeBlock((unsigned char *)b64_str, der_spki, der_len);
+    if (EVP_EncodeBlock((unsigned char *)b64_str, der_spki, der_len) < 0) {
+        OPENSSL_free(der_spki);
+        OPENSSL_free(b64_str);
+        return NULL;
+    }
     OPENSSL_free(der_spki);
     return b64_str;
 }
