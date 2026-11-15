@@ -74,12 +74,13 @@ DEFINE_RUN_ONCE_STATIC(do_init_module_list_lock)
 
 static int conf_diagnostics(const CONF *cnf)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int status;
     long result = 0;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     status = NCONF_get_number_e(cnf, NULL, "config_diagnostics", &result);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (status > 0) {
         OSSL_LIB_CTX_set_conf_diagnostics(cnf->libctx, result > 0);
         return result > 0;
@@ -154,11 +155,12 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     const char *appname, unsigned long flags)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     char *file = NULL;
     CONF *conf = NULL;
     int ret = 0, diagnostics = OSSL_LIB_CTX_get_conf_diagnostics(libctx);
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (filename == NULL) {
         file = CONF_get1_default_config_file();
@@ -197,9 +199,9 @@ err:
         ret = 1;
 
     if (ret > 0)
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     else
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
 
     return ret;
 }

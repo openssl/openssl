@@ -96,6 +96,7 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
     STACK_OF(PKCS12_SAFEBAG) *bags,
     OSSL_LIB_CTX *ctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     PKCS7 *p7;
     X509_ALGOR *pbe;
     EVP_CIPHER *pbe_ciph = NULL;
@@ -109,9 +110,9 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
         goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     pbe_ciph = EVP_CIPHER_fetch(ctx, OBJ_nid2sn(pbe_nid), propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (pbe_ciph != NULL) {
         pbe = PKCS5_pbe2_set_iv_ex(pbe_ciph, iter, salt, saltlen, NULL, -1, ctx);

@@ -859,6 +859,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     const char *data_structure = NULL;
     /* Saved to restore on return, mutated in PEM->DER transition. */
     const char *start_input_type = ctx->start_input_type;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     /*
      * This is an indicator up the call stack that something was indeed
@@ -1167,7 +1168,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * We only care about errors reported from decoder implementations
          * if it returns false (i.e. there was a fatal error).
          */
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
 
         new_data.current_decoder_inst_index = i;
         new_data.flag_input_structure_checked
@@ -1197,7 +1198,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             ERR_clear_last_mark();
             break;
         }
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
 
         /*
          * Break if the decoder implementation that we called recursed, since

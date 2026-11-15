@@ -603,6 +603,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     struct ASIdentifiers_st *tmp_rfc3779_asid = NULL;
 #endif
     int ret = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
@@ -625,7 +626,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         goto done;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509), const_x,
             tmp_fingerprint))
@@ -831,7 +832,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     scan_ext_flags(const_x, &tmp_ex_flags);
 
     tmp_ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     CRYPTO_THREAD_unlock(const_x->lock);
     /*

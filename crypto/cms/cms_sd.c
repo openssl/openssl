@@ -537,6 +537,7 @@ static EVP_MD *ossl_cms_get_noattr_md(const CMS_CTX *ctx, EVP_PKEY *pk, int *noa
 static int ossl_cms_adjust_md(const CMS_CTX *ctx, EVP_PKEY *pk, const EVP_MD **md, EVP_MD **fetched_md, unsigned int flags)
 {
     int md_a_must = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     while ((flags & CMS_NOATTR) != 0) {
         /*
@@ -558,10 +559,10 @@ static int ossl_cms_adjust_md(const CMS_CTX *ctx, EVP_PKEY *pk, const EVP_MD **m
     }
 
     if (*md != NULL)
-        (void)ERR_set_mark(); /* No error if no default md and user-supplied md is set */
+        (void)ERR_HANDLE_set_mark(&hdl); /* No error if no default md and user-supplied md is set */
     *fetched_md = ossl_cms_get_default_md(ctx, pk, &md_a_must);
     if (*md != NULL)
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
     if (md_a_must)
         *md = *fetched_md;
     else if (*md == NULL)
@@ -1311,6 +1312,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     const CMS_CTX *ctx = si->cms_ctx;
     OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(ctx);
     const char *propq = ossl_cms_ctx_get0_propq(ctx);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (si->pkey == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NO_PUBLIC_KEY);
@@ -1332,7 +1334,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 
     OBJ_obj2txt(name, sizeof(name), si->digestAlgorithm->algorithm, 0);
 
-    (void)ERR_set_mark();
+    (void)ERR_HANDLE_set_mark(&hdl);
     fetched_md = EVP_MD_fetch(libctx, name, propq);
 
     if (fetched_md != NULL) {
@@ -1345,11 +1347,11 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
             md = NULL;
     }
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
+        (void)ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         return -1;
     }
-    (void)ERR_pop_to_mark();
+    (void)ERR_HANDLE_pop_to_mark(&hdl);
 
     if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
@@ -1619,11 +1621,12 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
 static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (cipher != NULL) {
         EVP_CIPHER_free(cipher);
         return CMS_add_simple_smimecap(sk, nid, arg);
@@ -1634,11 +1637,12 @@ static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
 static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (md != NULL) {
         EVP_MD_free(md);
         return CMS_add_simple_smimecap(sk, nid, arg);

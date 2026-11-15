@@ -28,6 +28,7 @@ static int cache_objects(X509_LOOKUP *lctx, CACHED_STORE *store,
     int ok = 1;
     OSSL_STORE_CTX *ctx;
     X509_STORE *xstore = X509_LOOKUP_get_store(lctx);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if ((ctx = OSSL_STORE_open_ex(store->uri, store->libctx, store->propq,
              NULL, NULL, NULL, NULL, NULL))
@@ -53,9 +54,9 @@ static int cache_objects(X509_LOOKUP *lctx, CACHED_STORE *store,
      * actual directory with a thousand CA certs).
      */
     if (criterion != NULL) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         OSSL_STORE_find(ctx, criterion);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
 
     for (;;) {

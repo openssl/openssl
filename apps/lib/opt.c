@@ -395,13 +395,14 @@ void print_format_error(int format, unsigned long flags)
  */
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *c;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if ((c = EVP_CIPHER_fetch(app_get0_libctx(), name,
              app_get0_propq()))
         != NULL) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         if (cipherp != NULL) {
             EVP_CIPHER_free(*cipherp);
             *cipherp = c;
@@ -410,7 +411,7 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
         }
         return 1;
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return 0;
 }
 
@@ -456,11 +457,12 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
  */
 int opt_md_silent(const char *name, EVP_MD **mdp)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if ((md = EVP_MD_fetch(app_get0_libctx(), name, app_get0_propq())) != NULL) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         if (mdp != NULL) {
             EVP_MD_free(*mdp);
             *mdp = md;
@@ -469,7 +471,7 @@ int opt_md_silent(const char *name, EVP_MD **mdp)
         }
         return 1;
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return 0;
 }
 

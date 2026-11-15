@@ -407,15 +407,16 @@ static int test_genec_explicit_only(int idx)
     unsigned char *enc = NULL;
     size_t enc_len = 0, j;
     int ret = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!TEST_ptr(pkey = gen_ec(curve, "named_curve", 1)))
         goto end;
 
     for (j = 0; j < OSSL_NELEM(formats); j++) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ret = encode_pkey(pkey, EVP_PKEY_KEY_PARAMETERS, "type-specific",
             formats[j], &enc, &enc_len);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         OPENSSL_free(enc);
         enc = NULL;
         if (!TEST_false(ret)) {
@@ -452,11 +453,12 @@ end:
  */
 static int test_genec_unknown_curve(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY *pkey;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     pkey = gen_ec("bogus_foobar_curve", "named_curve", 1);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (!TEST_ptr_null(pkey)) {
         EVP_PKEY_free(pkey);

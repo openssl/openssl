@@ -471,6 +471,7 @@ const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt)
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
     OSSL_CALLBACK *cb, void *cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     void *ret;
     const char *desc = keymgmt->description != NULL ? keymgmt->description : "";
 
@@ -480,12 +481,12 @@ void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
         return NULL;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = keymgmt->gen(genctx, cb, cbarg);
-    if (ret == NULL && ERR_count_to_mark() == 0)
+    if (ret == NULL && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_KEYMGMT_FAILURE,
             "%s key generation:%s", keymgmt->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return ret;
 }
 

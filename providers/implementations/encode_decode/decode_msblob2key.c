@@ -94,6 +94,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_CALLBACK *data_cb, void *data_cbarg,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct msblob2key_ctx_st *ctx = vctx;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     const unsigned char *p;
@@ -111,10 +112,10 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         ERR_raise(ERR_LIB_PEM, PEM_R_KEYBLOB_TOO_SHORT);
         goto next;
     }
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     p = hdr_buf;
     ok = ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) > 0;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok)
         goto next;
 

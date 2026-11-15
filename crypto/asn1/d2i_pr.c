@@ -25,6 +25,7 @@ static EVP_PKEY *
 d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     long length, OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     OSSL_DECODER_CTX *dctx = NULL;
     size_t len = length;
     EVP_PKEY *pkey = NULL, *bak_a = NULL;
@@ -44,9 +45,9 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
     }
 
     /* This is just a probe. It might fail, so we ignore errors */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     p8info = d2i_PKCS8_PRIV_KEY_INFO(NULL, pp, length);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (p8info != NULL) {
         int64_t v;
 
@@ -98,6 +99,7 @@ EVP_PKEY *
 ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
     long length, OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY *ret;
     const unsigned char *p = *pp;
 
@@ -115,7 +117,7 @@ ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
         goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!ret->ameth->old_priv_decode || !ret->ameth->old_priv_decode(ret, &p, length)) {
         if (ret->ameth->priv_decode != NULL
             || ret->ameth->priv_decode_ex != NULL) {
@@ -123,27 +125,27 @@ ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
             PKCS8_PRIV_KEY_INFO *p8 = NULL;
             p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, length);
             if (p8 == NULL) {
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 goto err;
             }
             tmp = evp_pkcs82pkey_legacy(p8, libctx, propq);
             PKCS8_PRIV_KEY_INFO_free(p8);
             if (tmp == NULL) {
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 goto err;
             }
             EVP_PKEY_free(ret);
             ret = tmp;
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             if (EVP_PKEY_type(keytype) != EVP_PKEY_get_base_id(ret))
                 goto err;
         } else {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto err;
         }
     } else {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     }
     *pp = p;
     if (a != NULL)

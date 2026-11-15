@@ -234,6 +234,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     const PKCS7_CTX *p7_ctx;
     OSSL_LIB_CTX *libctx;
     const char *propq;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (p7 == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_INVALID_NULL_POINTER);
@@ -330,11 +331,11 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             if (RAND_bytes_ex(libctx, iv, ivlen, 0) <= 0)
                 goto err;
 
-        (void)ERR_set_mark();
+        (void)ERR_HANDLE_set_mark(&hdl);
         fetched_cipher = EVP_CIPHER_fetch(libctx,
             EVP_CIPHER_get0_name(evp_cipher),
             propq);
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
         else

@@ -321,13 +321,14 @@ static void report_ssl(SSL *ssl, BIO *bio, const char *pfx)
 
 static void report_obj(RADIX_OBJ *obj, void *arg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BIO *bio = arg;
     SSL *ssl = obj->ssl;
 
     BIO_printf(bio, "      - %-16s @ %p\n", obj->name, (void *)obj->ssl);
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     report_ssl(ssl, bio, "          ");
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 }
 
 static void RADIX_THREAD_report_state(RADIX_THREAD *rt, BIO *bio)

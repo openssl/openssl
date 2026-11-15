@@ -129,6 +129,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     char opt, ASN1_TLC *ctx, OSSL_LIB_CTX *libctx,
     const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const unsigned char *in_saved = *in;
     size_t publen;
     X509_PUBKEY *pubkey;
@@ -168,7 +169,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
      * from the queue. Subsequent explicit attempts to decode/use the key
      * will return an appropriate error.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     /*
      * Try to decode with legacy method first.  This ensures that engines
@@ -176,7 +177,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
      */
     if ((ret = x509_pubkey_decode(&pubkey->pkey, pubkey)) == -1) {
         /* -1 indicates a fatal error, like malloc failure */
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto end;
     }
 
@@ -213,7 +214,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
         } else if (OBJ_obj2txt(txtoidname, sizeof(txtoidname),
                        pubkey->algor->algorithm, 0)
             <= 0) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto end;
         }
         if ((dctx = OSSL_DECODER_CTX_new_for_pkey(&pubkey->pkey,
@@ -232,14 +233,14 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
                      * If we successfully decoded then we *must* consume all the
                      * bytes.
                      */
-                    ERR_clear_last_mark();
+                    ERR_HANDLE_clear_last_mark(&hdl);
                     ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
                     goto end;
                 }
             }
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     ret = 1;
 end:
     OSSL_DECODER_CTX_free(dctx);
@@ -295,6 +296,7 @@ X509_PUBKEY *X509_PUBKEY_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
 {
     X509_PUBKEY *pubkey = OPENSSL_zalloc(sizeof(*pubkey));
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (pubkey == NULL)
         return NULL;
@@ -315,18 +317,18 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
     }
 
     if (a->pkey != NULL) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         pubkey->pkey = EVP_PKEY_dup(a->pkey);
         if (pubkey->pkey == NULL) {
             pubkey->flag_force_legacy = 1;
             if (x509_pubkey_decode(&pubkey->pkey, pubkey) <= 0) {
                 x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
                     ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 return NULL;
             }
         }
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     return pubkey;
 }
