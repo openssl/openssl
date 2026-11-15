@@ -706,7 +706,7 @@ next_io:
 
         if (i > 0) {
             /* start of response: reset response-wide parsing state */
-            rctx->status_code = 0;
+            rctx->status_code = 0; /* this reset is not actually needed */
             rctx->got_text = 1;
             rctx->found_expected_ct = 0;
             rctx->found_keep_alive = 0;
