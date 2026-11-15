@@ -102,6 +102,14 @@ are also available in the default provider.
 
 =item ML-DSA-87
 
+=item ML-DSA-44-RSA2048-PSS-SHA256
+
+=item ML-DSA-44-ECDSA-P256-SHA256
+
+=item ML-DSA-87-ECDSA-P384-SHA512
+
+=item ML-DSA-87-RSA4096-PSS-SHA512
+
 =item ML-KEM-512
 
 =item ML-KEM-768
@@ -176,6 +184,14 @@ combination with the FIPS provider.
 
 =item ML-DSA-87
 
+=item ML-DSA-44-RSA2048-PSS-SHA256
+
+=item ML-DSA-44-ECDSA-P256-SHA256
+
+=item ML-DSA-87-ECDSA-P384-SHA512
+
+=item ML-DSA-87-RSA4096-PSS-SHA512
+
 =item ML-KEM-512
 
 =item ML-KEM-768
@@ -242,6 +258,11 @@ Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
 
 Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
 was added in OpenSSL 4.0.
+
+Support for the B<ML-DSA-44-RSA2048-PSS-SHA256>,
+B<ML-DSA-44-ECDSA-P256-SHA256>, B<ML-DSA-87-ECDSA-P384-SHA512> and
+B<ML-DSA-87-RSA4096-PSS-SHA512> composite signature algorithm encoders and
+decoders was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

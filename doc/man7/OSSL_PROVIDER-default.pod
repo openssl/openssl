@@ -235,6 +235,14 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item ML-DSA-87, see L<EVP_SIGNATURE-ML-DSA(7)>
 
+=item ML-DSA-44-RSA2048-PSS-SHA256, see L<EVP_SIGNATURE-ML-DSA-COMPOSITE(7)>
+
+=item ML-DSA-44-ECDSA-P256-SHA256, see L<EVP_SIGNATURE-ML-DSA-COMPOSITE(7)>
+
+=item ML-DSA-87-ECDSA-P384-SHA512, see L<EVP_SIGNATURE-ML-DSA-COMPOSITE(7)>
+
+=item ML-DSA-87-RSA4096-PSS-SHA512, see L<EVP_SIGNATURE-ML-DSA-COMPOSITE(7)>
+
 =item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
 
 =item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
@@ -331,6 +339,15 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
 
+=item ML-DSA-44-RSA2048-PSS-SHA256, see L<EVP_KEYMGMT-ML-DSA-COMPOSITE(7)>
+
+=item ML-DSA-44-ECDSA-P256-SHA256, see L<EVP_KEYMGMT-ML-DSA-COMPOSITE(7)>
+
+=item ML-DSA-87-ECDSA-P384-SHA512, see L<EVP_KEYMGMT-ML-DSA-COMPOSITE(7)>
+
+=item ML-DSA-87-RSA4096-PSS-SHA512, see L<EVP_KEYMGMT-ML-DSA-COMPOSITE(7)>
+
+=item MK-KEM-512, see L<EVP_KEYMGMT-ML-KEM-512(7)>
 =item ML-KEM-512, see L<EVP_KEYMGMT-ML-KEM-512(7)>
 
 =item ML-KEM-768, see L<EVP_KEYMGMT-ML-KEM-768(7)>
@@ -444,6 +461,14 @@ are also available in the base provider.
 
 =item ML-DSA-87
 
+=item ML-DSA-44-RSA2048-PSS-SHA256
+
+=item ML-DSA-44-ECDSA-P256-SHA256
+
+=item ML-DSA-87-ECDSA-P384-SHA512
+
+=item ML-DSA-87-RSA4096-PSS-SHA512
+
 =item ML-KEM-512
 
 =item ML-KEM-768
@@ -515,6 +540,14 @@ combination with the FIPS provider.
 =item ML-DSA-65
 
 =item ML-DSA-87
+
+=item ML-DSA-44-RSA2048-PSS-SHA256
+
+=item ML-DSA-44-ECDSA-P256-SHA256
+
+=item ML-DSA-87-ECDSA-P384-SHA512
+
+=item ML-DSA-87-RSA4096-PSS-SHA512
 
 =item ML-KEM-512
 
@@ -591,6 +624,11 @@ was added in OpenSSL 4.0.
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
 
 Support for CSHAKE-128 and CSHAKE-256 was added in OpenSSL 4.0.
+
+Support for the B<ML-DSA-44-RSA2048-PSS-SHA256>,
+B<ML-DSA-44-ECDSA-P256-SHA256>, B<ML-DSA-87-ECDSA-P384-SHA512> and
+B<ML-DSA-87-RSA4096-PSS-SHA512> composite signature algorithms was added in
+OpenSSL 4.1.
 
 Support for B<MLKEM512X25519> and B<SecP256r1MLKEM512> was added in OpenSSL
 4.2.

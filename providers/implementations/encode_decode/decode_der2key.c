@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <openssl/byteorder.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -36,6 +37,8 @@
 #include "crypto/ml_dsa.h"
 #include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
+#include "crypto/asn1_dsa.h" /* ossl_decode_der_length() */
+#include "internal/der.h"
 #include "crypto/ml_kem.h"
 #include "openssl/obj_mac.h"
 #include "prov/bio.h"
@@ -45,6 +48,7 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
+#include "prov/ml_dsa_composite_codecs.h"
 #include "providers/implementations/encode_decode/decode_der2key.inc"
 
 #ifndef OPENSSL_NO_SLH_DSA
@@ -1042,6 +1046,228 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+/*
+ * Composite SPKI/PKCS8 decoder helpers.
+ * The d2i_PUBKEY callback receives the full SubjectPublicKeyInfo DER.
+ * The d2i_PKCS8 callback receives the full PrivateKeyInfo DER.
+ */
+
+/*
+ * Read the length octets of a DER element from |pkt| and set |content| to
+ * the following bytes.  This is ossl_decode_der_length() plus a check that
+ * the length is minimally encoded, as DER requires: the 0x81 form must not
+ * be used for a length that fits the short form, nor the 0x82 form for one
+ * that fits in a single byte.
+ */
+static int ml_dsa_composite_der_content(PACKET *pkt, PACKET *content)
+{
+    unsigned int first;
+
+    if (!PACKET_peek_1(pkt, &first)
+        || !ossl_decode_der_length(pkt, content))
+        return 0;
+    if ((first == 0x81 && PACKET_remaining(content) < 0x80)
+        || (first == 0x82 && PACKET_remaining(content) < 0x100))
+        return 0;
+    return 1;
+}
+
+/*
+ * Parse SubjectPublicKeyInfo by hand to extract the BIT STRING body
+ * (mldsaPK || tradPK) without calling d2i_X509_PUBKEY (which would
+ * re-enter the OSSL_DECODER chain and recurse infinitely).
+ *
+ * SubjectPublicKeyInfo ::= SEQUENCE {
+ *   algorithm   AlgorithmIdentifier,
+ *   subjectPublicKey BIT STRING
+ * }
+ *
+ * The encoding must be strict DER: the exact universal tags, minimal
+ * lengths, a primitive BIT STRING with no unused bits, no data after the
+ * SubjectPublicKeyInfo, and an AlgorithmIdentifier that holds only the OID
+ * |expected_nid|, i.e. with the parameters absent.
+ *
+ * On success returns a pointer into |der| at the start of the BIT STRING
+ * payload and sets |*out_len|.  Returns NULL on parse failure.
+ */
+static const unsigned char *
+ml_dsa_composite_spki_bitstring_body(const unsigned char *der, long der_len,
+    int expected_nid, int *out_len)
+{
+    PACKET pkt, spki, algid, bitstr;
+    unsigned int tag, unused_bits;
+    const unsigned char *p;
+    ASN1_OBJECT *oid;
+    int nid;
+
+    if (der_len <= 0 || !PACKET_buf_init(&pkt, der, (size_t)der_len))
+        return NULL;
+
+    /* SubjectPublicKeyInfo SEQUENCE, with nothing after it */
+    if (!PACKET_get_1(&pkt, &tag)
+        || tag != (DER_F_CONSTRUCTED | DER_P_SEQUENCE)
+        || !ml_dsa_composite_der_content(&pkt, &spki)
+        || PACKET_remaining(&pkt) != 0)
+        return NULL;
+
+    /* AlgorithmIdentifier SEQUENCE */
+    if (!PACKET_get_1(&spki, &tag)
+        || tag != (DER_F_CONSTRUCTED | DER_P_SEQUENCE)
+        || !ml_dsa_composite_der_content(&spki, &algid))
+        return NULL;
+
+    /* It must hold exactly one OID, the expected one: no parameters */
+    p = PACKET_data(&algid);
+    oid = d2i_ASN1_OBJECT(NULL, &p, (long)PACKET_remaining(&algid));
+    if (oid == NULL)
+        return NULL;
+    nid = OBJ_obj2nid(oid);
+    ASN1_OBJECT_free(oid);
+    if (nid != expected_nid || p != PACKET_end(&algid))
+        return NULL;
+
+    /* subjectPublicKey BIT STRING (primitive), filling the rest of the SPKI */
+    if (!PACKET_get_1(&spki, &tag)
+        || tag != DER_P_BIT_STRING
+        || !ml_dsa_composite_der_content(&spki, &bitstr)
+        || PACKET_remaining(&spki) != 0)
+        return NULL;
+
+    /* unused-bits byte must be 0 for DER-encoded key material */
+    if (!PACKET_get_1(&bitstr, &unused_bits) || unused_bits != 0)
+        return NULL;
+
+    if (PACKET_remaining(&bitstr) > INT_MAX)
+        return NULL;
+
+    *out_len = (int)PACKET_remaining(&bitstr);
+    return PACKET_data(&bitstr);
+}
+
+static ML_DSA_COMPOSITE_KEY *
+ml_dsa_composite_d2i_pubkey_common(const unsigned char *der, long der_len,
+    int ml_dsa_evp_type,
+    const char *classic_alg, int classic_bits, const char *ec_curve,
+    struct der2key_ctx_st *ctx)
+{
+    const unsigned char *pk;
+    int pk_len;
+
+    pk = ml_dsa_composite_spki_bitstring_body(der, der_len,
+        ctx->desc->evp_type, &pk_len);
+    if (pk == NULL)
+        return NULL;
+
+    return ossl_ml_dsa_composite_d2i_pubkey(pk, pk_len, ml_dsa_evp_type,
+        classic_alg, classic_bits, ec_curve,
+        ctx->provctx, ctx->propq);
+}
+
+static ML_DSA_COMPOSITE_KEY *
+ml_dsa_composite_d2i_prvkey_common(const unsigned char *der, long der_len,
+    int ml_dsa_evp_type,
+    const char *classic_alg, int classic_bits, const char *ec_curve,
+    struct der2key_ctx_st *ctx)
+{
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    const unsigned char *ptr = der;
+    ML_DSA_COMPOSITE_KEY *key = NULL;
+    const unsigned char *privbytes;
+    const X509_ALGOR *alg = NULL;
+    int privlen;
+
+    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &ptr, der_len);
+    if (p8inf == NULL)
+        return NULL;
+
+    if (!PKCS8_pkey_get0(NULL, &privbytes, &privlen, &alg, p8inf))
+        goto done;
+
+    /* Reject structures whose OID doesn't match this composite variant. */
+    if (alg == NULL || OBJ_obj2nid(alg->algorithm) != ctx->desc->evp_type)
+        goto done;
+
+    key = ossl_ml_dsa_composite_d2i_prvkey(privbytes, privlen, ml_dsa_evp_type,
+        classic_alg, classic_bits, ec_curve,
+        ctx->provctx, ctx->propq);
+done:
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
+    return key;
+}
+
+/*
+ * MAKE_ML_DSA_COMPOSITE_D2I: per-algorithm d2i_PUBKEY, d2i_PKCS8, and the
+ * supporting #defines consumed by MAKE_DECODER.
+ */
+#define MAKE_ML_DSA_COMPOSITE_D2I(alg, ml_dsa_evp_type_, classic_alg_, classic_bits_, ec_curve_)        \
+    static void *                                                                                       \
+    alg##_d2i_PUBKEY(const unsigned char **der, long der_len,                                           \
+        struct der2key_ctx_st *ctx)                                                                     \
+    {                                                                                                   \
+        ML_DSA_COMPOSITE_KEY *key = ml_dsa_composite_d2i_pubkey_common(*der, der_len, ml_dsa_evp_type_, \
+            classic_alg_, classic_bits_, ec_curve_, ctx);                                               \
+        if (key != NULL)                                                                                \
+            *der += der_len;                                                                            \
+        return key;                                                                                     \
+    }                                                                                                   \
+    static void *                                                                                       \
+    alg##_d2i_PKCS8(const unsigned char **der, long der_len,                                            \
+        struct der2key_ctx_st *ctx)                                                                     \
+    {                                                                                                   \
+        ML_DSA_COMPOSITE_KEY *key = ml_dsa_composite_d2i_prvkey_common(*der, der_len, ml_dsa_evp_type_, \
+            classic_alg_, classic_bits_, ec_curve_, ctx);                                               \
+        if (key != NULL)                                                                                \
+            *der += der_len;                                                                            \
+        return key;                                                                                     \
+    }
+
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa44_rsa2048_pss_sha256, EVP_PKEY_ML_DSA_44, "RSA", 2048, NULL)
+#ifndef OPENSSL_NO_EC
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa44_ecdsa_p256_sha256, EVP_PKEY_ML_DSA_44, "EC", 0, "P-256")
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_ecdsa_p384_sha512, EVP_PKEY_ML_DSA_87, "EC", 0, "P-384")
+#endif
+MAKE_ML_DSA_COMPOSITE_D2I(mldsa87_rsa4096_pss_sha512, EVP_PKEY_ML_DSA_87, "RSA", 4096, NULL)
+
+/* Supporting #defines consumed by DO_SubjectPublicKeyInfo / DO_PrivateKeyInfo macros */
+#define mldsa44_rsa2048_pss_sha256_evp_type NID_ML_DSA_44_RSA2048_PSS_SHA256
+#define mldsa44_rsa2048_pss_sha256_d2i_private_key NULL
+#define mldsa44_rsa2048_pss_sha256_d2i_public_key NULL
+#define mldsa44_rsa2048_pss_sha256_d2i_key_params NULL
+#define mldsa44_rsa2048_pss_sha256_check NULL
+#define mldsa44_rsa2048_pss_sha256_adjust NULL
+#define mldsa44_rsa2048_pss_sha256_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+
+#ifndef OPENSSL_NO_EC
+#define mldsa44_ecdsa_p256_sha256_evp_type NID_ML_DSA_44_ECDSA_P256_SHA256
+#define mldsa44_ecdsa_p256_sha256_d2i_private_key NULL
+#define mldsa44_ecdsa_p256_sha256_d2i_public_key NULL
+#define mldsa44_ecdsa_p256_sha256_d2i_key_params NULL
+#define mldsa44_ecdsa_p256_sha256_check NULL
+#define mldsa44_ecdsa_p256_sha256_adjust NULL
+#define mldsa44_ecdsa_p256_sha256_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+
+#define mldsa87_ecdsa_p384_sha512_evp_type NID_ML_DSA_87_ECDSA_P384_SHA512
+#define mldsa87_ecdsa_p384_sha512_d2i_private_key NULL
+#define mldsa87_ecdsa_p384_sha512_d2i_public_key NULL
+#define mldsa87_ecdsa_p384_sha512_d2i_key_params NULL
+#define mldsa87_ecdsa_p384_sha512_check NULL
+#define mldsa87_ecdsa_p384_sha512_adjust NULL
+#define mldsa87_ecdsa_p384_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+#endif
+
+#define mldsa87_rsa4096_pss_sha512_evp_type NID_ML_DSA_87_RSA4096_PSS_SHA512
+#define mldsa87_rsa4096_pss_sha512_d2i_private_key NULL
+#define mldsa87_rsa4096_pss_sha512_d2i_public_key NULL
+#define mldsa87_rsa4096_pss_sha512_d2i_key_params NULL
+#define mldsa87_rsa4096_pss_sha512_check NULL
+#define mldsa87_rsa4096_pss_sha512_adjust NULL
+#define mldsa87_rsa4096_pss_sha512_free (free_key_fn *)ossl_ml_dsa_composite_key_free
+
+#endif /* OPENSSL_NO_ML_DSA_COMPOSITE */
+
+/* ---------------------------------------------------------------------- */
+
 #ifndef OPENSSL_NO_LMS
 static void lms_free_key(void *key)
 {
@@ -1367,6 +1593,19 @@ MAKE_DECODER("ML-DSA-65", ml_dsa_65, ml_dsa_65, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-65", ml_dsa_65, ml_dsa_65, SubjectPublicKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, PrivateKeyInfo);
 MAKE_DECODER("ML-DSA-87", ml_dsa_87, ml_dsa_87, SubjectPublicKeyInfo);
+#endif
+
+#ifndef OPENSSL_NO_ML_DSA_COMPOSITE
+MAKE_DECODER("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, mldsa44_rsa2048_pss_sha256, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-44-RSA2048-PSS-SHA256", mldsa44_rsa2048_pss_sha256, mldsa44_rsa2048_pss_sha256, SubjectPublicKeyInfo);
+#ifndef OPENSSL_NO_EC
+MAKE_DECODER("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, mldsa44_ecdsa_p256_sha256, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-44-ECDSA-P256-SHA256", mldsa44_ecdsa_p256_sha256, mldsa44_ecdsa_p256_sha256, SubjectPublicKeyInfo);
+MAKE_DECODER("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, mldsa87_ecdsa_p384_sha512, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-87-ECDSA-P384-SHA512", mldsa87_ecdsa_p384_sha512, mldsa87_ecdsa_p384_sha512, SubjectPublicKeyInfo);
+#endif
+MAKE_DECODER("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, mldsa87_rsa4096_pss_sha512, PrivateKeyInfo);
+MAKE_DECODER("ML-DSA-87-RSA4096-PSS-SHA512", mldsa87_rsa4096_pss_sha512, mldsa87_rsa4096_pss_sha512, SubjectPublicKeyInfo);
 #endif
 
 #ifndef OPENSSL_NO_LMS

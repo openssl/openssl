@@ -206,6 +206,16 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added 4 composite post-quantum signature algorithms combining ML-DSA with
+   RSA-PSS or ECDSA as defined in
+   [RFC 10073](https://datatracker.ietf.org/doc/html/rfc10073):
+   id-MLDSA44-RSA2048-PSS-SHA256, id-MLDSA44-ECDSA-P256-SHA256,
+   id-MLDSA87-ECDSA-P384-SHA512, id-MLDSA87-RSA4096-PSS-SHA512.
+   These algorithms are available in the default provider only.
+
+   *Felipe Ventura*
+
+ * Added AVX512 optimized SHAKE x4 operations for ML-DSA on x86_64.
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
 

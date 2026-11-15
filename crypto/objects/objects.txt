@@ -643,6 +643,12 @@ id-alg 3		: id-alg-dh-sig-hmac-sha1
 id-alg 4		: id-alg-dh-pop
 id-alg 36		: id-alg-unsigned
 
+# ML DSA Composite signature algorithms (RFC 10073)
+id-alg 37	: id-mldsa44-rsa2048-pss-sha256			: ML-DSA-44-RSA2048-PSS-SHA256
+id-alg 40	: id-mldsa44-ecdsa-p256-sha256			: ML-DSA-44-ECDSA-P256-SHA256
+id-alg 49	: id-mldsa87-ecdsa-p384-sha512			: ML-DSA-87-ECDSA-P384-SHA512
+id-alg 53	: id-mldsa87-rsa4096-pss-sha512			: ML-DSA-87-RSA4096-PSS-SHA512
+
 # CMC controls
 id-cmc 1		: id-cmc-statusInfo
 id-cmc 2		: id-cmc-identification
