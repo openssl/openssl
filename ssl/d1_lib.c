@@ -134,6 +134,20 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
     s->d1->has_change_cipher_spec = 0;
 }
 
+/*
+ * Called once the DTLS 1.3 hellos are done. Our handshake read keys are only
+ * installed when the peer's first epoch 2 record arrives (dtls1_read_bytes()),
+ * so until then only plaintext alerts and ACKs may be read. Handshake messages
+ * already reassembled or buffered arrived unprotected, so discard them.
+ */
+void dtls13_hellos_done(SSL_CONNECTION *s)
+{
+    s->dtls13_process_hello = 1;
+    dtls1_clear_received_buffer(s);
+    if (s->rlayer.rrlmethod->set_plain_alerts != NULL)
+        s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 1);
+}
+
 void ossl_list_record_number_elem_free(OSSL_LIST(record_number) *p_list)
 {
     DTLS1_RECORD_NUMBER *p_elem;
@@ -185,15 +199,49 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch)
     }
 }
 
+/*
+ * Returns true if some other entry in queue1 or queue2 still holds wrl.
+ * Multiple dtls_sent_msg entries can share the identical
+ * saved_retransmit_state.wrl: every message written at a given epoch captures
+ * the same write record layer, and more than one can still be queued
+ * by the time dtls1_clear_sent_buffer() removes any one of them. wrl must
+ * not be freed while another queued entry is still going to use it for a
+ * retransmit.
+ */
+static int dtls1_wrl_has_other_owner(const OSSL_RECORD_LAYER *wrl,
+    pqueue *queue1, pqueue *queue2)
+{
+    piterator iter;
+    pitem *item;
+
+    iter = pqueue_iterator(queue1);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->saved_retransmit_state.wrl == wrl)
+            return 1;
+    }
+
+    iter = pqueue_iterator(queue2);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->saved_retransmit_state.wrl == wrl)
+            return 1;
+    }
+
+    return 0;
+}
+
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
 {
     pitem *item = NULL;
-    pqueue *remaining_sent_messages = pqueue_new();
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
     pqueue *sent_messages = &s->d1->sent_messages;
 
     while ((item = pqueue_pop(sent_messages)) != NULL) {
         dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
-        unsigned char msg_type = sent_msg->msg_info.msg_type;
         unsigned char record_type = sent_msg->msg_info.record_type;
 
         if (SSL_CONNECTION_IS_DTLS13(s)
@@ -203,16 +251,24 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
             continue;
         }
 
-        if (((!SSL_CONNECTION_IS_DTLS13(s) && record_type == SSL3_RT_CHANGE_CIPHER_SPEC)
-                || (SSL_CONNECTION_IS_DTLS13(s)
-                    && (msg_type == SSL3_MT_FINISHED
-                        || msg_type == SSL3_MT_SERVER_HELLO
-                        || msg_type == SSL3_MT_KEY_UPDATE)))
+        /*
+         * Free the captured write layer once this is its last reference,
+         * regardless of this message's own type: any queued message can
+         * end up the final owner of a retired layer, not just the ones
+         * that originally triggered the epoch change.
+         */
+        if ((SSL_CONNECTION_IS_DTLS13(s)
+                || record_type == SSL3_RT_CHANGE_CIPHER_SPEC
+                || record_type == SSL3_RT_HANDSHAKE)
             && sent_msg->saved_retransmit_state.wrlmethod != NULL
-            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl) {
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
+            && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
+                sent_messages, remaining_sent_messages)) {
             /*
-             * If we're freeing the CCS then we're done with the old wrl and it
-             * can bee freed
+             * This message was the last one sent with its write record layer
+             * before the keys changed, and the record layer was kept only so
+             * that the message could be retransmitted. Now that the message
+             * is being dropped, the record layer can be freed too.
              */
             sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
         }
@@ -224,8 +280,52 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
     if (SSL_CONNECTION_IS_DTLS13(s))
         while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
             pqueue_insert(&s->d1->sent_messages, item);
+}
 
-    pqueue_free(remaining_sent_messages);
+/*
+ * Retire every queued CertificateRequest regardless of acknowledgment
+ * status, and report whether any was found. Finding none is not an error:
+ * rfc9147 section 7.1 lets the client ACK a CertificateRequest explicitly
+ * if it cannot produce its response right away, in which case ACK
+ * processing already removed it before Finished arrived. Either way, the
+ * client's Finished completes it implicitly (rfc9147 5.8.1: receiving the
+ * next flight, not just an ACK, ends WAITING), so it must not still be
+ * queued by the time Finished is processed. Entries of any other type are
+ * left untouched.
+ */
+static int dtls1_retire_sent_certificate_request_messages(SSL_CONNECTION *s)
+{
+    pitem *item = NULL;
+    pqueue remaining_sent_messages_buf = { NULL, 0 };
+    pqueue *remaining_sent_messages = &remaining_sent_messages_buf;
+    pqueue *sent_messages = &s->d1->sent_messages;
+    int retired = 0;
+
+    while ((item = pqueue_pop(sent_messages)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        if (sent_msg->msg_info.msg_type != SSL3_MT_CERTIFICATE_REQUEST) {
+            pqueue_insert(remaining_sent_messages, item);
+            continue;
+        }
+
+        /* Same ownership rule as dtls1_clear_sent_buffer(): free the
+         * captured write layer only once this is its last reference. */
+        if (sent_msg->saved_retransmit_state.wrlmethod != NULL
+            && s->rlayer.wrl != sent_msg->saved_retransmit_state.wrl
+            && !dtls1_wrl_has_other_owner(sent_msg->saved_retransmit_state.wrl,
+                sent_messages, remaining_sent_messages))
+            sent_msg->saved_retransmit_state.wrlmethod->free(sent_msg->saved_retransmit_state.wrl);
+
+        dtls1_sent_msg_free(sent_msg);
+        pitem_free(item);
+        retired = 1;
+    }
+
+    while ((item = pqueue_pop(remaining_sent_messages)) != NULL)
+        pqueue_insert(sent_messages, item);
+
+    return retired;
 }
 
 /*
@@ -251,6 +351,24 @@ void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s)
     }
 }
 
+/*
+ * Returns 1 if a message in the sent_messages queue was sent with the current
+ * write record layer, which then has to be kept for retransmissions.
+ */
+int dtls1_sent_buffer_uses_current_wrl(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        if (sent_msg->saved_retransmit_state.wrl == s->rlayer.wrl)
+            return 1;
+    }
+    return 0;
+}
+
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
 {
     pitem *item;
@@ -260,6 +378,22 @@ int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
         dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
 
         if (!ossl_list_record_number_is_empty(&msg->rec_nums))
+            return 1;
+    }
+
+    return 0;
+}
+
+int dtls_has_unacked_key_update(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE
+            && !ossl_list_record_number_is_empty(&msg->rec_nums))
             return 1;
     }
 
@@ -538,6 +672,69 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
     dtls1_clear_sent_buffer(s, 0);
+}
+
+/*
+ * Retire the timer and retransmit buffer now that a flight has finished
+ * reading. Post-handshake message categories acknowledge nothing of each
+ * other (rfc9147 5.8.4), so an unrelated message must not discard our own
+ * still-unacknowledged flight. A post-handshake-auth CertificateRequest is
+ * retired here explicitly, since it completes via the next flight rather
+ * than an ACK (rfc9147 5.8.1); that check is scoped to SSL_PHA_REQUESTED so
+ * it can't also fire for the CertificateRequest an ordinary mTLS initial
+ * handshake sends, which has no such special case and still falls through
+ * to the unconditional clear below.
+ *
+ * Whether a CertificateRequest was actually found there is not itself a
+ * precondition for preserving anything else that is still outstanding:
+ * rfc9147 section 7.1 lets the client ACK the CertificateRequest explicitly
+ * if it cannot produce its response right away, in which case ACK
+ * processing already removed it before Finished arrived. Either way, by
+ * the time Finished is processed it must not still be queued, so retiring
+ * it here is idempotent -- the decision to preserve or discard everything
+ * else is made separately, from whether anything else remains unacked.
+ *
+ * This can also be what finally unblocks a deferred write-key install, with
+ * no ACK record involved at all. dtls1_check_deferred_write_key() normally
+ * runs from dtls_process_ack() as ACK records arrive, but a
+ * CertificateRequest retired above -- or anything else cleared below -- can
+ * be the last thing our own KeyUpdate was waiting on. If so, nothing else
+ * is ever going to call it, so it has to be checked here instead, at every
+ * point this function can return, using the state left by whatever
+ * clearing just happened.
+ *
+ * Returns 0 only on a fatal error installing the deferred write key
+ * (SSLfatal() already called, via dtls1_check_deferred_write_key()); 1
+ * otherwise. The caller must check this and stop driving the connection
+ * forward rather than treat reaching the end of this function as success --
+ * SSLfatal() only records the failure in s->statem.state, it has no other
+ * way to halt execution on its own.
+ */
+int dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s)
+{
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && s->statem.hand_state == TLS_ST_SR_FINISHED
+        && s->post_handshake_auth == SSL_PHA_REQUESTED) {
+        dtls1_retire_sent_certificate_request_messages(s);
+        if (dtls_any_sent_messages_are_missing_acknowledge(s)) {
+            dtls1_clear_sent_buffer(s, 1);
+            return dtls1_check_deferred_write_key(s);
+        }
+    }
+
+    if (SSL_CONNECTION_IS_DTLS13(s)
+        && (s->statem.hand_state == TLS_ST_SR_KEY_UPDATE
+            || s->statem.hand_state == TLS_ST_CR_KEY_UPDATE
+            || s->statem.hand_state == TLS_ST_CR_SESSION_TICKET
+            || (s->statem.hand_state == TLS_ST_CR_CERT_REQ
+                && s->post_handshake_auth == SSL_PHA_REQUESTED))
+        && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+        dtls1_clear_sent_buffer(s, 1);
+        return dtls1_check_deferred_write_key(s);
+    }
+
+    dtls1_stop_timer(s);
+    return dtls1_check_deferred_write_key(s);
 }
 
 int dtls1_check_timeout_num(SSL_CONNECTION *s)
@@ -1425,6 +1622,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     DTLS_LISTENER *dl = arg;
     SSL *conn_ssl = NULL;
     SSL_CONNECTION *sc = NULL;
+    int pending = 0;
 
     ossl_crypto_mutex_lock(dl->mutex);
 
@@ -1433,8 +1631,10 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
         conn_ssl = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
 
     /* Check pending connections */
-    if (conn_ssl == NULL)
+    if (conn_ssl == NULL) {
         conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
+        pending = 1;
+    }
 
     /* Create new pending connection if needed */
     if (conn_ssl == NULL) {
@@ -1443,7 +1643,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
          * is reached. The LHASH item count is O(1) and the check does not
          * need a conn_ssl.
          */
-        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns)
+        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns)
+                + (size_t)sk_SSL_num(dl->incoming_connections)
+            >= dl->max_pending_conns)
             goto release;
 
         conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
@@ -1514,6 +1716,13 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
     /* Inject packet into connection's URXE queue */
     ossl_dtls_rx_inject_urxe(sc->listener_rx, urxe);
+
+    /*
+     * A connection being driven is rechecked by its driver in phase 3 of
+     * dtls_listener_drive_pass(). Anything else needs another pass.
+     */
+    if (pending && !sc->listener_being_driven)
+        dl->pending_input = 1;
 
     /* Signal notifier if needed */
     dtls_listener_signal_notifier(dl);
@@ -1848,6 +2057,8 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         goto err;
     }
 
+    ossl_dgram_demux_set_max_free_urxe(dl->demux, DEMUX_MAX_FREE_URXE);
+
     /* Set up the packet handler callback for routing datagrams to connections */
     ossl_dgram_demux_set_default_handler(dl->demux, dtls_listener_packet_handler, dl);
 
@@ -2107,7 +2318,8 @@ static int dtls_listener_conn_needs_retry(SSL *ssl)
      * For DTLS 1.2: Check if we're in a state that indicates HVR was sent.
      * The state machine will be waiting for the next ClientHello.
      */
-    if (sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST)
+    if (sc->statem.hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST
+        && !ossl_statem_in_error(sc))
         return 1;
 
     return 0;
@@ -2185,6 +2397,16 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
         }
     }
 
+    if (sc->listener_idle && !dtls1_is_timer_expired(sc)) {
+        int empty;
+
+        ossl_crypto_mutex_lock(sc->listener_rx->mutex);
+        empty = ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending);
+        ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+        if (empty)
+            return;
+    }
+
     /*
      * Up-ref and add to list first, then mark as being driven.
      * The up-ref ensures the connection stays valid while we drive it
@@ -2235,6 +2457,8 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     sc->listener_force_nonblocking = 1;
     ret = SSL_accept(ssl);
     sc->listener_force_nonblocking = 0;
+    ssl_err = SSL_get_error(ssl, ret);
+    sc->listener_idle = ssl_err == SSL_ERROR_WANT_READ;
 
     /*
      * Always clear the stateless flag after SSL_accept() completes.
@@ -2253,9 +2477,6 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     if (dtls_listener_conn_needs_retry(ssl))
         return;
 
-    /* Check SSL error */
-    ssl_err = SSL_get_error(ssl, ret);
-
     if (ssl_err == SSL_ERROR_WANT_READ || ssl_err == SSL_ERROR_WANT_WRITE) {
         /* Handshake in progress, needs more data - keep pending */
         return;
@@ -2269,7 +2490,7 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
 }
 
 /*
- * dtls_listener_drive_pending - drive handshakes for all pending connections.
+ * dtls_listener_drive_pass - drive handshakes for all pending connections.
  *
  * Uses a three-phase approach to minimize lock contention:
  *   Phase 1: LOCK - collect connections to drive, mark as being_driven, up-ref
@@ -2279,12 +2500,15 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
  * This approach allows SSL_accept() to call demux_pump() without deadlock,
  * since the mutex is not held during phase 2.
  *
+ * *again is set if a pending connection may have input left undriven.
+ *
  * Returns:
  *   1   At least one connection was moved to incoming_connections
  *   0   No connections completed (all still pending or failed)
  *  -1   Fatal error
  */
-static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
+static int dtls_listener_drive_pass(DTLS_LISTENER *dl, int last_pass,
+    int *again)
 {
     DRIVE_PENDING_CTX ctx;
     SSL *ssl;
@@ -2311,6 +2535,7 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
      * and up-ref them so they stay valid after we release the mutex.
      */
     ossl_crypto_mutex_lock(dl->mutex);
+    dl->pending_input = 0;
     ossl_dgram_conn_lookup_foreach(dl->pending_conns, collect_pending_cb, &ctx);
     ossl_crypto_mutex_unlock(dl->mutex);
 
@@ -2339,8 +2564,15 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         ssl = sk_SSL_value(ctx.to_drive, i);
         sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
-        if (sc != NULL)
+        if (sc != NULL) {
             sc->listener_being_driven = 0;
+            if (sc->listener_idle && sc->listener_rx != NULL) {
+                ossl_crypto_mutex_lock(sc->listener_rx->mutex);
+                if (!ossl_list_urxe_is_empty(&sc->listener_rx->urxe_pending))
+                    dl->pending_input = 1;
+                ossl_crypto_mutex_unlock(sc->listener_rx->mutex);
+            }
+        }
 
         SSL_free(ssl); /* Release reference from phase 1 */
     }
@@ -2396,12 +2628,39 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         dtls_listener_connection_free(ssl);
     }
 
+    *again = dl->pending_input;
+    /* Out of passes: make sure a blocked waiter ticks again. */
+    if (*again && last_pass)
+        dtls_listener_signal_notifier(dl);
+
     ossl_crypto_mutex_unlock(dl->mutex);
 
     sk_SSL_free(ctx.to_drive);
     sk_SSL_free(ctx.ready_conns);
     sk_SSL_free(ctx.failed_conns);
 
+    return result;
+}
+
+/*
+ * Driving a connection pumps the demux, which can queue input for a pending
+ * connection that the pass did not collect or has already driven. Pass again
+ * while that happens, up to a bound.
+ */
+static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
+{
+    int pass, ret, again = 0, result = 0;
+
+    for (pass = 0; pass < DTLS_LISTENER_MAX_DRIVE_PASSES; pass++) {
+        ret = dtls_listener_drive_pass(dl,
+            pass == DTLS_LISTENER_MAX_DRIVE_PASSES - 1, &again);
+        if (ret < 0)
+            return -1;
+        if (ret > 0)
+            result = 1;
+        if (!again)
+            break;
+    }
     return result;
 }
 
@@ -2446,6 +2705,26 @@ int ossl_dtls_tick(DTLS_LISTENER *dl)
      * to allow handshakes to progress even when no new data is arriving
      */
     return dtls_listener_drive_pending(dl);
+}
+
+/*
+ * Does a pending connection have input which the last tick left undriven?
+ * A waiter must then tick again rather than sleep. Not on a fatal listener:
+ * its ticks fail before driving, so pending_input may never be cleared.
+ */
+int ossl_dtls_listener_has_pending_input(SSL *s)
+{
+    DTLS_LISTENER *dl;
+    int ret;
+
+    if (!IS_DTLS_LISTENER(s))
+        return 0;
+
+    dl = (DTLS_LISTENER *)s;
+    ossl_crypto_mutex_lock(dl->mutex);
+    ret = dl->pending_input && !dl->fatal;
+    ossl_crypto_mutex_unlock(dl->mutex);
+    return ret;
 }
 
 SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
@@ -2852,11 +3131,14 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
  *
  * Supported (id) values:
  *   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS
- *       Current cap on the number of pending (handshake-in-progress)
- *       connections the listener will track.
+ *       Admission budget: the total connections the listener owns,
+ *       counting both the pending (handshake-in-progress) table and the
+ *       accept queue (validated connections awaiting
+ *       SSL_accept_connection). Accepted connections are not counted.
  *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
  *       Current reap timeout for pending connections, in milliseconds.
- *       UINT64_MAX means "infinite / disabled".
+ *       UINT64_MAX means "infinite / disabled". Accept-queue entries do
+ *       not expire.
  *   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE
  *       Maximum size in bytes of a datagram the listener will receive.
  *
@@ -2931,7 +3213,9 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
  *   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS
  *       value == 0 is rejected (a zero cap would reject every incoming
  *       connection). Values larger than SIZE_MAX are clamped to SIZE_MAX
- *       to avoid silent truncation on 32-bit builds.
+ *       to avoid silent truncation on 32-bit builds. Lowering the value
+ *       below the current number of listener-owned connections does not
+ *       evict any of them; it only affects later admission.
  *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
  *       Interpreted as milliseconds. value == 0 is rejected. UINT64_MAX is
  *       treated as "infinite / disabled".
@@ -3263,12 +3547,13 @@ void ossl_dtls_listener_enter_blocking_section(SSL *s)
     }
 }
 
-void ossl_dtls_listener_leave_blocking_section(SSL *s)
+int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation)
 {
     DTLS_LISTENER *dl;
+    int need_wait = 0;
 
     if (!IS_DTLS_LISTENER(s))
-        return;
+        return 0;
 
     dl = (DTLS_LISTENER *)s;
 
@@ -3282,20 +3567,47 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
             if (dl->cur_blocking_waiters == 0) {
                 ossl_rio_notifier_unsignal(&dl->notifier);
                 dl->signalled_notifier = 0;
+                ++dl->notify_generation;
 
                 /*
                  * Release the other threads which have woken up
                  */
                 ossl_crypto_condvar_broadcast(dl->notifier_cv);
             } else {
-                /* We are not the last waiter out - so wait for that one. */
-                while (dl->signalled_notifier)
-                    ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
+                *generation = dl->notify_generation;
+                need_wait = 1;
             }
         }
 
         ossl_crypto_mutex_unlock(dl->mutex);
     }
+
+    return need_wait;
+}
+
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation)
+{
+    DTLS_LISTENER *dl;
+
+    if (!IS_DTLS_LISTENER(s))
+        return;
+
+    dl = (DTLS_LISTENER *)s;
+    if (dl->have_notifier) {
+        ossl_crypto_mutex_lock(dl->mutex);
+        while (dl->signalled_notifier && dl->notify_generation == generation)
+            ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
+        ossl_crypto_mutex_unlock(dl->mutex);
+    }
+}
+
+/* Combined leave for single-listener tests; poll cleanup uses both phases. */
+void ossl_dtls_listener_leave_blocking_section(SSL *s)
+{
+    uint64_t generation;
+
+    if (ossl_dtls_listener_deregister_blocking_section(s, &generation))
+        ossl_dtls_listener_wait_for_notifier_clear(s, generation);
 }
 
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
@@ -3362,7 +3674,17 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
         SSL_handle_events(s);
 
     if ((events & SSL_POLL_EVENT_R) != 0) {
-        if (SSL_has_pending(s) || SSL_pending(s) > 0) {
+        /*
+         * Application data buffered during a handshake cannot be read until
+         * the handshake finishes. Until then, reporting it would make
+         * SSL_poll() return immediately while SSL_read() keeps failing with
+         * SSL_ERROR_WANT_READ, so wait for the datagrams that complete the
+         * handshake instead.
+         */
+        if (RECORD_LAYER_processed_read_pending(&sc->rlayer)
+            || RECORD_LAYER_read_pending(&sc->rlayer)
+            || (SSL_is_init_finished(s)
+                && DTLS_RECORD_LAYER_buffered_app_data_pending(&sc->rlayer))) {
             result |= SSL_POLL_EVENT_R;
         } else if (sc->d1->rx != NULL) {
             /* Listener-based connection: check URXE queue */

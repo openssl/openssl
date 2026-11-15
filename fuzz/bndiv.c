@@ -109,6 +109,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto done;
 
     success = success && BN_cmp(b5, b1) == 0;
+#ifndef OPENSSL_NO_STDIO
     if (!success) {
         BN_print_fp(stdout, b1);
         putchar('\n');
@@ -128,6 +129,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             BN_cmp(b5, b1));
         puts("----\n");
     }
+#endif
+    OPENSSL_assert(success);
 
 done:
     ERR_clear_error();

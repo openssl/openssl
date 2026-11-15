@@ -196,7 +196,7 @@ close IN;
 
 if ( ! $statefile ) {
     $statefile = $config;
-    $statefile =~ s/.ec/.txt/;
+    $statefile =~ s/\.ec$/.txt/;
 }
 
 # Unless a rewrite or a report was explicitly requested, skip the run

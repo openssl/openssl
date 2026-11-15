@@ -77,6 +77,19 @@ than 1, outputs information about every processed feature.
 
 This variable is not considered security-sensitive.
 
+=item B<OPENSSL_LOCK_CONTENTION_DIR>
+
+Specifies the directory where lock contention log files are written
+when OpenSSL is built with B<-DREPORT_RWLOCK_CONTENTION> added to the
+compiler flags.
+If not set or empty, log files are written to the current working directory.
+One log file is written per thread, named
+C<lock-contention-log.E<lt>tidE<gt>.txt>
+(C<lock-contention-log-fips.E<lt>tidE<gt>.txt> in the FIPS provider),
+where I<tid> is the thread ID.
+
+This variable is not considered security-sensitive.
+
 =item B<OPENSSL_MALLOC_FAILURES>, B<OPENSSL_MALLOC_FD>, B<OPENSSL_MALLOC_SEED>
 
 If built with debugging, this allows memory allocation to fail.
@@ -119,6 +132,27 @@ This variable is not considered security-sensitive.
 An optional variable used with B<OPENSSL_SEC_MEM>. The value indicates
 B<minsize> parameter in bytes. The same formatting applies as above.
 Default is 0. For more info see L<CRYPTO_secure_malloc_init(3)>.
+
+This variable is not considered security-sensitive.
+
+=item B<OPENSSL_TEST_CORPUS_MAX_FILES>
+
+This test-only environment variable is recognised by the fuzz test corpus
+runner. When set to a positive integer, the runner processes at most that
+many corpus files, selected evenly spread over the sorted corpus. It is
+used by the fuzz test recipes to keep budgeted runs within their time
+budget and should generally not be set by users.
+
+This variable is not considered security-sensitive.
+
+=item B<OPENSSL_TEST_CORPUS_MAX_TIME>
+
+This test-only environment variable is recognised by the fuzz test corpus
+runner. When set to a positive number of seconds, the runner stops starting
+new corpus files and failure injection passes once that much processing
+time has elapsed and reports the number of skipped files. It is used by
+the fuzz test recipes to keep budgeted runs within their time budget and
+should generally not be set by users.
 
 This variable is not considered security-sensitive.
 

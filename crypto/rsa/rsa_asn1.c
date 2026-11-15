@@ -42,6 +42,15 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             /* not a multi-prime key, skip */
             return 1;
         }
+        /*
+         * A product is kept for each extra prime, so refuse more of them
+         * than the rest of the RSA code supports before computing any.
+         */
+        if (sk_RSA_PRIME_INFO_num(((RSA *)*pval)->prime_infos)
+            > RSA_MAX_PRIME_NUM - 2) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MULTI_PRIME_KEY);
+            return 0;
+        }
         return (ossl_rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;
     }
     return 1;

@@ -457,8 +457,10 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
             tmp = BN_dup(prime);
             if (tmp == NULL)
                 goto err;
-            if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors)))
+            if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors))) {
+                BN_clear_free(tmp);
                 goto err;
+            }
             continue;
         }
 
@@ -527,8 +529,10 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         tmp = BN_dup(prime);
         if (tmp == NULL)
             goto err;
-        if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors)))
+        if (!sk_BIGNUM_insert(factors, tmp, sk_BIGNUM_num(factors))) {
+            BN_clear_free(tmp);
             goto err;
+        }
     }
 
     if (BN_cmp(rsa->p, rsa->q) < 0) {

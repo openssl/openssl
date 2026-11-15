@@ -29,6 +29,7 @@ struct fake_store_ctx_st {
     int remaining;
     int fail_params;
     int expected_type;
+    int is_skey_ref;
 };
 
 static unsigned int seen_params = 0;
@@ -76,6 +77,7 @@ static void *fake_store_open(void *provctx, const char *uri)
         return NULL;
     ctx->remaining = strcmp(cmd, FAKE_STORE_CMD_TWO_NAMES) == 0 ? 2 : 1;
     ctx->fail_params = strcmp(cmd, FAKE_STORE_CMD_PARAMS_FAIL) == 0;
+    ctx->is_skey_ref = strcmp(cmd, FAKE_STORE_CMD_SKEY_REF) == 0;
     return ctx;
 }
 
@@ -155,24 +157,41 @@ static int fake_store_load(void *loaderctx,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct fake_store_ctx_st *ctx = loaderctx;
-    OSSL_PARAM params[4];
-    int object_type = OSSL_OBJECT_NAME;
-    char name[16], desc[16];
 
     if (ctx->remaining <= 0)
         return 0;
-    snprintf(name, sizeof(name), "name%d", ctx->remaining);
-    snprintf(desc, sizeof(desc), "desc%d", ctx->remaining);
     ctx->remaining--;
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
-    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA,
-        name, 0);
-    params[2] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DESC,
-        desc, 0);
-    params[3] = OSSL_PARAM_construct_end();
+    if (ctx->is_skey_ref) {
+        OSSL_PARAM params[4];
+        static const char dummy_ref[] = "fake-skey-ref";
+        int object_type = OSSL_OBJECT_SKEY;
 
-    return object_cb(params, object_cbarg);
+        params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+            OSSL_SKEY_TYPE_GENERIC, 0);
+        params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
+            (void *)dummy_ref, sizeof(dummy_ref));
+        params[3] = OSSL_PARAM_construct_end();
+
+        return object_cb(params, object_cbarg);
+    } else {
+        OSSL_PARAM params[4];
+        int object_type = OSSL_OBJECT_NAME;
+        char name[16], desc[16];
+
+        snprintf(name, sizeof(name), "name%d", ctx->remaining + 1);
+        snprintf(desc, sizeof(desc), "desc%d", ctx->remaining + 1);
+
+        params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA,
+            name, 0);
+        params[2] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DESC,
+            desc, 0);
+        params[3] = OSSL_PARAM_construct_end();
+
+        return object_cb(params, object_cbarg);
+    }
 }
 
 static int fake_store_eof(void *loaderctx)
@@ -232,12 +251,55 @@ static const OSSL_ALGORITHM fake_store_store_algs[] = {
     { NULL, NULL, NULL, NULL }
 };
 
+static void fake_skeymgmt_free(void *keydata)
+{
+    OPENSSL_free(keydata);
+}
+
+static void *fake_skeymgmt_import(void *provctx, int selection, const OSSL_PARAM *params)
+{
+    const OSSL_PARAM *p;
+    const void *ref = NULL;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_REFERENCE);
+    if (p == NULL || !OSSL_PARAM_get_octet_string_ptr(p, &ref, NULL))
+        return NULL;
+
+    return OPENSSL_malloc(1);
+}
+
+static int fake_skeymgmt_export(void *keydata, int selection,
+    OSSL_CALLBACK *param_callback, void *cbarg)
+{
+    OSSL_PARAM params[1] = { OSSL_PARAM_END };
+
+    return param_callback(params, cbarg);
+}
+
+static const OSSL_DISPATCH fake_store_skeymgmt_funcs[] = {
+    { OSSL_FUNC_SKEYMGMT_FREE, (void (*)(void))fake_skeymgmt_free },
+    { OSSL_FUNC_SKEYMGMT_IMPORT, (void (*)(void))fake_skeymgmt_import },
+    { OSSL_FUNC_SKEYMGMT_EXPORT, (void (*)(void))fake_skeymgmt_export },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM fake_store_skeymgmt_algs[] = {
+    { OSSL_SKEY_TYPE_GENERIC, FAKE_STORE_FETCH_PROPS, fake_store_skeymgmt_funcs,
+        "Fake store Generic Key Management" },
+    { NULL, NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *fake_store_query(void *provctx, int operation_id,
     int *no_cache)
 {
-    *no_cache = 0;
-    if (operation_id == OSSL_OP_STORE)
+    switch (operation_id) {
+    case OSSL_OP_STORE:
+        *no_cache = 0;
         return fake_store_store_algs;
+    case OSSL_OP_SKEYMGMT:
+        *no_cache = 1;
+        return fake_store_skeymgmt_algs;
+    }
     return NULL;
 }
 

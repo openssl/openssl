@@ -56,6 +56,13 @@ instruction is set to the specified 192-bit mask.
 Deactivate modular exponentiation and CRT operation offloading to
 Crypto Express Adapters.
 
+=item cex_min_bits:<bits>
+
+Deactivate modular exponentiation and CRT operation offloading to
+Crypto Express Adapters for exponents less than the specified bit size.
+The default is to only offload operations with an exponent of at least 2048
+bits.
+
 =back
 
 The 64-bit masks are specified in hexadecimal notation. The 0x prefix is

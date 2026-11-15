@@ -229,6 +229,11 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
 
+    if (in == NULL && inl != 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     /* Handle AAD operation (out == NULL) - process associated data */
     if (out == NULL) {
         /* Can only add AAD before encryption/decryption updates start */
@@ -464,6 +469,20 @@ static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
         if (tag_len != ASCON_AEAD_TAG_LEN) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+            return 0;
+        }
+    }
+
+    if (p.ivlen != NULL) {
+        size_t iv_len = 0;
+
+        if (!OSSL_PARAM_get_size_t(p.ivlen, &iv_len)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        /* The nonce length is fixed */
+        if (iv_len != ASCON_AEAD_NONCE_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
     }

@@ -1187,7 +1187,14 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
     /* Add custom extensions first */
 #ifndef OPENSSL_NO_ECH
-    if ((context & SSL_EXT_CLIENT_HELLO) != 0 && s->ext.ech.attempted == 0)
+    /*
+     * With ECH, the outer ClientHello reuses the custom extensions added
+     * to the inner one, so only reset their flags for the inner. That has
+     * to happen for every inner, as after a HelloRetryRequest the flags
+     * would still be set from the first ClientHello.
+     */
+    if ((context & SSL_EXT_CLIENT_HELLO) != 0
+        && (s->ext.ech.attempted == 0 || s->ext.ech.ch_depth == 1))
         /* On the server side with initialise during ClientHello parsing */
         custom_ext_init(&s->cert->custext);
 #else
@@ -1431,7 +1438,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
                 ss->ext.tick_lifetime_hint = 0;
                 ss->ext.tick_age_add = 0;
                 if (!ssl_generate_session_id(s, ss)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    /* SSLfatal() already called */
                     return 0;
                 }
             } else {
@@ -1699,6 +1706,16 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
     return 1;
 }
 
+/* Is a HelloRetryRequest cookie required before the handshake can proceed? */
+int tls_hrr_cookie_required(const SSL_CONNECTION *s)
+{
+    if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0)
+        return 1;
+
+    return SSL_CONNECTION_IS_DTLS(s)
+        && (s->options & SSL_OP_COOKIE_EXCHANGE) != 0;
+}
+
 static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 {
 #if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
@@ -1722,12 +1739,18 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      */
     if (!s->server
         && !sent) {
-        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
-            return 0;
-        }
+        /*
+         * In a full handshake the ServerHello must carry a key_share, so its
+         * absence is a missing_extension alert (RFC 8446, sections 4.2.8
+         * and 6.2). Only when resuming may the server legitimately omit it,
+         * and then only if we offered psk_ke.
+         */
         if (!s->hit) {
             SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+        if ((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
     }
@@ -1739,7 +1762,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *         we have a suitable key_share
      *     THEN
      *         IF
-     *             we are stateless AND we have no cookie
+     *             a cookie is required AND we have no cookie
      *         THEN
      *             send a HelloRetryRequest
      *     ELSE
@@ -1761,7 +1784,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *         THEN
      *             fail
      *         ELSE IF
-     *             we are stateless AND we have no cookie
+     *             a cookie is required AND we have no cookie
      *         THEN
      *             send a HelloRetryRequest
      */
@@ -1785,15 +1808,10 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 
         if (s->s3.peer_tmp != NULL) {
             /* We have a suitable key_share */
-            if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
-                && !s->ext.cookieok) {
-                if (!ossl_assert(s->hello_retry_request == SSL_HRR_NONE)) {
-                    /*
-                     * If we are stateless then we wouldn't know about any
-                     * previously sent HRR - so how can this be anything other
-                     * than 0?
-                     */
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
+                if (s->hello_retry_request != SSL_HRR_NONE) {
+                    /* We already sent an HRR and still have no valid cookie */
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
                     return 0;
                 }
                 s->hello_retry_request = SSL_HRR_PENDING;
@@ -1821,15 +1839,10 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                 return 0;
             }
 
-            if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
-                && !s->ext.cookieok) {
-                if (!ossl_assert(s->hello_retry_request == SSL_HRR_NONE)) {
-                    /*
-                     * If we are stateless then we wouldn't know about any
-                     * previously sent HRR - so how can this be anything other
-                     * than 0?
-                     */
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
+                if (s->hello_retry_request != SSL_HRR_NONE) {
+                    /* We already sent an HRR and still have no valid cookie */
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
                     return 0;
                 }
                 s->hello_retry_request = SSL_HRR_PENDING;

@@ -1594,7 +1594,6 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     OPENSSL_DIR_CTX *d = NULL;
     const char *thisfile = NULL;
     OSSL_ECHSTORE *es = NULL;
-    BIO *in = NULL;
     int loaded = 0;
     int ret = 0;
 
@@ -1622,6 +1621,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     }
     while ((thisfile = OPENSSL_DIR_read(&d, thedir))) {
         char filepath[PATH_MAX];
+        BIO *in = NULL;
         int r;
 
 #ifdef OPENSSL_SYS_VMS
@@ -1638,6 +1638,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         }
         if ((in = BIO_new_file(filepath, "r")) == NULL
             || OSSL_ECHSTORE_read_pem(es, in, for_retry) != 1) {
+            BIO_free_all(in);
             BIO_printf(bio_err, "Failed reading from: %s\n", filepath);
             continue;
         }
@@ -3065,6 +3066,10 @@ int s_server_main(int argc, char *argv[])
             ERR_print_errors(bio_err);
             goto end;
         }
+        SSL_CTX_set_cookie_generate_cb(ctx2, generate_cookie_callback);
+        SSL_CTX_set_cookie_verify_cb(ctx2, verify_cookie_callback);
+        SSL_CTX_set_stateless_cookie_generate_cb(ctx2, generate_stateless_cookie_callback);
+        SSL_CTX_set_stateless_cookie_verify_cb(ctx2, verify_stateless_cookie_callback);
         tlsextcbp.biodebug = bio_s_out;
 #ifndef OPENSSL_NO_ECH
         SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_ech_servername_cb);

@@ -140,7 +140,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     size_t mac_size = 0;
     size_t rechdrsize = dtls_get_rec_header_size(rl->packet[0]);
     unsigned char md[EVP_MAX_MD_SIZE];
-    SSL_MAC_BUF macbuf = { NULL };
+    unsigned char *macbuf = NULL;
     int ret = 0;
 
     rr = &rl->rrec[0];
@@ -248,8 +248,8 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         /* rl->md_ctx != NULL => mac_size != -1 */
 
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
-        if (i == 0 || macbuf.mac == NULL
-            || CRYPTO_memcmp(md, macbuf.mac, mac_size) != 0)
+        if (i == 0 || macbuf == NULL
+            || CRYPTO_memcmp(md, macbuf, mac_size) != 0)
             enc_err = 0;
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
             enc_err = 0;
@@ -462,6 +462,22 @@ uint64_t dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
 int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type)
 {
     return !(crypto_rl->epoch == 2 && type == SSL3_RT_APPLICATION_DATA);
+}
+
+/*
+ * In DTLS 1.3 only the hello handshake messages are sent unprotected. Once
+ * they are done, the read layer stays in epoch 0 until the peer's first
+ * epoch 2 record arrives. libssl marks this phase by allowing plaintext
+ * alerts. Only alerts and ACKs may arrive unprotected in this phase;
+ * dtls_process_ack() checks the epoch authority of each ACK entry.
+ */
+static int dtls13_plaintext_allows_type(const OSSL_RECORD_LAYER *rl, int type)
+{
+    return rl->version != DTLS1_3_VERSION
+        || rl->epoch != 0
+        || !rl->allow_plain_alerts
+        || type == SSL3_RT_ALERT
+        || (type == SSL3_RT_ACK && rl->role == OSSL_RECORD_ROLE_SERVER);
 }
 
 /*-
@@ -843,6 +859,17 @@ again:
             }
             buffered_record = 1;
         }
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
+    /*
+     * Reject forbidden epoch 0 records before they can update the replay
+     * bitmap. Next epoch records have already been buffered above, so their
+     * unified headers aren't interpreted as plaintext content types here.
+     */
+    if (!dtls13_plaintext_allows_type(rl, rr->type)) {
         rr->length = 0;
         rl->packet_length = 0;
         goto again;

@@ -77,8 +77,104 @@ This release adds the following new features:
 
   * Initial support for the Elbrus2000 (`e2k`) architecture.
 
+Known issues in 4.1.0
+
+  * <https://github.com/openssl/openssl/issues/32878>
+    When a DTLS 1.3 KeyUpdate is received, all other outstanding
+    post-handshake records are dropped from the retransmission buffer.
+    This means post-handshake records still awaiting an ACK (such as a
+    NewSessionTicket) will no longer be retransmitted if the original
+    transmission is lost. A fix is in progress and planned for a future
+    release.
+
+  * <https://github.com/openssl/openssl/issues/33277>
+    A permanent receive failure on a DTLS listener can be reported as
+    `SSL_ERROR_WANT_READ` on an accepted connection. Polling and subsequent
+    accept calls may also fail to report the error, causing applications
+    to continue waiting after a permanent failure.
+
+  * <https://github.com/openssl/openssl/issues/33278>
+    A retryable write failure on a nonblocking connection accepted from a
+    DTLS listener can be reported as `SSL_ERROR_SYSCALL` instead of
+    `SSL_ERROR_WANT_WRITE`. Applications treating this result as fatal may
+    close a connection that is still usable.
+
+  * <https://github.com/openssl/openssl/issues/33242>
+    DTLS 1.3 servers may abort handshakes with an `unexpected_message` alert
+    when a client acknowledges part or all of the server's first flight
+    before sending its response. This can occur after packet loss or while
+    the client is preparing its authentication response.
+
 OpenSSL 4.0
 -----------
+
+### Major changes between OpenSSL 4.0.2 and OpenSSL 4.0.3 [29 Sep 2026]
+
+OpenSSL 4.0.3 is a security patch release.  The most severe CVE fixed
+in this release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed DTLS retransmissions of handshake messages from a stale buffer offset.
+    ([CVE-2026-84782])
+
+  * Fixed a use-after-free in X.509 extension cache under concurrent use.
+    ([CVE-2026-84783])
+
+  * Fixed excessive memory allocation in relative CRLDP processing.
+    ([CVE-2026-35189])
+
+  * Fixed QUIC unvalidated amplification credit may be over-accounted.
+    ([CVE-2026-35191])
+
+  * Fixed potential CPU DoS via O(n^2) fragment reassembly in QUIC.
+    ([CVE-2026-42772])
+
+  * Fixed a timing side-channel leak in generic elliptic curve scalar
+    multiplication.
+    ([CVE-2026-54872])
+
+  * Fixed QUIC `STREAM` fragment metadata DoS.
+    ([CVE-2026-54873])
+
+  * Fixed non-constant-time SM2 scalar multiplication on ARM64 and RISC-V.
+    ([CVE-2026-54875])
+
+  * Fixed out-of-bounds access after `SSL_set_SSL_CTX()` during a handshake.
+    ([CVE-2026-72897])
+
+  * Fixed QUIC connection-level flow control was not enforced for streams.
+    ([CVE-2026-75804])
+
+  * Fixed a NULL pointer dereference in CMP client revocation response handling.
+    ([CVE-2026-75805])
+
+  * Fixed an unauthenticated and undersized DTLS 1.2 AEAD record causing DoS.
+    ([CVE-2026-75806])
+
+  * Fixed a timing side-channel in SM2 signature generation.
+    ([CVE-2026-77696])
+
+  * Fixed an unbounded `RETIRE_CONNECTION_ID` backlog in QUIC stack
+    implementation.
+    ([CVE-2026-84784])
+
+  * Fixed a bug where `EVP_DecryptFinal()` incorrectly reported a stale success
+    on AES-SIV authentication failure.
+
+  * Fixed a regression in base64 encoding BIO filter introduced in OpenSSL 4.0,
+    where incomplete writes down the BIO chain may result in the loss of encoded
+    base64 data.
+
+This release incorporates the following potentially significant or incompatible
+changes:
+
+ * Changed the OpenSSL FIPS provider so that every algorithm advertised
+   with `fips=yes` property explicitly exposes a `fips-indicator` gettable
+   context parameter, that returns 1 for an approved operation.  The absence
+   of an indicator is no longer interpreted as approval.  Algorithms advertised
+   with `fips=no` property, including X448MLKEM1024, remain unapproved
+   and return 0 when they expose the indicator.
 
 ### Major changes between OpenSSL 4.0.1 and OpenSSL 4.0.2 [25 Aug 2026]
 
@@ -2549,6 +2645,8 @@ OpenSSL 0.9.x
 [CVE-2026-34182]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34182
 [CVE-2026-34183]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34183
 [CVE-2026-35188]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35188
+[CVE-2026-35189]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35189
+[CVE-2026-35191]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35191
 [CVE-2026-42764]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42764
 [CVE-2026-42765]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42765
 [CVE-2026-42766]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42766
@@ -2557,17 +2655,29 @@ OpenSSL 0.9.x
 [CVE-2026-42769]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42769
 [CVE-2026-42770]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42770
 [CVE-2026-42771]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42771
+[CVE-2026-42772]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42772
 [CVE-2026-45445]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45445
 [CVE-2026-45446]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45446
 [CVE-2026-45447]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45447
+[CVE-2026-54872]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54872
+[CVE-2026-54873]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54873
 [CVE-2026-54874]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54874
+[CVE-2026-54875]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54875
 [CVE-2026-54876]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54876
 [CVE-2026-63072]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63072
 [CVE-2026-63073]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63073
 [CVE-2026-63074]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63074
 [CVE-2026-63075]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63075
 [CVE-2026-63076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63076
+[CVE-2026-72897]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-72897
 [CVE-2026-75803]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75803
+[CVE-2026-75804]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75804
+[CVE-2026-75805]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75805
+[CVE-2026-75806]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75806
+[CVE-2026-77696]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-77696
+[CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
+[CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
+[CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md

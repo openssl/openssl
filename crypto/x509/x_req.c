@@ -60,13 +60,10 @@ static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_FREE_POST:
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
-        OPENSSL_free(ret->propq);
         break;
     case ASN1_OP_DUP_POST: {
         X509_REQ *old = exarg;
 
-        if (!ossl_x509_req_set0_libctx(ret, old->libctx, old->propq))
-            return 0;
         if (old->req_info.pubkey != NULL) {
             EVP_PKEY *pkey = X509_PUBKEY_get0(old->req_info.pubkey);
 
@@ -85,16 +82,12 @@ static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             }
         }
     } break;
-    case ASN1_OP_GET0_LIBCTX: {
-        OSSL_LIB_CTX **libctx = exarg;
-
-        *libctx = ret->libctx;
-    } break;
-    case ASN1_OP_GET0_PROPQ: {
-        const char **propq = exarg;
-
-        *propq = ret->propq;
-    } break;
+    case ASN1_OP_GET0_LIBCTX:
+        ossl_x509_req_get0_libctx(ret, exarg, NULL);
+        break;
+    case ASN1_OP_GET0_PROPQ:
+        ossl_x509_req_get0_libctx(ret, NULL, exarg);
+        break;
     }
 
     return 1;
@@ -133,35 +126,18 @@ ASN1_OCTET_STRING *X509_REQ_get0_distinguishing_id(X509_REQ *x)
     return x->distinguishing_id;
 }
 
-/*
- * This should only be used if the X509_REQ object was embedded inside another
- * asn1 object and it needs a libctx to operate.
- * Use X509_REQ_new_ex() instead if possible.
- */
-int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
-    const char *propq)
+void ossl_x509_req_get0_libctx(const X509_REQ *x, OSSL_LIB_CTX **libctx,
+    const char **propq)
 {
-    if (x != NULL) {
-        x->libctx = libctx;
-        OPENSSL_free(x->propq);
-        x->propq = NULL;
-        if (propq != NULL) {
-            x->propq = OPENSSL_strdup(propq);
-            if (x->propq == NULL)
-                return 0;
-        }
-    }
-    return 1;
+    if (libctx != NULL)
+        *libctx = NULL;
+    if (propq != NULL)
+        *propq = NULL;
+    if (x->req_info.pubkey != NULL)
+        (void)ossl_x509_PUBKEY_get0_libctx(libctx, propq, x->req_info.pubkey);
 }
 
 X509_REQ *X509_REQ_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    X509_REQ *req = NULL;
-
-    req = (X509_REQ *)ASN1_item_new(ASN1_ITEM_rptr(X509_REQ));
-    if (!ossl_x509_req_set0_libctx(req, libctx, propq)) {
-        X509_REQ_free(req);
-        req = NULL;
-    }
-    return req;
+    return (X509_REQ *)ASN1_item_new_ex(ASN1_ITEM_rptr(X509_REQ), libctx, propq);
 }

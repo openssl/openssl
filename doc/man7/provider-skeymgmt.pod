@@ -187,7 +187,10 @@ The value represents symmetric key as a byte array.
 
 =item "key-length" (B<OSSL_SKEY_PARAM_KEY_LENGTH>) <integer>
 
-The value is the byte length of the given key.
+The value is the byte length of the given key.  Key managements should
+provide it when exporting with B<OSSL_SKEYMGMT_SELECT_PARAMETERS>, including for
+keys whose raw bytes cannot be exported, so that the key length is available
+through L<EVP_SKEY_get0_raw_key(3)> without exporting the key.
 
 =item "skey-alias" (B<OSSL_SKEY_PARAM_ALIAS>) <UTF8 string>
 

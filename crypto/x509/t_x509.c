@@ -203,6 +203,8 @@ int X509_ocspid_print(BIO *bp, const X509 *x)
     const ASN1_BIT_STRING *keybstr;
     const X509_NAME *subj;
     EVP_MD *md = NULL;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
     if (x == NULL || bp == NULL)
         return 0;
@@ -220,7 +222,8 @@ int X509_ocspid_print(BIO *bp, const X509 *x)
     if (i2d_X509_NAME(subj, &dertmp) < 0)
         goto err;
 
-    md = EVP_MD_fetch(x->libctx, SN_sha1, x->propq);
+    ossl_x509_get0_libctx(x, &libctx, &propq);
+    md = EVP_MD_fetch(libctx, SN_sha1, propq);
     if (md == NULL)
         goto err;
     if (!EVP_Digest(der, derlen, SHA1md, NULL, md, NULL))

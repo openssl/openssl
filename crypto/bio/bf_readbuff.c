@@ -87,18 +87,26 @@ static int readbuffer_free(BIO *a)
 static int readbuffer_resize(BIO_F_BUFFER_CTX *ctx, int sz)
 {
     char *tmp;
+    size_t newsize;
 
-    /* Figure out how many blocks are required */
-    sz += (ctx->ibuf_off + DEFAULT_BUFFER_SIZE - 1);
-    sz = DEFAULT_BUFFER_SIZE * (sz / DEFAULT_BUFFER_SIZE);
+    /*
+     * Do the arithmetic in size_t and fail if the required size does
+     * not fit in the int size/offset fields: ibuf_off only grows as
+     * data is cached, so the int calculation overflowed near INT_MAX.
+     */
+    newsize = (size_t)ctx->ibuf_off + (size_t)sz;
+    if (newsize > (size_t)(INT_MAX - (DEFAULT_BUFFER_SIZE - 1)))
+        return 0;
+    newsize += DEFAULT_BUFFER_SIZE - 1;
+    newsize = DEFAULT_BUFFER_SIZE * (newsize / DEFAULT_BUFFER_SIZE);
 
     /* Resize if the buffer is not big enough */
-    if (sz > ctx->ibuf_size) {
-        tmp = OPENSSL_realloc(ctx->ibuf, sz);
+    if (newsize > (size_t)ctx->ibuf_size) {
+        tmp = OPENSSL_realloc(ctx->ibuf, newsize);
         if (tmp == NULL)
             return 0;
         ctx->ibuf = tmp;
-        ctx->ibuf_size = sz;
+        ctx->ibuf_size = (int)newsize;
     }
     return 1;
 }

@@ -21,7 +21,9 @@
 #include <openssl/bio.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include "crypto/rand.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 static char *configfile;
@@ -156,6 +158,81 @@ err:
 }
 
 /*
+ * ossl_rand_hash_salt() must hand out a salt from each of its sources and
+ * leave no errors behind:
+ *
+ * idx 0: a fresh library context, served by RAND_bytes_ex().
+ * idx 1: only the null provider is loaded, so RAND is unavailable and the
+ *        salt comes from the operating system entropy sources. With strict
+ *        seeding, which enable-fips-jitter builds force, those are skipped
+ *        and this covers the fallback of idx 2 instead.
+ * idx 2: strict seeding from a TEST-RAND seed source that has no entropy,
+ *        so RAND fails, the operating system sources must not stand in for
+ *        the seed source, and the salt comes from the time, counter, process
+ *        and thread id fallback. Not run in enable-fips-jitter builds, which
+ *        force the JITTER seed source.
+ */
+static int test_rand_hash_salt(int idx)
+{
+    static const size_t lens[] = { 1, 8, 16, 17, 40 };
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *nullprov = NULL;
+    unsigned char a[40], b[40];
+    size_t i;
+    int ok, res = 0;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
+        goto err;
+    if (idx == 1 && !TEST_ptr(nullprov = OSSL_PROVIDER_load(ctx, "null")))
+        goto err;
+    if (idx == 2 && !TEST_true(OSSL_LIB_CTX_load_config(ctx, strictconfigfile)))
+        goto err;
+
+    /* Make sure each case gets the source it is about */
+    if (idx > 0) {
+        ERR_set_mark();
+        ok = RAND_bytes_ex(ctx, a, sizeof(a), 0) <= 0;
+#ifndef OPENSSL_RAND_SEED_NONE
+        /* Without strict seeding the operating system sources serve it */
+        if (idx == 1 && !ossl_rand_seed_source_strict(ctx)) {
+            unsigned char *seed = NULL;
+            size_t seed_len = ossl_rand_get_entropy(ctx, &seed, 8 * 16, 16, 16);
+
+            ok = ok && seed_len == 16;
+            ossl_rand_cleanup_entropy(ctx, seed, seed_len);
+        }
+#endif
+        /* Strict seeding keeps the operating system sources out */
+        if (idx == 2)
+            ok = ok && ossl_rand_seed_source_strict(ctx);
+        ERR_pop_to_mark();
+        if (!TEST_true(ok))
+            goto err;
+    }
+
+    /* Only errors raised by ossl_rand_hash_salt() itself count below */
+    ERR_clear_error();
+    if (!TEST_true(ossl_rand_hash_salt(ctx, a, 0)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(lens); i++)
+        if (!TEST_true(ossl_rand_hash_salt(ctx, a, lens[i]))
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            goto err;
+
+    /* Consecutive salts must differ */
+    if (!TEST_true(ossl_rand_hash_salt(ctx, a, sizeof(a)))
+        || !TEST_true(ossl_rand_hash_salt(ctx, b, sizeof(b)))
+        || !TEST_mem_ne(a, sizeof(a), b, sizeof(b)))
+        goto err;
+
+    res = 1;
+err:
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
+/*
  * Check that creating the primary DRBG creates the seed source and
  * stores it in the library context: later users must keep getting the
  * same instance and no replacement may be created.
@@ -253,16 +330,26 @@ static int fips_health_tests(void)
     if (!TEST_true(fips_health_test_one(buf, i, i)))
         return 0;
 
-    /* Verify RCT can fail */
-    for (i = 0; i < 20; i++)
-        buf[i] = 0xff & (i > 10 ? 200 : i);
-    if (!TEST_false(fips_health_test_one(buf, i, i)))
+    /* Verify RCT accepts seven equal bytes and rejects eight */
+    memset(buf, 200, 8);
+    if (!TEST_true(fips_health_test_one(buf, 7, 7))
+        || !TEST_false(fips_health_test_one(buf, 8, 8)))
         return 0;
 
-    /* Verify APT can fail */
-    for (i = 0; i < sizeof(buf); i++)
-        buf[i] = 0xff & (i >= 512 && i % 8 == 0 ? 0x80 : i);
-    if (!TEST_false(fips_health_test_one(buf, i, i)))
+    /*
+     * Verify APT accepts 34 anchor occurrences in a 512-byte window,
+     * including the first byte.  Space them apart to avoid an RCT failure.
+     */
+    for (i = 0; i < 512; i++)
+        buf[i] = 1 + i % 255;
+    for (i = 0; i < 34; i++)
+        buf[15 * i] = 0;
+    if (!TEST_true(fips_health_test_one(buf, 512, 512)))
+        return 0;
+
+    /* A 35th anchor occurrence at the end of the window must fail */
+    buf[511] = 0;
+    if (!TEST_false(fips_health_test_one(buf, 512, 512)))
         return 0;
     return 1;
 }
@@ -541,6 +628,8 @@ typedef struct {
     int started;
     int completed;
     int seed_calls;
+    int good_seed_calls;
+    int clear_calls;
     int recursive_error;
 } ASYNC_SEED_PROBE;
 
@@ -654,20 +743,27 @@ static size_t async_seed_get_seed(void *vseed, unsigned char **out,
     size_t additional_input_len)
 {
     ASYNC_SEED *seed = vseed;
-    size_t len = (entropy + 7) / 8;
+    size_t i, len = (entropy + 7) / 8;
 
     if (len < min_len)
         len = min_len;
     if (!seed->ready || len > max_len
         || (*out = OPENSSL_malloc(len)) == NULL)
         return 0;
-    seed->probe->seed_calls++;
-    memset(*out, 0x5a, len);
+    /* Distinct bytes pass the health tests, the constant byte fails them */
+    if (++seed->probe->seed_calls <= seed->probe->good_seed_calls)
+        for (i = 0; i < len; i++)
+            (*out)[i] = (unsigned char)(0x9d * i + 0x3b);
+    else
+        memset(*out, 0x5a, len);
     return len;
 }
 
 static void async_seed_clear_seed(void *vseed, unsigned char *out, size_t len)
 {
+    /* Count the seed material handed back, a NULL hands nothing back */
+    if (out != NULL)
+        ((ASYNC_SEED *)vseed)->probe->clear_calls++;
     OPENSSL_clear_free(out, len);
 }
 
@@ -833,6 +929,161 @@ err:
     if (async_started)
         ASYNC_cleanup_thread();
     OSSL_PROVIDER_unload(def);
+    OSSL_PROVIDER_unload(custom);
+    OSSL_LIB_CTX_free(ctx);
+    async_seed_probe = NULL;
+    return res;
+}
+
+/*
+ * Entropy handed out through the core's get_user_entropy() must be freed
+ * correctly by its cleanup_user_entropy(), whether it came from the operating
+ * system sources or from the seed source, and even when the seed source was
+ * created in between. Entropy from the seed source must go back to its
+ * clear_seed() straight away and never escape to the caller.
+ *
+ * Without the secure heap both allocators end up in malloc(), so freeing with
+ * the wrong one goes unnoticed. Count the clear_seed() calls instead.
+ */
+static int test_rand_user_entropy_cleanup(void)
+{
+#ifdef OPENSSL_RAND_SEED_NONE
+    TEST_info("skipped: no operating system entropy sources");
+    return 1;
+#else
+    ASYNC_SEED_PROBE probe = { 0 };
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *custom = NULL;
+    unsigned char *buf = NULL;
+    size_t len = 0;
+    int res = 0;
+
+    async_seed_probe = &probe;
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_PROVIDER_add_builtin(ctx, "async-seed-probe",
+            async_seed_provider_init))
+        || !TEST_ptr(custom = OSSL_PROVIDER_load(ctx, "async-seed-probe"))
+        || !TEST_true(RAND_set_seed_source_type(ctx, "ASYNC-SEED",
+            "provider=async-seed-probe")))
+        goto err;
+
+    /* No seed source yet, so this comes from the operating system */
+    if (!TEST_size_t_eq(len = probe.entropy(probe.handle, &buf, 128, 16, 16),
+            16)
+        || !TEST_int_eq(probe.seed_calls, 0))
+        goto err;
+
+    /* Someone else creates the seed source before the cleanup */
+    if (!TEST_ptr(ossl_rand_get0_seed(ctx)))
+        goto err;
+    probe.clear_entropy(probe.handle, buf, len);
+    buf = NULL;
+    if (!TEST_int_eq(probe.clear_calls, 0))
+        goto err;
+
+    /* Now the seed source is used, and gets its buffer back at once */
+    if (!TEST_size_t_eq(len = probe.entropy(probe.handle, &buf, 128, 16, 16),
+            16)
+        || !TEST_int_eq(probe.seed_calls, 1)
+        || !TEST_int_eq(probe.clear_calls, 1))
+        goto err;
+    probe.clear_entropy(probe.handle, buf, len);
+    buf = NULL;
+    if (!TEST_int_eq(probe.clear_calls, 1))
+        goto err;
+
+    res = 1;
+err:
+    if (buf != NULL)
+        probe.clear_entropy(probe.handle, buf, len);
+    OSSL_PROVIDER_unload(custom);
+    OSSL_LIB_CTX_free(ctx);
+    async_seed_probe = NULL;
+    return res;
+#endif /* OPENSSL_RAND_SEED_NONE */
+}
+
+/*
+ * A CRNG-TEST hands seed material that fails the health tests back to where
+ * it came from.  It must then not leave its caller a pointer to that memory:
+ * a child DRBG releases whatever the pointer holds when its reseed fails,
+ * which would free the material a second time.  Nor may the material be
+ * left for the caller to release, since the child DRBG releases nothing
+ * when its instantiation fails.  Cover both of the CRNG-TEST's sources, the
+ * core's get_user_entropy() up-call that the FIPS provider's primary relies
+ * on, and an explicit parent.  The seed source produces acceptable bytes
+ * for the requests that must succeed and a constant byte afterwards, which
+ * fails the repetition count test.
+ */
+static int test_rand_crngt_entropy_failure(int idx)
+{
+    ASYNC_SEED_PROBE probe = { 0 };
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *custom = NULL;
+    EVP_RAND *crngt_alg = NULL, *drbg_alg = NULL;
+    EVP_RAND_CTX *seed, *crngt = NULL, *drbg = NULL;
+    OSSL_PARAM params[2];
+    unsigned char out[16];
+    int parent = idx & 1, reseed = idx & 2, res = 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+        (char *)"AES-256-CTR", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    /* The seed material for the instantiation passes, the next does not */
+    probe.good_seed_calls = reseed ? 1 : 0;
+    async_seed_probe = &probe;
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_LIB_CTX_load_config(ctx, configfile))
+        || !TEST_true(OSSL_PROVIDER_add_builtin(ctx, "async-seed-probe",
+            async_seed_provider_init))
+        || !TEST_ptr(custom = OSSL_PROVIDER_load(ctx, "async-seed-probe"))
+        || !TEST_true(RAND_set_seed_source_type(ctx, "ASYNC-SEED",
+            "provider=async-seed-probe,-fips"))
+        || !TEST_ptr(seed = ossl_rand_get0_seed(ctx))
+        || !TEST_ptr(crngt_alg = EVP_RAND_fetch(ctx, "CRNG-TEST", "-fips"))
+        || !TEST_ptr(drbg_alg = EVP_RAND_fetch(ctx, "CTR-DRBG", NULL))
+        || !TEST_ptr(crngt = EVP_RAND_CTX_new(crngt_alg, parent ? seed : NULL))
+        || !TEST_true(EVP_RAND_instantiate(crngt, 0, 0, NULL, 0, NULL))
+        || !TEST_ptr(drbg = EVP_RAND_CTX_new(drbg_alg, crngt)))
+        goto err;
+
+    if (reseed
+        && (!TEST_true(EVP_RAND_instantiate(drbg, 0, 0, NULL, 0, params))
+            || !TEST_int_eq(probe.seed_calls, 1)
+            || !TEST_int_eq(probe.clear_calls, 1)))
+        goto err;
+
+    ERR_clear_error();
+    if (reseed) {
+        if (!TEST_false(EVP_RAND_reseed(drbg, 0, NULL, 0, NULL, 0)))
+            goto err;
+    } else if (!TEST_false(EVP_RAND_instantiate(drbg, 0, 0, NULL, 0,
+                   params))) {
+        goto err;
+    }
+    /* The rejected seed material went back to its source exactly once */
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST)
+        || !TEST_int_eq(probe.seed_calls, probe.good_seed_calls + 1)
+        || !TEST_int_eq(probe.clear_calls, probe.good_seed_calls + 1)
+        || !TEST_int_eq(EVP_RAND_get_state(drbg), EVP_RAND_STATE_ERROR))
+        goto err;
+    ERR_clear_error();
+
+    /* Recovering from the error state requests seed material once more */
+    if (!TEST_false(EVP_RAND_generate(drbg, out, sizeof(out), 0, 0, NULL, 0))
+        || !TEST_int_eq(probe.seed_calls, probe.good_seed_calls + 2)
+        || !TEST_int_eq(probe.clear_calls, probe.good_seed_calls + 2))
+        goto err;
+    ERR_clear_error();
+
+    res = 1;
+err:
+    EVP_RAND_CTX_free(drbg);
+    EVP_RAND_CTX_free(crngt);
+    EVP_RAND_free(drbg_alg);
+    EVP_RAND_free(crngt_alg);
     OSSL_PROVIDER_unload(custom);
     OSSL_LIB_CTX_free(ctx);
     async_seed_probe = NULL;
@@ -1035,6 +1286,11 @@ int setup_tests(void)
     ADD_TEST(test_jitter_fips_indicator);
 #endif
     ADD_TEST(test_rand_uniform);
+#ifdef OPENSSL_NO_FIPS_JITTER
+    ADD_ALL_TESTS(test_rand_hash_salt, 3);
+#else
+    ADD_ALL_TESTS(test_rand_hash_salt, 2);
+#endif
     ADD_TEST(test_rand_primary_seed_stored);
 
     if (OSSL_PROVIDER_available(NULL, "fips")
@@ -1052,6 +1308,10 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_FIPS_JITTER
     ADD_ALL_TESTS(test_rand_seed_source_async, 4);
     ADD_TEST(test_rand_seed_source_recursive_error);
+    ADD_TEST(test_rand_user_entropy_cleanup);
+    if (OSSL_PROVIDER_available(NULL, "fips")
+        && fips_provider_version_ge(NULL, 4, 1, 0))
+        ADD_ALL_TESTS(test_rand_crngt_entropy_failure, 4);
 #endif
 
     ADD_MFAIL_ALL_TESTS(test_rand_bytes_mfail, 2);

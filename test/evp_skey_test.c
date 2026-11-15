@@ -622,6 +622,77 @@ end:
     return ret;
 }
 
+static int test_skey_get0_raw_key_len(int tst)
+{
+    OSSL_PROVIDER *fake_prov = NULL;
+    EVP_SKEY *key = NULL;
+    OSSL_PARAM params[2];
+    unsigned char import_key[32] = {
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59,
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59
+    };
+    const unsigned char *export_key = NULL;
+    size_t len = 0;
+    int ret = 0;
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    switch (tst) {
+    case 0:
+        /* Generic key, only the length is requested */
+        if (!TEST_ptr(key = EVP_SKEY_import_raw_key(libctx,
+                          OSSL_SKEY_TYPE_GENERIC, import_key, 5, NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, NULL, &len), 1)
+            || !TEST_size_t_eq(len, 5))
+            goto end;
+        break;
+    case 1:
+        /* AES key, only the length is requested */
+        if (!TEST_ptr(key = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_AES,
+                          import_key, sizeof(import_key), NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, NULL, &len), 1)
+            || !TEST_size_t_eq(len, sizeof(import_key)))
+            goto end;
+        break;
+    case 2:
+        /*
+         * The fake provider doesn't report OSSL_SKEY_PARAM_KEY_LENGTH, so
+         * requesting only the length fails even though the key is exportable.
+         */
+        if (!TEST_ptr(fake_prov = fake_cipher_start(libctx)))
+            goto end;
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+            import_key, KEY_SIZE);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_ptr(key = EVP_SKEY_import(libctx, "fake_cipher",
+                          FAKE_CIPHER_FETCH_PROPS,
+                          OSSL_SKEYMGMT_SELECT_ALL, params))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, NULL, &len), 0))
+            goto end;
+        break;
+    case 3:
+        /* The length pointer is mandatory */
+        if (!TEST_ptr(key = EVP_SKEY_import_raw_key(libctx,
+                          OSSL_SKEY_TYPE_GENERIC, import_key, 5, NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(key, &export_key, NULL), 0))
+            goto end;
+        break;
+    default:
+        goto end;
+    }
+
+    ret = 1;
+end:
+    EVP_SKEY_free(key);
+    fake_cipher_finish(fake_prov);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -635,6 +706,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_skey_metadata_export, 3);
     ADD_TEST(test_skey_to_same_provider);
     ADD_TEST(test_skey_to_diff_provider);
+    ADD_ALL_TESTS(test_skey_get0_raw_key_len, 4);
     ADD_TEST(test_aes_raw_skey);
 #ifndef OPENSSL_NO_DES
     ADD_TEST(test_des_raw_skey);

@@ -698,6 +698,16 @@ Don't automatically load the default `openssl.cnf` file.
 Typically OpenSSL will automatically load a system config file which configures
 default SSL options.
 
+### no-buildinfo-cflags
+
+Don't record the compiler command line and flags in libcrypto.
+
+By default they are reported by `OpenSSL_version(OPENSSL_CFLAGS)` and
+`openssl version -f`.  As they may contain environment specific paths and
+flags, they make it harder to build bit-for-bit identical binaries in
+different build environments.  With this option they are reported as
+`compiler: information not available` instead.
+
 ### enable-buildtest-c++
 
 While testing, generate C++ buildtest files that simply check that the public
@@ -1194,7 +1204,7 @@ Analogous to `no-{protocol}` but in addition do not build the methods for
 applications to explicitly select individual protocol versions.  Note that there
 is no `no-tls1_3-method` option because there is no application method for
 TLSv1.3.
-`no-ssl3` is deprecated and does nothing.
+`no-ssl3-method` is deprecated and does nothing.
 
 Using individual protocol methods directly is deprecated.  Applications should
 use `TLS_method()` instead.

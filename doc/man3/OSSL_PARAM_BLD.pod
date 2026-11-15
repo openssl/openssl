@@ -62,6 +62,12 @@ OSSL_PARAM_free(); if the contents of OSSL_PARAM array are confidential call
 OSSL_PARAM_clear_free().
 OSSL_PARAM_BLD_free() can safely be called any time after this function is.
 
+For all of the OSSL_PARAM_BLD_push functions, the I<key> string is stored
+by reference and is not copied.
+It must be a static string or otherwise remain allocated and unmodified
+until the OSSL_PARAM array returned by OSSL_PARAM_BLD_to_param() has been
+freed.
+
 =begin comment
 
 POD is pretty good at recognising function names and making them appropriately

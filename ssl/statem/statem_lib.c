@@ -728,9 +728,18 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL_CONNECTION *s, PACKET *pkt)
      * If we get a request for us to update our sending keys too then, we need
      * to additionally send a KeyUpdate message. However that message should
      * not also request an update (otherwise we get into an infinite loop).
+     * For DTLS1.3 specifically, this doesn't go through the public
+     * SSL_key_update() API, so it has to set in_init itself: without it,
+     * nothing tells a later SSL_write()/SSL_do_handshake() call to
+     * re-enter the state machine and notice key_update is no longer
+     * SSL_KEY_UPDATE_NONE, and the scheduled KeyUpdate would never
+     * actually get sent.
      */
-    if (updatetype == SSL_KEY_UPDATE_REQUESTED)
+    if (updatetype == SSL_KEY_UPDATE_REQUESTED) {
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            ossl_statem_set_in_init(s, 1);
+    }
 
     if (!tls13_update_key(s, 0)) {
         /* SSLfatal() already called */
@@ -831,6 +840,15 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     int was_first = SSL_IS_FIRST_HANDSHAKE(s);
     int ok;
+
+    /*
+     * A DTLS 1.3 Finished is protected with the peer's handshake keys. If we
+     * have not installed them yet we have no key to verify it with either.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(s) && dtls1_get_epoch(s, SSL3_CC_READ) < 2) {
+        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+        return MSG_PROCESS_ERROR;
+    }
 
     /* This is a real handshake so make sure we clean it up at the end */
     if (s->server) {
@@ -1523,8 +1541,17 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
     else if (sctx->info_callback != NULL)
         cb = sctx->info_callback;
 
-    /* The callback may expect us to not be in init at handshake done */
-    ossl_statem_set_in_init(s, 0);
+    /*
+     * The callback may expect us to not be in init at handshake done --
+     * but not for DTLS1.3 if a KeyUpdate is still scheduled and hasn't
+     * been constructed yet (e.g. a reciprocal one scheduled by
+     * tls_process_key_update() while processing the very message whose
+     * completion brought us here): clearing in_init here would mean
+     * nothing ever tells a later SSL_write()/SSL_do_handshake() call to
+     * re-enter the state machine and actually send it.
+     */
+    if (!SSL_CONNECTION_IS_DTLS13(s) || s->key_update == SSL_KEY_UPDATE_NONE)
+        ossl_statem_set_in_init(s, 0);
 
     if (cb != NULL) {
         if (cleanuphand

@@ -13,8 +13,10 @@
 #include "crypto/pkcs7.h"
 #include "p12_local.h"
 
-/* Initialise a PKCS12 structure to take data */
+/* Refer to https://datatracker.ietf.org/doc/html/rfc7292#section-4 */
+#define PKCS12_VERSION 3
 
+/* Initialise a PKCS12 structure to take data */
 PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
 {
     PKCS12 *pkcs12;
@@ -23,7 +25,7 @@ PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
         ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
-    if (!ASN1_INTEGER_set(pkcs12->version, 3))
+    if (!ASN1_INTEGER_set(pkcs12->version, PKCS12_VERSION))
         goto err;
     pkcs12->authsafes->type = OBJ_nid2obj(mode);
 
@@ -49,6 +51,13 @@ PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
 err:
     PKCS12_free(pkcs12);
     return NULL;
+}
+
+int PKCS12_check_version(const PKCS12 *p12)
+{
+    if (p12 == NULL)
+        return 0;
+    return ASN1_INTEGER_get(p12->version) == PKCS12_VERSION;
 }
 
 PKCS12 *PKCS12_init(int mode)

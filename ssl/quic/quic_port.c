@@ -1475,6 +1475,10 @@ err:
  *              token is valid.
  * @param scid  Pointer to the connection ID structure to store the SCID if the
  *              token is valid.
+ * @param gen_new_token Set to 1 if a NEW_TOKEN frame should be sent on the
+ *              new connection.
+ * @param is_retry Set to 1 if the token decrypted and parsed as a token we
+ *              minted for a RETRY packet, even if it then failed validation.
  *
  * @return      1 if the token is valid and ODCID/SCID are successfully set.
  *              0 otherwise.
@@ -1488,7 +1492,8 @@ err:
  *   configurable in the future.
  */
 static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
-    BIO_ADDR *peer, QUIC_CONN_ID *odcid, uint8_t *gen_new_token)
+    BIO_ADDR *peer, QUIC_CONN_ID *odcid, uint8_t *gen_new_token,
+    uint8_t *is_retry)
 {
     int ret = 0;
     QUIC_VALIDATION_TOKEN token = { 0 };
@@ -1498,6 +1503,7 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
     OSSL_TIME now = ossl_time_now();
 
     *gen_new_token = 0;
+    *is_retry = 0;
 
     if (!decrypt_validation_token(port, hdr->token, hdr->token_len, NULL,
             &dec_token_len)
@@ -1506,6 +1512,8 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
             dec_token, &dec_token_len)
         || !parse_validation_token(&token, dec_token, dec_token_len))
         goto err;
+
+    *is_retry = token.is_retry;
 
     /*
      * Validate token timestamp. Current time should not be before the token
@@ -1641,6 +1649,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CHANNEL *ch = NULL, *new_ch = NULL;
     QUIC_CONN_ID odcid;
     uint8_t gen_new_token = 0;
+    uint8_t is_retry_token = 0;
     OSSL_QRX *qrx = NULL, *qrx_ref;
     OSSL_QRX *qrx_src = NULL;
     OSSL_QRX_ARGS qrx_args = { 0 };
@@ -1800,7 +1809,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      */
     if (hdr.token != NULL
         && port_validate_token(&hdr, port, &e->peer,
-               &odcid, &gen_new_token)
+               &odcid, &gen_new_token, &is_retry_token)
             == 0) {
         /*
          * RFC 9000 s 8.1.3
@@ -1814,6 +1823,18 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * the request is valid
          */
         if (port->validate_addr == 1) {
+            /*
+             * RFC 9000 s 8.1.2
+             * If we minted this token for a Retry packet, the client has
+             * already processed a Retry and will not accept another one
+             * (RFC 9000 s 17.2.5.2), so sending one would only leave the
+             * client waiting for its idle timeout. The RFC prefers closing
+             * with INVALID_TOKEN, but also allows discarding the packet,
+             * which is what we do here.
+             */
+            if (is_retry_token)
+                goto undesirable;
+
             /*
              * Again: we should consider saving initial encryption level
              * secrets to token here to save some CPU cycles.

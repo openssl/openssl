@@ -22,5 +22,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 {- produce_param_decoder('ascon_aead128_set_ctx_params',
                          (['OSSL_CIPHER_PARAM_AEAD_TAG',    'tag',    'octet_string'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAGLEN', 'taglen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_AEAD_IVLEN',  'ivlen',  'size_t'],
                          )); -}
 

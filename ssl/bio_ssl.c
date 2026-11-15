@@ -89,6 +89,7 @@ static int ssl_free(BIO *a)
         BIO_set_init(a, 0);
     }
     OPENSSL_free(bs);
+    BIO_set_data(a, NULL);
     return 1;
 }
 
@@ -526,6 +527,7 @@ BIO *BIO_new_ssl(SSL_CTX *ctx, int client)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_2
 int BIO_ssl_copy_session_id(BIO *t, BIO *f)
 {
     BIO_SSL *tdata, *fdata;
@@ -537,10 +539,11 @@ int BIO_ssl_copy_session_id(BIO *t, BIO *f)
     fdata = BIO_get_data(f);
     if ((tdata->ssl == NULL) || (fdata->ssl == NULL))
         return 0;
-    if (!SSL_copy_session_id(tdata->ssl, (fdata->ssl)))
+    if (!ossl_ssl_copy_session_id(tdata->ssl, (fdata->ssl)))
         return 0;
     return 1;
 }
+#endif
 
 void BIO_ssl_shutdown(BIO *b)
 {

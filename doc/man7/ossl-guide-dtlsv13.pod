@@ -192,7 +192,8 @@ See L<SSL_set_blocking_mode(3)> for full details.
 
 The following tunables are available via L<SSL_get_value_uint(3)> /
 L<SSL_set_value_uint(3)>: B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>
-(pending-connection cap, default 256), B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>
+(cap on listener-owned connections, default 256),
+B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>
 (pending connection timeout in milliseconds, default 30000; pending connections
 that do not complete their handshake within this period are automatically cleaned
 up), and B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE> (maximum received datagram size

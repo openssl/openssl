@@ -13,7 +13,7 @@
 
 #include <openssl/pkcs7.h>
 
-void ossl_pkcs7_resolve_libctx(PKCS7 *p7);
+void ossl_pkcs7_SignerInfos_set_ctx(PKCS7 *p7);
 
 void ossl_pkcs7_set0_libctx(PKCS7 *p7, OSSL_LIB_CTX *ctx);
 int ossl_pkcs7_set1_propq(PKCS7 *p7, const char *propq);

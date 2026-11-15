@@ -110,6 +110,7 @@ __owur static ossl_inline int PACKET_get_quic_length_prefixed(PACKET *pkt,
 
     *pkt = tmp;
     subpkt->curr = data;
+    subpkt->msgstart = pkt->msgstart;
     subpkt->remaining = (size_t)length;
 
     return 1;

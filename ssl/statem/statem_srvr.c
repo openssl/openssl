@@ -82,6 +82,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
     }
 
     /*
+     * An ACK may arrive before or between messages of the client's flight.
+     * Preserve the interrupted read state so CertificateVerify and Finished
+     * are still required, even if the ACK covers our entire flight.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(s) && mt == DTLS13_MT_ACK
+        && s->hello_retry_request != SSL_HRR_PENDING
+        && dtls13_server_waiting_for_client_flight(st->hand_state)) {
+        st->pre_ack_hand_state = st->hand_state;
+        st->hand_state = TLS_ST_SR_ACK;
+        return 1;
+    }
+
+    /*
      * Note: There is no case for TLS_ST_BEFORE because at that stage we have
      * not negotiated TLSv1.3 yet, so that case is handled by
      * ossl_statem_server_read_transition()
@@ -140,7 +153,20 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
 
     case TLS_ST_SR_COMP_CERT:
     case TLS_ST_SR_CERT:
-        if (!received_client_cert(s)) {
+        /*
+         * DTLS 1.3 only. A PHA response being read here can straddle our
+         * own still-unacknowledged KeyUpdate: datagram reordering can
+         * deliver that KeyUpdate's ACK in between the client's Certificate
+         * and its Finished. Accept it and resume this same read afterward,
+         * restored by the TLS_ST_SR_ACK handling at the top of this
+         * function.
+         */
+        if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
+        if (st->no_cert_verify || !received_client_cert(s)) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_SR_FINISHED;
                 return 1;
@@ -154,6 +180,19 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
         break;
 
     case TLS_ST_SR_CERT_VRFY:
+        /*
+         * DTLS 1.3 only. A PHA response being read here can straddle our
+         * own still-unacknowledged KeyUpdate: datagram reordering can
+         * deliver that KeyUpdate's ACK in between the client's
+         * CertificateVerify and its Finished. Accept it and resume this
+         * same read afterward, restored by the TLS_ST_SR_ACK handling at
+         * the top of this function.
+         */
+        if (mt == DTLS13_MT_ACK) {
+            st->pre_ack_hand_state = st->hand_state;
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_SR_FINISHED;
             return 1;
@@ -166,6 +205,32 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             st->pre_ack_hand_state = st->hand_state;
             st->hand_state = TLS_ST_SR_ACK;
             return 1;
+        }
+        /*
+         * DTLS 1.3 only. Our own KeyUpdate being outstanding does not stop
+         * the peer from independently sending a KeyUpdate of its own, or
+         * answering a CertificateRequest we already sent: these are
+         * separate reliability state machines (rfc9147 5.8.4) and must be
+         * accepted the same as if we were at TLS_ST_OK.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && st->hand_state == TLS_ST_SW_KEY_UPDATE) {
+            if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+                if (mt == SSL3_MT_CERTIFICATE) {
+                    st->hand_state = TLS_ST_SR_CERT;
+                    return 1;
+                }
+#ifndef OPENSSL_NO_COMP_ALG
+                if (mt == SSL3_MT_COMPRESSED_CERTIFICATE
+                    && s->ext.compress_certificate_sent) {
+                    st->hand_state = TLS_ST_SR_COMP_CERT;
+                    return 1;
+                }
+#endif
+            }
+            if (mt == SSL3_MT_KEY_UPDATE) {
+                st->hand_state = TLS_ST_SR_KEY_UPDATE;
+                return 1;
+            }
         }
         break;
 
@@ -621,6 +686,39 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     }
 
     /*
+     * Resume a write we held back waiting on our own KeyUpdate.
+     * deferred_key_update_state holds the real continuation (e.g.
+     * TLS_ST_SW_SESSION_TICKET or TLS_ST_OK), not TLS_ST_SW_ACK itself, and
+     * is copied into deferred_ack_state only here, right before the
+     * TLS_ST_SW_ACK case below consumes it -- deferred_ack_state is also
+     * used by the ack_for_retransmit handling above, which can fire any
+     * number of times while this wait is still in progress, so the
+     * continuation is kept in the field that handling never touches until
+     * the moment it's actually needed.
+     *
+     * What it waits on before resuming depends on which continuation that
+     * is, matching whichever of the two TLS_ST_SR_FINISHED branches below
+     * deferred it: a parked TLS_ST_SW_SESSION_TICKET continuation needs the
+     * real write-key install to have completed (key_update_write_pending),
+     * since issuing that ticket bypasses the public SSL_new_session_ticket()
+     * API's own guard; a parked plain TLS_ST_OK continuation only needs our
+     * KeyUpdate's own ACK (dtls_has_unacked_key_update()), since going idle
+     * sends nothing by itself and every public entry point that could
+     * schedule something new from idle already refuses to while
+     * key_update_write_pending is set -- waiting for the full install there
+     * too would just delay ordinary application data for no reason.
+     */
+    if (st->deferred_key_update_state != TLS_ST_BEFORE
+        && (st->deferred_key_update_state == TLS_ST_SW_SESSION_TICKET
+                ? !s->d1->key_update_write_pending
+                : !dtls_has_unacked_key_update(s))) {
+        st->deferred_ack_state = st->deferred_key_update_state;
+        st->deferred_key_update_state = TLS_ST_BEFORE;
+        st->hand_state = TLS_ST_SW_ACK;
+        return WRITE_TRAN_CONTINUE;
+    }
+
+    /*
      * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
      * TLSv1.3 yet, so that is handled by ossl_statem_server_write_transition()
      */
@@ -634,6 +732,15 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
     case TLS_ST_OK:
         if (s->key_update != SSL_KEY_UPDATE_NONE) {
             st->hand_state = TLS_ST_SW_KEY_UPDATE;
+            /*
+             * A reply owed to the peer's KeyUpdate is built here without
+             * going through a public API, so nothing else has checked that
+             * our own KeyUpdate's write-key install is still pending.
+             * Building another KeyUpdate now would reset that install. Wait
+             * in TLS_ST_SW_KEY_UPDATE, which resumes here once it completes.
+             */
+            if (SSL_CONNECTION_IS_DTLS13(s) && s->d1->key_update_write_pending)
+                return WRITE_TRAN_FINISHED;
             return WRITE_TRAN_CONTINUE;
         }
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {
@@ -724,6 +831,29 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              */
             if (SSL_CONNECTION_IS_DTLS13(s)) {
                 st->deferred_ack_state = TLS_ST_OK;
+                if (dtls_has_unacked_key_update(s)) {
+                    /*
+                     * Going idle sends nothing by itself, and
+                     * SSL_new_session_ticket(), SSL_verify_client_post_handshake(),
+                     * and SSL_key_update() each already refuse to schedule
+                     * anything new while key_update_write_pending is set
+                     * (test_dtls13_pha_completion_eviction_blocks_new_actions()).
+                     * So this only needs our own KeyUpdate's ACK, not the
+                     * full write-key install -- key_update_write_pending can
+                     * stay set well after that ACK, behind some unrelated
+                     * predecessor, and would otherwise delay ordinary
+                     * application data for no reason.
+                     * Hold this ACK back rather than send it now. The
+                     * continuation (TLS_ST_OK) is saved in
+                     * deferred_key_update_state, not this TLS_ST_SR_FINISHED
+                     * state: re-entering TLS_ST_SR_FINISHED on resume would
+                     * rerun this whole case against post_handshake_auth/
+                     * ticket_expected state that may have since changed.
+                     */
+                    st->deferred_key_update_state = TLS_ST_OK;
+                    st->hand_state = TLS_ST_SW_KEY_UPDATE;
+                    return WRITE_TRAN_FINISHED;
+                }
                 st->hand_state = TLS_ST_SW_ACK;
             } else {
                 st->hand_state = TLS_ST_OK;
@@ -772,6 +902,43 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
         if (SSL_CONNECTION_IS_DTLS13(s)) {
             st->deferred_ack_state = next_state;
+            /*
+             * next_state can be TLS_ST_SW_SESSION_TICKET or, if a ticket
+             * was expected but then suppressed above, plain TLS_ST_OK --
+             * and only the former actually needs to wait for our own
+             * KeyUpdate's write-key install. The automatic ticket reissue
+             * built here bypasses the public SSL_new_session_ticket() API
+             * guard entirely, so key_update_write_pending has to be
+             * enforced on this path directly: RFC 9147 section 8's new
+             * keys must not be used for anything else until the install
+             * completes, and key_update_write_pending -- not
+             * dtls_has_unacked_key_update() -- is what tracks that, since
+             * an earlier unrelated message (e.g. a prior ticket) can hold
+             * the install back even after the KeyUpdate itself is
+             * acknowledged. When next_state is plain TLS_ST_OK instead,
+             * this falls back to the same dtls_has_unacked_key_update()
+             * check as the no-ticket-expected branch above, for the same
+             * reason: going idle alone sends nothing, and every public API
+             * entry point that could schedule something new from idle
+             * already refuses to while key_update_write_pending is set.
+             */
+            if (next_state == TLS_ST_SW_SESSION_TICKET
+                    ? s->d1->key_update_write_pending != 0
+                    : dtls_has_unacked_key_update(s)) {
+                /*
+                 * Hold this ACK back rather than send it now. The real
+                 * continuation (next_state) is saved in
+                 * deferred_key_update_state, not this TLS_ST_SR_FINISHED
+                 * state: re-entering TLS_ST_SR_FINISHED on resume would
+                 * rerun this whole case, and post_handshake_auth has by
+                 * then moved past SSL_PHA_REQUESTED, so the
+                 * ticket-suppressing branch above would compute the wrong
+                 * continuation.
+                 */
+                st->deferred_key_update_state = next_state;
+                st->hand_state = TLS_ST_SW_KEY_UPDATE;
+                return WRITE_TRAN_FINISHED;
+            }
             st->hand_state = TLS_ST_SW_ACK;
         } else {
             st->hand_state = next_state;
@@ -780,17 +947,44 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SR_KEY_UPDATE:
         if (SSL_CONNECTION_IS_DTLS13(s)) {
-            st->deferred_ack_state = TLS_ST_OK;
+            /*
+             * RFC 9147 section 8's restriction is on using the new
+             * epoch's keys, not on sending at all. Our own KeyUpdate's
+             * write keys are not installed until its ACK arrives (see
+             * dtls_process_ack()), so this ACK can safely go out under
+             * our current, still-valid keys even while our own
+             * KeyUpdate is outstanding. If its write-key install hasn't
+             * completed yet, go back to waiting rather than reporting
+             * the connection idle: key_update_write_pending, not
+             * dtls_has_unacked_key_update(), is what tracks that -- the
+             * KeyUpdate can already be acknowledged while its install is
+             * still withheld behind an earlier, unrelated message, and
+             * reporting idle in that window would admit new
+             * post-handshake content under the old keys.
+             */
+            st->deferred_ack_state = s->d1->key_update_write_pending
+                ? TLS_ST_SW_KEY_UPDATE
+                : TLS_ST_OK;
             st->hand_state = TLS_ST_SW_ACK;
             return WRITE_TRAN_CONTINUE;
         }
         /* Fall through */
     case TLS_ST_SW_KEY_UPDATE:
-        if (SSL_CONNECTION_IS_DTLS13(s))
+        /*
+         * Parked here waiting for our own KeyUpdate's write-key install,
+         * which can complete as a side effect of acknowledging some
+         * entirely unrelated message (e.g. a retransmitted ticket) --
+         * nothing re-enters this function for that on its own, so this
+         * case has to notice it the next time it's reached instead of
+         * assuming key_update_write_pending is still set just because
+         * hand_state hasn't moved. Otherwise anything scheduled behind
+         * it (TLS_ST_OK's own key_update check below) would stay stuck
+         * here indefinitely once the install genuinely finishes.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && s->d1->key_update_write_pending)
             /* We wait for ACK */
             return WRITE_TRAN_FINISHED;
-        else
-            st->hand_state = TLS_ST_OK;
+        st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
@@ -818,6 +1012,15 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         st->hand_state = st->deferred_ack_state;
         if (st->ack_for_retransmit) {
             st->ack_for_retransmit = 0;
+            return WRITE_TRAN_FINISHED;
+        }
+        if (st->hand_state == TLS_ST_SW_KEY_UPDATE) {
+            /*
+             * We are only here to resume waiting for our own KeyUpdate's
+             * ACK (see the TLS_ST_SR_KEY_UPDATE and TLS_ST_SR_FINISHED
+             * cases above) -- it was already sent, so this must not
+             * trigger constructing another one.
+             */
             return WRITE_TRAN_FINISHED;
         }
 
@@ -1111,6 +1314,15 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         /* Fall through */
 
     case TLS_ST_OK:
+        /*
+         * A message that arrived out of order may already be sitting fully
+         * received in the reassembly buffer, waiting on something earlier
+         * that we just finished processing in this same call. Loop back
+         * into reading instead of going idle, rather than stranding it
+         * until some unrelated new record happens to arrive later.
+         */
+        if (SSL_CONNECTION_IS_DTLS13(s) && dtls1_has_buffered_ready_message(s))
+            return WORK_FINISHED_SWAP;
         /* Calls SSLfatal() as required */
         return tls_finish_handshake(s, wst, 1, 1);
     }
@@ -1244,14 +1456,13 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             }
 
-            if (!SSL_CONNECTION_IS_DTLS13(s)
-                && s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
+            if (SSL_CONNECTION_IS_DTLS13(s)) {
+                dtls13_hellos_done(s);
+            } else if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
                 && !ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
                 /* SSLfatal() already called */
                 return WORK_ERROR;
-            } else {
-                s->dtls13_process_hello = 1;
             }
             /*
              * We don't yet know whether the next record we are going to receive
@@ -1334,7 +1545,17 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
     case TLS_ST_SW_KEY_UPDATE:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
-        if (!tls13_update_key(s, 1)) {
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /*
+             * RFC 9147 section 8: don't switch to the new write keys
+             * until this KeyUpdate has been acknowledged; keep using
+             * the current, still-valid keys until then. Installed from
+             * dtls_process_ack() once the ACK arrives.
+             */
+            s->d1->key_update_write_pending = 1;
+            s->d1->key_update_acked = 0;
+            s->d1->key_update_msg_seq = s->d1->w_msg.msg_seq;
+        } else if (!tls13_update_key(s, 1)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
         }
@@ -2085,6 +2306,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    unsigned char *snonce = s->s3.server_random;
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
@@ -2099,6 +2321,38 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         case SSL_CLIENT_HELLO_ERROR:
         default:
             SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
+            goto err;
+        }
+    }
+
+    /*
+     * The callback may have switched to an SSL_CTX with a different set of
+     * custom extensions, possibly in an earlier call that returned
+     * SSL_CLIENT_HELLO_RETRY. The collected extensions are indexed by the
+     * custom extensions in use when they were collected, so collect them
+     * again unless neither set has any.
+     */
+    if (clienthello->pre_proc_exts_len != TLSEXT_IDX_num_builtins
+        || s->cert->custext.meths_count != 0) {
+        PACKET extensions = clienthello->extensions;
+        void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
+            = s->ext.debug_cb;
+        int ret;
+
+        OPENSSL_free(clienthello->pre_proc_exts);
+        clienthello->pre_proc_exts = NULL;
+        clienthello->pre_proc_exts_len = 0;
+        /*
+         * The first collection has already initialised the built-in
+         * extensions and passed the extensions to the debug callback.
+         */
+        s->ext.debug_cb = NULL;
+        ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+            &clienthello->pre_proc_exts,
+            &clienthello->pre_proc_exts_len, 0);
+        s->ext.debug_cb = debug_cb;
+        if (!ret) {
+            /* SSLfatal already been called */
             goto err;
         }
     }
@@ -2226,6 +2480,39 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
+        memcpy(s->tmp_session_id, s->clienthello->session_id,
+            s->clienthello->session_id_len);
+        s->tmp_session_id_len = s->clienthello->session_id_len;
+
+        /*
+         * A stateless server reconstructs the transcript from the cookie,
+         * which must happen before the PSK binder is verified.
+         */
+        if (!tls_parse_extension(s, TLSEXT_IDX_cookie, SSL_EXT_CLIENT_HELLO,
+                clienthello->pre_proc_exts, NULL, 0)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    }
+
+    /*
+     * Generate the server_random now. The protocol version (and hence any
+     * downgrade sentinel) is known, and the cheap structural checks on the
+     * ClientHello (cookie, record boundary, cipher list, SCSVs) have all
+     * passed, so we do not spend entropy on a ClientHello we are going to
+     * reject anyway. It must happen before the session lookup below, as the
+     * callbacks invoked from there on such as the session ticket callbacks,
+     * tls_session_secret_cb, the (D)TLSv1.3 PSK callbacks and the servername
+     * callback can observe the value via SSL_get_server_random(). Note that
+     * in the TLSv1.2 flow tls_session_secret_cb in particular needs it for
+     * SessionTicket key derivation.
+     */
+    if (ssl_fill_hello_random(s, 1, snonce, SSL3_RANDOM_SIZE, dgrd) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     /*
      * We don't allow resumption in a backwards compatible ClientHello.
      * In TLS1.1+, session_id MUST be empty.
@@ -2262,12 +2549,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
                 goto err;
             }
         }
-    }
-
-    if (SSL_CONNECTION_IS_VERSION13(s)) {
-        memcpy(s->tmp_session_id, s->clienthello->session_id,
-            s->clienthello->session_id_len);
-        s->tmp_session_id_len = s->clienthello->session_id_len;
     }
 
     /*
@@ -2328,21 +2609,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             clienthello->pre_proc_exts, NULL, 0, 1)) {
         /* SSLfatal() already called */
         goto err;
-    }
-
-    /*
-     * Check if we want to use external pre-shared secret for this handshake
-     * for not reused session only. We need to generate server_random before
-     * calling tls_session_secret_cb in order to allow SessionTicket
-     * processing to use it in key derivation.
-     */
-    {
-        unsigned char *pos;
-        pos = s->s3.server_random;
-        if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE, dgrd) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
     }
 
     if (!s->hit && !tls1_set_server_sigalgs(s)) {
@@ -2809,7 +3075,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (!WPACKET_put_bytes_u16(pkt, version)
         /*
          * Random stuff. Filling of the server_random takes place in
-         * tls_process_client_hello()
+         * tls_early_post_process_client_hello()
          */
         || !WPACKET_memcpy(pkt,
             s->hello_retry_request == SSL_HRR_PENDING
@@ -4087,6 +4353,32 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
     return WORK_FINISHED_CONTINUE;
 }
 
+static void tls_clear_pending_client_identity(SSL_CONNECTION *sc)
+{
+    OSSL_STACK_OF_X509_free(sc->s3.tmp.pending_peer_chain);
+    sc->s3.tmp.pending_peer_chain = NULL;
+    EVP_PKEY_free(sc->s3.tmp.pending_peer_rpk);
+    sc->s3.tmp.pending_peer_rpk = NULL;
+}
+
+/*
+ * Clear old verification state before verifying fresh credentials, or after
+ * accepting an empty initial Certificate response. Empty PHA responses retain
+ * the previous state. Do not clear results produced by the new verification.
+ */
+static void tls_clear_client_verification_state(SSL_CONNECTION *sc, long verify_result)
+{
+    OSSL_STACK_OF_X509_free(sc->verified_chain);
+    sc->verified_chain = NULL;
+    X509_VERIFY_PARAM_move_peername(sc->param, NULL);
+    sc->dane.mdpth = -1;
+    sc->dane.pdpth = -1;
+    X509_free(sc->dane.mcert);
+    sc->dane.mcert = NULL;
+    sc->dane.mtlsa = NULL;
+    sc->verify_result = verify_result;
+}
+
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 {
     EVP_PKEY *peer_rpk = NULL;
@@ -4097,8 +4389,10 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     }
 
     /* Stash the parsed RPK; verification runs in the post-process step. */
-    EVP_PKEY_free(sc->session->peer_rpk);
-    sc->session->peer_rpk = peer_rpk;
+    tls_clear_pending_client_identity(sc);
+    sc->s3.tmp.pending_peer_rpk = peer_rpk;
+    if (peer_rpk != NULL)
+        tls_clear_client_verification_state(sc, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 }
@@ -4107,17 +4401,20 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     WORK_STATE wst)
 {
-    EVP_PKEY *peer_rpk = sc->session->peer_rpk;
+    EVP_PKEY *peer_rpk = sc->s3.tmp.pending_peer_rpk;
     SSL_SESSION *new_sess = NULL;
 
     (void)wst;
+
+    if (SSL_CONNECTION_IS_VERSION13(sc))
+        sc->statem.no_cert_verify = peer_rpk == NULL;
 
     if (peer_rpk == NULL) {
         if ((sc->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
             && (sc->verify_mode & SSL_VERIFY_PEER)) {
             SSLfatal(sc, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            return WORK_ERROR;
+            goto err;
         }
     } else {
         int v_ok;
@@ -4132,7 +4429,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
         if (v_ok <= 0) {
             SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            return WORK_ERROR;
+            goto err;
         }
     }
 
@@ -4140,26 +4437,25 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
      * Sessions must be immutable once they go into the session cache. Otherwise
      * we can get multi-thread problems. Therefore we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
-     * a new RPK (or certificate) is received via post-handshake authentication,
-     * as the session may have already gone into the session cache.
+     * a PHA response is accepted, even if empty, because refreshed tickets
+     * will update the session's key and ID.
      */
     if (sc->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(sc->session, 0)) == NULL) {
             SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            return WORK_ERROR;
+            goto err;
         }
 
         SSL_SESSION_free(sc->session);
         sc->session = new_sess;
     }
 
-    /* Ensure there is no peer/peer_chain */
-    X509_free(sc->session->peer);
-    sc->session->peer = NULL;
-    sk_X509_pop_free(sc->session->peer_chain, X509_free);
-    sc->session->peer_chain = NULL;
-
-    sc->session->verify_result = sc->verify_result;
+    if (peer_rpk != NULL || sc->post_handshake_auth != SSL_PHA_REQUESTED) {
+        if (peer_rpk == NULL)
+            tls_clear_client_verification_state(sc, X509_V_OK);
+        ossl_session_set0_peer(sc->session, NULL, peer_rpk, sc->verify_result);
+        sc->s3.tmp.pending_peer_rpk = NULL;
+    }
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -4168,7 +4464,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     if (SSL_CONNECTION_IS_VERSION13(sc)) {
         if (!ssl3_digest_cached_records(sc, 1)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
 
         /* Save the current hash state for when we receive the CertificateVerify */
@@ -4176,7 +4472,7 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
                 sizeof(sc->cert_verify_hash),
                 &sc->cert_verify_hash_len)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
 
         /* resend session tickets */
@@ -4184,6 +4480,10 @@ static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
     }
 
     return WORK_FINISHED_CONTINUE;
+
+err:
+    tls_clear_pending_client_identity(sc);
+    return WORK_ERROR;
 }
 
 MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
@@ -4289,8 +4589,10 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      * Stash the parsed chain so that tls_post_process_client_certificate() can
      * run verification and may pause the handshake via SSL_set_retry_verify().
      */
-    OSSL_STACK_OF_X509_free(s->session->peer_chain);
-    s->session->peer_chain = sk;
+    tls_clear_pending_client_identity(s);
+    s->s3.tmp.pending_peer_chain = sk;
+    if (sk_X509_num(sk) > 0)
+        tls_clear_client_verification_state(s, X509_V_ERR_UNSPECIFIED);
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
@@ -4301,8 +4603,8 @@ err:
 }
 
 /*
- * Verify s->session->peer_chain (parked by tls_process_client_certificate())
- * and finalize the peer cert / TLS 1.3 handshake-hash bookkeeping.
+ * Verify the parked chain from tls_process_client_certificate() and finalize
+ * the peer cert / TLS 1.3 handshake-hash bookkeeping.
  * Allows the verify callback to defer via SSL_set_retry_verify(), in which
  * case we return WORK_MORE_A and the state machine re-enters this function
  * once the application has supplied a verdict.
@@ -4313,26 +4615,30 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     STACK_OF(X509) *sk;
     SSL_SESSION *new_sess = NULL;
     EVP_PKEY *pkey;
-    int i;
+    int has_cert, i;
 
     if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
         return tls_post_process_client_rpk(s, wst);
 
-    sk = s->session->peer_chain;
+    sk = s->s3.tmp.pending_peer_chain;
     (void)wst;
 
-    if (sk == NULL || sk_X509_num(sk) <= 0) {
+    has_cert = sk != NULL && sk_X509_num(sk) > 0;
+    if (SSL_CONNECTION_IS_VERSION13(s))
+        s->statem.no_cert_verify = !has_cert;
+    if (!has_cert) {
         /* Fail only if we required a certificate */
         if ((s->verify_mode & SSL_VERIFY_PEER)
             && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            return WORK_ERROR;
+            goto err;
         }
+
         /* No client certificate so digest cached records */
         if (s->s3.handshake_buffer && !ssl3_digest_cached_records(s, 0)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
     } else {
         if (s->rwstate == SSL_RETRY_VERIFY)
@@ -4350,13 +4656,13 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            return WORK_ERROR;
+            goto err;
         }
         pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                 SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-            return WORK_ERROR;
+            goto err;
         }
     }
 
@@ -4364,31 +4670,29 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
      * Sessions must be immutable once they go into the session cache. Otherwise
      * we can get multi-thread problems. Therefore we don't "update" sessions,
      * we replace them with a duplicate. Here, we need to do this every time
-     * a new certificate is received via post-handshake authentication, as the
-     * session may have already gone into the session cache.
+     * a PHA response is accepted, even if empty, because refreshed tickets
+     * will update the session's key and ID.
      */
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
-            return WORK_ERROR;
+            goto err;
         }
 
         SSL_SESSION_free(s->session);
         s->session = new_sess;
-        /* peer_chain follows the session via ssl_session_dup(); refresh sk. */
-        sk = s->session->peer_chain;
     }
 
-    if (sk != NULL && sk_X509_num(sk) > 0) {
-        X509_free(s->session->peer);
-        /* Server keeps the EE cert in session->peer; peer_chain holds issuers only. */
-        s->session->peer = sk_X509_shift(sk);
-        s->session->verify_result = s->verify_result;
+    if (!has_cert) {
+        tls_clear_pending_client_identity(s);
+        sk = NULL;
+        if (s->post_handshake_auth != SSL_PHA_REQUESTED)
+            tls_clear_client_verification_state(s, X509_V_OK);
     }
-
-    /* Ensure there is no RPK */
-    EVP_PKEY_free(s->session->peer_rpk);
-    s->session->peer_rpk = NULL;
+    if (has_cert || s->post_handshake_auth != SSL_PHA_REQUESTED) {
+        ossl_session_set0_peer(s->session, sk, NULL, s->verify_result);
+        s->s3.tmp.pending_peer_chain = NULL;
+    }
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -4396,7 +4700,7 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
      */
     if (SSL_CONNECTION_IS_VERSION13(s) && !ssl3_digest_cached_records(s, 1)) {
         /* SSLfatal() already called */
-        return WORK_ERROR;
+        goto err;
     }
 
     /* Save the current hash state for when we receive the CertificateVerify */
@@ -4405,7 +4709,7 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
                 sizeof(s->cert_verify_hash),
                 &s->cert_verify_hash_len)) {
             /* SSLfatal() already called */
-            return WORK_ERROR;
+            goto err;
         }
 
         /* Resend session tickets */
@@ -4413,6 +4717,10 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     }
 
     return WORK_FINISHED_CONTINUE;
+
+err:
+    tls_clear_pending_client_identity(s);
+    return WORK_ERROR;
 }
 
 #ifndef OPENSSL_NO_COMP_ALG

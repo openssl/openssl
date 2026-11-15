@@ -85,6 +85,58 @@ Derive=Bob-25519-Raw
 PeerKey=Alice-25519-PUBLIC-Raw
 SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
 
+# Low-order peer keys must be rejected (RFC 8446 7.4.2)
+
+# u = 0 (identity)
+PublicKeyRaw = LowOrder-25519-0:X25519:0000000000000000000000000000000000000000000000000000000000000000
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-0
+Result = DERIVE_ERROR
+
+# u = 1 (order 4)
+PublicKeyRaw = LowOrder-25519-1:X25519:0100000000000000000000000000000000000000000000000000000000000000
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-1
+Result = DERIVE_ERROR
+
+# order-8 point A
+PublicKeyRaw = LowOrder-25519-2:X25519:e0eb7a7c3b41b8ae1656e3faf19fc46ada098deb9c32b1fd866205165f49b800
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-2
+Result = DERIVE_ERROR
+
+# order-8 point B
+PublicKeyRaw = LowOrder-25519-3:X25519:5f9c95bca3508c24b1d0b1559c83ef5b04445cc4581c8e86d8224eddd09f1157
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-3
+Result = DERIVE_ERROR
+
+# u = p-1 (order 2)
+PublicKeyRaw = LowOrder-25519-4:X25519:ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-4
+Result = DERIVE_ERROR
+
+# u = p (non-canonical 0)
+PublicKeyRaw = LowOrder-25519-5:X25519:edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-5
+Result = DERIVE_ERROR
+
+# u = p+1 (non-canonical 1)
+PublicKeyRaw = LowOrder-25519-6:X25519:eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f
+
+Derive = Alice-25519-Raw
+PeerKey = LowOrder-25519-6
+Result = DERIVE_ERROR
+
+
 # Illegal sign/verify operations with X25519 key
 
 Sign=Alice-25519
@@ -174,6 +226,30 @@ Availablein = default
 Derive=Alice-448-Raw
 PeerKey=Bob-448-PUBLIC-Raw-NonCanonical
 SharedSecret=66e2e682b1f8e68c809f1bb3e406bd826921d9c1a5bfbfcbab7ae72feecee63660eabd54934f3382061d17607f581a90bdac917a064959fb
+
+# Low-order peer keys must be rejected (RFC 8446 7.4.2)
+
+# u = 0 (identity)
+PublicKeyRaw = LowOrder-448-0:X448:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+Derive = Alice-448-Raw
+PeerKey = LowOrder-448-0
+Result = DERIVE_ERROR
+
+# u = 1 (order 4)
+PublicKeyRaw = LowOrder-448-1:X448:0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+Derive = Alice-448-Raw
+PeerKey = LowOrder-448-1
+Result = DERIVE_ERROR
+
+# u = p-1 (order 2)
+PublicKeyRaw = LowOrder-448-2:X448:fefffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+Derive = Alice-448-Raw
+PeerKey = LowOrder-448-2
+Result = DERIVE_ERROR
+
 
 # Illegal sign/verify operations with X448 key
 

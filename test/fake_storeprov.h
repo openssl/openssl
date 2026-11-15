@@ -27,6 +27,7 @@ void fake_store_finish(OSSL_PROVIDER *p);
 #define FAKE_STORE_CMD_TWO_NAMES "two-names"
 #define FAKE_STORE_CMD_OPEN_FAIL "open-fail"
 #define FAKE_STORE_CMD_PARAMS_FAIL "params-fail"
+#define FAKE_STORE_CMD_SKEY_REF "skey-ref"
 
 /* Bitmask of ctx params the fake loader has observed */
 #define FAKE_STORE_SEEN_EXPECT (1u << 0)

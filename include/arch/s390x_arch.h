@@ -89,7 +89,13 @@ extern int OPENSSL_s390xcex;
 __attribute__((visibility("hidden")))
 #endif
 extern int OPENSSL_s390xcex_nodev;
+#if defined(__GNUC__) && defined(__linux)
+__attribute__((visibility("hidden")))
 #endif
+extern unsigned int OPENSSL_s390xcex_min_bits;
+#endif
+
+#define S390X_CEX_MIN_BITS_DEFAULT 2048
 
 /* Max number of 64-bit words currently returned by STFLE */
 #define S390X_STFLE_MAX 3

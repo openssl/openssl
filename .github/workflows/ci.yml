@@ -73,7 +73,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      run: CPPFLAGS='-std=c99 -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' ./config --strict-warnings --banner=Configured enable-sslkeylog no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips enable-lms && perl configdata.pm --dump
+      run: CPPFLAGS='-std=c99 -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L' CXXFLAGS='-Werror=pedantic' ./config --strict-warnings --banner=Configured enable-sslkeylog no-asm no-secure-memory no-makedepend enable-buildtest-c++ enable-fips enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
 
@@ -119,7 +119,7 @@ jobs:
         util/wrap.pl -fips apps/openssl list -providers | grep 'name: CI FIPS Provider for OpenSSL$'
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@basic-gcc"
         path: artifacts.tar.gz
@@ -144,7 +144,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@basic-clang"
         path: artifacts.tar.gz
@@ -169,9 +169,39 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@linux-arm64"
+        path: artifacts.tar.gz
+
+  linux-aarch64-graviton4:
+    runs-on: graviton4
+    timeout-minutes: 60
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a run there would wait forever).
+    if: github.repository == 'openssl/openssl'
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: config
+      run: ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+        ./util/opensslwrap.sh info -cpusettings
+    - name: make test
+      run: .github/workflows/make-test
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: "ci@linux-aarch64-graviton4"
         path: artifacts.tar.gz
 
   gcc-min-version:
@@ -211,7 +241,7 @@ jobs:
         echo "CONTAINER_ID=$CONTAINER_ID" >> "$GITHUB_ENV"
     - name: install dependencies
       run:
-        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make"
+        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make cmake"
     - name: config
       run: |
         podman exec -t $CONTAINER_ID sh -c \
@@ -235,7 +265,7 @@ jobs:
           ".github/workflows/make-test"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@linux-x86"
         path: artifacts.tar.gz
@@ -247,7 +277,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -256,21 +286,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -279,7 +309,7 @@ jobs:
           .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@BSD-x86_64"
         path: artifacts.tar.gz
@@ -304,7 +334,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@minimal"
         path: artifacts.tar.gz
@@ -329,7 +359,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@no-deprecated"
         path: artifacts.tar.gz
@@ -354,13 +384,13 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@no-shared-ubuntu"
         path: artifacts.tar.gz
 
   no-shared-macos:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v6
       with:
@@ -379,38 +409,9 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
-        name: "ci@no-shared-macos-14"
-        path: artifacts.tar.gz
-
-  non-caching:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
-    - name: Adjust ASLR for sanitizer
-      run: |
-        sudo cat /proc/sys/vm/mmap_rnd_bits
-        sudo sysctl -w vm.mmap_rnd_bits=28
-    - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
-    - name: make
-      run: make -s -j4
-    - name: get cpu info
-      run: |
-        cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
-    - name: make test
-      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_sslapi -test_evp -test_cmp_http -test_verify -test_cms -test_store -test_enc -[01][0-9]"
-    - name: save artifacts
-      if: success() || failure()
-      uses: actions/upload-artifact@v5
-      with:
-        name: "ci@non-caching"
+        name: "ci@no-shared-macos-15"
         path: artifacts.tar.gz
 
   address_ub_sanitizer:
@@ -426,7 +427,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ec_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ec_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms enable-dgram-pair-pcap && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -437,12 +438,11 @@ jobs:
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@address_ub_sanitizer"
         path: artifacts.tar.gz
 
-  # Same configuration as the run-checker-merge variant, promoted to per-PR CI.
   # no-asm builds the sanitizer-instrumented C fallback primitives (e.g. the
   # OPENSSL_cleanse() C implementation), which the asm-enabled asan job above
   # cannot observe; keep both, as each covers C code the other does not build.
@@ -470,7 +470,7 @@ jobs:
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@address_ub_sanitizer_no_asm"
         path: artifacts.tar.gz
@@ -499,7 +499,7 @@ jobs:
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@fuzz_tests"
         path: artifacts.tar.gz
@@ -507,20 +507,13 @@ jobs:
 
   fuzz_tests_mfail:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
-    - name: trim corpora to a few seeds per fuzzer
-      env:
-        FUZZ_CORPUS_KEEP: 5
-      run: |
-        for d in fuzz/corpora/*/; do
-          find "$d" -maxdepth 1 -type f | tail -n +$((FUZZ_CORPUS_KEEP + 1)) | xargs -r rm -f
-        done
     - name: Adjust ASLR for sanitizer
       run: sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
@@ -534,10 +527,13 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test (fuzz with mfail)
+      env:
+        OSSL_FUZZ_TEST_BUDGET: 600
+        OSSL_FUZZ_TEST_JOBS: 4
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@fuzz_tests_mfail"
         path: artifacts.tar.gz
@@ -568,7 +564,7 @@ jobs:
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@memory_sanitizer"
         path: artifacts.tar.gz
@@ -597,7 +593,7 @@ jobs:
       run: .github/workflows/make-test V=1 TESTS="test_lhash test_threads test_internal_provider test_provfetch test_provider test_pbe test_evp_kdf test_pkcs12 test_store test_evp test_quic* test_dtls_listener_races"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@threads_sanitizer"
         path: artifacts.tar.gz
@@ -613,7 +609,7 @@ jobs:
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips enable-lms no-threads && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-egd enable-ktls enable-fips enable-lms enable-dgram-pair-pcap no-threads && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -624,42 +620,9 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@enable_non-default_options"
-        path: artifacts.tar.gz
-
-  full_featured:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
-    - name: modprobe tls
-      run: sudo modprobe tls
-    - name: Enable sctp
-      run: sudo modprobe sctp
-    - name: Enable auth in sctp
-      run: sudo sysctl -w net.sctp.auth_enable=1
-    - name: install extra config support
-      run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
-    - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
-    - name: make
-      run: make -s -j4
-    - name: get cpu info
-      run: |
-        cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
-    - name: make test
-      run: .github/workflows/make-test
-    - name: save artifacts
-      if: success() || failure()
-      uses: actions/upload-artifact@v5
-      with:
-        name: "ci@full_featured"
         path: artifacts.tar.gz
 
   legacy:
@@ -682,7 +645,7 @@ jobs:
       run: .github/workflows/make-test
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@legacy"
         path: artifacts.tar.gz
@@ -704,7 +667,7 @@ jobs:
       run: ./config --strict-warnings --banner=Configured --debug enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
-    - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
+    - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
       with:
         toolchain: stable
     - name: get cpu info
@@ -797,10 +760,10 @@ jobs:
     - name: make
       run: make -s -j4
     - name: Setup Python
-      uses: actions/setup-python@v6.0.0
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.PYTHON }}
-    - uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331
+    - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
       with:
         toolchain: stable
     - name: get cpu info
@@ -848,8 +811,9 @@ jobs:
       run: |
         mkdir nss
         cd nss
-        git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git
-        hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH
+        # A failed clone leaves a partial directory behind; remove it before each attempt.
+        "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nss && git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git'
+        "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nspr && hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH'
         cd nss
         USE_64=1 make nss_build_all
         USE_64=1 make install

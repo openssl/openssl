@@ -13,7 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
-/* Simple PKCS#12 file reader */
+/* Simple PKCS #12 file reader */
 
 static char *find_friendly_name(PKCS12 *p12)
 {
@@ -67,12 +67,17 @@ int main(int argc, char **argv)
     p12 = d2i_PKCS12_fp(fp, NULL);
     fclose(fp);
     if (p12 == NULL) {
-        fprintf(stderr, "Error reading PKCS#12 file\n");
+        fprintf(stderr, "Error reading PKCS #12 file\n");
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+    if (!PKCS12_check_version(p12)) {
+        fprintf(stderr, "PKCS #12 file has incorrect version\n");
         ERR_print_errors_fp(stderr);
         goto err;
     }
     if (!PKCS12_parse(p12, argv[2], &pkey, &cert, &ca)) {
-        fprintf(stderr, "Error parsing PKCS#12 file\n");
+        fprintf(stderr, "Error parsing PKCS #12 file\n");
         ERR_print_errors_fp(stderr);
         goto err;
     }

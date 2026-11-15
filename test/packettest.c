@@ -565,6 +565,9 @@ static int test_PACKET_get_quic_length_prefixed(void)
 
         if (!TEST_size_t_eq(subpkt.remaining, cases[i].len))
             return 0;
+
+        if (!TEST_ptr_eq(PACKET_msg_start(&subpkt), cases[i].buf))
+            return 0;
     }
 
     return 1;

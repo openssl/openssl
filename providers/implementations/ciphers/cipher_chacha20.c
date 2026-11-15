@@ -19,6 +19,7 @@
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)
 #define CHACHA20_IVLEN (CHACHA_CTR_SIZE)
+#define CHACHA20_MODE (EVP_CIPH_STREAM_CIPHER)
 #define CHACHA20_FLAGS (PROV_CIPHER_FLAG_CUSTOM_IV)
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
@@ -46,7 +47,7 @@ void ossl_chacha20_initctx(PROV_CHACHA20_CTX *ctx)
     ossl_cipher_generic_initkey(ctx, CHACHA20_KEYLEN * 8,
         CHACHA20_BLKLEN * 8,
         CHACHA20_IVLEN * 8,
-        0, CHACHA20_FLAGS,
+        CHACHA20_MODE, CHACHA20_FLAGS,
         ossl_prov_cipher_hw_chacha20(CHACHA20_KEYLEN * 8),
         NULL);
 }
@@ -93,7 +94,8 @@ static void *chacha20_dupctx(void *vctx)
 
 static int chacha20_get_params(OSSL_PARAM params[])
 {
-    return ossl_cipher_generic_get_params(params, 0, CHACHA20_FLAGS,
+    return ossl_cipher_generic_get_params(params,
+        CHACHA20_MODE, CHACHA20_FLAGS,
         CHACHA20_KEYLEN * 8,
         CHACHA20_BLKLEN * 8,
         CHACHA20_IVLEN * 8);

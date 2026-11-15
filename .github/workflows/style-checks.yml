@@ -5,25 +5,17 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-name: Coding style validation 
+name: Coding style and spelling validation
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - '*.md'
-      - '*.pod'
-      - 'README*'
-      - 'funding.json'
-      - 'LICENSE.txt'
-      - 'VERSION.dat'
 
 jobs:
   check-style:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
       - name: "Fetch the base commit"
         run: |
           # actions/checkout fetches a single commit by default

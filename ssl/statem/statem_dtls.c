@@ -505,8 +505,11 @@ again:
         return 1;
 
     /* reconstruct message header */
-    dtls1_write_hm_header(rec_data, s->s3.tmp.message_type, s->s3.tmp.message_size,
-        s->d1->r_msg_seq, 0, s->s3.tmp.message_size);
+    if (!dtls1_write_hm_header(rec_data, s->s3.tmp.message_type, s->s3.tmp.message_size,
+            s->d1->r_msg_seq, 0, s->s3.tmp.message_size)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     s->d1->r_msg_seq = 0;
 
@@ -764,6 +767,30 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
     }
 }
 
+/*
+ * Whether a fully-received message is already sitting in the reassembly
+ * buffer for the next sequence number we expect, independently of any new
+ * record having just arrived on the wire. dtls1_retrieve_buffered_fragment()
+ * checks this unconditionally on every entry into the read state machine,
+ * but that entry only ever happens as a side effect of a *new*
+ * SSL3_RT_HANDSHAKE/SSL3_RT_ACK record arriving (see dtls1_read_bytes()'s
+ * trampoline) or of a message we just processed ourselves bringing us back
+ * here. Callers use this to decide whether to keep looping instead of
+ * going idle, so a message that arrived out of order and was buffered
+ * ahead of something still missing is not left stranded once that
+ * something finally arrives and is processed in the same call.
+ */
+int dtls1_has_buffered_ready_message(SSL_CONNECTION *s)
+{
+    pitem *item = pqueue_find_u64(&s->d1->rcvd_messages, s->d1->handshake_read_seq);
+    hm_fragment *frag;
+
+    if (item == NULL)
+        return 0;
+    frag = (hm_fragment *)item->data;
+    return frag->reassembly == NULL;
+}
+
 static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr)
 {
@@ -878,6 +905,19 @@ int dtls_record_from_retained_epoch(SSL_CONNECTION *s)
 {
     return SSL_CONNECTION_IS_DTLS13(s)
         && s->s3.tmp.record_epoch != dtls1_get_epoch(s, SSL3_CC_READ);
+}
+
+/*
+ * Server read states where an ACK must not finish the client's flight.
+ * The certificate states are also used during post-handshake authentication.
+ * Callers admitting ACKs must exclude a pending HelloRetryRequest.
+ */
+int dtls13_server_waiting_for_client_flight(OSSL_HANDSHAKE_STATE state)
+{
+    return state == TLS_ST_EARLY_DATA
+        || state == TLS_ST_SR_CERT
+        || state == TLS_ST_SR_COMP_CERT
+        || state == TLS_ST_SR_CERT_VRFY;
 }
 
 int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
@@ -1383,6 +1423,65 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
     return CON_FUNC_SUCCESS;
 }
 
+/*
+ * If our own KeyUpdate is still awaiting installation of its new write
+ * keys, check whether it -- and everything sent before it -- is now
+ * acknowledged, and install the deferred write key if so. A peer can ACK a
+ * buffered message before it has actually processed the messages that
+ * precede it (rfc9147 section 7), so an ACK of the KeyUpdate itself does
+ * not establish that the peer has processed everything sent before it and
+ * installed the corresponding read keys. Erratum 8047 therefore requires
+ * waiting for every preceding message to be acknowledged too, not just the
+ * KeyUpdate -- a message sent *after* the KeyUpdate (e.g. a ticket) is
+ * unaffected and may remain outstanding.
+ *
+ * This deliberately does not search sent_messages for the KeyUpdate's own
+ * entry: key_update_acked, latched by dtls_process_ack() the instant
+ * coverage of that message completes, already captures whether it is
+ * acknowledged, and key_update_msg_seq -- the handshake message sequence
+ * number captured when it was sent -- identifies which other queued
+ * entries precede it, without depending on its own entry still being in
+ * the queue to do so. That matters because this is called from more than
+ * one place: not just from dtls_process_ack() when an ACK record arrives,
+ * but also from dtls1_stop_timer_for_read_flight(), since a preceding
+ * CertificateRequest can instead be retired implicitly (rfc9147 7.2) by
+ * the next flight, with no ACK record of its own ever involved.
+ *
+ * Returns 0 only on a fatal error installing the key (SSLfatal() already
+ * called); 1 otherwise, including when there was nothing to do.
+ */
+int dtls1_check_deferred_write_key(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter;
+    int preceding_unacked = 0;
+
+    if (!s->d1->key_update_write_pending || !s->d1->key_update_acked)
+        return 1;
+
+    iter = pqueue_iterator(&s->d1->sent_messages);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *msg = (dtls_sent_msg *)item->data;
+
+        if (msg->msg_info.msg_seq < s->d1->key_update_msg_seq
+            && !ossl_list_record_number_is_empty(&msg->rec_nums)) {
+            preceding_unacked = 1;
+            break;
+        }
+    }
+
+    if (!preceding_unacked) {
+        s->d1->key_update_write_pending = 0;
+        s->d1->key_update_acked = 0;
+        if (!tls13_update_key(s, 1)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 {
     PACKET record_numbers;
@@ -1412,6 +1511,16 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
             return MSG_PROCESS_ERROR;
         }
+
+        /*
+         * RFC 9147 section 7: during the initial handshake, an ACK must be
+         * carried in an epoch at least as high as the record it acknowledges.
+         * Ignore unauthorized entries before changing retransmission state.
+         * After the handshake, sending and receiving epochs can differ.
+         */
+        if (SSL_IS_FIRST_HANDSHAKE(s)
+            && epoch > s->s3.tmp.record_epoch)
+            continue;
 
         /*
          * Epoch 2 is the fixed handshake epoch and is never used again once
@@ -1478,15 +1587,50 @@ MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt)
 
                 RSMBLY_BITMASK_IS_COMPLETE(msg->covered,
                     (long)msg->msg_info.msg_body_len, is_complete);
-                if (is_complete)
+                if (is_complete) {
                     ossl_list_record_number_elem_free(&msg->rec_nums);
+                    /*
+                     * Latch this immediately, rather than re-discovering it
+                     * later by searching sent_messages for the entry: once
+                     * fully acknowledged, this entry is eligible to be freed
+                     * by dtls1_clear_sent_buffer() at any later, unrelated
+                     * point (e.g. when the peer's own KeyUpdate is
+                     * processed), so its continued presence in the queue
+                     * cannot be relied on below.
+                     */
+                    if (msg->msg_info.msg_type == SSL3_MT_KEY_UPDATE)
+                        s->d1->key_update_acked = 1;
+                }
             }
         }
     }
 
+    if (!dtls1_check_deferred_write_key(s))
+        return MSG_PROCESS_ERROR;
+
     /* Keep the retransmit timer running until the whole flight is ACKed. */
     if (dtls_any_sent_messages_are_missing_acknowledge(s))
         return MSG_PROCESS_CONTINUE_READING;
+
+    /*
+     * This ACK interrupted a server still reading the client's flight.
+     * A complete ACK of our flight does not replace the remaining client
+     * messages. It may arrive before Certificate or be reordered after
+     * Certificate or CertificateVerify. Finishing the read sub-state-machine
+     * here would let write_transition() move to TLS_ST_OK and skip them.
+     */
+    if (s->server
+        && dtls13_server_waiting_for_client_flight(s->statem.pre_ack_hand_state)) {
+        /*
+         * We already know above that nothing is left needing
+         * retransmission, so this only resets timeout state and clears the
+         * (already-empty) sent buffer -- it leaves the read state alone, so
+         * the client's flight, including Finished, is still processed on
+         * return.
+         */
+        dtls1_stop_timer(s);
+        return MSG_PROCESS_CONTINUE_READING;
+    }
 
     return MSG_PROCESS_FINISHED_READING;
 }
@@ -1550,7 +1694,11 @@ int dtls1_read_failed(SSL_CONNECTION *s, int code)
     }
     /* done, no need to send a retransmit */
     if (!SSL_in_init(ssl)) {
-        BIO_set_flags(SSL_get_rbio(ssl), BIO_FLAGS_READ);
+        BIO *rbio = SSL_get_rbio(ssl);
+
+        /* Connections created by a DTLS listener have no rbio */
+        if (rbio != NULL)
+            BIO_set_flags(rbio, BIO_FLAGS_READ);
         return code;
     }
 
@@ -1697,6 +1845,24 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
     s->rlayer.wrlmethod->set1_bio(s->rlayer.wrl, s->wbio);
 
     ret = dtls1_do_write(s, sent_msg->msg_info.record_type);
+
+    /*
+     * If the message was retransmitted through a write record layer that is
+     * no longer the current one, the retransmission used up record sequence
+     * numbers that the current layer does not know about. This only matters
+     * for a ClientHello: it is retransmitted through the epoch 0 layer after
+     * the client has switched to the early data layer, and a ClientHello sent
+     * after a HelloRetryRequest must not reuse any of those sequence numbers.
+     * Keep the saved epoch 0 sequence number up to date for that case.
+     */
+    if (s->rlayer.wrl != saved_state.wrl) {
+        uint64_t epoch, seq;
+
+        if (s->rlayer.wrlmethod->get_epoch(s->rlayer.wrl, &epoch) == 1
+            && epoch == 0
+            && s->rlayer.wrlmethod->get_sequence(s->rlayer.wrl, &seq) == 1)
+            s->rlayer.wlayer_epoch_zero_sequence = seq;
+    }
 
     /* restore current state */
     s->rlayer.wrlmethod = saved_state.wrlmethod;

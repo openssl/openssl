@@ -60,6 +60,7 @@ static const char *in_pass = "";
 static int has_key = 0;
 static int has_cert = 0;
 static int has_ca = 0;
+static int version_pass = 1;
 static int expected_ca_count = -1;
 static const char *expected_cert_file = NULL;
 static const char *expected_ca_file = NULL;
@@ -122,6 +123,8 @@ static int pkcs12_parse_test(void)
         if (!TEST_ptr(p12))
             goto err;
 
+        if (!TEST_int_eq(PKCS12_check_version(p12), version_pass))
+            goto err;
         if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
             goto err;
 
@@ -559,6 +562,25 @@ err:
     return ret;
 }
 
+static int pkcs12_check_version_test(void)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+
+    if (in_file != NULL) {
+        p12 = PKCS12_load(in_file);
+        if (!TEST_ptr(p12))
+            goto err;
+
+        if (!TEST_int_eq(PKCS12_check_version(p12), version_pass))
+            goto err;
+    }
+    ret = 1;
+err:
+    PKCS12_free(p12);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -574,6 +596,7 @@ typedef enum OPTION_choice {
     OPT_MISMATCHED_P12,
     OPT_IN_NUM_SKEYS,
     OPT_LEGACY,
+    OPT_BAD_VERSION,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -593,6 +616,7 @@ const OPTIONS *test_get_options(void)
         { "mismatched-key-pass", OPT_MISMATCHED_P12, '-', "Input has key encrypted with a different password" },
         { "num-skeys", OPT_IN_NUM_SKEYS, 'n', "Number of symmetric keys in the input file" },
         { "legacy", OPT_LEGACY, '-', "Test the legacy APIs" },
+        { "badversion", OPT_BAD_VERSION, '-', "Test is expected to fail the version info check" },
         { NULL }
     };
     return options;
@@ -844,6 +868,9 @@ int setup_tests(void)
         case OPT_IN_NUM_SKEYS:
             num_skeys = opt_int_arg();
             break;
+        case OPT_BAD_VERSION:
+            version_pass = 0;
+            break;
         case OPT_TEST_CASES:
             break;
         default:
@@ -857,19 +884,22 @@ int setup_tests(void)
         return 0;
     }
 
-    ADD_TEST(test_null_args);
-    ADD_TEST(pkcs12_parse_test);
-    ADD_ALL_TESTS(test_parse_combinations, 8);
-    ADD_ALL_TESTS(test_parse_cert_placement, 8);
-    ADD_TEST(test_parse_mismatched_key_password);
-    ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_mfail_test);
-    ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_existing_ca_mfail_test);
-    ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
-    ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
-    ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
-    ADD_TEST(test_parse_ex_skey);
-    ADD_ALL_TESTS(test_parse_ex_libctx, 2);
-    ADD_ALL_TESTS(test_parse_ex_skey_libctx, 4);
+    ADD_TEST(pkcs12_check_version_test);
+    if (version_pass) {
+        ADD_TEST(test_null_args);
+        ADD_TEST(pkcs12_parse_test);
+        ADD_ALL_TESTS(test_parse_combinations, 8);
+        ADD_ALL_TESTS(test_parse_cert_placement, 8);
+        ADD_TEST(test_parse_mismatched_key_password);
+        ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_mfail_test);
+        ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_existing_ca_mfail_test);
+        ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
+        ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
+        ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
+        ADD_TEST(test_parse_ex_skey);
+        ADD_ALL_TESTS(test_parse_ex_libctx, 2);
+        ADD_ALL_TESTS(test_parse_ex_skey_libctx, 4);
+    }
     return 1;
 }
 

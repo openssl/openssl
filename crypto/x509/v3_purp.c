@@ -16,7 +16,8 @@
 #include "internal/tsan_assist.h"
 #include "x509_local.h"
 #include "crypto/objects/obj_dat.h"
-#include "internal/hashfunc.h"
+#include "crypto/siphash.h"
+#include "crypto/rand.h"
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -408,16 +409,44 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
     return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
+/*
+ * Per-scan SipHash keying for the duplicate-extension fall-back table.
+ *
+ * Standard extensions have an assigned NID and are deduplicated with the O(1)
+ * bitset in scan_ext_flags(). Only unknown or dynamically registered OIDs,
+ * whose bytes are fully attacker-controlled on an untrusted certificate, reach
+ * the hash table. An unkeyed hash would let an attacker precompute colliding
+ * OIDs and drive the table into O(n^2) chain walks (hash flooding). Hash the
+ * OID with SipHash under a random key drawn once per scan, mirroring the
+ * defense in ssl/quic/quic_lcidm.c.
+ */
+typedef struct {
+    const ASN1_OBJECT *obj;
+    const uint64_t *key; /* 128-bit SipHash key owned by scan_ext_flags */
+} oid_hte;
+
 static unsigned long oid_hash(const void *p)
 {
-    const ASN1_OBJECT *a = p;
+    const oid_hte *e = (const oid_hte *)p;
+    SIPHASH sip = { 0 };
+    unsigned char digest[SIPHASH_MIN_DIGEST_SIZE];
+    unsigned long v = 0;
 
-    return (unsigned long)ossl_fnv1a_hash((uint8_t *)a->data, a->length);
+    if (!SipHash_set_hash_size(&sip, SIPHASH_MIN_DIGEST_SIZE))
+        return 0;
+    if (!SipHash_Init(&sip, (const unsigned char *)e->key, 0, 0))
+        return 0;
+    SipHash_Update(&sip, (const unsigned char *)e->obj->data, e->obj->length);
+
+    if (!SipHash_Final(&sip, digest, sizeof(digest)))
+        return 0;
+    memcpy(&v, digest, sizeof(v) < sizeof(digest) ? sizeof(v) : sizeof(digest));
+    return v;
 }
 
 static int oid_cmp(const void *a, const void *b)
 {
-    return OBJ_cmp((const ASN1_OBJECT *)a, (const ASN1_OBJECT *)b);
+    return OBJ_cmp(((const oid_hte *)a)->obj, ((const oid_hte *)b)->obj);
 }
 
 /*
@@ -432,11 +461,15 @@ static int oid_cmp(const void *a, const void *b)
 static void scan_ext_flags(const X509 *x509, uint32_t *flags)
 {
     OPENSSL_LHASH *h = NULL;
+    oid_hte *arr = NULL;
+    size_t num_entries = 0;
+    uint64_t k[2]; /* random SipHash key for the fall-back table */
     uint8_t ex_bitset[(NUM_NID + 7) / 8];
+    int count = X509_get_ext_count(x509);
 
     memset(ex_bitset, 0, sizeof(ex_bitset));
     /* A certificate MUST NOT include more than one instance of an extension. */
-    for (int i = 0; i < X509_get_ext_count(x509); i++) {
+    for (int i = 0; i < count; i++) {
         const X509_EXTENSION *ex = X509_get_ext(x509, i);
         const ASN1_OBJECT *a = X509_EXTENSION_get_object(ex);
         int nid = OBJ_obj2nid(a);
@@ -467,18 +500,49 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
                 break;
             }
             /*
-             * Hashing the OID should be manageable more cheaply as well, and
-             * without additional dynamic allocations. In the case of this
-             * corner case, it’s not a problem at all, but the other duplicate
-             * detections also require hashing, so for the sake of consistency
-             * it would make sense to use a cheaper construct here later as well.
+             * Create the table and draw a fresh random SipHash key the first
+             * time an attacker-controlled OID is seen, so unkeyed hashing
+             * cannot be used to force O(n^2) collisions (hash flooding).
+             *
+             * The key only has to be unpredictable, not secret, so it is
+             * drawn with ossl_rand_hash_salt(), which still succeeds in a
+             * library context without a usable RAND (e.g. only the null
+             * provider loaded) instead of making every such certificate
+             * with an unknown extension invalid.
+             *
+             * The key and the entry wrappers remain valid for the duration of
+             * the scan; the table never outlives this function. Only this
+             * and the later extensions can be inserted, so the wrappers are
+             * sized for count - i entries.
+             *
+             * If the table cannot be set up or an insert fails, fail closed
+             * with EXFLAG_INVALID, as ossl_x509v3_cache_extensions() does for
+             * any other extension it cannot process. Leaving the loop
+             * silently would skip not only the duplicate check but also the
+             * unsupported-critical check for this and every later extension.
              */
-            if (h == NULL && (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL)
-                break;
-            if (OPENSSL_LH_insert(h, (void *)a) != NULL) {
+            if (h == NULL) {
+                OSSL_LIB_CTX *libctx = NULL;
+
+                ossl_x509_get0_libctx(x509, &libctx, NULL);
+                if (!ossl_rand_hash_salt(libctx, (unsigned char *)k, sizeof(k))
+                    || (arr = OPENSSL_malloc_array(count - i, sizeof(*arr))) == NULL
+                    || (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL) {
+                    *flags |= EXFLAG_INVALID;
+                    break;
+                }
+            }
+            arr[num_entries].obj = a;
+            arr[num_entries].key = k;
+            if (OPENSSL_LH_insert(h, &arr[num_entries]) != NULL) {
                 *flags |= EXFLAG_DUPLICATE;
                 break;
             }
+            if (OPENSSL_LH_error(h) != 0) {
+                *flags |= EXFLAG_INVALID;
+                break;
+            }
+            num_entries++;
         }
         if (nid == NID_freshest_crl)
             *flags |= EXFLAG_FRESHEST;
@@ -490,6 +554,7 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
         }
     }
     OPENSSL_LH_free(h);
+    OPENSSL_free(arr);
 }
 
 #define V1_ROOT (EXFLAG_V1 | EXFLAG_SS)
@@ -585,6 +650,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
                 tmp_ex_flags |= EXFLAG_INVALID;
             } else {
                 tmp_ex_pathlen = ASN1_INTEGER_get(bs->pathlen);
+                if (tmp_ex_pathlen < 0 || tmp_ex_pathlen > 255) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_PATHLEN_TOO_LARGE);
+                    tmp_ex_flags |= EXFLAG_INVALID;
+                    tmp_ex_pathlen = -1;
+                }
             }
         }
         BASIC_CONSTRAINTS_free(bs);
@@ -600,10 +670,22 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             || X509_get_ext_by_NID(const_x, NID_issuer_alt_name, -1) >= 0) {
             tmp_ex_flags |= EXFLAG_INVALID;
         }
-        if (pci->pcPathLengthConstraint != NULL)
-            tmp_ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
-        else
+        if (pci->pcPathLengthConstraint != NULL) {
+            if (pci->pcPathLengthConstraint->type == V_ASN1_NEG_INTEGER) {
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
+                tmp_ex_flags |= EXFLAG_INVALID;
+                tmp_ex_pcpathlen = -1;
+            } else {
+                tmp_ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
+                if (tmp_ex_pcpathlen < 0 || tmp_ex_pcpathlen > 255) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_PATHLEN_TOO_LARGE);
+                    tmp_ex_flags |= EXFLAG_INVALID;
+                    tmp_ex_pcpathlen = -1;
+                }
+            }
+        } else {
             tmp_ex_pcpathlen = -1;
+        }
         PROXY_CERT_INFO_EXTENSION_free(pci);
         tmp_ex_flags |= EXFLAG_PROXY;
     } else if (i != -1) {
@@ -879,6 +961,14 @@ void X509_set_proxy_flag(X509 *x)
 
 void X509_set_proxy_pathlen(X509 *x, long l)
 {
+    /*
+     * Out of range values cannot be reported from a void function, so
+     * fail closed: the caller asked for a constraint, and 0 permits no
+     * further delegation and can never be more permissive than the
+     * requested value.
+     */
+    if (l < -1 || l > 255)
+        l = 0;
     x->ex_pcpathlen = l;
 }
 

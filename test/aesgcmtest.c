@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,8 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include "testutil.h"
 
 static const unsigned char gcm_key[] = {
@@ -136,10 +138,70 @@ static int ivgen_test(void)
         && do_decrypt(iv_gen, ct, ctlen, tag, taglen);
 }
 
+/*
+ * inl > ctx->ivlen makes setivinv() compute ctx->iv + ctx->ivlen - inl,
+ * which wraps, and inl == 0 points past the IV.  Both are rejected.
+ */
+static int setivinv_bounds_test(void)
+{
+    int ret = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char key[32] = { 0 };
+    unsigned char fixed_iv[4] = { 0x01, 0x02, 0x03, 0x04 };
+    unsigned char big_ivinv[64];
+    unsigned char exact_ivinv[12];
+    OSSL_PARAM params[2];
+
+    memset(big_ivinv, 'A', sizeof(big_ivinv));
+    memset(exact_ivinv, 'B', sizeof(exact_ivinv));
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(NULL, "AES-256-GCM", NULL)))
+        goto err;
+
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+            (int)sizeof(fixed_iv), fixed_iv)))
+        goto err;
+
+    /* --- Negative: inl == 0 must be rejected --- */
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, big_ivinv, 0);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto err;
+
+    /* --- Negative: inl > ivlen (64 > 12) must be rejected --- */
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV,
+        big_ivinv, sizeof(big_ivinv));
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto err;
+
+    /* --- Positive: inl == ivlen (12 == 12) must be accepted --- */
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV,
+        exact_ivinv, sizeof(exact_ivinv));
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(kat_test);
     ADD_TEST(badkeylen_test);
     ADD_TEST(ivgen_test);
+    ADD_TEST(setivinv_bounds_test);
     return 1;
 }

@@ -572,12 +572,35 @@ int SSL_clear(SSL *s)
     return s->method->ssl_reset(s);
 }
 
+static void ssl_connection_clear_tls13_secrets(SSL_CONNECTION *sc)
+{
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+        sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+        sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+        sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+        sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+        sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+        sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+        sizeof(sc->early_exporter_master_secret));
+}
+
 int ossl_ssl_connection_reset(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
+
+    ssl_connection_clear_tls13_secrets(sc);
 
     if (ssl_clear_bad_session(sc)) {
         SSL_SESSION_free(sc->session);
@@ -589,6 +612,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->psksession_id = NULL;
     sc->psksession_id_len = 0;
     sc->hello_retry_request = SSL_HRR_NONE;
+    sc->dtls13_process_hello = 0;
     sc->sent_tickets = 0;
 
     sc->error = 0;
@@ -683,6 +707,9 @@ int ossl_ssl_connection_reset(SSL *s)
             if (is_dtls_listener_conn) {
                 DTLS_LISTENER *dl = (DTLS_LISTENER *)saved_listener;
 
+                /* The detached connection cannot unregister itself on free. */
+                ossl_dtls_listener_unregister_established_conn(saved_listener,
+                    &saved_peer_addr);
                 ossl_crypto_mutex_lock(dl->mutex);
                 sc->listener_rx = NULL;
                 ossl_crypto_mutex_unlock(dl->mutex);
@@ -1154,8 +1181,11 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
     return 1;
 }
 
-int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-    unsigned int id_len)
+/*
+ * Returns -1 on error, 0 if there is no match and 1 if there is a match.
+ */
+int ssl_has_matching_session_id(const SSL_CONNECTION *sc,
+    const unsigned char *id, unsigned int id_len)
 {
     /*
      * A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
@@ -1165,20 +1195,28 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      * by this SSL.
      */
     SSL_SESSION r, *p;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
 
     if (sc == NULL || id_len > sizeof(r.session_id))
-        return 0;
+        return -1;
 
     r.ssl_version = sc->version;
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
 
     if (!CRYPTO_THREAD_read_lock(sc->session_ctx->lock))
-        return 0;
+        return -1;
     p = lh_SSL_SESSION_retrieve(sc->session_ctx->sessions, &r);
     CRYPTO_THREAD_unlock(sc->session_ctx->lock);
     return (p != NULL);
+}
+
+int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
+    unsigned int id_len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    /* Preserve the public API's boolean return value on internal errors. */
+    return ssl_has_matching_session_id(sc, id, id_len) > 0;
 }
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
@@ -1675,6 +1713,8 @@ void ossl_ssl_connection_free(SSL *ssl)
 #ifndef OPENSSL_NO_ECH
     ossl_ech_conn_clear(&s->ext.ech);
 #endif
+
+    ssl_connection_clear_tls13_secrets(s);
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -2115,17 +2155,9 @@ int SSL_has_pending(const SSL *s)
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     /* Check buffered app data if any first */
-    if (SSL_CONNECTION_IS_DTLS(sc)) {
-        TLS_RECORD *rdata;
-        pitem *item, *iter;
-
-        iter = pqueue_iterator(sc->rlayer.d->buffered_app_data);
-        while ((item = pqueue_next(&iter)) != NULL) {
-            rdata = item->data;
-            if (rdata->length > 0)
-                return 1;
-        }
-    }
+    if (SSL_CONNECTION_IS_DTLS(sc)
+        && DTLS_RECORD_LAYER_buffered_app_data_pending(&sc->rlayer))
+        return 1;
 
     if (RECORD_LAYER_processed_read_pending(&sc->rlayer))
         return 1;
@@ -2181,7 +2213,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
  * Now in theory, since the calling process own 't' it should be safe to
  * modify.  We need to be able to read f without being hassled
  */
-int SSL_copy_session_id(SSL *t, const SSL *f)
+int ossl_ssl_copy_session_id(SSL *t, const SSL *f)
 {
     int i;
     /* TODO(QUIC FUTURE): Not allowed for QUIC currently. */
@@ -2190,6 +2222,15 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
 
     if (tsc == NULL || fsc == NULL)
         return 0;
+
+    /*
+     * |t| keeps its own SSL_CTX, whose provider sigalgs index the CERT's
+     * pkeys, so it cannot share a CERT sized for a different set of them.
+     */
+    if (tsc->ssl_pkey_num != fsc->cert->ssl_pkey_num) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     /* Do we need to do SSL locking? */
     if (!SSL_set_session(t, SSL_get_session(f))) {
@@ -2217,6 +2258,13 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_2
+int SSL_copy_session_id(SSL *t, const SSL *f)
+{
+    return ossl_ssl_copy_session_id(t, f);
+}
+#endif
 
 /* Fix this so it checks all the valid key/cert options */
 int SSL_CTX_check_private_key(const SSL_CTX *ctx)
@@ -3110,6 +3158,22 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
+    /*
+     * An unsent reciprocal KeyUpdate does not prevent an orderly close.
+     * Cancel it only at a completed post-handshake boundary, with no write-key
+     * installation pending. A KeyUpdate already in flight must retain its
+     * state until the exchange completes.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc)
+        && !SSL_IS_FIRST_HANDSHAKE(sc)
+        && sc->statem.state == MSG_FLOW_FINISHED
+        && sc->statem.hand_state == TLS_ST_OK
+        && sc->key_update == SSL_KEY_UPDATE_NOT_REQUESTED
+        && !sc->d1->key_update_write_pending) {
+        sc->key_update = SSL_KEY_UPDATE_NONE;
+        ossl_statem_set_in_init(sc, 0);
+    }
+
     if (!SSL_in_init(s)) {
         if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
             struct ssl_async_args args;
@@ -3163,6 +3227,19 @@ int SSL_key_update(SSL *s, int updatetype)
 
     if (RECORD_LAYER_write_pending(&sc->rlayer)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_WRITE_RETRY);
+        return 0;
+    }
+
+    /*
+     * RFC 9147 section 5.8.4: implementations MUST NOT send a KeyUpdate if
+     * an earlier one has not yet been acknowledged. key_update_write_pending
+     * covers this and more: it also catches an earlier KeyUpdate that is
+     * acknowledged but whose write-key install is still withheld behind an
+     * earlier, unrelated message -- SSL_is_init_finished() above does not
+     * guarantee that has completed.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
         return 0;
     }
 
@@ -3260,6 +3337,15 @@ int SSL_new_session_ticket(SSL *s)
     if ((SSL_in_init(s) && sc->ext.extra_tickets_expected == 0)
         || SSL_IS_FIRST_HANDSHAKE(sc) || !sc->server
         || !SSL_CONNECTION_IS_VERSION13(sc))
+        return 0;
+
+    /*
+     * Our own KeyUpdate's new keys must not be used for anything else
+     * until its write-key install completes (RFC 9147 section 8) -- even
+     * though it may already be acknowledged, with nothing left for
+     * SSL_is_init_finished() to object to.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending)
         return 0;
     sc->ext.extra_tickets_expected++;
     if (!RECORD_LAYER_write_pending(&sc->rlayer) && !SSL_in_init(s))
@@ -4425,6 +4511,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     if ((ret->tktenc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq)) == NULL)
         goto err;
+    if ((ret->sha1 = EVP_MD_fetch(libctx, "SHA1", propq)) == NULL)
+        goto err;
+
 #if defined(OPENSSL_HAVE_TLS1PRF)
     if ((ret->tls1prf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_PRF, propq)) == NULL)
         goto err;
@@ -4450,6 +4539,14 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret->cert_store == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
+    }
+
+    if (!SSL_CTX_is_server(ret)) {
+        ret->handshake_certs = sk_X509_HS_CACHE_ENT_new(NULL);
+        if (ret->handshake_certs == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
     }
 #ifndef OPENSSL_NO_CT
     ret->ctlog_store = CTLOG_STORE_new_ex(libctx, propq);
@@ -4710,6 +4807,13 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     return ((i > 1) ? 1 : 0);
 }
 
+static void free_hs_cache_ent(X509_HS_CACHE_ENT *entry)
+{
+    X509_free(entry->cert);
+    OPENSSL_free(entry);
+    return;
+}
+
 void SSL_CTX_free(SSL_CTX *a)
 {
     int i;
@@ -4751,6 +4855,7 @@ void SSL_CTX_free(SSL_CTX *a)
     EVP_MAC_free(a->hmac);
     EVP_MD_free(a->sha256);
     EVP_CIPHER_free(a->tktenc);
+    EVP_MD_free(a->sha1);
 #ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF_free(a->tls1prf);
 #endif
@@ -4782,7 +4887,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
-    for (j = 0; j < SSL_ENC_NUM_IDX; j++)
+    for (j = 0; j < OSSL_NELEM(a->ssl_cipher_methods); j++)
         ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
     for (j = 0; j < SSL_MD_NUM_IDX; j++)
         ssl_evp_md_free(a->ssl_digest_methods[j]);
@@ -4812,6 +4917,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->client_cert_type);
     OPENSSL_free(a->server_cert_type);
 
+    sk_X509_HS_CACHE_ENT_pop_free(a->handshake_certs, free_hs_cache_ent);
     CRYPTO_THREAD_lock_free(a->lock);
     CRYPTO_FREE_REF(&a->references);
 #ifdef TSAN_REQUIRES_LOCKING
@@ -4832,6 +4938,107 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     OPENSSL_free(a);
+}
+
+X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
+    size_t cert_len, unsigned char *sha1_hash)
+{
+    int idx;
+    X509_HS_CACHE_ENT *find = NULL;
+    X509 *ret = NULL;
+    unsigned int len = SHA_DIGEST_LENGTH;
+    int cache_len;
+
+    if (sctx->handshake_certs == NULL)
+        return NULL;
+
+    if (!EVP_Digest(certbytes, cert_len, sha1_hash, &len, sctx->sha1, NULL))
+        return NULL;
+
+    if (len != SHA_DIGEST_LENGTH)
+        return NULL;
+
+    if (!CRYPTO_THREAD_read_lock(sctx->lock))
+        return NULL;
+
+    cache_len = sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs);
+    for (idx = 0; idx < cache_len; idx++) {
+        find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
+        if (!memcmp(find->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH)) {
+            /*
+             * If for some reason we cant take the reference on the
+             * cert, just don't return one
+             */
+            if (!X509_up_ref(find->cert))
+                break;
+            ret = find->cert;
+            break;
+        }
+    }
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
+}
+
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert,
+    unsigned char *sha1_hash)
+{
+    X509_HS_CACHE_ENT *tmp, *del;
+    X509 *ret = cert;
+
+    if (sctx->handshake_certs == NULL)
+        return cert;
+
+    /*
+     * Force extension caching on the X509 now, while we still "own" it
+     * exclusively. From this point on the cached cert is treated as
+     * immutable by all readers (they only X509_up_ref it).
+     */
+    if (X509_check_purpose(cert, -1, 0) <= 0)
+        return cert;
+
+    tmp = OPENSSL_malloc(sizeof(X509_HS_CACHE_ENT));
+    if (tmp == NULL)
+        return cert;
+
+    /*
+     * We had to compute the hash of the der string in the find routine, so
+     * we can reuse it here
+     */
+    memcpy(tmp->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH);
+    tmp->cert = cert;
+    if (!X509_up_ref(cert)) {
+        /*
+         * We didn't take a ref, so we can't cache this cert, but we still
+         * own the initial ref, so we can just return it for a single use
+         * Note: We use OPENSSL_free here instead of free_hs_cache_ent, as the
+         * latter drops the ref on the cert, which we don't want
+         */
+        OPENSSL_free(tmp);
+        return cert;
+    }
+
+    if (!CRYPTO_THREAD_write_lock(sctx->lock)) {
+        free_hs_cache_ent(tmp);
+        return cert;
+    }
+
+    if (sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs) > 64) {
+        /*
+         * Evict the oldest entry (index 0). Deleting index 64 with
+         * num > 64 would remove the most-recently-pushed entry, which
+         * is the opposite of what we want.
+         */
+        del = sk_X509_HS_CACHE_ENT_delete(sctx->handshake_certs, 0);
+        if (del != NULL)
+            free_hs_cache_ent(del);
+    }
+    if (!sk_X509_HS_CACHE_ENT_push(sctx->handshake_certs, tmp)) {
+        free_hs_cache_ent(tmp);
+        ret = cert;
+    }
+
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
 }
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
@@ -5573,7 +5780,7 @@ SSL *SSL_dup(SSL *s)
          * Arranges to share the same session via up_ref.  This "copies"
          * session-id, SSL_METHOD, sid_ctx, and 'cert'
          */
-        if (!SSL_copy_session_id(ret, s))
+        if (!ossl_ssl_copy_session_id(ret, s))
             goto err;
     } else {
         /*
@@ -7829,6 +8036,17 @@ int SSL_verify_client_post_handshake(SSL *ssl)
 
     if (!SSL_is_init_finished(ssl)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_STILL_IN_INIT);
+        return 0;
+    }
+
+    /*
+     * Our own KeyUpdate's new keys must not be used for anything else
+     * until its write-key install completes (RFC 9147 section 8) -- even
+     * though it may already be acknowledged, with nothing left for
+     * SSL_is_init_finished() to object to.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
         return 0;
     }
 

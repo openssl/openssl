@@ -195,32 +195,31 @@ typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
     (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12)
 
 /* Bits for algorithm_enc (symmetric encryption) */
-#define SSL_DES 0x00000001U
-#define SSL_3DES 0x00000002U
-#define SSL_RC4 0x00000004U
-#define SSL_RC2 0x00000008U
-#define SSL_IDEA 0x00000010U
-#define SSL_eNULL 0x00000020U
-#define SSL_AES128 0x00000040U
-#define SSL_AES256 0x00000080U
-#define SSL_CAMELLIA128 0x00000100U
-#define SSL_CAMELLIA256 0x00000200U
-#define SSL_eGOST2814789CNT 0x00000400U
-#define SSL_SEED 0x00000800U
-#define SSL_AES128GCM 0x00001000U
-#define SSL_AES256GCM 0x00002000U
-#define SSL_AES128CCM 0x00004000U
-#define SSL_AES256CCM 0x00008000U
-#define SSL_AES128CCM8 0x00010000U
-#define SSL_AES256CCM8 0x00020000U
-#define SSL_eGOST2814789CNT12 0x00040000U
-#define SSL_CHACHA20POLY1305 0x00080000U
-#define SSL_ARIA128GCM 0x00100000U
-#define SSL_ARIA256GCM 0x00200000U
-#define SSL_MAGMA 0x00400000U
-#define SSL_KUZNYECHIK 0x00800000U
-#define SSL_SM4GCM 0x01000000U
-#define SSL_SM4CCM 0x02000000U
+#define SSL_3DES 1U
+#define SSL_RC4 (1U << 1)
+#define SSL_IDEA (1U << 2)
+#define SSL_eNULL (1U << 3)
+#define SSL_AES128 (1U << 4)
+#define SSL_AES256 (1U << 5)
+#define SSL_CAMELLIA128 (1U << 6)
+#define SSL_CAMELLIA256 (1U << 7)
+#define SSL_eGOST2814789CNT (1U << 8)
+#define SSL_SEED (1U << 9)
+#define SSL_AES128GCM (1U << 10)
+#define SSL_AES256GCM (1U << 11)
+#define SSL_AES128CCM (1U << 12)
+#define SSL_AES256CCM (1U << 13)
+#define SSL_AES128CCM8 (1U << 14)
+#define SSL_AES256CCM8 (1U << 15)
+#define SSL_eGOST2814789CNT12 (1U << 16)
+#define SSL_CHACHA20POLY1305 (1U << 17)
+#define SSL_ARIA128GCM (1U << 18)
+#define SSL_ARIA256GCM (1U << 19)
+#define SSL_MAGMA (1U << 20)
+#define SSL_KUZNYECHIK (1U << 21)
+#define SSL_SM4GCM (1U << 22)
+#define SSL_SM4CCM (1U << 23)
+#define SSL_ENC_NUM_IDX 24
 
 #define SSL_AESGCM (SSL_AES128GCM | SSL_AES256GCM)
 #define SSL_AESCCM (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -233,8 +232,8 @@ typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
 #define SSL_CHACHA20 (SSL_CHACHA20POLY1305)
 #define SSL_ARIAGCM (SSL_ARIA128GCM | SSL_ARIA256GCM)
 #define SSL_ARIA (SSL_ARIAGCM)
-#define SSL_CBC (SSL_DES | SSL_3DES | SSL_RC2 | SSL_IDEA \
-    | SSL_AES128 | SSL_AES256 | SSL_CAMELLIA128          \
+#define SSL_CBC (SSL_3DES | SSL_IDEA            \
+    | SSL_AES128 | SSL_AES256 | SSL_CAMELLIA128 \
     | SSL_CAMELLIA256 | SSL_SEED)
 
 /* Bits for algorithm_mac (symmetric authentication) */
@@ -410,34 +409,6 @@ typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
 #define SSL_PKEY_ED25519 7
 #define SSL_PKEY_ED448 8
 #define SSL_PKEY_NUM 9
-
-#define SSL_ENC_DES_IDX 0
-#define SSL_ENC_3DES_IDX 1
-#define SSL_ENC_RC4_IDX 2
-#define SSL_ENC_RC2_IDX 3
-#define SSL_ENC_IDEA_IDX 4
-#define SSL_ENC_NULL_IDX 5
-#define SSL_ENC_AES128_IDX 6
-#define SSL_ENC_AES256_IDX 7
-#define SSL_ENC_CAMELLIA128_IDX 8
-#define SSL_ENC_CAMELLIA256_IDX 9
-#define SSL_ENC_GOST89_IDX 10
-#define SSL_ENC_SEED_IDX 11
-#define SSL_ENC_AES128GCM_IDX 12
-#define SSL_ENC_AES256GCM_IDX 13
-#define SSL_ENC_AES128CCM_IDX 14
-#define SSL_ENC_AES256CCM_IDX 15
-#define SSL_ENC_AES128CCM8_IDX 16
-#define SSL_ENC_AES256CCM8_IDX 17
-#define SSL_ENC_GOST8912_IDX 18
-#define SSL_ENC_CHACHA_IDX 19
-#define SSL_ENC_ARIA128GCM_IDX 20
-#define SSL_ENC_ARIA256GCM_IDX 21
-#define SSL_ENC_MAGMA_IDX 22
-#define SSL_ENC_KUZNYECHIK_IDX 23
-#define SSL_ENC_SM4GCM_IDX 24
-#define SSL_ENC_SM4CCM_IDX 25
-#define SSL_ENC_NUM_IDX 26
 
 /*-
  * SSL_kRSA <- RSA_ENC
@@ -895,6 +866,13 @@ typedef struct {
 #define OPENSSL_HAVE_TLS1PRF
 #endif
 
+typedef struct x509_hs_cache_entry_st {
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    X509 *cert;
+} X509_HS_CACHE_ENT;
+
+DEFINE_STACK_OF(X509_HS_CACHE_ENT)
+
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
@@ -906,6 +884,7 @@ struct ssl_ctx_st {
     STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
     struct x509_store_st /* X509_STORE */ *cert_store;
     LHASH_OF(SSL_SESSION) *sessions;
+    STACK_OF(X509_HS_CACHE_ENT) *handshake_certs;
     EVP_MAC *hmac;
     EVP_MD *sha256;
     EVP_CIPHER *tktenc;
@@ -1004,6 +983,8 @@ struct ssl_ctx_st {
         size_t cookie_len);
 
     CRYPTO_EX_DATA ex_data;
+
+    EVP_MD *sha1; /* For SSLv3/TLSv1 'ssl3-sha1' */
 
     STACK_OF(X509) *extra_certs;
     STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, TLSv1 */
@@ -1303,6 +1284,10 @@ struct ssl_ctx_st {
 #endif
 };
 
+X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
+    size_t cert_len, unsigned char *sha1_hash);
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert, unsigned char *sha1_hash);
+
 typedef struct ossl_quic_tls_callbacks_st {
     int (*crypto_send_cb)(SSL *s, const unsigned char *buf, size_t buf_len,
         size_t *consumed, void *arg);
@@ -1507,6 +1492,9 @@ struct ssl_connection_st {
             const struct sigalg_lookup_st *sigalg;
             /* Pointer to certificate we use */
             CERT_PKEY *cert;
+            /* Client identity awaiting verification */
+            STACK_OF(X509) *pending_peer_chain;
+            EVP_PKEY *pending_peer_rpk;
             /*
              * signature algorithms peer reports: e.g. supported signature
              * algorithms extension for server or as part of a certificate
@@ -1613,6 +1601,12 @@ struct ssl_connection_st {
      * making any further progress, including the progress being waited for.
      */
     unsigned int listener_force_nonblocking;
+    /*
+     * Set when the listener's last drive of this pending connection left it
+     * waiting for its peer, so it need not be driven again until a datagram
+     * is queued for it or its retransmission timer expires.
+     */
+    unsigned int listener_idle;
 #endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
@@ -2146,7 +2140,7 @@ typedef struct pitem_st pitem;
 
 struct pqueue_st {
     pitem *items;
-    int count;
+    size_t count;
 };
 
 struct pitem_st {
@@ -2228,6 +2222,43 @@ typedef struct dtls_sent_msg_st {
 
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
 
+/**
+ * @brief Test whether our own KeyUpdate is still awaiting acknowledgement.
+ *
+ * @param s the DTLS connection
+ * @returns 1 if a KeyUpdate in the sent message queue still has unacknowledged
+ *          record numbers, 0 otherwise.
+ */
+int dtls_has_unacked_key_update(SSL_CONNECTION *s);
+
+/**
+ * @brief Install a deferred KeyUpdate write key once it is safe to do so.
+ *
+ * If our KeyUpdate is waiting to install its new write keys, check whether
+ * it and every message sent before it is now acknowledged (RFC 9147 erratum
+ * 8047), and install the key if so. Called when an ACK is processed, and when
+ * a flight is retired implicitly with no ACK record involved.
+ *
+ * @param s the DTLS connection
+ * @returns 0 only on a fatal error installing the key, in which case
+ *          SSLfatal() has already been called; 1 otherwise, including when
+ *          there was nothing to do.
+ */
+int dtls1_check_deferred_write_key(SSL_CONNECTION *s);
+
+/**
+ * @brief Test whether the next expected handshake message is already buffered.
+ *
+ * Reports a fully received message waiting in the reassembly buffer for the
+ * next expected sequence number, independently of any new record arriving, so
+ * that callers keep reading instead of going idle.
+ *
+ * @param s the DTLS connection
+ * @returns 1 if the next expected message is complete and buffered, 0
+ *          otherwise.
+ */
+int dtls1_has_buffered_ready_message(SSL_CONNECTION *s);
+
 static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
 {
     switch (msgtype) {
@@ -2286,6 +2317,28 @@ typedef struct dtls1_state_st {
 
     unsigned int retransmitting;
     unsigned int has_change_cipher_spec;
+    /*
+     * Set when our own KeyUpdate has been sent but not yet acknowledged.
+     * The new write keys are not installed until the ACK arrives
+     * per RFC 9147 section 8: the restriction is on using the new
+     * epoch's keys, not on sending altogether, so we keep using the current
+     * keys in the meantime.
+     */
+    unsigned int key_update_write_pending;
+    /*
+     * Set true once our own pending KeyUpdate has been fully acknowledged.
+     * Tracked separately from its sent_messages entry because that entry
+     * can be freed as soon as it's acknowledged, even while
+     * key_update_write_pending is still waiting on an earlier message -- so
+     * the entry may already be gone by the time we need to know this.
+     */
+    unsigned int key_update_acked;
+    /*
+     * The handshake message sequence number of our own pending KeyUpdate,
+     * captured when it was sent. Lets us tell which other queued messages
+     * precede it, without needing its own entry to still be in the queue.
+     */
+    unsigned short key_update_msg_seq;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
@@ -2360,6 +2413,9 @@ DEFINE_STACK_OF(SSL)
  * Default maximum number of pending connections for DTLS listeners.
  */
 #define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 256
+
+/* Most drive passes over the pending connections in one listener tick */
+#define DTLS_LISTENER_MAX_DRIVE_PASSES 4
 
 /*
  * Default maximum size in bytes of a datagram a DTLS listener will receive.
@@ -2439,6 +2495,15 @@ typedef struct dtls_listener_st {
     /* Notifier has been signalled */
     int signalled_notifier;
 
+    /* Advanced when the last waiter clears the notifier. */
+    uint64_t notify_generation;
+
+    /*
+     * A pending connection may have queued input that no drive pass in
+     * progress will see. Protected by mutex.
+     */
+    unsigned int pending_input;
+
     /*
      * Time callback for customizable time source (primarily for testing).
      * If NULL, ossl_time_now() is used.
@@ -2454,7 +2519,8 @@ typedef struct dtls_listener_st {
     OSSL_TIME pending_timeout;
 
     /*
-     * Maximum number of pending connections allowed.
+     * Maximum number of listener-owned connections allowed, counting both
+     * the pending table and the accept queue.
      * When this limit is reached, new connection attempts are rejected.
      *
      * Default: DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS
@@ -2477,7 +2543,7 @@ typedef struct dtls_listener_st {
     RIO_NOTIFIER notifier;
 
     /*
-     * Count of threads currently blocked waiting in poll().
+     * Count of outstanding blocking registrations.
      */
     size_t cur_blocking_waiters;
 
@@ -2912,6 +2978,17 @@ __owur SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
 __owur SSL *ossl_ssl_connection_new(SSL_CTX *ctx);
 void ossl_ssl_connection_free(SSL *ssl);
 __owur int ossl_ssl_connection_reset(SSL *ssl);
+/**
+ * @brief Give @p t the session, method, session ID context and CERT of @p f.
+ *
+ * The CERT is shared, not copied. Fails if @p f's CERT is sized for a
+ * different number of provider sigalgs than @p t's SSL_CTX.
+ *
+ * @param t The SSL object to copy to.
+ * @param f The SSL object to copy from.
+ * @return 1 on success, 0 on failure.
+ */
+__owur int ossl_ssl_copy_session_id(SSL *t, const SSL *f);
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num,
@@ -2921,6 +2998,8 @@ __owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
+__owur int ssl_has_matching_session_id(const SSL_CONNECTION *sc,
+    const unsigned char *id, unsigned int id_len);
 __owur int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss);
 __owur int ssl_get_new_session(SSL_CONNECTION *s, int session);
 __owur SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
@@ -2928,6 +3007,8 @@ __owur SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
     size_t sess_id_len);
 __owur int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket);
+void ossl_session_set0_peer(SSL_SESSION *sess, STACK_OF(X509) *peer_chain,
+    EVP_PKEY *peer_rpk, long verify_result);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
@@ -3114,6 +3195,7 @@ void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
     int record_type);
 int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
+void dtls13_hellos_done(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs);
 void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch);
 __owur OSSL_TIME dtls1_default_timeout(void);
@@ -3122,8 +3204,31 @@ __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
 __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
+
+/**
+ * @brief Stop the retransmit timer on reading the peer's flight, keeping any
+ * of our own messages that are still unacknowledged.
+ *
+ * Unlike dtls1_stop_timer(), a DTLS 1.3 connection which still has other
+ * unacknowledged messages outstanding keeps them, retiring only what the
+ * peer's flight implicitly acknowledges (RFC 9147 section 7.2). A deferred
+ * KeyUpdate write key is installed if this unblocks it.
+ *
+ * @param s the DTLS connection
+ * @returns 0 only on a fatal error installing a deferred write key, in which
+ *          case SSLfatal() has already been called; 1 otherwise.
+ */
+int dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
+/**
+ * @brief Check whether the current write record layer is still needed for
+ * retransmissions.
+ * @param[in] s the DTLS connection
+ * @returns 1 if a message in the sent_messages queue was sent with the
+ *          current write record layer, which then has to be kept, 0 otherwise
+ */
+int dtls1_sent_buffer_uses_current_wrl(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
 __owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
@@ -3164,6 +3269,9 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
+/* Deregister without waiting, then wait only for the recorded signal cycle. */
+int ossl_dtls_listener_deregister_blocking_section(SSL *s, uint64_t *generation);
+void ossl_dtls_listener_wait_for_notifier_clear(SSL *s, uint64_t generation);
 int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
     int bound_by_event_timeout);
 int ossl_dtls_blocking(const SSL *s);
@@ -3172,6 +3280,7 @@ int ossl_dtls_get_blocking_mode(const SSL *s);
 int ossl_dtls_conn_wait_for_datagram(SSL *s);
 int ossl_dtls_conn_wait_for_write(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
+int ossl_dtls_listener_has_pending_input(SSL *s);
 
 /* DTLS Listener internal cookie callbacks */
 int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,

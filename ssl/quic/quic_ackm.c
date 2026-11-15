@@ -980,6 +980,13 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
                 loss_info.tx_size = p->num_bytes;
 
                 ackm->cc_method->on_data_lost(ackm->cc_data, &loss_info);
+            } else {
+                /*
+                 * The packet is no longer in flight all the same, so the CC
+                 * must stop counting it.
+                 */
+                ackm->cc_method->on_data_invalidated(ackm->cc_data,
+                    p->num_bytes);
             }
         }
 

@@ -1418,4 +1418,4 @@ foreach my $line (split("\n",$code)) {
 }
 
 }
- STDOUT or die "error closing STDOUT: $!";
+close STDOUT or die "error closing STDOUT: $!";

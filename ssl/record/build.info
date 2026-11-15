@@ -1,6 +1,6 @@
 SUBDIRS=methods
 
-#Needed for the multiblock code in rec_layer_s3.c
+#Needed for the multiblock code in tls_multib.c
 IF[{- !$disabled{asm} -}]
   $AESDEF_x86=AES_ASM
   $AESDEF_x86_64=AES_ASM

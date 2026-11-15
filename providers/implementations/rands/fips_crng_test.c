@@ -113,16 +113,22 @@ static int RCT_test(CRNG_TEST *crngt, uint8_t next)
      *
      *      C = 1 + \left\lceil\frac{ -log_2 \alpha}H\right\rceil
      *
-     * where alpha = 2^-20 and H is the expected entropy per sample.
+     * where alpha = 2^-40 and H is the expected entropy per sample.
      */
     static const unsigned int rct_c[9] = {
-        41, /* H = 0.5 */
-        21, 11, 8, 6, 5, 5, 4, 4 /* H = 1, ..., 8 */
+        81, /* H = 0.5 */
+        41, 21, 15, 11, 9, 8, 7, 6 /* H = 1, ..., 8 */
     };
 
     if (ossl_likely(crngt->rct.b != 0)
-        && ossl_unlikely(next == crngt->rct.a))
-        return ossl_likely(++crngt->rct.b < rct_c[ENTROPY_H]);
+        && ossl_unlikely(next == crngt->rct.a)) {
+        if (ossl_likely(++crngt->rct.b < rct_c[ENTROPY_H]))
+            return 1;
+        ERR_raise_data(ERR_LIB_PROV,
+            PROV_R_ENTROPY_SOURCE_FAILED_RCT_CONTINUOUS_TEST,
+            "byte repeats %u times", crngt->rct.b);
+        return 0;
+    }
     crngt->rct.a = next;
     crngt->rct.b = 1;
     return 1;
@@ -136,17 +142,21 @@ static int APT_test(CRNG_TEST *crngt, uint8_t next)
     /*
      * Critical values for this test are drawn from a binomial
      * distribution with n = 512, p = 2^-H at a critical threshold of
-     * 2^-20.  H being the expected entropy per sample.  Refer SP 800-90B
-     * section 4.4.2, table 2.
+     * 2^-40.  H being the expected entropy per sample.  Refer SP 800-90B
+     * section 4.4.2, footnote 10.
      */
     static const unsigned int apt_c[9] = {
-        410, /* H = 0.5 */
-        311, 177, 103, 62, 39, 25, 18, 13 /* H = 1, ..., 8 */
+        432, /* H = 0.5 */
+        336, 201, 123, 78, 51, 35, 26, 19 /* H = 1, ..., 8 */
     };
 
     if (ossl_likely(crngt->apt.b != 0)) {
         if (ossl_unlikely(crngt->apt.a == next)
             && ossl_unlikely(++crngt->apt.b >= apt_c[ENTROPY_H])) {
+            ERR_raise_data(ERR_LIB_PROV,
+                PROV_R_ENTROPY_SOURCE_FAILED_APT_CONTINUOUS_TEST,
+                "byte appears %u times by position %u",
+                crngt->apt.b, crngt->apt.i);
             crngt->apt.b = 0;
             return 0;
         }
@@ -167,8 +177,6 @@ static int crng_test(CRNG_TEST *crngt, const unsigned char *buf, size_t n)
     for (i = 0; i < n; i++)
         if (!RCT_test(crngt, buf[i]) || !APT_test(crngt, buf[i])) {
             crngt->state = EVP_RAND_STATE_ERROR;
-            ERR_raise(ERR_LIB_PROV,
-                PROV_R_ENTROPY_SOURCE_FAILED_CONTINUOUS_TESTS);
             return 0;
         }
     return 1;
@@ -292,6 +300,12 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
     size_t n;
     size_t r = 0;
 
+    /*
+     * Seed material that fails the health tests goes straight back to its
+     * source.  Do not leave |*pout| pointing at it: a DRBG whose reseed
+     * fails releases whatever |*pout| holds, which would free it again.
+     */
+
     /* Without a parent, we rely on the up calls */
     if (crngt->parent == NULL
         || crngt->parent_get_seed == NULL) {
@@ -299,8 +313,11 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
             min_len, max_len);
         if (n == 0)
             return 0;
-        r = crng_test(crngt, *pout, n);
-        return r > 0 ? n : 0;
+        if (crng_test(crngt, *pout, n) > 0)
+            return n;
+        ossl_prov_cleanup_entropy(crngt->provctx, *pout, n);
+        *pout = NULL;
+        return 0;
     }
 
     /* Grab seed from our parent */
@@ -310,10 +327,13 @@ static size_t crng_test_get_seed(void *vcrngt, unsigned char **pout,
     n = crngt->parent_get_seed(crngt->parent, pout, entropy,
         min_len, max_len, prediction_resistance,
         adin, adin_len);
-    if (n > 0 && crng_test(crngt, *pout, n) > 0)
+    if (n > 0 && crng_test(crngt, *pout, n) > 0) {
         r = n;
-    else if (crngt->parent_clear_seed != NULL)
-        crngt->parent_clear_seed(crngt->parent, *pout, n);
+    } else {
+        if (n > 0 && crngt->parent_clear_seed != NULL)
+            crngt->parent_clear_seed(crngt->parent, *pout, n);
+        *pout = NULL;
+    }
     unlock_parent(crngt);
     return r;
 }

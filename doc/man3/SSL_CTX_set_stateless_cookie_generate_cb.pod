@@ -6,7 +6,7 @@ SSL_CTX_set_stateless_cookie_generate_cb,
 SSL_CTX_set_stateless_cookie_verify_cb,
 SSL_CTX_set_cookie_generate_cb,
 SSL_CTX_set_cookie_verify_cb
-- Callback functions for stateless TLS1.3 cookies
+- Callback functions for TLS1.3 and DTLS cookies
 
 =head1 SYNOPSIS
 
@@ -39,35 +39,45 @@ SSL_CTX_set_cookie_verify_cb
 =head1 DESCRIPTION
 
 SSL_CTX_set_stateless_cookie_generate_cb() sets the callback used by
-L<SSL_stateless(3)> to generate the application-controlled portion of the cookie
-provided to clients in the HelloRetryRequest transmitted as a response to a
-ClientHello with a missing or invalid cookie. gen_stateless_cookie_cb() must
-write at most SSL_COOKIE_LENGTH bytes into B<cookie>, and must write the number
-of bytes written to B<cookie_len>. If a cookie cannot be generated, a zero
-return value can be used to abort the handshake.
+L<SSL_stateless(3)>, and by DTLS 1.3 server connections with
+B<SSL_OP_COOKIE_EXCHANGE> set (see L<SSL_CTX_set_options(3)>), to generate the
+application-controlled portion of the cookie provided to clients in the
+HelloRetryRequest transmitted as a response to a ClientHello with a missing or
+invalid cookie. gen_stateless_cookie_cb() must write at most SSL_COOKIE_LENGTH
+bytes into B<cookie>, and must write the number of bytes written to
+B<cookie_len>. If a cookie cannot be generated, a zero return value can be used
+to abort the handshake.
 
 SSL_CTX_set_stateless_cookie_verify_cb() sets the callback used by
-L<SSL_stateless(3)> to determine whether the application-controlled portion of a
-ClientHello cookie is valid. The cookie data is pointed to by B<cookie> and is of
-length B<cookie_len>. A nonzero return value from verify_stateless_cookie_cb()
-communicates that the cookie is valid. The integrity of the entire cookie,
-including the application-controlled portion, is automatically verified by HMAC
-before verify_stateless_cookie_cb() is called.
+L<SSL_stateless(3)>, and by DTLS 1.3 server connections with
+B<SSL_OP_COOKIE_EXCHANGE> set, to determine whether the application-controlled
+portion of a ClientHello cookie is valid. The cookie data is pointed to by
+B<cookie> and is of length B<cookie_len>. A nonzero return value from
+verify_stateless_cookie_cb() communicates that the cookie is valid. The
+integrity of the entire cookie, including the application-controlled portion, is
+automatically verified by HMAC before verify_stateless_cookie_cb() is called.
 
-SSL_CTX_set_cookie_generate_cb() sets the callback used by L<DTLSv1_listen(3)>
-to generate the cookie provided to clients in the HelloVerifyRequest transmitted
-as a response to a ClientHello with a missing or invalid cookie.
+SSL_CTX_set_cookie_generate_cb() sets the callback used by L<DTLSv1_listen(3)>,
+and by DTLS 1.0 and DTLS 1.2 server connections with B<SSL_OP_COOKIE_EXCHANGE>
+set, to generate the cookie provided to clients in the HelloVerifyRequest
+transmitted as a response to a ClientHello with a missing or invalid cookie.
 app_gen_cookie_cb()  must write at most DTLS1_COOKIE_LENGTH bytes into
 B<cookie>, and must write the number of bytes written to B<cookie_len>. If a
 cookie cannot be generated, a zero return value can be used to abort the
 handshake.
 
-SSL_CTX_set_cookie_verify_cb() sets the callback used by L<DTLSv1_listen(3)> to
-determine whether the cookie in a ClientHello is valid. The cookie data is
-pointed to by B<cookie> and is of length B<cookie_len>. A nonzero return value
-from app_verify_cookie_cb() communicates that the cookie is valid. The
+SSL_CTX_set_cookie_verify_cb() sets the callback used by L<DTLSv1_listen(3)>,
+and by DTLS 1.0 and DTLS 1.2 server connections with B<SSL_OP_COOKIE_EXCHANGE>
+set, to determine whether the cookie in a ClientHello is valid. The cookie data
+is pointed to by B<cookie> and is of length B<cookie_len>. A nonzero return
+value from app_verify_cookie_cb() communicates that the cookie is valid. The
 integrity of the cookie is not verified by OpenSSL. This is an application
 responsibility.
+
+If no stateless cookie callbacks are set, a DTLS 1.3 server connection with
+B<SSL_OP_COOKIE_EXCHANGE> set uses app_gen_cookie_cb() and
+app_verify_cookie_cb() for the application-controlled portion of the
+HelloRetryRequest cookie instead.
 
 =head1 RETURN VALUES
 

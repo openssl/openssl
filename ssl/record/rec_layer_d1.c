@@ -72,6 +72,25 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     d->buffered_app_data = buffered_app_data;
 }
 
+/*
+ * Checks for application data set aside while a handshake was in progress.
+ * dtls1_read_bytes() only returns it once the handshake has finished.
+ */
+int DTLS_RECORD_LAYER_buffered_app_data_pending(const RECORD_LAYER *rl)
+{
+    TLS_RECORD *rdata;
+    pitem *item, *iter;
+
+    iter = pqueue_iterator(rl->d->buffered_app_data);
+    while ((item = pqueue_next(&iter)) != NULL) {
+        rdata = item->data;
+        if (rdata->length > 0)
+            return 1;
+    }
+
+    return 0;
+}
+
 static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
@@ -87,7 +106,14 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
         return -1;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
-    item = pitem_new_u64(rec->seq_num, rdata);
+    /*
+     * DTLS 1.3 sequence numbers restart in every epoch, so records of
+     * different epochs can share one. Key on the epoch as well: the 48-bit
+     * sequence number leaves the top 16 bits for the low bits of the epoch.
+     */
+    item = pitem_new_u64(((rec->epoch & 0xFFFF) << 48)
+            | (rec->seq_num & 0xFFFFFFFFFFFFULL),
+        rdata);
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -284,6 +310,8 @@ start:
                     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
+                /* This must only ever happen once per handshake */
+                sc->dtls13_process_hello = 0;
 
                 /*
                  * Read the Buffered epoch
@@ -302,10 +330,31 @@ start:
                  * Anything other than a timeout is an error. SSLfatal() already
                  * called if appropriate.
                  */
-                if (ret <= 0)
-                    return ret;
-                else
+                if (ret > 0)
                     goto start;
+
+                /*
+                 * Once the record layer holds buffered records from a later
+                 * epoch it asks for a retry without reading the BIO again (see
+                 * dtls_get_more_records()), so nothing has set the BIO's retry
+                 * flags. Without them SSL_get_error() reports
+                 * SSL_ERROR_SYSCALL for what is an ordinary wait for more
+                 * data.
+                 *
+                 * A connection accepted by a DTLS listener has no read BIO of
+                 * its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (sc->rwstate == SSL_READING) {
+                    BIO *rbio = SSL_get_rbio(s);
+
+                    if (rbio != NULL && !BIO_should_retry(rbio)) {
+                        BIO_clear_retry_flags(rbio);
+                        BIO_set_retry_read(rbio);
+                    }
+                }
+                return ret;
             }
             rr->off = 0;
             sc->rlayer.num_recs++;
@@ -358,6 +407,50 @@ start:
             return -1;
 
         if (is_dtls13 && current_state == TLS_ST_OK && SSL_in_init(s)) {
+            if (!ossl_statem_get_in_handshake(sc)) {
+                /*
+                 * Post-handshake work is still owed (e.g. a reciprocal
+                 * KeyUpdate) and nothing is driving the state machine. Run it
+                 * now, as the top of this function does, so the message is
+                 * sent and its retransmit timer armed. Otherwise nothing
+                 * would be in flight and no event would ever end the wait for
+                 * the buffered data. It is released by dtls_unbuffer_record()
+                 * once the exchange completes.
+                 */
+                i = sc->handshake_func(s);
+                /* SSLfatal() already called if appropriate */
+                if (i < 0)
+                    return i;
+                if (i == 0)
+                    return -1;
+                goto start;
+            }
+
+            /*
+             * The record was buffered, not dropped or failed: it will be
+             * delivered once the in-progress post-handshake exchange (e.g.
+             * a reciprocal KeyUpdate) completes. Without this, rwstate is
+             * left at whatever start: last set it to (SSL_NOTHING, since
+             * this returns instead of looping back there), and
+             * SSL_get_error() reports SSL_ERROR_SYSCALL on an empty error
+             * queue instead of the ordinary retry condition this actually
+             * is.
+             *
+             * A connection accepted by a DTLS listener has no read BIO of
+             * its own -- it receives through the listener's shared demux
+             * queue instead (see dtls_listener_create_conn_ssl()) -- so
+             * SSL_get_rbio() returns NULL here and these BIO flag updates
+             * must be skipped. SSL_get_error() already reports
+             * SSL_ERROR_WANT_READ for SSL_READING on such a connection
+             * without needing a BIO at all.
+             */
+            BIO *rbio = SSL_get_rbio(s);
+
+            sc->rwstate = SSL_READING;
+            if (rbio != NULL) {
+                BIO_clear_retry_flags(rbio);
+                BIO_set_retry_read(rbio);
+            }
             return -1;
         }
         goto start;
@@ -630,8 +723,17 @@ start:
 
                     sc->rwstate = SSL_READING;
                     bio = SSL_get_rbio(s);
-                    BIO_clear_retry_flags(bio);
-                    BIO_set_retry_read(bio);
+                    /*
+                     * A connection accepted by a DTLS listener has no read
+                     * BIO of its own (see dtls_listener_create_conn_ssl());
+                     * SSL_get_error() already reports SSL_ERROR_WANT_READ
+                     * for SSL_READING on such a connection without needing
+                     * one.
+                     */
+                    if (bio != NULL) {
+                        BIO_clear_retry_flags(bio);
+                        BIO_set_retry_read(bio);
+                    }
                     return -1;
                 }
             }
@@ -679,8 +781,16 @@ start:
                  */
                 sc->rwstate = SSL_READING;
                 bio = SSL_get_rbio(s);
-                BIO_clear_retry_flags(bio);
-                BIO_set_retry_read(bio);
+                /*
+                 * A connection accepted by a DTLS listener has no read BIO
+                 * of its own (see dtls_listener_create_conn_ssl());
+                 * SSL_get_error() already reports SSL_ERROR_WANT_READ for
+                 * SSL_READING on such a connection without needing one.
+                 */
+                if (bio != NULL) {
+                    BIO_clear_retry_flags(bio);
+                    BIO_set_retry_read(bio);
+                }
                 return -1;
             }
         }
@@ -742,10 +852,20 @@ start:
             return -1;
         } else if (sc->version == DTLS1_3_VERSION) {
             /*
-             * Let's let DTLS ACK and retransmits fix this problem.
+             * Only buffer data authenticated under application traffic keys
+             * (epoch 3 onwards), including delayed data interleaved with a
+             * post-handshake authentication response. Plaintext, early data,
+             * and handshake-epoch data must not be buffered here for delivery
+             * as ordinary application data.
              */
-            ssl_release_record(sc, rr, 0);
-            return -1;
+            if (rr->epoch >= 3 && dtls_buffer_record(sc, rr) < 0) {
+                /* SSLfatal() already called */
+                return -1;
+            }
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            /* Continue to the next record or obtain a genuine read retry. */
+            goto start;
         } else {
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
             return -1;

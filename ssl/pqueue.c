@@ -62,7 +62,10 @@ pitem *pqueue_insert(pqueue *pq, pitem *item)
     pitem *curr, *next;
 
     if (pq->items == NULL) {
+        item->next = NULL;
         pq->items = item;
+        pq->count++;
+
         return item;
     }
 
@@ -79,6 +82,7 @@ pitem *pqueue_insert(pqueue *pq, pitem *item)
                 pq->items = item;
             else
                 curr->next = item;
+            pq->count++;
 
             return item;
         }
@@ -89,6 +93,7 @@ pitem *pqueue_insert(pqueue *pq, pitem *item)
 
     item->next = NULL;
     curr->next = item;
+    pq->count++;
 
     return item;
 }
@@ -102,8 +107,10 @@ pitem *pqueue_pop(pqueue *pq)
 {
     pitem *item = pq->items;
 
-    if (pq->items != NULL)
+    if (pq->items != NULL) {
         pq->items = pq->items->next;
+        pq->count--;
+    }
 
     return item;
 }
@@ -163,12 +170,5 @@ pitem *pqueue_next(piterator *item)
 
 size_t pqueue_size(pqueue *pq)
 {
-    pitem *item = pq->items;
-    size_t count = 0;
-
-    while (item != NULL) {
-        count++;
-        item = item->next;
-    }
-    return count;
+    return pq->count;
 }

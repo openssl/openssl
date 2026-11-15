@@ -509,6 +509,29 @@ static int test_ctlog_from_base64(void)
     return 1;
 }
 
+static int test_ctlog_store_load_file_mfail(void)
+{
+    CTLOG_STORE *store = NULL;
+    char *file = NULL;
+    int ret, result = -1;
+
+    if (!TEST_ptr(file = test_mk_file_path(ct_dir, "log_list_missing_section.cnf"))
+        || !TEST_ptr(store = CTLOG_STORE_new()))
+        goto end;
+
+    MFAIL_start();
+    ret = CTLOG_STORE_load_file(store, file);
+    MFAIL_end();
+
+    /* A missing log section must fail, even if an allocation fails. */
+    result = TEST_int_eq(ret, 0) ? 1 : -1;
+
+end:
+    CTLOG_STORE_free(store);
+    OPENSSL_free(file);
+    return result;
+}
+
 static int test_ctlog_store_add0_log(void)
 {
     CTLOG_STORE *store = NULL;
@@ -653,6 +676,7 @@ int setup_tests(void)
     ADD_TEST(test_encode_tls_sct);
     ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
     ADD_TEST(test_ctlog_from_base64);
+    ADD_MFAIL_NO_CHECK_TEST(test_ctlog_store_load_file_mfail);
     ADD_TEST(test_ctlog_store_add0_log);
     ADD_TEST(test_ctlog_store_add0_log_validates_sct);
     ADD_TEST(test_ctlog_store_add0_log_null);
