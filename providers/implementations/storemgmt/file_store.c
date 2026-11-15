@@ -157,7 +157,7 @@ static const char *uri_file_stat(const char *uri, struct stat *st)
     const char *path = uri, *q;
     struct stat local_st;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (st == NULL)
         st = &local_st;
@@ -168,7 +168,7 @@ static const char *uri_file_stat(const char *uri, struct stat *st)
      */
     if (!HAS_CASE_PREFIX(uri, "file://")) {
         if (stat(path, st) == 0) {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             return uri;
         }
         ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", path);
@@ -176,7 +176,7 @@ static const char *uri_file_stat(const char *uri, struct stat *st)
 
     /* Do a second attempt only if the URI appears to start with the "file" scheme. */
     if (!CHECK_AND_SKIP_CASE_PREFIX(path, "file:")) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         return NULL;
     }
 
@@ -205,7 +205,7 @@ static const char *uri_file_stat(const char *uri, struct stat *st)
 
             ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED,
                 "%.*s", len, q);
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             return NULL;
         }
     }
@@ -216,11 +216,11 @@ static const char *uri_file_stat(const char *uri, struct stat *st)
 #endif
 
     if (stat(path, st) == 0) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         return path;
     }
     ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", path);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return NULL;
 }
 
@@ -595,15 +595,15 @@ static int file_load_file(struct file_ctx_st *ctx,
 
     /* Launch */
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = OSSL_DECODER_from_bio(ctx->_.file.decoderctx, ctx->_.file.file);
     if (BIO_eof(ctx->_.file.file)
         && ((err = ERR_peek_last_error()) != 0)
         && ERR_GET_LIB(err) == ERR_LIB_OSSL_DECODER
         && ERR_GET_REASON(err) == ERR_R_UNSUPPORTED)
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     else
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     return ret;
 }
 

@@ -1738,9 +1738,9 @@ static int kem_locate(const char *algo, unsigned int *idx)
             return 1;
         }
     }
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     kem = EVP_KEM_fetch(app_get0_libctx(), algo, app_get0_propq());
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (kem != NULL) {
         canonical_name = EVP_KEM_get0_name(kem);
         for (i = 0; i < kems_algs_len; i++) {
@@ -1787,9 +1787,9 @@ static int sig_locate(const char *algo, unsigned int *idx)
             return 1;
         }
     }
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     sig = EVP_SIGNATURE_fetch(app_get0_libctx(), algo, app_get0_propq());
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (sig != NULL) {
         canonical_name = EVP_SIGNATURE_get0_name(sig);
         for (i = 0; i < sigs_algs_len; i++) {

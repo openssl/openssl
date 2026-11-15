@@ -287,15 +287,15 @@ static int test_asn1_item_verify(void)
             0))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
                          alg, sig,
                          NULL, pkey),
             0)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     ret = 1;
 

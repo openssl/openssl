@@ -538,9 +538,9 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
         return 0;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = ASN1_INTEGER_get_int64(&l, bs);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (ok) { /* Reading an int64_t succeeded: print decimal and hex. */
         if (bs->type == V_ASN1_NEG_INTEGER) {

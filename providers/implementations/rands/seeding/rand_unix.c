@@ -379,9 +379,9 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * We could cache the result of the lookup, but we normally don't
      * call this function often.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     p_getentropy.p = DSO_global_lookup("getentropy");
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
 #endif

@@ -2003,9 +2003,9 @@ static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
      * An undecodable issuerAltName extension is treated as an absent one;
      * any decoding errors are not left in the error queue.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     gens = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (gens == NULL && (gens = sk_GENERAL_NAME_new_null()) == NULL)
         return 0;
     if ((gen = GENERAL_NAME_new()) == NULL

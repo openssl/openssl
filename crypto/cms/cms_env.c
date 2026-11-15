@@ -635,6 +635,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
     OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(ctx);
     const char *propq = ossl_cms_ctx_get0_propq(ctx);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     ec = ossl_cms_get0_env_enc_content(cms);
 
@@ -650,7 +651,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
         OBJ_obj2txt(name, sizeof(name), calg->algorithm, 1);
 
-        (void)ERR_set_mark();
+        (void)ERR_HANDLE_set_mark(&hdl);
         fetched_cipher = EVP_CIPHER_fetch(libctx, name, propq);
 
         if (fetched_cipher != NULL)
@@ -658,11 +659,11 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         else
             cipher = EVP_get_cipherbyobj(calg->algorithm);
         if (cipher == NULL) {
-            (void)ERR_clear_last_mark();
+            (void)ERR_HANDLE_clear_last_mark(&hdl);
             ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
             return 0;
         }
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
 
         cctx = EVP_CIPHER_CTX_new();
         if (cctx == NULL
@@ -1460,6 +1461,7 @@ int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk)
 {
     int ri_type;
     EVP_PKEY_CTX *ctx = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     /*
      * First check the provider for RecipientInfo support since a key may support
@@ -1499,14 +1501,14 @@ int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk)
     ri_type = CMS_RECIPINFO_TRANS;
     ctx = EVP_PKEY_CTX_new(pk, NULL);
     if (ctx != NULL) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if (EVP_PKEY_encrypt_init(ctx) > 0)
             ri_type = CMS_RECIPINFO_TRANS;
         else if (EVP_PKEY_derive_init(ctx) > 0)
             ri_type = CMS_RECIPINFO_AGREE;
         else if (EVP_PKEY_encapsulate_init(ctx, NULL) > 0)
             ri_type = CMS_RECIPINFO_KEM;
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     EVP_PKEY_CTX_free(ctx);
 

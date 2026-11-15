@@ -276,6 +276,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     const ssl_cipher_table *t;
     EVP_KEYEXCH *kex = NULL;
     EVP_SIGNATURE *sig = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     ctx->disabled_enc_mask = 0;
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
@@ -300,11 +301,11 @@ int ssl_load_ciphers(SSL_CTX *ctx)
          * We ignore any errors from the fetch below. It is expected to fail
          * if these algorithms are not available.
          */
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         const EVP_MD *md = EVP_MD_fetch(ctx->libctx,
             OBJ_nid2sn(t->nid),
             ctx->propq);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
 
         ctx->ssl_digest_methods[i] = md;
         if (md == NULL) {
@@ -325,7 +326,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
      * We ignore any errors from the fetches below. They are expected to fail
      * if these algorithms are not available.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     sig = EVP_SIGNATURE_fetch(ctx->libctx, "DSA", ctx->propq);
     if (sig == NULL)
         ctx->disabled_auth_mask |= SSL_aDSS;
@@ -346,7 +347,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
         ctx->disabled_auth_mask |= SSL_aECDSA;
     else
         EVP_SIGNATURE_free(sig);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
 #ifdef OPENSSL_NO_PSK
     ctx->disabled_mkey_mask |= SSL_PSK;

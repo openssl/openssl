@@ -117,6 +117,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     int same_issuer, ss;
     AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
     enum qualifier keyid = NEVER, issuer = NEVER;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (akeyid == NULL)
         goto err;
@@ -168,12 +169,12 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         goto err;
     }
     same_issuer = ctx->subject_cert == ctx->issuer_cert;
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (ctx->issuer_pkey != NULL)
         ss = X509_check_private_key(ctx->subject_cert, ctx->issuer_pkey);
     else
         ss = same_issuer;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (keyid > NONSS || (keyid == NONSS && !ss)) {
         /*

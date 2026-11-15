@@ -1358,6 +1358,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     s->init_num = 0;
 
@@ -1579,7 +1580,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
             return WORK_MORE_A;
         }
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         break;
 
     case TLS_ST_SW_ACK:

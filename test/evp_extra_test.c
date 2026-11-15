@@ -6354,7 +6354,7 @@ static int test_evp_aead_tag_direction(int idx)
     const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
     EVP_CIPHER_CTX *ctx_enc = NULL; /* set tag while encrypting: must fail */
     EVP_CIPHER_CTX *ctx_dec = NULL; /* get tag while decrypting: must fail */
-
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     OSSL_PARAM tagparams[2];
 
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
@@ -6397,21 +6397,21 @@ static int test_evp_aead_tag_direction(int idx)
     tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
         tag, info->taglen);
     tagparams[1] = OSSL_PARAM_construct_end();
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx_enc, tagparams))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         errmsg = "ENC_SET_TAG_NOT_REJECTED";
         goto err;
     }
     err_code = ERR_peek_last_error();
     if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
         || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_TAG_NOT_NEEDED)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         expected = PROV_R_TAG_NOT_NEEDED;
         errmsg = "ENC_SET_TAG_WRONG_REASON";
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* a tag read while decrypting must be rejected */
     if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())) {
@@ -6433,21 +6433,21 @@ static int test_evp_aead_tag_direction(int idx)
     }
 
     /* but a tag must never be readable back while decrypting */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_false(EVP_CIPHER_CTX_get_params(ctx_dec, tagparams))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         errmsg = "DEC_GET_TAG_NOT_REJECTED";
         goto err;
     }
     err_code = ERR_peek_last_error();
     if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
         || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_TAG_NOT_SET)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         expected = PROV_R_TAG_NOT_SET;
         errmsg = "DEC_GET_TAG_WRONG_REASON";
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     testresult = 1;
 
@@ -7163,13 +7163,13 @@ static int test_ivlen_change(int idx)
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_false(EVP_CipherUpdate(ctx, outbuf, &outlen, gcmDefaultPlaintext,
             sizeof(gcmDefaultPlaintext)))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     res = 1;
 err:
@@ -7216,14 +7216,14 @@ static int test_iv_reuse(int idx)
         goto err;
 
     /* Without IV change, EncryptUpdate must be rejected */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_false(EVP_EncryptUpdate(ctx, outbuf, &outlen,
             gcmDefaultPlaintext,
             sizeof(gcmDefaultPlaintext)))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     res = 1;
 err:
@@ -7289,13 +7289,13 @@ static int test_keylen_change(int idx)
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_false(EVP_CipherUpdate(ctx, outbuf, &outlen, gcmDefaultPlaintext,
             sizeof(gcmDefaultPlaintext)))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     res = 1;
 err:
@@ -8468,19 +8468,19 @@ static int test_aes_xts_rejects_missing_iv(void)
         goto err;
 
     /* Initialize with a NULL IV, which may fail immediately */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!EVP_EncryptInit_ex2(ctx, cipher, key, NULL, NULL)) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         ret = 1;
         goto err;
     }
 
     /* Test EVP_EncryptUpdate after NULL IV initialization, which should fail */
     if (!TEST_false(EVP_EncryptUpdate(ctx, out, &outl, in, sizeof(in)))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     ret = 1;
 
@@ -8696,9 +8696,9 @@ static int test_aead_oneshot_roundtrip(int idx)
      * Probe for the cipher: a build with no-ocb / no-chacha / etc. will
      * not have it, and we treat that as a pass (nothing to test here).
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     probe = EVP_CIPHER_fetch(testctx, cfg->name, testpropq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (probe == NULL) {
         TEST_info("skipping, '%s' is not available", cfg->name);
         return 1;

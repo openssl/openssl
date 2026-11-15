@@ -120,6 +120,7 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     char ciph_name[80];
     EVP_CIPHER *cipher = NULL;
     EVP_PBE_KEYGEN_EX *kdf;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     int rv = 0;
 
@@ -147,11 +148,11 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     cipher = EVP_CIPHER_fetch(libctx, ciph_name, propq);
 
     if (cipher == NULL) {
-        (void)ERR_clear_last_mark();
+        (void)ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_CIPHER);
         goto err;
     }
-    (void)ERR_pop_to_mark();
+    (void)ERR_HANDLE_pop_to_mark(&hdl);
 
     /* Fixup cipher based on AlgorithmIdentifier */
     if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de))

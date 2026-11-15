@@ -355,20 +355,20 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
             BIO_ADDR_clear(&urxe->local);
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd)) {
         if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
             /* Transient error, clear the error and stop. */
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             return DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
         } else {
             /* Non-transient error, do not clear the error. */
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
         }
     }
 
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     now = demux->now != NULL ? demux->now(demux->now_arg) : ossl_time_zero();
 
     urxe = ossl_list_urxe_head(&demux->urx_free);

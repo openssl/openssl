@@ -44,14 +44,15 @@ CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 {
     CMS_ContentInfo *ci;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms == NULL ? NULL : *cms);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     ci = ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms,
         ossl_cms_ctx_get0_libctx(ctx),
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ossl_cms_infos_set_cmsctx(ci);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     return ci;
 }
@@ -108,6 +109,7 @@ CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,
 {
     CMS_ContentInfo *ci;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms == NULL ? NULL : *cms);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     ci = (CMS_ContentInfo *)SMIME_read_ASN1_ex(bio, flags, bcont,
         ASN1_ITEM_rptr(CMS_ContentInfo),
@@ -115,9 +117,9 @@ CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,
         ossl_cms_ctx_get0_libctx(ctx),
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ossl_cms_infos_set_cmsctx(ci);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     return ci;
 }

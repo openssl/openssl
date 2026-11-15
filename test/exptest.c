@@ -99,13 +99,13 @@ static int test_mod_exp_zero(void)
     if (!TEST_ptr(mont = BN_MONT_CTX_new()))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     /* mont is not set but passed in */
     if (!TEST_false(BN_mod_exp_mont_consttime(r, p, a, m, ctx, mont)))
         goto err;
     if (!TEST_false(BN_mod_exp_mont(r, p, a, m, ctx, mont)))
         goto err;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (!TEST_true(BN_MONT_CTX_set(mont, m, ctx)))
         goto err;

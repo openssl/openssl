@@ -432,11 +432,11 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
     if (ctx == NULL)
         goto err;
     /* May fail if no provider available */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (EVP_PKEY_fromdata_init(ctx) == 1) {
         OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         params[0] = OSSL_PARAM_construct_octet_string(
             key_is_priv ? OSSL_PKEY_PARAM_PRIV_KEY
                         : OSSL_PKEY_PARAM_PUB_KEY,
@@ -451,7 +451,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
 
         return pkey;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     /* else not supported so fallback to legacy */
 
     /* Legacy code path */
@@ -1220,6 +1220,8 @@ static void mdname2nid(const char *mdname, void *data)
 static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
     int arg1, void *arg2)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
     if (pkey->keymgmt == NULL)
         return 0;
     switch (op) {
@@ -1236,9 +1238,9 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
             OSSL_NAMEMAP *namemap;
             int nid = NID_undef;
 
-            (void)ERR_set_mark();
+            (void)ERR_HANDLE_set_mark(&hdl);
             md = EVP_MD_fetch(libctx, mdname, NULL);
-            (void)ERR_pop_to_mark();
+            (void)ERR_HANDLE_pop_to_mark(&hdl);
             namemap = ossl_namemap_stored(libctx);
 
             /*
@@ -1317,10 +1319,10 @@ int EVP_PKEY_digestsign_supports_digest(EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
     if ((ctx = EVP_MD_CTX_new()) == NULL)
         return -1;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     rv = EVP_DigestSignInit_ex(ctx, NULL, name, libctx,
         propq, pkey, NULL);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     EVP_MD_CTX_free(ctx);
     return rv;
@@ -1551,7 +1553,7 @@ static void find_ameth(const char *name, void *data)
      * The error messages from pkey_set_type() are uninteresting here,
      * and misleading.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (pkey_set_type(NULL, EVP_PKEY_NONE, name, (int)strlen(name),
             NULL)) {
@@ -1561,7 +1563,7 @@ static void find_ameth(const char *name, void *data)
             str[1] = name;
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 }
 #endif
 
