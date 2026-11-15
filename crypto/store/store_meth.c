@@ -58,7 +58,8 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
 #ifdef OPENSSL_NO_CACHED_FETCH
     free_loader(loader);
 #else
-    if (loader != NULL && (loader->no_store != 0))
+    /* Legacy loaders have no provider and are never in the method store */
+    if (loader != NULL && (loader->no_store != 0 || loader->prov == NULL))
         free_loader(loader);
 #endif
 }

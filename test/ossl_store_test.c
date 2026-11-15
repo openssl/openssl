@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 #include <limits.h>
 #include <openssl/store.h>
@@ -259,6 +262,19 @@ static int test_store_delete_null_uri(void)
     return TEST_int_eq(OSSL_STORE_delete(NULL, NULL, NULL, NULL, NULL, NULL), 0);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+static int test_store_legacy_loader_free(void)
+{
+    OSSL_STORE_LOADER *loader = NULL;
+
+    if (!TEST_ptr(loader = OSSL_STORE_LOADER_new(NULL, "legacyfree")))
+        return 0;
+
+    OSSL_STORE_LOADER_free(loader);
+    return 1;
+}
+#endif
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -317,5 +333,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_store_get_params, 3);
     if (sm2file != NULL)
         ADD_TEST(test_store_attach_unregistered_scheme);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_store_legacy_loader_free);
+#endif
     return 1;
 }
