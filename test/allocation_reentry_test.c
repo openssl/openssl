@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include "crypto/sparse_array.h"
 #include "internal/threads_common.h"
 
@@ -22,10 +23,13 @@
 
 static int allocation_count;
 static int fail_after;
+static int fail_once;
 
 static int should_fail(void)
 {
-    return allocation_count++ >= fail_after;
+    int current = allocation_count++;
+
+    return fail_once ? current == fail_after : current >= fail_after;
 }
 
 static void *fail_malloc(size_t size, const char *file, int line)
@@ -96,6 +100,48 @@ end:
     return ok;
 }
 
+static int prepare_err_test(int init_strings)
+{
+    fail_after = INT_MAX;
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
+        || !CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+            CRYPTO_THREAD_NO_CONTEXT, (void *)1)
+        || !CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+            CRYPTO_THREAD_NO_CONTEXT, NULL))
+        return 0;
+    if (init_strings)
+        (void)ERR_reason_error_string(ERR_R_MALLOC_FAILURE);
+    allocation_count = 0;
+    return 1;
+}
+
+static int test_err_init(void)
+{
+    if (!prepare_err_test(0))
+        return 0;
+    fail_after = 1;
+    return ERR_reason_error_string(ERR_R_MALLOC_FAILURE) == NULL
+        && CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+               CRYPTO_THREAD_NO_CONTEXT)
+            == NULL;
+}
+
+static int test_err_load(void)
+{
+    static const ERR_STRING_DATA strings[] = {
+        { ERR_PACK(ERR_LIB_USER, 0, 1), "test reason" },
+        { 0, NULL },
+    };
+
+    if (!prepare_err_test(1))
+        return 0;
+    fail_after = 0;
+    return ERR_load_strings_const(strings)
+        && CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
+               CRYPTO_THREAD_NO_CONTEXT)
+            == NULL;
+}
+
 int main(int argc, char **argv)
 {
     int ok = 0;
@@ -105,6 +151,10 @@ int main(int argc, char **argv)
 
     if (strcmp(argv[1], "control") == 0) {
         fail_after = INT_MAX;
+    } else if (strcmp(argv[1], "err-init") == 0
+        || strcmp(argv[1], "err-load") == 0) {
+        fail_after = INT_MAX;
+        fail_once = 1;
     } else if (strcmp(argv[1], "lock") == 0) {
         fail_after = 0;
     } else if (strcmp(argv[1], "tls-master") == 0) {
@@ -127,6 +177,10 @@ int main(int argc, char **argv)
 
     if (strcmp(argv[1], "control") == 0)
         ok = test_control();
+    else if (strcmp(argv[1], "err-init") == 0)
+        ok = test_err_init();
+    else if (strcmp(argv[1], "err-load") == 0)
+        ok = test_err_load();
     else if (strcmp(argv[1], "lock") == 0)
         ok = test_lock();
     else if (strncmp(argv[1], "tls-", 4) == 0)

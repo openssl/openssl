@@ -22,6 +22,11 @@ my @tests = (
     [ "sparse-node", "sparse-array node allocation" ],
 );
 
+push @tests,
+    [ "err-init", "error-string initialization" ],
+    [ "err-load", "error-string insertion" ]
+    unless disabled("err");
+
 unshift @tests, [ "lock", "pthread lock allocation" ]
     unless disabled("threads") || $^O =~ /^(MSWin32|msys)$/;
 
