@@ -277,6 +277,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
 #define LIBZ "z"
 #endif
 #endif
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     ERR_HANDLE_set_mark(&hdl);
     zlib_dso = DSO_load(NULL, LIBZ, NULL, 0);

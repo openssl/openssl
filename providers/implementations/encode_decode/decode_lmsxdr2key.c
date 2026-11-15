@@ -65,6 +65,7 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     size_t length;
     int ok = 0, inlen, readlen;
     BIO *in;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     if (in == NULL)

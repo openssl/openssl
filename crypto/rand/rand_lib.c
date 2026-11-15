@@ -844,8 +844,9 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
 static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
     EVP_RAND_CTX *ret, *seed = NULL, *primary;
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
     ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
-
+#endif
     if (dgbl == NULL)
         return NULL;
 
