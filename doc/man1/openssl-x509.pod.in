@@ -66,6 +66,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile> I<filename>]
 [B<-extensions> I<section>]
+[B<-unsigned>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-badsig>]
 [B<-I<digest>>]
@@ -131,7 +132,7 @@ So this excludes the B<-in> and B<-req> options.
 Instead, the B<-set_subject> option needs to be given.
 The public key to include can be given with the B<-force_pubkey> option
 and defaults to the key given with the B<-key> (or B<-signkey>) option,
-which implies self-signature.
+which implies self-signature unless B<-unsigned> is given.
 
 =item B<-x509toreq>
 
@@ -178,7 +179,8 @@ Names and values of these options are algorithm-specific.
 This option provides the private key for signing a new certificate or
 certificate request.
 Unless B<-force_pubkey> is given, the corresponding public key is placed in
-the new certificate or certificate request, resulting in a self-signature.
+the new certificate or certificate request, resulting in a self-signature
+unless a certificate is created with B<-unsigned>.
 
 This option cannot be used in conjunction with the B<-CA> option.
 
@@ -542,6 +544,20 @@ See the description of B<-extfile> above for details.
 
 See the L<x509v3_config(5)> manual page for details of the
 extension section format.
+
+=item B<-unsigned>
+
+When creating a certificate, do this unsigned according to RFC 9925.
+The issuer is set to the subject if it is not the NULL-DN,
+otherwise the `id-rdna-unsigned` placeholder is set.
+Any authority key identifier and issuer alternative name extensions are removed.
+
+When used with B<-req>, no signing key is needed. When used with B<-new>,
+a subject public key must still be provided with B<-key> or B<-force_pubkey>.
+
+This option cannot be used with B<-CA>, B<-sigopt>, or B<-badsig>.
+When used with B<-x509toreq>, this option is ignored and a warning is emitted;
+the request is still signed with the key provided by B<-key>.
 
 =item B<-sigopt> I<nm>:I<v>
 
