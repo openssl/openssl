@@ -327,4 +327,24 @@ int ERR_count_to_mark(void)
 {
     return c_count_to_mark != NULL ? c_count_to_mark(NULL) : 0;
 }
+
+int ERR_HANDLE_set_mark(ossl_unused ERR_HANDLE **hdl)
+{
+    return ERR_set_mark();
+}
+
+int ERR_HANDLE_pop_to_mark(ossl_unused ERR_HANDLE **hdl)
+{
+    return ERR_pop_to_mark();
+}
+
+int ERR_HANDLE_clear_last_mark(ossl_unused ERR_HANDLE **hdl)
+{
+    return ERR_clear_last_mark();
+}
+
+int ERR_HANDLE_count_to_mark(ossl_unused ERR_HANDLE **hdl)
+{
+    return ERR_count_to_mark();
+}
 #endif
