@@ -40,6 +40,7 @@ struct dgram_demux_st {
 
     /* The default packet handler, if any. */
     ossl_dgram_demux_cb_fn *default_cb;
+    ossl_dgram_demux_route_fn *route_cb;
     void *default_cb_arg;
 
     /*
@@ -212,7 +213,52 @@ void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
     void *cb_arg)
 {
     demux->default_cb = cb;
+    demux->route_cb = NULL;
     demux->default_cb_arg = cb_arg;
+}
+
+void ossl_dgram_demux_set_route_handler(DGRAM_DEMUX *demux,
+    ossl_dgram_demux_route_fn *cb,
+    void *cb_arg)
+{
+    demux->default_cb = NULL;
+    demux->route_cb = cb;
+    demux->default_cb_arg = cb_arg;
+}
+
+/*
+ * Return a URXE that is on no list to the free list. If the list is at its
+ * limit it is not cached and 0 is returned: the caller frees it, once it has
+ * dropped the lock if it can. Caller holds the lock.
+ */
+static int dgram_demux_cache_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
+{
+    if (demux->max_free_urxe != 0
+        && ossl_list_urxe_num(&demux->urx_free) >= demux->max_free_urxe)
+        return 0;
+
+    ossl_list_urxe_insert_tail(&demux->urx_free, e);
+    e->demux_state = URXE_DEMUX_STATE_FREE;
+    return 1;
+}
+
+/*
+ * Hand an issued URXE, which is on no list, to the handler. Returns 1 if the
+ * handler took it, 0 if it is still the demux's to return to the free list:
+ * a route handler declined it, or there is no handler. Called without the
+ * lock, which a handler takes if it releases or reinjects a URXE.
+ */
+static int dgram_demux_dispatch_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
+{
+    if (demux->route_cb != NULL)
+        return demux->route_cb(e, demux->default_cb_arg);
+
+    if (demux->default_cb != NULL) {
+        demux->default_cb(e, demux->default_cb_arg);
+        return 1;
+    }
+
+    return 0;
 }
 
 static DGRAM_URXE *dgram_demux_alloc_urxe(size_t alloc_len)
@@ -396,6 +442,8 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
  */
 static int dgram_demux_process_pending_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
 {
+    int taken;
+
     /* The next URXE we process should be at the head of the pending list. */
     if (!ossl_assert(e == ossl_list_urxe_head(&demux->urx_pending)))
         return 0;
@@ -403,23 +451,21 @@ static int dgram_demux_process_pending_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
     assert(e->demux_state == URXE_DEMUX_STATE_PENDING);
 
     ossl_list_urxe_remove(&demux->urx_pending, e);
-    if (demux->default_cb != NULL) {
-        /*
-         * Pass to handler for routing. The URXE now belongs to the callback.
-         * Release lock before callback to avoid deadlock if callback calls
-         * release_urxe or reinject_urxe.
-         */
-        e->demux_state = URXE_DEMUX_STATE_ISSUED;
-        if (demux->require_mutex)
-            ossl_crypto_mutex_unlock(demux->mutex);
-        demux->default_cb(e, demux->default_cb_arg);
-        if (demux->require_mutex)
-            ossl_crypto_mutex_lock(demux->mutex);
-    } else {
-        /* No handler, discard. */
-        ossl_list_urxe_insert_tail(&demux->urx_free, e);
-        e->demux_state = URXE_DEMUX_STATE_FREE;
-    }
+    e->demux_state = URXE_DEMUX_STATE_ISSUED;
+
+    /*
+     * Pass to the handler for routing. Release the lock around it to avoid a
+     * deadlock if it calls release_urxe or reinject_urxe.
+     */
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+    taken = dgram_demux_dispatch_urxe(demux, e);
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+
+    /* Not taken: back to the free list, under the lock we hold. */
+    if (!taken && !dgram_demux_cache_urxe(demux, e))
+        OPENSSL_free(e);
 
     return 1; /* keep processing pending URXEs */
 }
@@ -441,6 +487,68 @@ static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
 }
 
 /*
+ * Thread-safe pump: take the pending batch off the shared list under one lock
+ * and make its callbacks without the lock, so that other threads read and
+ * route the next batch meanwhile instead of taking datagrams of this one one
+ * at a time. URXEs the route handler declines are returned to the free list
+ * under one more lock for the whole batch. A reinjected URXE goes back on the
+ * shared pending list, for this or another thread's next pump.
+ */
+static int dgram_demux_pump_batch(DGRAM_DEMUX *demux)
+{
+    DGRAM_URXE_LIST batch, declined, excess;
+    DGRAM_URXE *e;
+    int ret;
+
+    ossl_list_urxe_init(&batch);
+    ossl_list_urxe_init(&declined);
+    ossl_list_urxe_init(&excess);
+
+    ossl_crypto_mutex_lock(demux->mutex);
+    if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
+        if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
+            ossl_crypto_mutex_unlock(demux->mutex);
+            return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        }
+        ret = dgram_demux_recv(demux);
+        if (ret != DGRAM_DEMUX_PUMP_RES_OK) {
+            ossl_crypto_mutex_unlock(demux->mutex);
+            return ret;
+        }
+    }
+    while ((e = ossl_list_urxe_head(&demux->urx_pending)) != NULL) {
+        ossl_list_urxe_remove(&demux->urx_pending, e);
+        ossl_list_urxe_insert_tail(&batch, e);
+        e->demux_state = URXE_DEMUX_STATE_ISSUED;
+    }
+    ossl_crypto_mutex_unlock(demux->mutex);
+
+    while ((e = ossl_list_urxe_head(&batch)) != NULL) {
+        /* The callee gets the URXE on no list. */
+        ossl_list_urxe_remove(&batch, e);
+        if (!dgram_demux_dispatch_urxe(demux, e))
+            ossl_list_urxe_insert_tail(&declined, e);
+    }
+
+    if (ossl_list_urxe_head(&declined) == NULL)
+        return DGRAM_DEMUX_PUMP_RES_OK;
+
+    /* One lock to return what the batch declined. */
+    ossl_crypto_mutex_lock(demux->mutex);
+    while ((e = ossl_list_urxe_head(&declined)) != NULL) {
+        ossl_list_urxe_remove(&declined, e);
+        if (!dgram_demux_cache_urxe(demux, e))
+            ossl_list_urxe_insert_tail(&excess, e);
+    }
+    ossl_crypto_mutex_unlock(demux->mutex);
+    while ((e = ossl_list_urxe_head(&excess)) != NULL) {
+        ossl_list_urxe_remove(&excess, e);
+        OPENSSL_free(e);
+    }
+    return DGRAM_DEMUX_PUMP_RES_OK;
+}
+
+/*
  * Drain the pending URXE list, processing any pending URXEs by making their
  * callbacks. If no URXEs are pending, a network read is attempted first.
  */
@@ -449,17 +557,16 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     int ret;
 
     if (demux->require_mutex)
-        ossl_crypto_mutex_lock(demux->mutex);
+        return dgram_demux_pump_batch(demux);
 
+    /* Not thread-safe, so there is no lock to take from here on. */
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
-        if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
-            ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
-            goto end;
-        }
+        if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL))
+            return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
 
         ret = dgram_demux_recv(demux);
         if (ret != DGRAM_DEMUX_PUMP_RES_OK)
-            goto end;
+            return ret;
 
         /*
          * If dgram_demux_recv returned successfully, we should always have
@@ -468,17 +575,10 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
         assert(ossl_list_urxe_head(&demux->urx_pending) != NULL);
     }
 
-    if (dgram_demux_process_pending_urxl(demux) <= 0) {
-        ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
-        goto end;
-    }
+    if (dgram_demux_process_pending_urxl(demux) <= 0)
+        return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
 
-    ret = DGRAM_DEMUX_PUMP_RES_OK;
-
-end:
-    if (demux->require_mutex)
-        ossl_crypto_mutex_unlock(demux->mutex);
-    return ret;
+    return DGRAM_DEMUX_PUMP_RES_OK;
 }
 
 /* Artificially inject a packet into the demuxer for testing purposes. */
@@ -550,12 +650,7 @@ void ossl_dgram_demux_release_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
 
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
-    cache = demux->max_free_urxe == 0
-        || ossl_list_urxe_num(&demux->urx_free) < demux->max_free_urxe;
-    if (cache) {
-        ossl_list_urxe_insert_tail(&demux->urx_free, e);
-        e->demux_state = URXE_DEMUX_STATE_FREE;
-    }
+    cache = dgram_demux_cache_urxe(demux, e);
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
     if (!cache)

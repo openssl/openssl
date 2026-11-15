@@ -1588,6 +1588,16 @@ struct ssl_connection_st {
     /* Stable alias for d1->rx while SSL_clear() resets or replaces d1. */
     DTLS_RX *listener_rx;
     /*
+     * Membership of the listener's lookup tables and run queue, see
+     * DTLS_LISTENER_CONN. NULL until the connection is first registered in a
+     * lookup, which allocates it, and then kept until the connection is
+     * freed: a connection that no listener created never has one. Hangs off
+     * the connection rather than off d1 because the tables and the queue
+     * point into it, and d1 is wiped (dtls1_clear) or reallocated (SSL_clear)
+     * while the connection stays registered.
+     */
+    struct dtls_listener_conn_st *listener_conn;
+    /*
      * Set when this connection is being driven by dtls_listener_drive_pending().
      * Used to prevent multiple threads from driving the same connection
      * concurrently and to allow the demux pump to be called without holding
@@ -1607,6 +1617,14 @@ struct ssl_connection_st {
      * is queued for it or its retransmission timer expires.
      */
     unsigned int listener_idle;
+    /*
+     * Set once SSL_accept_connection() has handed this connection to the
+     * application, which is when it takes its reference on the listener; the
+     * reference is released with it, or when it loses the listener. Until
+     * then the listener owns the connection, which points at it through
+     * d1->listener without a reference.
+     */
+    unsigned int listener_ref_held;
 #endif
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback)(int write_p, int version, int content_type,
@@ -2390,6 +2408,30 @@ typedef struct dtls1_state_st {
 
 } DTLS1_STATE;
 
+#ifndef OPENSSL_NO_DTLS
+/*
+ * What a connection carries for the DTLS listener that created it: its
+ * membership of the listener's lookup tables and of its run queue. Kept out
+ * of SSL_CONNECTION, which points at it (listener_conn), so that connections
+ * with no listener do not pay for it.
+ */
+typedef struct dtls_listener_conn_st {
+    /* The connection this belongs to. */
+    SSL_CONNECTION *sc;
+    /*
+     * Membership of the listener's pending or established connection lookup
+     * table (DGRAM_CONN_LOOKUP): zeroed, i.e. unlinked, until registered.
+     */
+    DGRAM_CONN_LINK lookup_link;
+    /*
+     * Membership of the listener's run queue (DTLS_LISTENER.run_queue), the
+     * pending connections its next tick drives. Protected by the listener
+     * mutex; zeroed, i.e. not queued, until the listener queues it.
+     */
+    OSSL_QUEUE_MEMBER(listener_run);
+} DTLS_LISTENER_CONN;
+#endif /* !OPENSSL_NO_DTLS */
+
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 /*
  * Blocking mode of a DTLS listener or of a connection created from one.
@@ -2473,6 +2515,17 @@ typedef struct dtls_listener_st {
      * Use DGRAM_CONN_LOOKUP to keep track of established connections.
      */
     DGRAM_CONN_LOOKUP *established_conns;
+
+    /*
+     * The pending connections the next tick drives: created, given input,
+     * or left by their last drive with work (see dtls_listener_queue_run()).
+     * The rest of pending_conns waits for a peer and costs a tick nothing,
+     * so a tick is proportional to the connections with something to do,
+     * not to the pending table. Driven in the order queued: |run_last| is
+     * the tail of |run_queue|, or NULL. Protected by mutex.
+     */
+    OSSL_QUEUE run_queue;
+    DTLS_LISTENER_CONN *run_last;
 
     /* Have we started listening yet? */
     TSAN_QUALIFIER int listening;
@@ -3250,8 +3303,16 @@ BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
 /* Established connections API - these handle their own locking */
 SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
     const DGRAM_URXE *urxe);
-void ossl_dtls_listener_unregister_established_conn(SSL *s,
-    const BIO_ADDR *peer_addr);
+/**
+ * Unlink a connection created by listener |s| from whichever of its lookup
+ * tables it is registered in, and drop it from the listener's run queue.
+ * Takes the listener mutex. Does nothing if |s| is not a DTLS listener or
+ * |conn| is NULL.
+ *
+ * @param s    the DTLS listener
+ * @param conn the connection to unlink
+ */
+void ossl_dtls_listener_unregister_conn(SSL *s, SSL *conn);
 void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl);
 
 size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl);

@@ -49,9 +49,9 @@ IF[{- !$disabled{quic} -}]
   SHARED_SOURCE[../libssl] = ../crypto/hashtable/hashfunc.c
 ENDIF
 
-# siphash.c is needed by dtls_conn_lookup.c (DTLS) and quic_lcidm.c (QUIC)
-# for hash-flooding resistant connection lookup
-IF[{- !$disabled{dtls} || !$disabled{quic} -}]
+# siphash.c is needed by quic_lcidm.c (QUIC) for hash-flooding resistant
+# connection lookup
+IF[{- !$disabled{quic} -}]
   SHARED_SOURCE[../libssl]=../crypto/siphash/siphash.c
 ENDIF
 

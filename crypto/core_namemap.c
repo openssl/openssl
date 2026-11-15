@@ -9,17 +9,132 @@
 
 #include "internal/namemap.h"
 #include "internal/tsan_assist.h"
-#include "internal/hashtable.h"
+#include "internal/htable_rcu.h"
 #include "internal/sizes.h"
 #include "crypto/context.h"
 #include "crypto/evp.h"
 
-#define NAMEMAP_HT_BUCKETS 512
-
+/* Names are told apart by their first NAMEMAP_NAME_LEN characters. */
 #define NAMEMAP_NAME_LEN 64
-HT_START_KEY_DEFN(namenum_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, NAMEMAP_NAME_LEN)
-HT_END_KEY_DEFN(NAMENUM_KEY)
+
+/* 1 << NAMEMAP_HT_BITS buckets; chains grow beyond that many names. */
+#define NAMEMAP_HT_BITS 10
+
+/*
+ * A name, held once: it is an element of the name->number table and its
+ * |name| is the string stored in the number->names stack, which owns it.
+ * Nothing changes after the entry has been added, and entries are only
+ * freed with the namemap, so the table is read without a lock.
+ */
+typedef struct namemap_entry_st {
+    OSSL_QUEUE_MEMBER(namenum);
+    uint64_t hash; /* of the folded key */
+    size_t keylen; /* strlen(name), at most NAMEMAP_NAME_LEN */
+    int number;
+    char name[1]; /* as registered, NUL terminated */
+} NAMEMAP_ENTRY;
+
+DEFINE_QUEUE_OF(namenum, NAMEMAP_ENTRY);
+DEFINE_HTABLE_OF(namenum, NAMEMAP_ENTRY, NAMEMAP_HT_BITS);
+DEFINE_HTABLE_RCU_OF(namenum, NAMEMAP_ENTRY);
+
+/*
+ * Names compare case insensitively, by clearing the bit that tells an upper
+ * from a lower case letter. Two names are the same when their keys, the
+ * first NAMEMAP_NAME_LEN characters folded this way, are.
+ */
+#if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
+#define NAMEMAP_FOLD 0xbfU
+#else
+#define NAMEMAP_FOLD 0xdfU
+#endif
+
+/*
+ * Keys are hashed and compared a word at a time. The words are read in the
+ * host's byte order, which is as good as any: neither a word nor a hash
+ * leaves the process.
+ */
+static ossl_inline uint64_t namemap_fold64(const char *p)
+{
+    uint64_t w;
+
+    memcpy(&w, p, sizeof(w));
+    return w & (NAMEMAP_FOLD * 0x0101010101010101ULL);
+}
+
+static ossl_inline uint32_t namemap_fold32(const char *p)
+{
+    uint32_t w;
+
+    memcpy(&w, p, sizeof(w));
+    return w & (NAMEMAP_FOLD * 0x01010101U);
+}
+
+/*
+ * The folded key of a name shorter than a word, as one word. Given |len|,
+ * which the callers hash or compare as well, it determines every character:
+ * the two halves of 4 to 7 characters overlap, and so do the first, middle
+ * and last of 1 to 3.
+ */
+static ossl_inline uint64_t namemap_fold_short(const char *p, size_t len)
+{
+    if (len >= 4)
+        return namemap_fold32(p) | (uint64_t)namemap_fold32(p + len - 4) << 32;
+    if (len == 0)
+        return 0;
+    return ((unsigned char)p[0] & NAMEMAP_FOLD)
+        | ((unsigned char)p[len >> 1] & NAMEMAP_FOLD) << 8
+        | ((unsigned char)p[len - 1] & NAMEMAP_FOLD) << 16;
+}
+
+#define NAMEMAP_HASH_MULT 0x9e3779b97f4a7c15ULL
+
+static ossl_inline uint64_t namemap_hash_word(uint64_t h, uint64_t w)
+{
+    h = (h ^ w) * NAMEMAP_HASH_MULT;
+    /* The next word's multiplication must see the high bits of this one */
+    return h ^ (h >> 32);
+}
+
+/*
+ * Hash of the folded key. A name of a word or more is taken a word at a
+ * time, the last word ending at the name's end and overlapping the one
+ * before it unless the length is a multiple of the word size; the length is
+ * hashed too, so that the overlap is unambiguous. The result is mixed, since
+ * the table uses the low bits.
+ */
+static ossl_inline uint64_t namemap_hash(const char *name, size_t keylen)
+{
+    uint64_t h = keylen * NAMEMAP_HASH_MULT;
+    size_t i;
+
+    if (keylen >= sizeof(uint64_t)) {
+        for (i = 0; i + sizeof(uint64_t) < keylen; i += sizeof(uint64_t))
+            h = namemap_hash_word(h, namemap_fold64(name + i));
+        h = namemap_hash_word(h,
+            namemap_fold64(name + keylen - sizeof(uint64_t)));
+    } else {
+        h = namemap_hash_word(h, namemap_fold_short(name, keylen));
+    }
+    return ossl_hash_mix64(h);
+}
+
+static ossl_inline int namemap_key_eq(const NAMEMAP_ENTRY *e, uint64_t hash,
+    const char *name, size_t keylen)
+{
+    size_t i;
+
+    if (e->hash != hash || e->keylen != keylen)
+        return 0;
+    if (keylen < sizeof(uint64_t))
+        return namemap_fold_short(e->name, keylen)
+            == namemap_fold_short(name, keylen);
+    for (i = 0; i + sizeof(uint64_t) < keylen; i += sizeof(uint64_t))
+        if (namemap_fold64(e->name + i) != namemap_fold64(name + i))
+            return 0;
+    return namemap_fold64(e->name + keylen - sizeof(uint64_t))
+        == namemap_fold64(name + keylen - sizeof(uint64_t));
+}
 
 /*-
  * The namemap itself
@@ -34,17 +149,21 @@ struct ossl_namemap_st {
     /* Flags */
     unsigned int stored : 1; /* If 1, it's stored in a library context */
 
-    HT *namenum_ht; /* Name->number mapping */
-
     CRYPTO_RWLOCK *lock;
     STACK_OF(NAMES) *numnames;
 
     TSAN_QUALIFIER int max_number; /* Current max number */
+
+    /*
+     * Name->number mapping. Added to under |lock|, held for writing; read
+     * without a lock.
+     */
+    OSSL_HTABLE(namenum) namenum_ht;
 };
 
 static void name_string_free(char *name)
 {
-    OPENSSL_free(name);
+    OPENSSL_free(OSSL_CONTAINER_OF(name, NAMEMAP_ENTRY, name));
 }
 
 static void names_free(NAMES *n)
@@ -149,9 +268,8 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
 int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     const char *name, size_t name_len)
 {
-    int number = 0;
-    HT_VALUE *val;
-    NAMENUM_KEY key;
+    const NAMEMAP_ENTRY *e;
+    uint64_t hash;
 
 #ifndef FIPS_MODULE
     if (namemap == NULL)
@@ -164,16 +282,11 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (name_len > NAMEMAP_NAME_LEN)
         name_len = NAMEMAP_NAME_LEN;
 
-    HT_INIT_RAW_KEY(&key);
-    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, name_len);
+    hash = namemap_hash(name, name_len);
+    OSSL_HTABLE_FIND_RCU(e, namenum, &namemap->namenum_ht, hash,
+        namemap_key_eq(e, hash, name, name_len));
 
-    val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
-
-    if (val != NULL)
-        /* We store a (small) int directly instead of a pointer to it. */
-        number = (int)(intptr_t)val->value;
-
-    return number;
+    return e != NULL ? e->number : 0;
 }
 
 const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
@@ -197,12 +310,14 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
     return ret;
 }
 
-/* This function is not thread safe, the namemap must be locked */
-static int numname_insert(OSSL_NAMEMAP *namemap, int number,
-    const char *name)
+/*
+ * Add |name| to the names of |number|, or as the first name of a new number
+ * if that is 0. The stack takes ownership of the entry that |name| is part
+ * of. This function is not thread safe, the namemap must be locked.
+ */
+static int numname_insert(OSSL_NAMEMAP *namemap, int number, char *name)
 {
     NAMES *names;
-    char *tmpname;
 
     if (number > 0) {
         names = sk_NAMES_value(namemap->numnames, number - 1);
@@ -217,25 +332,19 @@ static int numname_insert(OSSL_NAMEMAP *namemap, int number,
             return 0;
     }
 
-    if ((tmpname = OPENSSL_strdup(name)) == NULL)
-        goto err;
-
-    if (!sk_OPENSSL_STRING_push(names, tmpname))
-        goto err;
-    tmpname = NULL;
-
     if (number <= 0) {
-        if (!sk_NAMES_push(namemap->numnames, names))
-            goto err;
+        /* Reserve the slot first, so that the pushes below cannot fail */
+        if (!sk_OPENSSL_STRING_reserve(names, 1)
+            || !sk_NAMES_push(namemap->numnames, names)) {
+            sk_OPENSSL_STRING_free(names);
+            return 0;
+        }
         number = sk_NAMES_num(namemap->numnames);
     }
-    return number;
 
-err:
-    if (number <= 0)
-        sk_OPENSSL_STRING_pop_free(names, name_string_free);
-    OPENSSL_free(tmpname);
-    return 0;
+    if (!sk_OPENSSL_STRING_push(names, name))
+        return 0;
+    return number;
 }
 
 /* This function is not thread safe, the namemap must be locked */
@@ -243,32 +352,31 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     const char *name)
 {
     int ret;
-    HT_VALUE val = { 0 };
-    NAMENUM_KEY key;
+    size_t len = strlen(name);
+    NAMEMAP_ENTRY *e;
 
     /* If it already exists, we don't add it */
     if ((ret = ossl_namemap_name2num(namemap, name)) != 0)
         return ret;
 
-    if ((number = numname_insert(namemap, number, name)) == 0)
+    if ((e = OPENSSL_malloc(sizeof(*e) + len)) == NULL)
         return 0;
+    ossl_queue_namenum_init_elem(e);
+    memcpy(e->name, name, len + 1);
+    e->keylen = len > NAMEMAP_NAME_LEN ? NAMEMAP_NAME_LEN : len;
+    e->hash = namemap_hash(name, e->keylen);
+
+    if ((number = numname_insert(namemap, number, e->name)) == 0) {
+        OPENSSL_free(e);
+        return 0;
+    }
+    e->number = number;
 
     /* Using tsan_store alone here is safe since we're under lock */
     tsan_store(&namemap->max_number, number);
 
-    HT_INIT_RAW_KEY(&key);
-    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
-
-    val.value = (void *)(intptr_t)number;
-    ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
-    if (ret <= 0) {
-        /*
-         * We either got an allocation failure (INTERNAL_ERROR), or
-         * hit too many conflicts in the table (TOO_MANY_NAMES)
-         */
-        ERR_raise(ERR_LIB_CRYPTO, (ret < 0) ? CRYPTO_R_TOO_MANY_NAMES : ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    /* Publish the finished entry to the lock-free readers; cannot fail */
+    ossl_htable_namenum_add_rcu(&namemap->namenum_ht, e, e->hash);
     return number;
 }
 
@@ -528,17 +636,12 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 OSSL_NAMEMAP *ossl_namemap_new(OSSL_LIB_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap;
-    HT_CONFIG htconf = { NULL, NULL, NULL, NAMEMAP_HT_BUCKETS, 1, 1, 0 };
-
-    htconf.ctx = libctx;
 
     if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) == NULL)
         goto err;
+    ossl_htable_namenum_init(&namemap->namenum_ht);
 
     if ((namemap->lock = CRYPTO_THREAD_lock_new()) == NULL)
-        goto err;
-
-    if ((namemap->namenum_ht = ossl_ht_new(&htconf)) == NULL)
         goto err;
 
     if ((namemap->numnames = sk_NAMES_new_null()) == NULL)
@@ -556,9 +659,8 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
     if (namemap == NULL || namemap->stored)
         return;
 
+    /* The names stacks own the entries of the name->number table */
     sk_NAMES_pop_free(namemap->numnames, names_free);
-
-    ossl_ht_free(namemap->namenum_ht);
 
     CRYPTO_THREAD_lock_free(namemap->lock);
     OPENSSL_free(namemap);

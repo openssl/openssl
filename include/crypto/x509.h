@@ -12,6 +12,7 @@
 #pragma once
 
 #include "internal/refcount.h"
+#include "internal/htable.h"
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -60,6 +61,12 @@ struct X509_name_st {
     /* canonical encoding used for rapid Name comparison */
     unsigned char *canon_enc;
     int canon_enclen;
+    /*
+     * Hash of canon_enc, valid whenever canon_enc is: both are set together.
+     * It is not keyed, so that it can be computed once per name and shared
+     * by every table the name is looked up in.
+     */
+    uint64_t canon_hash;
 } /* X509_NAME */;
 
 /* Signature info structure */
@@ -328,6 +335,14 @@ struct x509_object_st {
         X509 *x509;
         X509_CRL *crl;
     } data;
+    /*
+     * For an object held in an X509_STORE's table of names, unused in any
+     * other object. The first object added under a name is the element of
+     * the table, and |same| of that object holds the others of the name in
+     * the order they were added; it is NULL while there are none.
+     */
+    OSSL_HTABLE_MEMBER(x509_objs);
+    STACK_OF(X509_OBJECT) *same;
 };
 
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);

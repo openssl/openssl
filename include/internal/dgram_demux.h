@@ -109,9 +109,10 @@ struct dgram_urxe_st {
 
 /*
  * Free-list limit used by the DTLS listener: two receive batches, so one
- * full batch can always be cached. Enforced by
- * ossl_dgram_demux_release_urxe() once set with
- * ossl_dgram_demux_set_max_free_urxe(); the default 0 is unbounded.
+ * full batch can always be cached. Enforced whenever a URXE comes back to
+ * the free list, released by its holder or declined by a route handler,
+ * once set with ossl_dgram_demux_set_max_free_urxe(); the default 0 is
+ * unbounded.
  */
 #define DEMUX_MAX_FREE_URXE (2 * DEMUX_MAX_MSGS_PER_CALL)
 
@@ -142,6 +143,15 @@ void ossl_dgram_urxe_insert_tail(DGRAM_URXE_LIST *l, DGRAM_URXE *e);
  * therefore the callee can use the prev and next fields as it wishes.
  */
 typedef void(ossl_dgram_demux_cb_fn)(DGRAM_URXE *e, void *arg);
+
+/*
+ * As ossl_dgram_demux_cb_fn, but the callee may decline the URXE: a return of
+ * 0 means it kept no reference and the demuxer takes the URXE back itself, so
+ * the callee need not call ossl_dgram_demux_release_urxe(). On a thread-safe
+ * demuxer the declined URXEs of a batch are returned under one lock.
+ * A return of 1 transfers ownership as with ossl_dgram_demux_cb_fn.
+ */
+typedef int(ossl_dgram_demux_route_fn)(DGRAM_URXE *e, void *arg);
 
 /*
  * Creates a new demuxer. The given BIO is used to receive datagrams from the
@@ -201,6 +211,19 @@ size_t ossl_dgram_demux_get_free_list_len(DGRAM_DEMUX *demux);
  */
 void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
     ossl_dgram_demux_cb_fn *cb,
+    void *cb_arg);
+
+/**
+ * Set a default packet handler which may decline datagrams (see
+ * ossl_dgram_demux_route_fn). Replaces any handler set with
+ * ossl_dgram_demux_set_default_handler().
+ *
+ * @param demux  the demuxer
+ * @param cb     the handler, or NULL to unset it
+ * @param cb_arg the argument passed to |cb|
+ */
+void ossl_dgram_demux_set_route_handler(DGRAM_DEMUX *demux,
+    ossl_dgram_demux_route_fn *cb,
     void *cb_arg);
 
 /*
