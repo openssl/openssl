@@ -17,40 +17,52 @@
 #include "prov/ml_dsa_composite.h"
 #include "prov/provider_ctx.h"
 
-/*
- * Encode the ml dsa composite public key (mldsaPK || tradPK) into *out.
- * Returns the total byte length on success, 0 on error.
- * If out is NULL, only the length is returned (no allocation).
+/**
+ * @brief Encode the ML-DSA composite public key (mldsaPK || tradPK).
+ * @param key the key to encode
+ * @param out if not NULL, receives a newly allocated buffer that the caller
+ * frees with OPENSSL_free(); if NULL only the length is computed
+ * @returns the length in bytes on success, 0 on error
  */
 __owur int ossl_ml_dsa_composite_i2d_pubkey(const ML_DSA_COMPOSITE_KEY *key,
     unsigned char **out);
 
-/*
- * Encode the ml dsa composite private key (mldsaSeed[32] || tradSK) into *out.
- * Returns the total byte length on success, 0 on error.
- * If out is NULL, only the length is returned (no allocation).
+/**
+ * @brief Encode the ML-DSA composite private key (mldsaSeed[32] || tradSK).
+ * @param key the key to encode
+ * @param out if not NULL, receives a newly allocated buffer holding secret
+ * key material, which the caller frees (preferably with OPENSSL_clear_free());
+ * if NULL only the length is computed
+ * @returns the length in bytes on success, 0 on error
  */
 __owur int ossl_ml_dsa_composite_i2d_prvkey(const ML_DSA_COMPOSITE_KEY *key,
     unsigned char **out);
 
-/*
- * Print a human-readable description of the ml dsa composite key to |out|.
- * |selection| is an OSSL_KEYMGMT_SELECT_* mask.
+/**
+ * @brief Print a human-readable description of the ML-DSA composite key.
+ * @param out the BIO to print to
+ * @param key the key to describe
+ * @param selection an OSSL_KEYMGMT_SELECT_* mask choosing what to print
+ * @returns 1 on success, 0 on error
  */
 __owur int ossl_ml_dsa_composite_key_to_text(BIO *out, const ML_DSA_COMPOSITE_KEY *key,
     int selection);
 
-/*
- * Decode a ml dsa composite public key from its wire format (mldsaPK || tradPK).
- * |pk|/|pk_len|: raw concatenated public key bytes (BIT STRING content
- *   from SubjectPublicKeyInfo).
- * |ml_dsa_evp_type|: EVP_PKEY_ML_DSA_44/65/87 selecting the ML-DSA variant.
- * |classic_alg|: "RSA", "EC", "ED25519", or "ED448".
- * |classic_bits|: expected classic key size in bits, checked for RSA only.
- * |ec_curve|: curve name for EC (e.g. "P-256"), NULL for non-EC.
- * |provctx|: provider context for library context and propq.
- * |propq|: property query string (may be NULL).
- * Returns a newly allocated ML_DSA_COMPOSITE_KEY on success, NULL on failure.
+/**
+ * @brief Decode an ML-DSA composite public key from its wire format
+ * (mldsaPK || tradPK).
+ * @param pk the raw concatenated public key bytes (the BIT STRING content of
+ * a SubjectPublicKeyInfo)
+ * @param pk_len the number of bytes at pk
+ * @param ml_dsa_evp_type EVP_PKEY_ML_DSA_44, EVP_PKEY_ML_DSA_65 or
+ * EVP_PKEY_ML_DSA_87, selecting the ML-DSA variant
+ * @param classic_alg the classical algorithm: "RSA" or "EC"
+ * @param classic_bits the expected classical key size in bits, checked for
+ * RSA only
+ * @param ec_curve the curve name for EC (for example "P-256"), NULL otherwise
+ * @param provctx the provider context, used for the library context
+ * @param propq the property query string, may be NULL
+ * @returns a newly allocated key, or NULL on failure
  */
 __owur ML_DSA_COMPOSITE_KEY *ossl_ml_dsa_composite_d2i_pubkey(const unsigned char *pk,
     int pk_len,
@@ -61,11 +73,20 @@ __owur ML_DSA_COMPOSITE_KEY *ossl_ml_dsa_composite_d2i_pubkey(const unsigned cha
     PROV_CTX *provctx,
     const char *propq);
 
-/*
- * Decode a ml dsa composite private key from its wire format (mldsaSeed[32] || tradSK).
- * |priv|/|priv_len|: raw concatenated private key bytes.
- * Other params: same as ossl_ml_dsa_composite_d2i_pubkey.
- * Returns a newly allocated ML_DSA_COMPOSITE_KEY on success, NULL on failure.
+/**
+ * @brief Decode an ML-DSA composite private key from its wire format
+ * (mldsaSeed[32] || tradSK).
+ * @param priv the raw concatenated private key bytes
+ * @param priv_len the number of bytes at priv
+ * @param ml_dsa_evp_type EVP_PKEY_ML_DSA_44, EVP_PKEY_ML_DSA_65 or
+ * EVP_PKEY_ML_DSA_87, selecting the ML-DSA variant
+ * @param classic_alg the classical algorithm: "RSA" or "EC"
+ * @param classic_bits the expected classical key size in bits, checked for
+ * RSA only
+ * @param ec_curve the curve name for EC (for example "P-256"), NULL otherwise
+ * @param provctx the provider context, used for the library context
+ * @param propq the property query string, may be NULL
+ * @returns a newly allocated key, or NULL on failure
  */
 __owur ML_DSA_COMPOSITE_KEY *ossl_ml_dsa_composite_d2i_prvkey(const unsigned char *priv,
     int priv_len,

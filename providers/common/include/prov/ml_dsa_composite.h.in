@@ -66,8 +66,23 @@ typedef struct {
     size_t siglen;
 } PROV_ML_DSA_COMPOSITE_CTX;
 
+/**
+ * @brief Allocate an empty ML-DSA composite key of the given ML-DSA variant.
+ * The classical component is not set; the caller fills it in.
+ * @param ctx the provider context, used for the library context
+ * @param propq the property query string for algorithm fetches, may be NULL
+ * @param ml_dsa_evp_type EVP_PKEY_ML_DSA_44, EVP_PKEY_ML_DSA_65 or
+ * EVP_PKEY_ML_DSA_87, selecting the ML-DSA variant
+ * @returns a newly allocated key, or NULL on failure or when the provider is
+ * not running
+ */
 ML_DSA_COMPOSITE_KEY *ossl_prov_ml_dsa_composite_new(PROV_CTX *ctx, const char *propq,
     int ml_dsa_evp_type);
+
+/**
+ * @brief Free an ML-DSA composite key and both of its components.
+ * @param key the key to free, may be NULL
+ */
 void ossl_ml_dsa_composite_key_free(ML_DSA_COMPOSITE_KEY *key);
 
 #endif /* PROV_ML_DSA_COMPOSITE_H */
