@@ -37,6 +37,8 @@
 #include "crypto/ml_dsa.h"
 #include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
+#include "crypto/asn1_dsa.h" /* ossl_decode_der_length() */
+#include "internal/der.h"
 #include "crypto/ml_kem.h"
 #include "openssl/obj_mac.h"
 #include "prov/bio.h"
@@ -1052,6 +1054,26 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
  */
 
 /*
+ * Read the length octets of a DER element from |pkt| and set |content| to
+ * the following bytes.  This is ossl_decode_der_length() plus a check that
+ * the length is minimally encoded, as DER requires: the 0x81 form must not
+ * be used for a length that fits the short form, nor the 0x82 form for one
+ * that fits in a single byte.
+ */
+static int ml_dsa_composite_der_content(PACKET *pkt, PACKET *content)
+{
+    unsigned int first;
+
+    if (!PACKET_peek_1(pkt, &first)
+        || !ossl_decode_der_length(pkt, content))
+        return 0;
+    if ((first == 0x81 && PACKET_remaining(content) < 0x80)
+        || (first == 0x82 && PACKET_remaining(content) < 0x100))
+        return 0;
+    return 1;
+}
+
+/*
  * Parse SubjectPublicKeyInfo by hand to extract the BIT STRING body
  * (mldsaPK || tradPK) without calling d2i_X509_PUBKEY (which would
  * re-enter the OSSL_DECODER chain and recurse infinitely).
@@ -1061,53 +1083,66 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
  *   subjectPublicKey BIT STRING
  * }
  *
+ * The encoding must be strict DER: the exact universal tags, minimal
+ * lengths, a primitive BIT STRING with no unused bits, no data after the
+ * SubjectPublicKeyInfo, and an AlgorithmIdentifier that holds only the OID
+ * |expected_nid|, i.e. with the parameters absent.
+ *
  * On success returns a pointer into |der| at the start of the BIT STRING
  * payload and sets |*out_len|.  Returns NULL on parse failure.
  */
 static const unsigned char *
 ml_dsa_composite_spki_bitstring_body(const unsigned char *der, long der_len,
-    int *out_len)
+    int expected_nid, int *out_len)
 {
-    const unsigned char *p = der;
-    const unsigned char *end;
-    long outer_len, algo_len, bs_len;
-    int tag, xclass, inf;
+    PACKET pkt, spki, algid, bitstr;
+    unsigned int tag, unused_bits;
+    const unsigned char *p;
+    ASN1_OBJECT *oid;
+    int nid;
 
-    if (der_len <= 0)
+    if (der_len <= 0 || !PACKET_buf_init(&pkt, der, (size_t)der_len))
         return NULL;
 
-    /* Outer SEQUENCE; ASN1_get_object() itself bounds-checks outer_len against der_len */
-    inf = ASN1_get_object(&p, &outer_len, &tag, &xclass, der_len);
-    if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_SEQUENCE)
-        return NULL;
-    end = p + outer_len; /* safe: outer_len was checked to fit within der_len above */
-
-    /* AlgorithmIdentifier (SEQUENCE) — skip it */
-    inf = ASN1_get_object(&p, &algo_len, &tag, &xclass, (long)(end - p));
-    if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_SEQUENCE)
-        return NULL;
-    p += algo_len; /* skip AlgorithmIdentifier body; bounds already checked */
-
-    /* BIT STRING */
-    inf = ASN1_get_object(&p, &bs_len, &tag, &xclass, (long)(end - p));
-    if ((inf & 0x80) != 0 || xclass != V_ASN1_UNIVERSAL || tag != V_ASN1_BIT_STRING
-        || bs_len < 1)
+    /* SubjectPublicKeyInfo SEQUENCE, with nothing after it */
+    if (!PACKET_get_1(&pkt, &tag)
+        || tag != (DER_F_CONSTRUCTED | DER_P_SEQUENCE)
+        || !ml_dsa_composite_der_content(&pkt, &spki)
+        || PACKET_remaining(&pkt) != 0)
         return NULL;
 
-    /* the BIT STRING must exactly fill the SEQUENCE with no trailing junk */
-    if (p + bs_len != end)
+    /* AlgorithmIdentifier SEQUENCE */
+    if (!PACKET_get_1(&spki, &tag)
+        || tag != (DER_F_CONSTRUCTED | DER_P_SEQUENCE)
+        || !ml_dsa_composite_der_content(&spki, &algid))
+        return NULL;
+
+    /* It must hold exactly one OID, the expected one: no parameters */
+    p = PACKET_data(&algid);
+    oid = d2i_ASN1_OBJECT(NULL, &p, (long)PACKET_remaining(&algid));
+    if (oid == NULL)
+        return NULL;
+    nid = OBJ_obj2nid(oid);
+    ASN1_OBJECT_free(oid);
+    if (nid != expected_nid || p != PACKET_end(&algid))
+        return NULL;
+
+    /* subjectPublicKey BIT STRING (primitive), filling the rest of the SPKI */
+    if (!PACKET_get_1(&spki, &tag)
+        || tag != DER_P_BIT_STRING
+        || !ml_dsa_composite_der_content(&spki, &bitstr)
+        || PACKET_remaining(&spki) != 0)
         return NULL;
 
     /* unused-bits byte must be 0 for DER-encoded key material */
-    if (p[0] != 0)
+    if (!PACKET_get_1(&bitstr, &unused_bits) || unused_bits != 0)
         return NULL;
 
-    if (bs_len - 1 > INT_MAX)
+    if (PACKET_remaining(&bitstr) > INT_MAX)
         return NULL;
 
-    /* First byte is the unused-bits count; payload starts at p+1 */
-    *out_len = (int)(bs_len - 1);
-    return p + 1;
+    *out_len = (int)PACKET_remaining(&bitstr);
+    return PACKET_data(&bitstr);
 }
 
 static ML_DSA_COMPOSITE_KEY *
@@ -1117,38 +1152,10 @@ ml_dsa_composite_d2i_pubkey_common(const unsigned char *der, long der_len,
     struct der2key_ctx_st *ctx)
 {
     const unsigned char *pk;
-    const unsigned char *p = der;
-    long outer_len, algo_len;
-    int tag, xclass, inf, pk_len;
-    ASN1_OBJECT *oid = NULL;
+    int pk_len;
 
-    /*
-     * Peek at the AlgorithmIdentifier OID to reject structures that don't
-     * belong to this composite variant, without calling d2i_X509_PUBKEY
-     * (which would re-enter the OSSL_DECODER chain and recurse infinitely).
-     */
-
-    /* Outer SEQUENCE */
-    inf = ASN1_get_object(&p, &outer_len, &tag, &xclass, der_len);
-    if ((inf & 0x80) || tag != V_ASN1_SEQUENCE)
-        return NULL;
-
-    /* AlgorithmIdentifier SEQUENCE header */
-    inf = ASN1_get_object(&p, &algo_len, &tag, &xclass, outer_len);
-    if ((inf & 0x80) || tag != V_ASN1_SEQUENCE || algo_len <= 0)
-        return NULL;
-
-    /* OID inside AlgorithmIdentifier */
-    oid = d2i_ASN1_OBJECT(NULL, &p, algo_len);
-    if (oid == NULL)
-        return NULL;
-    if (OBJ_obj2nid(oid) != ctx->desc->evp_type) {
-        ASN1_OBJECT_free(oid);
-        return NULL;
-    }
-    ASN1_OBJECT_free(oid);
-
-    pk = ml_dsa_composite_spki_bitstring_body(der, der_len, &pk_len);
+    pk = ml_dsa_composite_spki_bitstring_body(der, der_len,
+        ctx->desc->evp_type, &pk_len);
     if (pk == NULL)
         return NULL;
 
