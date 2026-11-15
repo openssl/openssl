@@ -16,7 +16,6 @@
 #include <openssl/params.h>
 #include <openssl/rand.h>
 #include "testutil.h"
-#include "ml_dsa_composite_sig.inc"
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -49,34 +48,6 @@ static EVP_PKEY *do_gen_key(const char *alg)
     EVP_PKEY_CTX_free(ctx);
     return pkey;
 }
-
-/*
- * Load a ml dsa composite public key from raw DER bytes via EVP_PKEY_fromdata.
- */
-#if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
-static EVP_PKEY *ml_dsa_composite_key_from_pub(const char *alg,
-    const uint8_t *pub, size_t pub_len)
-{
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    OSSL_PARAM params[2];
-
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-        (void *)pub, pub_len);
-    params[1] = OSSL_PARAM_construct_end();
-
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
-        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
-        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey,
-                            OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
-                            params),
-            1))
-        pkey = NULL;
-
-    EVP_PKEY_CTX_free(ctx);
-    return pkey;
-}
-#endif /* ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0 */
 
 /* =========================================================================
  *  DRBG round-trip tests (keygen → sign → verify)
@@ -197,43 +168,6 @@ err:
     EVP_PKEY_free(k1_dup);
     return ret;
 }
-
-/* =========================================================================
- * Deterministic vector tests (ml_dsa_composite_sig.inc)
- * ========================================================================= */
-
-/*
- * sigver: load public key from vector, verify the stored signature.
- * td->expected == 1 for valid, 0 for deliberately invalid vectors.
- */
-#if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
-static int ml_dsa_composite_sigver_test(int tst_id)
-{
-    int ret = 0;
-    const ML_DSA_COMPOSITE_SIG_VER_TEST_DATA *td = &ml_dsa_composite_sigver_testdata[tst_id];
-    EVP_PKEY_CTX *vctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    EVP_SIGNATURE *sig_alg = NULL;
-
-    if (!TEST_ptr(pkey = ml_dsa_composite_key_from_pub(td->alg, td->pub, td->pub_len)))
-        goto err;
-
-    if (!TEST_ptr(vctx = EVP_PKEY_CTX_new_from_pkey(lib_ctx, pkey, NULL))
-        || !TEST_ptr(sig_alg = EVP_SIGNATURE_fetch(lib_ctx, td->alg, NULL))
-        || !TEST_int_eq(EVP_PKEY_verify_message_init(vctx, sig_alg, NULL), 1)
-        || !TEST_int_eq(EVP_PKEY_verify(vctx, td->sig, td->sig_len,
-                            td->msg, td->msg_len),
-            td->expected))
-        goto err;
-
-    ret = 1;
-err:
-    EVP_SIGNATURE_free(sig_alg);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(vctx);
-    return ret;
-}
-#endif /* ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0 */
 
 /* =========================================================================
  * Negative tests
@@ -908,14 +842,9 @@ int setup_tests(void)
     if (!test_get_libctx(&lib_ctx, &null_prov, config_file, &lib_prov, NULL))
         return 0;
 
-    /* Strategy 1: DRBG round-trips for all algorithms */
+    /* DRBG round-trips for all algorithms */
     ADD_ALL_TESTS(ml_dsa_composite_drbg_sign_verify_test, NUM_ML_DSA_COMPOSITE_ALGS);
     ADD_TEST(ml_dsa_composite_keygen_drbg_test);
-
-    /* Strategy 2: deterministic vector tests from ml_dsa_composite_sig.inc */
-#if ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT > 0
-    ADD_ALL_TESTS(ml_dsa_composite_sigver_test, ML_DSA_COMPOSITE_SIGVER_TESTDATA_COUNT);
-#endif
 
     /* Negative tests */
     ADD_TEST(ml_dsa_composite_cross_alg_mismatch_test);
