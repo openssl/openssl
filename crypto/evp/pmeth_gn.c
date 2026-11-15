@@ -14,6 +14,7 @@
 #include "internal/cryptlib.h"
 #include "internal/core.h"
 #include "internal/common.h"
+#include "internal/params.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "crypto/bn.h"
@@ -317,6 +318,11 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
 
     if (ppkey == NULL)
         return -1;
+
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params,
+            evp_keymgmt_import_types(ctx->keymgmt, selection)))
+        return 0;
 
     if (*ppkey == NULL)
         allocated_pkey = *ppkey = EVP_PKEY_new();

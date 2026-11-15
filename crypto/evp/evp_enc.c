@@ -16,6 +16,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/common.h"
@@ -152,6 +153,11 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             return 0;
         }
     }
+
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params,
+            EVP_CIPHER_CTX_settable_params(ctx)))
+        return 0;
 
     if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
         /*
@@ -323,6 +329,11 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
+
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params,
+            EVP_CIPHER_CTX_settable_params(ctx)))
+        return 0;
 
     if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
         /*
@@ -1146,6 +1157,10 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
     int r = 0;
     const OSSL_PARAM *p;
 
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params,
+            EVP_CIPHER_CTX_settable_params(ctx)))
+        return 0;
     if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL) {
         r = ctx->cipher->set_ctx_params(ctx->algctx, params);
         if (r > 0) {

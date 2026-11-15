@@ -11,6 +11,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
+#include <openssl/params.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/trace.h>
@@ -57,6 +58,14 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
                 ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
+        } else if (strcmp(oval->name, "strict_params") == 0) {
+            int m;
+
+            /* Detailed error already reported. */
+            if (!X509V3_get_value_bool(oval, &m))
+                return 0;
+            if (!OSSL_PARAM_set_strict(m > 0))
+                return 0;
         } else {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_OPTION,
                 "name=%s, value=%s", oval->name, oval->value);

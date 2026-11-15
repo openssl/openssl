@@ -16,6 +16,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "crypto/evp.h"
@@ -438,6 +439,9 @@ int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[])
 static int evp_rand_set_ctx_params_locked(EVP_RAND_CTX *ctx,
     const OSSL_PARAM params[])
 {
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_RAND_CTX_settable_params(ctx)))
+        return 0;
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->algctx, params);
     return 1;
@@ -528,6 +532,9 @@ int EVP_RAND_names_do_all(const EVP_RAND *rand,
 static int evp_rand_instantiate_locked(EVP_RAND_CTX *ctx, unsigned int strength, int prediction_resistance,
     const unsigned char *pstr, size_t pstr_len, const OSSL_PARAM params[])
 {
+    if (ossl_param_strict_enabled()
+        && !ossl_param_check_settable(params, EVP_RAND_CTX_settable_params(ctx)))
+        return 0;
     return ctx->meth->instantiate(ctx->algctx, strength, prediction_resistance,
         pstr, pstr_len, params);
 }

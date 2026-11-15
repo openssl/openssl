@@ -503,6 +503,7 @@ CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
 CRYPTO_R_PARAM_CANNOT_BE_REPRESENTED_EXACTLY:123:\
 	param cannot be represented exactly
 CRYPTO_R_PARAM_NOT_INTEGER_TYPE:124:param not integer type
+CRYPTO_R_PARAM_NOT_SETTABLE:133:param not settable
 CRYPTO_R_PARAM_OF_INCOMPATIBLE_TYPE:129:param of incompatible type
 CRYPTO_R_PARAM_UNSIGNED_INTEGER_NEGATIVE_VALUE_UNSUPPORTED:125:\
 	param unsigned integer negative value unsupported

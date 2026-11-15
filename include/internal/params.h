@@ -43,4 +43,22 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
 int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
     unsigned char **out, size_t *out_len);
 
+/**
+ * @brief Report whether OSSL_PARAM_set_strict() has turned strict
+ * checking on.
+ * @returns 1 if strict checking is on, 0 otherwise
+ */
+int ossl_param_strict_enabled(void);
+
+/**
+ * @brief Check that every key in an OSSL_PARAM array is settable.
+ * On failure an error naming the first unrecognised key is raised.
+ * @param params the array to check, or NULL
+ * @param settable the receiver's settable list; NULL accepts no keys
+ * @returns 1 if params is NULL or every key in it appears in settable,
+ *          0 otherwise
+ */
+int ossl_param_check_settable(const OSSL_PARAM *params,
+    const OSSL_PARAM *settable);
+
 #endif /* !defined(OSSL_INTERNAL_PARAMS_H) */

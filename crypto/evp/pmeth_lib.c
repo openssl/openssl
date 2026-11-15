@@ -29,6 +29,7 @@
 #include "crypto/ec.h"
 #include "internal/ffc.h"
 #include "internal/numbers.h"
+#include "internal/params.h"
 #include "internal/provider.h"
 #include "internal/common.h"
 #include "evp_local.h"
@@ -426,6 +427,8 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
 {
     switch (evp_pkey_ctx_state(ctx)) {
     case EVP_PKEY_STATE_PROVIDER:
+        if (!evp_pkey_ctx_check_settable(ctx, params))
+            return 0;
         if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->set_ctx_params != NULL)
@@ -628,6 +631,14 @@ int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     }
 
     return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int evp_pkey_ctx_check_settable(const EVP_PKEY_CTX *ctx,
+    const OSSL_PARAM *params)
+{
+    if (!ossl_param_strict_enabled())
+        return 1;
+    return ossl_param_check_settable(params, EVP_PKEY_CTX_settable_params(ctx));
 }
 
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
