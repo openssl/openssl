@@ -56,7 +56,7 @@ ok(run(app(['openssl', 'list', '-tls-signature-algorithms', '-verbose'])),
    "provider listing of TLS signature algorithms");
 ok(run(app(['openssl', 'list', '-asymcipher-algorithms', '-verbose'])),
    "provider listing of encryption algorithms");
-ok(run(app(['openssl', 'list', '-key-managers', '-verbose', '-select', 'DSA' ])),
+ok(run(app(['openssl', 'list', '-key-managers', '-verbose', '-select', 'RSA' ])),
    "provider listing of one item in the keymanager");
 
 sub pubfrompriv {

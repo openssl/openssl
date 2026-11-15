@@ -49,6 +49,7 @@ static int default_libctx = 1;
 static int is_fips = 0;
 static int is_fips_3_0_0 = 0;
 static int is_fips_lt_3_5 = 0;
+static int is_fips_ge_4_2 = 0;
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_LIB_CTX *keyctx = NULL;
@@ -1886,6 +1887,8 @@ int setup_tests(void)
     is_fips_3_0_0 = is_fips && fips_provider_version_eq(testctx, 3, 0, 0);
     /* FIPS(3.5.0) is the first to support ML-DSA, ML-KEM and SLH-DSA */
     is_fips_lt_3_5 = is_fips && fips_provider_version_lt(testctx, 3, 5, 0);
+    /* FIPS(4.2.0) is the first without DSA */
+    is_fips_ge_4_2 = is_fips && fips_provider_version_ge(testctx, 4, 2, 0);
 
 #ifdef STATIC_LEGACY
     /*
@@ -1934,8 +1937,10 @@ int setup_tests(void)
     MAKE_DOMAIN_KEYS(DHX, "X9.42 DH", NULL);
 #endif
 #ifndef OPENSSL_NO_DSA
-    TEST_info("Generating DSA keys...");
-    MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
+    if (!is_fips_ge_4_2) {
+        TEST_info("Generating DSA keys...");
+        MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
+    }
 #endif
 #ifndef OPENSSL_NO_EC
     TEST_info("Generating EC keys...");
@@ -2012,14 +2017,16 @@ int setup_tests(void)
          */
 #endif
 #ifndef OPENSSL_NO_DSA
-        ADD_TEST_SUITE(DSA);
-        ADD_TEST_SUITE_PARAMS(DSA);
-        ADD_TEST_SUITE_LEGACY(DSA);
-        ADD_TEST_SUITE_MSBLOB(DSA);
-        ADD_TEST_SUITE_UNPROTECTED_PVK(DSA);
+        if (!is_fips_ge_4_2) {
+            ADD_TEST_SUITE(DSA);
+            ADD_TEST_SUITE_PARAMS(DSA);
+            ADD_TEST_SUITE_LEGACY(DSA);
+            ADD_TEST_SUITE_MSBLOB(DSA);
+            ADD_TEST_SUITE_UNPROTECTED_PVK(DSA);
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
-        ADD_TEST_SUITE_PROTECTED_PVK(DSA);
+            ADD_TEST_SUITE_PROTECTED_PVK(DSA);
 #endif
+        }
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST(ec_encode_to_data_multi);

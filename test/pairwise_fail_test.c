@@ -18,7 +18,6 @@ typedef enum OPTION_choice {
     OPT_PROVIDER_NAME,
     OPT_CONFIG_FILE,
     OPT_PAIRWISETEST,
-    OPT_DSAPARAM,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -28,7 +27,6 @@ struct self_test_arg {
 
 static OSSL_LIB_CTX *libctx = NULL;
 static char *pairwise_name = NULL;
-static char *dsaparam_file = NULL;
 static struct self_test_arg self_test_args = { 0 };
 
 const OPTIONS *test_get_options(void)
@@ -39,7 +37,6 @@ const OPTIONS *test_get_options(void)
             "The configuration file to use for the libctx" },
         { "pairwise", OPT_PAIRWISETEST, 's',
             "Test keygen pairwise test failures" },
-        { "dsaparam", OPT_DSAPARAM, 's', "DSA param file" },
         { NULL }
     };
     return test_options;
@@ -86,9 +83,7 @@ err:
 
 static int test_keygen_pairwise_failure(void)
 {
-    BIO *bio = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *pParams = NULL;
     EVP_PKEY *pkey = NULL;
     const char *type = OSSL_SELF_TEST_TYPE_PCT;
     int ret = 0;
@@ -102,23 +97,6 @@ static int test_keygen_pairwise_failure(void)
         if (!TEST_true(setup_selftest_pairwise_failure(type)))
             goto err;
         if (!TEST_ptr_null(pkey = EVP_PKEY_Q_keygen(libctx, NULL, "EC", "P-256")))
-            goto err;
-    } else if (strncmp(pairwise_name, "dsa", 3) == 0) {
-        if (strcmp(pairwise_name, "dsakat") == 0)
-            type = OSSL_SELF_TEST_TYPE_PCT_KAT;
-        if (!TEST_true(setup_selftest_pairwise_failure(type)))
-            goto err;
-        if (!TEST_ptr(bio = BIO_new_file(dsaparam_file, "r")))
-            goto err;
-        if (!TEST_ptr(pParams = PEM_read_bio_Parameters_ex(bio, NULL, libctx, NULL)))
-            goto err;
-        if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pParams, NULL)))
-            goto err;
-        if (!TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1))
-            goto err;
-        if (!TEST_int_le(EVP_PKEY_keygen(ctx, &pkey), 0))
-            goto err;
-        if (!TEST_ptr_null(pkey))
             goto err;
     } else if (strncmp(pairwise_name, "eddsa", 5) == 0) {
         if (!TEST_true(setup_selftest_pairwise_failure(type)))
@@ -169,8 +147,6 @@ static int test_keygen_pairwise_failure(void)
 err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
-    BIO_free(bio);
-    EVP_PKEY_free(pParams);
     return ret;
 }
 
@@ -186,9 +162,6 @@ int setup_tests(void)
             break;
         case OPT_PAIRWISETEST:
             pairwise_name = opt_arg();
-            break;
-        case OPT_DSAPARAM:
-            dsaparam_file = opt_arg();
             break;
         case OPT_TEST_CASES:
             break;

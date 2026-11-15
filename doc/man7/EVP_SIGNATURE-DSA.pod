@@ -12,8 +12,7 @@ L<EVP_PKEY_sign(3)> is DER encoded ASN.1 in the form described in
 RFC 3279, section 2.2.2.
 See L<EVP_PKEY-DSA(7)> for information related to DSA keys.
 
-As part of FIPS 140-3 DSA is not longer FIPS approved for key generation and
-signature validation, but is still allowed for signature verification.
+DSA is not FIPS approved, and is not supported by the OpenSSL FIPS provider.
 
 =head2 Algorithm Names
 
@@ -75,12 +74,6 @@ include a message digest algorithm, See L</Algorithm Names> above.
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
-=item "key-check" (B<OSSL_SIGNATURE_PARAM_FIPS_KEY_CHECK>) <integer>
-
-=item "digest-check" (B<OSSL_SIGNATURE_PARAM_FIPS_DIGEST_CHECK>) <integer>
-
-=item "sign-check"  (B<OSSL_SIGNATURE_PARAM_FIPS_SIGN_CHECK>) <int>
-
 The settable parameters are described in L<provider-signature(7)>.
 
 =back
@@ -96,8 +89,6 @@ EVP_PKEY_CTX_get_params().
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
-=item "fips-indicator" (B<OSSL_SIGNATURE_PARAM_FIPS_APPROVED_INDICATOR>) <integer>
-
 The gettable parameters are described in L<provider-signature(7)>.
 
 =back
@@ -112,7 +103,8 @@ L<provider-signature(7)>,
 =head1 HISTORY
 
 DSA Key generation and signature generation are no longer FIPS approved in
-OpenSSL 3.4. See L<fips_module(7)/FIPS indicators> for more information.
+OpenSSL 3.4, and DSA was removed from the FIPS provider in OpenSSL 4.2.
+See L<fips_module(7)/FIPS indicators> for more information.
 
 =head1 COPYRIGHT
 

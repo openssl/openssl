@@ -102,10 +102,6 @@ push @files, qw(
                 evppkey_slh_dsa_sigver.txt
                ) unless $no_slh_dsa;
 push @files, qw(
-                evppkey_dsa.txt
-                evppkey_dsa_sigalg.txt
-               ) unless $no_dsa;
-push @files, qw(
                 evppkey_ecx.txt
                 evppkey_ecx_sigalg.txt
                 evppkey_mismatch_ecx.txt
@@ -192,6 +188,10 @@ push @defltfiles, qw(evpkdf_krb5.txt) unless $no_krb5kdf;
 push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
 push @defltfiles, qw(evppkey_ecx_kem.txt) unless $no_ecx;
 push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless ($no_dsa || $no_determinstic_nonce);
+push @defltfiles, qw(
+                     evppkey_dsa.txt
+                     evppkey_dsa_sigalg.txt
+                    ) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;

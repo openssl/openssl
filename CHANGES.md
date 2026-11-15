@@ -33,6 +33,15 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Removed DSA from the FIPS provider.  NIST no longer approves DSA
+   for signature generation (FIPS 186-5), permitting verification of
+   existing signatures only.  The `openssl fipsinstall` option
+   `-dsa_sign_disabled` and the corresponding `dsa-sign-disabled`
+   module configuration parameter were removed along with it.
+   <!-- https://github.com/openssl/openssl/issues/33571 -->
+
+   *Richard Levitte*
+
  * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
    `CRYPTO_new_ex_data()`.
 

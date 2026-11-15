@@ -135,10 +135,6 @@ This option is deprecated.
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-x963kdf_digest_check>
 
-=item B<dsa-sign-disabled>
-
-See L<openssl-fipsinstall(1)/OPTIONS> B<-dsa_sign_disabled>
-
 =item B<tdes-encrypt-disabled>
 
 See L<openssl-fipsinstall(1)/OPTIONS> B<-tdes_encrypt_disabled>
