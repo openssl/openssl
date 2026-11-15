@@ -285,6 +285,50 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
     return test_encrypt_decrypt(EVP_aes_256_gcm());
 }
 
+static int test_encrypt_decrypt_empty(const EVP_CIPHER *cipher)
+{
+    int testresult = 0;
+    STACK_OF(X509) *certstack = sk_X509_new_null();
+    BIO *msgbio = BIO_new_mem_buf("", 0);
+    BIO *outmsgbio = BIO_new(BIO_s_mem());
+    CMS_ContentInfo *content = NULL;
+    char *out = NULL;
+
+    if (!TEST_ptr(certstack) || !TEST_ptr(msgbio) || !TEST_ptr(outmsgbio))
+        goto end;
+
+    if (!TEST_int_gt(sk_X509_push(certstack, cert), 0))
+        goto end;
+
+    content = CMS_encrypt(certstack, msgbio, cipher, CMS_BINARY);
+    if (!TEST_ptr(content))
+        goto end;
+
+    if (!TEST_true(CMS_decrypt(content, privkey, cert, NULL, outmsgbio,
+            CMS_BINARY))
+        || !TEST_long_eq(BIO_get_mem_data(outmsgbio, &out), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    sk_X509_free(certstack);
+    BIO_free(msgbio);
+    BIO_free(outmsgbio);
+    CMS_ContentInfo_free(content);
+
+    return testresult && TEST_int_eq(ERR_peek_error(), 0);
+}
+
+static int test_encrypt_decrypt_empty_aes_ofb(void)
+{
+    return test_encrypt_decrypt_empty(EVP_aes_128_ofb());
+}
+
+static int test_encrypt_decrypt_empty_aes_gcm(void)
+{
+    return test_encrypt_decrypt_empty(EVP_aes_128_gcm());
+}
+
 static int smimecap_has_nid(STACK_OF(X509_ALGOR) *smcap, int nid)
 {
     int i;
@@ -1660,6 +1704,8 @@ int setup_tests(void)
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_256_gcm);
+    ADD_TEST(test_encrypt_decrypt_empty_aes_ofb);
+    ADD_TEST(test_encrypt_decrypt_empty_aes_gcm);
     ADD_TEST(test_non_aead_on_auth_envelope_enc);
     ADD_TEST(test_non_aead_on_auth_envelope_dec);
     ADD_TEST(test_short_mac_on_auth_envelope_data);
