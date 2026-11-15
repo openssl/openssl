@@ -372,6 +372,21 @@ int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
     return 0;
 }
 
+size_t ossl_cipher_output_size(const EVP_CIPHER_CTX *ctx,
+    size_t inlen, size_t blocksize)
+{
+    if (EVP_CIPHER_CTX_get_mode(ctx) != EVP_CIPH_WRAP_MODE)
+        return inlen + (blocksize == 1 ? 0 : blocksize);
+
+#if !defined(OPENSSL_NO_DES)
+    /* DES3-WRAP requires aligned input and adds 8 bytes each for IV and checksum. */
+    if (EVP_CIPHER_is_a(EVP_CIPHER_CTX_get0_cipher(ctx), "DES3-WRAP"))
+        return inlen + 16;
+#endif
+    /* Wrap output includes a full block after rounding up the input. */
+    return ((inlen + blocksize - 1) / blocksize + 1) * blocksize;
+}
+
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, unsigned int inl)
 {
@@ -393,10 +408,7 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (blocksize == 0)
         return 0;
 
-    if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
-        outsize = ossl_cipher_wrap_output_size(ctx, (size_t)inl, blocksize);
-    else
-        outsize = (size_t)inl + (blocksize == 1 ? 0 : blocksize);
+    outsize = ossl_cipher_output_size(ctx, (size_t)inl, blocksize);
 
     if (ctx->cipher->ccipher != NULL)
         ret = ctx->cipher->ccipher(ctx->algctx, out, &outl,

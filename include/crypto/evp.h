@@ -16,19 +16,16 @@
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
-/*
- * Wrap output includes a full block after rounding up the input.
- * DES3-WRAP instead adds an eight-byte IV and an eight-byte checksum.
+/**
+ * Calculate the cipher output buffer size.
+ *
+ * @param ctx Cipher context.
+ * @param inlen Input length in bytes.
+ * @param blocksize Cipher block size in bytes; must be nonzero.
+ * @returns Output buffer size in bytes.
  */
-static ossl_inline size_t ossl_cipher_wrap_output_size(const EVP_CIPHER_CTX *ctx,
-    size_t inlen, size_t blocksize)
-{
-#if !defined(OPENSSL_NO_DES)
-    if (EVP_CIPHER_is_a(EVP_CIPHER_CTX_get0_cipher(ctx), "DES3-WRAP"))
-        return inlen + 16;
-#endif
-    return ((inlen + blocksize - 1) / blocksize + 1) * blocksize;
-}
+size_t ossl_cipher_output_size(const EVP_CIPHER_CTX *ctx,
+    size_t inlen, size_t blocksize);
 
 /*
  * Default PKCS5 PBE KDF salt lengths

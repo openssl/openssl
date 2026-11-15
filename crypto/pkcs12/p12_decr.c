@@ -60,11 +60,11 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
         goto err;
     }
 
-    if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_WRAP_MODE)
-        max_out_len = ossl_cipher_wrap_output_size(ctx, (size_t)inlen,
-            (size_t)block_size);
-    else
-        max_out_len = (size_t)inlen + (size_t)block_size;
+    max_out_len = ossl_cipher_output_size(ctx, (size_t)inlen,
+        (size_t)block_size);
+    /* Preserve a nonzero allocation for empty stream cipher input. */
+    if (block_size == 1)
+        max_out_len++;
     if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
             & EVP_CIPH_FLAG_CIPHER_WITH_MAC)
         != 0) {
