@@ -185,8 +185,8 @@ int main(int argc, char **argv)
     size_t txcap = 0;
     int txlen;
 
-    char rxbuf[128];
-    size_t rxcap = sizeof(rxbuf);
+    char rxbuf[128 + 1];
+    size_t rxcap = sizeof(rxbuf) - 1;
     int rxlen;
 
     char *rem_server_ip = NULL;
