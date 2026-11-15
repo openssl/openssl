@@ -94,15 +94,60 @@ typedef struct mlx_key_st {
     ((key)->xinfo->framework == MLX_FRAMEWORK_CG)
 
 /* Helpers shared with the X-Wing encoder/decoder implementation. */
+/**
+ * @brief Allocate an empty MLX key for the selected variant.
+ *
+ * @param provctx Provider context.
+ * @param variant MLX variant table index.
+ * @param propq Optional property query, copied into the new key.
+ * @returns The new key, or NULL on failure. The caller owns the key.
+ */
 MLX_KEY *ossl_mlx_key_new(PROV_CTX *provctx, unsigned int variant,
     const char *propq);
+/**
+ * @brief Free an MLX key and clear its private seed.
+ *
+ * @param vkey Key to free, or NULL.
+ */
 void ossl_mlx_key_free(void *vkey);
+/**
+ * @brief Derive and store an MLX key pair from a private seed.
+ *
+ * @param key Empty key to populate.
+ * @param seed Private seed input.
+ * @param seedlen Seed length required by the selected variant.
+ * @returns 1 on success, or 0 on failure.
+ */
 int ossl_mlx_set_seed(MLX_KEY *key, const unsigned char *seed,
     size_t seedlen);
+/**
+ * @brief Import the concatenated MLX public key.
+ *
+ * @param key Empty key to populate.
+ * @param pub Encoded public key input.
+ * @param publen Length of the public key input.
+ * @returns 1 on success, or 0 on failure.
+ */
 int ossl_mlx_set_public_key(MLX_KEY *key, const unsigned char *pub,
     size_t publen);
+/**
+ * @brief Encode the concatenated MLX public key into a caller-provided buffer.
+ *
+ * @param key Key containing the public components.
+ * @param out Output buffer.
+ * @param outlen Buffer length, which must equal the encoded public key length.
+ * @returns 1 on success, or 0 on failure.
+ */
 int ossl_mlx_encode_public_key(const MLX_KEY *key, unsigned char *out,
     size_t outlen);
+/**
+ * @brief Copy the stored MLX private seed into a caller-provided buffer.
+ *
+ * @param key Key containing the private seed.
+ * @param out Output buffer.
+ * @param outlen Buffer length, which must equal the private seed length.
+ * @returns 1 on success, or 0 on failure.
+ */
 int ossl_mlx_encode_seed(const MLX_KEY *key, unsigned char *out,
     size_t outlen);
 

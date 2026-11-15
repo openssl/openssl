@@ -100,6 +100,17 @@ int ossl_hpke_labeled_expand(EVP_KDF_CTX *kctx,
     const char *label,
     const unsigned char *info, size_t infolen);
 
+/**
+ * @brief Derive HPKE key pair material using a domain-separated XOF.
+ *
+ * @param out Output buffer.
+ * @param outlen Requested output length, at most UINT16_MAX.
+ * @param md_xof XOF digest implementation.
+ * @param kemid HPKE KEM identifier.
+ * @param ikm Input keying material.
+ * @param ikmlen Length of the input keying material.
+ * @returns 1 on success, or 0 on failure.
+ */
 int ossl_hpke_keypair_derive_xof(unsigned char *out, size_t outlen,
     EVP_MD *md_xof, uint16_t kemid,
     const unsigned char *ikm, size_t ikmlen);
