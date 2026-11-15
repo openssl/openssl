@@ -1054,6 +1054,10 @@ Build with support for TCP Fast Open (RFC7413). Supported on Linux, macOS and Fr
 
 Don't build with QUIC support.
 
+This only disables OpenSSL's built-in QUIC stack, instead of the QUIC TLS API.
+3rd-party applications with their own QUIC stack can still use OpenSSL to integrate TLS
+even in the event of `no-quic`.
+
 ### no-threads
 
 Don't build with support for multi-threaded applications.
