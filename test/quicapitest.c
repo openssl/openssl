@@ -1588,61 +1588,6 @@ err:
     return testresult;
 }
 
-static void rejected_conn_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-    int idx, long argl, void *argp)
-{
-    if (ptr != NULL)
-        ++*(int *)ptr;
-}
-
-static int reject_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg)
-{
-    int *data = arg;
-
-    ++data[2];
-    if (!SSL_set_ex_data(conn, data[0], &data[1]))
-        data[1] = -1;
-    return 0;
-}
-
-static int test_reject_new_channel(void)
-{
-    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL *client = NULL, *listener = NULL;
-    int data[3] = { -1, 0, 0 };
-    int i, testresult = 0;
-
-    if (!TEST_ptr(cctx)
-        || !TEST_int_ge(data[0] = SSL_get_ex_new_index(0, NULL, NULL, NULL,
-                            rejected_conn_free),
-            0)
-        || !TEST_true(qtest_create_quic_objects_ex(libctx, cctx, NULL, cert,
-            privkey, QTEST_FLAG_FAKE_TIME, &listener, &client, NULL, NULL)))
-        goto err;
-
-    ossl_quic_port_set_new_channel_cb(ossl_quic_listener_get_port(listener),
-        reject_new_channel, data);
-
-    for (i = 0; i < 10 && data[1] == 0; ++i) {
-        if (!TEST_int_le(SSL_connect(client), 0)
-            || !TEST_true(SSL_handle_events(listener)))
-            goto err;
-        qtest_add_time(1);
-    }
-
-    if (!TEST_int_gt(data[2], 0)
-        || !TEST_int_eq(data[1], data[2])
-        || !TEST_size_t_eq(SSL_get_accept_connection_queue_len(listener), 0))
-        goto err;
-
-    testresult = 1;
-err:
-    SSL_free(listener);
-    SSL_free(client);
-    SSL_CTX_free(cctx);
-    return testresult;
-}
-
 /*
  * Test SSL_get_shutdown() behavior.
  */
@@ -5803,7 +5748,6 @@ int setup_tests(void)
     ADD_TEST(test_quic_resize_txe);
     ADD_MFAIL_TEST(test_ssl_new_mfail);
     ADD_TEST(test_pending_limit);
-    ADD_TEST(test_reject_new_channel);
 
     return 1;
 err:

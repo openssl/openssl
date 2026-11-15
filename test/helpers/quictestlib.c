@@ -87,7 +87,7 @@ static CRYPTO_MUTEX *client_ready_mutex = NULL;
 
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
-static int fault_on_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg);
+static void fault_on_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg);
 static int select_alpn(SSL *ssl, const unsigned char **out,
     unsigned char *out_len, const unsigned char *in,
     unsigned int in_len, void *arg);
@@ -638,11 +638,6 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     return wait_for_timeout(s, qtserv, NULL);
 }
 
-int qtest_wait_for_timeout_ssl(SSL *s, SSL *listener)
-{
-    return wait_for_timeout(s, NULL, listener);
-}
-
 static void tick_server(QUIC_TSERVER *qtserv, SSL *listener)
 {
     if (qtserv != NULL)
@@ -852,12 +847,12 @@ static void run_server_shutdown_thread(void)
      * fast
      */
     do {
-        tick_server(globtserv, globlistener);
+        ossl_quic_tserver_tick(globtserv);
     } while (!tsan_load(&shutdowndone));
 }
 #endif
 
-static int quic_shutdown(QUIC_TSERVER *qtserv, SSL *listener, SSL *clientssl)
+int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 {
     int tickserver = 1;
     int ret = 0;
@@ -881,7 +876,6 @@ static int quic_shutdown(QUIC_TSERVER *qtserv, SSL *listener, SSL *clientssl)
          * connection
          */
         globtserv = qtserv;
-        globlistener = listener;
         shutdowndone = 0;
         if (!TEST_true(run_thread(&t, run_server_shutdown_thread)))
             return 0;
@@ -906,7 +900,7 @@ static int quic_shutdown(QUIC_TSERVER *qtserv, SSL *listener, SSL *clientssl)
             break;
 
         if (tickserver)
-            tick_server(qtserv, listener);
+            ossl_quic_tserver_tick(qtserv);
     }
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
@@ -918,16 +912,6 @@ static int quic_shutdown(QUIC_TSERVER *qtserv, SSL *listener, SSL *clientssl)
 #endif
 
     return ret;
-}
-
-int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
-{
-    return quic_shutdown(qtserv, NULL, clientssl);
-}
-
-int qtest_shutdown_ssl(SSL *listener, SSL *clientssl)
-{
-    return quic_shutdown(NULL, listener, clientssl);
 }
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
@@ -960,33 +944,6 @@ int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
 int qtest_check_server_frame_encoding_err(QUIC_TSERVER *qtserv)
 {
     return qtest_check_server_transport_err(qtserv, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR);
-}
-
-int qtest_check_server_transport_err_ssl(SSL *sconn, uint64_t code)
-{
-    SSL_CONN_CLOSE_INFO info;
-
-    (void)SSL_handle_events(sconn);
-
-    if (!TEST_int_eq(SSL_get_conn_close_info(sconn, &info, sizeof(info)), 1)
-        || !TEST_false(info.flags & SSL_CONN_CLOSE_FLAG_LOCAL)
-        || !TEST_true(info.flags & SSL_CONN_CLOSE_FLAG_TRANSPORT)
-        || !TEST_uint64_t_eq(info.error_code, code))
-        return 0;
-
-    return 1;
-}
-
-int qtest_check_server_protocol_err_ssl(SSL *sconn)
-{
-    return qtest_check_server_transport_err_ssl(sconn,
-        OSSL_QUIC_ERR_PROTOCOL_VIOLATION);
-}
-
-int qtest_check_server_frame_encoding_err_ssl(SSL *sconn)
-{
-    return qtest_check_server_transport_err_ssl(sconn,
-        OSSL_QUIC_ERR_FRAME_ENCODING_ERROR);
 }
 
 void qtest_fault_free(QTEST_FAULT *fault)
@@ -1247,28 +1204,26 @@ static int set_handshake_mutator(QTEST_FAULT *fault)
         handshake_mutate, handshake_finish, fault);
 }
 
-static int fault_on_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg)
+static void fault_on_new_channel(SSL *conn, QUIC_CHANNEL *ch, void *arg)
 {
     QTEST_FAULT *fault = arg;
 
     fault->ch = ch;
 
     if (fault->want_pplain_mutator
-        && !ossl_quic_channel_set_mutator(ch, packet_plain_mutate,
-            packet_plain_finish, fault))
-        return 0;
+        && !TEST_true(ossl_quic_channel_set_mutator(ch, packet_plain_mutate,
+            packet_plain_finish, fault)))
+        return;
 
     if (fault->want_handshake_mutator
-        && !ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(ch),
-            handshake_mutate, handshake_finish, fault))
-        return 0;
+        && !TEST_true(ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(ch),
+            handshake_mutate, handshake_finish, fault)))
+        return;
 
     if (fault->noiseargs.sbio != NULL) {
         ossl_quic_channel_set_msg_callback(ch, noise_msg_callback, conn);
         ossl_quic_channel_set_msg_callback_arg(ch, &fault->noiseargs);
     }
-
-    return 1;
 }
 
 int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,

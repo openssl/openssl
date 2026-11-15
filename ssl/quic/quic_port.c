@@ -942,16 +942,9 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         }
     }
 
-    if (port->new_channel_cb != NULL && ch->tls != NULL
-        && !port->new_channel_cb(SSL_CONNECTION_FROM_SSL(ch->tls)->user_ssl,
-            ch, port->new_channel_cb_arg)) {
-        SSL *user_ssl = SSL_CONNECTION_FROM_SSL(ch->tls)->user_ssl;
-
-        ((QUIC_CONNECTION *)user_ssl)->ch = NULL;
-        ossl_quic_channel_free(ch);
-        SSL_free(user_ssl);
-        return;
-    }
+    if (port->new_channel_cb != NULL && ch->tls != NULL)
+        port->new_channel_cb(SSL_CONNECTION_FROM_SSL(ch->tls)->user_ssl, ch,
+            port->new_channel_cb_arg);
 
     ossl_list_incoming_ch_insert_tail(&port->incoming_channel_list, ch);
     *new_ch = ch;
