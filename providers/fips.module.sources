@@ -247,7 +247,6 @@ crypto/ffc/ffc_params.c
 crypto/ffc/ffc_params_generate.c
 crypto/ffc/ffc_params_validate.c
 crypto/hashtable/hashfunc.c
-crypto/hashtable/hashtable.c
 crypto/hmac/hmac.c
 crypto/hmac/hmac_local.h
 crypto/ia64cpuid.S
@@ -488,7 +487,6 @@ include/internal/endian.h
 include/internal/ffc.h
 include/internal/fips.h
 include/internal/hashfunc.h
-include/internal/hashtable.h
 include/internal/list.h
 include/internal/mem_alloc_utils.h
 include/internal/namemap.h
