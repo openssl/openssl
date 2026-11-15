@@ -576,6 +576,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     const unsigned char *p;
     char *buf, *key, *value, *line_end = NULL;
     size_t resp_hdr_lines = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -593,13 +594,13 @@ next_io:
         if (rctx->expect_asn1 && (rctx->state == OHS_ASN1_HEADER || rctx->state == OHS_ASN1_CONTENT)) {
             n = BIO_read(rctx->rbio, buf, rctx->buf_size);
         } else { /* read one text line */
-            (void)ERR_set_mark();
+            (void)ERR_HANDLE_set_mark(&hdl);
             n = BIO_gets(rctx->rbio, buf, rctx->buf_size);
             if (n == -2) { /* some BIOs, such as SSL, do not support "gets" */
-                (void)ERR_pop_to_mark();
+                (void)ERR_HANDLE_pop_to_mark(&hdl);
                 n = BIO_get_line(rctx->rbio, buf, rctx->buf_size);
             } else {
-                (void)ERR_clear_last_mark();
+                (void)ERR_HANDLE_clear_last_mark(&hdl);
             }
         }
         if (n <= 0) {
@@ -1096,6 +1097,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 {
     BIO *cbio; /* == bio if supplied, used as connection BIO if rbio is NULL */
     OSSL_HTTP_REQ_CTX *rctx = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (use_ssl && bio_update_fn == NULL) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_TLS_NOT_ENABLED);
@@ -1139,7 +1141,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 #endif
     }
 
-    (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
+    (void)ERR_HANDLE_set_mark(&hdl); /* prepare removing any spurious libssl errors */
     if (rbio == NULL && BIO_do_connect_retry(cbio, overall_timeout, -1) <= 0) {
         if (bio == NULL) /* cbio was not provided by caller */
             BIO_free_all(cbio);
@@ -1167,9 +1169,9 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 end:
     if (rctx != NULL)
         /* remove any spurious error queue entries by ssl_add_cert_chain() */
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
     else
-        (void)ERR_clear_last_mark();
+        (void)ERR_HANDLE_clear_last_mark(&hdl);
 
     return rctx;
 }

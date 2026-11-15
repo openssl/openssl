@@ -226,6 +226,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret;
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;
@@ -242,7 +243,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_DERIVE;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (evp_pkey_ctx_is_legacy(ctx))
         goto err;
@@ -257,7 +258,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
         if (pkey == NULL
             || !EVP_PKEY_set_type_by_keymgmt(pkey, ctx->keymgmt)
             || (pkey->keydata = evp_keymgmt_newdata(ctx->keymgmt, NULL)) == NULL) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             EVP_PKEY_free(pkey);
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
@@ -270,14 +271,14 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
      */
     if (!ossl_assert(ctx->pkey->keymgmt == NULL
             || ctx->pkey->keymgmt == ctx->keymgmt)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     supported_exch = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
         OSSL_OP_KEYEXCH);
     if (supported_exch == NULL) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -323,7 +324,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
             exchange = evp_keyexch_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                 supported_exch, ctx->propquery);
             if (exchange == NULL) {
-                ERR_pop_to_mark();
+                ERR_HANDLE_pop_to_mark(&hdl);
                 ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
                 return -2;
             }
@@ -352,13 +353,13 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     }
 
     if (provkey == NULL) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         EVP_KEYEXCH_free(exchange);
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* A Coverity false positive with up_ref/down_ref and free */
     /* coverity[use_after_free] */

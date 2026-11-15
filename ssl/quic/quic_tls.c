@@ -688,6 +688,8 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
     int src_line,
     const char *src_func)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
     /*
      * When QTLS fails, add a "cover letter" error with information, potentially
      * with any underlying libssl errors underneath it (but our cover error may
@@ -712,7 +714,7 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
         qtls->error_msg = error_msg;
         qtls->inerror = 1;
 
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     return 0;
 }
@@ -770,6 +772,7 @@ int ossl_quic_tls_configure(QUIC_TLS *qtls)
 #ifndef OPENSSL_NO_QUIC
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret, err;
     const unsigned char *alpn;
     unsigned int alpnlen;
@@ -802,7 +805,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
      * NOTE: Ensure all escape paths from this function call
      * ERR_clear_to_mark(). The RAISE macros handle this in failure cases.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (!qtls->configured) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
@@ -851,7 +854,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 
     if (ret <= 0) {
         err = ossl_ssl_get_error(qtls->args.s, ret,
-            /*check_err=*/ERR_count_to_mark() > 0);
+            /*check_err=*/ERR_HANDLE_count_to_mark(&hdl) > 0);
 
         switch (err) {
         case SSL_ERROR_WANT_READ:
@@ -859,7 +862,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         case SSL_ERROR_WANT_CLIENT_HELLO_CB:
         case SSL_ERROR_WANT_X509_LOOKUP:
         case SSL_ERROR_WANT_RETRY_VERIFY:
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             return 1;
 
         default:
@@ -875,11 +878,11 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
                 "no application protocol negotiated");
 
         qtls->complete = 1;
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         return qtls->args.handshake_complete_cb(qtls->args.handshake_complete_cb_arg);
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return 1;
 }
 #endif

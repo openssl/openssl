@@ -462,15 +462,16 @@ static int drbg_hmac_set_ctx_params_locked(PROV_DRBG *ctx, const struct drbg_set
     EVP_MD *prov_md = NULL;
     const EVP_MD *md;
     int md_size;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, p->ind_d))
         return 0;
 
     /* try to fetch mac and digest from provider */
-    (void)ERR_set_mark();
+    (void)ERR_HANDLE_set_mark(&hdl);
     if (!drbg_fetch_algs_from_prov(p, libctx, &hmac->ctx, &prov_md,
             (p->propq != NULL && p->propq->data_type == OSSL_PARAM_UTF8_STRING) ? p->propq->data : NULL)) {
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
         if (p->digest != NULL) {
             /* fall back to full implementation search */
             if (!ossl_prov_digest_load(&hmac->digest, p->digest, p->propq,
@@ -482,7 +483,7 @@ static int drbg_hmac_set_ctx_params_locked(PROV_DRBG *ctx, const struct drbg_set
                 return 0;
         }
     } else {
-        (void)ERR_clear_last_mark();
+        (void)ERR_HANDLE_clear_last_mark(&hdl);
         if (prov_md)
             ossl_prov_digest_set_md(&hmac->digest, prov_md);
     }

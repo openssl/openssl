@@ -76,7 +76,7 @@ struct extracted_param_data_st {
 static int try_name(struct extracted_param_data_st *, OSSL_STORE_INFO **);
 static int try_key(struct extracted_param_data_st *, OSSL_STORE_INFO **,
     OSSL_STORE_CTX *, const OSSL_PROVIDER *,
-    OSSL_LIB_CTX *, const char *);
+    OSSL_LIB_CTX *, const char *, ERR_HANDLE **hdl);
 static int try_cert(struct extracted_param_data_st *, OSSL_STORE_INFO **,
     OSSL_LIB_CTX *, const char *);
 static int try_crl(struct extracted_param_data_st *, OSSL_STORE_INFO **,
@@ -96,6 +96,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     const char *propq = ctx->properties;
     const OSSL_PARAM *p;
     struct extracted_param_data_st helper_data;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     memset(&helper_data, 0, sizeof(helper_data));
     helper_data.object_type = OSSL_OBJECT_UNKNOWN;
@@ -132,30 +133,30 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
      * The helper functions return 0 on actual errors, otherwise 1, even if
      * they didn't fill out |*v|.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (*v == NULL && !try_name(&helper_data, v))
         goto err;
-    ERR_pop_to_mark();
-    ERR_set_mark();
-    if (*v == NULL && !try_key(&helper_data, v, ctx, provider, libctx, propq))
+    ERR_HANDLE_pop_to_mark(&hdl);
+    ERR_HANDLE_set_mark(&hdl);
+    if (*v == NULL && !try_key(&helper_data, v, ctx, provider, libctx, propq, &hdl))
         goto err;
-    ERR_pop_to_mark();
-    ERR_set_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
+    ERR_HANDLE_set_mark(&hdl);
     if (*v == NULL && !try_cert(&helper_data, v, libctx, propq))
         goto err;
-    ERR_pop_to_mark();
-    ERR_set_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
+    ERR_HANDLE_set_mark(&hdl);
     if (*v == NULL && !try_crl(&helper_data, v, libctx, propq))
         goto err;
-    ERR_pop_to_mark();
-    ERR_set_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
+    ERR_HANDLE_set_mark(&hdl);
     if (*v == NULL && !try_pkcs12(&helper_data, v, ctx, libctx, propq))
         goto err;
-    ERR_pop_to_mark();
-    ERR_set_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
+    ERR_HANDLE_set_mark(&hdl);
     if (*v == NULL && !try_skey(&helper_data, v, provider, libctx, propq))
         goto err;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (*v == NULL) {
         const char *hint = "";
@@ -173,7 +174,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
 
     return (*v != NULL);
 err:
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return 0;
 }
 
@@ -207,7 +208,7 @@ static int try_name(struct extracted_param_data_st *data, OSSL_STORE_INFO **v)
 static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
     OSSL_STORE_CTX *ctx,
     const OSSL_PROVIDER *provider,
-    OSSL_LIB_CTX *libctx, const char *propq)
+    OSSL_LIB_CTX *libctx, const char *propq, ERR_HANDLE **hdl)
 {
     EVP_PKEY *pk = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
@@ -219,7 +220,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
         return 0;
 
     keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(hdl);
     while (keymgmt != NULL && keydata == NULL && try_fallback-- > 0) {
         /*
          * There are two possible cases
@@ -260,16 +261,16 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
             keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
                 data->data_type, propq);
             if (keymgmt != NULL) {
-                ERR_pop_to_mark();
-                ERR_set_mark();
+                ERR_HANDLE_pop_to_mark(hdl);
+                ERR_HANDLE_set_mark(hdl);
             }
         }
     }
     if (keydata != NULL) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(hdl);
         pk = evp_keymgmt_util_make_pkey(keymgmt, keydata);
     } else {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(hdl);
     }
     EVP_KEYMGMT_free(keymgmt);
 
@@ -412,7 +413,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
 
 static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
     OSSL_STORE_CTX *ctx, const OSSL_PROVIDER *provider,
-    OSSL_LIB_CTX *libctx, const char *propq)
+    OSSL_LIB_CTX *libctx, const char *propq, ERR_HANDLE **hdl)
 {
     store_info_new_fn *store_info_new = NULL;
     int harderr = 0;
@@ -423,7 +424,7 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
         /* Prefer key by reference than key by value */
         if (data->object_type == OSSL_OBJECT_PKEY && data->ref != NULL) {
-            pk = try_key_ref(data, ctx, provider, libctx, propq);
+            pk = try_key_ref(data, ctx, provider, libctx, propq, hdl);
 
             /*
              * If for some reason we couldn't get a key, it's an error.

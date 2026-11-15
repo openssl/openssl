@@ -557,6 +557,7 @@ static int rand_seed_source_strict(ossl_unused RAND_GLOBAL *dgbl)
 
 static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_RAND *rand;
     const char *propq;
     char *name;
@@ -583,9 +584,9 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
     propq = "";
 #endif /* OPENSSL_NO_FIPS_JITTER */
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     rand = EVP_RAND_fetch(libctx, name, propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (rand == NULL) {
         if (!fallback)
             ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
@@ -843,7 +844,9 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
 static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
     EVP_RAND_CTX *ret, *seed = NULL, *primary;
-
+#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+#endif
     if (dgbl == NULL)
         return NULL;
 
@@ -858,13 +861,13 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 
 #if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
     /* Create a seed source for libcrypto or jitter enabled FIPS provider */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     seed = rand_get0_seed(ctx, dgbl);
-    if (seed == NULL && ERR_count_to_mark() > 0) {
-        ERR_clear_last_mark();
+    if (seed == NULL && ERR_HANDLE_count_to_mark(&hdl) > 0) {
+        ERR_HANDLE_clear_last_mark(&hdl);
         return NULL;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 #endif /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
 
 #if defined(FIPS_MODULE)

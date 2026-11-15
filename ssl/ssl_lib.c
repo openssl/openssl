@@ -6207,6 +6207,7 @@ int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 
 int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
@@ -6214,17 +6215,18 @@ int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
         return 0;
 
     /* We ignore errors, in case the directory doesn't exist */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     return 1;
 }
 
 int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_file());
@@ -6232,18 +6234,19 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
         return 0;
 
     /* We ignore errors, in case the file doesn't exist */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     X509_LOOKUP_load_file_ex(lookup, NULL, X509_FILETYPE_DEFAULT, ctx->libctx,
         ctx->propq);
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     return 1;
 }
 
 int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_store());
@@ -6251,11 +6254,11 @@ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
         return 0;
 
     /* We ignore errors, in case the directory doesn't exist */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     X509_LOOKUP_add_store_ex(lookup, NULL, ctx->libctx, ctx->propq);
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     return 1;
 }
@@ -8117,9 +8120,10 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
     const char *name,
     const char *properties)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const EVP_CIPHER *ciph;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ciph = EVP_CIPHER_fetch(libctx, name, properties);
     if (ciph != NULL) {
         OSSL_PARAM params[2];
@@ -8135,7 +8139,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
             ciph = NULL;
         }
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return ciph;
 }
 

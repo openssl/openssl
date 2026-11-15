@@ -25,6 +25,7 @@
 
 static int test_print_error_format(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     /* Variables used to construct an error line */
     char *lib;
     const char *func = OPENSSL_FUNC;
@@ -63,14 +64,14 @@ static int test_print_error_format(void)
      * with ERR_PUT_error().  That is, after all, just a simulation to verify
      * ERR_print_errors() output, not a real error.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     ERR_PUT_error(ERR_LIB_SYS, 0, syserr, file, line);
     errorcode = ERR_peek_error();
     reasoncode = ERR_GET_REASON(errorcode);
 
     if (!TEST_int_eq(reasoncode, syserr)) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         goto err;
     }
 
@@ -163,6 +164,7 @@ static int raised_error(void)
 static int test_marks(void)
 {
     unsigned long mallocfail, shouldnot;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     /* Set an initial error */
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
@@ -171,54 +173,54 @@ static int test_marks(void)
         return 0;
 
     /* Setting and clearing a mark should not affect the error */
-    if (!TEST_true(ERR_set_mark())
-        || !TEST_true(ERR_pop_to_mark())
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl))
+        || !TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(mallocfail, ERR_peek_last_error())
-        || !TEST_true(ERR_set_mark())
-        || !TEST_true(ERR_clear_last_mark())
+        || !TEST_true(ERR_HANDLE_set_mark(&hdl))
+        || !TEST_true(ERR_HANDLE_clear_last_mark(&hdl))
         || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
         return 0;
 
     /* Test popping errors */
-    if (!TEST_true(ERR_set_mark()))
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     if (!TEST_ulong_ne(mallocfail, ERR_peek_last_error())
-        || !TEST_true(ERR_pop_to_mark())
+        || !TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
         return 0;
 
     /* Nested marks should also work */
-    if (!TEST_true(ERR_set_mark())
-        || !TEST_true(ERR_set_mark()))
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl))
+        || !TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     if (!TEST_ulong_ne(mallocfail, ERR_peek_last_error())
-        || !TEST_true(ERR_pop_to_mark())
-        || !TEST_true(ERR_pop_to_mark())
+        || !TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
+        || !TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
         return 0;
 
-    if (!TEST_true(ERR_set_mark()))
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     shouldnot = ERR_peek_last_error();
     if (!TEST_ulong_ne(mallocfail, shouldnot)
-        || !TEST_true(ERR_set_mark()))
+        || !TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     if (!TEST_ulong_ne(shouldnot, ERR_peek_last_error())
-        || !TEST_true(ERR_pop_to_mark())
+        || !TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(shouldnot, ERR_peek_last_error())
-        || !TEST_true(ERR_pop_to_mark())
+        || !TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
         return 0;
 
     /* Setting and clearing a mark should not affect the errors on the stack */
-    if (!TEST_true(ERR_set_mark()))
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-    if (!TEST_true(ERR_clear_last_mark())
+    if (!TEST_true(ERR_HANDLE_clear_last_mark(&hdl))
         || !TEST_ulong_eq(shouldnot, ERR_peek_last_error()))
         return 0;
 
@@ -226,13 +228,13 @@ static int test_marks(void)
      * Popping where no mark has been set should pop everything - but return
      * a failure result
      */
-    if (!TEST_false(ERR_pop_to_mark())
+    if (!TEST_false(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(0, ERR_peek_last_error()))
         return 0;
 
     /* Clearing where there is no mark should fail */
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-    if (!TEST_false(ERR_clear_last_mark())
+    if (!TEST_false(ERR_HANDLE_clear_last_mark(&hdl))
         /* "get" the last error to remove it */
         || !TEST_ulong_eq(mallocfail, ERR_get_error())
         || !TEST_ulong_eq(0, ERR_peek_last_error()))
@@ -248,27 +250,27 @@ static int test_marks(void)
      * to ERR_pop_to_mark() or ERR_clear_last_mark() will do the right thing
      * anyway (even though they will report a failure result).
      */
-    if (!TEST_false(ERR_set_mark()))
+    if (!TEST_false(ERR_HANDLE_set_mark(&hdl)))
         return 0;
 
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-    if (!TEST_true(ERR_set_mark()))
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 
     /* Should be able to "pop" past 2 errors */
-    if (!TEST_true(ERR_pop_to_mark())
+    if (!TEST_true(ERR_HANDLE_pop_to_mark(&hdl))
         || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
         return 0;
 
-    if (!TEST_true(ERR_set_mark()))
+    if (!TEST_true(ERR_HANDLE_set_mark(&hdl)))
         return 0;
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 
     /* Should be able to "clear" past 2 errors */
-    if (!TEST_true(ERR_clear_last_mark())
+    if (!TEST_true(ERR_HANDLE_clear_last_mark(&hdl))
         || !TEST_ulong_eq(shouldnot, ERR_peek_last_error()))
         return 0;
 
@@ -337,6 +339,7 @@ static int test_save_restore(int idx)
     unsigned long mallocfail, interr;
     static const char testdata[] = "test data";
     const char *data = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!TEST_ptr(es = OSSL_ERR_STATE_new()))
         goto err;
@@ -346,7 +349,7 @@ static int test_save_restore(int idx)
     if (!TEST_ulong_gt(mallocfail, 0))
         goto err;
 
-    if (idx == 1 && !TEST_int_eq(ERR_set_mark(), 1))
+    if (idx == 1 && !TEST_int_eq(ERR_HANDLE_set_mark(&hdl), 1))
         goto err;
 
     ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR, testdata);

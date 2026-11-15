@@ -241,6 +241,7 @@ struct provider_ctx_data_st {
 static OSSL_CALLBACK add_provider_groups;
 static int add_provider_groups(const OSSL_PARAM params[], void *data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct provider_ctx_data_st *pgd = data;
     struct tls_group_params_st prms;
     SSL_CTX *ctx = pgd->ctx;
@@ -362,7 +363,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
      * it.
      */
     ret = 1;
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
     if (keymgmt != NULL) {
         /* We have successfully fetched the algorithm, we can use the group. */
@@ -370,7 +371,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         ginf = NULL;
         EVP_KEYMGMT_free(keymgmt);
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 err:
     if (ginf != NULL) {
         OPENSSL_free(ginf->tlsname);
@@ -412,6 +413,7 @@ static const char *inferred_keytype(const TLS_SIGALG_INFO *sinf)
 static OSSL_CALLBACK add_provider_sigalgs;
 static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct provider_ctx_data_st *pgd = data;
     struct tls_sigalg_params_st prms;
     SSL_CTX *ctx = pgd->ctx;
@@ -626,7 +628,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
      * use it.
      */
     ret = 1;
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     keytype = inferred_keytype(sinf);
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, keytype, ctx->propq);
     if (keymgmt != NULL) {
@@ -672,7 +674,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         }
         EVP_KEYMGMT_free(keymgmt);
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 err:
     if (sinf != NULL) {
         OPENSSL_free(sinf->name);
@@ -2340,6 +2342,7 @@ static const uint16_t tls_default_sigalg[] = {
 
 int ssl_setup_sigalgs(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     size_t i, cache_idx, sigalgs_len, enabled;
     const SIGALG_LOOKUP *lu;
     SIGALG_LOOKUP *cache = NULL;
@@ -2360,7 +2363,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     if (tls12_sigalgs_list == NULL)
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     /* First fill cache and tls12_sigalgs list from legacy algorithm list */
     for (i = 0, lu = sigalg_lookup_tbl;
         i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
@@ -2416,7 +2419,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
         cache[cache_idx].advertise = 0;
         cache_idx++;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     enabled = 0;
     for (i = 0; i < OSSL_NELEM(tls12_sigalgs); ++i) {
@@ -2464,13 +2467,14 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
     const SIGALG_LOOKUP *lu;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
     char *retval = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     for (i = 0, lu = sigalg_lookup_tbl;
         i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
         EVP_PKEY_CTX *pctx;
         int enabled = 1;
 
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         /* Check hash is available in some provider. */
         if (lu->hash != NID_undef) {
             EVP_MD *hash = EVP_MD_fetch(libctx, OBJ_nid2ln(lu->hash), NULL);
@@ -2478,7 +2482,7 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
             /* If unable to create we assume the hash algorithm is unavailable */
             if (hash == NULL) {
                 enabled = 0;
-                ERR_pop_to_mark();
+                ERR_HANDLE_pop_to_mark(&hdl);
                 continue;
             }
             EVP_MD_free(hash);
@@ -2486,14 +2490,14 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
 
         if (!EVP_PKEY_set_type(tmpkey, lu->sig)) {
             enabled = 0;
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             continue;
         }
         pctx = EVP_PKEY_CTX_new_from_pkey(libctx, tmpkey, NULL);
         /* If unable to create pctx we assume the sig algorithm is unavailable */
         if (pctx == NULL)
             enabled = 0;
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         EVP_PKEY_CTX_free(pctx);
 
         if (enabled) {

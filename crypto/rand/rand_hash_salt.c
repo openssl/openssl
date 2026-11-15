@@ -97,6 +97,7 @@ err:
  */
 int ossl_rand_hash_salt(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     unsigned char *seed = NULL;
     size_t seed_len;
     int ok;
@@ -104,7 +105,7 @@ int ossl_rand_hash_salt(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num)
     if (num == 0)
         return 1;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (RAND_bytes_ex(ctx, buf, num, 0) > 0)
         goto done;
 
@@ -129,11 +130,11 @@ int ossl_rand_hash_salt(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num)
     if (hash_salt_fallback(buf, num))
         goto done;
 
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_RETRIEVING_ENTROPY);
     return 0;
 
 done:
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return 1;
 }

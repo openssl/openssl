@@ -455,7 +455,9 @@ err:
 
 DEF_FUNC(hf_pop_err)
 {
-    ERR_pop();
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
+    ERR_HANDLE_pop(&hdl);
 
     return 1;
 }

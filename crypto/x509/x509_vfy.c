@@ -128,12 +128,13 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
     STACK_OF(X509) *certs;
     X509 *xtmp = NULL;
     int i, ret;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     *result = NULL;
     /* Lookup all certs with matching subject name */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (certs == NULL)
         return -1;
 
@@ -1992,6 +1993,7 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
  */
 static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     DIST_POINT_NAME dpname;
     GENERAL_NAMES *gens;
     GENERAL_NAME *gen = NULL;
@@ -2002,9 +2004,9 @@ static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
      * An undecodable issuerAltName extension is treated as an absent one;
      * any decoding errors are not left in the error queue.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     gens = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (gens == NULL && (gens = sk_GENERAL_NAME_new_null()) == NULL)
         return 0;
     if ((gen = GENERAL_NAME_new()) == NULL

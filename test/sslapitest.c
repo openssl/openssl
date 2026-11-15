@@ -17889,6 +17889,7 @@ struct resume_servername_cb_data {
  */
 static int resume_servername_cb(SSL *s, int *ad, void *arg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct resume_servername_cb_data *cbdata = arg;
     SSL *serverssl = NULL, *clientssl = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -17906,16 +17907,16 @@ static int resume_servername_cb(SSL *s, int *ad, void *arg)
         || !TEST_true(SSL_set_session(clientssl, cbdata->sess)))
         goto end;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     /*
      * We expect this to fail - because the servername cb will fail. This will
      * mark the session as not_resumable.
      */
     if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto end;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     ret = SSL_TLSEXT_ERR_OK;
 end:

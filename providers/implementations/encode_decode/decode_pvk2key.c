@@ -127,6 +127,7 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     void *key = NULL;
     int ok = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (in == NULL)
         return 0;
@@ -159,7 +160,7 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         if (lib == ERR_LIB_PEM
             && (reason == PEM_R_BAD_PASSWORD_READ
                 || reason == PEM_R_BAD_DECRYPT)) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto end;
         }
 

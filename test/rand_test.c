@@ -180,6 +180,7 @@ static int test_rand_hash_salt(int idx)
     unsigned char a[40], b[40];
     size_t i;
     int ok, res = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
         goto err;
@@ -190,7 +191,7 @@ static int test_rand_hash_salt(int idx)
 
     /* Make sure each case gets the source it is about */
     if (idx > 0) {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ok = RAND_bytes_ex(ctx, a, sizeof(a), 0) <= 0;
 #ifndef OPENSSL_RAND_SEED_NONE
         /* Without strict seeding the operating system sources serve it */
@@ -205,7 +206,7 @@ static int test_rand_hash_salt(int idx)
         /* Strict seeding keeps the operating system sources out */
         if (idx == 2)
             ok = ok && ossl_rand_seed_source_strict(ctx);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         if (!TEST_true(ok))
             goto err;
     }
@@ -239,6 +240,7 @@ err:
  */
 static int test_rand_primary_seed_stored(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     OSSL_LIB_CTX *ctx = NULL;
     EVP_RAND_CTX *seed;
     unsigned char buf[16];
@@ -249,9 +251,9 @@ static int test_rand_primary_seed_stored(void)
         goto err;
 
     /* The default seed source may be unavailable in some configurations */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = RAND_bytes_ex(ctx, buf, sizeof(buf), 0) > 0;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok) {
         TEST_info("skipped: cannot instantiate the primary DRBG");
         res = 1;
@@ -279,6 +281,7 @@ err:
 /* Test the FIPS health tests */
 static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int res = 0;
     EVP_RAND *crngt_alg = NULL, *parent_alg = NULL;
     EVP_RAND_CTX *crngt = NULL, *parent = NULL;
@@ -308,9 +311,9 @@ static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
         || !TEST_int_le(indicator, 0))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     res = EVP_RAND_generate(crngt, out, gen, 0, 0, NULL, 0);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 err:
     EVP_RAND_CTX_free(crngt);
     EVP_RAND_CTX_free(parent);
@@ -501,6 +504,7 @@ static int test_rand_seed_source_strict(void)
     OSSL_PARAM params[3];
     int generate = 1, res = 0;
     size_t i;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     for (i = 0; i < sizeof(entropy); i++)
         entropy[i] = 0xff & (i + 1);
@@ -517,12 +521,12 @@ static int test_rand_seed_source_strict(void)
      */
     if (!TEST_ptr(drbg = provider_side_drbg(ctx)))
         goto err;
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_false(provider_side_drbg_instantiate(drbg))) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     EVP_RAND_CTX_free(drbg);
     drbg = NULL;
 
@@ -565,6 +569,7 @@ static int test_rand_seed_source_nonstrict(void)
     OSSL_LIB_CTX *ctx = NULL;
     EVP_RAND_CTX *drbg = NULL;
     int ok, res = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
         goto err;
@@ -573,9 +578,9 @@ static int test_rand_seed_source_nonstrict(void)
         /* enable-fips-jitter build: the JITTER seed source is hard-wired */
         if (!TEST_ptr(drbg = provider_side_drbg(ctx)))
             goto err;
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ok = provider_side_drbg_instantiate(drbg);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         /* The seed source may be unusable in this configuration */
         if (ok
             && (!TEST_ptr(ossl_rand_get0_seed_noncreating(ctx))
@@ -1156,6 +1161,7 @@ static int rand_drbg_fetch_warmup(EVP_RAND *drbg_alg)
  */
 static int test_rand_bytes_mfail(int idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     OSSL_LIB_CTX *ctx = NULL;
     EVP_RAND *drbg = NULL, *seed = NULL;
     unsigned char buf[16];
@@ -1166,9 +1172,9 @@ static int test_rand_bytes_mfail(int idx)
         || !rand_drbg_fetch_warmup(drbg))
         goto end;
     /* The default seed source may be unavailable in some configurations */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     seed = EVP_RAND_fetch(ctx, OPENSSL_SEED_SRC_NAME, NULL);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     MFAIL_start();
     rc = (idx == 0 ? RAND_bytes_ex(ctx, buf, sizeof(buf), 0)

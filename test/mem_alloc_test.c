@@ -273,7 +273,8 @@ static void save_counts(void)
 
 static void check_exp_prep(void)
 {
-    ERR_set_mark();
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+    ERR_HANDLE_set_mark(&hdl);
 
     save_counts();
 }
@@ -334,8 +335,9 @@ static int check_exp(const char *const fn, const int ln, const size_t sz,
     int err_flags = 0;
     int test_result = 1;
     unsigned long oom_err;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
-    num_errs = ERR_count_to_mark();
+    num_errs = ERR_HANDLE_count_to_mark(&hdl);
     if (num_errs > 0) {
         err_code = ERR_peek_last_error_all(&err_file, &err_line, &err_func,
             &err_data, &err_flags);
@@ -409,7 +411,7 @@ static int check_exp(const char *const fn, const int ln, const size_t sz,
         test_result = 0;
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /*
      * We don't check for frees here as there's a non-trivial amount
