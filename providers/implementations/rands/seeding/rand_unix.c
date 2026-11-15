@@ -374,7 +374,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         void *p;
         int (*f)(void *buffer, size_t length);
     } p_getentropy;
-
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     /*
      * We could cache the result of the lookup, but we normally don't
      * call this function often.
