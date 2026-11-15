@@ -16,7 +16,7 @@ EVP_PKEY-ML-DSA-87-RSA4096-PSS-SHA512
 The composite keytypes combine an B<ML-DSA> post-quantum key with a
 traditional (classical) key, RSA or EC, into a single key pair, as described
 in
-L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>.
+L<RFC 10073|https://datatracker.ietf.org/doc/html/rfc10073>.
 The intent is to provide protection against attacks on either component
 algorithm: an attacker must break both the post-quantum and the classical
 component to forge a signature or recover a private key.
@@ -160,7 +160,7 @@ component operations.
 The wire format used for the "pub" and "priv" parameters above, and for the
 raw content of the encoded B<SubjectPublicKeyInfo> and B<PrivateKeyInfo>
 structures, follows
-L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>:
+L<RFC 10073|https://datatracker.ietf.org/doc/html/rfc10073>:
 
 =over 4
 
@@ -208,7 +208,7 @@ component does not match are rejected.
 
 =over 4
 
-=item L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>
+=item L<RFC 10073|https://datatracker.ietf.org/doc/html/rfc10073>
 
 =item FIPS 204 (for the B<ML-DSA> component)
 

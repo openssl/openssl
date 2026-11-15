@@ -472,7 +472,7 @@ static const OSSL_PARAM *ml_dsa_composite_export_types(int selection)
 
 /*
  * Decode the traditional sub-key from its raw wire format as defined in
- * draft-ietf-lamps-pq-composite-sigs:
+ * RFC 10073:
  *
  *   RSA:      RSAPublicKey DER (pub)  / RSAPrivateKey DER (priv)   — PKCS#1
  *   EC:       Uncompressed X9.62 point 0x04||x||y (pub)
@@ -679,7 +679,7 @@ static EVP_PKEY *ml_dsa_composite_decode_classic_key(OSSL_LIB_CTX *libctx,
 
 /*
  * Reconstruct a ML_DSA_COMPOSITE_KEY from raw bytes in params[], using the wire
- * format defined in draft-ietf-lamps-pq-composite-sigs:
+ * format defined in RFC 10073:
  *
  *   Public key:  mldsaPK(fixed size) || tradPK(raw)
  *   Private key: mldsaSeed(32 bytes) || tradSK(raw)
@@ -732,7 +732,7 @@ static int ml_dsa_composite_import_internal(void *keydata, int selection,
         return 0;
 
     /*
-     * 2. Split at the ML-DSA boundary per the draft spec:
+     * 2. Split at the ML-DSA boundary per RFC 10073:
      *    - Private key: first ML_DSA_SEED_BYTES (32) bytes are the seed,
      *      NOT the expanded key (sk_len is 4032/3936/etc.).
      *    - Public key: first kp->pk_len bytes (1312/1952/2592).
@@ -770,7 +770,7 @@ static int ml_dsa_composite_import_internal(void *keydata, int selection,
 
 /*
  * Encode the traditional sub-key to its raw wire format per
- * draft-ietf-lamps-pq-composite-sigs:
+ * RFC 10073:
  *
  *   RSA:      RSAPublicKey DER (pub)  / RSAPrivateKey DER (priv)   — PKCS#1
  *   EC:       Uncompressed X9.62 point 0x04||x||y (pub)
@@ -843,7 +843,7 @@ static int ml_dsa_composite_encode_classic_key(const EVP_PKEY *pkey,
 /*
  * ml_dsa_composite_export:
  * Serialize both sub-keys into the caller's OSSL_PARAM array.
- * Wire format per draft-ietf-lamps-pq-composite-sigs:
+ * Wire format per RFC 10073:
  *   Public key:  mldsaPK(pk_len bytes) || tradPK(raw)
  *   Private key: mldsaSeed(32 bytes)   || tradSK(raw)
  */

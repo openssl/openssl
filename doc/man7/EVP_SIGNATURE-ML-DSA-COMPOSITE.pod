@@ -16,7 +16,7 @@ B<ML-DSA-87-ECDSA-P384-SHA512> and B<ML-DSA-87-RSA4096-PSS-SHA512>
 EVP_PKEY implementations support one-shot and streaming (message) sign and
 verify, combining an B<ML-DSA> signature with a classical (RSA or ECDSA)
 signature, as described in
-L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>.
+L<RFC 10073|https://datatracker.ietf.org/doc/html/rfc10073>.
 See L<EVP_PKEY-ML-DSA-COMPOSITE(7)> for information related to the
 composite key types.
 
@@ -211,7 +211,7 @@ L<EVP_SIGNATURE-ML-DSA(7)>,
 L<provider-signature(7)>,
 L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,
-L<draft-ietf-lamps-pq-composite-sigs|https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs>
+L<RFC 10073|https://datatracker.ietf.org/doc/html/rfc10073>
 
 =head1 HISTORY
 

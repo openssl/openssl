@@ -31,7 +31,7 @@
 #include <openssl/rand.h>
 
 /*
- * Fixed 32-byte domain separation prefix per draft-ietf-lamps-pq-composite-sigs.
+ * Fixed 32-byte domain separation prefix per RFC 10073.
  * Byte encoding of the ASCII string "CompositeAlgorithmSignatures2025":
  *   436F6D706F73697465416C676F726974686D5369676E61747572657332303235
  */
@@ -66,13 +66,13 @@ typedef enum {
 
 typedef struct {
     const char *name;
-    const char *label; /* ASCII label for M' and ML-DSA ctx per draft §6 */
+    const char *label; /* ASCII label for M' and ML-DSA ctx per RFC 10073 §6 */
     const unsigned char *oid;
     size_t oid_sz;
     const char *prehash_alg; /* hash for composite PH(M) only */
     size_t prehash_len; /* prehash output length in bytes */
     const char *classic_hash; /* hash for traditional component signing (may differ
-                               * from prehash_alg per draft-ietf-lamps-pq-composite-sigs §6);
+                               * from prehash_alg per RFC 10073 §6);
                                * NULL for EdDSA (no digest arg needed) */
     ML_DSA_COMPOSITE_CLASSIC_TYPE classic_type;
     int pss_salt_len; /* RSA-PSS only; 0 otherwise; MGF1 uses classic_hash */
@@ -81,7 +81,7 @@ typedef struct {
 /*
  * prehash_alg: hash used for the composite PH(M) step.
  * classic_hash: hash used by the traditional component signature algorithm,
- *               which may differ from prehash_alg per draft-ietf-lamps-pq-composite-sigs §6;
+ *               which may differ from prehash_alg per RFC 10073 §6;
  *               NULL for EdDSA variants (no digest argument).
  */
 static const ML_DSA_COMPOSITE_ALG_INFO ml_dsa_composite_alg_table[] = {
@@ -140,7 +140,7 @@ static int ml_dsa_composite_compute_prehash(OSSL_LIB_CTX *libctx,
 
 /*
  * Build M' = Prefix(32) || Label || uint8(ctx_len) || ctx || PH(M) into a
- * newly allocated buffer, per draft-ietf-lamps-pq-composite-sigs §2.2.
+ * newly allocated buffer, per RFC 10073 §2.2.
  * Caller must OPENSSL_free() (or OPENSSL_clear_free()) the result.
  */
 static uint8_t *ml_dsa_composite_build_mprime(PROV_ML_DSA_COMPOSITE_CTX *ctx,

@@ -25,7 +25,7 @@
 
 /*
  * Encode the classic sub-key public component to its raw wire format
- * (draft-ietf-lamps-pq-composite-sigs):
+ * (RFC 10073):
  *
  *   RSA:      RSAPublicKey DER (PKCS#1)
  *   EC:       Uncompressed X9.62 point 0x04||x||y

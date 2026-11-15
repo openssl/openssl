@@ -7,7 +7,7 @@
 
 -- -------------------------------------------------------------------
 
--- Taken from https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/
+-- Taken from https://datatracker.ietf.org/doc/html/rfc10073
 
 pkixAlgs OBJECT IDENTIFIER ::= { 1 3 6 1 5 5 7 6 }
 

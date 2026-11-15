@@ -476,7 +476,7 @@ extern const OSSL_DISPATCH ossl_slh_dsa_shake_256s_signature_functions[];
 extern const OSSL_DISPATCH ossl_slh_dsa_shake_256f_signature_functions[];
 #endif /* OPENSSL_NO_SLH_DSA */
 
-/* ML DSA Composite signature algorithms (draft-ietf-lamps-pq-composite-sigs) */
+/* ML DSA Composite signature algorithms (RFC 10073) */
 extern const OSSL_DISPATCH ossl_mldsa44_rsa2048_pss_sha256_signature_functions[];
 extern const OSSL_DISPATCH ossl_mldsa87_rsa4096_pss_sha512_signature_functions[];
 #ifndef OPENSSL_NO_EC

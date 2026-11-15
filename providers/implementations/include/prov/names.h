@@ -474,7 +474,7 @@
 #define PROV_DESCS_SLH_DSA_SHAKE_256S "OpenSSL SLH-DSA-SHAKE-256s implementation"
 #define PROV_DESCS_SLH_DSA_SHAKE_256F "OpenSSL SLH-DSA-SHAKE-256f implementation"
 
-/* ML DSA Composite signature algorithms (draft-ietf-lamps-pq-composite-sigs) */
+/* ML DSA Composite signature algorithms (RFC 10073) */
 #define PROV_NAMES_MLDSA44_RSA2048_PSS_SHA256 \
     "ML-DSA-44-RSA2048-PSS-SHA256:id-mldsa44-rsa2048-pss-sha256:1.3.6.1.5.5.7.6.37"
 #define PROV_DESCS_MLDSA44_RSA2048_PSS_SHA256 \
