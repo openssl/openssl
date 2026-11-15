@@ -5831,6 +5831,50 @@ end:
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
+static int reject_pending_conn_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    ++*(int *)arg;
+    return 0;
+}
+
+/*
+ * Test that a listener whose new pending connection callback rejects every
+ * connection discards them without deadlocking.
+ */
+static int test_reject_pending_conn(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *listener = NULL;
+    int i, calls = 0, testresult = 0;
+
+    if (!TEST_true(create_quic_ctx_pair(libctx, &cctx, &sctx, cert, privkey)))
+        return 0;
+
+    SSL_CTX_set_new_pending_conn_cb(sctx, reject_pending_conn_cb, &calls);
+
+    if (!TEST_true(create_quic_conn_objects(cctx, sctx, &clientssl, &listener))
+        || !TEST_true(SSL_listen(listener)))
+        goto end;
+
+    for (i = 0; i < 10 && calls == 0; i++) {
+        if (!TEST_int_le(SSL_connect(clientssl), 0))
+            goto end;
+        SSL_handle_events(listener);
+    }
+
+    if (!TEST_int_gt(calls, 0)
+        || !TEST_size_t_eq(SSL_get_accept_connection_queue_len(listener), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(clientssl);
+    SSL_free(listener);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     char *modulename;
@@ -5955,6 +5999,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_resize_txe);
     ADD_MFAIL_TEST(test_ssl_new_mfail);
     ADD_TEST(test_pending_limit);
+    ADD_TEST(test_reject_pending_conn);
 
     return 1;
 err:
