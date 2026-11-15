@@ -358,8 +358,8 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
         /*
          * we didn't find one, but that's ok, just initialize it now
          */
-        mkey = OPENSSL_calloc(CRYPTO_THREAD_LOCAL_KEY_MAX,
-            sizeof(MASTER_KEY_ENTRY));
+        mkey = CRYPTO_calloc(CRYPTO_THREAD_LOCAL_KEY_MAX,
+            sizeof(MASTER_KEY_ENTRY), NULL, 0);
         if (mkey == NULL)
             return 0;
         /*
