@@ -24,6 +24,7 @@ int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     const BIGNUM *x_, int y_bit,
     BN_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BN_CTX *new_ctx = NULL;
     BIGNUM *tmp1, *tmp2, *x, *y;
     int ret = 0;

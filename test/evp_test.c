@@ -1031,6 +1031,7 @@ static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
     CIPHER_DATA *cdat;
     int m;

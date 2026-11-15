@@ -25,6 +25,7 @@
 
 static int test_print_error_format(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     /* Variables used to construct an error line */
     char *lib;
     const char *func = OPENSSL_FUNC;

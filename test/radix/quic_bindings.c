@@ -321,6 +321,7 @@ static void report_ssl(SSL *ssl, BIO *bio, const char *pfx)
 
 static void report_obj(RADIX_OBJ *obj, void *arg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BIO *bio = arg;
     SSL *ssl = obj->ssl;
 

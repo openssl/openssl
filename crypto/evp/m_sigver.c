@@ -35,6 +35,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     EVP_PKEY *pkey, int ver,
     const OSSL_PARAM params[])
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
     const char *desc;
@@ -327,6 +328,7 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
 int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     EVP_PKEY_CTX *pctx = ctx->pctx;
@@ -366,6 +368,7 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 
 int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     EVP_PKEY_CTX *pctx = ctx->pctx;
@@ -402,6 +405,7 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     size_t *siglen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     int r = 0;
@@ -494,6 +498,7 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     size_t siglen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     int r = 0;

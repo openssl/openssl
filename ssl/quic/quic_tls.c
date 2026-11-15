@@ -770,6 +770,7 @@ int ossl_quic_tls_configure(QUIC_TLS *qtls)
 #ifndef OPENSSL_NO_QUIC
 int ossl_quic_tls_tick(QUIC_TLS *qtls)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret, err;
     const unsigned char *alpn;
     unsigned int alpnlen;

@@ -226,6 +226,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret;
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;

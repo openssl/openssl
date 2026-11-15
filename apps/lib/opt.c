@@ -395,6 +395,7 @@ void print_format_error(int format, unsigned long flags)
  */
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *c;
 
     ERR_set_mark();
@@ -456,6 +457,7 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
  */
 int opt_md_silent(const char *name, EVP_MD **mdp)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
 
     ERR_set_mark();

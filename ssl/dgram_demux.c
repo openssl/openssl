@@ -307,6 +307,7 @@ static int dgram_demux_ensure_free_urxe(DGRAM_DEMUX *demux, size_t min_num_free)
  */
 static int dgram_demux_recv(DGRAM_DEMUX *demux)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BIO_MSG msg[DEMUX_MAX_MSGS_PER_CALL];
     size_t rd, i;
     DGRAM_URXE *urxe = ossl_list_urxe_head(&demux->urx_free), *unext;

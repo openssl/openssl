@@ -17765,6 +17765,7 @@ struct resume_servername_cb_data {
  */
 static int resume_servername_cb(SSL *s, int *ad, void *arg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct resume_servername_cb_data *cbdata = arg;
     SSL *serverssl = NULL, *clientssl = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;

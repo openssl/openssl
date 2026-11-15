@@ -471,6 +471,7 @@ const OSSL_PARAM *EVP_KEYMGMT_gen_gettable_params(const EVP_KEYMGMT *keymgmt)
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
     OSSL_CALLBACK *cb, void *cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     void *ret;
     const char *desc = keymgmt->description != NULL ? keymgmt->description : "";
 

@@ -1619,6 +1619,7 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
 static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
 
     ERR_set_mark();
@@ -1634,6 +1635,7 @@ static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
 static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
 
     ERR_set_mark();

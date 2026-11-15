@@ -35,6 +35,7 @@ static CONF_IMODULE *ssl_do_lookup_module(OSSL_LIB_CTX *libctx)
 
 static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     SSL_CONF_CTX *cctx = NULL;
     size_t i, idx, cmd_count;
     int err = 1;

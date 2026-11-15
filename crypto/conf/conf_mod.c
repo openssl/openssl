@@ -74,6 +74,7 @@ DEFINE_RUN_ONCE_STATIC(do_init_module_list_lock)
 
 static int conf_diagnostics(const CONF *cnf)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int status;
     long result = 0;
 
@@ -154,6 +155,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     const char *appname, unsigned long flags)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     char *file = NULL;
     CONF *conf = NULL;
     int ret = 0, diagnostics = OSSL_LIB_CTX_get_conf_diagnostics(libctx);

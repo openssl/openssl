@@ -1044,6 +1044,7 @@ int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
  */
 int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int blocking = timeout <= 0;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
     int rv;

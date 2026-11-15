@@ -252,6 +252,7 @@ static int test_x509_crl_tbs_cache(void)
 
 static int test_asn1_item_verify(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
     BIO *bio = NULL;
     X509 *x509 = NULL;

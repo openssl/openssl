@@ -6207,6 +6207,7 @@ int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 
 int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
@@ -6225,6 +6226,7 @@ int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
 
 int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_file());
@@ -6244,6 +6246,7 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
 
 int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_LOOKUP *lookup;
 
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_store());
@@ -8117,6 +8120,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
     const char *name,
     const char *properties)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const EVP_CIPHER *ciph;
 
     ERR_set_mark();

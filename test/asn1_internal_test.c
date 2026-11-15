@@ -211,6 +211,7 @@ static int test_invalid_utf8(void)
 
 static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int nid;
 
     ERR_set_mark();

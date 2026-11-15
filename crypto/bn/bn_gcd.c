@@ -547,6 +547,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
  */
 int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
     BIGNUM *tmp;
 

@@ -233,6 +233,7 @@ struct provider_ctx_data_st {
 static OSSL_CALLBACK add_provider_groups;
 static int add_provider_groups(const OSSL_PARAM params[], void *data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct provider_ctx_data_st *pgd = data;
     struct tls_group_params_st prms;
     SSL_CTX *ctx = pgd->ctx;
@@ -404,6 +405,7 @@ static const char *inferred_keytype(const TLS_SIGALG_INFO *sinf)
 static OSSL_CALLBACK add_provider_sigalgs;
 static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct provider_ctx_data_st *pgd = data;
     struct tls_sigalg_params_st prms;
     SSL_CTX *ctx = pgd->ctx;
@@ -2311,6 +2313,7 @@ static const uint16_t tls_default_sigalg[] = {
 
 int ssl_setup_sigalgs(SSL_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     size_t i, cache_idx, sigalgs_len, enabled;
     const SIGALG_LOOKUP *lu;
     SIGALG_LOOKUP *cache = NULL;

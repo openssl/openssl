@@ -1063,6 +1063,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     OSSL_STORE_post_process_info_fn post_process,
     void *post_process_data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER *fetched_loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;

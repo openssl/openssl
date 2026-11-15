@@ -1992,6 +1992,7 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
  */
 static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     DIST_POINT_NAME dpname;
     GENERAL_NAMES *gens;
     GENERAL_NAME *gen = NULL;

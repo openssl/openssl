@@ -45,6 +45,7 @@ static int a_is_zero_mod_one(const char *method, const BIGNUM *r,
  */
 static int test_mod_exp_zero(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BIGNUM *a = NULL, *p = NULL, *m = NULL;
     BIGNUM *r = NULL;
     BN_ULONG one_word = 1;

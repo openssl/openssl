@@ -273,6 +273,7 @@ static void save_counts(void)
 
 static void check_exp_prep(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     ERR_set_mark();
 
     save_counts();

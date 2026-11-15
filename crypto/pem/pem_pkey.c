@@ -103,6 +103,7 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
     const char *propq,
     int selection)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     char *nm = NULL;
     const unsigned char *p = NULL;
     unsigned char *data = NULL;
@@ -218,6 +219,7 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
     const char *propq,
     int selection)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY *ret = NULL;
     BIO *new_bio = NULL;
     int pos;

@@ -1727,6 +1727,7 @@ static void collect_kem(EVP_KEM *kem, void *stack)
 
 static int kem_locate(const char *algo, unsigned int *idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     unsigned int i;
     EVP_KEM *kem;
     const char *canonical_name;
@@ -1775,6 +1776,7 @@ static void collect_signatures(EVP_SIGNATURE *sig, void *stack)
 
 static int sig_locate(const char *algo, unsigned int *idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     unsigned int i;
     EVP_SIGNATURE *sig;
     const char *canonical_name;

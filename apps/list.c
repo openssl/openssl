@@ -1183,6 +1183,7 @@ static void list_options_for_command(const char *command)
 
 static int is_md_available(const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
     const char *propq = app_get0_propq();
 
@@ -1200,6 +1201,7 @@ static int is_md_available(const char *name)
 
 static int is_cipher_available(const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
     const char *propq = app_get0_propq();
 

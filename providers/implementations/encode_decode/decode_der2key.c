@@ -238,6 +238,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_CALLBACK *data_cb, void *data_cbarg,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct der2key_ctx_st *ctx = vctx;
     unsigned char *der = NULL;
     const unsigned char *derp;

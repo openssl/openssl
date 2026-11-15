@@ -307,6 +307,7 @@ static char *app_get_pass(const char *arg, int keepbio)
 
 char *app_conf_try_string(const CONF *conf, const char *group, const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     char *res;
 
     ERR_set_mark();
@@ -321,6 +322,7 @@ char *app_conf_try_string(const CONF *conf, const char *group, const char *name)
 int app_conf_try_number(const CONF *conf, const char *group, const char *name,
     long *result)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ok;
 
     ERR_set_mark();
@@ -1220,6 +1222,7 @@ end:
 
 int load_rpk_file(SSL *ssl, const char *file)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BIO *in = BIO_new_file(file, "r");
     char *name = NULL;
     char *header = NULL;
@@ -2730,6 +2733,7 @@ int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
 
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int match;
 
     ERR_set_mark();
@@ -2909,6 +2913,7 @@ void store_setup_crl_download(X509_STORE *st)
 
 int host_is_ip_address(const char *host)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 #ifndef INET6_ADDRSTRLEN /* not defined on OPENSSL_NO_SOCK */
 #define INET6_ADDRSTRLEN 46
 #endif

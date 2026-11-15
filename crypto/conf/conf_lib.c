@@ -124,6 +124,7 @@ char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
 long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
     const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int status;
     long result = 0;
 
@@ -369,6 +370,7 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 long _CONF_get_number(const CONF *conf, const char *section,
     const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int status;
     long result = 0;
 

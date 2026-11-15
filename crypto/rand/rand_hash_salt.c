@@ -97,6 +97,7 @@ err:
  */
 int ossl_rand_hash_salt(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     unsigned char *seed = NULL;
     size_t seed_len;
     int ok;

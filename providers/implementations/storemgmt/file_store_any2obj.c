@@ -130,6 +130,7 @@ static int der2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_CALLBACK *data_cb, void *data_cbarg,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct any2obj_ctx_st *ctx = vctx;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     BUF_MEM *mem = NULL;

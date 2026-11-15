@@ -420,6 +420,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
     size_t len,
     int key_is_priv)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int result = 0;
@@ -1309,6 +1310,7 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
 int EVP_PKEY_digestsign_supports_digest(EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
     const char *name, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int rv;
     EVP_MD_CTX *ctx = NULL;
 
@@ -1542,6 +1544,7 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
 #ifndef FIPS_MODULE
 static void find_ameth(const char *name, void *data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const char **str = data;
 
     /*

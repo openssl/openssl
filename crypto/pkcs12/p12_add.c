@@ -96,6 +96,7 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
     STACK_OF(PKCS12_SAFEBAG) *bags,
     OSSL_LIB_CTX *ctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     PKCS7 *p7;
     X509_ALGOR *pbe;
     EVP_CIPHER *pbe_ciph = NULL;

@@ -44,6 +44,7 @@ static int evp_asym_cipher_up_ref(void *data)
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     const OSSL_PARAM params[])
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
     void *provkey = NULL;
     EVP_ASYM_CIPHER *cipher = NULL;
@@ -228,6 +229,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_ASYM_CIPHER *cipher;
     const char *desc;
     int ret;
@@ -271,6 +273,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_ASYM_CIPHER *cipher;
     const char *desc;
     int ret;

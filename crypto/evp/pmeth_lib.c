@@ -1073,6 +1073,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
     int cmd, int p1, void *p2)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
 
     if (ctx == NULL) {
@@ -1129,6 +1130,7 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
     const char *name, const char *value)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
 
     /* If unsupported, we don't want that reported here */

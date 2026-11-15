@@ -526,6 +526,7 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
  */
 int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int i, ok;
     int64_t l;
     uint64_t ul;

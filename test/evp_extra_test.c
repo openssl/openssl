@@ -7131,6 +7131,7 @@ static const char *ivlen_change_ciphers[] = {
 /* Negative test for ivlen change after iv being set */
 static int test_ivlen_change(int idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int outlen;
     int res = 0;
     unsigned char outbuf[1024];
@@ -7190,6 +7191,7 @@ static const char *iv_state_ciphers[] = {
 /* Negative test for IV_STATE_FINISHED (avoid IV reuse) */
 static int test_iv_reuse(int idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int outlen;
     int res = 0;
     unsigned char outbuf[64];
@@ -7252,6 +7254,7 @@ static const char *keylen_change_ciphers[] = {
 /* Negative test for keylen change after key was set */
 static int test_keylen_change(int idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int outlen;
     int res = 0;
     unsigned char outbuf[1024];
@@ -8424,6 +8427,7 @@ end:
 
 static int test_aes_xts_rejects_missing_iv(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     static const unsigned char key[32] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
         0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -8666,6 +8670,7 @@ end:
  */
 static int test_aead_oneshot_roundtrip(int idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     static const unsigned char fixed_key[32] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
         0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,

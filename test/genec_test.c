@@ -452,6 +452,7 @@ end:
  */
 static int test_genec_unknown_curve(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY *pkey;
 
     ERR_set_mark();

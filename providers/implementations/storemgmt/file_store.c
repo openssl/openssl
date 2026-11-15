@@ -153,6 +153,7 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
  */
 static const char *uri_file_stat(const char *uri, struct stat *st)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const char *path = uri, *q;
     struct stat local_st;
 
@@ -573,6 +574,7 @@ static int file_load_file(struct file_ctx_st *ctx,
     OSSL_CALLBACK *object_cb, void *object_cbarg,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct file_load_data_st data;
     int ret, err;
 

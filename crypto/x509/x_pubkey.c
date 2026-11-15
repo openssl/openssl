@@ -129,6 +129,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     char opt, ASN1_TLC *ctx, OSSL_LIB_CTX *libctx,
     const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const unsigned char *in_saved = *in;
     size_t publen;
     X509_PUBKEY *pubkey;

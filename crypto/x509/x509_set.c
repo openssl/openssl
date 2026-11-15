@@ -308,6 +308,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 int ossl_x509_get_signature_info_ex(const X509 *x, int *mdnid, int *pknid,
     int *secbits, uint32_t *flags, OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509_SIG_INFO siginf;
 
     ERR_set_mark();

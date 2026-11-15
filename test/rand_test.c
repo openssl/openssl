@@ -239,6 +239,7 @@ err:
  */
 static int test_rand_primary_seed_stored(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     OSSL_LIB_CTX *ctx = NULL;
     EVP_RAND_CTX *seed;
     unsigned char buf[16];
@@ -279,6 +280,7 @@ err:
 /* Test the FIPS health tests */
 static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int res = 0;
     EVP_RAND *crngt_alg = NULL, *parent_alg = NULL;
     EVP_RAND_CTX *crngt = NULL, *parent = NULL;
@@ -1156,6 +1158,7 @@ static int rand_drbg_fetch_warmup(EVP_RAND *drbg_alg)
  */
 static int test_rand_bytes_mfail(int idx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     OSSL_LIB_CTX *ctx = NULL;
     EVP_RAND *drbg = NULL, *seed = NULL;
     unsigned char buf[16];

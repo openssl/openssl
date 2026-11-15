@@ -557,6 +557,7 @@ static int rand_seed_source_strict(ossl_unused RAND_GLOBAL *dgbl)
 
 static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_RAND *rand;
     const char *propq;
     char *name;

@@ -2527,6 +2527,7 @@ MSG_PROCESS_RETURN tls_process_server_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
     WORK_STATE wst)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     size_t certidx;
     const SSL_CERT_LOOKUP *clu;
     int v_ok;
@@ -2701,6 +2702,7 @@ err:
 WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     WORK_STATE wst)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     X509 *x;
     EVP_PKEY *pkey = NULL;
     const SSL_CERT_LOOKUP *clu;
