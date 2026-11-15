@@ -450,9 +450,9 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
  *
  *  scalar_inverse_ntt_demontgomerize
  *      Inverse NTT whose input may still carry an inverse-Montgomery factor
- *      R^-1 from a preceding inner_product_montgomery call.  On the generic
- *      PPC, and AVX2 paths the two pointers are identical (both point at the same
- *      fully-reduced implementation), because the generic inner_product
+ *      R^-1 from a preceding inner_product_montgomery call.  On the generic,
+ *      PPC, AVX2, and AArch64 paths the two pointers are identical (both point at
+ *      the same fully-reduced implementation), because the generic inner_product
  *      already produces fully-reduced outputs via Barrett reduction.  On the
  *      s390x/vec128 path the two are distinct:
  *        - inner_product_montgomery_vec128 accumulates the dot-product using
@@ -485,9 +485,9 @@ static ml_kem_scalar_ntt_fn scalar_ntt = ossl_ml_kem_scalar_ntt_generic;
 static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_generic;
 /*
  * scalar_inverse_ntt_demontgomerize: used after inner_product_montgomery.  On
- * generic/PPC/AVX2 this is the same function as scalar_inverse_ntt.  On s390x it is
- * a specialised variant that also removes the inverse-Montgomery factor R^-1
- * left by inner_product_montgomery_vec128.
+ * generic/PPC/AVX2/AArch64 this is the same function as scalar_inverse_ntt.
+ * On s390x it is a specialised variant that also removes the inverse-Montgomery
+ * factor R^-1 left by inner_product_montgomery_vec128.
  */
 static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
 
