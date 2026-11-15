@@ -40,6 +40,7 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
     int pos, newpos;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if ((pos = BIO_tell(bp)) < 0)
         /* We can depend on BIO_tell() thanks to the BIO_f_readbuffer() */
@@ -57,24 +58,24 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
     if (!OSSL_DECODER_CTX_set_pem_password_cb(dctx, cb, u))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     while (!OSSL_DECODER_from_bio(dctx, bp) || pkey == NULL)
         if (BIO_eof(bp) != 0 || (newpos = BIO_tell(bp)) < 0 || newpos <= pos) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto err;
         } else {
             if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_UNSUPPORTED) {
                 /* unsupported PEM data, try again */
-                ERR_pop_to_mark();
-                ERR_set_mark();
+                ERR_HANDLE_pop_to_mark(&hdl);
+                ERR_HANDLE_set_mark(&hdl);
             } else {
                 /* other error, bail out */
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 goto err;
             }
             pos = newpos;
         }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* if we were asked for private key, the public key is optional */
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
@@ -103,6 +104,7 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
     const char *propq,
     int selection)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     char *nm = NULL;
     const unsigned char *p = NULL;
     unsigned char *data = NULL;
@@ -110,12 +112,12 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
     int slen;
     EVP_PKEY *ret = NULL;
 
-    ERR_set_mark(); /* not interested in PEM read errors */
+    ERR_HANDLE_set_mark(&hdl); /* not interested in PEM read errors */
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         if (!PEM_bytes_read_bio_secmem(&data, &len, &nm,
                 PEM_STRING_EVP_PKEY,
                 bp, cb, u)) {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             return NULL;
         }
     } else {
@@ -126,11 +128,11 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
         if (!PEM_bytes_read_bio(&data, &len, &nm,
                 pem_string,
                 bp, cb, u)) {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             return NULL;
         }
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     p = data;
 
     if (strcmp(nm, PEM_STRING_PKCS8INF) == 0) {
@@ -218,6 +220,7 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
     const char *propq,
     int selection)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY *ret = NULL;
     BIO *new_bio = NULL;
     int pos;
@@ -238,7 +241,7 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
         || !ossl_pw_enable_passphrase_caching(&pwdata))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = pem_read_bio_key_decoder(bp, x, ossl_pw_pem_password, &pwdata,
         libctx, propq, selection);
     if (ret == NULL
@@ -248,9 +251,9 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
                     libctx, propq,
                     selection))
                 == NULL))
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     else
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
 
 err:
     ossl_pw_clear_passphrase_data(&pwdata);

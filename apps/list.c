@@ -1183,13 +1183,14 @@ static void list_options_for_command(const char *command)
 
 static int is_md_available(const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
     const char *propq = app_get0_propq();
 
     /* Look through providers' digests */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     md = EVP_MD_fetch(app_get0_libctx(), name, propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (md != NULL) {
         EVP_MD_free(md);
         return 1;
@@ -1200,13 +1201,14 @@ static int is_md_available(const char *name)
 
 static int is_cipher_available(const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
     const char *propq = app_get0_propq();
 
     /* Look through providers' ciphers */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     cipher = EVP_CIPHER_fetch(app_get0_libctx(), name, propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (cipher != NULL) {
         EVP_CIPHER_free(cipher);
         return 1;

@@ -77,6 +77,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     char scheme_copy[256], *p = scheme_copy, *schemes[2], *scheme = NULL;
     size_t schemes_n = 0;
     size_t i;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (uri == NULL) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
@@ -108,7 +109,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
         }
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (ui_method != NULL
         && (!ossl_pw_set_ui_method(&pwdata, ui_method, ui_data)
@@ -129,9 +130,9 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
         scheme = schemes[i];
         OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if ((loader = ossl_store_get0_loader_int(scheme)) != NULL) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             no_loader_found = 0;
             if (loader->open_ex != NULL)
                 loader_ctx = loader->open_ex(loader, uri, libctx, propq,
@@ -139,7 +140,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
             else
                 loader_ctx = loader->open(loader, uri, ui_method, ui_data);
         } else {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
         }
 #endif
         if (loader == NULL
@@ -204,12 +205,12 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
      * other scheme loader succeeded, the failure to open with the 'file'
      * scheme loader leaves an error on the error stack.  Let's remove it.
      */
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     return ctx;
 
 err:
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     if (loader_ctx != NULL) {
         /*
          * Temporary structure so OSSL_STORE_close() can work even when
@@ -1063,6 +1064,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     OSSL_STORE_post_process_info_fn post_process,
     void *post_process_data)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER *fetched_loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
@@ -1072,7 +1074,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         scheme = "file";
 
     OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if ((loader = ossl_store_get0_loader_int(scheme)) != NULL)
         loader_ctx = loader->attach(loader, bp, libctx, propq,
@@ -1124,12 +1126,12 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
      * the scheme cannot be retrieved. But if a loader was successfully
      * fetched then we remove this error from the error stack.
      */
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     return ctx;
 
 err:
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     if (loader_ctx != NULL) {
         /*
          * Temporary structure so OSSL_STORE_close() can work even when

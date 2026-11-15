@@ -547,6 +547,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
  */
 int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
     BIGNUM *tmp;
 
@@ -555,11 +556,11 @@ int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     if (tmp == NULL)
         goto end;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     BN_set_flags(a, BN_FLG_CONSTTIME);
     ret = (BN_mod_inverse(tmp, a, b, ctx) != NULL);
     /* Clear any errors (an error is returned if there is no inverse) */
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 end:
     BN_CTX_end(ctx);
     return ret;
