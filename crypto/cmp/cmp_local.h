@@ -16,8 +16,6 @@
 #include "crypto/x509.h"
 #include "internal/cryptlib.h"
 
-#define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
-
 /*
  * this structure is used to store the context for CMP sessions
  */

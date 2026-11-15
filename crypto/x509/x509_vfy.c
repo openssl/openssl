@@ -688,13 +688,13 @@ static int check_extensions(X509_STORE_CTX *ctx)
                     X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA);
             }
             /* Check issuer is non-empty acc. to RFC 5280 section 4.1.2.4 */
-            CB_FAIL_IF(X509_NAME_entry_count(X509_get_issuer_name(x)) == 0,
+            CB_FAIL_IF(OSSL_IS_NULL_DN(X509_get_issuer_name(x)),
                 ctx, x, i, X509_V_ERR_ISSUER_NAME_EMPTY);
             /* Check subject is non-empty acc. to RFC 5280 section 4.1.2.6 */
             CB_FAIL_IF(((x->ex_flags & EXFLAG_CA) != 0
                            || (x->ex_kusage & KU_CRL_SIGN) != 0
                            || x->altname == NULL)
-                    && X509_NAME_entry_count(X509_get_subject_name(x)) == 0,
+                    && OSSL_IS_NULL_DN(X509_get_subject_name(x)),
                 ctx, x, i, X509_V_ERR_SUBJECT_NAME_EMPTY);
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
             CB_FAIL_IF(x->altname != NULL

@@ -3,7 +3,8 @@
 =head1 NAME
 
 X509_NAME_get_index_by_NID, X509_NAME_get_index_by_OBJ, X509_NAME_get_entry,
-X509_NAME_entry_count, X509_NAME_get_text_by_NID, X509_NAME_get_text_by_OBJ -
+X509_NAME_entry_count, X509_NAME_get_text_by_NID, X509_NAME_get_text_by_OBJ,
+OSSL_IS_NULL_DN -
 X509_NAME lookup and enumeration functions
 
 =head1 SYNOPSIS
@@ -16,6 +17,7 @@ X509_NAME lookup and enumeration functions
 
  int X509_NAME_entry_count(const X509_NAME *name);
  const X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
+ #define OSSL_IS_NULL_DN(name)
 
  Deprecated Functions:
 
@@ -30,6 +32,9 @@ These functions allow an B<X509_NAME> structure to be examined. The
 B<X509_NAME> structure is the same as the B<Name> type defined in
 RFC 5280 (and elsewhere) and used for example in certificate subject
 and issuer names.
+
+OSSL_IS_NULL_DN() is a macro that returns 1 if B<name> is NULL
+or contains no entries (the NULL-DN), and 0 otherwise.
 
 X509_NAME_get_index_by_NID() and X509_NAME_get_index_by_OBJ() retrieve
 the next index matching B<nid> or B<obj> after B<lastpos>. B<lastpos>
@@ -86,6 +91,9 @@ for failure.
 X509_NAME_get_entry() returns an B<X509_NAME> pointer to the
 requested entry or B<NULL> if the index is invalid.
 
+OSSL_IS_NULL_DN() returns 1 if B<name> is NULL or contains no entries,
+and 0 otherwise.
+
 =head1 EXAMPLES
 
 Process all entries:
@@ -114,6 +122,10 @@ Process all commonName entries:
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<d2i_X509_NAME(3)>
+
+=head1 HISTORY
+
+OSSL_IS_NULL_DN() was added in OpenSSL 4.2.0.
 
 =head1 COPYRIGHT
 

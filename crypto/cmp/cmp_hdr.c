@@ -79,7 +79,7 @@ STACK_OF(OSSL_CMP_ITAV)
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 {
     return name == NULL
-        || (name->type == GEN_DIRNAME && IS_NULL_DN(name->d.directoryName));
+        || (name->type == GEN_DIRNAME && OSSL_IS_NULL_DN(name->d.directoryName));
 }
 
 /*
