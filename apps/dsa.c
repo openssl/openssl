@@ -210,7 +210,7 @@ int dsa_main(int argc, char **argv)
     if (modulus) {
         BIGNUM *pub_key = NULL;
 
-        if (!EVP_PKEY_get_bn_param(pkey, "pub", &pub_key)) {
+        if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_pub_key, &pub_key)) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -284,7 +284,7 @@ int dsa_main(int argc, char **argv)
     if (outformat == FORMAT_PVK) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
+        params[0] = OSSL_PARAM_construct_int(OSSL_ENCODER_PARAM_encrypt_level, &pvk_encr);
         if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
             BIO_puts(bio_err, "invalid PVK encryption level\n");
             goto end;

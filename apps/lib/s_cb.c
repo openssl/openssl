@@ -441,7 +441,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
         char name[80];
         size_t name_len;
 
-        if (!EVP_PKEY_get_utf8_string_param(key, OSSL_PKEY_PARAM_GROUP_NAME,
+        if (!EVP_PKEY_get_utf8_string_param(key, OSSL_PKEY_PARAM_group_name,
                 name, sizeof(name), &name_len))
             strcpy(name, "?");
         BIO_printf(out, "ECDH, %s, %d bits\n", name, EVP_PKEY_get_bits(key));

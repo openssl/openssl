@@ -253,11 +253,11 @@ int pkey_main(int argc, char **argv)
             goto end;
 
         if (asn1_encoding != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ec_encoding,
                 asn1_encoding, 0);
         if (point_format != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(
-                OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                OSSL_PKEY_PARAM_ec_point_conversion_format,
                 point_format, 0);
         *p = OSSL_PARAM_construct_end();
         if (EVP_PKEY_set_params(pkey, params) <= 0)
