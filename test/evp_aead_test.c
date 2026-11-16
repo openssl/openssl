@@ -1680,7 +1680,7 @@ static int test_evp_aead_reinit(int idx)
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
     unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
 
-    static const unsigned char msg[] = "reinit regression";
+    static const unsigned char msg[] = "reinit short";
     static const unsigned char aad[] = "reinit aad";
     unsigned char ct[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
     unsigned char pt[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
