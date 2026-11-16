@@ -3166,6 +3166,15 @@ __owur int dtls1_query_mtu(SSL_CONNECTION *s);
  */
 unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s);
 
+/**
+ * Returns the fatal receive error retained by the listener the connection
+ * belongs to, without touching the error queue or the connection's state.
+ *
+ * @param s the connection
+ * @returns the retained error, or 0 if the transport has not failed
+ */
+unsigned long ossl_dtls_conn_shared_error(const SSL_CONNECTION *s);
+
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags);
 void ossl_dtls_listener_free(SSL *ssl);

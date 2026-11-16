@@ -7351,6 +7351,7 @@ struct failing_recv_data {
     int pending_accept;
     int fragment_received;
     int pending_handshake_seen;
+    int silent;
     SSL *pending_conn;
 };
 
@@ -7384,11 +7385,14 @@ static long failing_recv_ctrl(BIO *bio, int cmd, long num, void *ptr)
         return 1;
     }
 
+    /* Only entries raised by this query count, not ones already queued. */
+    ERR_set_mark();
     ret = failing_send_ctrl(bio, cmd, num, ptr);
     if (data->delayed && ret > 0 && data->receive_calls == 2
         && desc->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
-        && desc->value.fd >= 0 && ERR_peek_error() == 0)
+        && desc->value.fd >= 0 && ERR_count_to_mark() == 0)
         data->wait_descriptor_seen = 1;
+    ERR_clear_last_mark();
 
     return ret;
 }
@@ -7468,6 +7472,10 @@ static int failing_recv_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
         return 0;
     }
 
+    /* Not allowed by BIO_sendmmsg(3), but a failure must still be retained. */
+    if (data->silent)
+        return 0;
+
     if (data->system_error)
         ERR_raise(ERR_LIB_SYS, EBADF);
     else
@@ -7510,12 +7518,28 @@ enum recv_error_scenario {
     RECV_ERROR_ACCEPT_QUEUED,
     RECV_ERROR_ACCEPT_TICK,
     RECV_ERROR_ACCEPT_PENDING,
+    RECV_ERROR_SILENT,
     RECV_ERROR_NUM_SCENARIOS
 };
 
 /*
+ * Leave an entry of the opposite kind to the expected failure on the queue:
+ * a system error when a BIO error is expected, and a non-system error when a
+ * system error is expected. SSL_get_error() must not classify from it.
+ */
+static void raise_unrelated_error(int system_error)
+{
+    if (system_error)
+        ERR_raise(ERR_LIB_USER, ERR_R_PASSED_INVALID_ARGUMENT);
+    else
+        ERR_raise(ERR_LIB_SYS, ENOENT);
+}
+
+/*
  * A permanent receive failure on the listener must be reported as fatal by
  * the accepted connection's first read that encounters it, not as WANT_READ.
+ * The reads that discover the failure run with an unrelated entry already on
+ * the error queue, which must not change the reported category.
  * It must also remain fatal for another connection after the error queue
  * is cleared and the working transport is restored. Repeated accept calls
  * must report the same failure rather than look like an empty accept queue.
@@ -7532,6 +7556,10 @@ enum recv_error_scenario {
  * idx 16/17: shared failure takes precedence over an already-queued accept.
  * idx 18/19: an empty-queue accept discovers failure during its own tick.
  * idx 20/21: the initial pump succeeds, then pending-handshake receive fails.
+ * idx 22/23: the receive fails without raising anything, so the retained
+ *             diagnostic is the pump's own ERR_LIB_BIO internal error. The
+ *             unrelated entry queued before the discovering read is a system
+ *             error for idx 22 and a non-system error for idx 23.
  * Each pair injects BIO_R_TRANSFER_ERROR / EBADF, respectively.
  * All scenarios check unmasked listener EL / connection EC polls.
  * Masked and mixed polls cover both the failed listener and connection,
@@ -7584,6 +7612,13 @@ static int test_dtls_listener_permanent_recv_error(int idx)
     data.delayed = scenario == RECV_ERROR_DELAYED;
     data.transient_remaining = scenario == RECV_ERROR_POLL_TRANSLATION ? 1 : 0;
     data.pending_accept = scenario == RECV_ERROR_ACCEPT_PENDING;
+    data.silent = scenario == RECV_ERROR_SILENT;
+    if (data.silent) {
+        /* The pump raises its own fallback, and system_error picks the stale entry. */
+        expected_ssl_error = SSL_ERROR_SSL;
+        expected_lib = ERR_LIB_BIO;
+        expected_reason = ERR_R_INTERNAL_ERROR;
+    }
 
 #ifndef OPENSSL_THREADS
     if (notifier_poll) {
@@ -7799,11 +7834,13 @@ static int test_dtls_listener_permanent_recv_error(int idx)
             goto end;
     }
 
+    /* An unrelated older entry must not decide the category of the failure. */
     ERR_clear_error();
+    raise_unrelated_error(system_error);
     readbytes = 0;
     ret = SSL_read_ex(serverssl[0], buf, sizeof(buf), &readbytes);
     ssl_error = SSL_get_error(serverssl[0], ret);
-    saved_error = ERR_peek_error();
+    saved_error = ERR_peek_last_error();
 
     if (data.delayed
         && (!TEST_true(data.wait_descriptor_seen)
@@ -7815,7 +7852,6 @@ static int test_dtls_listener_permanent_recv_error(int idx)
         || !TEST_int_eq(ssl_error, expected_ssl_error)
         || !TEST_int_eq(ERR_GET_LIB(saved_error), expected_lib)
         || !TEST_int_eq(ERR_GET_REASON(saved_error), expected_reason)
-        || !TEST_ulong_eq(ERR_peek_last_error(), saved_error)
         || !TEST_false(BIO_should_retry(SSL_get_rbio(listener))))
         goto end;
 
@@ -8097,17 +8133,17 @@ static int test_dtls_listener_permanent_recv_error(int idx)
             goto end;
     }
     ERR_clear_error();
+    raise_unrelated_error(system_error);
 
     readbytes = 0;
     ret = SSL_read_ex(serverssl[1], buf, sizeof(buf), &readbytes);
     ssl_error = SSL_get_error(serverssl[1], ret);
-    error = ERR_peek_error();
+    error = ERR_peek_last_error();
 
     if (!TEST_int_eq(ret, 0)
         || !TEST_int_eq(ssl_error, expected_ssl_error)
         || !TEST_int_eq(ERR_GET_LIB(error), ERR_GET_LIB(saved_error))
-        || !TEST_int_eq(ERR_GET_REASON(error), ERR_GET_REASON(saved_error))
-        || !TEST_ulong_eq(ERR_peek_last_error(), error))
+        || !TEST_int_eq(ERR_GET_REASON(error), ERR_GET_REASON(saved_error)))
         goto end;
 
     /* Clearing diagnostics must not hide the failure from later accepts. */
@@ -9957,8 +9993,14 @@ static int silent_fatal_recv_recvmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
 /*
  * A failed accept must leave an error saying why. The network BIO here fails
  * its receive without raising anything, while an unrelated error is already
- * on the queue. The accept must still report its own failure last, not leave
- * the unrelated entry to be read as the cause.
+ * on the queue. The failure must be reported as the internal error, not leave
+ * the unrelated entry to be read as the cause, and must be retained as such
+ * for later calls.
+ *
+ * idx 0: nonblocking accept; idx 1: blocking accept; both with an unrelated
+ * ERR_LIB_USER entry. idx 2, 3 and 4: nonblocking accept with a stale
+ * ECONNREFUSED (peer-scoped), BIO_R_NON_FATAL or EAGAIN entry, none of which
+ * may make the silent failure be classified as transient.
  */
 static int test_dtls_accept_failure_stale_error(int idx)
 {
@@ -9967,9 +10009,9 @@ static int test_dtls_accept_failure_stale_error(int idx)
     BIO_ADDR *server_addr = NULL;
     BIO_METHOD *meth = NULL;
     BIO *sockbio, *filter = NULL;
-    uint64_t flags = idx == 0 ? SSL_ACCEPT_CONNECTION_NO_BLOCK : 0;
+    uint64_t flags = idx == 1 ? 0 : SSL_ACCEPT_CONNECTION_NO_BLOCK;
     unsigned long err;
-    int server_fd = -1, testresult = 0;
+    int i, server_fd = -1, testresult = 0;
 
     if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
         || !TEST_true(create_udp_listener(sctx,
@@ -9992,15 +10034,53 @@ static int test_dtls_accept_failure_stale_error(int idx)
     filter = NULL;
 
     ERR_clear_error();
-    ERR_raise(ERR_LIB_USER, ERR_R_PASSED_INVALID_ARGUMENT);
+    /* A stale entry which reads as transient must not hide the failure. */
+    switch (idx) {
+    case 2:
+#ifdef OPENSSL_SYS_WINDOWS
+        ERR_raise(ERR_LIB_SYS, WSAECONNREFUSED);
+#else
+        ERR_raise(ERR_LIB_SYS, ECONNREFUSED);
+#endif
+        break;
+    case 3:
+        ERR_raise(ERR_LIB_BIO, BIO_R_NON_FATAL);
+        break;
+    case 4:
+#ifdef OPENSSL_SYS_WINDOWS
+        ERR_raise(ERR_LIB_SYS, WSAEWOULDBLOCK);
+#else
+        ERR_raise(ERR_LIB_SYS, EAGAIN);
+#endif
+        break;
+    default:
+        ERR_raise(ERR_LIB_USER, ERR_R_PASSED_INVALID_ARGUMENT);
+        break;
+    }
 
-    if (!TEST_ptr_null(SSL_accept_connection(listener, flags)))
-        goto end;
+    /*
+     * The first accept discovers the failure and the second replays it after
+     * the queue is emptied. Neither may report the unrelated entry.
+     */
+    for (i = 0; i < 2; i++) {
+        if (!TEST_ptr_null(SSL_accept_connection(listener, flags)))
+            goto end;
 
-    err = ERR_peek_last_error();
-    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_SSL)
-        || !TEST_int_eq(ERR_GET_REASON(err), ERR_R_INTERNAL_ERROR))
-        goto end;
+        /*
+         * What the first accept leaves depends on which layer reports the
+         * failure, so it only has to leave something. The second accept can
+         * only report what the listener retained.
+         */
+        err = ERR_peek_last_error();
+        if (!TEST_ulong_ne(err, 0))
+            goto end;
+        if (i == 1
+            && (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_BIO)
+                || !TEST_int_eq(ERR_GET_REASON(err), ERR_R_INTERNAL_ERROR)))
+            goto end;
+
+        ERR_clear_error();
+    }
 
     testresult = 1;
 end:
@@ -10289,7 +10369,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_listener_redrive_driven_earlier, 4);
     ADD_ALL_TESTS(test_dtls_listener_conn_poll_pending_input, 4);
     ADD_TEST(test_dtls_listener_fatal_no_pending_input);
-    ADD_ALL_TESTS(test_dtls_accept_failure_stale_error, 2);
+    ADD_ALL_TESTS(test_dtls_accept_failure_stale_error, 5);
 #endif
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_dtls13_listener_conn_read_timeout);

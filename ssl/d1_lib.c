@@ -527,7 +527,7 @@ void dtls1_start_timer(SSL_CONNECTION *s)
 }
 
 /* The listener's retained fatal receive error, or 0 if none has occurred. */
-static unsigned long dtls1_shared_error(const SSL_CONNECTION *s)
+unsigned long ossl_dtls_conn_shared_error(const SSL_CONNECTION *s)
 {
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
     if (s->d1 != NULL && s->d1->listener != NULL && s->d1->rx != NULL)
@@ -543,7 +543,7 @@ static unsigned long dtls1_shared_error(const SSL_CONNECTION *s)
  */
 unsigned long ossl_dtls_conn_apply_shared_failure(SSL_CONNECTION *s)
 {
-    unsigned long error = dtls1_shared_error(s);
+    unsigned long error = ossl_dtls_conn_shared_error(s);
 
     if (error != 0) {
         ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
@@ -559,7 +559,7 @@ int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft)
     OSSL_TIME timenow;
 
     /* A failed shared transport leaves nothing to wait for */
-    if (dtls1_shared_error(s) != 0)
+    if (ossl_dtls_conn_shared_error(s) != 0)
         return 0;
 
     /* If no timeout is set, just return NULL */
@@ -3472,7 +3472,7 @@ err:
     if (error != 0) {
         if (ERR_peek_last_error() != error)
             ERR_raise(ERR_GET_LIB(error), ERR_GET_REASON(error));
-    } else if (ERR_peek_last_error() == 0) {
+    } else {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
     }
     return -1;

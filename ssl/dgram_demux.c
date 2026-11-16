@@ -393,9 +393,15 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
 
     ERR_set_mark();
     if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd)) {
-        if (BIO_err_is_non_fatal(ERR_peek_last_error())
+        /*
+         * Classify only an error the receive itself raised. An entry that was
+         * already on the queue says nothing about why the receive failed.
+         */
+        unsigned long err = ERR_count_to_mark() > 0 ? ERR_peek_last_error() : 0;
+
+        if (BIO_err_is_non_fatal(err)
             || (demux->peer_errors_transient
-                && dgram_demux_err_is_peer_scoped(ERR_peek_last_error()))) {
+                && dgram_demux_err_is_peer_scoped(err))) {
             /* Transient error, clear the error and stop. */
             ERR_pop_to_mark();
             return DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
@@ -523,6 +529,9 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     int ret;
     unsigned long error = 0;
 
+    /* Only what this pump raises may be retained as the failure's cause. */
+    ERR_set_mark();
+
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
 
@@ -558,12 +567,14 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
 end:
     if (ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL && demux->retain_errors) {
         if (demux->permanent_error == 0) {
-            demux->permanent_error = ERR_peek_last_error();
-            if (demux->permanent_error == 0)
+            if (ERR_count_to_mark() > 0)
+                demux->permanent_error = ERR_peek_last_error();
+            else
                 demux->permanent_error = ERR_PACK(ERR_LIB_BIO, 0, ERR_R_INTERNAL_ERROR);
         }
         error = demux->permanent_error;
     }
+    ERR_clear_last_mark();
 
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
