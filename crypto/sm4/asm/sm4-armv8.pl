@@ -174,6 +174,7 @@ $code.=<<___;
 	sm4ekey	$key6.4S,$key5.4S,$const6.4S
 	sm4ekey	$key7.4S,$key6.4S,$const7.4S
 	st1	{$key4.4s,$key5.4s,$key6.4s,$key7.4s},[$keys]
+	mov	w0,#1
 	ret
 .size	${prefix}_set_encrypt_key,.-${prefix}_set_encrypt_key
 ___
@@ -229,6 +230,7 @@ $code.=<<___;
 	ext	$key7.16b,$key7.16b,$key7.16b,#8
 	st1	{$key7.4s,$key6.4s,$key5.4s,$key4.4s},[$keys],64
 	st1	{$key3.4s,$key2.4s,$key1.4s,$key0.4s},[$keys]
+	mov	w0,#1
 	ret
 .size	${prefix}_set_decrypt_key,.-${prefix}_set_decrypt_key
 ___

@@ -1182,6 +1182,9 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../apps/include
     DEPEND[sm4_internal_test]=../libcrypto.a libtestutil.a
+    IF[{- !$disabled{asm} && ($target{asm_arch} // '') eq 'aarch64' -}]
+      DEFINE[sm4_internal_test]=OPENSSL_CPUID_OBJ VPSM4_ASM
+    ENDIF
 
     SOURCE[destest]=destest.c
     INCLUDE[destest]=../include ../apps/include

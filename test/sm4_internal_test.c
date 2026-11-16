@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,6 +18,7 @@
 
 #ifndef OPENSSL_NO_SM4
 #include "crypto/sm4.h"
+#include "crypto/sm4_platform.h"
 
 static int test_sm4_ecb(void)
 {
@@ -75,12 +76,69 @@ static int test_sm4_ecb(void)
 
     return 1;
 }
+
+#ifdef HWSM4_CAPABLE
+static int test_sm4_asm_key_setup(int idx)
+{
+    static const uint8_t k[SM4_BLOCK_SIZE] = { 0 };
+    SM4_KEY key, expected;
+    int (*set_encrypt_key)(const unsigned char *, SM4_KEY *);
+    int (*set_decrypt_key)(const unsigned char *, SM4_KEY *);
+    int i;
+
+    switch (idx) {
+    case 0:
+        if (!HWSM4_CAPABLE)
+            return TEST_skip("SM4 instructions are unavailable");
+        set_encrypt_key = HWSM4_set_encrypt_key;
+        set_decrypt_key = HWSM4_set_decrypt_key;
+        break;
+#ifdef VPSM4_CAPABLE
+    case 1:
+        if ((OPENSSL_armcap_P & ARMV7_NEON) == 0)
+            return TEST_skip("NEON instructions are unavailable");
+        set_encrypt_key = vpsm4_set_encrypt_key;
+        set_decrypt_key = vpsm4_set_decrypt_key;
+        break;
+#endif
+#ifdef VPSM4_EX_CAPABLE
+    case 2:
+        if ((OPENSSL_armcap_P & ARMV8_AES) == 0)
+            return TEST_skip("AES instructions are unavailable");
+        set_encrypt_key = vpsm4_ex_set_encrypt_key;
+        set_decrypt_key = vpsm4_ex_set_decrypt_key;
+        break;
+#endif
+    default:
+        return TEST_skip("SM4 implementation is unavailable");
+    }
+
+    if (!TEST_int_eq(ossl_sm4_set_key(k, &expected), 1)
+        || !TEST_int_eq(set_encrypt_key(k, &key), 1)
+        || !TEST_mem_eq(key.rk, sizeof(key.rk), expected.rk, sizeof(expected.rk)))
+        return 0;
+
+    /* Assembly decryption uses the round keys in reverse order. */
+    for (i = 0; i < SM4_KEY_SCHEDULE / 2; i++) {
+        uint32_t tmp = expected.rk[i];
+
+        expected.rk[i] = expected.rk[SM4_KEY_SCHEDULE - 1 - i];
+        expected.rk[SM4_KEY_SCHEDULE - 1 - i] = tmp;
+    }
+
+    return TEST_int_eq(set_decrypt_key(k, &key), 1)
+        && TEST_mem_eq(key.rk, sizeof(key.rk), expected.rk, sizeof(expected.rk));
+}
+#endif
 #endif
 
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_SM4
     ADD_TEST(test_sm4_ecb);
+#ifdef HWSM4_CAPABLE
+    ADD_ALL_TESTS(test_sm4_asm_key_setup, 3);
+#endif
 #endif
     return 1;
 }
