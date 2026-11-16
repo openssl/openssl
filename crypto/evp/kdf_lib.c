@@ -80,8 +80,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
 
     /*
      * The derived keys live in algctx and were copied by dupctx() above; a
-     * provider that cannot copy them, because they exist only as handles on a
-     * token, fails there.
+     * provider that cannot copy them fails there.
      */
     return dst;
 }
@@ -355,24 +354,8 @@ EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose,
 
     skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->meth->prov, keytype,
         propquery);
-    if (skeymgmt == NULL)
-        skeymgmt = EVP_SKEYMGMT_fetch(ossl_provider_libctx(ctx->meth->prov),
-            keytype, propquery);
     if (skeymgmt == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
-        return NULL;
-    }
-
-    /*
-     * When the skeymgmt is from a different provider than the KDF, we cannot
-     * safely call get_skey with that provider's import function, because the
-     * KDF provider might return its own native key object that we'd then bind
-     * to the foreign skeymgmt (type confusion). The same-provider check ensures
-     * the keydata returned by get_skey is compatible with the skeymgmt.
-     */
-    if (skeymgmt->prov != ctx->meth->prov) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        EVP_SKEYMGMT_free(skeymgmt);
         return NULL;
     }
 
