@@ -49,6 +49,21 @@ if [ "$ROLE" == "client" ]; then
         SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
         exit 0
         ;;
+    "keyupdate")
+        HOSTNAME=none
+        for req in $REQUESTS
+        do
+            OUTFILE=$(basename $req)
+            if [ "$HOSTNAME" == "none" ]
+            then
+                HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+                HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+            fi
+            echo -n "$OUTFILE " >> ./reqfile.txt
+        done
+        KEY_UPDATE=yes SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+        exit 0
+        ;;
     "resumption")
         for req in $REQUESTS
         do

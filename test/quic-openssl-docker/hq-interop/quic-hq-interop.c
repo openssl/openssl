@@ -875,6 +875,7 @@ int main(int argc, char *argv[])
     size_t this_poll_count = 0;
     char *req = NULL;
     char *hostname, *port;
+    int key_update = getenv("KEY_UPDATE") != NULL;
 
     if (argc < 4) {
         fprintf(stderr, "Usage: quic-hq-interop hostname port reqfile\n");
@@ -993,6 +994,20 @@ int main(int argc, char *argv[])
                  */
                 if (!eof) {
                     BIO_write(outbiolist[poll_idx], buf, readbytes);
+                    /*
+                     * QUIC allows a key update only after the handshake is
+                     * confirmed (RFC 9001 6.1). The client cannot query that
+                     * state, so try on each read until it succeeds, dropping
+                     * the error raised by an early attempt.
+                     */
+                    if (key_update && readbytes > 0) {
+                        ERR_set_mark();
+                        if (SSL_key_update(ssl, SSL_KEY_UPDATE_REQUESTED)) {
+                            fprintf(stderr, "key update initiated\n");
+                            key_update = 0;
+                        }
+                        ERR_pop_to_mark();
+                    }
                 } else {
                     fprintf(stderr, "completed %s\n", outnames[poll_idx]);
                     /* This file is done, take it out of polling contention */
