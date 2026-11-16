@@ -2394,8 +2394,9 @@ int speed_main(int argc, char **argv)
     memset(loopargs, 0, loopargs_len * sizeof(loopargs_t));
 
     buflen = lengths[size_num - 1];
-    if (buflen < 36) /* size of random vector in RSA benchmark */
-        buflen = 36;
+    /* The shared buffers also hold RSA ciphertext and public-key signatures. */
+    if (buflen < (int)rsa_keys[R_RSA_15360].bits / 8)
+        buflen = (int)rsa_keys[R_RSA_15360].bits / 8;
     if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen) {
         BIO_puts(bio_err, "Error: buffer size too large\n");
         goto end;

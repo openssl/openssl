@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,35 @@ use OpenSSL::Test::Utils;
 
 setup("test_speed");
 
-plan tests => 25;
+# -bytes sizes symmetric inputs, not public-key signatures or ciphertext.
+my @buffer_tests = (
+    [ "RSA", [], "rsa2048" ],
+    [ "ECDSA", [qw(ec)], "ecdsap521" ],
+);
+
+plan tests => 25 + scalar @buffer_tests;
+
+foreach my $test (@buffer_tests) {
+    my ($name, $disabled, $algorithm) = @$test;
+
+    subtest "$name works with small -bytes" => sub {
+        plan skip_all => "$name is not supported by this OpenSSL build"
+            if disabled(@$disabled);
+
+        local $ENV{OPENSSL_CONF} = srctop_file("test", "default.cnf");
+        local $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+        foreach my $bytes (1, 16) {
+            foreach my $misalign (0, 63) {
+                my @alignment = $misalign ? ('-misalign', $misalign) : ();
+
+                ok(run(app(['openssl', 'speed', '-testmode', '-bytes', $bytes,
+                            @alignment, $algorithm])),
+                   "$name succeeds with $bytes-byte inputs at offset $misalign");
+            }
+        }
+        done_testing();
+    };
+}
 
 ok(run(app(['openssl', 'speed', '-testmode'])),
        "Simple test of all speed algorithms");

@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `openssl speed` public-key benchmarks failing with small `-bytes`
+   values because the shared buffers were too small for signatures and RSA
+   ciphertext.
+
+   *Tobias Brick*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
