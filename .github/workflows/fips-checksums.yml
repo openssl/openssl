@@ -34,7 +34,6 @@ jobs:
           mkdir ./source-pristine
           mkdir ./build
           mkdir ./source
-          mkdir ./artifact
       - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
@@ -75,15 +74,15 @@ jobs:
           cp -a build-pristine/providers/fips-sources.checksums.new source/providers/fips-sources.checksums
           cp -a build-pristine/providers/fips.checksum.new source/providers/fips.checksum
       - name: make diff-fips-checksums
-        run: make diff-fips-checksums && touch ../artifact/fips_unchanged || ( touch ../artifact/fips_changed ; echo FIPS CHANGED )
+        id: diff
+        run: make diff-fips-checksums && echo result=unchanged >> "$GITHUB_OUTPUT" || ( echo result=changed >> "$GITHUB_OUTPUT" ; echo FIPS CHANGED )
         working-directory: ./build
-      - name: save PR number
-        run: echo ${{ github.event.number }} > ./artifact/pr_num
-      - name: save artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: fips_checksum
-          path: artifact/
+      - name: 'marker: fips changed'
+        if: steps.diff.outputs.result == 'changed'
+        run: 'true'
+      - name: 'marker: fips unchanged'
+        if: steps.diff.outputs.result == 'unchanged'
+        run: 'true'
 
   compute-abidiff:
     runs-on: ubuntu-latest
@@ -96,7 +95,6 @@ jobs:
           mkdir ./source-pristine
           mkdir ./build
           mkdir ./source
-          mkdir ./artifact
       - name: install extra config support
         run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
       - uses: actions/checkout@v6
@@ -122,11 +120,11 @@ jobs:
         run: make -s -j4
         working-directory: ./build
       - name: abidiff
-        run: abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libcrypto.so ./build/libcrypto.so && abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libssl.so ./build/libssl.so && touch ./artifact/abi_unchanged || ( touch ./artifact/abi_changed ; echo ABI CHANGED )
-      - name: save PR number
-        run: echo ${{ github.event.number }} > ./artifact/pr_num
-      - name: save artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: abidiff
-          path: artifact/
+        id: diff
+        run: abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libcrypto.so ./build/libcrypto.so && abidiff --headers-dir1 build-pristine/include/openssl --headers-dir2 build/include/openssl --drop-private-types ./build-pristine/libssl.so ./build/libssl.so && echo result=unchanged >> "$GITHUB_OUTPUT" || ( echo result=changed >> "$GITHUB_OUTPUT" ; echo ABI CHANGED )
+      - name: 'marker: abi changed'
+        if: steps.diff.outputs.result == 'changed'
+        run: 'true'
+      - name: 'marker: abi unchanged'
+        if: steps.diff.outputs.result == 'unchanged'
+        run: 'true'
