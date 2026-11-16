@@ -19906,8 +19906,8 @@ int setup_tests(void)
         || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2))
     ADD_ALL_TESTS(test_sigalgs_available, 12);
 #endif
-    ADD_TEST(test_disabled_group_not_implemented);
 #if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_DTLS1_3)
+    ADD_TEST(test_disabled_group_not_implemented);
     ADD_ALL_TESTS(test_pluggable_group, 4);
     ADD_ALL_TESTS(test_pluggable_signature, 12);
 #endif
