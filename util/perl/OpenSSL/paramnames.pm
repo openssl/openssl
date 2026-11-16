@@ -709,6 +709,7 @@ sub output_endifdef {
 sub calculate_name_offsets {
     my %offsets = ();
     my %name_positions = ();
+    my %resolved_names = ();
     my $character_count = 0;
 
     foreach my $name (sort keys %params) {
@@ -718,6 +719,16 @@ sub calculate_name_offsets {
         while (substr($param_text, 0, 1) eq '*') {
             $param_text = $params{substr($param_text, 1)};
         }
+
+        $resolved_names{$name} = $param_text;
+    }
+
+    # Store longer names first so shorter names can share their suffixes.
+    foreach my $name (sort {
+        length($resolved_names{$b}) <=> length($resolved_names{$a})
+            || $a cmp $b
+    } keys %params) {
+        my $param_text = $resolved_names{$name};
 
         # Assume we're creating a new record
         my %offset = (
@@ -730,7 +741,12 @@ sub calculate_name_offsets {
             $offset{"position"} = $name_positions{$param_text};
             $offset{"dup"} = 1;
         } else {
-            $name_positions{$param_text} = $character_count;
+            # Check if the string exists as a suffix of another existing string.
+            # This is a brute force implementation, if it becomes an issue
+            # something more elegant should be implemented.
+            for my $i (0 .. length($param_text)) {
+                $name_positions{substr($param_text, $i)} //= $character_count + $i;
+            }
             $character_count += length($param_text) + 1;
         }
         $offsets{$name} = \%offset;
@@ -769,7 +785,10 @@ sub generate_param_name_array {
     my @name_text = ();
     my ($total, %position_info) = calculate_name_offsets();
 
-    foreach my $name (sort keys %params) {
+    foreach my $name (sort {
+        $position_info{$a}{'position'} <=> $position_info{$b}{'position'}
+            || $a cmp $b
+    } keys %params) {
         my $val = $position_info{$name}{'text'};
         my $text = '';
 
