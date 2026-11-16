@@ -469,7 +469,7 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     /* We export, the provider imports */
     rv = importer(to_keydata, selection, params);
 
-    OSSL_PARAM_free(params);
+    OSSL_PARAM_clear_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return rv;
