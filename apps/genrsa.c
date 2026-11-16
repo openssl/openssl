@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_names.h>
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -215,7 +216,7 @@ int genrsa_main(int argc, char **argv)
         BIGNUM *e = NULL;
 
         /* Every RSA key has an 'e' */
-        EVP_PKEY_get_bn_param(pkey, "e", &e);
+        EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_rsa_e, &e);
         if (e == NULL) {
             BIO_puts(bio_err, "Error cannot access RSA e\n");
             goto end;

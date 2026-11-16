@@ -10,6 +10,7 @@
 /* Necessary for legacy RSA public key export */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <openssl/core_names.h>
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -285,7 +286,7 @@ int rsa_main(int argc, char **argv)
         BIGNUM *n = NULL;
 
         /* Every RSA key has an 'n' */
-        EVP_PKEY_get_bn_param(pkey, "n", &n);
+        EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_rsa_n, &n);
         BIO_puts(out, "Modulus=");
         BN_print(out, n);
         BIO_puts(out, "\n");
@@ -395,7 +396,7 @@ int rsa_main(int argc, char **argv)
     if (outformat == FORMAT_PVK) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
+        params[0] = OSSL_PARAM_construct_int(OSSL_ENCODER_PARAM_encrypt_level, &pvk_encr);
         if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
             BIO_puts(bio_err, "invalid PVK encryption level\n");
             goto end;

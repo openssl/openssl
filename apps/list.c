@@ -1378,12 +1378,12 @@ static void list_provider_info(void)
         BIO_printf(bio_out, "  %s\n", provname);
 
         /* Query the "known" information parameters, the order matches below */
-        params[0] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME,
+        params[0] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_name,
             &name, 0);
-        params[1] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+        params[1] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_version,
             &version, 0);
-        params[2] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_STATUS, &status);
-        params[3] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
+        params[2] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_status, &status);
+        params[3] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_buildinfo,
             &buildinfo, 0);
         params[4] = OSSL_PARAM_construct_end();
         OSSL_PARAM_set_all_unmodified(params);

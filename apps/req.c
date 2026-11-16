@@ -1011,7 +1011,7 @@ int req_main(int argc, char **argv)
         if (EVP_PKEY_is_a(tpubkey, "RSA") || EVP_PKEY_is_a(tpubkey, "RSA-PSS")) {
             BIGNUM *n = NULL;
 
-            if (!EVP_PKEY_get_bn_param(tpubkey, "n", &n))
+            if (!EVP_PKEY_get_bn_param(tpubkey, OSSL_PKEY_PARAM_rsa_n, &n))
                 goto end;
             BN_print(out, n);
             BN_free(n);
@@ -1647,7 +1647,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
         size_t bits = keylen;
 
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_BITS, &bits);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_bits, &bits);
         if (EVP_PKEY_CTX_set_params(gctx, params) <= 0) {
             BIO_puts(bio_err, "Error setting keysize\n");
             EVP_PKEY_CTX_free(gctx);

@@ -318,11 +318,11 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
         goto end;
     }
     if (!quiet) {
-        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME,
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_name,
             &name, sizeof(name));
-        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_version,
             &vers, sizeof(vers));
-        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_buildinfo,
             &build, sizeof(build));
         *p = OSSL_PARAM_construct_end();
         if (!OSSL_PROVIDER_get_params(prov, params)) {
@@ -336,7 +336,7 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
         if (OSSL_PARAM_modified(params + 2))
             BIO_printf(bio_err, "\t%-10s\t%s\n", "build:", build);
     } else {
-        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_version,
             &vers, sizeof(vers));
         *p = OSSL_PARAM_construct_end();
         if (!OSSL_PROVIDER_get_params(prov, params)) {
