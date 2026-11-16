@@ -210,8 +210,13 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
-        if (!ctx->hw->gettag(ctx, p.tag->data, p.tag->data_size))
-            return 0;
+        if (p.tag->data == NULL) {
+            p.tag->return_size = ctx->m;
+        } else {
+            if (!ctx->hw->gettag(ctx, p.tag->data, p.tag->data_size))
+                return 0;
+            p.tag->return_size = p.tag->data_size;
+        }
     }
 
     return 1;
