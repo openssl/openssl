@@ -229,10 +229,6 @@ reinitialize:
             ctx->fetched_digest = EVP_MD_fetch(locpctx->libctx, mdname, props);
             if (ctx->fetched_digest != NULL) {
                 ctx->digest = ctx->reqdigest = ctx->fetched_digest;
-                if (ctx->digest == NULL) {
-                    ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                    goto err;
-                }
             }
         }
     }
