@@ -23,7 +23,34 @@ my @buffer_tests = (
     [ "ECDSA", [qw(ec)], "ecdsap521" ],
 );
 
-plan tests => 26 + scalar @buffer_tests;
+# The second selection must run even though the first completed only once.
+my @selection_tests = (
+    [ "RSA", [], [qw(rsa512 rsa2048)],
+      (map { [$_, [512, 2048]] } 1 .. 4),
+      (map { [$_, [qw(rsa512 rsa2048)]] } 15 .. 20) ],
+    [ "DSA", [qw(dsa)], [qw(dsa1024 dsa2048)],
+      (map { [$_, [1024, 2048]] } 5 .. 6) ],
+    [ "ECDSA", [qw(ec)], [qw(ecdsap256 ecdsap384)],
+      (map { [$_, [qw(prime256v1 secp384r1)]] } 7 .. 8) ],
+    [ "ECDH", [qw(ec)], [qw(ecdhp256 ecdhp384)],
+      [9, [qw(prime256v1 secp384r1)]] ],
+    [ "EdDSA", [qw(ecx)], [qw(ed25519 ed448)],
+      (map { [$_, [qw(Ed25519 Ed448)]] } 7 .. 8) ],
+    [ "ECX derive", [qw(ecx)], [qw(ecdhx25519 ecdhx448)],
+      [9, [qw(X25519 X448)]] ],
+    [ "SM2 sign", [qw(sm2)], [qw(ecdsap256 sm2)],
+      (map { [$_, [qw(prime256v1 SM2)]] } 7 .. 8) ],
+    [ "SM2 derive", [qw(sm2)], [qw(ecdhp256 curveSM2)],
+      [9, [qw(prime256v1 SM2)]] ],
+    [ "FFDH", [qw(dh)], [qw(ffdh2048 ffdh3072)],
+      [14, [2048, 3072]] ],
+    [ "KEM", [qw(ml-kem)], [qw(ML-KEM-512 ML-KEM-768)],
+      (map { [$_, [qw(ML-KEM-512 ML-KEM-768)]] } 15 .. 17) ],
+    [ "generic signatures", [qw(ml-dsa)], [qw(ML-DSA-44 ML-DSA-65)],
+      (map { [$_, [qw(ML-DSA-44 ML-DSA-65)]] } 18 .. 20) ],
+);
+
+plan tests => 26 + scalar @buffer_tests + scalar @selection_tests;
 
 foreach my $test (@buffer_tests) {
     my ($name, $disabled, $algorithm) = @$test;
@@ -41,6 +68,39 @@ foreach my $test (@buffer_tests) {
                 ok(run(app(['openssl', 'speed', '-testmode', '-bytes', $bytes,
                             @alignment, $algorithm])),
                    "$name succeeds with $bytes-byte inputs at offset $misalign");
+            }
+        }
+        done_testing();
+    };
+}
+
+foreach my $test (@selection_tests) {
+    my ($name, $disabled, $algorithms, @operations) = @$test;
+
+    subtest "testmode completes earlier and later $name selections" => sub {
+        plan skip_all => "$name is not supported by this OpenSSL build"
+            if disabled(@$disabled);
+
+        # Keep machine-wide provider configuration out of these selection tests.
+        local $ENV{OPENSSL_CONF} = srctop_file("test", "default.cnf");
+        local $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+        my $stderr = "speed-selection.err";
+
+        ok(run(app(['openssl', 'speed', '-testmode', '-mr', @$algorithms],
+                   stderr => $stderr)),
+           "selected algorithms succeed");
+        open my $fh, '<', $stderr or die "Cannot open $stderr: $!";
+        my $output = do { local $/; <$fh> };
+        close $fh;
+        unlink $stderr;
+
+        # Check completed operations, not just announcements of work to be done.
+        foreach my $operation (@operations) {
+            my ($tag, $entries) = @$operation;
+
+            foreach my $entry (@$entries) {
+                like($output, qr/^\+R$tag:1:\Q$entry\E:/m,
+                     "$entry completes operation R$tag exactly once");
             }
         }
         done_testing();
@@ -94,6 +154,27 @@ subtest "Simple test of all speed algorithms" => sub {
     unlike($output, qr/(?:sign|verify) setup failure|ECDH key generation failure/,
            "default selections do not attempt incompatible EC operations");
 
+    foreach my $operation (
+        [ "ec", "prime256v1", 7, 8, 9 ],
+        [ "ecx", "Ed25519", 7, 8 ],
+        [ "ecx", "Ed448", 7, 8 ],
+        [ "ecx", "X25519", 9 ],
+        [ "ecx", "X448", 9 ],
+        [ "sm2", "SM2", 7, 8, 9 ],
+    ) {
+        my ($feature, $name, @tags) = @$operation;
+
+        SKIP: {
+            # Default EC benchmarks are gated on ECX support.
+            skip "Default $name benchmarks are disabled", scalar @tags
+                if disabled($feature) || disabled("ecx");
+
+            foreach my $tag (@tags) {
+                like($output, qr/^\+R$tag:1:\Q$name\E:/m,
+                     "$name completes operation R$tag exactly once");
+            }
+        }
+    }
     done_testing();
 };
 

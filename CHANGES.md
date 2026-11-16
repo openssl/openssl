@@ -46,6 +46,12 @@ OpenSSL 4.2
 
    *Tobias Brick*
 
+ * Fixed `openssl speed -testmode` skipping later selected public-key
+   benchmarks when the one-iteration test limit triggered the slow-operation
+   cutoff intended for timed benchmarks.
+
+   *Tobias Brick*
+
  * Fixed `openssl speed` public-key benchmarks failing with small `-bytes`
    values because the shared buffers were too small for signatures and RSA
    ciphertext.

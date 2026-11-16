@@ -3254,7 +3254,7 @@ int speed_main(int argc, char **argv)
             op_count = count;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(rsa_doit, testnum);
         }
@@ -3331,7 +3331,7 @@ int speed_main(int argc, char **argv)
             dsa_results[testnum][1] = (double)count / d;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(dsa_doit, testnum);
         }
@@ -3446,7 +3446,7 @@ int speed_main(int argc, char **argv)
             ecdsa_results[testnum][1] = (double)count / d;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ecdsa_doit, testnum);
         }
@@ -3533,7 +3533,7 @@ int speed_main(int argc, char **argv)
             op_count = count;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ecdh_doit, testnum);
         }
@@ -3709,7 +3709,7 @@ int speed_main(int argc, char **argv)
             ffdh_results[testnum][0] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ffdh_doit, testnum);
         }
@@ -3901,7 +3901,7 @@ int speed_main(int argc, char **argv)
             kems_results[testnum][2] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(kems_doit, testnum);
         }
@@ -4121,7 +4121,7 @@ int speed_main(int argc, char **argv)
             sigs_results[testnum][2] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1)
+        if (!testmode && op_count <= 1)
             stop_it(sigs_doit, testnum);
     }
 
