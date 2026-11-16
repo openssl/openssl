@@ -329,6 +329,23 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 #endif
 }
 
+/*
+ * Counted references for internal holders that may outlive the library
+ * context the method was fetched from, such as the operation cache of an
+ * EVP_PKEY that belongs to another library context.  Unlike
+ * EVP_KEYMGMT_up_ref(), these count stored methods too, so the method
+ * survives the method store's release in OSSL_LIB_CTX_free().
+ */
+int evp_keymgmt_up_ref_counted(EVP_KEYMGMT *keymgmt)
+{
+    return evp_keymgmt_up_ref(keymgmt);
+}
+
+void evp_keymgmt_free_counted(EVP_KEYMGMT *keymgmt)
+{
+    evp_keymgmt_free(keymgmt);
+}
+
 const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->prov;
