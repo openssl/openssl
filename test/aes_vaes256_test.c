@@ -24,6 +24,14 @@
  */
 
 #include <string.h>
+
+/*
+ * aes_platform.h uses AES_KEY. That type is hidden from public headers when
+ * the library is configured no-deprecated, which is what the no-deprecated
+ * and minimal CI jobs do. This has to come before any other OpenSSL header.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
