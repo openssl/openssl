@@ -314,6 +314,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
     int sock_options = BIO_SOCK_REUSEADDR;
     int ret = 0;
 
+    #ifdef AF_UNIX
+        int unix_socket_created = 0;
+    #endif
+
     if (BIO_sock_init() != 1)
         return 0;
 
@@ -370,6 +374,11 @@ int do_server(int *accept_sock, const char *host, const char *port,
             BIO_closesocket(asock);
         goto end;
     }
+    
+#ifdef AF_UNIX
+    if (family == AF_UNIX)
+        unix_socket_created = 1;
+#endif
 
 #ifndef OPENSSL_NO_SCTP
     if (protocol == IPPROTO_SCTP) {
@@ -474,7 +483,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     }
 end:
 #ifdef AF_UNIX
-    if (family == AF_UNIX)
+    if (unix_socket_created)
         unlink(host);
 #endif
     BIO_ADDR_free(ourpeer);
