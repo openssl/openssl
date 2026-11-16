@@ -8,6 +8,7 @@
  */
 
 #include <openssl/trace.h>
+#include "internal/params.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
