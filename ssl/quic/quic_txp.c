@@ -1670,7 +1670,7 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
         QUIC_STREAM *s
             = ossl_quic_stream_map_get_by_id(txp->args.qsm, stream_id);
 
-        if (s == NULL)
+        if (s == NULL || s->recv_state != QUIC_RSTREAM_STATE_RECV)
             return;
 
         s->want_max_stream_data = 1;
@@ -1689,7 +1689,7 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
         QUIC_STREAM *s
             = ossl_quic_stream_map_get_by_id(txp->args.qsm, stream_id);
 
-        if (s == NULL)
+        if (s == NULL || s->send_state != QUIC_SSTREAM_STATE_RESET_SENT)
             return;
 
         s->want_reset_stream = 1;
@@ -3026,10 +3026,11 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
     txpkt.pn = txp->next_pn[pn_space];
     txpkt.flags = OSSL_QTX_PKT_FLAG_COALESCE; /* always try to coalesce */
 
-    /* Generate TXPIM chunks representing STOP_SENDING and RESET_STREAM frames. */
+    /* Track stream credit and abort frames even without STREAM payload. */
     for (stream = pkt->stream_head; stream != NULL; stream = stream->txp_next)
-        if (stream->txp_sent_stop_sending || stream->txp_sent_reset_stream) {
-            /* Log STOP_SENDING/RESET_STREAM chunk to TXPIM. */
+        if (stream->txp_sent_fc || stream->txp_sent_stop_sending
+            || stream->txp_sent_reset_stream) {
+            /* Empty range: FIFD regenerates control without STREAM data. */
             QUIC_TXPIM_CHUNK chunk;
 
             chunk.stream_id = stream->id;

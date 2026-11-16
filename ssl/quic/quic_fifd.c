@@ -141,28 +141,22 @@ static void on_lost(void *arg)
         sstream = fifd->get_sstream_by_id(chunks[i].stream_id,
             pkt->ackm_pkt.pkt_space,
             fifd->get_sstream_by_id_arg);
-        if (sstream == NULL)
-            continue;
-
         sstream_updated = 0;
+        if (sstream != NULL) {
+            if (chunks[i].end >= chunks[i].start) {
+                /* Reset streams have no send buffer or data to retransmit. */
+                ossl_quic_sstream_mark_lost(sstream,
+                    chunks[i].start, chunks[i].end);
+                sstream_updated = 1;
+            }
 
-        if (chunks[i].end >= chunks[i].start) {
-            /*
-             * Note: If the stream is being reset, we do not need to retransmit
-             * old data as this is pointless. In this case this will be handled
-             * by (sstream == NULL) above as the QSM will free the QUIC_SSTREAM
-             * and our call to get_sstream_by_id above will return NULL.
-             */
-            ossl_quic_sstream_mark_lost(sstream,
-                chunks[i].start, chunks[i].end);
-            sstream_updated = 1;
+            if (chunks[i].has_fin && chunks[i].stream_id != UINT64_MAX) {
+                ossl_quic_sstream_mark_lost_fin(sstream);
+                sstream_updated = 1;
+            }
         }
 
-        if (chunks[i].has_fin && chunks[i].stream_id != UINT64_MAX) {
-            ossl_quic_sstream_mark_lost_fin(sstream);
-            sstream_updated = 1;
-        }
-
+        /* Receive/control frame delivery does not depend on a send buffer. */
         if (chunks[i].has_stop_sending && chunks[i].stream_id != UINT64_MAX)
             fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
                 chunks[i].stream_id, pkt,

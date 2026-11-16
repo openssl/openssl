@@ -841,23 +841,12 @@ QUIC_STREAM *ossl_quic_stream_map_find_in_accept_queue(QUIC_STREAM_MAP *qsm,
     int is_uni);
 
 /*
- * Retires an incoming stream for the purposes of MAX_STREAMS RXFC, so that the
- * peer is granted credit for another stream. rtt is the estimated connection
- * RTT. Must be called at most once for a given stream.
- */
-void ossl_quic_stream_map_retire_stream_credit(QUIC_STREAM_MAP *qsm,
-    QUIC_STREAM *s,
-    OSSL_TIME rtt);
-
-/*
- * Removes a stream from the accept queue. rtt is the estimated connection RTT.
- * The stream is retired for the purposes of MAX_STREAMS RXFC.
+ * Removes a stream from the accept queue.
  *
  * Precondition: s is in the accept queue.
  */
 void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
-    QUIC_STREAM *s,
-    OSSL_TIME rtt);
+    QUIC_STREAM *s);
 
 /* Returns the length of the accept queue for the given stream type. */
 size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm, int is_uni);
@@ -872,9 +861,11 @@ size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm);
 
 /*
  * Delete streams ready for GC. Pointers to those QUIC_STREAM objects become
- * invalid.
+ * invalid. Retire discarded receive bytes and incoming stream credit using the
+ * connection's smoothed RTT.
+ * Returns 0 on an internal flow-control error, retaining the failing stream.
  */
-void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm);
+int ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm, OSSL_TIME rtt);
 
 /*
  * Begins shutdown stream flush triage. Analyses all streams, including deleted

@@ -490,7 +490,7 @@ uint64_t ossl_quic_tserver_pop_incoming_stream(QUIC_TSERVER *srv)
     if (qs == NULL)
         return UINT64_MAX;
 
-    ossl_quic_stream_map_remove_from_accept_queue(qsm, qs, ossl_time_zero());
+    ossl_quic_stream_map_remove_from_accept_queue(qsm, qs);
 
     return qs->id;
 }
