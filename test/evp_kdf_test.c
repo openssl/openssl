@@ -1220,7 +1220,8 @@ err:
 /*
  * Test using published RFC 8448 test vectors to verify correctness
  * RFC 8448 section 3, pages 10-11: server application traffic secret,
- * key, and IV from the simple 1-RTT handshake example
+ * key, and IV from the simple 1-RTT handshake example.
+ * Tests that DATA parameter is properly ignored per RFC 8446 section 7.3.
  */
 static int test_kdf_tls13_rfc8448_vectors(void)
 {
@@ -1229,7 +1230,7 @@ static int test_kdf_tls13_rfc8448_vectors(void)
     EVP_SKEY *skey = NULL;
     const unsigned char *raw_key = NULL, *raw_iv = NULL;
     size_t raw_key_len = 0, raw_iv_len = 0;
-    OSSL_PARAM params[7], *p = params;
+    OSSL_PARAM params[8], *p;
     size_t cipher_key_len = 16, iv_len = 12;
     int mode_expand = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
     /* Server application traffic secret from RFC 8448 section 3, page 11 */
@@ -1238,6 +1239,13 @@ static int test_kdf_tls13_rfc8448_vectors(void)
         0xad, 0x47, 0x11, 0x6b, 0x45, 0xa9, 0x50, 0x32,
         0x82, 0x04, 0xb4, 0xf4, 0x4b, 0xfb, 0x6b, 0x3a,
         0x4b, 0x4f, 0x1f, 0x3f, 0xcb, 0x63, 0x16, 0x43
+    };
+    /* Transcript hash from RFC 8448 section 3, page 10 */
+    static const unsigned char transcript_hash[32] = {
+        0x96, 0x08, 0x10, 0x2a, 0x0f, 0x1c, 0xcc, 0x6d,
+        0xb6, 0x25, 0x0b, 0x7b, 0x7e, 0x41, 0x7b, 0x1a,
+        0x00, 0x0e, 0xaa, 0xda, 0x3d, 0xaa, 0xe4, 0x77,
+        0x7a, 0x76, 0x86, 0xc9, 0xff, 0x83, 0xdf, 0x13
     };
     /* "tls13 " prefix in hex for EBCDIC compatibility */
     static const unsigned char prefix[] = {
@@ -1254,6 +1262,11 @@ static int test_kdf_tls13_rfc8448_vectors(void)
         0x54, 0x9a, 0xad, 0xf1, 0xe9, 0x84
     };
 
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    /* Case 1: No DATA parameter - empty context per RFC 8446 */
+    p = params;
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
@@ -1265,8 +1278,7 @@ static int test_kdf_tls13_rfc8448_vectors(void)
     *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
     *p = OSSL_PARAM_construct_end();
 
-    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF))
-        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
         goto err;
 
     /* Verify key matches RFC 8448 published value */
@@ -1280,6 +1292,101 @@ static int test_kdf_tls13_rfc8448_vectors(void)
     skey = NULL;
 
     /* Verify IV matches RFC 8448 published value */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
+                         &raw_iv, &raw_iv_len),
+            1)
+        || !TEST_size_t_eq(raw_iv_len, sizeof(expected_iv))
+        || !TEST_mem_eq(raw_iv, raw_iv_len, expected_iv, sizeof(expected_iv)))
+        goto err;
+
+    EVP_KDF_CTX_free(kctx);
+    kctx = NULL;
+
+    /* Case 2: DATA supplied in derive_SKEYs params - should be ignored */
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
+        (void *)transcript_hash, sizeof(transcript_hash));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify key still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_SERVER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len), 1)
+        || !TEST_size_t_eq(raw_key_len, sizeof(expected_key))
+        || !TEST_mem_eq(raw_key, raw_key_len, expected_key, sizeof(expected_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify IV still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
+                         &raw_iv, &raw_iv_len),
+            1)
+        || !TEST_size_t_eq(raw_iv_len, sizeof(expected_iv))
+        || !TEST_mem_eq(raw_iv, raw_iv_len, expected_iv, sizeof(expected_iv)))
+        goto err;
+
+    EVP_KDF_CTX_free(kctx);
+    kctx = NULL;
+
+    /* Case 3: DATA set on context via set_params, then derive_SKEYs called */
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    /*
+     * Set MODE and DATA on context first (simulates reused context after
+     * deriving traffic secret which sets DATA to transcript hash)
+     */
+    p = params;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
+        (void *)transcript_hash, sizeof(transcript_hash));
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_CTX_set_params(kctx, params), 0))
+        goto err;
+
+    /* Now derive without passing DATA again */
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify key still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_SERVER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len), 1)
+        || !TEST_size_t_eq(raw_key_len, sizeof(expected_key))
+        || !TEST_mem_eq(raw_key, raw_key_len, expected_key, sizeof(expected_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify IV still matches RFC 8448 - DATA should be ignored */
     if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
                          &raw_iv, &raw_iv_len),
             1)
