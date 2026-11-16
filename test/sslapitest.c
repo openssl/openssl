@@ -3842,6 +3842,108 @@ end:
 #endif
 #endif
 
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_CT)
+static X509 *sct_cert_issuer = NULL;
+
+/* Staples an ordinary OCSP response for the server certificate: no SCTs. */
+static int ocsp_server_cb_no_scts(SSL *s, void *arg)
+{
+    OCSP_RESPONSE *resp;
+    unsigned char *der = NULL;
+    int len;
+
+    resp = create_ocsp_resp(SSL_get_certificate(s), sct_cert_issuer,
+        V_OCSP_CERTSTATUS_GOOD, "embeddedSCTs1_issuer-key.pem",
+        "embeddedSCTs1_issuer.pem");
+    if (!TEST_ptr(resp))
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    len = i2d_OCSP_RESPONSE(resp, &der);
+    OCSP_RESPONSE_free(resp);
+    if (!TEST_int_gt(len, 0)
+        || !TEST_true(SSL_set_tlsext_status_ocsp_resp(s, der, len))) {
+        OPENSSL_free(der);
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+    ocsp_server_called = 1;
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int ct_accept_all_cb(const CT_POLICY_EVAL_CTX *ctx,
+    const STACK_OF(SCT) *scts, void *arg)
+{
+    return 1;
+}
+
+/*
+ * A stapled OCSP response without the SCT extension, the usual kind, must not
+ * make SSL_get0_peer_scts() fail and discard the SCTs embedded in the
+ * certificate.
+ * Test 0: TLS 1.2
+ * Test 1: TLS 1.3
+ */
+static int test_peer_scts_with_stapled_ocsp(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    const STACK_OF(SCT) *scts;
+    char *certfile = NULL, *keyfile = NULL, *issuerfile = NULL;
+    int version = idx == 0 ? TLS1_2_VERSION : TLS1_3_VERSION;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (version == TLS1_2_VERSION)
+        return TEST_skip("TLS 1.2 is disabled");
+#endif
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (version == TLS1_3_VERSION)
+        return TEST_skip("TLS 1.3 is disabled");
+#endif
+
+    certfile = test_mk_file_path(certsdir, "embeddedSCTs1.pem");
+    keyfile = test_mk_file_path(certsdir, "embeddedSCTs1-key.pem");
+    issuerfile = test_mk_file_path(certsdir, "embeddedSCTs1_issuer.pem");
+    if (!TEST_ptr(certfile) || !TEST_ptr(keyfile) || !TEST_ptr(issuerfile)
+        || !TEST_ptr(sct_cert_issuer = load_cert_pem(issuerfile, libctx))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), version, version, &sctx, &cctx, certfile,
+            keyfile)))
+        goto end;
+    SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_no_scts);
+
+    /* The CT validation callback also requests a stapled OCSP response. */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_ct_validation_callback(clientssl,
+            ct_accept_all_cb, NULL))
+        || !TEST_int_eq(SSL_get_tlsext_status_type(clientssl),
+            TLSEXT_STATUSTYPE_ocsp))
+        goto end;
+
+    ocsp_server_called = 0;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(ocsp_server_called)
+        || !TEST_ptr(scts = SSL_get0_peer_scts(clientssl))
+        || !TEST_int_eq(sk_SCT_num(scts), 1)
+        || !TEST_int_eq(SCT_get_source(sk_SCT_value(scts, 0)),
+            SCT_SOURCE_X509V3_EXTENSION))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    X509_free(sct_cert_issuer);
+    sct_cert_issuer = NULL;
+    OPENSSL_free(certfile);
+    OPENSSL_free(keyfile);
+    OPENSSL_free(issuerfile);
+    return testresult;
+}
+#endif
+
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
     || !defined(OSSL_NO_USABLE_DTLS1_3)
 static int new_called, get_called;
@@ -19836,6 +19938,9 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_tlsext_status_type_multi);
 #endif
+#endif
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_CT)
+    ADD_ALL_TESTS(test_peer_scts_with_stapled_ocsp, 2);
 #endif
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);

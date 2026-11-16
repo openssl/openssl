@@ -7086,7 +7086,7 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
     OCSP_RESPONSE *rsp = NULL;
     STACK_OF(SCT) *scts = NULL;
     int ret;
-    int i, j;
+    int i, j, crit;
 
     if (s->ext.ocsp.resp_ex == NULL)
         goto err;
@@ -7107,8 +7107,15 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
                 continue;
 
             scts = OCSP_SINGLERESP_get1_ext_d2i(single,
-                NID_ct_cert_scts, NULL, NULL);
+                NID_ct_cert_scts, &crit, NULL);
             if (scts == NULL) {
+                /*
+                 * A response without the SCT extension is the usual case and
+                 * not an error: it must not discard the SCTs delivered in the
+                 * certificate or the TLS extension.
+                 */
+                if (crit == -1)
+                    continue;
                 scts_extracted = -1;
                 goto err;
             }
