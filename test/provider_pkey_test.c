@@ -8,7 +8,7 @@
  */
 
 /* RSA_new() and EVP_PKEY_assign_RSA() are used to build a legacy key */
-#include "internal/deprecated.h"
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stddef.h>
 #include <string.h>
