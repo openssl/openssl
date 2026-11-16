@@ -72,9 +72,15 @@ Since this is an internal pointer it should B<not> be freed or
 modified in any way. I<x> B<MUST NOT> be NULL.
 
 ASN1_STRING_copy() copies the string type and content (along with the relevant
-internal attributes) from I<str> to I<dst>.
+internal attributes) from I<str> to I<dst>.  Note that even if I<src>
+was created with L<ASN1_STRING_new_not_owned(3)>, the copy will have the content
+copied and thus will have the ownership of it.
 
-ASN1_STRING_dup() returns a copy of the structure I<a>.
+ASN1_STRING_dup() returns a copy of the structure I<a>;
+it is a wrapper that calls L<ASN1_STRING_new(3)> to create a new B<ASN1_STRING>
+and uses ASN1_STRING_copy() to create the copy
+(so, the content non-ownership aspect of I<a> is not transferred
+to the duplicate).
 
 ASN1_STRING_cmp() compares I<a> and I<b> returning 0 if the two
 are identical. The string types and content are compared.
