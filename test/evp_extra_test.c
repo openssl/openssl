@@ -7379,6 +7379,42 @@ err:
     return res;
 }
 
+static int test_cipher_param_decoding(int idx)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned int padding = 0;
+    const char *name = idx == 0 ? OSSL_CIPHER_PARAM_PADDING
+                                : OSSL_CIPHER_PARAM_padding;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_uint(name, &padding),
+        OSSL_PARAM_END
+    };
+    int ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-CBC", testpropq))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_uint_eq(padding, 1))
+        goto end;
+
+    padding = 0;
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto end;
+
+    padding = 1;
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_uint_eq(padding, 0))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 enum cipher_param_list_type {
     CIPHER_ALGORITHM_PARAMS,
     CIPHER_GETTABLE_CTX_PARAMS,
@@ -9713,6 +9749,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_iv_reuse, OSSL_NELEM(iv_state_ciphers));
     if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
         ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
+    ADD_ALL_TESTS(test_cipher_param_decoding, 2);
     ADD_ALL_TESTS(test_cipher_param_types, OSSL_NELEM(cipher_param_tests));
 #if !defined(OPENSSL_NO_MULTIBLOCK)
     ADD_TEST(test_aes_cbc_hmac_sha_short_multiblock_aad);
