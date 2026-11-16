@@ -13,6 +13,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
+#include <openssl/trace.h>
 #include <string.h>
 
 #include "testutil.h"
@@ -728,6 +729,123 @@ static int test_http_adapt_proxy_empty_server(void)
         && TEST_str_eq(OSSL_HTTP_adapt_proxy(proxy, "abc", "[]", 0), proxy);
 }
 
+typedef struct {
+    char data[256];
+    size_t used;
+} http_trace_capture;
+
+static size_t http_trace_cb(const char *data, size_t len, int category,
+    int command, void *arg)
+{
+    http_trace_capture *capture = arg;
+
+    (void)category;
+    if (command == OSSL_TRACE_CTRL_WRITE) {
+        if (len >= sizeof(capture->data) - capture->used)
+            return 0;
+        memcpy(capture->data + capture->used, data, len);
+        capture->used += len;
+        capture->data[capture->used] = '\0';
+    }
+    return len;
+}
+
+static int test_http_error_trace(const char *body, size_t initially_available)
+{
+    http_trace_capture capture = { { 0 }, 0 };
+    BIO *wire = NULL, *writer = NULL, *reader = NULL, *request = NULL;
+    OSSL_HTTP_REQ_CTX *ctx = NULL;
+    char header[256];
+    const char *data;
+    unsigned long error;
+    int header_len, first, result, type_error = 0, length_error = 0;
+    int ret = 0;
+    size_t body_len = strlen(body);
+
+    if (!TEST_size_t_le(initially_available, body_len))
+        return 0;
+
+    if (!OSSL_trace_set_callback(OSSL_TRACE_CATEGORY_HTTP,
+            http_trace_cb, &capture))
+        return TEST_skip("HTTP tracing is not available");
+    if (!TEST_true(BIO_new_bio_pair(&wire, 0, &writer, 0))
+        || !TEST_ptr(reader = BIO_new(BIO_f_buffer()))
+        || !TEST_ptr(request = BIO_new(BIO_s_mem())))
+        goto end;
+    reader = BIO_push(reader, wire);
+    wire = NULL; /* now owned by the BIO chain */
+    if (!TEST_ptr(reader)
+        || !TEST_ptr(ctx = OSSL_HTTP_REQ_CTX_new(request, reader, 1024))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(ctx, 0, NULL, NULL, "/"))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(ctx, NULL, 1, 0, 0)))
+        goto end;
+
+    header_len = snprintf(header, sizeof(header),
+        "HTTP/1.0 500 Internal Server Error\r\n"
+        "Content-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
+        strlen(body));
+    if (!TEST_int_gt(header_len, 0)
+        || !TEST_int_eq(BIO_write(writer, header, header_len), header_len))
+        goto end;
+    if (initially_available > 0) {
+        if (!TEST_int_eq(BIO_write(writer, body, initially_available),
+                initially_available))
+            goto end;
+    }
+    if (initially_available == body_len) {
+        if (!TEST_true(BIO_shutdown_wr(writer)))
+            goto end;
+    }
+
+    ERR_clear_error();
+    first = result = OSSL_HTTP_REQ_CTX_nbio(ctx);
+    if (initially_available < body_len) {
+        if (!TEST_int_eq(first, -1)
+            || !TEST_int_eq(BIO_write(writer, body + initially_available,
+                    body_len - initially_available), body_len - initially_available)
+            || !TEST_true(BIO_shutdown_wr(writer)))
+            goto end;
+        result = OSSL_HTTP_REQ_CTX_nbio(ctx);
+    }
+    if (!TEST_int_eq(result, 0)
+        || !TEST_ptr(strstr(capture.data, body)))
+        goto end;
+
+    while ((error = ERR_get_error_all(NULL, NULL, NULL, &data, NULL)) != 0) {
+        if (ERR_GET_LIB(error) == ERR_LIB_HTTP) {
+            type_error |= ERR_GET_REASON(error) == HTTP_R_CONTENT_TYPE_MISMATCH;
+            length_error |= ERR_GET_REASON(error) == HTTP_R_INCONSISTENT_CONTENT_LENGTH;
+        }
+    }
+    if (!TEST_true(type_error) || !TEST_false(length_error))
+        goto end;
+    ret = 1;
+end:
+    (void)OSSL_trace_set_callback(OSSL_TRACE_CATEGORY_HTTP, NULL, NULL);
+    ERR_clear_error();
+    OSSL_HTTP_REQ_CTX_free(ctx);
+    BIO_free(request);
+    BIO_free_all(reader);
+    BIO_free(writer);
+    BIO_free(wire);
+    return ret;
+}
+
+static int test_http_error_trace_delayed(void)
+{
+    return test_http_error_trace("diagnostic\n", 0);
+}
+
+static int test_http_error_trace_paused(void)
+{
+    return test_http_error_trace("first\nsecond\n", 6);
+}
+
+static int test_http_error_trace_unterminated(void)
+{
+    return test_http_error_trace("diagnostic", sizeof("diagnostic") - 1);
+}
+
 void cleanup_tests(void)
 {
     X509_free(x509);
@@ -782,5 +900,8 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
     ADD_TEST(test_http_adapt_proxy_empty_server);
+    ADD_TEST(test_http_error_trace_delayed);
+    ADD_TEST(test_http_error_trace_paused);
+    ADD_TEST(test_http_error_trace_unterminated);
     return 1;
 }

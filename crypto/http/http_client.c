@@ -65,6 +65,8 @@ struct ossl_http_req_ctx_st {
     unsigned char *pos; /* Current position sending data */
     long len_to_send; /* Number of bytes still to send */
     size_t resp_len; /* Length of response */
+    size_t error_resp_len; /* Bytes consumed from an error response body */
+    int error_content_eof; /* EOF reached while reading an error response body */
     size_t max_resp_len; /* Maximum length of response, or 0 */
     int keep_alive; /* Persistent conn. 0=no, 1=prefer, 2=require */
     time_t max_time; /* Maximum end time of current transfer, or 0 */
@@ -237,6 +239,8 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
         return 0;
 
     rctx->resp_len = 0;
+    rctx->error_resp_len = 0;
+    rctx->error_content_eof = 0;
     rctx->state = OHS_ADD_HEADERS;
     return 1;
 }
@@ -547,6 +551,18 @@ static int check_set_resp_len(const char *desc, OSSL_HTTP_REQ_CTX *rctx, size_t 
     return 1;
 }
 
+static int process_error_content(OSSL_HTTP_REQ_CTX *rctx, char *buf, long len,
+    int got_text)
+{
+    rctx->error_resp_len += (size_t)len;
+    if (!check_max_len("error response content", rctx->max_resp_len,
+            rctx->error_resp_len))
+        return 0;
+    if (OSSL_TRACE_ENABLED(HTTP)) /* dump response content line */
+        OSSL_TRACE_STRING(HTTP, got_text, 1, (unsigned char *)buf, len);
+    return 1;
+}
+
 static int may_still_retry(time_t max_time, int *ptimeout)
 {
     time_t time_diff, now = time(NULL);
@@ -603,15 +619,12 @@ next_io:
             }
         }
         if (n <= 0) {
-            if (rctx->state == OHS_ERROR_CONTENT) {
-                if (OSSL_TRACE_ENABLED(HTTP))
-                    OSSL_TRACE(HTTP, "]\n"); /* end of error response content */
-                /* in addition, throw error on inconsistent length: */
-                (void)check_set_resp_len("error response content", rctx, resp_len);
-                return 0;
-            }
             if (BIO_should_retry(rctx->rbio))
                 return -1;
+            if (rctx->state == OHS_ERROR_CONTENT) {
+                rctx->error_content_eof = 1;
+                goto next_line; /* consume any final unterminated body bytes */
+            }
             ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
             return 0;
         }
@@ -723,6 +736,28 @@ next_io:
          */
         n = BIO_get_mem_data(rctx->mem, &p);
         if (n <= 0 || memchr(p, '\n', n) == 0) {
+            if (rctx->state == OHS_ERROR_CONTENT && rctx->error_content_eof) {
+                if (n > 0) {
+                    if (n >= rctx->buf_size) {
+                        rctx->state = OHS_ERROR;
+                        return 0;
+                    }
+                    n = BIO_read(rctx->mem, buf, (int)n);
+                    if (n <= 0) {
+                        rctx->state = OHS_ERROR;
+                        return 0;
+                    }
+                    if (!process_error_content(rctx, buf, n, got_text))
+                        return 0;
+                    goto next_line;
+                }
+                if (OSSL_TRACE_ENABLED(HTTP))
+                    OSSL_TRACE(HTTP, "]\n"); /* end of error response content */
+                /* in addition, throw error on inconsistent length: */
+                (void)check_set_resp_len("error response content", rctx,
+                    rctx->error_resp_len);
+                return 0;
+            }
             if (n >= rctx->buf_size) {
                 rctx->state = OHS_ERROR;
                 return 0;
@@ -739,11 +774,8 @@ next_io:
         }
 
         if (rctx->state == OHS_ERROR_CONTENT) {
-            resp_len += n;
-            if (!check_max_len("error response content", rctx->max_resp_len, resp_len))
+            if (!process_error_content(rctx, buf, n, got_text))
                 return 0;
-            if (OSSL_TRACE_ENABLED(HTTP)) /* dump response content line */
-                OSSL_TRACE_STRING(HTTP, got_text, 1, (unsigned char *)buf, n);
             goto next_line;
         }
 
