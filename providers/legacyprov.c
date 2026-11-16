@@ -347,4 +347,29 @@ int ERR_HANDLE_count_to_mark(ossl_unused ERR_HANDLE **hdl)
 {
     return ERR_count_to_mark();
 }
+
+void ERR_HANDLE_new(ERR_HANDLE **hdl)
+{
+    ERR_new();
+}
+
+void ERR_HANDLE_set_debug(ERR_HANDLE **hdl, const char *file, int line, const char *func)
+{
+    ERR_set_debug(file, line, func);
+}
+
+void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    ERR_vset_error(lib, reason, fmt, args);
+    va_end(args);
+}
+
+void ERR_HANDLE_vset_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, va_list args)
+{
+    ERR_vset_error(lib, reason, fmt, args);
+}
+
 #endif

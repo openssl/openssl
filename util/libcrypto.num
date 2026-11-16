@@ -5755,3 +5755,7 @@ ERR_HANDLE_pop_to_mark                  ?	4_2_0	EXIST::FUNCTION:
 ERR_HANDLE_clear_last_mark              ?	4_2_0	EXIST::FUNCTION:
 ERR_HANDLE_count_to_mark                ?	4_2_0	EXIST::FUNCTION:
 ERR_HANDLE_pop                          ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_new                          ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_set_debug                    ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_set_error                    ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_vset_error                   ?	4_2_0	EXIST::FUNCTION:
