@@ -13,7 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"

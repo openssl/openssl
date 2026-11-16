@@ -8,6 +8,7 @@
  */
 
 #include <openssl/asn1t.h>
+#include "internal/params.h"
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>

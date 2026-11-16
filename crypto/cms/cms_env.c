@@ -21,7 +21,7 @@
 #include <openssl/cms.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
 #include "crypto/asn1.h"

@@ -12,6 +12,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 
 #include <string.h>
 #include <openssl/core_names.h>

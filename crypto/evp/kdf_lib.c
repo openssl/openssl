@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include "internal/params.h"
 #include <stdlib.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>

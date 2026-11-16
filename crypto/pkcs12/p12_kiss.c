@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include <openssl/core_names.h>

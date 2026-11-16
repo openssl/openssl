@@ -8,6 +8,7 @@
  */
 
 #include <stdlib.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/dsa.h>

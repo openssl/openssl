@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "internal/params.h"
 #include <time.h>
 #include <sys/types.h>
 
