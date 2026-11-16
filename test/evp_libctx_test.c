@@ -493,22 +493,14 @@ static int test_cipher_reinit_partialupdate(int test_id)
     if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
         || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, in_len))
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
-        || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len))
+        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, in_len))
+        || (EVP_CIPHER_get_iv_length(cipher) != 0
+            && (!TEST_mem_eq(out1, out1_len, out2, out2_len)
+                || !TEST_mem_eq(out1, out1_len, out3, out3_len))))
         goto err;
 
-    if (EVP_CIPHER_get_iv_length(cipher) != 0)
-        if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
-            goto err;
-
-    if (EVP_CIPHER_get_mode(cipher) != EVP_CIPH_SIV_MODE) {
-        if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
-            || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, in_len)))
-            goto err;
-
-        if (EVP_CIPHER_get_iv_length(cipher) != 0)
-            if (!TEST_mem_eq(out1, out1_len, out3, out3_len))
-                goto err;
-    }
     ret = 1;
 err:
     EVP_CIPHER_free(cipher);
