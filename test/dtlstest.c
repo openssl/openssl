@@ -1768,13 +1768,11 @@ end:
 #endif /* OPENSSL_NO_DTLS1_3 */
 
 /*
- * frag_bio and the four retransmit tests below need only one of DTLS1.2 or
+ * frag_bio and the tests below that use it need only one of DTLS1.2 or
  * DTLS1.3 to be available - the frag_bio helpers are shared by both, so
  * they can't be scoped to either protocol's guard alone.
  */
-#if !defined(OPENSSL_NO_DTLS1_2)                            \
-    || (!defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) \
-        && !defined(OPENSSL_NO_ML_KEM) && !defined(OPENSSL_NO_DTLS1_3))
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
 
 /*
  * Number of times the retransmit timer is fired while a write is parked, in
@@ -1786,7 +1784,57 @@ typedef struct {
     BIO *bio;
     int allowed; /* number of fragment writes to let through before suspending */
     int write_calls; /* number of times frag_write() has been invoked at all */
+    /*
+     * Offset at which the next plaintext handshake fragment must start for the
+     * message to stay contiguous (or 0 before any). A fragment after a
+     * rejected write that starts anywhere else was built from a shifted
+     * position in the message, so it overlaps or skips data already sent.
+     */
+    long next_off;
+    int offset_mismatch; /* a fragment did not start where the last ended */
+    int rejections; /* number of writes this BIO rejected */
+    /*
+     * The first rejected write, kept to compare with the first write accepted
+     * afterwards. The record sequence number may legitimately change on the
+     * retry, so only the data after the record header is compared.
+     */
+    unsigned char rejected[8192];
+    size_t rejected_len;
+    int retry_compared; /* the write after the rejection was compared */
+    int retry_mismatch; /* ... and it differed from the rejected one */
 } frag_bio;
+
+/*
+ * Parse the plaintext (epoch 0) handshake record in the buffer and return its
+ * fragment offset and length. Returns 0 if it is not one. DTLS 1.3 epoch 0
+ * records still use the DTLS record header.
+ */
+static int frag_handshake_info(const char *buf, size_t len, long *off,
+    long *flen)
+{
+    PACKET pkt;
+    unsigned int rec_type, rec_version, epoch, rec_len, msg_type, msg_seq;
+    unsigned long msg_len, frag_off, frag_len;
+
+    if (!PACKET_buf_init(&pkt, (const unsigned char *)buf, len)
+        || !PACKET_get_1(&pkt, &rec_type)
+        || !PACKET_get_net_2(&pkt, &rec_version)
+        || !PACKET_get_net_2(&pkt, &epoch)
+        || !PACKET_forward(&pkt, DTLS1_RT_HEADER_SEQ_LEN)
+        || !PACKET_get_net_2(&pkt, &rec_len)
+        || rec_type != SSL3_RT_HANDSHAKE
+        || epoch != 0
+        || !PACKET_get_1(&pkt, &msg_type)
+        || !PACKET_get_net_3(&pkt, &msg_len)
+        || !PACKET_get_net_2(&pkt, &msg_seq)
+        || !PACKET_get_net_3(&pkt, &frag_off)
+        || !PACKET_get_net_3(&pkt, &frag_len))
+        return 0;
+
+    *off = (long)frag_off;
+    *flen = (long)frag_len;
+    return 1;
+}
 
 /*
  * Each call to this function corresponds to exactly one DTLS fragment being
@@ -1803,11 +1851,36 @@ static int frag_write(BIO *bio, const char *buf, size_t len, size_t *written)
     f->write_calls++;
 
     if (f->allowed <= 0) {
+        if (f->rejections++ == 0 && len <= sizeof(f->rejected)) {
+            memcpy(f->rejected, buf, len);
+            f->rejected_len = len;
+        }
         BIO_set_retry_write(bio);
         *written = 0;
         return 0;
     }
     f->allowed--;
+
+    if (f->rejected_len > 0 && !f->retry_compared) {
+        f->retry_compared = 1;
+        if (len != f->rejected_len
+            || len < DTLS1_RT_HEADER_LENGTH
+            || memcmp(buf + DTLS1_RT_HEADER_LENGTH,
+                   f->rejected + DTLS1_RT_HEADER_LENGTH,
+                   len - DTLS1_RT_HEADER_LENGTH)
+                != 0)
+            f->retry_mismatch = 1;
+    }
+
+    {
+        long off, flen;
+
+        if (frag_handshake_info(buf, len, &off, &flen)) {
+            if (off != 0 && off != f->next_off)
+                f->offset_mismatch = 1;
+            f->next_off = off + flen;
+        }
+    }
 
     if (!BIO_write_ex(f->bio, buf, len, written)) {
         fprintf(stderr, "Failed to send data via BIO_write_ex\n");
@@ -2433,7 +2506,152 @@ end:
     return testresult;
 }
 #endif /* !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && ... */
-#endif /* !defined(OPENSSL_NO_DTLS1_2) || (DTLS1.3-capable) */
+
+static void frag_retry_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+}
+
+/*
+ * A record write that is rejected part way through a fragmented handshake
+ * message must be retried as the same fragment. dtls1_do_write() makes room
+ * for each fragment's header by moving its position in the message back by
+ * DTLS1_HM_HEADER_LENGTH; if that is applied again on the retry, the fragment
+ * goes out at the wrong offset and carries the previous header as data.
+ *
+ * The ClientHello is padded with ALPN so it takes several fragments at an MTU
+ * of 256. The first fragment is let through and the second is rejected, then
+ * retried. The fragment-checking BIO flags any fragment that does not start
+ * where the previous one ended, which is what a retry that moved the position
+ * a second time produces for the fragment after it.
+ *
+ * Handshake writes go through a buffering BIO, so the rejection is seen when
+ * dtls1_do_write() flushes it, not when the record is written.
+ *
+ * idx bit 0: DTLS 1.3 instead of 1.2
+ * idx bit 1: set a msg callback (it restores the overwritten payload but not
+ *            the offset)
+ * idx bit 2: use an MTU and ClientHello larger than the 4096 byte buffering
+ *            BIO. Fragments that size bypass the buffer, so the rejection is
+ *            returned by the record write itself, not by the flush, and the
+ *            retry has to rebuild the fragment.
+ */
+static int test_dtls_fragment_write_retry(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    int dtls13 = idx & 1, msg_cb = (idx >> 1) & 1, large = (idx >> 2) & 1;
+    int ret, i;
+    static unsigned char alpn[14000];
+    size_t j, used = 0;
+    const size_t nprotos = large ? 56 : 3;
+    BIO *c_to_s_bio = NULL, *frag_wbio;
+    frag_bio *fb;
+    int version = dtls13 ? DTLS1_3_VERSION : DTLS1_2_VERSION;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!dtls13)
+        return TEST_skip("DTLS 1.2 is disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (dtls13)
+        return TEST_skip("DTLS 1.3 is disabled");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, NULL);
+
+    /* Pad the ClientHello out via ALPN so it needs multiple fragments. */
+    for (j = 0; j < nprotos; j++) {
+        char name[250];
+        int n = snprintf(name, sizeof(name), "proto-%04zu-%s", j,
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpad");
+
+        if (!TEST_int_ge(n, 0) || !TEST_size_t_lt((size_t)n, sizeof(name))
+            || !TEST_size_t_le(used + 1 + (size_t)n, sizeof(alpn)))
+            goto end;
+
+        alpn[used++] = (unsigned char)n;
+        memcpy(alpn + used, name, (size_t)n);
+        used += (size_t)n;
+    }
+    if (!TEST_false(SSL_CTX_set_alpn_protos(cctx, alpn, (unsigned int)used)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (msg_cb)
+        SSL_set_msg_callback(clientssl, frag_retry_msg_cb);
+
+    SSL_set_options(clientssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_true(SSL_set_mtu(clientssl, large ? 6000 : 256)))
+        goto end;
+
+    /* See test_dtls_client_retransmit() for why the extra reference. */
+    c_to_s_bio = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_bio) || !TEST_true(BIO_up_ref(c_to_s_bio)))
+        goto end;
+
+    /* Let only the first ClientHello fragment through. */
+    frag_wbio = frag_new(c_to_s_bio, 1);
+    if (!TEST_ptr(frag_wbio)) {
+        BIO_free(c_to_s_bio);
+        goto end;
+    }
+    fb = BIO_get_data(frag_wbio);
+    SSL_set0_wbio(clientssl, frag_wbio);
+
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Each retry is rejected again, with the BIO still blocked. */
+    for (i = 0; i < 3; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_WRITE))
+            goto end;
+    }
+
+    /* Unblock: the next write is the retry of the rejected fragment. */
+    fb->allowed = 100;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Every fragment started where the previous one ended. */
+    if (!TEST_int_gt(fb->rejections, 0)
+        || !TEST_false(fb->offset_mismatch))
+        goto end;
+
+    /* The retry carried the same handshake header and payload as the reject. */
+    if (!TEST_size_t_gt(fb->rejected_len, DTLS1_RT_HEADER_LENGTH)
+        || !TEST_true(fb->retry_compared)
+        || !TEST_false(fb->retry_mismatch))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3) */
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
 #ifndef OPENSSL_NO_DTLS1_2
@@ -2915,6 +3133,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_server_retransmit_dtls13);
 #endif
     ADD_ALL_TESTS(test_dtls_connect_state_after_client_hello, 2);
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
+    ADD_ALL_TESTS(test_dtls_fragment_write_retry, 8);
+#endif
 
     return 1;
 }
