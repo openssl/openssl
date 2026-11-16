@@ -24,7 +24,7 @@
 #include "prov/securitycheck.h"
 #include "internal/skey.h"
 
-#define AES_CBC_BLK_BITS 128
+#define AES_ECB_BLK_BITS 128
 
 typedef struct prov_aes_ecb_ctx_st {
     PROV_AES_CTX aesbase;
@@ -40,10 +40,7 @@ struct aes_ecb_get_ctx_param_list_st {
 #endif
 };
 
-#define aes_ecb_set_ctx_param_list_st ossl_cipher_set_ctx_param_list_st
-
 #define aes_ecb_get_ctx_params_st aes_ecb_get_ctx_param_list_st
-#define aes_ecb_set_ctx_params_st aes_ecb_set_ctx_param_list_st
 
 #include "providers/implementations/ciphers/cipher_aes_ecb.inc"
 
@@ -57,6 +54,7 @@ static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_ecb_gettable_ctx_params;
 static OSSL_FUNC_cipher_get_ctx_params_fn aes_ecb_get_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn aes_ecb_settable_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn aes_ecb_set_ctx_params;
+
 /*
  * AES-ECB encryption is no longer approved in SP800-131A r3 for
  * confidential operations.
@@ -80,7 +78,7 @@ static void *aes_ecb_newctx(void *provctx, size_t kbits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
-        ossl_cipher_generic_initkey(&ctx->aesbase, kbits, AES_CBC_BLK_BITS,
+        ossl_cipher_generic_initkey(&ctx->aesbase, kbits, AES_ECB_BLK_BITS,
             0, EVP_CIPH_ECB_MODE, 0, ossl_prov_cipher_hw_aes_ecb(kbits), provctx);
 #ifdef FIPS_MODULE
         ctx->operation_allowed = 1;
@@ -112,13 +110,19 @@ static void *aes_ecb_dupctx(void *ctx)
     ret->operation_allowed = in->operation_allowed;
 #endif
     in->aesbase.base.hw->copyctx(&ret->aesbase.base, &in->aesbase.base);
+    if (!ossl_cipher_generic_dupctx_tlsmac(&ret->aesbase.base, &in->aesbase.base)) {
+        OPENSSL_clear_free(ret, sizeof(*ret));
+        return NULL;
+    }
     return ret;
 }
 
 static int aes_ecb_init(void *vctx, const uint8_t *key, size_t keylen,
     const uint8_t *iv, size_t ivlen, const OSSL_PARAM params[], int enc)
 {
-    if (!ossl_cipher_generic_init(vctx, key, keylen, iv, ivlen, params, enc))
+    /* Decode initialization parameters with the ECB-specific setter. */
+    if (!ossl_cipher_generic_init(vctx, key, keylen, iv, ivlen, NULL, enc)
+        || !aes_ecb_set_ctx_params(vctx, params))
         return 0;
 #ifdef FIPS_MODULE
     if (!aes_ecb_encrypt_check_approved((PROV_AES_ECB_CTX *)vctx, enc))
@@ -132,13 +136,7 @@ static int aes_ecb_skey_init(void *vctx, void *skeydata,
 {
     PROV_SKEY *key = skeydata;
 
-    if (!ossl_cipher_generic_init(vctx, key->data, key->length, iv, ivlen, params, enc))
-        return 0;
-#ifdef FIPS_MODULE
-    if (!aes_ecb_encrypt_check_approved((PROV_AES_ECB_CTX *)vctx, enc))
-        return 0;
-#endif
-    return 1;
+    return aes_ecb_init(vctx, key->data, key->length, iv, ivlen, params, enc);
 }
 
 static int aes_ecb_einit(void *vctx, const uint8_t *key, size_t keylen,
@@ -197,7 +195,7 @@ static const OSSL_PARAM *aes_ecb_settable_ctx_params(ossl_unused void *cctx,
 static int aes_ecb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-    struct aes_ecb_set_ctx_param_list_st p;
+    struct ossl_cipher_set_ctx_param_list_st p;
 
     if (ctx == NULL || !aes_ecb_set_ctx_params_decoder(params, &p))
         return 0;
@@ -214,7 +212,7 @@ static int aes_ecb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     static int aes_##bits##_##name##_get_params(OSSL_PARAM params[])                   \
     {                                                                                  \
         return ossl_cipher_generic_get_params(params, EVP_CIPH_ECB_MODE, 0,            \
-            bits, AES_CBC_BLK_BITS, 0);                                                \
+            bits, AES_ECB_BLK_BITS, 0);                                                \
     }                                                                                  \
     const OSSL_DISPATCH ossl_aes##bits##name##_functions[] = {                         \
         { OSSL_FUNC_CIPHER_NEWCTX,                                                     \
