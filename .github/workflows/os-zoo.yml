@@ -106,19 +106,19 @@ jobs:
             # Debian 11 LTS ended 2026-08-31 and bullseye moved to
             # archive.debian.org.
             setup: sed -i 's|http://deb.debian.org|http://archive.debian.org|' /etc/apt/sources.list
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/debian:12
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/debian:13
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:20.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:22.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:24.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:26.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/fedora:42
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/fedora:43
@@ -444,7 +444,7 @@ jobs:
         echo "CONTAINER_ID=$CONTAINER_ID" >> "$GITHUB_ENV"
     - name: install dependencies
       run:
-        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make"
+        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make libc6-dev"
     - name: config
       run: |
         podman exec -t $CONTAINER_ID sh -c \
