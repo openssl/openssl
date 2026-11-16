@@ -420,10 +420,13 @@ static int run_trusted_ee_test(void)
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     X509 *cacert = NULL;
+    EVP_PKEY *capkey = NULL;
+    unsigned char *cakbuf = NULL, *cp;
     STACK_OF(X509) *chain = NULL;
+    int caklen;
     int ret = 0;
 
-    /* Create a DANE-enabled SSL handle, with */
+    /* Create a DANE-enabled SSL handle, with CAfile as trust store. */
     if (!TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
         || !TEST_int_gt(SSL_CTX_dane_enable(ctx), 0)
         || !TEST_true(SSL_CTX_load_verify_file(ctx, CAfile))
@@ -435,24 +438,31 @@ static int run_trusted_ee_test(void)
     SSL_set_connect_state(ssl);
 
     if (!TEST_ptr(cacert = load_cert_pem(CAfile, NULL))
+        || !TEST_ptr(capkey = X509_get0_pubkey(cacert))
+        || !TEST_int_gt((caklen = i2d_PUBKEY(capkey, NULL)), 0)
+        || !TEST_ptr(cp = cakbuf = OPENSSL_malloc(caklen))
+        || !TEST_int_eq(i2d_PUBKEY(capkey, &cp), caklen)
         || !TEST_ptr(chain = sk_X509_new_reserve(NULL, 1))
         || !TEST_int_gt(sk_X509_push(chain, cacert), 0))
         goto end;
 
     /*
-     * Register a non-matching DANE-TA(2) SPKI(1) Full(0) TLSA RR,
-     * and a PKIX-EE(1) RR to enable trust store matching.
+     * Register a matching DANE-TA(2) SPKI(1) Full(0) TLSA RR,
+     * and a non-matching PKIX-EE(1) RR to enable trust store matching,
+     * and in the end fall back to DANE-TA(2).
      */
-    if (!TEST_int_gt(SSL_dane_tlsa_add(ssl, 2, 1, 0, edkey, edlen), 0)
+    if (!TEST_int_gt(SSL_dane_tlsa_add(ssl, 2, 1, 0, cakbuf, caklen), 0)
         || !TEST_int_gt(SSL_dane_tlsa_add(ssl, 1, 1, 0, edkey, edlen), 0))
         goto end;
 
-    /* Now "verify" the CA certificate, this should fail (return 0). */
-    if (!TEST_int_eq(verify_chain(ssl, chain), 0))
+    /* Now "verify" the certificate, this should succeed. */
+    if (!TEST_int_gt(verify_chain(ssl, chain), 0)
+        || !TEST_long_eq(SSL_get_verify_result(ssl), X509_V_OK))
         goto end;
     ret = 1;
 
 end:
+    OPENSSL_free(cakbuf);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     sk_X509_free(chain);
@@ -460,7 +470,7 @@ end:
 
     return ret;
 }
-#endif
+#endif /* OPENSSL_NO_ECX */
 
 OPT_TEST_DECLARE_USAGE("basedomain CAfile tlsafile\n")
 

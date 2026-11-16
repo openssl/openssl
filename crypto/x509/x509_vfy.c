@@ -3582,18 +3582,18 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
     danetls_record *t;
     X509 *cert;
     int recnum = sk_danetls_record_num(dane->trecs);
-    int num;
-    int i;
+    int ix, i;
 
     /*
      * If, when PKIX-TA/PKIX-EE records are present, a trust store lookup of a
      * self-signed EE certificate took place and found it in the trust store,
-     * the untrusted count could be 0, but in that case any "2 1 0" signer
-     * would have already matched the public key directly, so we don't need to
-     * check whether any such key is a potential signer.
+     * the untrusted count could be 0, but since we're checking DANE-TA(2)
+     * records, no PKIX-?? records matched, but a DANE-TA(2) trust-anchor
+     * key could still a valid signer of the EE certificate.  (Should we
+     * require the certificate to be a CA certificate???)
      */
-    if ((num = ctx->num_untrusted) == 0
-        || (cert = sk_X509_value(ctx->chain, num - 1)) == NULL)
+    ix = ctx->num_untrusted > 0 ? ctx->num_untrusted - 1 : 0;
+    if ((cert = sk_X509_value(ctx->chain, ix)) == NULL)
         return X509_TRUST_UNTRUSTED;
 
     for (i = 0; i < recnum; ++i) {
@@ -3610,11 +3610,11 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
 
         /* Record match via a bare TA public key */
         ctx->bare_ta_signed = 1;
-        dane->mdpth = num - 1;
+        dane->mdpth = ix;
         dane->mtlsa = t;
 
         /* Prune any excess chain certificates */
-        for (i = sk_X509_num(ctx->chain); i > num; --i)
+        for (i = sk_X509_num(ctx->chain) - 1; i > ix; --i)
             X509_free(sk_X509_pop(ctx->chain));
 
         return X509_TRUST_TRUSTED;
