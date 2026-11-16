@@ -1410,7 +1410,7 @@ end:
  * 32 relative distribution points and 32 crls.  CMS_verify
  * should fail to validate this messages after attempting
  * to process 16 dps.
- * Built based on reproducer in ANT-2026-ZQ110HRQ
+ * Built based on reproducer in CVE-2026-121482
  */
 static unsigned char overlong_cms_der[] = {
     0x30, 0x82, 0x0f, 0x76, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d,
@@ -1778,7 +1778,7 @@ static int test_cms_overlong_relative_dist_points(void)
 
     if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_X509)
         || !TEST_int_eq(ERR_GET_REASON(err), X509_R_INVALID_DISTPOINT)
-        || !TEST_int_eq(strcmp(errstr, "Too many dist points in certificate"), 0))
+        || !TEST_str_eq(errstr, "Too many relative dist points in certificate"))
         goto err;
     ok = 1;
 err:
@@ -2068,7 +2068,7 @@ int setup_tests(void)
     if (ed448_cert != NULL && ed448_privkey != NULL) {
         /*
          * We only run the overlong test if we have ec enabled
-         * as the root cert uses ec keys
+         * as the root certs signer uses an ed25519 key.
          */
         ADD_TEST(test_cms_overlong_relative_dist_points);
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
