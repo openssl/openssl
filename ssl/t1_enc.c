@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include "internal/params.h"
 #include "ssl_local.h"
 #include "record/record_local.h"
 #include "internal/ktls.h"

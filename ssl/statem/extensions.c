@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include "internal/nelem.h"
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "../ssl_local.h"

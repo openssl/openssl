@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include "internal/params.h"
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>

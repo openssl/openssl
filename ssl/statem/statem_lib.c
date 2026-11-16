@@ -9,6 +9,7 @@
  */
 
 #include <limits.h>
+#include "internal/params.h"
 #include <string.h>
 #include <stdio.h>
 #include "../ssl_local.h"

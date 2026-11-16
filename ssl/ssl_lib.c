@@ -10,6 +10,7 @@
  */
 
 #include "internal/e_os.h"
+#include "internal/params.h"
 #include "internal/e_winsock.h"
 #include "ssl_local.h"
 
