@@ -1403,11 +1403,22 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
 
     /*
      * RFC 9973: the external PSK is only offered with the extension, which
-     * excludes resumption PSKs and early data. Otherwise don't offer the PSK
-     * at all, or a server could accept it as the sole authentication.
+     * excludes resumption PSKs and early data, and can't be added after a
+     * HelloRetryRequest. Otherwise don't offer the PSK at all, or a server
+     * could accept it as the sole authentication. After a HelloRetryRequest,
+     * also drop a PSK that doesn't match the hash of its ciphersuite, as
+     * psk_client_callback() can't know it. Then
+     * tls_construct_ctos_cert_with_extern_psk() aborts.
      */
     if ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0 && psksess != NULL
-        && s->ext.psk_resumption_offered) {
+        && (s->ext.psk_resumption_offered
+            || (s->hello_retry_request == SSL_HRR_PENDING
+                && ((s->ext.extflags[TLSEXT_IDX_cert_with_extern_psk]
+                        & SSL_EXT_FLAG_SENT)
+                        == 0
+                    || ssl_md(SSL_CONNECTION_GET_CTX(s),
+                           psksess->cipher->algorithm2)
+                        != handmd)))) {
         SSL_SESSION_free(s->psksession);
         s->psksession = psksess = NULL;
     }
@@ -1779,6 +1790,24 @@ EXT_RETURN tls_construct_ctos_cert_with_extern_psk(SSL_CONNECTION *s,
     if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0)
         return EXT_RETURN_NOT_SENT;
 #endif
+
+    if (s->hello_retry_request == SSL_HRR_PENDING) {
+        int sent = (s->ext.extflags[TLSEXT_IDX_cert_with_extern_psk]
+                       & SSL_EXT_FLAG_SENT)
+            != 0;
+
+        /*
+         * RFC 9973 Section 5: after a HelloRetryRequest, repeat the extension
+         * or abort. Like pre_shared_key, it can't be added then either. This
+         * happens if the HelloRetryRequest selects a ciphersuite that doesn't
+         * match the PSK's hash, which the RFC gives no alert for.
+         */
+        if (sent && !offer) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_PSK);
+            return EXT_RETURN_FAIL;
+        }
+        offer = sent;
+    }
 
     if (!offer)
         return EXT_RETURN_NOT_SENT;

@@ -592,7 +592,8 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
  * ClientHello.
  *
  * It is sent with the external PSK picked by tls_construct_ctos_early_data(),
- * which is then the only PSK offered.
+ * which is then the only PSK offered. After a HelloRetryRequest it is repeated
+ * exactly when it was sent in the first ClientHello.
  *
  * @param s the client connection
  * @param pkt the packet to write the extension to
