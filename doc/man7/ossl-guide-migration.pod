@@ -1553,11 +1553,12 @@ disabled with the macro NO_ASN1_OLD since OpenSSL 0.9.7.
 
 =item *
 
-ASN1_STRING_length_set()
+ASN1_STRING_length_set(), ASN1_STRING_set0()
 
-Use L<ASN1_STRING_set(3)> or L<ASN1_STRING_set0(3)> instead.
-This was a potentially unsafe function that could change the bounds of a
-previously passed in pointer.
+Use L<ASN1_STRING_set1_data(3)> or L<ASN1_BIT_STRING_set1(3)> instead.
+Both of these were a potentially unsafe functions that could change the bounds of a
+previously passed in pointer, or pass in an incorrect pointer with incorrect bounds
+that directly modified string internals.
 
 =item *
 

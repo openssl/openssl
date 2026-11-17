@@ -467,7 +467,7 @@ int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
         if (!cms_kek_cipher(&enckey, &enckeylen, ec->key, ec->keylen,
                 kari, 1))
             return 0;
-        ASN1_STRING_set0(rek->encryptedKey, enckey, (int)enckeylen);
+        ossl_asn1_string_set0(rek->encryptedKey, enckey, (int)enckeylen);
     }
 
     return 1;

@@ -3720,17 +3720,23 @@ int has_stdin_waiting(void)
  */
 int corrupt_signature(ASN1_STRING *signature)
 {
-    const unsigned char *valid = ASN1_STRING_get0_data(signature);
-    size_t length = ASN1_STRING_get_length(signature);
-    unsigned char *s = OPENSSL_memdup(valid, length);
+    const uint8_t *valid = ASN1_STRING_get0_data(signature);
+    size_t length;
+    int unused_bits;
+    uint8_t *s;
+    int ret;
 
-    if (s == NULL)
+    if (!ASN1_BIT_STRING_get_length(signature, &length, &unused_bits)
+        || length == 0)
+        return 0;
+    if ((s = OPENSSL_memdup(valid, length)) == NULL)
         return 0;
 
-    s[length - 1] ^= 0x1;
+    s[length - 1] ^= (uint8_t)(1U << unused_bits);
 
-    ASN1_STRING_set0(signature, s, (int)length);
-    return 1;
+    ret = ASN1_BIT_STRING_set1(signature, s, length, unused_bits);
+    OPENSSL_free(s);
+    return ret;
 }
 
 int check_cert_time_string(const char *time, const char *desc)

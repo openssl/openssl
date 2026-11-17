@@ -1022,7 +1022,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
 void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,
     unsigned char *penc, int penclen)
 {
-    ASN1_STRING_set0(pub->public_key, penc, penclen);
+    ossl_asn1_string_set0(pub->public_key, penc, penclen);
     ossl_asn1_bit_string_set_unused_bits(pub->public_key, 0);
 }
 

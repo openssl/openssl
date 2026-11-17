@@ -64,7 +64,7 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
     if (!X509_ALGOR_set0(priv->pkeyalg, aobj, ptype, pval))
         return 0;
     if (penc)
-        ASN1_STRING_set0(priv->pkey, penc, penclen);
+        ossl_asn1_string_set0(priv->pkey, penc, penclen);
     return 1;
 }
 
