@@ -847,16 +847,27 @@ sub clean {
     } else {
         my $dep_ext = $target{dep_extension} || platform->depext();
         my $obj_ext = $target{obj_extension} || platform->objext();
+        # Same submodule list as the clean target in unix-Makefile.tmpl
+        my %submodules = map { ("./$_" => 1) }
+            qw(cloudflare-quiche fuzz/corpora gost-engine krb5 oqs-provider
+               pkcs11-provider pyca-cryptography python-ecdsa tlsfuzzer
+               tlslite-ng wycheproof);
+
+        # Remove the generated dependency files, object files, response
+        # files and symlinks in a single pass, leave dotted files alone and
+        # avoid descending into submodules.  With no_chdir, $_ is the path
+        # relative to '.', so dotted names must be checked on its basename.
         find({ wanted => sub {
-                   return if $_ =~ /^\./;
-                   return if -d $_;
-                   rm_f($File::Find::name)
-                       if /\Q$dep_ext\E\z/ || /\Q$obj_ext\E\z/ || /\.rsp\z/;
-               }, no_chdir => 1 }, '.');
-        find({ wanted => sub {
-                   return if $File::Find::name =~ m|^\./pkcs11-provider/|;
-                   return if $_ =~ /^\./;
-                   rm_f($File::Find::name) if -l $File::Find::name;
+                   if ($submodules{$_}) {
+                       $File::Find::prune = 1;
+                       return;
+                   }
+                   return if basename($_) =~ /^\./;
+                   my $is_link = -l $_;
+                   return if !$is_link && -d $_;
+                   rm_f($_)
+                       if $is_link || /\Q$dep_ext\E\z/ || /\Q$obj_ext\E\z/
+                          || /\.rsp\z/;
                }, no_chdir => 1 }, '.');
     }
 }

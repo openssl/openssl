@@ -53,6 +53,14 @@ jobs:
       run: ninja -C _build doc-nits
     - name: check markdown
       run: ninja -C _build md-nits
+    - name: check clean
+      run: |
+        ninja -C _build clean
+        leftovers="$(find _build \( -type l -o -name '*.o' -o -name '*.d' -o -name '*.rsp' \) ! -name '.*' -print)"
+        if [ -n "$leftovers" ]; then
+          printf 'ninja clean left these behind:\n%s\n' "$leftovers"
+          exit 1
+        fi
 
   linux-fedora:
     if: github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch'
