@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   perl-minimal-checker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Install perl 5.10
       run: |
