@@ -297,7 +297,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 {
     ktls_crypto_info_t crypto_info;
     unsigned char recseq[SEQ_NUM_SIZE], *p_recseq = recseq;
-    int rekey;
+    int rekey, ret = OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     l2n8(rl->sequence, p_recseq);
 
@@ -336,11 +336,16 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             return OSSL_RECORD_RETURN_NON_FATAL_ERR;
     }
 
+    /*
+     * From here on crypto_info may hold a copy of the key material (on Linux
+     * the keys are copied into it rather than referenced), so every exit
+     * must go through the cleanse below.
+     */
     if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, recseq,
             &crypto_info,
             rl->direction == OSSL_RECORD_DIRECTION_WRITE,
             iv, ivlen, key, keylen, mackey, mackeylen))
-        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+        goto end;
 
     if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction)) {
         int err = errno;
@@ -355,9 +360,9 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                 "kernel rejected new %s keys, errno=%d",
                 rl->direction == OSSL_RECORD_DIRECTION_WRITE ? "TX" : "RX",
                 err);
-            return OSSL_RECORD_RETURN_FATAL;
+            ret = OSSL_RECORD_RETURN_FATAL;
         }
-        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+        goto end;
     }
 
     if (rl->direction == OSSL_RECORD_DIRECTION_WRITE && (rl->options & SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE) != 0)
@@ -367,7 +372,10 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
          */
         BIO_set_ktls_tx_zerocopy_sendfile(rl->bio);
 
-    return OSSL_RECORD_RETURN_SUCCESS;
+    ret = OSSL_RECORD_RETURN_SUCCESS;
+end:
+    OPENSSL_cleanse(&crypto_info, sizeof(crypto_info));
+    return ret;
 }
 
 static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
