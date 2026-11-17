@@ -818,7 +818,9 @@ jobs:
         "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nss && git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git'
         "$GITHUB_WORKSPACE"/.github/retry sh -c 'rm -rf nspr && hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH'
         cd nss
-        USE_64=1 make nss_build_all
+        # NSS's own Werror.mk adds -Werror; newer gcc (ubuntu-26.04) trips it
+        # on NSS's own code, which is not this job's business to lint.
+        USE_64=1 make nss_build_all WARNING_CFLAGS="-Wall -Wshadow"
         USE_64=1 make install
         cd ../..
     - name: Test ECH with NSS
