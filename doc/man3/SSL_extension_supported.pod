@@ -209,7 +209,9 @@ negotiated.
 =item SSL_EXT_IGNORE_ON_RESUMPTION
 
 The extension will be ignored during parsing if a previous session is being
-successfully resumed.
+successfully resumed. A TLSv1.3 handshake that uses an external PSK together
+with certificate-based authentication, see
+L<SSL_cert_with_extern_psk_negotiated(3)>, isn't a resumption in this sense.
 
 =item SSL_EXT_CLIENT_HELLO
 

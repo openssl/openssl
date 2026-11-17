@@ -154,6 +154,10 @@ Note that parameter B<hint> given to the callback may be B<NULL>.
 A connection established via a TLSv1.3 PSK will appear as if session resumption
 has occurred so that L<SSL_session_reused(3)> will return true.
 
+A TLSv1.3 PSK is normally the sole means of authentication. With the
+B<SSL_OP_CERT_WITH_EXTERN_PSK> option the PSK is instead combined with
+certificate-based authentication, see L<SSL_cert_with_extern_psk_negotiated(3)>.
+
 There are no known security issues with sharing the same PSK between TLSv1.2 (or
 below) and TLSv1.3. However, the RFC has this note of caution:
 
@@ -181,6 +185,7 @@ failure. In the event of failure the connection setup fails.
 L<ssl(7)>,
 L<SSL_CTX_set_psk_find_session_callback(3)>,
 L<SSL_set_psk_find_session_callback(3)>,
+L<SSL_cert_with_extern_psk_negotiated(3)>,
 L<SSL_write_early_data(3)>
 
 =head1 HISTORY

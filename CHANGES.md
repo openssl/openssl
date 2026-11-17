@@ -37,6 +37,21 @@ OpenSSL 4.2
 
    *Dr Paul Dale*
 
+ * Added support for the TLSv1.3 "tls_cert_with_extern_psk" extension as per
+   [RFC 9973], which combines an external PSK with certificate-based
+   authentication. The external PSK is used in the key schedule alongside the
+   (EC)DHE shared secret, which protects the confidentiality of the connection
+   should the key exchange ever be broken, while the peers still authenticate
+   with certificates. It is enabled with the new `SSL_OP_CERT_WITH_EXTERN_PSK`
+   option (`CertWithExternPSK` in configuration files, `-cert_with_extern_psk`
+   for `openssl s_client` and `openssl s_server`), and
+   `SSL_cert_with_extern_psk_negotiated()` reports whether it was negotiated.
+   With the option, neither peer uses an external PSK on its own or one
+   shorter than 128 bits, and a client only resumes sessions that the external
+   PSK protects.
+
+   *David Stromberger*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
@@ -24752,6 +24767,7 @@ ndif
 [RFC 9846 Section 4.3.10]: https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.10
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
+[RFC 9973]: https://datatracker.ietf.org/doc/html/rfc9973
 [SECG SEC 1 Section 2.3.4]: https://www.secg.org/sec1-v2.pdf#subsubsection.2.3.4
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final

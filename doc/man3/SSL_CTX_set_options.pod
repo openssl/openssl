@@ -427,6 +427,21 @@ are consistent across HelloRetryRequest replays within the same connection.
 If a HelloRetryRequest asks for a new key share, the second ClientHello omits
 the GREASE key share so that the requested key share is the only entry.
 
+=item SSL_OP_CERT_WITH_EXTERN_PSK
+
+In TLSv1.3, combine external PSKs with certificate-based authentication by
+means of the RFC 9973 "tls_cert_with_extern_psk" extension. The external PSK
+then contributes to the key schedule alongside the (EC)DHE shared secret, but
+the peers still authenticate with certificates.
+
+A client with this option offers its external PSK only together with the
+extension, and aborts the handshake if the server would use the PSK as the
+sole means of authentication. A server with this option accepts the extension
+when a client offers it, and likewise uses an external PSK only together with
+it, so a client that doesn't offer the extension gets a full handshake. Neither
+peer uses an external PSK shorter than 128 bits. See
+L<SSL_cert_with_extern_psk_negotiated(3)> for details.
+
 =back
 
 The following options no longer have any effect but their identifiers are
@@ -537,6 +552,8 @@ These options apply to SSL objects referencing a QUIC connection:
 
 =item SSL_OP_ALLOW_NO_DHE_KEX
 
+=item SSL_OP_CERT_WITH_EXTERN_PSK
+
 =item SSL_OP_NO_TX_CERTIFICATE_COMPRESSION
 
 =item SSL_OP_NO_RX_CERTIFICATE_COMPRESSION
@@ -616,6 +633,8 @@ added a padding extension (RFC 7685) to the ClientHello to work around a
 bug in certain F5 middleboxes; the fix shipped long ago and the affected
 hardware is long out of support, so nothing should still be running the
 problematic version.
+
+The B<SSL_OP_CERT_WITH_EXTERN_PSK> option was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

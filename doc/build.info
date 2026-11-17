@@ -2575,6 +2575,10 @@ DEPEND[html/man3/SSL_alloc_buffers.html]=man3/SSL_alloc_buffers.pod
 GENERATE[html/man3/SSL_alloc_buffers.html]=man3/SSL_alloc_buffers.pod
 DEPEND[man/man3/SSL_alloc_buffers.3]=man3/SSL_alloc_buffers.pod
 GENERATE[man/man3/SSL_alloc_buffers.3]=man3/SSL_alloc_buffers.pod
+DEPEND[html/man3/SSL_cert_with_extern_psk_negotiated.html]=man3/SSL_cert_with_extern_psk_negotiated.pod
+GENERATE[html/man3/SSL_cert_with_extern_psk_negotiated.html]=man3/SSL_cert_with_extern_psk_negotiated.pod
+DEPEND[man/man3/SSL_cert_with_extern_psk_negotiated.3]=man3/SSL_cert_with_extern_psk_negotiated.pod
+GENERATE[man/man3/SSL_cert_with_extern_psk_negotiated.3]=man3/SSL_cert_with_extern_psk_negotiated.pod
 DEPEND[html/man3/SSL_check_chain.html]=man3/SSL_check_chain.pod
 GENERATE[html/man3/SSL_check_chain.html]=man3/SSL_check_chain.pod
 DEPEND[man/man3/SSL_check_chain.3]=man3/SSL_check_chain.pod
@@ -3747,6 +3751,7 @@ html/man3/SSL_accept.html \
 html/man3/SSL_accept_stream.html \
 html/man3/SSL_alert_type_string.html \
 html/man3/SSL_alloc_buffers.html \
+html/man3/SSL_cert_with_extern_psk_negotiated.html \
 html/man3/SSL_check_chain.html \
 html/man3/SSL_clear.html \
 html/man3/SSL_connect.html \
@@ -4435,6 +4440,7 @@ man/man3/SSL_accept.3 \
 man/man3/SSL_accept_stream.3 \
 man/man3/SSL_alert_type_string.3 \
 man/man3/SSL_alloc_buffers.3 \
+man/man3/SSL_cert_with_extern_psk_negotiated.3 \
 man/man3/SSL_check_chain.3 \
 man/man3/SSL_clear.3 \
 man/man3/SSL_connect.3 \

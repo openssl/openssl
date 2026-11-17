@@ -38,6 +38,9 @@ OpenSSL 4.2
     single KDF operation, as TLS requires. New API `EVP_KDF_derive_SKEYs()`,
     `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` have been added.
 
+  * Support for combining TLSv1.3 external PSKs with certificate-based
+    authentication as per [RFC 9973].
+
 OpenSSL 4.1
 -----------
 
@@ -2694,6 +2697,7 @@ OpenSSL 0.9.x
 [RFC 9147]: https://datatracker.ietf.org/doc/html/rfc9147
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
+[RFC 9973]: https://datatracker.ietf.org/doc/html/rfc9973
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [issue tracker]: https://github.com/openssl/openssl/issues
