@@ -295,12 +295,12 @@ int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
     if (cert_ctx == NULL)
         goto err;
     if ((flags & PKCS7_NOVERIFY) == 0) {
-        if (!ossl_x509_add_certs_new(&untrusted, certs, X509_ADD_FLAG_NO_DUP))
+        if ((untrusted = sk_X509_new_null()) == NULL
+            || !X509_add_certs(untrusted, certs, X509_ADD_FLAG_NO_DUP))
             goto err;
         included_certs = pkcs7_get0_certificates(p7);
         if ((flags & PKCS7_NOCHAIN) == 0
-            && !ossl_x509_add_certs_new(&untrusted, included_certs,
-                X509_ADD_FLAG_NO_DUP))
+            && !X509_add_certs(untrusted, included_certs, X509_ADD_FLAG_NO_DUP))
             goto err;
 
         for (k = 0; k < sk_X509_num(signers); k++) {
