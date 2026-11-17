@@ -145,7 +145,8 @@ jobs:
           }, {
             arch: mipsisa32r6el-linux-gnu,
             libs: libc6-dev-mipsr6el-cross,
-            target: linux-mips32 -march=mips32r6,
+            # Use large-file interfaces so QEMU can read runner directory entries.
+            target: linux-mips32 -march=mips32r6 -D_FILE_OFFSET_BITS=64,
             fips: no,
             qemucpu: mips32r6-generic,
             tests: -test_includes -test_store -test_x509_store
