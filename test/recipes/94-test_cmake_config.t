@@ -94,6 +94,13 @@ push @cmake_configure, "-A", "Win32"
 push @cmake_configure, "-A", "ARM64"
     if config('target') =~ /^VC-WIN64-ARM/ && $platform_flag_ok;
 
+# A no-shared OpenSSL build links against the static CRT (Configurations
+# sets /MT for that case); the dummy programs must use the same runtime,
+# or they import msvcr*.dll, which a minimal toolchain environment need
+# not carry.
+push @cmake_configure, "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
+    if config('target') =~ /^VC-/ && disabled("shared");
+
 # With Unix generators, cmake compiles the consumer project with the
 # host compiler's default word size, which may deviate from the OpenSSL
 # build's (e.g. linux-x86 on an x86_64 host).  Translate the word size
