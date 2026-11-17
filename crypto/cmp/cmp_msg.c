@@ -963,7 +963,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int certReqId,
      * as is used to create and verify the certificate signature.
      * If not available, a fallback hash algorithm is used.
      */
-    if ((certHash = ossl_x509_digest_sig_ex(ctx->newCert, &md, &is_fallback,
+    if ((certHash = X509_digest_sig_ex(ctx->newCert, &md, &is_fallback,
              ctx->libctx, ctx->propq))
         == NULL)
         goto err;

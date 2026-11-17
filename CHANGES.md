@@ -150,6 +150,11 @@ OpenSSL 4.2
 
    *Nihal Kotte*
 
+ * Added `X509_digest_sig_ex()`, a variant of `X509_digest_sig()` that
+   fetches the digest from a given library context and property query.
+
+   *Bob Beck*
+
  * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
    large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
    <!-- https://github.com/openssl/openssl/pull/30755 -->
