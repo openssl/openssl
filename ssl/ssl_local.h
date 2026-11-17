@@ -3164,6 +3164,21 @@ __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
     STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
+/**
+ * @brief Choose a cipher from those offered by the client, like
+ * ssl3_choose_cipher(), optionally restricted to a handshake digest.
+ *
+ * @param s the server connection
+ * @param clnt the ciphers offered by the client
+ * @param srvr the ciphers enabled on the server
+ * @param md if not NULL, only choose a (D)TLSv1.3 ciphersuite with this
+ *           handshake digest, e.g. to match a PSK
+ * @returns the selected cipher, or NULL if there is no common cipher
+ */
+__owur const SSL_CIPHER *ssl3_choose_cipher_md(SSL_CONNECTION *s,
+    STACK_OF(SSL_CIPHER) *clnt,
+    STACK_OF(SSL_CIPHER) *srvr,
+    const EVP_MD *md);
 __owur int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
