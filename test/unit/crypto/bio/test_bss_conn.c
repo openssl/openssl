@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <time.h>
 #include <netinet/in.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 #include "bio_local.h"
 
 #define FAKE_SOCKET 42
@@ -50,18 +50,18 @@ int __wrap_BIO_sock_error(int sock);
 ssize_t __wrap_read(int fd, void *buf, size_t count)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(count);
+    check_expected_uint(count);
     return mock_type(ssize_t);
 }
 
 ssize_t __wrap_write(int fd, const void *buf, size_t count)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(count);
+    check_expected_uint(count);
     return mock_type(ssize_t);
 }
 
@@ -72,11 +72,11 @@ int __wrap_BIO_lookup(const char *host, const char *service,
     int rc;
 
     function_called();
-    check_expected(host);
-    check_expected(service);
-    check_expected(lookup_type);
-    check_expected(family);
-    check_expected(socktype);
+    check_expected_ptr(host);
+    check_expected_ptr(service);
+    check_expected_int(lookup_type);
+    check_expected_int(family);
+    check_expected_int(socktype);
     rc = mock_type(int);
     if (rc == 1)
         *res = mock_ptr_type(BIO_ADDRINFO *);
@@ -86,41 +86,41 @@ int __wrap_BIO_lookup(const char *host, const char *service,
 int __wrap_BIO_socket(int domain, int socktype, int protocol, int options)
 {
     function_called();
-    check_expected(domain);
-    check_expected(socktype);
-    check_expected(protocol);
-    check_expected(options);
+    check_expected_int(domain);
+    check_expected_int(socktype);
+    check_expected_int(protocol);
+    check_expected_int(options);
     return mock_type(int);
 }
 
 int __wrap_BIO_connect(int sock, const BIO_ADDR *addr, int options)
 {
     function_called();
-    check_expected(sock);
+    check_expected_int(sock);
     check_expected_ptr(addr);
-    check_expected(options);
+    check_expected_int(options);
     return mock_type(int);
 }
 
 int __wrap_BIO_sock_should_retry(int i)
 {
     function_called();
-    check_expected(i);
+    check_expected_int(i);
     return mock_type(int);
 }
 
 int __wrap_BIO_closesocket(int sock)
 {
     function_called();
-    check_expected(sock);
+    check_expected_int(sock);
     return mock_type(int);
 }
 
 int __wrap_BIO_socket_wait(int fd, int for_write, time_t max_time)
 {
     function_called();
-    check_expected(fd);
-    check_expected(for_write);
+    check_expected_int(fd);
+    check_expected_int(for_write);
     (void)max_time; /* derived from time(NULL): not checked */
     return mock_type(int);
 }
@@ -128,7 +128,7 @@ int __wrap_BIO_socket_wait(int fd, int for_write, time_t max_time)
 int __wrap_BIO_sock_error(int sock)
 {
     function_called();
-    check_expected(sock);
+    check_expected_int(sock);
     return mock_type(int);
 }
 
@@ -155,7 +155,7 @@ static int fake_dgram_read(BIO *b, char *buf, size_t size, size_t *readbytes)
     (void)b;
     function_called();
     check_expected_ptr(buf);
-    check_expected(size);
+    check_expected_uint(size);
     ret = mock_type(int);
     if (ret > 0) {
         *readbytes = (size_t)ret;
@@ -173,7 +173,7 @@ static int fake_dgram_write(BIO *b, const char *buf, size_t size,
     (void)b;
     function_called();
     check_expected_ptr(buf);
-    check_expected(size);
+    check_expected_uint(size);
     ret = mock_type(int);
     if (ret > 0) {
         *written = (size_t)ret;
@@ -199,9 +199,9 @@ static int fake_dgram_sendmmsg(BIO *b, BIO_MSG *m, size_t s, size_t n,
     (void)b;
     function_called();
     check_expected_ptr(m);
-    check_expected(s);
-    check_expected(n);
-    check_expected(f);
+    check_expected_uint(s);
+    check_expected_uint(n);
+    check_expected_uint(f);
     *mp = mock_type(size_t);
     return mock_type(int);
 }
@@ -212,9 +212,9 @@ static int fake_dgram_recvmmsg(BIO *b, BIO_MSG *m, size_t s, size_t n,
     (void)b;
     function_called();
     check_expected_ptr(m);
-    check_expected(s);
-    check_expected(n);
-    check_expected(f);
+    check_expected_uint(s);
+    check_expected_uint(n);
+    check_expected_uint(f);
     *mp = mock_type(size_t);
     return mock_type(int);
 }
@@ -248,18 +248,18 @@ static BIO *make_fake_dgram(void)
 static void expect_read(int fd, const void *buf, size_t count, ssize_t rc)
 {
     expect_function_call(__wrap_read);
-    expect_value(__wrap_read, fd, fd);
-    expect_value(__wrap_read, buf, buf);
-    expect_value(__wrap_read, count, count);
+    expect_int_value(__wrap_read, fd, fd);
+    expect_uint_value(__wrap_read, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_read, count, count);
     will_return(__wrap_read, rc);
 }
 
 static void expect_write(int fd, const void *buf, size_t count, ssize_t rc)
 {
     expect_function_call(__wrap_write);
-    expect_value(__wrap_write, fd, fd);
-    expect_value(__wrap_write, buf, buf);
-    expect_value(__wrap_write, count, count);
+    expect_int_value(__wrap_write, fd, fd);
+    expect_uint_value(__wrap_write, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_write, count, count);
     will_return(__wrap_write, rc);
 }
 
@@ -281,10 +281,10 @@ static void expect_BIO_socket(int domain, int socktype, int protocol,
     int options, int rc)
 {
     expect_function_call(__wrap_BIO_socket);
-    expect_value(__wrap_BIO_socket, domain, domain);
-    expect_value(__wrap_BIO_socket, socktype, socktype);
-    expect_value(__wrap_BIO_socket, protocol, protocol);
-    expect_value(__wrap_BIO_socket, options, options);
+    expect_int_value(__wrap_BIO_socket, domain, domain);
+    expect_int_value(__wrap_BIO_socket, socktype, socktype);
+    expect_int_value(__wrap_BIO_socket, protocol, protocol);
+    expect_int_value(__wrap_BIO_socket, options, options);
     will_return(__wrap_BIO_socket, rc);
 }
 
@@ -292,54 +292,54 @@ static void expect_BIO_connect(int sock, const BIO_ADDR *addr, int options,
     int rc)
 {
     expect_function_call(__wrap_BIO_connect);
-    expect_value(__wrap_BIO_connect, sock, sock);
-    expect_value(__wrap_BIO_connect, addr, addr);
-    expect_value(__wrap_BIO_connect, options, options);
+    expect_int_value(__wrap_BIO_connect, sock, sock);
+    expect_uint_value(__wrap_BIO_connect, addr, cast_ptr_to_uintmax_type(addr));
+    expect_int_value(__wrap_BIO_connect, options, options);
     will_return(__wrap_BIO_connect, rc);
 }
 
 static void expect_BIO_sock_should_retry(int i, int rc)
 {
     expect_function_call(__wrap_BIO_sock_should_retry);
-    expect_value(__wrap_BIO_sock_should_retry, i, i);
+    expect_int_value(__wrap_BIO_sock_should_retry, i, i);
     will_return(__wrap_BIO_sock_should_retry, rc);
 }
 
 static void expect_BIO_closesocket(int sock, int rc)
 {
     expect_function_call(__wrap_BIO_closesocket);
-    expect_value(__wrap_BIO_closesocket, sock, sock);
+    expect_int_value(__wrap_BIO_closesocket, sock, sock);
     will_return(__wrap_BIO_closesocket, rc);
 }
 
 static void expect_BIO_socket_wait(int fd, int for_write, int rc)
 {
     expect_function_call(__wrap_BIO_socket_wait);
-    expect_value(__wrap_BIO_socket_wait, fd, fd);
-    expect_value(__wrap_BIO_socket_wait, for_write, for_write);
+    expect_int_value(__wrap_BIO_socket_wait, fd, fd);
+    expect_int_value(__wrap_BIO_socket_wait, for_write, for_write);
     will_return(__wrap_BIO_socket_wait, rc);
 }
 
 static void expect_BIO_sock_error(int sock, int rc)
 {
     expect_function_call(__wrap_BIO_sock_error);
-    expect_value(__wrap_BIO_sock_error, sock, sock);
+    expect_int_value(__wrap_BIO_sock_error, sock, sock);
     will_return(__wrap_BIO_sock_error, rc);
 }
 
 static void expect_fake_dgram_read(const void *buf, size_t size, int rc)
 {
     expect_function_call(fake_dgram_read);
-    expect_value(fake_dgram_read, buf, buf);
-    expect_value(fake_dgram_read, size, size);
+    expect_uint_value(fake_dgram_read, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(fake_dgram_read, size, size);
     will_return(fake_dgram_read, rc);
 }
 
 static void expect_fake_dgram_write(const void *buf, size_t size, int rc)
 {
     expect_function_call(fake_dgram_write);
-    expect_value(fake_dgram_write, buf, buf);
-    expect_value(fake_dgram_write, size, size);
+    expect_uint_value(fake_dgram_write, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(fake_dgram_write, size, size);
     will_return(fake_dgram_write, rc);
 }
 
@@ -347,10 +347,10 @@ static void expect_fake_dgram_sendmmsg(const BIO_MSG *m, size_t s, size_t n,
     uint64_t f, size_t processed, int rc)
 {
     expect_function_call(fake_dgram_sendmmsg);
-    expect_value(fake_dgram_sendmmsg, m, m);
-    expect_value(fake_dgram_sendmmsg, s, s);
-    expect_value(fake_dgram_sendmmsg, n, n);
-    expect_value(fake_dgram_sendmmsg, f, f);
+    expect_uint_value(fake_dgram_sendmmsg, m, cast_ptr_to_uintmax_type(m));
+    expect_uint_value(fake_dgram_sendmmsg, s, s);
+    expect_uint_value(fake_dgram_sendmmsg, n, n);
+    expect_uint_value(fake_dgram_sendmmsg, f, f);
     will_return(fake_dgram_sendmmsg, processed);
     will_return(fake_dgram_sendmmsg, rc);
 }
@@ -359,10 +359,10 @@ static void expect_fake_dgram_recvmmsg(const BIO_MSG *m, size_t s, size_t n,
     uint64_t f, size_t processed, int rc)
 {
     expect_function_call(fake_dgram_recvmmsg);
-    expect_value(fake_dgram_recvmmsg, m, m);
-    expect_value(fake_dgram_recvmmsg, s, s);
-    expect_value(fake_dgram_recvmmsg, n, n);
-    expect_value(fake_dgram_recvmmsg, f, f);
+    expect_uint_value(fake_dgram_recvmmsg, m, cast_ptr_to_uintmax_type(m));
+    expect_uint_value(fake_dgram_recvmmsg, s, s);
+    expect_uint_value(fake_dgram_recvmmsg, n, n);
+    expect_uint_value(fake_dgram_recvmmsg, f, f);
     will_return(fake_dgram_recvmmsg, processed);
     will_return(fake_dgram_recvmmsg, rc);
 }
