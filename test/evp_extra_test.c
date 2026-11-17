@@ -7977,6 +7977,49 @@ err:
     return ret;
 }
 
+static const char *const siv_tag_len_ciphers[] = { "AES-128-GCM-SIV", "AES-128-SIV" };
+
+/*
+ * Setting only the tag length, with a NULL tag, on a decrypting context.
+ * CCM and OCB callers do this before setting the tag.
+ */
+static int test_aes_siv_set_tag_len_only(int idx)
+{
+    static const unsigned char key[32] = { 0x01 }, nonce[12] = { 0x02 };
+    static const unsigned char pt[5] = { 0x01, 0x02, 0x03, 0x04, 0x05 };
+    const unsigned char *iv = idx == 0 ? nonce : NULL;
+    unsigned char ct[sizeof(pt)], out[sizeof(pt)], tag[16];
+    EVP_CIPHER *c = EVP_CIPHER_fetch(testctx, siv_tag_len_ciphers[idx], testpropq);
+    EVP_CIPHER_CTX *ctx = NULL;
+    int outl, ret = 0;
+
+    if (c == NULL)
+        return TEST_skip("%s cipher is not available", siv_tag_len_ciphers[idx]);
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, c, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &outl, pt, sizeof(pt)))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, out, &outl))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag)))
+        goto err;
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, c, key, iv, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, NULL), 0)
+        || !TEST_int_le(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 15, NULL), 0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, tag), 0)
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &outl, ct, sizeof(ct)))
+        || !TEST_mem_eq(out, outl, pt, sizeof(pt))
+        || !TEST_true(EVP_DecryptFinal_ex(ctx, out, &outl)))
+        goto err;
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(c);
+    return ret;
+}
+
 /*
  * Seal pt under key, nonce and aad with a fresh context, producing ct and
  * tag.  A zero aad_len means no AAD update at all.
@@ -9714,6 +9757,7 @@ int setup_tests(void)
     ADD_TEST(test_aes_gcm_siv_reinit_aad_replay_no_nonce);
     ADD_TEST(test_aes_gcm_siv_reinit_aad_params_only_keeps);
     ADD_TEST(test_aes_gcm_siv_zero_length_aad);
+    ADD_ALL_TESTS(test_aes_siv_set_tag_len_only, OSSL_NELEM(siv_tag_len_ciphers));
 
     ADD_TEST(test_invalid_ctx_for_digest);
 

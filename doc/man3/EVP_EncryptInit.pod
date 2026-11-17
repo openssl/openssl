@@ -1663,6 +1663,9 @@ bytes from I<tag>. This call is only legal when decrypting data and must be
 made B<before> any data is processed (e.g. before any EVP_DecryptUpdate()
 calls). For SIV mode the taglen must be 16.
 
+Calling this with I<tag> set to NULL and I<taglen> set to 16 succeeds and
+leaves the expected tag unchanged.
+
 =back
 
 SIV mode makes two passes over the input data, thus, only one call to
