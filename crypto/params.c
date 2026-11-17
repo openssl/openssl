@@ -12,12 +12,11 @@
 #define OSSL_PARAM_CONSTRUCT_INLINE
 
 #include <string.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/err.h>
 #include "internal/thread_once.h"
 #include "internal/numbers.h"
 #include "internal/endian.h"
-#include "internal/params.h"
 #include "internal/packet.h"
 #include "internal/common.h"
 

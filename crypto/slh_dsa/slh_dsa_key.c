@@ -11,7 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "slh_dsa_local.h"

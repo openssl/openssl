@@ -10,7 +10,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "ml_dsa_key.h"
