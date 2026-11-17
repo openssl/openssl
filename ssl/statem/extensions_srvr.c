@@ -1562,6 +1562,22 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         }
 #endif /* OPENSSL_NO_PSK */
 
+        /*
+         * RFC 9973 Section 7: with the option, an external PSK must not be the
+         * sole basis for authentication, so only use it with the extension.
+         * Nor use one too short to protect against a CRQC. Treat it like an
+         * unknown identity instead, so a full handshake may follow, which
+         * issues tickets as usual.
+         */
+        if (sess != NULL && (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+            && (!cert_with_extern_psk
+                || sess->master_key_length < SSL_CERT_WITH_EXTERN_PSK_MIN_LEN)) {
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            s->ext.ticket_expected = 1;
+            continue;
+        }
+
         if (sess != NULL) {
             /*
              * We found an external (not a resumption) PSK - duplicate the

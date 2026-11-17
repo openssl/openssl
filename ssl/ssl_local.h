@@ -374,6 +374,12 @@ typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
     ((s)->hit && (s)->ext.cert_with_extern_psk)
 
 /*
+ * RFC 9973 Section 7: for protection against a CRQC, the external PSK needs to
+ * be at least 128 bits
+ */
+#define SSL_CERT_WITH_EXTERN_PSK_MIN_LEN 16
+
+/*
  * See if we use signature algorithms extension and signature algorithm
  * before signatures.
  */
