@@ -252,6 +252,16 @@ PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7);
 int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7);
 int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
+/** @see PEM_read_bio_PKCS7(3) */
+PKCS7 *PEM_read_bio_PKCS7(BIO *out, PKCS7 **x, pem_password_cb *cb, void *u);
+/** @see PEM_write_bio_PKCS7(3) */
+int PEM_write_bio_PKCS7(BIO *out, const PKCS7 *x);
+#if !defined(OPENSSL_NO_STDIO)
+/** @see PEM_read_PKCS7(3) */
+PKCS7 *PEM_read_PKCS7(FILE *out, PKCS7 **x, pem_password_cb *cb, void *u);
+/** @see PEM_write_PKCS7(3) */
+int PEM_write_PKCS7(FILE *out, const PKCS7 *x);
+#endif /* !defined(OPENSSL_NO_STDIO) */
 
 DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNER_INFO)
 DECLARE_ASN1_FUNCTIONS(PKCS7_RECIP_INFO)
