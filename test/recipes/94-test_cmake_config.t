@@ -67,13 +67,32 @@ my @cmake_configure =
      # The dummy programs are run through the same wrapper that the rest
      # of the test suite uses, so the loader path is set up for them
      "-DOPENSSL_WRAP_PL=" . abs_path(bldtop_file("util", "wrap.pl")));
+
+# Find out what generator cmake will use: $ENV{CMAKE_GENERATOR} when set,
+# otherwise the default, which `cmake --system-information` reports.
+my $cmake_generator = $ENV{CMAKE_GENERATOR};
+if (!defined $cmake_generator) {
+    foreach (`cmake --system-information`) {
+        if (/^CMAKE_GENERATOR +"(.*?)"$/) {
+            $cmake_generator = $1;
+            last;
+        }
+    }
+}
+# Only the Visual Studio generators support platform selection (-A);
+# other generators reject it with a hard error.  With those, the
+# architecture is determined by the compiler that cmake finds in the
+# environment instead.
+my $platform_flag_ok =
+    defined $cmake_generator && $cmake_generator =~ /Visual Studio/;
+
 # With Visual Studio generators, cmake defaults to the x64 platform.
 # The dummy programs must match the architecture of the OpenSSL build,
 # so say it explicitly when it deviates from that default.
 push @cmake_configure, "-A", "Win32"
-    if config('target') =~ /^VC-WIN32/;
+    if config('target') =~ /^VC-WIN32/ && $platform_flag_ok;
 push @cmake_configure, "-A", "ARM64"
-    if config('target') =~ /^VC-WIN64-ARM/;
+    if config('target') =~ /^VC-WIN64-ARM/ && $platform_flag_ok;
 
 # With Unix generators, cmake compiles the consumer project with the
 # host compiler's default word size, which may deviate from the OpenSSL
@@ -123,6 +142,25 @@ ok(run_host_command(\@cmake_configure),
    "configure the cmake test project");
 ok(run_host_command(["cmake", "--build", $cmake_build_dir, "--config", "Release"]),
    "build the cmake test project");
+# Diagnose a failing ctest run: show where the dummy binaries actually
+# landed, and try running one directly, which discriminates "binary not
+# where ctest looked for it" from "binary cannot be executed".
+sub diagnose_cmake_build {
+    my ($dir) = @_;
+
+    diag("Contents of $dir:");
+    diag("  $_") foreach sort glob("$dir/* $dir/*/*");
+    my @exes = glob("$dir/ossl_config_dummy_vars*"
+                    . " $dir/*/ossl_config_dummy_vars*");
+    if (@exes) {
+        diag("running $exes[0] directly:");
+        run_host_command([$exes[0]]);
+    } else {
+        diag("no ossl_config_dummy_vars binary found");
+    }
+}
+
 ok(run_host_command(["ctest", "--test-dir", $cmake_build_dir,
                      "-C", "Release", "--output-on-failure"]),
-   "run the cmake test project");
+   "run the cmake test project")
+    or diagnose_cmake_build($cmake_build_dir);
