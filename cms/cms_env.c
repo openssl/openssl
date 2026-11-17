@@ -233,7 +233,7 @@ CMS_ContentInfo *CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher,
         goto err;
 
     if (!ossl_cms_EncryptedContent_init(env->encryptedContentInfo, cipher, NULL,
-            0, ossl_cms_get0_cmsctx(cms)))
+            0))
         goto err;
     return cms;
 err:
@@ -306,8 +306,7 @@ CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
     if (aenv == NULL)
         goto merr;
     if (!ossl_cms_EncryptedContent_init(aenv->authEncryptedContentInfo,
-            cipher, NULL, 0,
-            ossl_cms_get0_cmsctx(cms)))
+            cipher, NULL, 0))
         goto merr;
     return cms;
 merr:
@@ -353,7 +352,7 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
      * structure.
      */
 
-    if (!ossl_cms_set1_SignerIdentifier(ktri->rid, recip, idtype, ctx))
+    if (!ossl_cms_set1_SignerIdentifier(ktri->rid, recip, idtype))
         return 0;
 
     if (!X509_up_ref(recip))

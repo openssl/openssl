@@ -110,7 +110,7 @@ int ossl_cms_RecipientInfo_kemri_init(CMS_RecipientInfo *ri, X509 *recip,
      */
 
     idtype = (flags & CMS_USE_KEYID) ? CMS_RECIPINFO_KEYIDENTIFIER : CMS_RECIPINFO_ISSUER_SERIAL;
-    if (!ossl_cms_set1_SignerIdentifier(kemri->rid, recip, idtype, ctx))
+    if (!ossl_cms_set1_SignerIdentifier(kemri->rid, recip, idtype))
         return 0;
 
     x_pubkey = X509_get_X509_PUBKEY(recip);

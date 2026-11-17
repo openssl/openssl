@@ -485,11 +485,11 @@ void ossl_cms_infos_set_cmsctx(CMS_ContentInfo *ci);
 
 /**
  * @brief Create a CMS structure of type data with embedded content.
- * @param ctx the library context, NULL for the default
+ * @param libctx the library context, NULL for the default
  * @param propq the property query, may be NULL
  * @returns the structure, or NULL on error
  */
-CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
+CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *libctx, const char *propq);
 /**
  * @brief Finalize cms after its content has been written through cmsbio.
  * Stores content being created and completes the type-specific processing.
@@ -561,11 +561,10 @@ int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain, BIO *data,
  * @param sid the SignerIdentifier
  * @param cert the certificate
  * @param type CMS_SIGNERINFO_ISSUER_SERIAL or CMS_SIGNERINFO_KEYIDENTIFIER
- * @param ctx the CMS context
  * @returns 1 on success, 0 on error
  */
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
-    int type, const CMS_CTX *ctx);
+    int type);
 /**
  * @brief Get the identifying fields of a SignerIdentifier.
  * Only the outputs for the identifier type are set.
@@ -665,12 +664,12 @@ int ossl_cms_get_aead_params(const ASN1_TYPE *param, unsigned char *iv,
 /**
  * @brief Create the cipher BIO for an EncryptedContentInfo.
  * @param ec the EncryptedContentInfo
- * @param ctx the CMS context to fetch the cipher with
+ * @param cms_ctx the CMS context to fetch the cipher with
  * @param auth 1 for authEnvelopedData, 0 otherwise
  * @returns the BIO, or NULL on error
  */
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-    const CMS_CTX *ctx, int auth);
+    const CMS_CTX *cms_ctx, int auth);
 /**
  * @brief Create the cipher BIO for an encryptedData structure.
  * @param cms the CMS structure
@@ -683,13 +682,11 @@ BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
  * @param cipher the content cipher, may be NULL
  * @param key the content key, copied, may be NULL
  * @param keylen the length of key
- * @param ctx the CMS context
  * @returns 1 on success, 0 on error
  */
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     const EVP_CIPHER *cipher,
-    const unsigned char *key, size_t keylen,
-    const CMS_CTX *ctx);
+    const unsigned char *key, size_t keylen);
 
 /**
  * @brief Verify a signed receipt against the signed request it answers.
