@@ -9,6 +9,7 @@
 use strict;
 use warnings;
 
+use Config;
 use Cwd qw(abs_path);
 use IPC::Cmd;
 use OpenSSL::Test;
@@ -149,6 +150,15 @@ ok(run_host_command(\@cmake_configure),
    "configure the cmake test project");
 ok(run_host_command(["cmake", "--build", $cmake_build_dir, "--config", "Release"]),
    "build the cmake test project");
+# Run a command and show its output whether it succeeds or not
+sub run_diag_command {
+    my ($command) = @_;
+    my ($success, $error, $output) =
+        IPC::Cmd::run(command => $command);
+    diag(join("", @{$output})) if defined $output;
+    diag($error) if !$success && defined $error;
+}
+
 # Diagnose a failing ctest run: show where the dummy binaries actually
 # landed, and try running one directly, which discriminates "binary not
 # where ctest looked for it" from "binary cannot be executed".
@@ -157,9 +167,46 @@ sub diagnose_cmake_build {
 
     diag("Contents of $dir:");
     diag("  $_") foreach sort glob("$dir/* $dir/*/*");
-    my @exes = glob("$dir/ossl_config_dummy_vars*"
+    # $Config{_exe} is the executable suffix on platforms that have one
+    # ('.exe' on Windows, empty on Unix)
+    my @exes = grep { -f $_ && !/\.(ilk|pdb|lib|exp)$/
+                      && ($Config{_exe} eq '' || /\Q$Config{_exe}\E$/i) }
+               glob("$dir/ossl_config_dummy_vars*"
                     . " $dir/*/ossl_config_dummy_vars*");
     if (@exes) {
+        if ($^O eq 'MSWin32') {
+            # Name what kills the binary: the effective PATH, and the
+            # resolvability of the DLLs the binary imports.  The CRT
+            # DLL names vary with the Visual Studio version
+            # (msvcr120.dll for VS2013, vcruntime140.dll and
+            # ucrtbase.dll for VS2015 and later), so take the list from
+            # the binary itself rather than hard-coding it.
+            run_diag_command(["cmd", "/c", "set", "PATH"]);
+            my @imports;
+            if (IPC::Cmd::can_run("dumpbin")) {
+                my ($success, $error, $output) =
+                    IPC::Cmd::run(command =>
+                                  ["dumpbin", "/dependents", $exes[0]]);
+                diag(join("", @{$output})) if defined $output;
+                diag($error) if !$success && defined $error;
+                if ($success) {
+                    my %seen;
+                    @imports =
+                        grep { !$seen{lc $_}++ }
+                        map { /^\s+(\S+\.dll)\s*$/i ? ($1) : () }
+                        @{$output};
+                }
+            }
+            if (@imports) {
+                run_diag_command(["where", $_]) foreach @imports;
+            } else {
+                # dumpbin unavailable or failed; probe the CRT naming
+                # patterns known to date
+                run_diag_command(["where", "msvcr*.dll"]);
+                run_diag_command(["where", "vcruntime*.dll"]);
+                run_diag_command(["where", "ucrtbase.dll"]);
+            }
+        }
         diag("running $exes[0] directly:");
         run_host_command([$exes[0]]);
     } else {
