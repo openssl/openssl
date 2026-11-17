@@ -20,6 +20,23 @@ typedef struct siv128_context SIV128_CONTEXT;
 SIV128_CONTEXT *ossl_siv128_new(const unsigned char *key, int klen,
     EVP_CIPHER *cbc, EVP_CIPHER *ctr,
     OSSL_LIB_CTX *libctx, const char *propq);
+
+/**
+ * @brief Initialize a SIV context with a key, or restart with the existing one.
+ *
+ * With a NULL @p key the context keeps its key material, discards any AAD and
+ * payload state, and starts a new operation; @p klen, @p cbc, @p ctr,
+ * @p libctx and @p propq are then ignored. Fails if the context has no key.
+ *
+ * @param ctx the context to initialize
+ * @param key the key, or NULL to restart with the existing one
+ * @param klen the length of @p key in bytes
+ * @param cbc the CBC cipher for the CMAC
+ * @param ctr the CTR cipher for the encryption
+ * @param libctx the library context to fetch from
+ * @param propq the property query for fetches
+ * @returns 1 on success, 0 on failure
+ */
 int ossl_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     const EVP_CIPHER *cbc, const EVP_CIPHER *ctr,
     OSSL_LIB_CTX *libctx, const char *propq);
