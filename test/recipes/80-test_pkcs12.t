@@ -57,7 +57,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_err =  disabled('err') || disabled('autoerrinit');
 
-plan tests => 122 + ($no_fips ? 0 : 5);
+plan tests => 125 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -241,6 +241,26 @@ for my $instance (sort keys %pbmac1_tests) {
         close DATA;
         ok(scalar @match > 0 ? 1 : 0, "test_export_pkcs12_${pbmac1_id}_info");
     }
+}
+
+# Test that -no_pbmac1_pbkdf2 overrides an earlier -pbmac1_pbkdf2
+{
+    ok(run(app(["openssl", "pkcs12", "-export", "-pbmac1_pbkdf2",
+            "-no_pbmac1_pbkdf2",
+            "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+            "-in", srctop_file(@path, "cert-key-cert.pem"),
+            "-passout", "pass:1234",
+            "-out", "no_pbmac1.p12"])),
+    "test_export_pkcs12_no_pbmac1");
+
+    ok(run(app(["openssl", "pkcs12", "-in", "no_pbmac1.p12", "-info", "-noout",
+            "-passin", "pass:1234"], stderr => "no_pbmac1_info.txt")),
+    "test_export_pkcs12_no_pbmac1_info");
+    open DATA, "no_pbmac1_info.txt";
+    my @info = <DATA>;
+    close DATA;
+    ok(grep(/^MAC: sha256,/, @info) == 1 && grep(/PBMAC1/, @info) == 0,
+       "test_export_pkcs12_no_pbmac1_uses_mac");
 }
 
 # Test pbmac1 pkcs12 good files, RFC 9579, and one extra with shorter key

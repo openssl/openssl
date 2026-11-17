@@ -53,6 +53,13 @@ OpenSSL 4.2
 
    *Matt Caswell*
 
+ * Added the `-no_pbmac1_pbkdf2` option to `openssl pkcs12`, which selects
+   the traditional PKCS#12 MAC and overrides an earlier `-pbmac1_pbkdf2`.
+   This allows wrappers or distributions to pass `-pbmac1_pbkdf2` by default
+   while still letting users opt out.
+
+   *Dimitri John Ledkov*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
