@@ -296,7 +296,7 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
         d->pub_key = pub_key;
     }
     if (priv_key != NULL) {
-        BN_free(d->priv_key);
+        BN_clear_free(d->priv_key);
         d->priv_key = priv_key;
     }
     d->dirty_cnt++;
