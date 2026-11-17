@@ -1858,10 +1858,9 @@ static int test_evp_aead_tag_reject(int idx)
     OSSL_PARAM params[2];
     int i, len = 0, testresult = 0;
 
-    /* CCM and SIV verify the tag at Update, not at Final */
-    if (info->mode == EVP_CIPH_CCM_MODE
-        || info->mode == EVP_CIPH_SIV_MODE)
-        return TEST_skip("Cipher %s skipped, Cipher is CCM or SIV mode",
+    /* SIV verifies the tag at Update, not at Final */
+    if (info->mode == EVP_CIPH_SIV_MODE)
+        return TEST_skip("Cipher %s skipped, Cipher is SIV mode",
             info->name);
 
     for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
@@ -1871,6 +1870,59 @@ static int test_evp_aead_tag_reject(int idx)
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
         tag, info->taglen);
     params[1] = OSSL_PARAM_construct_end();
+
+    /* CCM verifies the tag at Update, not at Final */
+    if (info->mode == EVP_CIPH_CCM_MODE) {
+        /* ciphertext only */
+        ERR_clear_error();
+        if (!TEST_ptr(ctx_ct = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_DecryptInit_ex2(ctx_ct, info->ciph, key, iv, params))
+            || !TEST_false(EVP_DecryptUpdate(ctx_ct, out, &len, ct, sizeof(ct)))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+            TEST_info("test_evp_aead_tag_reject %s: ciphertext variant",
+                info->name);
+            goto err;
+        }
+
+        /* AAD only */
+        ERR_clear_error();
+        if (!TEST_ptr(ctx_aad = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_DecryptInit_ex2(ctx_aad, info->ciph, key, iv, params))
+            || !TEST_true(EVP_DecryptUpdate(ctx_aad, NULL, &len, NULL, 0))
+            || !TEST_true(EVP_DecryptUpdate(ctx_aad, NULL, &len, aad, sizeof(aad)))
+            || !TEST_false(EVP_DecryptUpdate(ctx_aad, out, &len, ct, 0))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+            TEST_info("test_evp_aead_tag_reject %s: AAD variant", info->name);
+            goto err;
+        }
+
+        /* ciphertext + AAD */
+        ERR_clear_error();
+        if (!TEST_ptr(ctx_ct_aad = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_DecryptInit_ex2(ctx_ct_aad, info->ciph, key, iv, params))
+            || !TEST_true(EVP_DecryptUpdate(ctx_ct_aad, NULL, &len, NULL, sizeof(ct)))
+            || !TEST_true(EVP_DecryptUpdate(ctx_ct_aad, NULL, &len, aad, sizeof(aad)))
+            || !TEST_false(EVP_DecryptUpdate(ctx_ct_aad, out, &len, ct, sizeof(ct)))
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+            TEST_info("test_evp_aead_tag_reject %s: ciphertext + AAD variant",
+                info->name);
+            goto err;
+        }
+
+        /* ciphertext only, EVP_Cipher() interface */
+        ERR_clear_error();
+        if (!TEST_ptr(ctx_c_ct = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_DecryptInit_ex2(ctx_c_ct, info->ciph, key, iv, params))
+            || !TEST_int_lt(EVP_Cipher(ctx_c_ct, out, ct, sizeof(ct)), 0)
+            || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+            TEST_info("test_evp_aead_tag_reject %s: ciphertext variant (EVP_Cipher)",
+                info->name);
+            goto err;
+        }
+
+        testresult = 1;
+        goto err;
+    }
 
     /* ciphertext only */
     ERR_clear_error();
