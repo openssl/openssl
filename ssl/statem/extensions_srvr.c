@@ -1352,6 +1352,27 @@ static SSL_TICKET_STATUS tls_get_stateful_ticket(SSL_CONNECTION *s, PACKET *tick
     return SSL_TICKET_SUCCESS;
 }
 
+/*
+ * Look up the resumption PSK |identity| in the session cache or by decrypting
+ * it as a ticket.
+ */
+static SSL_TICKET_STATUS tls_get_psk_ticket(SSL_CONNECTION *s,
+    PACKET *identity, SSL_SESSION **sess)
+{
+    /*
+     * If we are using anti-replay protection then we behave as if
+     * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
+     * is no point in using full stateless tickets.
+     */
+    if ((s->options & SSL_OP_NO_TICKET) != 0
+        || (s->max_early_data > 0
+            && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))
+        return tls_get_stateful_ticket(s, identity, sess);
+
+    return tls_decrypt_ticket(s, PACKET_data(identity),
+        PACKET_remaining(identity), NULL, 0, sess);
+}
+
 int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
@@ -1491,19 +1512,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             OSSL_TIME t, age, expire;
             int ret;
 
-            /*
-             * If we are using anti-replay protection then we behave as if
-             * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
-             * is no point in using full stateless tickets.
-             */
-            if ((s->options & SSL_OP_NO_TICKET) != 0
-                || (s->max_early_data > 0
-                    && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))
-                ret = tls_get_stateful_ticket(s, &identity, &sess);
-            else
-                ret = tls_decrypt_ticket(s, PACKET_data(&identity),
-                    PACKET_remaining(&identity), NULL, 0,
-                    &sess);
+            ret = tls_get_psk_ticket(s, &identity, &sess);
 
             if (ret == SSL_TICKET_EMPTY) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
