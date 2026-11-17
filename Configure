@@ -743,6 +743,7 @@ my @disable_cascades = (
     "legacy"            => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
+    "cms"               => [ "ts" ],
 
     "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests",
                              "fips-jitter" ],
