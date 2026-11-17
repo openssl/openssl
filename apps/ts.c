@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#include <openssl/ts.h>
+#include <libcms/ts.h>
 #include <openssl/bn.h>
 
 /* Request nonce length, in bits (must be a multiple of 8). */
