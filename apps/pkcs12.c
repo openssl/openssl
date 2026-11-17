@@ -833,33 +833,45 @@ int pkcs12_main(int argc, char **argv)
         i2a_ASN1_OBJECT(bio_err, macobj);
         if (OBJ_obj2nid(macobj) == NID_pbmac1) {
             PBKDF2PARAM *pbkdf2_param = PBMAC1_get1_pbkdf2_param(macalgid);
+            PBMAC1PARAM *pbmac1_param = PBMAC1_get1_param(macalgid);
 
-            if (pbkdf2_param == NULL) {
-                BIO_puts(bio_err, ", Unsupported KDF or params for PBMAC1\n");
+
+            if (pbmac1_param == NULL) {
+                BIO_puts(bio_err, ", Unsupported params for PBMAC1\n");
             } else {
-                const ASN1_OBJECT *prfobj;
-                int prfnid;
+                const ASN1_OBJECT *pbmac1obj;
 
-                BIO_printf(bio_err, " using PBKDF2, Iteration %ld\n",
-                    ASN1_INTEGER_get(pbkdf2_param->iter));
-                BIO_printf(bio_err, "Key length: %ld, Salt length: %d\n",
-                    ASN1_INTEGER_get(pbkdf2_param->keylength),
-                    (int)ASN1_STRING_get_length(pbkdf2_param->salt->value.octet_string));
-                if (pbkdf2_param->prf == NULL) {
-                    prfnid = NID_hmacWithSHA1;
+                X509_ALGOR_get0(&pbmac1obj, NULL, NULL, pbmac1_param->messageAuthScheme);
+
+                if (pbkdf2_param == NULL) {
+                    BIO_puts(bio_err, " using an unsupported KDF for PBMAC1 and ");
+                    i2a_ASN1_OBJECT(bio_err, pbmac1obj);
+                    BIO_puts(bio_err, " Message Authentication Scheme\n");
                 } else {
-                    X509_ALGOR_get0(&prfobj, NULL, NULL, pbkdf2_param->prf);
-                    prfnid = OBJ_obj2nid(prfobj);
+                    const ASN1_OBJECT *prfobj;
+                    int prfnid;
+
+                    BIO_printf(bio_err, " using PBKDF2 and ");
+                    i2a_ASN1_OBJECT(bio_err, pbmac1obj);
+                    BIO_printf(bio_err, "\nIteration %ld, Key length: %ld, Salt length: %d\n",
+                        ASN1_INTEGER_get(pbkdf2_param->iter),
+                        ASN1_INTEGER_get(pbkdf2_param->keylength),
+                        (int)ASN1_STRING_get_length(pbkdf2_param->salt->value.octet_string));
+                    if (pbkdf2_param->prf == NULL) {
+                        prfnid = NID_hmacWithSHA1;
+                    } else {
+                        X509_ALGOR_get0(&prfobj, NULL, NULL, pbkdf2_param->prf);
+                        prfnid = OBJ_obj2nid(prfobj);
+                    }
+                    BIO_printf(bio_err, "PBKDF2 PRF: %s\n", OBJ_nid2sn(prfnid));
                 }
-                BIO_printf(bio_err, "PBKDF2 PRF: %s\n", OBJ_nid2sn(prfnid));
             }
             PBKDF2PARAM_free(pbkdf2_param);
-        } else {
-            BIO_printf(bio_err, ", Iteration %ld\n",
-                tmaciter != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
-            BIO_printf(bio_err, "MAC length: %ld, salt length: %ld\n",
-                tmac != NULL ? (long)ASN1_STRING_get_length(tmac) : 0L,
-                tsalt != NULL ? (long)ASN1_STRING_get_length(tsalt) : 0L);
+            PBMAC1PARAM_free(pbmac1_param);
+        }
+        else
+        {
+            BIO_puts(bio_err, "\n");
         }
     }
 
