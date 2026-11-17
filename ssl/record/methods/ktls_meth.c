@@ -297,8 +297,17 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 {
     ktls_crypto_info_t crypto_info;
     unsigned char recseq[SEQ_NUM_SIZE], *p_recseq = recseq;
+    int rekey;
 
     l2n8(rl->sequence, p_recseq);
+
+    /*
+     * If KTLS is already active on the BIO in this direction then this is a
+     * TLSv1.3 KeyUpdate and we are replacing the keys held by the kernel.
+     */
+    rekey = rl->direction == OSSL_RECORD_DIRECTION_WRITE
+        ? BIO_get_ktls_send(rl->bio)
+        : BIO_get_ktls_recv(rl->bio);
 
     /*
      * Check if we are suitable for KTLS. If not suitable we return
@@ -333,8 +342,23 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             iv, ivlen, key, keylen, mackey, mackeylen))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
-    if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction))
+    if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction)) {
+        int err = errno;
+
+        if (rekey) {
+            /*
+             * The kernel already owns this direction of the connection, so
+             * there is no falling back to another record layer. Rekeying
+             * requires kernel support, e.g. Linux 6.14 or later.
+             */
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_KTLS_KEY_UPDATE_FAILED,
+                "kernel rejected new %s keys, errno=%d",
+                rl->direction == OSSL_RECORD_DIRECTION_WRITE ? "TX" : "RX",
+                err);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+    }
 
     if (rl->direction == OSSL_RECORD_DIRECTION_WRITE && (rl->options & SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE) != 0)
         /* Ignore errors. The application opts in to using the zerocopy
