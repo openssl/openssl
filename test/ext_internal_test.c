@@ -79,6 +79,7 @@ static EXT_LIST ext_list[] = {
     EXT_EXCEPTION(ech),
     EXT_EXCEPTION(outer_extensions),
 #endif
+    EXT_ENTRY(cert_with_extern_psk),
     EXT_ENTRY(grease1),
     EXT_ENTRY(grease2),
     EXT_ENTRY(psk),

@@ -766,6 +766,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_ech,
     TLSEXT_IDX_outer_extensions,
+    TLSEXT_IDX_cert_with_extern_psk,
     TLSEXT_IDX_grease1,
     TLSEXT_IDX_grease2,
     TLSEXT_IDX_psk,

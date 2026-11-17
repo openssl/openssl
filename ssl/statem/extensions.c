@@ -465,6 +465,12 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     INVALID_EXTENSION,
     INVALID_EXTENSION,
 #endif /* END_OPENSSL_NO_ECH */
+    { TLSEXT_TYPE_cert_with_extern_psk,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
+            | SSL_EXT_TLS1_3_ONLY,
+        OSSL_ECH_HANDLING_CALL_BOTH,
+        NULL, tls_parse_ctos_cert_with_extern_psk, NULL,
+        tls_construct_stoc_cert_with_extern_psk, NULL, NULL },
     { /* RFC 8701 GREASE extension 1 - type is dynamic */
         TLSEXT_TYPE_grease1,
         SSL_EXT_CLIENT_HELLO,

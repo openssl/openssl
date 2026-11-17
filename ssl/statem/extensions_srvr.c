@@ -555,6 +555,13 @@ int tls_parse_ctos_etm(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_cert_with_extern_psk_offered(SSL_CONNECTION *s)
+{
+    return (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+        && s->clienthello != NULL
+        && s->clienthello->pre_proc_exts[TLSEXT_IDX_cert_with_extern_psk].present;
+}
+
 /*
  * Process a psk_kex_modes extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
@@ -582,7 +589,9 @@ int tls_parse_ctos_psk_kex_modes(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     if (((s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) != 0)
-        && (s->options & SSL_OP_PREFER_NO_DHE_KEX) != 0) {
+        && (s->options & SSL_OP_PREFER_NO_DHE_KEX) != 0
+        /* RFC 9973 needs DHE PSK, see tls_parse_ctos_psk() */
+        && !tls_cert_with_extern_psk_offered(s)) {
 
         /*
          * If NO_DHE is supported and preferred, then we only remember this
@@ -1384,6 +1393,15 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     const EVP_MD *md = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    int cert_with_extern_psk = tls_cert_with_extern_psk_offered(s);
+
+    /*
+     * RFC 9973 Section 5.1: the extension requires psk_dhe_ke. Without it, use
+     * no PSK.
+     */
+    if (cert_with_extern_psk
+        && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
+        return 1;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -1393,6 +1411,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             & (TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE))
         == 0)
         return 1;
+
+    if (cert_with_extern_psk)
+        s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE_DHE;
 
     if (!PACKET_get_length_prefixed_2(pkt, &identities)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1665,6 +1686,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     s->ext.tick_identity = id;
+    s->ext.cert_with_extern_psk = cert_with_extern_psk;
 
     SSL_SESSION_free(s->session);
     s->session = sess;
@@ -1672,6 +1694,28 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 err:
     SSL_SESSION_free(sess);
     return 0;
+}
+
+int tls_parse_ctos_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx)
+{
+    if ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) == 0)
+        return 1;
+
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* RFC 9973 Section 4: not allowed together with early_data */
+    if (s->clienthello != NULL
+        && s->clienthello->pre_proc_exts[TLSEXT_IDX_early_data].present) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    return 1;
 }
 
 int tls_parse_ctos_post_handshake_auth(SSL_CONNECTION *s, PACKET *pkt,
@@ -2455,6 +2499,23 @@ EXT_RETURN tls_construct_stoc_psk(SSL_CONNECTION *s, WPACKET *pkt,
         || !WPACKET_start_sub_packet_u16(pkt)
         || !WPACKET_put_bytes_u16(pkt, s->ext.tick_identity)
         || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
+EXT_RETURN tls_construct_stoc_cert_with_extern_psk(SSL_CONNECTION *s,
+    WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx)
+{
+    if (!SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_with_extern_psk)
+        || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
