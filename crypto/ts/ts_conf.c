@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
@@ -343,6 +346,20 @@ err:
     return ret;
 }
 
+/* Parse the whole of str as a decimal int */
+static int ts_strtoint(const char *str, int *result)
+{
+    char *end;
+    long l;
+
+    errno = 0;
+    l = strtol(str, &end, 10);
+    if (errno != 0 || end == str || *end != '\0' || l < INT_MIN || l > INT_MAX)
+        return 0;
+    *result = (int)l;
+    return 1;
+}
+
 int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 {
     int ret = 0;
@@ -359,21 +376,21 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         CONF_VALUE *val = sk_CONF_VALUE_value(list, i);
         if (strcmp(val->name, ENV_VALUE_SECS) == 0) {
             if (val->value != NULL
-                && (!ossl_strtoint(val->value, NULL, 10, &secs)
+                && (!ts_strtoint(val->value, &secs)
                     || secs < 0)) {
                 ts_CONF_invalid(section, ENV_ACCURACY);
                 goto err;
             }
         } else if (strcmp(val->name, ENV_VALUE_MILLISECS) == 0) {
             if (val->value != NULL
-                && (!ossl_strtoint(val->value, NULL, 10, &millis)
+                && (!ts_strtoint(val->value, &millis)
                     || millis < 0)) {
                 ts_CONF_invalid(section, ENV_ACCURACY);
                 goto err;
             }
         } else if (strcmp(val->name, ENV_VALUE_MICROSECS) == 0) {
             if (val->value != NULL
-                && (!ossl_strtoint(val->value, NULL, 10, &micros)
+                && (!ts_strtoint(val->value, &micros)
                     || micros < 0)) {
                 ts_CONF_invalid(section, ENV_ACCURACY);
                 goto err;
