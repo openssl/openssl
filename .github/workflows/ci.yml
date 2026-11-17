@@ -904,6 +904,9 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+    - name: package installs
+      # mercurial (hg) is not preinstalled on ubuntu-26.04 runner images
+      run: sudo apt-get update && sudo apt-get -y install mercurial
     - name: Configure OpenSSL
       run: ./config enable-external-tests
     - name: Build OpenSSL
