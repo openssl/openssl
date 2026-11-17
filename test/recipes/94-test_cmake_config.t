@@ -95,6 +95,15 @@ push @cmake_configure, "-A", "Win32"
 push @cmake_configure, "-A", "ARM64"
     if config('target') =~ /^VC-WIN64-ARM/ && $platform_flag_ok;
 
+# cmake defaults single-config builds with MSVC to Debug, which pulls in
+# the debug CRT (msvcr*d.dll); minimal toolchain environments carry only
+# the release CRT.  Build the consumer project in Release, like the
+# OpenSSL build itself.  Multi-config generators ignore
+# CMAKE_BUILD_TYPE; with those, the configuration is selected at build
+# time (--config) instead.
+push @cmake_configure, "-DCMAKE_BUILD_TYPE=Release"
+    if config('target') =~ /^VC-/;
+
 # A no-shared OpenSSL build links against the static CRT (Configurations
 # sets /MT for that case); the dummy programs must use the same runtime,
 # or they import msvcr*.dll, which a minimal toolchain environment need
