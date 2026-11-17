@@ -64,22 +64,35 @@ err:
 static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
     long *sec, long *usec)
 {
-    OSSL_TIME t;
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
+    SYSTEMTIME st;
+    FILETIME ft;
+    uint64_t t;
+
+    GetSystemTime(&st);
+    if (!SystemTimeToFileTime(&st, &ft))
+        goto err;
+    /* 100 ns intervals since 1601-01-01, rebased to 1970-01-01 */
+    t = (((uint64_t)ft.dwHighDateTime << 32) | ft.dwLowDateTime)
+        - UINT64_C(116444736000000000);
+    *sec = (long)(t / 10000000);
+    *usec = (long)(t % 10000000 / 10);
+#else
     struct timeval tv;
 
-    t = ossl_time_now();
-    if (ossl_time_is_zero(t)) {
-        ERR_raise(ERR_LIB_TS, TS_R_TIME_SYSCALL_ERROR);
-        TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
-            "Time is not available.");
-        TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
-        return 0;
-    }
-    tv = ossl_time_to_timeval(t);
-    *sec = (long int)tv.tv_sec;
-    *usec = (long int)tv.tv_usec;
-
+    if (gettimeofday(&tv, NULL) != 0)
+        goto err;
+    *sec = (long)tv.tv_sec;
+    *usec = (long)tv.tv_usec;
+#endif /* defined(_WIN32) && !defined(OPENSSL_SYS_UEFI) */
     return 1;
+
+err:
+    ERR_raise(ERR_LIB_TS, TS_R_TIME_SYSCALL_ERROR);
+    TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
+        "Time is not available.");
+    TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
+    return 0;
 }
 
 static int def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext,
