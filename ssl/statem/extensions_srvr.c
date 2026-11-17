@@ -562,6 +562,17 @@ int tls_cert_with_extern_psk_offered(SSL_CONNECTION *s)
         && s->clienthello->pre_proc_exts[TLSEXT_IDX_cert_with_extern_psk].present;
 }
 
+const SSL_CIPHER *tls_cert_with_extern_psk_cipher(SSL_CONNECTION *s,
+    const EVP_MD *md)
+{
+    /* tls_early_post_process_client_hello() set s->peer_ciphers */
+    if (md == NULL || s->peer_ciphers == NULL)
+        return NULL;
+
+    return ssl3_choose_cipher_md(s, s->peer_ciphers,
+        SSL_get_ciphers(SSL_CONNECTION_GET_SSL(s)), md);
+}
+
 /*
  * Process a psk_kex_modes extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
@@ -1020,6 +1031,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     PACKET cookie, raw, chhash, appcookie;
     WPACKET hrrpkt;
     const unsigned char *data, *mdin, *ciphdata;
+    const SSL_CIPHER *cookie_cipher;
     unsigned char hmac[SHA256_DIGEST_LENGTH];
     unsigned char hrr[MAX_HRR_SIZE];
     size_t rawlen, hmaclen, hrrlen, ciphlen;
@@ -1132,13 +1144,27 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (s->s3.tmp.new_cipher != ssl_get_cipher_by_char(s, ciphdata, 0)) {
+    cookie_cipher = ssl_get_cipher_by_char(s, ciphdata, 0);
+    if (s->s3.tmp.new_cipher != cookie_cipher) {
         /*
-         * We chose a different cipher this time around to what is in the
-         * cookie. Something must have changed.
+         * RFC 9973: the cookie may hold a ciphersuite of the external PSK's
+         * hash, see tls_parse_ctos_psk(). Keep it if that hash still selects
+         * it.
          */
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
-        return 0;
+        if (cookie_cipher != NULL
+            && tls_cert_with_extern_psk_offered(s)
+            && tls_cert_with_extern_psk_cipher(s,
+                   ssl_md(sctx, cookie_cipher->algorithm2))
+                == cookie_cipher) {
+            s->s3.tmp.new_cipher = cookie_cipher;
+        } else {
+            /*
+             * We chose a different cipher this time around to what is in the
+             * cookie. Something must have changed.
+             */
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
+            return 0;
+        }
     }
 
     if (!PACKET_get_1(&cookie, &key_share)
@@ -1695,17 +1721,31 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         if (!EVP_MD_is_a(md,
                 EVP_MD_get0_name(ssl_md(sctx,
                     s->s3.tmp.new_cipher->algorithm2)))) {
-            /* The ciphersuite is not compatible with this session. */
-            SSL_SESSION_free(sess);
-            sess = NULL;
-            s->ext.early_data_ok = 0;
+            const SSL_CIPHER *cipher = NULL;
+
             /*
-             * We fall back to a full handshake. The new session ticket will be
-             * issued to the client with the newly negotiated ciphersuite,
-             * allowing successful resumption on future connections.
+             * RFC 9973: switch to a ciphersuite of the external PSK's hash,
+             * unless a HelloRetryRequest has already fixed it.
              */
-            s->ext.ticket_expected = 1;
-            continue;
+            if (cert_with_extern_psk && ext
+                && s->hello_retry_request == SSL_HRR_NONE)
+                cipher = tls_cert_with_extern_psk_cipher(s, md);
+
+            if (cipher == NULL) {
+                /* The ciphersuite is not compatible with this session. */
+                SSL_SESSION_free(sess);
+                sess = NULL;
+                s->ext.early_data_ok = 0;
+                /*
+                 * We fall back to a full handshake. The new session ticket will
+                 * be issued to the client with the newly negotiated
+                 * ciphersuite, allowing successful resumption on future
+                 * connections.
+                 */
+                s->ext.ticket_expected = 1;
+                continue;
+            }
+            s->s3.tmp.new_cipher = cipher;
         }
         /*
          * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK

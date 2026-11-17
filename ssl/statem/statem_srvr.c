@@ -2468,8 +2468,14 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     /* For TLSv1.3 we must select the ciphersuite *before* session resumption */
     if (SSL_CONNECTION_IS_VERSION13(s)) {
-        const SSL_CIPHER *cipher = ssl3_choose_cipher(s, ciphers, SSL_get_ciphers(ssl));
+        const SSL_CIPHER *cipher;
 
+        /* RFC 9973 needs them for the PSK selection too */
+        sk_SSL_CIPHER_free(s->peer_ciphers);
+        s->peer_ciphers = ciphers;
+        ciphers = NULL;
+
+        cipher = ssl3_choose_cipher(s, s->peer_ciphers, SSL_get_ciphers(ssl));
         if (cipher == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_SHARED_CIPHER);
             goto err;
@@ -2478,11 +2484,25 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             && (s->s3.tmp.new_cipher == NULL
                 || s->s3.tmp.new_cipher->id != cipher->id)) {
             /*
-             * A previous HRR picked a different ciphersuite to the one we
-             * just selected. Something must have changed.
+             * RFC 9973: the HRR may use a ciphersuite of the external PSK's
+             * hash, see tls_parse_ctos_psk(). Keep it if that hash still
+             * selects it.
              */
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
-            goto err;
+            if (s->s3.tmp.new_cipher != NULL
+                && tls_cert_with_extern_psk_offered(s)
+                && tls_cert_with_extern_psk_cipher(s,
+                       ssl_md(SSL_CONNECTION_GET_CTX(s),
+                           s->s3.tmp.new_cipher->algorithm2))
+                    == s->s3.tmp.new_cipher) {
+                cipher = s->s3.tmp.new_cipher;
+            } else {
+                /*
+                 * A previous HRR picked a different ciphersuite to the one we
+                 * just selected. Something must have changed.
+                 */
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
+                goto err;
+            }
         }
         s->s3.tmp.new_cipher = cipher;
 
@@ -2798,10 +2818,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 #endif
 
     /*
-     * Given s->peer_ciphers and SSL_get_ciphers, we must pick a cipher
+     * Given s->peer_ciphers and SSL_get_ciphers, we must pick a cipher. For
+     * TLSv1.3 they were set before selecting it above.
      */
 
-    if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
+    if (!s->hit && !SSL_CONNECTION_IS_VERSION13(s)) {
         sk_SSL_CIPHER_free(s->peer_ciphers);
         s->peer_ciphers = ciphers;
         if (ciphers == NULL) {

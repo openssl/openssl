@@ -407,6 +407,19 @@ int tls_parse_ctos_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
  *          contains the extension, 0 otherwise
  */
 int tls_cert_with_extern_psk_offered(SSL_CONNECTION *s);
+/**
+ * @brief Find the ciphersuite to select for an RFC 9973 external PSK.
+ *
+ * A PSK only works with a ciphersuite of its hash, but the ciphersuite is
+ * selected before the PSKs.
+ *
+ * @param s the server connection
+ * @param md the hash of the external PSK
+ * @returns the ciphersuite of hash @p md to select from those the client
+ *          offered, or NULL if there is none
+ */
+const SSL_CIPHER *tls_cert_with_extern_psk_cipher(SSL_CONNECTION *s,
+    const EVP_MD *md);
 int tls_parse_ctos_post_handshake_auth(SSL_CONNECTION *, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
