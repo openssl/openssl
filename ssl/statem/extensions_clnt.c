@@ -1352,6 +1352,17 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         psksess = NULL;
     }
 
+    /*
+     * RFC 9973 Section 7: with the option, the external PSK is only offered
+     * with the extension, which needs a PSK of at least 128 bits to protect
+     * against a CRQC. Drop a shorter one too.
+     */
+    if (psksess != NULL && (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+        && psksess->master_key_length < SSL_CERT_WITH_EXTERN_PSK_MIN_LEN) {
+        SSL_SESSION_free(psksess);
+        psksess = NULL;
+    }
+
     SSL_SESSION_free(s->psksession);
     s->psksession = psksess;
     if (psksess != NULL) {
@@ -1390,9 +1401,22 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
      */
     s->ext.psk_resumption_offered = tls13_check_resumption_psk(s, handmd);
 
+    /*
+     * RFC 9973: the external PSK is only offered with the extension, which
+     * excludes resumption PSKs and early data. Otherwise don't offer the PSK
+     * at all, or a server could accept it as the sole authentication.
+     */
+    if ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0 && psksess != NULL
+        && s->ext.psk_resumption_offered) {
+        SSL_SESSION_free(s->psksession);
+        s->psksession = psksess = NULL;
+    }
+
     edsess = s->ext.psk_resumption_offered ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || edsess == NULL
+        || ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+            && edsess == s->psksession)
         || edsess->ext.max_early_data == 0
         || !tls13_early_cipher_offered(s, edsess)
         || !tls13_early_alpn_offered(s, edsess)) {
