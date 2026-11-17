@@ -66,6 +66,7 @@ PKCS#12 output (export) options:
 [B<-descert>]
 [B<-macalg> I<digest>]
 [B<-pbmac1_pbkdf2>]
+[B<-no_pbmac1_pbkdf2>]
 [B<-pbmac1_pbkdf2_md> I<digest>]
 [B<-iter> I<count>]
 [B<-noiter>]
@@ -357,6 +358,13 @@ Specify the MAC digest algorithm. If not included SHA256 will be used.
 =item B<-pbmac1_pbkdf2>
 
 Use PBMAC1 with PBKDF2 for MAC protection of the PKCS#12 file.
+
+=item B<-no_pbmac1_pbkdf2>
+
+Use the traditional PKCS#12 MAC (HMAC keyed using PKCS12KDF) for MAC
+protection of the PKCS#12 file. This is the default.
+If both B<-pbmac1_pbkdf2> and B<-no_pbmac1_pbkdf2> are given, the last one
+specified takes effect.
 
 =item B<-pbmac1_pbkdf2_md> I<digest>
 

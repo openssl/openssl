@@ -109,6 +109,7 @@ typedef enum OPTION_choice {
     OPT_PROV_ENUM,
     OPT_JDKTRUST,
     OPT_PBMAC1_PBKDF2,
+    OPT_NO_PBMAC1_PBKDF2,
     OPT_PBMAC1_PBKDF2_MD,
     OPT_NOVERSIONCHECK,
 #ifndef OPENSSL_NO_DES
@@ -185,6 +186,7 @@ const OPTIONS pkcs12_options[] = {
     { "macalg", OPT_MACALG, 's',
         "Digest algorithm to use in MAC (default SHA256)" },
     { "pbmac1_pbkdf2", OPT_PBMAC1_PBKDF2, '-', "Use PBMAC1 with PBKDF2 instead of MAC" },
+    { "no_pbmac1_pbkdf2", OPT_NO_PBMAC1_PBKDF2, '-', "Use MAC instead of PBMAC1 with PBKDF2" },
     { "pbmac1_pbkdf2_md", OPT_PBMAC1_PBKDF2_MD, 's', "Digest to use for PBMAC1 KDF (default SHA256)" },
     { "iter", OPT_ITER, 'p', "Specify the iteration count for encryption and MAC" },
     { "noiter", OPT_NOITER, '-', "Don't use encryption iteration" },
@@ -326,6 +328,9 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_PBMAC1_PBKDF2:
             pbmac1_pbkdf2 = 1;
+            break;
+        case OPT_NO_PBMAC1_PBKDF2:
+            pbmac1_pbkdf2 = 0;
             break;
         case OPT_PBMAC1_PBKDF2_MD:
             pbmac1_pbkdf2_md = opt_arg();
