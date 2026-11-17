@@ -160,7 +160,7 @@ static int test_x509_make_unsigned(void)
 
     if (!TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
         || !TEST_ptr(issuer = X509_NAME_dup(X509_get_issuer_name(x)))
-        || !TEST_false(OSSL_IS_NULL_DN(issuer))
+        || !TEST_ptr(X509_NAME_get_entry(issuer, 0))
         || !TEST_true(X509_set_unsigned(x))
         || !TEST_int_eq(X509_NAME_cmp(X509_get_issuer_name(x), issuer), 0)
         || !TEST_true(test_x509_is_unsigned(x)))
@@ -177,7 +177,7 @@ static int test_x509_make_unsigned(void)
         || !TEST_true(test_x509_is_unsigned(decoded)))
         goto end;
 
-    if (!TEST_false(OSSL_IS_NULL_DN(X509_get_subject_name(decoded)))
+    if (!TEST_ptr(X509_NAME_get_entry(X509_get_subject_name(decoded), 0))
         || !TEST_ptr(empty_issuer = X509_NAME_new())
         || !TEST_int_eq(X509_set_issuer_name(decoded, empty_issuer), 1)
         || !TEST_true(X509_set_unsigned(decoded))
