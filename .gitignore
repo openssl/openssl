@@ -210,6 +210,7 @@ providers/implementations/rands/test_rng.inc
 /crypto/err/openssl.txt.old
 # Generated error code files (from crypto/err/openssl.txt)
 /cms/cms_err.c
+/cms/ts_err.c
 /crypto/asn1/asn1_err.c
 /crypto/async/async_err.c
 /crypto/bio/bio_err.c
@@ -242,7 +243,6 @@ providers/implementations/rands/test_rng.inc
 /crypto/ssl_err.c
 /crypto/sslerr.h
 /crypto/store/store_err.c
-/crypto/ts/ts_err.c
 /crypto/ui/ui_err.c
 /crypto/x509/v3err.c
 /crypto/x509/x509_err.c

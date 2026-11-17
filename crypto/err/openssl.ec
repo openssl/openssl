@@ -27,7 +27,7 @@ L DSO           NONE                            crypto/dso/dso_err.c            
 L OCSP          include/openssl/ocsperr.h       crypto/ocsp/ocsp_err.c                  include/crypto/ocsperr.h
 L UI            include/openssl/uierr.h         crypto/ui/ui_err.c                      include/crypto/uierr.h
 L COMP          include/openssl/comperr.h       crypto/comp/comp_err.c                  include/crypto/comperr.h
-L TS            include/openssl/tserr.h         crypto/ts/ts_err.c                      include/crypto/tserr.h
+L TS            include/openssl/tserr.h         cms/ts_err.c                            include/crypto/tserr.h
 L CMS           include/openssl/cmserr.h        cms/cms_err.c                           include/crypto/cmserr.h
 L CRMF          include/openssl/crmferr.h       crypto/crmf/crmf_err.c                  include/crypto/crmferr.h
 L CMP           include/openssl/cmperr.h        crypto/cmp/cmp_err.c                    include/crypto/cmperr.h
