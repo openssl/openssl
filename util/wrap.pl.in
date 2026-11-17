@@ -118,6 +118,11 @@ if ($^O eq 'VMS') {
     @cmd = ( @ARGV );
 }
 
+# A program path coming from foreign tooling (such as cmake) may carry
+# forward slashes, which CreateProcess chokes on for executables on Windows.
+# Normalize to native separators.
+$cmd[0] =~ s|/|\\|g if $^O eq 'MSWin32';
+
 # The exec() statement on MSWin32 doesn't seem to give back the exit code
 # from the call, so we resort to using system() instead.
 my $waitcode;
