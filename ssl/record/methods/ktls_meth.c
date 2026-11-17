@@ -391,6 +391,16 @@ static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
             RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
                 SSL_R_WRONG_VERSION_NUMBER);
             break;
+#ifdef EKEYEXPIRED
+        case EKEYEXPIRED:
+            /*
+             * The kernel has received a KeyUpdate and refuses to decrypt any
+             * further records until the new RX keys have been installed.
+             */
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                SSL_R_KTLS_KEY_UPDATE_FAILED);
+            break;
+#endif
         default:
             break;
         }
