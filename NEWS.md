@@ -30,6 +30,16 @@ in this release is Low.
 
 This release incorporates the following bug fixes and mitigations:
 
+  * Fixed out-of-bounds read in TLS 1.3 key-share processing with Suite B flag.
+    ([CVE-2026-35190])
+
+  * Fixed use-after-free in `PEM_X509_INFO_read_bio_ex()` on stack append
+    failure.
+    ([CVE-2026-107493])
+
+  * Fixed unbounded memory retention in QUIC server for rejected streams.
+    ([CVE-2026-124709])
+
   * Fixed use of uninitialized stack data in QUIC automated peer detection.
     ([CVE-2026-88822])
 
@@ -2445,6 +2455,9 @@ OpenSSL 0.9.x
 [CVE-2026-95691]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95691
 [CVE-2026-95692]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95692
 [CVE-2026-107496]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107496
+[CVE-2026-35190]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35190
+[CVE-2026-107493]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107493
+[CVE-2026-124709]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-124709
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
 [README-QUIC.md]: ./README-QUIC.md
