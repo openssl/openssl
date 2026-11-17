@@ -26,7 +26,7 @@ int main(void)
 #include <stddef.h>
 #include <setjmp.h>
 #include <string.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 
 #include "bio_local.h"
 
@@ -57,8 +57,8 @@ int __wrap_getnameinfo(const struct sockaddr *sa, socklen_t salen,
 
     function_called();
     check_expected_ptr(sa);
-    check_expected(salen);
-    check_expected(flags);
+    check_expected_uint(salen);
+    check_expected_int(flags);
     rc = mock_type(int);
     if (rc == 0) {
         if (host != NULL)
@@ -90,9 +90,9 @@ static void expect_getnameinfo(const struct sockaddr *sa, socklen_t salen,
     const char *host_out, const char *serv_out)
 {
     expect_function_call(__wrap_getnameinfo);
-    expect_value(__wrap_getnameinfo, sa, sa);
-    expect_value(__wrap_getnameinfo, salen, salen);
-    expect_value(__wrap_getnameinfo, flags, flags);
+    expect_uint_value(__wrap_getnameinfo, sa, cast_ptr_to_uintmax_type(sa));
+    expect_uint_value(__wrap_getnameinfo, salen, salen);
+    expect_int_value(__wrap_getnameinfo, flags, flags);
     will_return(__wrap_getnameinfo, rc);
     if (rc == 0) {
         will_return(__wrap_getnameinfo, host_out);
@@ -103,7 +103,7 @@ static void expect_getnameinfo(const struct sockaddr *sa, socklen_t salen,
 static void expect_freeaddrinfo(const struct addrinfo *res)
 {
     expect_function_call(__wrap_freeaddrinfo);
-    expect_value(__wrap_freeaddrinfo, res, res);
+    expect_uint_value(__wrap_freeaddrinfo, res, cast_ptr_to_uintmax_type(res));
 }
 #endif /* AI_PASSIVE */
 

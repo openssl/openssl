@@ -26,7 +26,7 @@ int main(void)
 #include <string.h>
 #include <errno.h>
 #include <netinet/in.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 #include "bio_local.h"
 #include <openssl/bio.h>
 
@@ -60,10 +60,10 @@ ssize_t __wrap_recvfrom(int fd, void *buf, size_t len, int flags,
     ssize_t rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(len);
-    check_expected(flags);
+    check_expected_uint(len);
+    check_expected_int(flags);
     rc = mock_type(ssize_t);
     if (rc >= 0 && src != NULL && slen != NULL) {
         const struct sockaddr *sa = mock_ptr_type(const struct sockaddr *);
@@ -84,11 +84,11 @@ ssize_t __wrap_sendto(int fd, const void *buf, size_t len, int flags,
     ssize_t rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(len);
-    check_expected(flags);
-    check_expected(slen);
+    check_expected_uint(len);
+    check_expected_int(flags);
+    check_expected_uint(slen);
     (void)dst;
     rc = mock_type(ssize_t);
     if (rc < 0)
@@ -99,9 +99,9 @@ ssize_t __wrap_sendto(int fd, const void *buf, size_t len, int flags,
 ssize_t __wrap_write(int fd, const void *buf, size_t count)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(count);
+    check_expected_uint(count);
     return mock_type(ssize_t);
 }
 
@@ -110,7 +110,7 @@ int __wrap_getsockname(int fd, struct sockaddr *addr, socklen_t *slen)
     int rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     rc = mock_type(int);
     if (rc == 0 && addr != NULL && slen != NULL) {
         const struct sockaddr *sa = mock_ptr_type(const struct sockaddr *);
@@ -129,7 +129,7 @@ int __wrap_getpeername(int fd, struct sockaddr *addr, socklen_t *slen)
     int rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     rc = mock_type(int);
     if (rc == 0 && addr != NULL && slen != NULL && *slen >= sizeof(g_sin)) {
         memcpy(addr, &g_sin, sizeof(g_sin));
@@ -141,15 +141,15 @@ int __wrap_getpeername(int fd, struct sockaddr *addr, socklen_t *slen)
 int __wrap_BIO_closesocket(int fd)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     return mock_type(int);
 }
 
 int __wrap_BIO_socket_nbio(int fd, int mode)
 {
     function_called();
-    check_expected(fd);
-    check_expected(mode);
+    check_expected_int(fd);
+    check_expected_int(mode);
     return mock_type(int);
 }
 
@@ -159,10 +159,10 @@ static void expect_recvfrom(int fd, const void *buf, size_t len, int flags,
     ssize_t rc, const struct sockaddr *src, int errnoval)
 {
     expect_function_call(__wrap_recvfrom);
-    expect_value(__wrap_recvfrom, fd, fd);
-    expect_value(__wrap_recvfrom, buf, buf);
-    expect_value(__wrap_recvfrom, len, len);
-    expect_value(__wrap_recvfrom, flags, flags);
+    expect_int_value(__wrap_recvfrom, fd, fd);
+    expect_uint_value(__wrap_recvfrom, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_recvfrom, len, len);
+    expect_int_value(__wrap_recvfrom, flags, flags);
     will_return(__wrap_recvfrom, rc);
     if (rc >= 0)
         will_return(__wrap_recvfrom, src);
@@ -174,11 +174,11 @@ static void expect_sendto(int fd, const void *buf, size_t len, int flags,
     socklen_t slen, ssize_t rc, int errnoval)
 {
     expect_function_call(__wrap_sendto);
-    expect_value(__wrap_sendto, fd, fd);
-    expect_value(__wrap_sendto, buf, buf);
-    expect_value(__wrap_sendto, len, len);
-    expect_value(__wrap_sendto, flags, flags);
-    expect_value(__wrap_sendto, slen, slen);
+    expect_int_value(__wrap_sendto, fd, fd);
+    expect_uint_value(__wrap_sendto, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_sendto, len, len);
+    expect_int_value(__wrap_sendto, flags, flags);
+    expect_uint_value(__wrap_sendto, slen, slen);
     will_return(__wrap_sendto, rc);
     if (rc < 0)
         will_return(__wrap_sendto, errnoval);
@@ -187,16 +187,16 @@ static void expect_sendto(int fd, const void *buf, size_t len, int flags,
 static void expect_write(int fd, const void *buf, size_t count, ssize_t rc)
 {
     expect_function_call(__wrap_write);
-    expect_value(__wrap_write, fd, fd);
-    expect_value(__wrap_write, buf, buf);
-    expect_value(__wrap_write, count, count);
+    expect_int_value(__wrap_write, fd, fd);
+    expect_uint_value(__wrap_write, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_write, count, count);
     will_return(__wrap_write, rc);
 }
 
 static void expect_getsockname(int fd, int rc)
 {
     expect_function_call(__wrap_getsockname);
-    expect_value(__wrap_getsockname, fd, fd);
+    expect_int_value(__wrap_getsockname, fd, fd);
     will_return(__wrap_getsockname, rc);
     if (rc == 0) {
         will_return(__wrap_getsockname, (const struct sockaddr *)&g_sin);
@@ -207,22 +207,22 @@ static void expect_getsockname(int fd, int rc)
 static void expect_getpeername(int fd, int rc)
 {
     expect_function_call(__wrap_getpeername);
-    expect_value(__wrap_getpeername, fd, fd);
+    expect_int_value(__wrap_getpeername, fd, fd);
     will_return(__wrap_getpeername, rc);
 }
 
 static void expect_BIO_closesocket(int fd, int rc)
 {
     expect_function_call(__wrap_BIO_closesocket);
-    expect_value(__wrap_BIO_closesocket, fd, fd);
+    expect_int_value(__wrap_BIO_closesocket, fd, fd);
     will_return(__wrap_BIO_closesocket, rc);
 }
 
 static void expect_BIO_socket_nbio(int fd, int mode, int rc)
 {
     expect_function_call(__wrap_BIO_socket_nbio);
-    expect_value(__wrap_BIO_socket_nbio, fd, fd);
-    expect_value(__wrap_BIO_socket_nbio, mode, mode);
+    expect_int_value(__wrap_BIO_socket_nbio, fd, fd);
+    expect_int_value(__wrap_BIO_socket_nbio, mode, mode);
     will_return(__wrap_BIO_socket_nbio, rc);
 }
 

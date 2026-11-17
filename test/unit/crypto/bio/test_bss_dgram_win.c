@@ -26,7 +26,7 @@ int main(void) { return 0; }
 #include <stddef.h>
 #include <setjmp.h>
 #include <string.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 #include <detours/detours.h>
 
 #include "internal/sockets.h"
@@ -235,7 +235,7 @@ static void expect_recvfrom_error(char *buf, int len, int flags, int wsaerr)
 {
     expect_function_call(mock_recvfrom);
     expect_uint_value(mock_recvfrom, s, FAKE_SOCKET);
-    expect_value(mock_recvfrom, buf, buf);
+    expect_uint_value(mock_recvfrom, buf, cast_ptr_to_uintmax_type(buf));
     expect_int_value(mock_recvfrom, len, len);
     expect_int_value(mock_recvfrom, flags, flags);
     will_return_int(mock_recvfrom, SOCKET_ERROR);
