@@ -2179,8 +2179,6 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
                 }
             }
 
-            if (dp->distpoint != NULL && dp->distpoint->type == 1)
-                continue;
             dpname = sk_X509_NAME_value(*crldp_names, i);
             match = idp_check_dp(dp->distpoint, dpname, crl->idp->distpoint);
         }
