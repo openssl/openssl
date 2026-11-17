@@ -67,6 +67,9 @@ Set the fixed value 'r', indicating the length of the counter in bits.
 Supported values are B<8>, B<16>, B<24>, and B<32>.
 The default value of B<32> will be used if unspecified.
 
+In counter mode the derivation fails if the requested output needs more than
+2^r - 1 PRF invocations, since the counter would wrap.
+
 =back
 
 The OpenSSL FIPS provider also supports the following parameters:
