@@ -19,7 +19,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include "prov/digestcommon.h"

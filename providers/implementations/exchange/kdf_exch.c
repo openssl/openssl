@@ -13,7 +13,7 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "internal/numbers.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"

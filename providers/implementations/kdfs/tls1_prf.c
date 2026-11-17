@@ -58,7 +58,7 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
@@ -70,7 +70,6 @@
 #include "prov/securitycheck.h"
 #include "internal/e_os.h"
 #include "internal/fips.h"
-#include "internal/params.h"
 #include "internal/safe_math.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)

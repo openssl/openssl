@@ -15,7 +15,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/mdc2.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>

@@ -17,7 +17,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>

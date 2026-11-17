@@ -11,7 +11,7 @@
 #define OSSL_PROV_CIPHERCOMMON_H
 #pragma once
 
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>

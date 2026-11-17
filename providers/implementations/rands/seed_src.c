@@ -11,7 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/e_os2.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
