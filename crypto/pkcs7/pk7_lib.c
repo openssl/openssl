@@ -348,8 +348,6 @@ static int pkcs7_rsa_sign_verify_setup(PKCS7_SIGNER_INFO *si, int verify)
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     const EVP_MD *dgst)
 {
-    int ret;
-
     /* We now need to add another PKCS7_SIGNER_INFO entry */
     if (!ASN1_INTEGER_set(p7i->version, 1))
         return 0;
@@ -382,15 +380,6 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     if (EVP_PKEY_is_a(pkey, "RSA"))
         return pkcs7_rsa_sign_verify_setup(p7i, 0);
 
-    if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
-        ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN, 0, p7i);
-        if (ret > 0)
-            return 1;
-        if (ret != -2) {
-            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNING_CTRL_FAILURE);
-            return 0;
-        }
-    }
     ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }
@@ -597,7 +586,6 @@ static int pkcs7_rsa_encrypt_decrypt_setup(PKCS7_RECIP_INFO *ri, int decrypt)
 
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 {
-    int ret;
     EVP_PKEY *pkey = NULL;
     if (!ASN1_INTEGER_set(p7i->version, 0))
         return 0;
@@ -621,22 +609,9 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         goto finished;
     }
 
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL) {
-        ERR_raise(ERR_LIB_PKCS7,
-            PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        goto err;
-    }
+    ERR_raise(ERR_LIB_PKCS7, PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+    goto err;
 
-    ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_ENCRYPT, 0, p7i);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_PKCS7,
-            PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        goto err;
-    }
-    if (ret <= 0) {
-        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_ENCRYPTION_CTRL_FAILURE);
-        goto err;
-    }
 finished:
     if (!X509_up_ref(x509))
         goto err;
