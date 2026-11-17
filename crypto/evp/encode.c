@@ -229,9 +229,13 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 {
     int wrap_cnt = 0;
 
-    OPENSSL_assert(t != NULL);
     OPENSSL_assert(dlen >= 0);
-    /* Ensure the base64 output length does not overflow. */
+    /*
+     * Base64 expands 3 input bytes to 4 output bytes, therefore
+     * 4 * ceil(dlen / 3) fits in an int if and only if
+     * dlen <= 3 * floor(INT_MAX / 4). See #33812 for moving the check
+     * into the internal functions and returning success/failure there.
+     */
     OPENSSL_assert(dlen <= (INT_MAX / 4) * 3);
     OPENSSL_assert(f != NULL || dlen == 0);
 
