@@ -276,7 +276,7 @@ int tls_parse_ctos_sig_algs_cert(SSL_CONNECTION *s, PACKET *pkt,
      * get asked for PHA we need to always save the sigalgs regardless
      * of whether it was a resumption or not.
      */
-    if ((!s->server || (s->server && !s->hit))
+    if ((!s->server || !s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
         && !tls1_save_sigalgs(s, &supported_sig_algs, 1)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
@@ -301,7 +301,7 @@ int tls_parse_ctos_sig_algs(SSL_CONNECTION *s, PACKET *pkt,
      * get asked for PHA we need to always save the sigalgs regardless
      * of whether it was a resumption or not.
      */
-    if ((!s->server || (s->server && !s->hit))
+    if ((!s->server || !s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
         && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
@@ -318,7 +318,7 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
     PACKET responder_id_list, exts;
 
     /* We ignore this in a resumption handshake */
-    if (s->hit)
+    if (s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
         return 1;
 
     /* Not defined if we get one of these in a client Certificate */

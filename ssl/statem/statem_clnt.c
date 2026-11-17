@@ -131,7 +131,7 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
         break;
 
     case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
-        if (s->hit) {
+        if (s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_CR_FINISHED;
                 return 1;

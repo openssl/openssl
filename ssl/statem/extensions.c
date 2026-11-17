@@ -879,7 +879,8 @@ int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
         || (!is_version13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) == 0)
         || (s->server && !is_version13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0)
-        || (s->hit && (extctx & SSL_EXT_IGNORE_ON_RESUMPTION) != 0))
+        || (s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)
+            && (extctx & SSL_EXT_IGNORE_ON_RESUMPTION) != 0))
         return 0;
     return 1;
 }
@@ -1685,7 +1686,8 @@ static int init_srtp(SSL_CONNECTION *s, unsigned int context)
 
 static int final_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-    if (!sent && SSL_CONNECTION_IS_VERSION13(s) && !s->hit) {
+    if (!sent && SSL_CONNECTION_IS_VERSION13(s)
+        && (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
             SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
@@ -1743,9 +1745,10 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
          * In a full handshake the ServerHello must carry a key_share, so its
          * absence is a missing_extension alert (RFC 8446, sections 4.2.8
          * and 6.2). Only when resuming may the server legitimately omit it,
-         * and then only if we offered psk_ke.
+         * and then only if we offered psk_ke. RFC 9973 requires it with
+         * "tls_cert_with_extern_psk" too.
          */
-        if (!s->hit) {
+        if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
             SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
