@@ -692,7 +692,8 @@ static int test_current_time_days(void)
 
     /* Parse the same calendar date to check the derived fields. */
     if (!TEST_int_eq(strftime(buf, sizeof(buf), "%Y%m%d000000Z",
-                              &current), 15))
+                         &current),
+            15))
         goto err;
     r = TEST_true(ASN1_TIME_set_string(a, buf))
         && TEST_true(ASN1_TIME_to_tm(a, &parsed))
