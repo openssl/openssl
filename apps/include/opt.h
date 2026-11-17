@@ -163,6 +163,7 @@
     OPT_S_LEGACYCONN,                                                 \
     OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN,                               \
     OPT_S_ALLOW_NO_DHE_KEX, OPT_S_PREFER_NO_DHE_KEX,                  \
+    OPT_S_CERT_WITH_EXTERN_PSK,                                       \
     OPT_S_PRIORITIZE_CHACHA,                                          \
     OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS,   \
     OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
@@ -205,6 +206,8 @@
             "In TLSv1.3 allow non-(ec)dhe based key exchange on resumption" },                                  \
         { "prefer_no_dhe_kex", OPT_S_PREFER_NO_DHE_KEX, '-',                                                    \
             "In TLSv1.3 prefer non-(ec)dhe over (ec)dhe-based key exchange on resumption" },                    \
+        { "cert_with_extern_psk", OPT_S_CERT_WITH_EXTERN_PSK, '-',                                              \
+            "Combine a TLSv1.3 external PSK with certificates (RFC 9973)" },                                    \
         { "prioritize_chacha", OPT_S_PRIORITIZE_CHACHA, '-',                                                    \
             "Prioritize ChaCha ciphers when preferred by clients" },                                            \
         { "strict", OPT_S_STRICT, '-',                                                                          \
@@ -258,6 +261,7 @@
     case OPT_S_NOLEGACYCONN:      \
     case OPT_S_ALLOW_NO_DHE_KEX:  \
     case OPT_S_PREFER_NO_DHE_KEX: \
+    case OPT_S_CERT_WITH_EXTERN_PSK: \
     case OPT_S_PRIORITIZE_CHACHA: \
     case OPT_S_STRICT:            \
     case OPT_S_SIGALGS:           \

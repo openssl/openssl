@@ -3950,8 +3950,11 @@ static void print_connection_info(SSL *con)
                 srtp_profile->name);
     }
 #endif
-    if (SSL_session_reused(con))
+    /* An RFC 9973 handshake uses a PSK too, but starts a new session */
+    if (SSL_session_reused(con) && !SSL_cert_with_extern_psk_negotiated(con))
         BIO_puts(bio_s_out, "Reused session-id\n");
+    if (SSL_cert_with_extern_psk_negotiated(con))
+        BIO_puts(bio_s_out, "Certificate with external PSK negotiated\n");
 
     ssl_print_secure_renegotiation_notes(bio_s_out, con);
 
@@ -4346,7 +4349,12 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             ssl_print_groups(io, con, 0);
 #endif
             print_ca_names(io, con);
-            BIO_printf(io, (SSL_session_reused(con) ? "---\nReused, " : "---\nNew, "));
+            /* An RFC 9973 handshake uses a PSK too, but starts a new session */
+            if (SSL_session_reused(con)
+                && !SSL_cert_with_extern_psk_negotiated(con))
+                BIO_puts(io, "---\nReused, ");
+            else
+                BIO_puts(io, "---\nNew, ");
             c = SSL_get_current_cipher(con);
             BIO_printf(io, "%s, Cipher is %s\n",
                 SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
