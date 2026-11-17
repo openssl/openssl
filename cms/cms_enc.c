@@ -285,8 +285,7 @@ err:
 
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     const EVP_CIPHER *cipher,
-    const unsigned char *key, size_t keylen,
-    const CMS_CTX *cms_ctx)
+    const unsigned char *key, size_t keylen)
 {
     ec->cipher = cipher;
     if (key) {
@@ -330,8 +329,7 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
         return 0;
     }
     ec = cms->d.encryptedData->encryptedContentInfo;
-    return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen,
-        ossl_cms_get0_cmsctx(cms));
+    return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen);
 }
 
 BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)

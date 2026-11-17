@@ -167,7 +167,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
 }
 
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
-    int type, const CMS_CTX *ctx)
+    int type)
 {
     switch (type) {
     case CMS_SIGNERINFO_ISSUER_SERIAL:
@@ -609,7 +609,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         si->version = 1;
     }
 
-    if (!ossl_cms_set1_SignerIdentifier(si->sid, signer, type, ctx))
+    if (!ossl_cms_set1_SignerIdentifier(si->sid, signer, type))
         goto err;
 
     if (ossl_cms_adjust_md(ctx, pk, &md, &local_md, flags) != 1)
