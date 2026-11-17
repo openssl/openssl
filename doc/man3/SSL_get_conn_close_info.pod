@@ -152,10 +152,11 @@ The connection was terminated immediately due to the idle timeout expiring.
 
 =head1 RETURN VALUES
 
-SSL_get_conn_close_info() returns 1 on success and 0 on failure. This function
-fails if called on a QUIC connection SSL object which has not yet been
-terminated. It also fails if called on a QUIC stream SSL object or a non-QUIC
-SSL object.
+SSL_get_conn_close_info() returns 1 if the QUIC connection has been terminated
+and connection close information is available, and 0 if the connection has not
+been terminated. It returns -1 if called on an object that is not a QUIC
+connection, such as a non-QUIC SSL object, a QUIC stream, a QUIC listener, or a
+QUIC domain, or if the connection status cannot be determined.
 
 =head1 SEE ALSO
 
