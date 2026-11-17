@@ -19,17 +19,19 @@ This functionality has historically been part of libcrypto, where it is
 deprecated since OpenSSL 4.2 but remains exported for ABI compatibility
 until a future major release.  New code should use libcms.
 
-The libcms API is declared by the header F<< <libcms/cms.h> >>.  It
-provides the same declarations as the deprecated header location
-F<< <openssl/cms.h> >>, without deprecation.
+Each libcms header F<< <libcms/I<name>.h> >> provides the same
+declarations as the deprecated libcrypto header F<< <openssl/I<name>.h> >>,
+without deprecation.  Functions that libcrypto had already deprecated before
+they moved, such as CMS_stream(), are not provided by libcms.
 
 =head2 Migrating from libcrypto
 
-Code using the CMS API of libcrypto compiles unchanged against libcms.
-Include F<< <libcms/cms.h> >> instead of F<< <openssl/cms.h> >>, and link
-with libcms (a F<libcms.pc> pkg-config file is installed).  The libcms
-header must be included before the deprecated header would otherwise be
-reached; getting this wrong is caught with a preprocessor error.
+Code using an API that moved from libcrypto to libcms compiles unchanged
+against libcms.  Include the libcms header in place of the libcrypto header
+of the same name, and link with libcms (a F<libcms.pc> pkg-config file is
+installed).  A libcms header must be included before the corresponding
+deprecated header would otherwise be reached; getting this wrong is caught
+with a preprocessor error.
 
 libcms exports the API under symbol names of its own: the libcms header
 maps every name to the same name with a B<LIBCMS_> prefix at compile

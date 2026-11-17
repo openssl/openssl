@@ -11,7 +11,7 @@ TS_VERIFY_CTX_set_data, TS_VERIFY_CTX_set_imprint, TS_VERIFY_CTX_set_store
 
 =head1 SYNOPSIS
 
- #include <openssl/ts.h>
+ #include <libcms/ts.h>
 
  typedef struct TS_verify_ctx TS_VERIFY_CTX;
 
@@ -27,7 +27,8 @@ TS_VERIFY_CTX_set_data, TS_VERIFY_CTX_set_imprint, TS_VERIFY_CTX_set_store
  int TS_VERIFY_CTX_set0_store(TS_VERIFY_CTX *ctx, X509_STORE *s);
  int TS_VERIFY_CTX_set0_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs);
 
-The following functions have been deprecated since OpenSSL 3.4:
+The following functions have been deprecated since OpenSSL 3.4, and are
+declared only in F<< <openssl/ts.h> >>:
 
  BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b);
  unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
@@ -36,7 +37,8 @@ The following functions have been deprecated since OpenSSL 3.4:
  STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx,
                                          STACK_OF(X509) *certs);
 
-The following function has been deprecated since OpenSSL 3.0:
+The following function has been deprecated since OpenSSL 3.0, and is
+declared only in F<< <openssl/ts.h> >>:
 
  STACK_OF(X509) *TS_VERIFY_CTS_set_certs(TS_VERIFY_CTX *ctx,
                                          STACK_OF(X509) *certs);
@@ -141,6 +143,11 @@ in OpenSSL 3.4.0.
 The spelling of TS_VERIFY_CTX_set_certs() was corrected in OpenSSL 3.0.0.
 The misspelled version TS_VERIFY_CTS_set_certs() has been retained for
 compatibility reasons, but it is deprecated in OpenSSL 3.0.0.
+
+All of these functions except those deprecated in OpenSSL 3.4 or earlier
+moved to the new libcms library in OpenSSL 4.2.  Deprecated variants remain
+in libcrypto, declared in F<< <openssl/ts.h> >>, until a future major
+release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
