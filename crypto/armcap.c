@@ -152,6 +152,7 @@ static unsigned long getauxval(unsigned long key)
 #define OSSL_HWCAP_CE_SHA512 (1 << 21)
 #define OSSL_HWCAP_SVE (1 << 22)
 #define OSSL_HWCAP_DIT (1 << 24)
+#define OSSL_HWCAP_SB (1 << 29)
 /* AT_HWCAP2 */
 #define OSSL_HWCAP2 26
 #define OSSL_HWCAP2_SVE2 (1 << 1)
@@ -228,6 +229,7 @@ void _armv8_sve_probe(void);
 void _armv8_sve2_probe(void);
 void _armv8_rng_probe(void);
 void _armv8_dit_probe(void);
+void _armv8_sb_probe(void);
 #endif
 #endif /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
 
@@ -325,6 +327,7 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha512", ARMV8_SHA512);
         OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha3", ARMV8_SHA3);
         OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_DIT", ARMV8_DIT);
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_SB", ARMV8_SB);
 
         if (OPENSSL_armcap_P & ARMV8_SHA3) {
             char uarch[64];
@@ -380,6 +383,9 @@ void OPENSSL_cpuid_setup(void)
     if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_DIT)
         OPENSSL_armcap_P |= ARMV8_DIT;
 
+    if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SB)
+        OPENSSL_armcap_P |= ARMV8_SB;
+
     if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
         OPENSSL_armcap_P |= ARMV9_SVE2;
 
@@ -429,6 +435,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV9_SVE2);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_dit_probe, ARMV8_DIT);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_sb_probe, ARMV8_SB);
 #endif
 
     /*
@@ -548,6 +555,28 @@ int ossl_get_dit(int value_for_on)
     return 0;
 }
 
+#if defined(__APPLE__)
+/**
+ * @brief                   Inserts a speculation barrier into the code.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_SB set.
+ */
+static ossl_inline void ossl_speculation_barrier(void)
+{
+    __asm__ volatile(".inst 0xd50330ff" ::: "memory"); /* sb */
+}
+
+/**
+ * @brief                   Function to use in the case where OPENSSL_armcap_P does not have the
+ *                          ARMV8_SB bit set - i.e. speculation barriers are not enabled.
+ */
+static ossl_inline void ossl_speculation_barrier_unsupported(void)
+{
+    __asm__ __volatile__("dsb nsh" ::: "memory");
+    __asm__ __volatile__("isb sy" ::: "memory");
+}
+#endif
+
 /**
  * @brief                   Sets DIT on.
  *
@@ -555,7 +584,24 @@ int ossl_get_dit(int value_for_on)
  */
 static ossl_inline void ossl_set_dit_on(void)
 {
+#if defined(__APPLE__)
+    void (*sb_func)(void) = NULL;
+
+    if (OPENSSL_armcap_P & ARMV8_SB) {
+        sb_func = ossl_speculation_barrier;
+    } else {
+        sb_func = ossl_speculation_barrier_unsupported;
+    }
+#endif
+
     __asm__ volatile(".inst 0xD503415F"); /* msr dit, #1 */
+
+#if defined(__APPLE__)
+    /* Apple documentation recommends a speculation barrier after enabling DIT. See
+     * https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
+     * specifically the section on enabling DIT for constant-time cryptographic operations. */
+    sb_func();
+#endif
 }
 
 /**
