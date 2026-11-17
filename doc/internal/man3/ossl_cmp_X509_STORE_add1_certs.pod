@@ -2,9 +2,8 @@
 
 =head1 NAME
 
-ossl_cmp_X509_STORE_add1_certs,
-ossl_cmp_X509_STORE_get1_certs
-- functions manipulating stores of certificates
+ossl_cmp_X509_STORE_add1_certs
+- add certificates to a store
 
 =head1 SYNOPSIS
 
@@ -12,21 +11,15 @@ ossl_cmp_X509_STORE_get1_certs
 
   int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                                      int only_self_signed);
-  STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
 
 =head1 DESCRIPTION
 
 ossl_cmp_X509_STORE_add1_certs() adds all or only self-signed certificates from
 the given stack to given store. The I<certs> parameter may be NULL.
 
-ossl_cmp_X509_STORE_get1_certs() retrieves a copy of all certificates in the
-given store.
-
 =head1 RETURN VALUES
 
 ossl_cmp_X509_STORE_add1_certs() returns 1 on success, 0 on error.
-
-ossl_cmp_X509_STORE_get1_certs() returns a list of certificates, NULL on error.
 
 =head1 HISTORY
 

@@ -839,22 +839,16 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
     char **file, int *line);
 #define ossl_cmp_add_error_data(txt) ERR_add_error_txt(" : ", txt)
 #define ossl_cmp_add_error_line(txt) ERR_add_error_txt("\n", txt)
-/* The two functions manipulating X509_STORE could be generally useful */
+/* The function manipulating X509_STORE could be generally useful */
 /**
  * @brief Add certificates to a store.
  * @param store the store to add to
  * @param certs the certificates to add, may be NULL
- * @param only_self_issued if nonzero, add only self-signed certificates
+ * @param only_self_signed if nonzero, add only self-signed certificates
  * @returns 1 on success, 0 on error
  */
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-    int only_self_issued);
-/**
- * @brief Get a copy of all certificates in a store.
- * @param store the store to read
- * @returns the certificates, owned by the caller, or NULL on error
- */
-STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
+    int only_self_signed);
 /**
  * @brief Append a UTF8String holding the given text to a stack.
  * @param sk the stack to append to
@@ -1040,10 +1034,10 @@ int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
 const char *ossl_cmp_PKIStatus_to_string(int status);
 /**
  * @brief Get the statusString of a PKIStatusInfo.
- * @param s the PKIStatusInfo
- * @returns the statusString, owned by s, or NULL
+ * @param si the PKIStatusInfo
+ * @returns the statusString, owned by si, or NULL
  */
-OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *s);
+OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *si);
 /**
  * @brief Get the PKIFailureInfo bits of a PKIStatusInfo.
  * @param si the PKIStatusInfo
@@ -1381,15 +1375,6 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int certReqId,
  */
 OSSL_CMP_MSG *ossl_cmp_pollReq_new(OSSL_CMP_CTX *ctx, int crid);
 /**
- * @brief Create a protected polling response message.
- * @param ctx the CMP context
- * @param crid the certReqId
- * @param poll_after the number of seconds to wait before polling again
- * @returns the message, or NULL on error
- */
-OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
-    int64_t poll_after);
-/**
  * @brief Get a PKIStatusInfo from a RevRepContent.
  * @param rrep the RevRepContent
  * @param rsid the index of the status
@@ -1431,12 +1416,6 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
  */
 X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_CERTRESPONSE *crep);
-/**
- * @brief Load a CMP message from a file.
- * @param file the file name
- * @returns the message, or NULL on error
- */
-OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
 /**
  * @brief Check whether a message is an error message with status waiting.
  * @param msg the message
@@ -1493,25 +1472,14 @@ typedef int (*ossl_cmp_allow_unprotected_cb_t)(const OSSL_CMP_CTX *ctx,
 int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
 /**
- * @brief Check a received message and update ctx.
- * @param ctx the CMP context
- * @param msg the received message
- * @param cb decides whether missing or invalid protection is acceptable,
- *        may be NULL
- * @param cb_arg passed to cb
- * @returns 1 on success, 0 on error
- */
-int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-    ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
-/**
  * @brief Verify the proof of possession in a certificate request.
  * @param ctx the CMP context
  * @param msg an IR, CR, KUR or P10CR message
- * @param accept_RAVerified whether to accept RAVerified as proof of possession
+ * @param acceptRAVerified whether to accept RAVerified as proof of possession
  * @returns 1 on success, 0 on failure or error
  */
 int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,
-    const OSSL_CMP_MSG *msg, int accept_RAVerified);
+    const OSSL_CMP_MSG *msg, int acceptRAVerified);
 
 /* from cmp_client.c */
 /* expected max time per msg round trip, used for last try during polling: */
