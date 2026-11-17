@@ -783,7 +783,7 @@ jobs:
         RUST:
           - 1.51.0
         PYTHON:
-          - 3.9
+          - 3.11
     steps:
     - uses: actions/checkout@v6
       with:
