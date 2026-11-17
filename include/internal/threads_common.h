@@ -52,6 +52,7 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     OSSL_LIB_CTX *ctx, void *data);
 
 void CRYPTO_THREAD_clean_local(void);
+void CRYPTO_THREAD_remove_master_key(void);
 
 /* Do atomics work? */
 

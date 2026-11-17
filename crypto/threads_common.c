@@ -412,3 +412,10 @@ void CRYPTO_THREAD_clean_local(void)
         CRYPTO_THREAD_set_local(&master_key, NULL);
     }
 }
+
+void CRYPTO_THREAD_remove_master_key(void)
+{
+    if (master_key_init != 0)
+        CRYPTO_THREAD_cleanup_local(&master_key);
+    master_key_init = 0;
+}
