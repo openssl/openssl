@@ -720,7 +720,17 @@ struct ossl_cmp_msg_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
 } /* OSSL_CMP_MSG */;
+/**
+ * @brief Allocate an empty CMP message bound to a library context.
+ * @param libctx the library context to use, NULL for the default
+ * @param propq the property query to use, may be NULL
+ * @returns the new message, or NULL on error
+ */
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Free a CMP message.
+ * @param msg the message to free, may be NULL
+ */
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
 /*-
@@ -805,30 +815,106 @@ struct ossl_cmp_certreqtemplate_st {
 } /* OSSL_CMP_CERTREQTEMPLATE */;
 
 /* from cmp_asn.c */
+/**
+ * @brief Get the value of an ASN.1 INTEGER as an int.
+ * @param a the integer to convert
+ * @returns the value, or -2 if it is invalid or out of int range
+ */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
 
 /* from cmp_util.c */
+/**
+ * @brief Parse the location and severity prefix of a CMP log message.
+ * Unparsed outputs are set to -1 (level), NULL (func, file) and 0 (line).
+ * Strings stored in *func and *file are owned by the caller.
+ * @param buf the log message to parse
+ * @param level receives the severity level, or -1
+ * @param func receives the function name, or NULL
+ * @param file receives the file name, or NULL
+ * @param line receives the line number, or 0
+ * @returns the message text after the prefix, or buf if there is none
+ */
 const char *ossl_cmp_log_parse_metadata(const char *buf,
     OSSL_CMP_severity *level, char **func,
     char **file, int *line);
 #define ossl_cmp_add_error_data(txt) ERR_add_error_txt(" : ", txt)
 #define ossl_cmp_add_error_line(txt) ERR_add_error_txt("\n", txt)
 /* The two functions manipulating X509_STORE could be generally useful */
+/**
+ * @brief Add certificates to a store.
+ * @param store the store to add to
+ * @param certs the certificates to add, may be NULL
+ * @param only_self_issued if nonzero, add only self-signed certificates
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     int only_self_issued);
+/**
+ * @brief Get a copy of all certificates in a store.
+ * @param store the store to read
+ * @returns the certificates, owned by the caller, or NULL on error
+ */
 STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
+/**
+ * @brief Append a UTF8String holding the given text to a stack.
+ * @param sk the stack to append to
+ * @param text the text, may be NULL when len is 0
+ * @param len the length of text in bytes
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
     const char *text, size_t len);
+/**
+ * @brief Replace *tgt with a copy of src, or with NULL.
+ * @param tgt the octet string to replace
+ * @param src the value to copy, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
     const ASN1_OCTET_STRING *src);
+/**
+ * @brief Replace *tgt with an octet string holding a copy of bytes, or NULL.
+ * @param tgt the octet string to replace
+ * @param bytes the bytes to copy, may be NULL
+ * @param len the number of bytes
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     const unsigned char *bytes, int len);
+/**
+ * @brief Add a certificate to a stack, allocating the stack if *p_sk is NULL.
+ * @param p_sk the stack to add to
+ * @param cert the certificate to add
+ * @param flags X509_ADD_FLAG_* flags as for X509_add_cert()
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert,
     int flags);
+/**
+ * @brief Add certificates to a stack, allocating the stack if *p_sk is NULL.
+ * With X509_ADD_FLAG_PREPEND the certificates keep their original order.
+ * @param p_sk the stack to add to
+ * @param certs the certificates to add, may be NULL
+ * @param flags X509_ADD_FLAG_* flags as for X509_add_cert()
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_x509_add_certs_new(STACK_OF(X509) **p_sk,
     const STACK_OF(X509) *certs, int flags);
 
 /* from cmp_ctx.c */
+/**
+ * @brief Output a CMP log message via the log callback of ctx.
+ * The message is dropped when ctx or its log callback is NULL, or when
+ * level exceeds the verbosity of ctx.
+ * @param level the severity of the message
+ * @param ctx the CMP context, may be NULL
+ * @param func the function name, may be NULL
+ * @param file the file name, may be NULL
+ * @param line the line number
+ * @param level_str the name of the severity level, may be NULL
+ * @param format the printf-style format of the message
+ * @returns 1 on success or when the message is dropped, 0 on error
+ */
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
     const char *func, const char *file, int line,
     const char *level_str, const char *format, ...);
@@ -855,51 +941,242 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 #define ossl_cmp_info(ctx, msg) ossl_cmp_log(INFO, ctx, msg)
 #define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 #define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
+/**
+ * @brief Set the cached, already validated certificate of the peer.
+ * @param ctx the CMP context
+ * @param cert the certificate, up-referenced, or NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set1_validatedPeerCert(OSSL_CMP_CTX *ctx, X509 *cert);
+/**
+ * @brief Set the PKIStatus of the last received response in ctx.
+ * @param ctx the CMP context
+ * @param status the status
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
+/**
+ * @brief Set the statusString of the last received response in ctx.
+ * @param ctx the CMP context
+ * @param text the status string, ownership passes to ctx, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
     OSSL_CMP_PKIFREETEXT *text);
+/**
+ * @brief Set the PKIFailureInfo bits of the last received response in ctx.
+ * @param ctx the CMP context
+ * @param fail_info the failure info bits
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set_failInfoCode(OSSL_CMP_CTX *ctx, int fail_info);
+/**
+ * @brief Set the newly enrolled certificate in ctx.
+ * @param ctx the CMP context
+ * @param cert the certificate, ownership passes to ctx, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert);
+/**
+ * @brief Set the chain of the newly enrolled certificate in ctx.
+ * @param ctx the CMP context
+ * @param newChain the chain, copied with up-referenced certificates, or NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set1_newChain(OSSL_CMP_CTX *ctx, STACK_OF(X509) *newChain);
+/**
+ * @brief Set the CA certificates received in caPubs in ctx.
+ * @param ctx the CMP context
+ * @param caPubs the certificates, copied with up-referenced elements, or NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs);
+/**
+ * @brief Set the extraCerts received in the last response in ctx.
+ * @param ctx the CMP context
+ * @param extraCertsIn the certificates, copied with up-referenced elements,
+ *        or NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
     STACK_OF(X509) *extraCertsIn);
+/**
+ * @brief Set the recipNonce to use in the next message created with ctx.
+ * @param ctx the CMP context
+ * @param nonce the nonce, copied, or NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
     const ASN1_OCTET_STRING *nonce);
+/**
+ * @brief Get the public key to be certified.
+ * Taken from the first available of newPkey, the PKCS#10 CSR, oldCert,
+ * cert and pkey in ctx.
+ * @param ctx the CMP context
+ * @returns the key, owned by ctx, or NULL if there is none
+ */
 EVP_PKEY *ossl_cmp_ctx_get0_newPubkey(const OSSL_CMP_CTX *ctx);
+/**
+ * @brief Set the senderNonce of the first request of the transaction in ctx.
+ * @param ctx the CMP context
+ * @param nonce the nonce, copied, or NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_ctx_set1_first_senderNonce(OSSL_CMP_CTX *ctx,
     const ASN1_OCTET_STRING *nonce);
 
 /* from cmp_status.c */
+/**
+ * @brief Get the PKIStatus of a PKIStatusInfo.
+ * @param si the PKIStatusInfo
+ * @returns the status, or -1 on error
+ */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
+/**
+ * @brief Get a human-readable description of a PKIStatus value.
+ * @param status the status
+ * @returns a static string, or NULL for an unknown status
+ */
 const char *ossl_cmp_PKIStatus_to_string(int status);
+/**
+ * @brief Get the statusString of a PKIStatusInfo.
+ * @param s the PKIStatusInfo
+ * @returns the statusString, owned by s, or NULL
+ */
 OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *s);
+/**
+ * @brief Get the PKIFailureInfo bits of a PKIStatusInfo.
+ * @param si the PKIStatusInfo
+ * @returns the bits, or -1 on error
+ */
 int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si);
+/**
+ * @brief Test one PKIFailureInfo bit of a PKIStatusInfo.
+ * @param si the PKIStatusInfo
+ * @param index the bit index
+ * @returns 1 if the bit is set, 0 if not, -1 on error
+ */
 int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int index);
 
 /* from cmp_hdr.c */
+/**
+ * @brief Set the protocol version of a PKIHeader.
+ * @param hdr the header
+ * @param pvno the protocol version
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
+/**
+ * @brief Get the protocol version of a PKIHeader.
+ * @param hdr the header
+ * @returns the protocol version, or -1 on error
+ */
 int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
+/**
+ * @brief Get the NID of the protection algorithm of a PKIHeader.
+ * @param hdr the header
+ * @returns the NID, or NID_undef if there is none or on error
+ */
 int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr);
+/**
+ * @brief Get the senderNonce of a PKIHeader.
+ * @param hdr the header
+ * @returns the nonce, owned by hdr, or NULL
+ */
 ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
+/**
+ * @brief Check whether a GeneralName is absent or the NULL-DN.
+ * @param name the name, may be NULL
+ * @returns 1 if name is NULL or the NULL-DN, else 0
+ */
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
+/**
+ * @brief Set the sender of a PKIHeader to a copy of a name.
+ * @param hdr the header
+ * @param nm the name, or NULL for the NULL-DN
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
+/**
+ * @brief Set the recipient of a PKIHeader to a copy of a name.
+ * @param hdr the header
+ * @param nm the name, or NULL for the NULL-DN
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
+/**
+ * @brief Set the messageTime of a PKIHeader to the current time.
+ * @param hdr the header
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr);
+/**
+ * @brief Set the senderKID of a PKIHeader to a copy of the given value.
+ * @param hdr the header
+ * @param senderKID the key identifier, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
     const ASN1_OCTET_STRING *senderKID);
+/**
+ * @brief Append a string to the freeText of a PKIHeader.
+ * @param hdr the header
+ * @param text the string, ownership passes to hdr
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
+/**
+ * @brief Append a copy of a string to the freeText of a PKIHeader.
+ * @param hdr the header
+ * @param text the string, copied
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
+/**
+ * @brief Append an InfoTypeAndValue to the generalInfo of a PKIHeader.
+ * @param hdr the header
+ * @param itav the item, ownership passes to hdr
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
     OSSL_CMP_ITAV *itav);
+/**
+ * @brief Append copies of InfoTypeAndValues to the generalInfo of a PKIHeader.
+ * @param hdr the header
+ * @param itavs the items, copied
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
     const STACK_OF(OSSL_CMP_ITAV) *itavs);
+/**
+ * @brief Add implicitConfirm to the generalInfo of a PKIHeader.
+ * @param hdr the header
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
+/**
+ * @brief Check whether the generalInfo of a PKIHeader contains implicitConfirm.
+ * @param hdr the header
+ * @returns 1 if it does, else 0
+ */
 int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
 #define OSSL_CMP_TRANSACTIONID_LENGTH 16
 #define OSSL_CMP_SENDERNONCE_LENGTH 16
+/**
+ * @brief Set the transactionID of a PKIHeader from ctx.
+ * If ctx has no transactionID a new random one is generated and stored in ctx.
+ * @param ctx the CMP context
+ * @param hdr the header
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
+/**
+ * @brief Initialize a PKIHeader from the values in ctx.
+ * Starts a new transaction if ctx has no transactionID.
+ * @param ctx the CMP context
+ * @param hdr the header
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 
 /* from cmp_msg.c */
@@ -938,80 +1215,327 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 #define OSSL_CMP_CERTREQID_INVALID -2
 /* sequence id for the first - and so far only - revocation request */
 #define OSSL_CMP_REVREQSID 0
+/**
+ * @brief Set the library context and property query of a CMP message.
+ * @param msg the message, may be NULL
+ * @param libctx the library context, not up-referenced
+ * @param propq the property query, copied, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
     const char *propq);
+/**
+ * @brief Get the name of a PKIBody type.
+ * @param type the body type
+ * @returns a static string, "illegal body type" for an unknown type
+ */
 const char *ossl_cmp_bodytype_to_string(int type);
+/**
+ * @brief Set the body type of a CMP message.
+ * @param msg the message
+ * @param type the body type
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
+/**
+ * @brief Create a CMP message with a header from ctx and an empty body.
+ * Starts a new transaction if ctx has no transactionID.
+ * @param ctx the CMP context
+ * @param bodytype the body type
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype);
+/**
+ * @brief Create a protected IR, CR, KUR or P10CR message.
+ * @param ctx the CMP context
+ * @param bodytype the body type
+ * @param crm the CRMF message to use, or NULL to create one from ctx
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
     const OSSL_CRMF_MSG *crm);
+/**
+ * @brief Create an IP, CP or KUP message.
+ * The message is left unprotected if unprotectedErrors is nonzero and
+ * the status in si is rejection.
+ * @param ctx the CMP context
+ * @param bodytype the body type
+ * @param certReqId the certReqId of the response
+ * @param si the status, copied
+ * @param cert the enrolled certificate, up-referenced, may be NULL
+ * @param pkey a centrally generated private key to return encrypted,
+ *        may be NULL
+ * @param encryption_recip must be NULL; encrypted certificates are unsupported
+ * @param chain certificates to add to extraCerts, may be NULL
+ * @param caPubs certificates to return in an IP, may be NULL
+ * @param unprotectedErrors whether to leave a rejection unprotected
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     int certReqId, const OSSL_CMP_PKISI *si,
     X509 *cert, const EVP_PKEY *pkey,
     const X509 *encryption_recip,
     const STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
     int unprotectedErrors);
+/**
+ * @brief Create a protected revocation request for the certificate in ctx.
+ * @param ctx the CMP context
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx);
+/**
+ * @brief Create a revocation response message.
+ * The message is left unprotected if unprotectedErrors is nonzero and
+ * the status in si is rejection.
+ * @param ctx the CMP context
+ * @param si the status
+ * @param cid the identifier of the certificate concerned
+ * @param unprotectedErrors whether to leave a rejection unprotected
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
     const OSSL_CRMF_CERTID *cid,
     int unprotectedErrors);
+/**
+ * @brief Create a protected PKIConfirm message.
+ * @param ctx the CMP context
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_pkiconf_new(OSSL_CMP_CTX *ctx);
+/**
+ * @brief Create a protected polling response message.
+ * @param ctx the CMP context
+ * @param crid the certReqId
+ * @param poll_after the number of seconds to wait before polling again
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
     int64_t poll_after);
+/**
+ * @brief Append an InfoTypeAndValue to the body of a GENM or GENP message.
+ * @param msg the message
+ * @param itav the item, ownership passes to msg
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_gen_push0_ITAV(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav);
+/**
+ * @brief Append copies of InfoTypeAndValues to the body of a GENM or GENP
+ * message.
+ * @param msg the message
+ * @param itavs the items, copied
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
     const STACK_OF(OSSL_CMP_ITAV) *itavs);
+/**
+ * @brief Create a protected GENM message with the genm ITAVs in ctx.
+ * @param ctx the CMP context
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx);
+/**
+ * @brief Create a protected GENP message.
+ * @param ctx the CMP context
+ * @param itavs the items to include, copied, may be NULL
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
     const STACK_OF(OSSL_CMP_ITAV) *itavs);
+/**
+ * @brief Create an error message.
+ * @param ctx the CMP context
+ * @param si the status
+ * @param errorCode the error code; a positive OpenSSL error code also adds
+ *        its library and reason strings to errorDetails
+ * @param details text to add to errorDetails, may be NULL
+ * @param unprotected whether to leave the message unprotected
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
     int64_t errorCode, const char *details,
     int unprotected);
+/**
+ * @brief Set the certHash of a CertStatus.
+ * @param certStatus the CertStatus
+ * @param hash the hash, ownership passes to certStatus
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
     ASN1_OCTET_STRING *hash);
+/**
+ * @brief Create a protected certConf message for the newly enrolled
+ * certificate.
+ * @param ctx the CMP context
+ * @param certReqId the certReqId
+ * @param fail_info 0 to accept the certificate, else the failure info bits
+ * @param text the statusString of a rejection, may be NULL
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int certReqId,
     int fail_info, const char *text);
+/**
+ * @brief Create a protected polling request message.
+ * @param ctx the CMP context
+ * @param crid the certReqId
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_pollReq_new(OSSL_CMP_CTX *ctx, int crid);
+/**
+ * @brief Create a protected polling response message.
+ * @param ctx the CMP context
+ * @param crid the certReqId
+ * @param poll_after the number of seconds to wait before polling again
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
     int64_t poll_after);
+/**
+ * @brief Get a PKIStatusInfo from a RevRepContent.
+ * @param rrep the RevRepContent
+ * @param rsid the index of the status
+ * @returns the status, owned by rrep, or NULL if not found
+ */
 OSSL_CMP_PKISI *
 ossl_cmp_revrepcontent_get_pkisi(OSSL_CMP_REVREPCONTENT *rrep, int rsid);
+/**
+ * @brief Get a CertId from a RevRepContent.
+ * @param rc the RevRepContent
+ * @param rsid the index of the CertId
+ * @returns the CertId, owned by rc, or NULL if not found
+ */
 OSSL_CRMF_CERTID *ossl_cmp_revrepcontent_get_CertId(OSSL_CMP_REVREPCONTENT *rc,
     int rsid);
+/**
+ * @brief Find the PollRep for a certReqId in a PollRepContent.
+ * @param prc the PollRepContent
+ * @param rid the certReqId, or OSSL_CMP_CERTREQID_NONE for the first one
+ * @returns the PollRep, owned by prc, or NULL if not found or on error
+ */
 OSSL_CMP_POLLREP *
 ossl_cmp_pollrepcontent_get0_pollrep(const OSSL_CMP_POLLREPCONTENT *prc,
     int rid);
+/**
+ * @brief Find the CertResponse for a certReqId in a CertRepMessage.
+ * @param crm the CertRepMessage
+ * @param rid the certReqId, or OSSL_CMP_CERTREQID_NONE for the first one
+ * @returns the CertResponse, owned by crm, or NULL if not found or on error
+ */
 OSSL_CMP_CERTRESPONSE *
 ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
     int rid);
+/**
+ * @brief Get the newly enrolled certificate from a CertResponse.
+ * @param ctx the CMP context, holding the private key for indirect POPO
+ * @param crep the CertResponse
+ * @returns the certificate, owned by the caller, or NULL on error
+ */
 X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_CERTRESPONSE *crep);
+/**
+ * @brief Load a CMP message from a file.
+ * @param file the file name
+ * @returns the message, or NULL on error
+ */
 OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
+/**
+ * @brief Check whether a message is an error message with status waiting.
+ * @param msg the message
+ * @returns 1 if it is, else 0
+ */
 int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg);
 
 /* from cmp_protect.c */
+/**
+ * @brief Build and cache the chain of the CMP signer certificate in ctx.
+ * Does nothing if ctx already has a chain.
+ * @param ctx the CMP context
+ */
 void ossl_cmp_set_own_chain(OSSL_CMP_CTX *ctx);
+/**
+ * @brief Add the CMP signer certificate, its chain and extraCertsOut to
+ * extraCerts.
+ * The signer certificate and chain are added only for signature-based
+ * protection; a chain built here is cached in ctx.
+ * @param ctx the CMP context
+ * @param msg the message
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
+/**
+ * @brief Calculate the protection of a message.
+ * @param ctx the CMP context with the credentials
+ * @param msg the message, with protectionAlg set in its header
+ * @returns the protection, owned by the caller, or NULL on error
+ */
 ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg);
+/**
+ * @brief Protect a message with PBMAC or a signature according to ctx.
+ * @param ctx the CMP context
+ * @param msg the message
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 
 /* from cmp_vfy.c */
 typedef int (*ossl_cmp_allow_unprotected_cb_t)(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg,
     int invalid_protection, int arg);
+/**
+ * @brief Perform the generic checks on a received message and update ctx.
+ * @param ctx the CMP context
+ * @param msg the received message
+ * @param cb decides whether missing or invalid protection is acceptable,
+ *        may be NULL
+ * @param cb_arg passed to cb
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+/**
+ * @brief Check a received message and update ctx.
+ * @param ctx the CMP context
+ * @param msg the received message
+ * @param cb decides whether missing or invalid protection is acceptable,
+ *        may be NULL
+ * @param cb_arg passed to cb
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+/**
+ * @brief Verify the proof of possession in a certificate request.
+ * @param ctx the CMP context
+ * @param msg an IR, CR, KUR or P10CR message
+ * @param accept_RAVerified whether to accept RAVerified as proof of possession
+ * @returns 1 on success, 0 on failure or error
+ */
 int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
 /* from cmp_client.c */
 /* expected max time per msg round trip, used for last try during polling: */
 #define OSSL_CMP_EXPECTED_RESP_TIME 2
+/**
+ * @brief Send a certConf message and receive the PKIConfirm response.
+ * @param ctx the CMP context
+ * @param certReqId the certReqId
+ * @param fail_info 0 to accept the certificate, else the failure info bits
+ * @param txt the statusString of a rejection, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int certReqId,
     int fail_info, const char *txt);
+/**
+ * @brief Send an error message and receive the PKIConfirm response.
+ * @param ctx the CMP context
+ * @param status the PKIStatus
+ * @param fail_info the failure info bits
+ * @param txt the statusString, may be NULL
+ * @param errorCode the error code
+ * @param detail text for errorDetails, may be NULL
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
     const char *txt, int errorCode, const char *detail);
 
