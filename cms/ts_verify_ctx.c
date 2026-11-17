@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <libcms/names.h>
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
@@ -46,13 +47,13 @@ int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f)
     return ctx->flags;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_4
+#if !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES)
 BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b)
 {
     ctx->data = b;
     return ctx->data;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES) */
 
 int TS_VERIFY_CTX_set0_data(TS_VERIFY_CTX *ctx, BIO *b)
 {
@@ -61,13 +62,13 @@ int TS_VERIFY_CTX_set0_data(TS_VERIFY_CTX *ctx, BIO *b)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_4
+#if !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES)
 X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s)
 {
     ctx->store = s;
     return ctx->store;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES) */
 
 int TS_VERIFY_CTX_set0_store(TS_VERIFY_CTX *ctx, X509_STORE *s)
 {
@@ -76,14 +77,14 @@ int TS_VERIFY_CTX_set0_store(TS_VERIFY_CTX *ctx, X509_STORE *s)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_4
+#if !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES)
 STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx,
     STACK_OF(X509) *certs)
 {
     ctx->certs = certs;
     return ctx->certs;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES) */
 
 int TS_VERIFY_CTX_set0_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs)
 {
@@ -92,7 +93,7 @@ int TS_VERIFY_CTX_set0_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_4
+#if !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES)
 unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
     unsigned char *hexstr, long len)
 {
@@ -101,7 +102,7 @@ unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
     ctx->imprint_len = len;
     return ctx->imprint;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_4) && !defined(OSSL_LIBCMS_NAMES) */
 
 int TS_VERIFY_CTX_set0_imprint(TS_VERIFY_CTX *ctx,
     unsigned char *hexstr, long len)

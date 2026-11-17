@@ -50,6 +50,7 @@ foreach my $header ("$top/cms/cms_local.h", "$top/include/internal/cms.h") {
 # generated, later in the build than this header, so the glob below does not
 # see it.
 $names{'ossl_err_load_CMS_strings'} = 1;
+$names{'ossl_err_load_TS_strings'} = 1;
 
 # ASN.1 items and functions.  A template whose END macro is the static_
 # form defines a static item, which cannot collide, so only the others
@@ -78,6 +79,8 @@ foreach my $src (glob("$top/cms/*.c")) {
         # collide, and only those may be renamed: renaming something the
         # sources merely call would look for it under the wrong name.
         next if /^static\b/;
+        # A type macro such as "const STACK_OF(X509) *" is not a name
+        s/\b(?:STACK_OF|LHASH_OF)\s*\([^()]*\)/TYPE/g;
         $names{$1} = 1
             if /^[A-Za-z_][A-Za-z0-9_ ]*[ *]([A-Za-z_][A-Za-z0-9_]*)\(/;
     }

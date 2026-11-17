@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <libcms/names.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
 #include <openssl/ts.h>
-#include <openssl/conf_api.h>
+#include <openssl/conf.h>
 
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION "tsa"
@@ -418,7 +419,10 @@ int TS_CONF_set_clock_precision_digits(const CONF *conf, const char *section,
     /*
      * If not specified, set the default value to 0, i.e. sec precision
      */
-    digits = _CONF_get_number(conf, section, ENV_CLOCK_PRECISION_DIGITS);
+    ERR_set_mark();
+    if (!NCONF_get_number_e(conf, section, ENV_CLOCK_PRECISION_DIGITS, &digits))
+        digits = 0;
+    ERR_pop_to_mark();
     if (digits < 0 || digits > TS_MAX_CLOCK_PRECISION_DIGITS) {
         ts_CONF_invalid(section, ENV_CLOCK_PRECISION_DIGITS);
         goto err;
