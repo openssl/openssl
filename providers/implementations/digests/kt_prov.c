@@ -64,7 +64,12 @@ static size_t kt_length_encode(size_t x, unsigned char *out)
 {
     size_t n = 0, t = x, i;
 
-    while (t > 0) {
+    /*
+     * The n < sizeof(t) bound is provably never reached (t >>= 8 reaches
+     * zero in at most sizeof(t) steps), but it makes the maximum value of
+     * n visible to the reader and to compiler warning analysis.
+     */
+    while (t > 0 && n < sizeof(t)) {
         n++;
         t >>= 8;
     }
