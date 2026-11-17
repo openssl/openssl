@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
@@ -431,9 +432,39 @@ static int ts_check_status_info(TS_RESP *response)
     return 0;
 }
 
+/* Join the status strings with '/'; NULL if over TS_MAX_STATUS_LENGTH */
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
-    return ossl_sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
+    const ASN1_UTF8STRING *current;
+    size_t length = 0, len;
+    char *result, *p;
+    int i;
+
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
+        current = sk_ASN1_UTF8STRING_value(text, i);
+        if (i > 0)
+            length++;
+        length += ASN1_STRING_get_length(current);
+        if (length > TS_MAX_STATUS_LENGTH)
+            return NULL;
+    }
+    if ((result = OPENSSL_malloc(length + 1)) == NULL)
+        return NULL;
+
+    p = result;
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
+        current = sk_ASN1_UTF8STRING_value(text, i);
+        if (i > 0)
+            *p++ = '/';
+        len = ASN1_STRING_get_length(current);
+        if (len > 0) {
+            memcpy(p, ASN1_STRING_get0_data(current), len);
+            p += len;
+        }
+    }
+    *p = '\0';
+
+    return result;
 }
 
 static int ts_check_policy(const ASN1_OBJECT *req_oid,
