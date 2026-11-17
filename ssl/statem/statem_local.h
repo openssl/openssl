@@ -587,6 +587,25 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
+/**
+ * @brief Add the RFC 9973 "tls_cert_with_extern_psk" extension to the
+ * ClientHello.
+ *
+ * It is sent with the external PSK picked by tls_construct_ctos_early_data(),
+ * which is then the only PSK offered.
+ *
+ * @param s the client connection
+ * @param pkt the packet to write the extension to
+ * @param context the message the extension is constructed for
+ * @param x unused
+ * @param chainidx unused
+ * @returns EXT_RETURN_SENT if the extension was added, EXT_RETURN_NOT_SENT if
+ *          not, EXT_RETURN_FAIL on a fatal error
+ */
+EXT_RETURN tls_construct_ctos_cert_with_extern_psk(SSL_CONNECTION *s,
+    WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
 EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
@@ -637,6 +656,23 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 int tls_parse_stoc_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx);
 int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
+    X509 *x, size_t chainidx);
+/**
+ * @brief Process an RFC 9973 "tls_cert_with_extern_psk" extension received in
+ * the ServerHello.
+ *
+ * The server must also have selected the external PSK. Marks the extension as
+ * negotiated, which keeps the certificates in the handshake.
+ *
+ * @param s the client connection
+ * @param pkt the extension data
+ * @param context the message the extension was received in
+ * @param x unused
+ * @param chainidx unused
+ * @returns 1 on success, 0 on a fatal error
+ */
+int tls_parse_stoc_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context,
     X509 *x, size_t chainidx);
 
 int tls_handle_alpn(SSL_CONNECTION *s);

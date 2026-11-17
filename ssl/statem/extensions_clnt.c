@@ -1389,6 +1389,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
      * s->ext.psk_resumption_offered.
      */
     s->ext.psk_resumption_offered = tls13_check_resumption_psk(s, handmd);
+
     edsess = s->ext.psk_resumption_offered ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || edsess == NULL
@@ -1729,6 +1730,38 @@ dopsksess:
                pskbinder, s->psksession, 1, 1)
             != 1) {
         /* SSLfatal() already called */
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
+}
+
+EXT_RETURN tls_construct_ctos_cert_with_extern_psk(SSL_CONNECTION *s,
+    WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx)
+{
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    int offer = (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+        && s->psksession != NULL
+        && s->session->ssl_version == version1_3;
+
+#ifndef OPENSSL_NO_ECH
+    /* Don't reveal the use of the extension in the outer ClientHello */
+    if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0)
+        return EXT_RETURN_NOT_SENT;
+#endif
+
+    if (!offer)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_with_extern_psk)
+        || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
@@ -2639,6 +2672,26 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
     if (identity != 0)
         s->ext.early_data_ok = 0;
 #endif
+
+    return 1;
+}
+
+int tls_parse_stoc_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* RFC 9973 Section 4: the server must also select the external PSK */
+    if (!s->hit) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    s->ext.cert_with_extern_psk = 1;
 
     return 1;
 }
