@@ -302,6 +302,23 @@ __owur int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     size_t binderoffset, const unsigned char *binderin,
     unsigned char *binderout,
     SSL_SESSION *sess, int sign, int external);
+/**
+ * @brief Start a new session for an RFC 9973 handshake.
+ *
+ * A handshake with "tls_cert_with_extern_psk" is an initial one, which uses
+ * the external PSK only in the key schedule (RFC 9973, Section 4). So replace
+ * the external PSK's session with a new one, as created for a full handshake.
+ * It records the peer certificate, the SNI and the ALPN protocol of this
+ * connection, and so do the tickets issued from it (RFC 9846, Sections 4.3.10
+ * and 4.7.1).
+ *
+ * Call this once the early secret has been derived from the external PSK and,
+ * on the server, once ssl_get_prev_session() has validated its session.
+ *
+ * @param s the connection
+ * @returns 1 on success, 0 on a fatal error
+ */
+__owur int tls_cert_with_extern_psk_new_session(SSL_CONNECTION *s);
 
 /* Server Extension processing */
 __owur int tls_hrr_cookie_required(const SSL_CONNECTION *s);

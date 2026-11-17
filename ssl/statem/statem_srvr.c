@@ -2556,6 +2556,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         if (i == 1) {
             /* previous session */
             s->hit = 1;
+            if (SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)
+                && !tls_cert_with_extern_psk_new_session(s)) {
+                /* SSLfatal() already called */
+                goto err;
+            }
         } else if (i == -1) {
             /* SSLfatal() already called */
             goto err;
@@ -2925,7 +2930,7 @@ int tls_handle_alpn(SSL_CONNECTION *s)
                 /* Not consistent so can't be used for early_data */
                 s->ext.early_data_ok = 0;
 
-                if (!s->hit) {
+                if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
                     /*
                      * This is a new session and so alpn_selected should have
                      * been initialised to NULL. We should update it with the

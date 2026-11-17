@@ -1405,7 +1405,8 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
      * was successful.
      */
     if (s->server) {
-        if (sent && ret == SSL_TLSEXT_ERR_OK && !s->hit) {
+        if (sent && ret == SSL_TLSEXT_ERR_OK
+            && (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
             s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
@@ -2388,5 +2389,15 @@ static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context)
         sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.client_cert_type = TLSEXT_cert_type_x509;
     }
+    return 1;
+}
+
+int tls_cert_with_extern_psk_new_session(SSL_CONNECTION *s)
+{
+    if (!ssl_get_new_session(s, s->server))
+        return 0;
+
+    s->session->cipher = s->s3.tmp.new_cipher;
+    s->verify_result = s->session->verify_result;
     return 1;
 }
