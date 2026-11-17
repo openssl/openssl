@@ -187,7 +187,8 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 {
     EVP_PKEY_CTX *pctx = NULL;
     unsigned char *ek = NULL;
-    size_t eklen;
+    const unsigned char *in;
+    size_t eklen, inlen;
     int ret = -1;
     const PKCS7_CTX *ctx = ri->ctx;
 
@@ -199,10 +200,20 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
     if (EVP_PKEY_decrypt_init(pctx) <= 0)
         goto err;
 
-    ret = evp_pkey_decrypt_alloc(pctx, &ek, &eklen, fixlen,
-        ASN1_STRING_get0_data(ri->enc_key), ASN1_STRING_get_length(ri->enc_key));
-    if (ret <= 0)
+    in = ASN1_STRING_get0_data(ri->enc_key);
+    inlen = ASN1_STRING_get_length(ri->enc_key);
+    if (EVP_PKEY_decrypt(pctx, NULL, &eklen, in, inlen) <= 0
+        || (ek = OPENSSL_malloc(eklen)) == NULL)
         goto err;
+    if (EVP_PKEY_decrypt(pctx, ek, &eklen, in, inlen) <= 0
+        || eklen == 0
+        || (fixlen != 0 && eklen != fixlen)) {
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
+        OPENSSL_clear_free(ek, eklen);
+        ek = NULL;
+        ret = 0;
+        goto err;
+    }
 
     ret = 1;
 
