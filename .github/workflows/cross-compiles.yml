@@ -143,6 +143,13 @@ jobs:
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
+            arch: mipsisa32r6el-linux-gnu,
+            libs: libc6-dev-mipsr6el-cross,
+            target: linux-mips32 -march=mips32r6,
+            fips: no,
+            qemucpu: mips32r6-generic,
+            tests: -test_includes -test_store -test_x509_store
+          }, {
             arch: powerpc64le-linux-gnu,
             label: ppc64le,
             libs: libc6-dev-ppc64el-cross,
