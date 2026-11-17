@@ -169,6 +169,8 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/digests/sha3_prov.inc \
          providers/implementations/digests/ml_dsa_mu_prov.inc \
          providers/implementations/digests/cshake_prov.inc \
+         providers/implementations/digests/turboshake_prov.inc \
+         providers/implementations/digests/kt_prov.inc \
          providers/implementations/include/prov/blake2_params.inc \
          providers/implementations/macs/cmac_prov.inc \
          providers/implementations/macs/gmac_prov.inc \
@@ -312,6 +314,8 @@ DEPEND[ssl/t1_lib.inc \
        providers/implementations/digests/sha2_prov.inc \
        providers/implementations/digests/sha3_prov.inc \
        providers/implementations/digests/cshake_prov.inc \
+       providers/implementations/digests/turboshake_prov.inc \
+       providers/implementations/digests/kt_prov.inc \
        providers/implementations/include/prov/blake2_params.inc \
        providers/implementations/macs/cmac_prov.inc \
        providers/implementations/macs/gmac_prov.inc \
@@ -509,6 +513,10 @@ GENERATE[providers/implementations/digests/sha3_prov.inc]=\
     providers/implementations/digests/sha3_prov.inc.in
 GENERATE[providers/implementations/digests/cshake_prov.inc]=\
     providers/implementations/digests/cshake_prov.inc.in
+GENERATE[providers/implementations/digests/turboshake_prov.inc]=\
+    providers/implementations/digests/turboshake_prov.inc.in
+GENERATE[providers/implementations/digests/kt_prov.inc]=\
+    providers/implementations/digests/kt_prov.inc.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
     providers/implementations/include/prov/blake2_params.inc.in
 GENERATE[providers/implementations/digests/ml_dsa_mu_prov.inc]=\
@@ -584,7 +592,7 @@ DEPEND[openssl.pc]=libcrypto.pc libssl.pc
 
 GENERATE[builddata.pm]=util/mkinstallvars.pl \
     COMMENT="This file should be used when building against this OpenSSL build, and should never be installed" \
-    PREFIX=. BINDIR=apps APPLINKDIR=ms \
+    PREFIX=. BINDIR=apps "APPLINKDIR=$(SRCDIR)/ms" \
     LIBDIR= INCLUDEDIR=include "INCLUDEDIR=$(SRCDIR)/include" \
     MODULESDIR=providers \
     libdir= CMAKECONFIGDIR= PKGCONFIGDIR= \

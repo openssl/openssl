@@ -697,19 +697,14 @@ end:
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    int r = 1;
     uint64_t *operation = NULL;
     int64_t *algorithm = NULL;
 
-    if (!read_uint(&buf, &len, &operation)) {
-        r = 0;
+    if (!read_uint(&buf, &len, &operation))
         goto end;
-    }
 
-    if (!read_int(&buf, &len, &algorithm)) {
-        r = 0;
+    if (!read_int(&buf, &len, &algorithm))
         goto end;
-    }
 
     switch (*operation % 10) {
     case 0:
@@ -750,12 +745,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         /* not yet implemented */
         break;
     default:
-        r = 0;
         goto end;
     }
 
 end:
     OPENSSL_free(operation);
     OPENSSL_free(algorithm);
-    return r;
+    return 0;
 }

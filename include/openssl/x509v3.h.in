@@ -965,6 +965,10 @@ int X509v3_addr_add_range(IPAddrBlocks *addr,
     unsigned afi, const unsigned *safi,
     unsigned char *min, unsigned char *max);
 unsigned X509v3_addr_get_afi(const IPAddressFamily *f);
+/**
+ * @brief Get the SAFI of an IPAddressFamily, or 0 if it has none.
+ * @see X509v3_addr_get_safi(3)
+ */
 unsigned X509v3_addr_get_safi(const IPAddressFamily *f);
 int X509v3_addr_get_range(IPAddressOrRange *aor, unsigned afi,
     unsigned char *min, unsigned char *max,

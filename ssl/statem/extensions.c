@@ -1187,7 +1187,14 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
     /* Add custom extensions first */
 #ifndef OPENSSL_NO_ECH
-    if ((context & SSL_EXT_CLIENT_HELLO) != 0 && s->ext.ech.attempted == 0)
+    /*
+     * With ECH, the outer ClientHello reuses the custom extensions added
+     * to the inner one, so only reset their flags for the inner. That has
+     * to happen for every inner, as after a HelloRetryRequest the flags
+     * would still be set from the first ClientHello.
+     */
+    if ((context & SSL_EXT_CLIENT_HELLO) != 0
+        && (s->ext.ech.attempted == 0 || s->ext.ech.ch_depth == 1))
         /* On the server side with initialise during ClientHello parsing */
         custom_ext_init(&s->cert->custext);
 #else

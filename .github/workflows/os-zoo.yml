@@ -386,11 +386,15 @@ jobs:
             config: no-asm enable-fips
           - name: no-shared
             config: no-shared enable-fips enable-ec_nistp_64_gcc_128
+          # gcc 11's ASan makes every process exit take seconds on aarch64 (LSan walks
+          # a 32-bit-style allocator); gcc 14's runtime does not.
           - name: asan-ubsan
-            config: --debug enable-asan enable-ubsan enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5
+            config: CC=gcc14-gcc CXX=gcc14-g++ --debug enable-asan enable-ubsan enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5
     name: linux-aarch64-graviton4 (${{ matrix.name }})
     env:
       HARNESS_JOBS: 8
+      # On by default in gcc 14's runtime and very slow on aarch64; gcc 11 had it off.
+      ASAN_OPTIONS: detect_stack_use_after_return=0
     steps:
     - uses: actions/checkout@v6
       with:
@@ -569,7 +573,7 @@ jobs:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -578,21 +582,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -613,7 +617,7 @@ jobs:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -622,7 +626,7 @@ jobs:
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -631,7 +635,7 @@ jobs:
         run: |
           ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -640,7 +644,7 @@ jobs:
         run: |
           make -j4
     - name: make test
-      uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 #v1.6.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64

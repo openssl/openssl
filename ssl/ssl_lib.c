@@ -3158,6 +3158,22 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
+    /*
+     * An unsent reciprocal KeyUpdate does not prevent an orderly close.
+     * Cancel it only at a completed post-handshake boundary, with no write-key
+     * installation pending. A KeyUpdate already in flight must retain its
+     * state until the exchange completes.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc)
+        && !SSL_IS_FIRST_HANDSHAKE(sc)
+        && sc->statem.state == MSG_FLOW_FINISHED
+        && sc->statem.hand_state == TLS_ST_OK
+        && sc->key_update == SSL_KEY_UPDATE_NOT_REQUESTED
+        && !sc->d1->key_update_write_pending) {
+        sc->key_update = SSL_KEY_UPDATE_NONE;
+        ossl_statem_set_in_init(sc, 0);
+    }
+
     if (!SSL_in_init(s)) {
         if ((sc->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
             struct ssl_async_args args;
@@ -3211,6 +3227,19 @@ int SSL_key_update(SSL *s, int updatetype)
 
     if (RECORD_LAYER_write_pending(&sc->rlayer)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_WRITE_RETRY);
+        return 0;
+    }
+
+    /*
+     * RFC 9147 section 5.8.4: implementations MUST NOT send a KeyUpdate if
+     * an earlier one has not yet been acknowledged. key_update_write_pending
+     * covers this and more: it also catches an earlier KeyUpdate that is
+     * acknowledged but whose write-key install is still withheld behind an
+     * earlier, unrelated message -- SSL_is_init_finished() above does not
+     * guarantee that has completed.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
         return 0;
     }
 
@@ -3308,6 +3337,15 @@ int SSL_new_session_ticket(SSL *s)
     if ((SSL_in_init(s) && sc->ext.extra_tickets_expected == 0)
         || SSL_IS_FIRST_HANDSHAKE(sc) || !sc->server
         || !SSL_CONNECTION_IS_VERSION13(sc))
+        return 0;
+
+    /*
+     * Our own KeyUpdate's new keys must not be used for anything else
+     * until its write-key install completes (RFC 9147 section 8) -- even
+     * though it may already be acknowledged, with nothing left for
+     * SSL_is_init_finished() to object to.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending)
         return 0;
     sc->ext.extra_tickets_expected++;
     if (!RECORD_LAYER_write_pending(&sc->rlayer) && !SSL_in_init(s))
@@ -4927,7 +4965,12 @@ X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
     for (idx = 0; idx < cache_len; idx++) {
         find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
         if (!memcmp(find->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH)) {
-            X509_up_ref(find->cert);
+            /*
+             * If for some reason we cant take the reference on the
+             * cert, just don't return one
+             */
+            if (!X509_up_ref(find->cert))
+                break;
             ret = find->cert;
             break;
         }
@@ -7993,6 +8036,17 @@ int SSL_verify_client_post_handshake(SSL *ssl)
 
     if (!SSL_is_init_finished(ssl)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_STILL_IN_INIT);
+        return 0;
+    }
+
+    /*
+     * Our own KeyUpdate's new keys must not be used for anything else
+     * until its write-key install completes (RFC 9147 section 8) -- even
+     * though it may already be acknowledged, with nothing left for
+     * SSL_is_init_finished() to object to.
+     */
+    if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
         return 0;
     }
 
