@@ -32,6 +32,72 @@ OpenSSL 4.0
 
 ### Changes between 4.0.3 and 4.0.4 [xx XXX xxxx]
 
+ * Fixed out-of-bounds read in TLS 1.3 key-share processing with Suite B flag.
+
+   Severity: Low
+
+   Issue summary: A server configured with the Suite B certificate flag through
+   `SSL_CTX_set_cert_flags()` and with TLS 1.3 enabled may read past the end of
+   a fixed group list when it processes a ClientHello whose supported_groups and
+   key_share contain no Suite B group.
+
+   Impact summary: A remote client can send a ClientHello that makes the server
+   read past the end of a static array. The values read are never returned to
+   the client, so no memory is disclosed; on builds with sanitizers or hardened
+   allocators the read may crash the process, causing Denial of Service.
+
+   Reported by: Laurent Gaffie (secorizon.com).
+
+   ([CVE-2026-35190])
+   <!-- https://github.com/openssl/openssl/pull/33617 -->
+   <!-- https://github.com/openssl/openssl/pull/33720 -->
+   <!-- https://github.com/openssl/openssl/pull/33721 -->
+
+   *Daniel Kubec*
+
+ * Fixed use-after-free in PEM_X509_INFO_read_bio_ex() on stack append failure.
+
+   Severity: Low
+
+   Issue summary: When an application passes a stack to
+   `PEM_X509_INFO_read_bio_ex()` to add entries to, and reading fails, OpenSSL
+   frees every entry in the stack, both the old ones and any new ones, but
+   leaves them in the stack.
+
+   Impact summary: An application that passes an existing stack to
+   `PEM_X509_INFO_read_bio_ex()` and keeps using it after a failed read may use
+   memory that was already freed. This can cause a crash or, in principle,
+   memory corruption. Malformed PEM data can make the read fail, but only
+   applications that pass an existing stack are affected, and OpenSSL itself
+   does not do this.
+
+   Reported by: Filipe Casal (Trail of Bits).
+
+   ([CVE-2026-107493])
+   <!-- https://github.com/openssl/openssl/pull/33662 -->
+
+   *Viktor Dukhovni*
+
+ * Fixed unbounded memory retention in QUIC server for rejected streams.
+
+   Severity: Low
+
+   Issue summary: `BIO_dgram_detect_peer_addr()` returns uninitialised stack
+   data as part of an address for non-IPv4 sockets, that is then used in QUIC
+   automatic peer detection code as the destination for outgoing packets.
+
+   Impact summary: A remote client that completes a QUIC handshake can
+   repeatedly open and reset streams, causing server memory to grow without
+   bound until the process runs out of memory and every connection on it is
+   lost. This is a Denial of Service.
+
+   Reported by: Bhabani Sankar Das.
+
+   ([CVE-2026-124709])
+   <!-- https://github.com/openssl/openssl/pull/33718 -->
+
+   *Bhabani Sankar Das*
+
  * Fixed use of uninitialized stack data in QUIC automated peer detection.
 
    Severity: Low
@@ -24039,6 +24105,9 @@ ndif
 [CVE-2026-95691]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95691
 [CVE-2026-95692]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95692
 [CVE-2026-107496]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107496
+[CVE-2026-35190]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35190
+[CVE-2026-107493]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107493
+[CVE-2026-124709]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-124709
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
