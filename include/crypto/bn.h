@@ -35,7 +35,7 @@ int bn_set_top_fixed(BIGNUM *a, int words);
  * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to.
  *                      Note that this doesn't set 'top', that's done by
  *                      bn_release().
- * @returns     the OSSL_FN instance of the BIGNUM, if there is one
+ * @returns             the OSSL_FN instance of the BIGNUM, if there is one
  * @pre         b must not be NULL
  */
 OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs);
@@ -61,7 +61,7 @@ void bn_release(BIGNUM *b, int limbs);
  * operands; use bn_acquire_ossl_fn() for writable results.
  *
  * @param[in]   bn   The BIGNUM instance to get an OSSL_FN from
- * @returns     the OSSL_FN instance of the BIGNUM, or NULL if it has none
+ * @returns          the OSSL_FN instance of the BIGNUM, or NULL if it has none
  * @pre         bn must not be NULL
  */
 const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);

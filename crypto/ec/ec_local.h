@@ -592,12 +592,12 @@ int ossl_ec_fn_read(OSSL_FN *dst, const BIGNUM *src);
  * group->b into field-width temporaries, so no operand needs to be pre-"cleaned"
  * to the field width.  @p ctx is sized per the *_ctx_size companion.
  *
- * @param[in]   group   the group to compute in.
- * @param[in,out] r     first ladder point (X/Z only).
- * @param[in,out] s     second ladder point (X/Z only).
- * @param[in]   p       the affine base point.
- * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
- * @returns             1 on success, 0 on error.
+ * @param[in]      group  the group to compute in.
+ * @param[in,out]  r      first ladder point (X/Z only).
+ * @param[in,out]  s      second ladder point (X/Z only).
+ * @param[in]      p      the affine base point.
+ * @param[in]      ctx    the OSSL_FN_CTX arena for scratch.
+ * @returns               1 on success, 0 on error.
  */
 int ossl_ec_point_ladder_step_fn(const EC_GROUP *group, EC_POINT *r,
     EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
@@ -654,12 +654,12 @@ size_t ossl_ec_point_ladder_pre_fn_ctx_size(const EC_GROUP *group,
  * (r->Z == 0 -> infinity, s->Z == 0 -> -p) branch on the public result, again
  * exactly as the original does.
  *
- * @param[in]   group   the group to compute in.
- * @param[in,out] r     the ladder point to normalise to affine.
- * @param[in]   s       the other final ladder point.
- * @param[in]   p       the affine base point.
- * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
- * @returns             1 on success, 0 on error.
+ * @param[in]      group  the group to compute in.
+ * @param[in,out]  r      the ladder point to normalise to affine.
+ * @param[in]      s      the other final ladder point.
+ * @param[in]      p      the affine base point.
+ * @param[in]      ctx    the OSSL_FN_CTX arena for scratch.
+ * @returns               1 on success, 0 on error.
  */
 int ossl_ec_point_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
     EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
