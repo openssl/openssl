@@ -36,8 +36,10 @@ extern "C" {
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_2) || defined(OSSL_LIBCMP_NAMES)
 
+/** @see OSSL_CMP_log_open(3) */
 OSSL_LIBCMP_DEPRECATEDIN_4_2
 int OSSL_CMP_log_open(void);
+/** @see OSSL_CMP_log_close(3) */
 OSSL_LIBCMP_DEPRECATEDIN_4_2
 void OSSL_CMP_log_close(void);
 #define OSSL_CMP_LOG_PREFIX "CMP "
@@ -59,10 +61,12 @@ typedef int OSSL_CMP_severity;
 typedef int (*OSSL_CMP_log_cb_t)(const char *func, const char *file, int line,
     OSSL_CMP_severity level, const char *msg);
 
+/** @see OSSL_CMP_print_to_bio(3) */
 OSSL_LIBCMP_DEPRECATEDIN_4_2
 int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
     int line, OSSL_CMP_severity level, const char *msg);
 /* use of the logging callback for outputting error queue */
+/** @see OSSL_CMP_print_errors_cb(3) */
 OSSL_LIBCMP_DEPRECATEDIN_4_2
 void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn);
 
