@@ -98,6 +98,36 @@ static const char *ts_failure_sep(uint32_t mask, int idx)
     return (mask & (1U << idx)) && (mask & ((1U << idx) - 1)) ? "," : "";
 }
 
+/* Return the comma-separated names of the slots set in @mask, or NULL */
+static char *ts_failure_list(uint32_t mask)
+{
+    const int count = (int)OSSL_NELEM(ts_failure_info);
+    size_t len = 0, n;
+    char *list, *p;
+    int i;
+
+    for (i = 0; i < count; i++)
+        len += strlen(ts_failure_sep(mask, i)) + strlen(ts_failure_text(mask, i));
+    if ((list = OPENSSL_malloc(len + 1)) == NULL)
+        return NULL;
+
+    p = list;
+    for (i = 0; i < count; i++) {
+        const char *sep = ts_failure_sep(mask, i);
+        const char *text = ts_failure_text(mask, i);
+
+        n = strlen(sep);
+        memcpy(p, sep, n);
+        p += n;
+        n = strlen(text);
+        memcpy(p, text, n);
+        p += n;
+    }
+    *p = '\0';
+
+    return list;
+}
+
 /*-
  * This function carries out the following tasks:
  *      - Checks if there is one and only one signer.
@@ -406,18 +436,7 @@ static int ts_check_status_info(TS_RESP *response)
 
     /* Build a comma-separated list of failure_info bits, if any. */
     mask = info->failure_info != NULL ? ts_failure_mask(info->failure_info) : 0;
-    if (mask != 0
-        && ossl_asprintf(&failure_text,
-               "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-               ts_failure_text(mask, 0),
-               ts_failure_sep(mask, 1), ts_failure_text(mask, 1),
-               ts_failure_sep(mask, 2), ts_failure_text(mask, 2),
-               ts_failure_sep(mask, 3), ts_failure_text(mask, 3),
-               ts_failure_sep(mask, 4), ts_failure_text(mask, 4),
-               ts_failure_sep(mask, 5), ts_failure_text(mask, 5),
-               ts_failure_sep(mask, 6), ts_failure_text(mask, 6),
-               ts_failure_sep(mask, 7), ts_failure_text(mask, 7))
-            < 0)
+    if (mask != 0 && (failure_text = ts_failure_list(mask)) == NULL)
         mfail_msg = "unable to display, malloc failed";
 
     ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
