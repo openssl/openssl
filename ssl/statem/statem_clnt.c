@@ -2192,6 +2192,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
 
     s->hit = 0;
+    s->ext.cert_with_extern_psk = 0;
 
     if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*

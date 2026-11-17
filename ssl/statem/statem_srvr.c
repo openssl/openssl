@@ -2420,6 +2420,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     s->hit = 0;
+    s->ext.cert_with_extern_psk = 0;
 
     if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites)
         || !ossl_bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers, &scsvs, 1)) {
@@ -3169,6 +3170,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         SSL_SESSION_free(s->session);
         s->session = NULL;
         s->hit = 0;
+        s->ext.cert_with_extern_psk = 0;
 
         /*
          * Re-initialise the Transcript Hash. We're going to prepopulate it with

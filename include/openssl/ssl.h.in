@@ -457,6 +457,9 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /* RFC 8701: Send GREASE values in ClientHello */
 #define SSL_OP_GREASE SSL_OP_BIT(41)
 
+/* RFC 9973: Combine a TLSv1.3 external PSK with certificate authentication */
+#define SSL_OP_CERT_WITH_EXTERN_PSK SSL_OP_BIT(42)
+
 /*
  * Option "collections."
  */
@@ -2580,6 +2583,12 @@ SSL_as_poll_descriptor(SSL *s)
 #endif
 
 __owur int SSL_session_reused(const SSL *s);
+/**
+ * @brief Check whether a TLSv1.3 external PSK was used together with
+ * certificate-based authentication (RFC 9973).
+ * @see SSL_cert_with_extern_psk_negotiated(3)
+ */
+__owur int SSL_cert_with_extern_psk_negotiated(const SSL *s);
 __owur int SSL_is_server(const SSL *s);
 
 __owur SSL_CONF_CTX *SSL_CONF_CTX_new(void);

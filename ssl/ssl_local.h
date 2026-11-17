@@ -367,6 +367,13 @@ typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
     || (s)->s3.tmp.peer_finish_md_len == 0)
 
 /*
+ * Check whether RFC 9973 "tls_cert_with_extern_psk" was negotiated. Such a
+ * handshake sets s->hit as it uses a PSK, but still exchanges certificates.
+ */
+#define SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s) \
+    ((s)->hit && (s)->ext.cert_with_extern_psk)
+
+/*
  * See if we use signature algorithms extension and signature algorithm
  * before signatures.
  */
@@ -1918,6 +1925,9 @@ struct ssl_connection_st {
          * secret underived.
          */
         bool psk_resumption_offered;
+
+        /* RFC 9973, see SSL_CONNECTION_CERT_WITH_EXTERN_PSK() */
+        bool cert_with_extern_psk;
 
         /*
          * Client-only. Set in tls_psk_do_binder() when the first-offered PSK's
@@ -3656,7 +3666,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 
 /* Total mask of connection-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_CONN \
-    (OSSL_LEGACY_SSL_OPTIONS | OSSL_TLS1_2_OPTIONS | SSL_OP_SERVER_PREFERENCE | SSL_OP_DISABLE_TLSEXT_CA_NAMES | SSL_OP_NO_TX_CERTIFICATE_COMPRESSION | SSL_OP_NO_RX_CERTIFICATE_COMPRESSION | SSL_OP_PRIORITIZE_CHACHA | SSL_OP_NO_QUERY_MTU | SSL_OP_NO_TICKET | SSL_OP_NO_ANTI_REPLAY)
+    (OSSL_LEGACY_SSL_OPTIONS | OSSL_TLS1_2_OPTIONS | SSL_OP_SERVER_PREFERENCE | SSL_OP_DISABLE_TLSEXT_CA_NAMES | SSL_OP_NO_TX_CERTIFICATE_COMPRESSION | SSL_OP_NO_RX_CERTIFICATE_COMPRESSION | SSL_OP_PRIORITIZE_CHACHA | SSL_OP_NO_QUERY_MTU | SSL_OP_NO_TICKET | SSL_OP_NO_ANTI_REPLAY | SSL_OP_CERT_WITH_EXTERN_PSK)
 
 /* Total mask of stream-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_STREAM \

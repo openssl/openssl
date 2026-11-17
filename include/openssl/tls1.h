@@ -147,6 +147,9 @@ extern "C" {
 /* ExtensionType value from RFC8879 */
 #define TLSEXT_TYPE_compress_certificate 27
 
+/* ExtensionType value from RFC9973 */
+#define TLSEXT_TYPE_cert_with_extern_psk 33
+
 /* ExtensionType value from RFC4507 */
 #define TLSEXT_TYPE_session_ticket 35
 
