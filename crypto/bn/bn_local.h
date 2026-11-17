@@ -123,10 +123,10 @@ typedef unsigned long long BN_ULLONG;
  * Multiply a limb vector by a single limb and add into another vector:
  * rp[i] += ap[i] * w for i in 0..num-1.
  *
- * @param[in, out]  rp      result accumulator, num limbs.
- * @param[in]   ap      multiplicand, num limbs.
- * @param[in]   num     number of limbs in ap and rp.
- * @param[in]   w       the single-limb multiplier.
+ * @param[in,out]  rp   result accumulator, num limbs.
+ * @param[in]      ap   multiplicand, num limbs.
+ * @param[in]      num  number of limbs in ap and rp.
+ * @param[in]      w    the single-limb multiplier.
  * @returns             the carry out of the most significant limb.
  */
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
@@ -830,7 +830,7 @@ int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
  *
  * @param[in]   b       The BIGNUM instance to zeroise
  * @param[in]   newtop  The new 'top'
- * @returns     the new 'top'
+ * @returns             the new 'top'
  * @pre         b must not be NULL and newtop must be zero or positive
  */
 static ossl_inline int bn_set_top(BIGNUM *b, int newtop)

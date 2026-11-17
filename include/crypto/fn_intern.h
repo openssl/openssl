@@ -202,8 +202,8 @@ const OSSL_FN *ossl_fn_get0_small_factors(void);
  * bookkeeping for values that pass through the BIGNUM layer; OSSL_FN
  * arithmetic itself is unsigned.
  *
- * @param[in,out] f     the OSSL_FN to mark.
- * @param[in]   neg     true to mark negative, false to mark non-negative.
+ * @param[in,out]  f    the OSSL_FN to mark.
+ * @param[in]      neg  true to mark negative, false to mark non-negative.
  */
 void ossl_fn_set_negative(OSSL_FN *f, bool neg);
 
@@ -273,13 +273,13 @@ OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
  * hold at least num_bits(|range|) bits.  |libctx| is used to fetch the digest
  * and for RNG access.
  *
- * @param[out]  out         the nonce.
- * @param[in]   range       the exclusive upper bound of the nonce range.
- * @param[in]   priv        the private key mixed into the nonce.
- * @param[in]   message     the message bytes mixed into the nonce.
- * @param[in]   message_len the length of message, in bytes.
- * @param[in]   libctx      the library context for digest and RNG access.
- * @returns                 1 on success, 0 on error.
+ * @param[out]  out          the nonce.
+ * @param[in]   range        the exclusive upper bound of the nonce range.
+ * @param[in]   priv         the private key mixed into the nonce.
+ * @param[in]   message      the message bytes mixed into the nonce.
+ * @param[in]   message_len  the length of message, in bytes.
+ * @param[in]   libctx       the library context for digest and RNG access.
+ * @returns                  1 on success, 0 on error.
  */
 int ossl_fn_gen_dsa_nonce(OSSL_FN *out, const OSSL_FN *range,
     const OSSL_FN *priv, const unsigned char *message,
@@ -327,14 +327,14 @@ size_t ossl_fn_miller_rabin_is_prime_ctx_size_from_sizes(size_t w_dsize);
  * Test whether |w| is probably prime, clamping |checks| to a minimum
  * round count based on the candidate's width.
  *
- * @param[in]   w               the candidate to test.
- * @param[in]   checks          the requested number of rounds.
- * @param[in]   ctx             the OSSL_FN_CTX arena for scratch.
- * @param[in]   do_trial_division   nonzero to weed out small factors first.
- * @param[in]   cb              an optional BN_GENCB callback, may be NULL.
- * @param[in]   libctx          the library context.
- * @returns                     1 when probably prime, 0 when composite,
- *                              -1 on error.
+ * @param[in]   w                  the candidate to test.
+ * @param[in]   checks             the requested number of rounds.
+ * @param[in]   ctx                the OSSL_FN_CTX arena for scratch.
+ * @param[in]   do_trial_division  nonzero to weed out small factors first.
+ * @param[in]   cb                 an optional BN_GENCB callback, may be NULL.
+ * @param[in]   libctx             the library context.
+ * @returns                        1 when probably prime, 0 when composite,
+ *                                 -1 on error.
  */
 int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
