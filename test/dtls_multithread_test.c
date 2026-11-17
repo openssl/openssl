@@ -533,14 +533,22 @@ static int test_dtls_listener_clear_replace_race(void)
         ossl_crypto_thread_native_join(traffic_args.thread, NULL);
         ossl_crypto_thread_native_clean(traffic_args.thread);
         traffic_args.thread = NULL;
-        if (!TEST_int_eq(traffic_args.result, 1)
-            || !TEST_true(SSL_clear(client)))
+        if (!TEST_int_eq(traffic_args.result, 1))
             goto err;
 
-        SSL_set_accept_state(server_conn);
-        SSL_set_connect_state(client);
-        if (!TEST_true(create_ssl_connection(server_conn, client,
-                SSL_ERROR_NONE)))
+        /*
+         * Reconnect from a new client socket. Datagrams the old client sent
+         * may still be queued, and on the same address they would reach the
+         * new handshake as unexpected application data.
+         */
+        SSL_free(client);
+        client = NULL;
+        BIO_closesocket(client_fd);
+        client_fd = -1;
+        SSL_free(server_conn);
+        server_conn = NULL;
+        if (!TEST_true(create_client(cctx, server_addr, &client, &client_fd))
+            || !TEST_true(do_handshake(client, listener, &server_conn)))
             goto err;
     }
 
