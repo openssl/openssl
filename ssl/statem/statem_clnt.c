@@ -2353,6 +2353,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     }
 #endif
 
+    /* RFC 9973: it starts the session that the other extensions record into */
+    if (SSL_CONNECTION_IS_VERSION13(s)
+        && !tls_parse_extension(s, TLSEXT_IDX_cert_with_extern_psk, context,
+            extensions, NULL, 0)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
+
     if (!tls_parse_all_extensions(s, context, extensions, NULL, 0, 1)) {
         /* SSLfatal() already called */
         goto err;

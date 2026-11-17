@@ -663,7 +663,10 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
  * the ServerHello.
  *
  * The server must also have selected the external PSK. Marks the extension as
- * negotiated, which keeps the certificates in the handshake.
+ * negotiated, which keeps the certificates in the handshake, and starts a new
+ * session, see tls_cert_with_extern_psk_new_session().
+ * tls_process_server_hello() parses it before the other ServerHello
+ * extensions, which record into that session.
  *
  * @param s the client connection
  * @param pkt the extension data

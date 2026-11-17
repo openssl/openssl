@@ -1970,7 +1970,7 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    if (!s->hit) {
+    if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
         if (s->session->ext.hostname != NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -2264,7 +2264,7 @@ int tls_parse_stoc_alpn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* ALPN not consistent with the old session so cannot use early_data */
         s->ext.early_data_ok = 0;
     }
-    if (!s->hit) {
+    if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
         /*
          * This is a new session and so alpn_selected should have been
          * initialised to NULL. We should update it with the selected ALPN.
@@ -2504,7 +2504,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
     /* Retain this group in the SSL_SESSION */
-    if (!s->hit) {
+    if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
         s->session->kex_group = group_id;
     } else if (group_id != s->session->kex_group) {
         /*
@@ -2746,7 +2746,7 @@ int tls_parse_stoc_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
 
     s->ext.cert_with_extern_psk = 1;
 
-    return 1;
+    return tls_cert_with_extern_psk_new_session(s);
 }
 
 EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
