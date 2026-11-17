@@ -1382,6 +1382,58 @@ static SSL_TICKET_STATUS tls_get_psk_ticket(SSL_CONNECTION *s,
         PACKET_remaining(identity), NULL, 0, sess);
 }
 
+/*
+ * RFC 9973 Section 5.1: check that none of the remaining |identities|, the
+ * first of which has index |id|, is a resumption PSK. Like the PSK selection,
+ * this examines at most MAX_PRE_SHARED_KEYS identities, so an offer with more
+ * is refused too.
+ * Returns 1 on success, or 0 after calling SSLfatal().
+ */
+static int tls_psk_check_no_resumption(SSL_CONNECTION *s, PACKET *identities,
+    unsigned int id)
+{
+    for (; PACKET_remaining(identities) != 0; id++) {
+        PACKET identity;
+        SSL_SESSION *sess = NULL;
+        SSL_TICKET_STATUS ret;
+
+        if (id >= MAX_PRE_SHARED_KEYS) {
+            /* This and the following identities could be resumption PSKs */
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_PSK);
+            return 0;
+        }
+
+        /* Skip obfuscated_ticket_age */
+        if (!PACKET_get_length_prefixed_2(identities, &identity)
+            || !PACKET_forward(identities, 4)
+            || PACKET_remaining(&identity) == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        ret = tls_get_psk_ticket(s, &identity, &sess);
+        SSL_SESSION_free(sess);
+
+        switch (ret) {
+        case SSL_TICKET_NONE:
+        case SSL_TICKET_NO_DECRYPT:
+            break;
+        case SSL_TICKET_SUCCESS:
+        case SSL_TICKET_SUCCESS_RENEW:
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_PSK);
+            return 0;
+        case SSL_TICKET_EMPTY:
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        default:
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
@@ -1397,11 +1449,16 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     /*
      * RFC 9973 Section 5.1: the extension requires psk_dhe_ke. Without it, use
-     * no PSK.
+     * no PSK, but still refuse a resumption PSK.
      */
     if (cert_with_extern_psk
-        && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
-        return 1;
+        && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0) {
+        if (!PACKET_get_length_prefixed_2(pkt, &identities)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        return tls_psk_check_no_resumption(s, &identities, 0);
+    }
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -1548,6 +1605,12 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             if (ret == SSL_TICKET_NONE || ret == SSL_TICKET_NO_DECRYPT)
                 continue;
 
+            /* RFC 9973 Section 5.1: only external PSKs are allowed */
+            if (cert_with_extern_psk) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_PSK);
+                goto err;
+            }
+
             /* Check for replay */
             if (s->max_early_data > 0
                 && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0
@@ -1636,6 +1699,17 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         if (sess->cipher->id != s->s3.tmp.new_cipher->id)
             s->ext.early_data_ok = 0;
         break;
+    }
+
+    /*
+     * A resumption PSK may also follow the selected external PSK, or the
+     * identities examined without selecting one
+     */
+    if (cert_with_extern_psk
+        && !tls_psk_check_no_resumption(s, &identities,
+            sess != NULL ? id + 1 : id)) {
+        /* SSLfatal() already called */
+        goto err;
     }
 
     if (sess == NULL) {
