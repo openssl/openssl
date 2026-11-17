@@ -2424,6 +2424,7 @@ int tls_cert_with_extern_psk_new_session(SSL_CONNECTION *s)
         return 0;
 
     s->session->cipher = s->s3.tmp.new_cipher;
+    s->session->flags |= SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK;
     s->verify_result = s->session->verify_result;
     return 1;
 }

@@ -310,7 +310,9 @@ __owur int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
  * the external PSK's session with a new one, as created for a full handshake.
  * It records the peer certificate, the SNI and the ALPN protocol of this
  * connection, and so do the tickets issued from it (RFC 9846, Sections 4.3.10
- * and 4.7.1).
+ * and 4.7.1). It is marked with SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK, which
+ * the tickets inherit, so the client can tell that resuming it keeps the
+ * external PSK's protection.
  *
  * Call this once the early secret has been derived from the external PSK and,
  * on the server, once ssl_get_prev_session() has validated its session.

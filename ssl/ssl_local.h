@@ -650,6 +650,11 @@ struct ssl_session_st {
 
 /* Extended master secret support */
 #define SSL_SESS_FLAG_EXTMS 0x1
+/*
+ * The session stems from an RFC 9973 "tls_cert_with_extern_psk" handshake, so
+ * its resumption PSKs are derived from the external PSK
+ */
+#define SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK 0x2
 
 #ifndef OPENSSL_NO_SRP
 

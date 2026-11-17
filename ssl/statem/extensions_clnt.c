@@ -1402,6 +1402,18 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     s->ext.psk_resumption_offered = tls13_check_resumption_psk(s, handmd);
 
     /*
+     * RFC 9973: rather than resume a session without the external PSK's
+     * protection, for instance one from a full handshake with a server that
+     * didn't use the PSK, offer the PSK again. A session from an RFC 9973
+     * handshake keeps the protection, as its resumption PSKs are derived from
+     * the external PSK.
+     */
+    if ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0 && psksess != NULL
+        && s->ext.psk_resumption_offered
+        && (s->session->flags & SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK) == 0)
+        s->ext.psk_resumption_offered = 0;
+
+    /*
      * RFC 9973: the external PSK is only offered with the extension, which
      * excludes resumption PSKs and early data, and can't be added after a
      * HelloRetryRequest. Otherwise don't offer the PSK at all, or a server
