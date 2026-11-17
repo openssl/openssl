@@ -2134,8 +2134,12 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     } else {
         /* HMAC keys can't do EVP_DigestVerify* - use CRYPTO_memcmp instead */
         ret = (CRYPTO_memcmp(binderin, binderout, hashsize) == 0);
+        /* RFC 9973 Section 5.1 requires illegal_parameter instead */
         if (!ret)
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BINDER_DOES_NOT_VERIFY);
+            SSLfatal(s,
+                tls_cert_with_extern_psk_offered(s) ? SSL_AD_ILLEGAL_PARAMETER
+                                                    : SSL_AD_DECRYPT_ERROR,
+                SSL_R_BINDER_DOES_NOT_VERIFY);
     }
 
 err:

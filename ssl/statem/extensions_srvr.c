@@ -1723,11 +1723,15 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         }
         /*
          * decrypt_error here to keep the alert the same as if the binder
-         * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
+         * failed. See RFC9846 Appendix F.6. RFC 9973 uses illegal_parameter
+         * for that, see tls_psk_do_binder(). Note we make no attempt to do this
          * in constant time compared to verifying the binder. None of this code
          * is constant time anyway.
          */
-        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+        SSLfatal(s,
+            cert_with_extern_psk ? SSL_AD_ILLEGAL_PARAMETER
+                                 : SSL_AD_DECRYPT_ERROR,
+            SSL_R_BAD_EXTENSION);
         goto err;
     }
 
