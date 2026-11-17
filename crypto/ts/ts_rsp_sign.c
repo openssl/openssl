@@ -17,9 +17,6 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
-#include "internal/time.h"
-#include "crypto/asn1.h"
-#include "crypto/ess.h"
 #include "ts_local.h"
 
 DEFINE_STACK_OF_CONST(EVP_MD)

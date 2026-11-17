@@ -14,7 +14,6 @@
 #include <openssl/pkcs7.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
-#include "crypto/ess.h"
 #include "ts_local.h"
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
