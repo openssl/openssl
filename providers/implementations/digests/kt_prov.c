@@ -68,6 +68,10 @@ static size_t kt_length_encode(size_t x, unsigned char *out)
         n++;
         t >>= 8;
     }
+
+    if (n > sizeof(uint64_t))
+        return 0;
+
     for (i = 0; i < n; i++)
         out[n - i - 1] = (unsigned char)(x >> (8 * i));
     out[n] = (unsigned char)n;
