@@ -3844,17 +3844,80 @@ end:
 
 #if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_CT)
 static X509 *sct_cert_issuer = NULL;
+static int sct_ocsp_bad_ext = 0;
 
-/* Staples an ordinary OCSP response for the server certificate: no SCTs. */
+/*
+ * An OCSP response for |server_cert| whose single response carries an SCT
+ * list extension that does not decode.
+ */
+static OCSP_RESPONSE *create_ocsp_resp_bad_scts(X509 *server_cert, X509 *issuer)
+{
+    static const unsigned char not_an_sct_list[] = { 0x00, 0x05, 0x01 };
+    ASN1_TIME *thisupd = X509_gmtime_adj(NULL, 0);
+    ASN1_TIME *nextupd = X509_time_adj_ex(NULL, 1, 0, NULL);
+    EVP_MD *md = EVP_MD_fetch(libctx, "SHA-256", NULL);
+    OCSP_BASICRESP *bs = OCSP_BASICRESP_new();
+    OCSP_CERTID *cert_id = NULL;
+    OCSP_SINGLERESP *single;
+    ASN1_OCTET_STRING *value = ASN1_OCTET_STRING_new();
+    X509_EXTENSION *ext = NULL;
+    char *key_file = test_mk_file_path(certsdir, "embeddedSCTs1_issuer-key.pem");
+    char *cert_file = test_mk_file_path(certsdir, "embeddedSCTs1_issuer.pem");
+    EVP_PKEY *signer_key = NULL;
+    X509 *signer_cert = NULL;
+    OCSP_RESPONSE *resp = NULL;
+
+    if (!TEST_ptr(thisupd) || !TEST_ptr(nextupd) || !TEST_ptr(md)
+        || !TEST_ptr(bs) || !TEST_ptr(value) || !TEST_ptr(key_file)
+        || !TEST_ptr(cert_file)
+        || !TEST_ptr(cert_id = OCSP_cert_to_id(md, server_cert, issuer))
+        || !TEST_ptr(single = OCSP_basic_add1_status(bs, cert_id,
+                         V_OCSP_CERTSTATUS_GOOD, 0, NULL, thisupd, nextupd))
+        || !TEST_true(ASN1_OCTET_STRING_set(value, not_an_sct_list,
+            sizeof(not_an_sct_list)))
+        || !TEST_ptr(ext = X509_EXTENSION_create_by_NID(NULL,
+                         NID_ct_cert_scts, 0, value))
+        || !TEST_true(OCSP_SINGLERESP_add_ext(single, ext, -1))
+        || !TEST_ptr(signer_key = load_pkey_pem(key_file, libctx))
+        || !TEST_ptr(signer_cert = load_cert_pem(cert_file, libctx))
+        || !TEST_true(OCSP_basic_sign(bs, signer_cert, signer_key,
+            EVP_sha256(), NULL, OCSP_NOCERTS)))
+        goto end;
+    resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
+
+end:
+    X509_free(signer_cert);
+    EVP_PKEY_free(signer_key);
+    OPENSSL_free(cert_file);
+    OPENSSL_free(key_file);
+    X509_EXTENSION_free(ext);
+    ASN1_OCTET_STRING_free(value);
+    OCSP_CERTID_free(cert_id);
+    OCSP_BASICRESP_free(bs);
+    EVP_MD_free(md);
+    ASN1_TIME_free(nextupd);
+    ASN1_TIME_free(thisupd);
+    return resp;
+}
+
+/*
+ * Staples an OCSP response for the server certificate without SCTs: an
+ * ordinary one, or, with sct_ocsp_bad_ext, one whose SCT extension does not
+ * decode.
+ */
 static int ocsp_server_cb_no_scts(SSL *s, void *arg)
 {
     OCSP_RESPONSE *resp;
     unsigned char *der = NULL;
     int len;
 
-    resp = create_ocsp_resp(SSL_get_certificate(s), sct_cert_issuer,
-        V_OCSP_CERTSTATUS_GOOD, "embeddedSCTs1_issuer-key.pem",
-        "embeddedSCTs1_issuer.pem");
+    if (sct_ocsp_bad_ext)
+        resp = create_ocsp_resp_bad_scts(SSL_get_certificate(s),
+            sct_cert_issuer);
+    else
+        resp = create_ocsp_resp(SSL_get_certificate(s), sct_cert_issuer,
+            V_OCSP_CERTSTATUS_GOOD, "embeddedSCTs1_issuer-key.pem",
+            "embeddedSCTs1_issuer.pem");
     if (!TEST_ptr(resp))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     len = i2d_OCSP_RESPONSE(resp, &der);
@@ -3875,11 +3938,13 @@ static int ct_accept_all_cb(const CT_POLICY_EVAL_CTX *ctx,
 }
 
 /*
- * A stapled OCSP response without the SCT extension, the usual kind, must not
- * make SSL_get0_peer_scts() fail and discard the SCTs embedded in the
- * certificate.
- * Test 0: TLS 1.2
- * Test 1: TLS 1.3
+ * A stapled OCSP response without the SCT extension, the usual kind, or with
+ * one that does not decode, must not make SSL_get0_peer_scts() fail and
+ * discard the SCTs embedded in the certificate.
+ * Test 0: TLS 1.2, no SCT extension
+ * Test 1: TLS 1.3, no SCT extension
+ * Test 2: TLS 1.2, undecodable SCT extension
+ * Test 3: TLS 1.3, undecodable SCT extension
  */
 static int test_peer_scts_with_stapled_ocsp(int idx)
 {
@@ -3887,7 +3952,7 @@ static int test_peer_scts_with_stapled_ocsp(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     const STACK_OF(SCT) *scts;
     char *certfile = NULL, *keyfile = NULL, *issuerfile = NULL;
-    int version = idx == 0 ? TLS1_2_VERSION : TLS1_3_VERSION;
+    int version = idx % 2 == 0 ? TLS1_2_VERSION : TLS1_3_VERSION;
     int testresult = 0;
 
 #ifdef OPENSSL_NO_TLS1_2
@@ -3909,6 +3974,7 @@ static int test_peer_scts_with_stapled_ocsp(int idx)
             keyfile)))
         goto end;
     SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_no_scts);
+    sct_ocsp_bad_ext = idx >= 2;
 
     /* The CT validation callback also requests a stapled OCSP response. */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -3922,8 +3988,13 @@ static int test_peer_scts_with_stapled_ocsp(int idx)
     ocsp_server_called = 0;
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE))
-        || !TEST_true(ocsp_server_called)
-        || !TEST_ptr(scts = SSL_get0_peer_scts(clientssl))
+        || !TEST_true(ocsp_server_called))
+        goto end;
+
+    /* An ignored SCT extension leaves nothing on the error queue. */
+    ERR_clear_error();
+    if (!TEST_ptr(scts = SSL_get0_peer_scts(clientssl))
+        || !TEST_ulong_eq(ERR_peek_error(), 0)
         || !TEST_int_eq(sk_SCT_num(scts), 1)
         || !TEST_int_eq(SCT_get_source(sk_SCT_value(scts, 0)),
             SCT_SOURCE_X509V3_EXTENSION))
@@ -3937,6 +4008,7 @@ end:
     SSL_CTX_free(cctx);
     X509_free(sct_cert_issuer);
     sct_cert_issuer = NULL;
+    sct_ocsp_bad_ext = 0;
     OPENSSL_free(certfile);
     OPENSSL_free(keyfile);
     OPENSSL_free(issuerfile);
@@ -19940,7 +20012,7 @@ int setup_tests(void)
 #endif
 #endif
 #if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_CT)
-    ADD_ALL_TESTS(test_peer_scts_with_stapled_ocsp, 2);
+    ADD_ALL_TESTS(test_peer_scts_with_stapled_ocsp, 4);
 #endif
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
