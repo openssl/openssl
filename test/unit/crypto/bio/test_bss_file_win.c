@@ -52,7 +52,7 @@ int main(void)
 #include <stddef.h>
 #include <setjmp.h>
 #include <string.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 #include <detours/detours.h>
 
 #include "internal/sockets.h"
@@ -171,8 +171,8 @@ static size_t __cdecl mock_fread(void *ptr, size_t size, size_t nmemb,
     g_mocks_armed = 0;
     function_called();
     check_expected_ptr(ptr);
-    check_expected(size);
-    check_expected(nmemb);
+    check_expected_uint(size);
+    check_expected_uint(nmemb);
     check_expected_ptr(stream);
     rc = mock_type(size_t);
     g_mocks_armed = 1;
@@ -190,8 +190,8 @@ static size_t __cdecl mock_fwrite(const void *ptr, size_t size, size_t nmemb,
     g_mocks_armed = 0;
     function_called();
     check_expected_ptr(ptr);
-    check_expected(size);
-    check_expected(nmemb);
+    check_expected_uint(size);
+    check_expected_uint(nmemb);
     check_expected_ptr(stream);
     rc = mock_type(size_t);
     g_mocks_armed = 1;
@@ -237,8 +237,8 @@ static int __cdecl mock_setmode(int fd, int mode)
 
     g_mocks_armed = 0;
     function_called();
-    check_expected(fd);
-    check_expected(mode);
+    check_expected_int(fd);
+    check_expected_int(mode);
     rc = mock_type(int);
     g_mocks_armed = 1;
     return rc;
@@ -253,7 +253,7 @@ static intptr_t __cdecl mock_get_osfhandle(int fd)
 
     g_mocks_armed = 0;
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     rc = mock_type(intptr_t);
     g_mocks_armed = 1;
     return rc;
@@ -306,7 +306,7 @@ static DWORD WINAPI mock_GetFileType(HANDLE h)
 static void expect_feof(FILE *stream, int rc, int errnoval)
 {
     expect_function_call(mock_feof);
-    expect_value(mock_feof, stream, stream);
+    expect_uint_value(mock_feof, stream, cast_ptr_to_uintmax_type(stream));
     will_return(mock_feof, rc);
     will_return(mock_feof, errnoval);
 }
@@ -314,17 +314,17 @@ static void expect_feof(FILE *stream, int rc, int errnoval)
 static void expect_ftell(FILE *stream, long rc)
 {
     expect_function_call(mock_ftell);
-    expect_value(mock_ftell, stream, stream);
+    expect_uint_value(mock_ftell, stream, cast_ptr_to_uintmax_type(stream));
     will_return(mock_ftell, rc);
 }
 
 static void expect_fread(void *ptr, size_t nmemb, FILE *stream, size_t rc)
 {
     expect_function_call(mock_fread);
-    expect_value(mock_fread, ptr, ptr);
-    expect_value(mock_fread, size, 1);
-    expect_value(mock_fread, nmemb, nmemb);
-    expect_value(mock_fread, stream, stream);
+    expect_uint_value(mock_fread, ptr, cast_ptr_to_uintmax_type(ptr));
+    expect_uint_value(mock_fread, size, 1);
+    expect_uint_value(mock_fread, nmemb, nmemb);
+    expect_uint_value(mock_fread, stream, cast_ptr_to_uintmax_type(stream));
     will_return(mock_fread, rc);
 }
 
@@ -332,39 +332,39 @@ static void expect_fwrite(const void *ptr, size_t nmemb, FILE *stream,
     size_t rc)
 {
     expect_function_call(mock_fwrite);
-    expect_value(mock_fwrite, ptr, ptr);
-    expect_value(mock_fwrite, size, 1);
-    expect_value(mock_fwrite, nmemb, nmemb);
-    expect_value(mock_fwrite, stream, stream);
+    expect_uint_value(mock_fwrite, ptr, cast_ptr_to_uintmax_type(ptr));
+    expect_uint_value(mock_fwrite, size, 1);
+    expect_uint_value(mock_fwrite, nmemb, nmemb);
+    expect_uint_value(mock_fwrite, stream, cast_ptr_to_uintmax_type(stream));
     will_return(mock_fwrite, rc);
 }
 
 static void expect_fclose(FILE *stream, int rc)
 {
     expect_function_call(mock_fclose);
-    expect_value(mock_fclose, stream, stream);
+    expect_uint_value(mock_fclose, stream, cast_ptr_to_uintmax_type(stream));
     will_return(mock_fclose, rc);
 }
 
 static void expect_fileno(FILE *stream, int rc)
 {
     expect_function_call(mock_fileno);
-    expect_value(mock_fileno, stream, stream);
+    expect_uint_value(mock_fileno, stream, cast_ptr_to_uintmax_type(stream));
     will_return(mock_fileno, rc);
 }
 
 static void expect_setmode(int fd, int mode, int rc)
 {
     expect_function_call(mock_setmode);
-    expect_value(mock_setmode, fd, fd);
-    expect_value(mock_setmode, mode, mode);
+    expect_int_value(mock_setmode, fd, fd);
+    expect_int_value(mock_setmode, mode, mode);
     will_return(mock_setmode, rc);
 }
 
 static void expect_get_osfhandle(int fd, intptr_t rc)
 {
     expect_function_call(mock_get_osfhandle);
-    expect_value(mock_get_osfhandle, fd, fd);
+    expect_int_value(mock_get_osfhandle, fd, fd);
     will_return(mock_get_osfhandle, rc);
 }
 
@@ -382,7 +382,7 @@ static void expect_wfopen(const wchar_t *filename, const wchar_t *mode,
 static void expect_GetFileType(intptr_t h, DWORD rc)
 {
     expect_function_call(mock_GetFileType);
-    expect_value(mock_GetFileType, h, (HANDLE)h);
+    expect_uint_value(mock_GetFileType, h, cast_ptr_to_uintmax_type((HANDLE)h));
     will_return(mock_GetFileType, rc);
 }
 

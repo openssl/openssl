@@ -14,7 +14,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 
 #include "bio_local.h"
 #include <openssl/bio.h>
@@ -58,9 +58,9 @@ int __wrap_getsockopt(int fd, int level, int optname, void *optval,
     int rc;
 
     function_called();
-    check_expected(fd);
-    check_expected(level);
-    check_expected(optname);
+    check_expected_int(fd);
+    check_expected_int(level);
+    check_expected_int(optname);
     (void)optlen;
     rc = mock_type(int);
     if (rc == 0) {
@@ -78,10 +78,10 @@ int __wrap_setsockopt(int fd, int level, int optname, const void *optval,
     int on = (optval != NULL) ? *(const int *)optval : 0;
 
     function_called();
-    check_expected(fd);
-    check_expected(level);
-    check_expected(optname);
-    check_expected(on);
+    check_expected_int(fd);
+    check_expected_int(level);
+    check_expected_int(optname);
+    check_expected_int(on);
     (void)optlen;
     return mock_type(int);
 }
@@ -91,7 +91,7 @@ int __wrap_getsockname(int fd, struct sockaddr *addr, socklen_t *slen)
     int rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     (void)addr;
     rc = mock_type(int);
     if (rc == 0 && slen != NULL)
@@ -102,8 +102,8 @@ int __wrap_getsockname(int fd, struct sockaddr *addr, socklen_t *slen)
 int __wrap_ioctl(int fd, unsigned long request, void *arg)
 {
     function_called();
-    check_expected(fd);
-    check_expected(request);
+    check_expected_int(fd);
+    check_expected_uint(request);
     (void)arg;
     return mock_type(int);
 }
@@ -114,8 +114,8 @@ int __wrap_poll(struct pollfd *fds, nfds_t nfds, int timeout)
     int events = fds[0].events;
 
     function_called();
-    check_expected(pfd);
-    check_expected(events);
+    check_expected_int(pfd);
+    check_expected_int(events);
     (void)nfds;
     (void)timeout;
     return mock_type(int);
@@ -135,9 +135,9 @@ int __wrap_BIO_lookup(const char *host, const char *service,
     int rc;
 
     function_called();
-    check_expected(family);
-    check_expected(socktype);
-    check_expected(lookup_type);
+    check_expected_int(family);
+    check_expected_int(socktype);
+    check_expected_int(lookup_type);
     (void)host;
     (void)service;
     rc = mock_type(int);
@@ -153,9 +153,9 @@ int __wrap_BIO_lookup(const char *host, const char *service,
 int __wrap_BIO_socket(int domain, int socktype, int protocol, int options)
 {
     function_called();
-    check_expected(domain);
-    check_expected(socktype);
-    check_expected(protocol);
+    check_expected_int(domain);
+    check_expected_int(socktype);
+    check_expected_int(protocol);
     (void)options;
     return mock_type(int);
 }
@@ -163,8 +163,8 @@ int __wrap_BIO_socket(int domain, int socktype, int protocol, int options)
 int __wrap_BIO_listen(int sock, const BIO_ADDR *ba, int options)
 {
     function_called();
-    check_expected(sock);
-    check_expected(options);
+    check_expected_int(sock);
+    check_expected_int(options);
     (void)ba;
     return mock_type(int);
 }
@@ -172,7 +172,7 @@ int __wrap_BIO_listen(int sock, const BIO_ADDR *ba, int options)
 int __wrap_BIO_closesocket(int sock)
 {
     function_called();
-    check_expected(sock);
+    check_expected_int(sock);
     return mock_type(int);
 }
 
@@ -185,8 +185,8 @@ void __wrap_BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
 int __wrap_BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options)
 {
     function_called();
-    check_expected(accept_sock);
-    check_expected(options);
+    check_expected_int(accept_sock);
+    check_expected_int(options);
     (void)addr;
     return mock_type(int);
 }
@@ -194,14 +194,14 @@ int __wrap_BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options)
 int __wrap_BIO_sock_should_retry(int i)
 {
     function_called();
-    check_expected(i);
+    check_expected_int(i);
     return mock_type(int);
 }
 
 char *__wrap_BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric)
 {
     function_called();
-    check_expected(numeric);
+    check_expected_int(numeric);
     (void)ap;
     return mock_ptr_type(char *);
 }
@@ -209,7 +209,7 @@ char *__wrap_BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric)
 char *__wrap_BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric)
 {
     function_called();
-    check_expected(numeric);
+    check_expected_int(numeric);
     (void)ap;
     return mock_ptr_type(char *);
 }
@@ -219,9 +219,9 @@ char *__wrap_BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric)
 static void expect_getsockopt(int fd, int rc, int value)
 {
     expect_function_call(__wrap_getsockopt);
-    expect_value(__wrap_getsockopt, fd, fd);
-    expect_value(__wrap_getsockopt, level, SOL_SOCKET);
-    expect_value(__wrap_getsockopt, optname, SO_ERROR);
+    expect_int_value(__wrap_getsockopt, fd, fd);
+    expect_int_value(__wrap_getsockopt, level, SOL_SOCKET);
+    expect_int_value(__wrap_getsockopt, optname, SO_ERROR);
     will_return(__wrap_getsockopt, rc);
     will_return(__wrap_getsockopt, value);
 }
@@ -230,10 +230,10 @@ static void expect_getsockopt(int fd, int rc, int value)
 static void expect_setsockopt(int fd, int on, int rc)
 {
     expect_function_call(__wrap_setsockopt);
-    expect_value(__wrap_setsockopt, fd, fd);
-    expect_value(__wrap_setsockopt, level, TEST_TCP_LEVEL);
-    expect_value(__wrap_setsockopt, optname, TCP_NODELAY);
-    expect_value(__wrap_setsockopt, on, on);
+    expect_int_value(__wrap_setsockopt, fd, fd);
+    expect_int_value(__wrap_setsockopt, level, TEST_TCP_LEVEL);
+    expect_int_value(__wrap_setsockopt, optname, TCP_NODELAY);
+    expect_int_value(__wrap_setsockopt, on, on);
     will_return(__wrap_setsockopt, rc);
 }
 #endif
@@ -241,7 +241,7 @@ static void expect_setsockopt(int fd, int on, int rc)
 static void expect_getsockname(int fd, int rc, socklen_t outlen)
 {
     expect_function_call(__wrap_getsockname);
-    expect_value(__wrap_getsockname, fd, fd);
+    expect_int_value(__wrap_getsockname, fd, fd);
     will_return(__wrap_getsockname, rc);
     if (rc == 0)
         will_return(__wrap_getsockname, (int)outlen);
@@ -251,8 +251,8 @@ static void expect_getsockname(int fd, int rc, socklen_t outlen)
 static void expect_ioctl(int fd, unsigned long request, int rc)
 {
     expect_function_call(__wrap_ioctl);
-    expect_value(__wrap_ioctl, fd, fd);
-    expect_value(__wrap_ioctl, request, request);
+    expect_int_value(__wrap_ioctl, fd, fd);
+    expect_uint_value(__wrap_ioctl, request, request);
     will_return(__wrap_ioctl, rc);
 }
 #endif
@@ -260,8 +260,8 @@ static void expect_ioctl(int fd, unsigned long request, int rc)
 static void expect_poll(int fd, int events, int rc)
 {
     expect_function_call(__wrap_poll);
-    expect_value(__wrap_poll, pfd, fd);
-    expect_value(__wrap_poll, events, events);
+    expect_int_value(__wrap_poll, pfd, fd);
+    expect_int_value(__wrap_poll, events, events);
     will_return(__wrap_poll, rc);
 }
 
