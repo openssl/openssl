@@ -84,6 +84,16 @@ Unlike L<BIO_read(3)> and L<BIO_write(3)>, the L<BIO_sendmmsg(3)> and
 L<BIO_recvmmsg(3)> methods are stateless and do not cause the internal state of
 the BIO_s_datagram() to change.
 
+=item
+
+On Linux, L<BIO_sendmmsg(3)> can use UDP Generic Segmentation Offload (GSO) when
+the caller passes B<BIO_SENDMMSG_FLAG_GSO>: a run of equal-sized datagrams
+destined for the same peer is submitted to the kernel as a single segmented send,
+substantially reducing per-datagram transmit overhead. The flag is opt-in
+because coalescing changes datagram boundaries; see L<BIO_sendmmsg(3)> for the
+conditions the caller must satisfy. It falls back to ordinary sendmmsg(2)
+behaviour where GSO is unavailable.
+
 =back
 
 Various controls are available for configuring the BIO_s_datagram() using

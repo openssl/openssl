@@ -63,6 +63,9 @@ struct ossl_qtx_st {
     /* TX BIO. */
     BIO *bio;
 
+    /* Whether bio can use UDP GSO; refreshed whenever bio is set. */
+    int gso_capable;
+
     /* QLOG instance retrieval callback if in use, or NULL. */
     QLOG *(*get_qlog_cb)(void *arg);
     void *get_qlog_cb_arg;
@@ -117,6 +120,21 @@ struct ossl_qtx_st {
     SSL *msg_callback_ssl;
 };
 
+/*
+ * Returns 1 if it is safe to pass BIO_SENDMMSG_FLAG_GSO to bio. We only do so for
+ * the built-in datagram BIO: it is known to accept the flag and performs its own
+ * GSO capability detection on the socket. We deliberately do NOT probe via a
+ * control request: a filter BIO forwards an unknown control to the datagram BIO
+ * beneath it and would report "capable", yet the filter itself may reject a
+ * nonzero flags argument (the documented contract was that it be zero), which
+ * would break connection setup. Only the BIO we actually hand the flag to can
+ * tell us it is safe, so we require that BIO to be the datagram BIO itself.
+ */
+static int qtx_bio_gso_capable(BIO *bio)
+{
+    return bio != NULL && BIO_method_type(bio) == BIO_TYPE_DGRAM;
+}
+
 /* Instantiates a new QTX. */
 OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
 {
@@ -132,6 +150,7 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
     qtx->libctx = args->libctx;
     qtx->propq = args->propq;
     qtx->bio = args->bio;
+    qtx->gso_capable = qtx_bio_gso_capable(args->bio);
     qtx->mdpl = args->mdpl;
     /* We update this if possible when we get a BIO. */
     qtx->mtu = QTX_DEFAULT_MTU;
@@ -935,7 +954,16 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
             break;
 
         ERR_set_mark();
-        res = BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0, &wr);
+        /*
+         * The QUIC stack owns this socket and never sets UDP_SEGMENT, UDP_CORK or
+         * MSG_MORE on it, so it is safe to request UDP GSO - but only when the
+         * write BIO is the built-in datagram BIO (gso_capable), which is known to
+         * accept the flag. Any other BIO (a filter or an application's custom BIO)
+         * is sent zero flags, exactly as before, so it cannot be broken by an
+         * unexpected flag value.
+         */
+        res = BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i,
+            qtx->gso_capable ? BIO_SENDMMSG_FLAG_GSO : 0, &wr);
         if (res && wr == 0) {
             /*
              * Treat 0 messages sent as a transient error and just stop for now.
@@ -997,6 +1025,7 @@ void ossl_qtx_set_bio(OSSL_QTX *qtx, BIO *bio)
     unsigned int mtu;
 
     qtx->bio = bio;
+    qtx->gso_capable = qtx_bio_gso_capable(bio);
 
     if (bio != NULL) {
         /*

@@ -172,6 +172,7 @@ BIO_POLL_DESCRIPTOR_TYPE_NONE           define
 BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD        define
 BIO_POLL_DESCRIPTOR_TYPE_SSL            define
 BIO_POLL_DESCRIPTOR_TYPE_CUSTOM_START   define
+BIO_SENDMMSG_FLAG_GSO                   define
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
 BIO_dgram_get_local_addr_cap            define

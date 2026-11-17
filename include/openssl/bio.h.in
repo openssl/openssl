@@ -393,6 +393,16 @@ typedef struct bio_msg_st {
     uint64_t flags;
 } BIO_MSG;
 
+/*
+ * Flag for the flags argument of BIO_sendmmsg(): request UDP Generic
+ * Segmentation Offload (GSO). The caller asserts that it owns the socket and
+ * has not configured UDP_SEGMENT, UDP_CORK or MSG_MORE on it, allowing the
+ * datagram BIO to coalesce a run of equal-sized datagrams destined for the same
+ * peer into a single segmented send. It is ignored by BIOs that do not support
+ * it, including non-Linux platforms and non-UDP sockets.
+ */
+#define BIO_SENDMMSG_FLAG_GSO ((uint64_t)1 << 0)
+
 typedef struct bio_mmsg_cb_args_st {
     BIO_MSG *msg;
     size_t stride, num_msg;
