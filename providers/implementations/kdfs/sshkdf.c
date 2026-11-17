@@ -195,6 +195,11 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
+    /* Each round appends one digest, so the digest must have output */
+    if (EVP_MD_get_size(md) <= 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
+        return 0;
+    }
     if (ctx->key == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
