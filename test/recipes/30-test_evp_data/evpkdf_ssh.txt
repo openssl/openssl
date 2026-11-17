@@ -4888,6 +4888,17 @@ Ctrl.hexsession_id = hexsession_id:a4ebd45934f56792b5112dcd75a1075fdc889245
 Ctrl.type = type:A
 Result = KDF_MISMATCH
 
+# A digest with no output cannot produce any key material
+Availablein = default
+KDF = SSHKDF
+Ctrl.digest = digest:NULL
+Ctrl.hexkey = hexkey:0102030405060708
+Ctrl.hexxcghash = hexxcghash:0102030405060708
+Ctrl.hexsession_id = hexsession_id:0102030405060708
+Ctrl.type = type:A
+Output = 00
+Result = KDF_DERIVE_ERROR
+
 Title = FIPS indicator tests
 
 # Test that the operation with unapproved digest function is rejected
