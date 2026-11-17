@@ -15,10 +15,7 @@
 #include <openssl/err.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
-#include "crypto/evp.h"
 #include "pk7_local.h"
-
-#include <crypto/asn1.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);

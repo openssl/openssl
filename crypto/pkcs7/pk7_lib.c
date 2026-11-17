@@ -12,9 +12,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/pkcs7.h>
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
-#include "crypto/x509.h" /* for sk_X509_add1_cert() */
 #include "pk7_local.h"
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
