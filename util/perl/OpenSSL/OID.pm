@@ -10,7 +10,7 @@
 
 package OpenSSL::OID;
 
-use 5.10.0;
+use 5.26.0;
 use strict;
 use warnings;
 use Carp;
