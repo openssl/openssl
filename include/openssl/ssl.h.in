@@ -1988,6 +1988,11 @@ size_t SSL_client_hello_get0_session_id(SSL *s, const unsigned char **out);
 size_t SSL_client_hello_get0_ciphers(SSL *s, const unsigned char **out);
 size_t SSL_client_hello_get0_compression_methods(SSL *s,
     const unsigned char **out);
+/**
+ * @brief Get the raw extensions block of the ClientHello being processed.
+ * @see SSL_client_hello_get0_extensions(3)
+ */
+size_t SSL_client_hello_get0_extensions(SSL *s, const unsigned char **out);
 int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen);
 int SSL_client_hello_get_extension_order(SSL *s, uint16_t *exts,
     size_t *num_exts);

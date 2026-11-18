@@ -34,6 +34,9 @@ OpenSSL 4.2
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
+  * Added `SSL_client_hello_get0_extensions()` for zero-copy access to the
+    raw ClientHello extensions block during the ClientHello callback.
+
 OpenSSL 4.1
 -----------
 
