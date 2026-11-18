@@ -2156,7 +2156,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
     uint64_t hdr_bytes;
     WPACKET *wpkt;
     QUIC_TXPIM_CHUNK chunk = { 0 };
-    size_t i, space_left;
+    size_t i, j, space_left;
 
     for (i = 0;; ++i) {
         space_left = tx_helper_get_space_left(h);
@@ -2212,8 +2212,8 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
             return 0; /* alloc error */
 
         /* Add payload iovecs to the helper (infallible). */
-        for (i = 0; i < num_stream_iovec; ++i)
-            tx_helper_append_iovec(h, iov[i].buf, iov[i].buf_len);
+        for (j = 0; j < num_stream_iovec; ++j)
+            tx_helper_append_iovec(h, iov[j].buf, iov[j].buf_len);
 
         *have_ack_eliciting = 1;
         tx_helper_unrestrict(h); /* no longer need PING */
