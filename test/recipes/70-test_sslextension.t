@@ -196,9 +196,31 @@ sub inject_cryptopro_extension
     $message->repack();
 }
 
+sub inject_empty_server_name
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight == 0) {
+        my $message = ${$proxy->message_list}[0];
+        # A ServerNameList with one host_name entry of zero length
+        my $ext = pack "nCn",
+            3,      # ServerNameList length
+            0x00,   # NameType: host_name
+            0;      # HostName length
+        $message->set_extension(TLSProxy::Message::EXT_SERVER_NAME, $ext);
+        $message->repack();
+        return;
+    }
+
+    my $last_record = @{$proxy->{record_list}}[-1];
+    my $alert = $last_record->is_fatal_alert(1);
+    $fatal_alert = $alert if $alert;
+}
+
 # Test 1-2: Sending a duplicate extension should fail.
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 9;
+plan tests => 10;
 ok($fatal_alert, "Duplicate ClientHello extension");
 
 SKIP: {
@@ -285,4 +307,17 @@ SKIP: {
     $proxy->start();
     ok($fatal_alert == TLSProxy::Message::AL_DESC_UNSUPPORTED_EXTENSION,
        "Unknown ServerHello extension (TLSv1.3)");
+}
+
+SKIP: {
+    skip "TLS 1.3 disabled", 1
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
+    #Test 10: A server_name extension with an empty HostName must be rejected
+    $fatal_alert = 0;
+    $proxy->clear();
+    $proxy->filter(\&inject_empty_server_name);
+    $proxy->clientflags("");
+    $proxy->start();
+    ok($fatal_alert == TLSProxy::Message::AL_DESC_DECODE_ERROR,
+       "Empty HostName in server_name extension");
 }
