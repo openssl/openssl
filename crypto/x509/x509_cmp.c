@@ -8,13 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
+#include <openssl/lhash.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/core_names.h>
 #include "crypto/x509.h"
+
+DEFINE_LHASH_OF_EX(X509);
 
 int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 {
@@ -274,20 +276,169 @@ int X509_add_certs(STACK_OF(X509) *sk, const STACK_OF(X509) *certs, int flags)
     return ossl_x509_add_certs_new(&sk, certs, flags);
 }
 
+/**
+ * @brief Hash a certificate for the deduplication table.
+ *
+ * A certificate that has been modified since it was signed or decoded, or
+ * that has no cached fingerprint, has no usable fingerprint. All of these
+ * hash to 0, which leaves it to X509_cmp() to tell them apart.
+ *
+ * @param cert the certificate, must not be NULL
+ * @returns the hash of @p cert
+ */
+static unsigned long x509_cert_lh_hash(const X509 *cert)
+{
+    uint64_t h;
+
+    if (cert->cert_info.enc.modified
+        || (cert->ex_flags & (EXFLAG_SET | EXFLAG_NO_FINGERPRINT)) != EXFLAG_SET)
+        return 0;
+
+    memcpy(&h, cert->fingerprint, sizeof(h));
+
+    return (unsigned long)(h ^ (h >> 32));
+}
+
+/**
+ * @brief Insert a certificate into the deduplication table.
+ *
+ * The fingerprint is cached first, because the table hashes the certificate
+ * before X509_cmp() gets a chance to cache it. Errors raised while caching
+ * are discarded.
+ *
+ * @param lh the deduplication table
+ * @param cert the certificate to insert
+ * @param found out: whether an equal certificate was already in @p lh,
+ *              may be NULL
+ * @returns 1 on success, 0 if @p cert is NULL or memory allocation fails
+ */
+static int x509_cert_lh_insert(LHASH_OF(X509) *lh, X509 *cert, int *found)
+{
+    X509 *old;
+
+    if (cert == NULL)
+        return 0;
+
+    if (!cert->cert_info.enc.modified) {
+        ERR_set_mark();
+        (void)ossl_x509v3_cache_extensions(cert);
+        ERR_pop_to_mark();
+    }
+
+    old = lh_X509_insert(lh, cert);
+    if (lh_X509_error(lh))
+        return 0;
+    if (found != NULL)
+        *found = old != NULL;
+    return 1;
+}
+
+/**
+ * @brief Collect the certificates from @p src not already present in @p dst.
+ *
+ * Builds a hash table keyed on the cached certificate fingerprint and uses
+ * X509_cmp() to resolve collisions, so that the comparison matches the
+ * linear scan in X509_add_cert(). The destination is inserted into the table
+ * first, so certificates equal to one already in @p dst are skipped too.
+ *
+ * With X509_ADD_FLAG_PREPEND set, @p src is walked backwards so that the
+ * returned certificates stay in the order in which they will be added.
+ *
+ * A certificate that has been modified since it was signed or decoded, or
+ * that cannot be fingerprinted, is still deduplicated: all such certificates
+ * share one bucket and are compared with X509_cmp(). The one difference from
+ * the linear scan is that a certificate that could not be fingerprinted is
+ * not matched against an equal one that could, which takes a memory
+ * allocation failure while fingerprinting one of the two.
+ *
+ * There is no fallback to the linear scan. A memory allocation failure fails
+ * the call, before anything is added to the destination.
+ *
+ * @param dst the destination stack, may be NULL
+ * @param m the number of certificates in @p dst
+ * @param src the source stack
+ * @param n the number of certificates in @p src, must be positive
+ * @param flags the X509_add_cert() flags, X509_ADD_FLAG_PREPEND is honoured
+ * @param nkeep out: the number of certificates written to the returned array
+ * @returns an array of @p nkeep borrowed certificates in insertion order,
+ *          to be freed with OPENSSL_free() by the caller, or NULL if a
+ *          stack holds a NULL certificate or memory allocation fails
+ */
+static X509 **x509_certs_dedup(const STACK_OF(X509) *dst, int m,
+    const STACK_OF(X509) *src, int n, int flags, int *nkeep)
+{
+    LHASH_OF(X509) *lh;
+    X509 **keep;
+    int i, count = 0;
+
+    lh = lh_X509_new(x509_cert_lh_hash, X509_cmp);
+    keep = OPENSSL_calloc(n, sizeof(*keep));
+    if (lh == NULL || keep == NULL)
+        goto err;
+
+    for (i = 0; i < m; i++) {
+        if (!x509_cert_lh_insert(lh, sk_X509_value(dst, i), NULL))
+            goto err;
+    }
+
+    for (i = 0; i < n; i++) {
+        int found, j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
+        X509 *cert = sk_X509_value(src, j);
+
+        if (!x509_cert_lh_insert(lh, cert, &found))
+            goto err;
+        if (!found)
+            keep[count++] = cert;
+    }
+
+    lh_X509_free(lh);
+    *nkeep = count;
+    return keep;
+
+err:
+    lh_X509_free(lh);
+    OPENSSL_free(keep);
+    return NULL;
+}
+
 int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, int flags)
 /* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
 {
-    int n = sk_X509_num(certs /* may be NULL */);
-    int i;
+    int i, m, n, nkeep;
+    X509 **keep = NULL;
+
+    n = sk_X509_num(certs /* may be NULL */);
+    if (n <= 0)
+        return 1;
+
+    m = sk_X509_num(*p_sk /* may be NULL */);
+    if (m < 0)
+        m = 0;
+
+    /*
+     * With X509_ADD_FLAG_NO_DUP, use a hash table if either the source (n)
+     * or destination (m) contains more than four certificates. If both
+     * contain at most four, use the linear scan in X509_add_cert(), which
+     * is quadratic over the batch but cheaper for so few certificates.
+     */
+    if ((flags & X509_ADD_FLAG_NO_DUP) != 0 && (n > 4 || m > 4)) {
+        keep = x509_certs_dedup(*p_sk, m, certs, n, flags, &nkeep);
+        if (keep == NULL)
+            return 0;
+        n = nkeep;
+        flags &= ~X509_ADD_FLAG_NO_DUP;
+    }
 
     for (i = 0; i < n; i++) {
+        /* If prepending, add in reverse order to preserve source order. */
         int j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
-        /* if prepend, add certs in reverse order to keep original order */
+        X509 *cert = keep != NULL ? keep[i] : sk_X509_value(certs, j);
 
-        if (!ossl_x509_add_cert_new(p_sk, sk_X509_value(certs, j), flags))
-            return 0;
+        if (!ossl_x509_add_cert_new(p_sk, cert, flags))
+            break;
     }
-    return 1;
+    OPENSSL_free(keep);
+    return i == n;
 }
 
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
