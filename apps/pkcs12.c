@@ -835,7 +835,6 @@ int pkcs12_main(int argc, char **argv)
             PBKDF2PARAM *pbkdf2_param = PBMAC1_get1_pbkdf2_param(macalgid);
             PBMAC1PARAM *pbmac1_param = PBMAC1_get1_param(macalgid);
 
-
             if (pbmac1_param == NULL) {
                 BIO_puts(bio_err, ", Unsupported params for PBMAC1\n");
             } else {
@@ -868,9 +867,7 @@ int pkcs12_main(int argc, char **argv)
             }
             PBKDF2PARAM_free(pbkdf2_param);
             PBMAC1PARAM_free(pbmac1_param);
-        }
-        else
-        {
+        } else {
             BIO_puts(bio_err, "\n");
         }
     }
