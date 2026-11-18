@@ -51,6 +51,9 @@
 static int do_fips = 0;
 static char *privkey;
 static char *storedir;
+static char *policy_root_file;
+static char *policy_ca_file;
+static char *policy_ee_file;
 static char *config_file = NULL;
 static int multidefault_run = 0;
 
@@ -1473,6 +1476,95 @@ err:
     return ret;
 }
 
+/*
+ * Certificates shared by the threads of test_x509_policy_cache(): a root,
+ * an intermediate CA and an end-entity certificate with certificate
+ * policies, plus a lock the main thread holds for writing until every
+ * worker has started.
+ */
+static X509 *policy_root = NULL, *policy_ca = NULL, *policy_ee = NULL;
+static X509_STORE *policy_store = NULL;
+static STACK_OF(X509) *policy_untrusted = NULL;
+static CRYPTO_RWLOCK *policy_start = NULL;
+
+static void test_x509_policy_cache_worker(void)
+{
+    X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *param;
+    ASN1_OBJECT *policy = NULL;
+    int ok = 0;
+
+    /* Block until the main thread releases the start lock. */
+    if (!TEST_true(CRYPTO_THREAD_read_lock(policy_start)))
+        goto err;
+    CRYPTO_THREAD_unlock(policy_start);
+
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, policy_store, policy_ee,
+            policy_untrusted)))
+        goto err;
+    param = X509_STORE_CTX_get0_param(ctx);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_POLICY_CHECK | X509_V_FLAG_EXPLICIT_POLICY | X509_V_FLAG_NO_CHECK_TIME);
+    if (!TEST_ptr(policy = OBJ_txt2obj("1.3.6.1.4.1.16604.998855.1", 1))
+        || !TEST_true(X509_VERIFY_PARAM_add0_policy(param, policy)))
+        goto err;
+    policy = NULL;
+    if (!TEST_int_eq(X509_verify_cert(ctx), 1))
+        goto err;
+    ok = 1;
+err:
+    ASN1_OBJECT_free(policy);
+    X509_STORE_CTX_free(ctx);
+    if (!ok)
+        multi_set_success(0);
+}
+
+static void test_x509_policy_cache_start(void)
+{
+    CRYPTO_THREAD_unlock(policy_start);
+}
+
+/*
+ * Test that concurrent first use of a certificate's policy cache is safe.
+ * Every thread verifies the same chain with policy checking enabled, so
+ * they race in ossl_policy_cache_set() to build and install the policy
+ * cache of each certificate. Under TSAN this detects one thread reading
+ * the cache while another is still building it.
+ */
+static int test_x509_policy_cache(void)
+{
+    int ret = 0;
+
+    if (!TEST_ptr(policy_root = load_cert_pem(policy_root_file, NULL))
+        || !TEST_ptr(policy_ca = load_cert_pem(policy_ca_file, NULL))
+        || !TEST_ptr(policy_ee = load_cert_pem(policy_ee_file, NULL))
+        || !TEST_ptr(policy_store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(policy_store, policy_root))
+        || !TEST_ptr(policy_untrusted = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(policy_untrusted, policy_ca)))
+        goto err;
+    policy_ca = NULL;
+    if (!TEST_ptr(policy_start = CRYPTO_THREAD_lock_new())
+        || !TEST_true(CRYPTO_THREAD_write_lock(policy_start)))
+        goto err;
+
+    ret = thread_run_test(&test_x509_policy_cache_start, MAXIMUM_THREADS,
+        &test_x509_policy_cache_worker, 0, NULL);
+
+err:
+    CRYPTO_THREAD_lock_free(policy_start);
+    policy_start = NULL;
+    OSSL_STACK_OF_X509_free(policy_untrusted);
+    policy_untrusted = NULL;
+    X509_STORE_free(policy_store);
+    policy_store = NULL;
+    X509_free(policy_ca);
+    X509_free(policy_ee);
+    X509_free(policy_root);
+    policy_ca = policy_ee = policy_root = NULL;
+    return ret;
+}
+
 /* Test using OBJ_create in multiple threads */
 static void test_obj_create_worker(void)
 {
@@ -1646,6 +1738,13 @@ int setup_tests(void)
     if (!TEST_ptr(storedir))
         return 0;
 
+    policy_root_file = test_mk_file_path(datadir, "policy-root-cert.pem");
+    policy_ca_file = test_mk_file_path(datadir, "policy-ca-pol-cert.pem");
+    policy_ee_file = test_mk_file_path(datadir, "policy-ee-cert-policies.pem");
+    if (!TEST_ptr(policy_root_file) || !TEST_ptr(policy_ca_file)
+        || !TEST_ptr(policy_ee_file))
+        return 0;
+
     if (!TEST_ptr(global_lock = CRYPTO_THREAD_lock_new()))
         return 0;
 
@@ -1687,6 +1786,7 @@ int setup_tests(void)
     ADD_TEST(test_pem_read);
     ADD_TEST(test_x509_store);
     ADD_TEST(test_x509_self_signed);
+    ADD_TEST(test_x509_policy_cache);
     ADD_TEST(test_obj_stress);
     return 1;
 }
@@ -1695,6 +1795,9 @@ void cleanup_tests(void)
 {
     OPENSSL_free(privkey);
     OPENSSL_free(storedir);
+    OPENSSL_free(policy_root_file);
+    OPENSSL_free(policy_ca_file);
+    OPENSSL_free(policy_ee_file);
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_lock_free(tsan_lock);
 #endif

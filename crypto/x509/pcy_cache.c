@@ -188,15 +188,33 @@ void ossl_policy_cache_free(X509_POLICY_CACHE *cache)
 
 const X509_POLICY_CACHE *ossl_policy_cache_set(X509 *x)
 {
+    const X509_POLICY_CACHE *cache;
 
-    if (x->policy_cache == NULL) {
-        if (!CRYPTO_THREAD_write_lock(x->lock))
-            return NULL;
+    /*
+     * x->policy_cache is a lazily-computed field of a certificate that may be
+     * shared between threads. policy_cache_new() publishes x->policy_cache
+     * before it has finished populating the cache (cache->data is filled in
+     * afterwards), so every access to x->policy_cache must be made under
+     * x->lock. Read it under a read lock first - read and write locks are
+     * mutually exclusive, so a reader can never observe the cache while
+     * another thread is still building it under the write lock.
+     */
+    if (!CRYPTO_THREAD_read_lock(x->lock))
+        return NULL;
+    cache = x->policy_cache;
+    CRYPTO_THREAD_unlock(x->lock);
+    if (cache != NULL)
+        return cache;
+
+    if (!CRYPTO_THREAD_write_lock(x->lock))
+        return NULL;
+    /* Another thread may have built the cache before we took the write lock. */
+    if (x->policy_cache == NULL)
         policy_cache_new(x);
-        CRYPTO_THREAD_unlock(x->lock);
-    }
+    cache = x->policy_cache;
+    CRYPTO_THREAD_unlock(x->lock);
 
-    return x->policy_cache;
+    return cache;
 }
 
 X509_POLICY_DATA *ossl_policy_cache_find_data(const X509_POLICY_CACHE *cache,
