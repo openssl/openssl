@@ -32,6 +32,7 @@
 #include <openssl/ess.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/pkcs7.h>
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif

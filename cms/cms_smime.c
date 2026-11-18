@@ -14,6 +14,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/pkcs7.h>
 #include "cms_local.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
