@@ -15,6 +15,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#include <openssl/pkcs7.h>
 #include <openssl/rsa.h>
 #include <openssl/provider.h>
 #include "../cms/cms_local.h" /* for d.signedData and d.envelopedData */
