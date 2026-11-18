@@ -13,7 +13,7 @@
 #include <openssl/core_names.h>
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
-#include "crypto/pkcs7/pk7_local.h"
+#include "cms/pk7_local.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 

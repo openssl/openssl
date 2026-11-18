@@ -56,7 +56,8 @@ $names{'ossl_err_load_TS_strings'} = 1;
 # form defines a static item, which cannot collide, so only the others
 # matter.  The IMPLEMENT_ASN1_* macros define the encode and allocate
 # functions for the same types.
-foreach my $src (glob("$top/cms/*.c")) {
+# Only the sources built into libcms
+foreach my $src (glob("$top/cms/cms_*.c $top/cms/ts_*.c")) {
     open my $fh, '<', $src or die "$src: $!\n";
     while (<$fh>) {
         # Every template names its type in the _END macro, wherever the

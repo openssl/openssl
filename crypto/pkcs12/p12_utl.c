@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
-#include "crypto/pkcs7/pk7_local.h"
+#include "cms/pk7_local.h"
 #include <crypto/asn1.h>
 
 /* Cheap and nasty Unicode stuff */
