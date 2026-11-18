@@ -9,6 +9,7 @@
 
 /* Simple PKCS#7 processing functions */
 
+#include "internal/deprecated.h"
 #include <libcms/names.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
