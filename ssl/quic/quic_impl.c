@@ -788,7 +788,7 @@ void ossl_quic_free(SSL *s)
      * by the port. It has no shared resources to clean up, and the port lock
      * may already be held by the caller.
      */
-    if (ctx.qc->pending && ctx.qc->ch == NULL) {
+    if (!ctx.is_stream && ctx.qc->pending && ctx.qc->ch == NULL) {
         qc_cleanup(ctx.qc, /*have_lock=*/0);
         return;
     }
