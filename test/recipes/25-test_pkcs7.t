@@ -12,8 +12,12 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test qw/:DEFAULT srctop_file data_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_pkcs7");
+
+plan skip_all => "This test requires cms support"
+    if disabled("cms");
 
 plan tests => 10;
 

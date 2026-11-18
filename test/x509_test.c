@@ -13,7 +13,9 @@
 #include <openssl/x509v3.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
-#include <openssl/pkcs7.h>
+#if !defined(OPENSSL_NO_CMS)
+#include <libcms/pkcs7.h>
+#endif /* !defined(OPENSSL_NO_CMS) */
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include "crypto/x509.h" /* x509_st definition */
@@ -902,6 +904,7 @@ end:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_CMS)
 static PKCS7 *make_two_digest_pkcs7(void)
 {
     PKCS7 *p7 = NULL;
@@ -1009,6 +1012,7 @@ end:
     PKCS7_free(expected_p7);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_CMS) */
 
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
@@ -1059,8 +1063,10 @@ int setup_tests(void)
     ADD_TEST(test_x509_name_canon_failure_cache);
     ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
     ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
+#if !defined(OPENSSL_NO_CMS)
     ADD_MFAIL_TEST(test_pkcs7_digest_set_i2d_mfail);
     ADD_MFAIL_NO_CHECK_TEST(test_pkcs7_digest_set_stream_mfail);
+#endif /* !defined(OPENSSL_NO_CMS) */
     return 1;
 }
 

@@ -15,7 +15,7 @@
 #include "progs.h"
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
-#include <openssl/pkcs7.h>
+#include <libcms/pkcs7.h>
 #include <openssl/err.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
