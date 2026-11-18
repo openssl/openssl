@@ -31,29 +31,21 @@ permissions:
 
 jobs:
   perl-minimal-checker:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
-    - name: Install perl 5.10
+    # We check with perl 5.26.1, the oldest perl 5.26.x shipped as the
+    # system perl on maintained platforms (SLES 15, Ubuntu 18.04).
+    - name: Install perl 5.26
       run: |
         pushd /tmp
         mkdir perl
-        wget https://www.cpan.org/src/5.0/perl-5.10.1.tar.bz2
-        tar xf perl-5.10.1.tar.bz2
-        cd perl-5.10.1
-        ./Configure -des -Dprefix=/tmp/perl -A ccflags='-Wno-incompatible-pointer-types' -A define:malloctype='void *' -A define:freetype='void' -Dlibs='-ldl -lm -lutil -lc'
-        make -j1 perl
+        wget https://www.cpan.org/src/5.0/perl-5.26.1.tar.gz
+        tar xf perl-5.26.1.tar.gz
+        cd perl-5.26.1
+        ./Configure -des -Dprefix=/tmp/perl -A ccflags='-Wno-incompatible-pointer-types' -A define:malloctype='void *' -A define:freetype='void'
+        make -j$(nproc)
         make install
-        popd
-    - name: Install Test::More 0.96
-      run: |
-        pushd /tmp
-        wget https://cpan.metacpan.org/authors/id/M/MS/MSCHWERN/Test-Simple-0.96.tar.gz
-        tar xf Test-Simple-0.96.tar.gz
-        cd Test-Simple-0.96
-        PATH="/tmp/perl/bin:$PATH"
-        perl Makefile.PL
-        make -j$(nproc) && make install
-        perl -MTest::More -e 'print "$Test::More::VERSION\n"'
+        echo "/tmp/perl/bin" >> "$GITHUB_PATH"
         popd
     - uses: actions/checkout@v6
       with:
