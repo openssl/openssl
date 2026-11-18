@@ -1329,6 +1329,11 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
     ackm->time_of_last_ack_eliciting_pkt[pkt_space] = ossl_time_zero();
     ackm->loss_time[pkt_space] = ossl_time_zero();
     ackm->pto_count = 0;
+    ackm->pending_probe.pto[pkt_space] = 0;
+    if (pkt_space == QUIC_PN_SPACE_INITIAL)
+        ackm->pending_probe.anti_deadlock_initial = 0;
+    else if (pkt_space == QUIC_PN_SPACE_HANDSHAKE)
+        ackm->pending_probe.anti_deadlock_handshake = 0;
     ackm->discarded[pkt_space] = 1;
     ackm->ack_eliciting_bytes_in_flight[pkt_space] = 0;
     ackm_set_loss_detection_timer(ackm);
