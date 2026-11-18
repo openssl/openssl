@@ -1361,11 +1361,14 @@ static void ackm_queue_probe_anti_deadlock_initial(OSSL_ACKM *ackm)
 static void ackm_queue_probe(OSSL_ACKM *ackm, int pkt_space)
 {
     /*
-     * TODO(QUIC FUTURE): We are allowed to send either one or two probe
-     * packets here.
-     * Determine a strategy for when we should send two probe packets.
+     * We may send one or two probe packets (RFC 9002 s. 6.2.4). Request two
+     * for Initial, so that Initial CRYPTO data of two packets can be resent.
+     * Probes still pending from an earlier PTO count towards the two.
      */
-    ++ackm->pending_probe.pto[pkt_space];
+    if (pkt_space == QUIC_PN_SPACE_INITIAL)
+        ackm->pending_probe.pto[pkt_space] = 2;
+    else
+        ++ackm->pending_probe.pto[pkt_space];
 }
 
 int ossl_ackm_on_timeout(OSSL_ACKM *ackm)

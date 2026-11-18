@@ -259,6 +259,31 @@ int ossl_quic_sstream_mark_lost_fin(QUIC_SSTREAM *qss)
     return 1;
 }
 
+int ossl_quic_sstream_get_first_unacked(QUIC_SSTREAM *qss, uint64_t from,
+    uint64_t *start, uint64_t *end)
+{
+    UINT_SET_ITEM *acked;
+
+    *start = from;
+    for (acked = ossl_list_uint_set_head(&qss->acked_set); acked != NULL;
+        acked = ossl_list_uint_set_next(acked)) {
+        if (acked->range.end < *start)
+            continue;
+
+        if (acked->range.start > *start)
+            break;
+
+        *start = acked->range.end + 1;
+    }
+
+    if (*start >= qss->ring_buf.head_offset)
+        return 0;
+
+    *end = acked != NULL ? acked->range.start - 1
+                         : qss->ring_buf.head_offset - 1;
+    return 1;
+}
+
 int ossl_quic_sstream_mark_acked(QUIC_SSTREAM *qss,
     uint64_t start,
     uint64_t end)
