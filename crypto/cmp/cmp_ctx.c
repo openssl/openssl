@@ -192,7 +192,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && ossl_cmp_ctx_set1_newChain(ctx, NULL)
         && ossl_cmp_ctx_set1_caPubs(ctx, NULL)
         && ossl_cmp_ctx_set1_extraCertsIn(ctx, NULL)
-        && ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL)
+        && ossl_cmp_ctx_set1_validatedPeerCert(ctx, NULL)
         && ossl_cmp_ctx_set1_first_senderNonce(ctx, NULL)
         && OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
@@ -218,7 +218,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     OPENSSL_free(ctx->no_proxy);
 
     X509_free(ctx->srvCert);
-    X509_free(ctx->validatedSrvCert);
+    X509_free(ctx->validatedPeerCert);
     X509_NAME_free(ctx->expected_sender);
     X509_STORE_free(ctx->trusted);
     OSSL_STACK_OF_X509_free(ctx->untrusted);
@@ -614,7 +614,7 @@ DEFINE_OSSL_CMP_CTX_get1_certs(caPubs)
         return 1;                                                                \
     }
 
-        DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedSrvCert, X509)
+        DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedPeerCert, X509)
 
     /*
      * Pins the server certificate to be directly trusted (even if it is expired)
@@ -753,7 +753,7 @@ DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, oldCert, X509)
     DEFINE_OSSL_set0(ossl_cmp_ctx, newCert, X509)
 
     /* Get successfully validated sender cert, if any, of current transaction */
-    DEFINE_OSSL_CMP_CTX_get0(validatedSrvCert, X509)
+    DEFINE_OSSL_CMP_CTX_get0_NAME(validatedSrvCert, validatedPeerCert, X509)
 
     /*
      * Get the (newly received in IP/KUP/CP) client certificate from the context

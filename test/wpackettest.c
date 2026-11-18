@@ -189,7 +189,7 @@ static int test_WPACKET_start_sub_packet(void)
 {
     WPACKET pkt;
     size_t written;
-    size_t len;
+    size_t len = 0;
 
     if (!TEST_true(WPACKET_init(&pkt, buf))
         || !TEST_true(WPACKET_start_sub_packet(&pkt))
@@ -330,7 +330,7 @@ static int test_WPACKET_allocate_bytes(void)
 {
     WPACKET pkt;
     size_t written;
-    unsigned char *bytes;
+    unsigned char *bytes = NULL;
 
     if (!TEST_true(WPACKET_init_len(&pkt, buf, 1))
         || !TEST_true(WPACKET_allocate_bytes(&pkt, 2, &bytes)))
@@ -456,7 +456,7 @@ static int test_WPACKET_init_der(void)
 static int test_WPACKET_quic(void)
 {
     WPACKET pkt;
-    size_t written, len;
+    size_t written, len = 0;
     unsigned char *bytes;
 
     /* QUIC sub-packet with 4-byte length prefix, containing a 1-byte vlint */

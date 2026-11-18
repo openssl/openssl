@@ -14,7 +14,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 
 #include "bio_local.h"
 #include "internal/bio_tfo.h"
@@ -42,16 +42,16 @@ int __wrap_BIO_sock_should_retry(int i);
 int __wrap_socket(int domain, int type, int protocol)
 {
     function_called();
-    check_expected(domain);
-    check_expected(type);
-    check_expected(protocol);
+    check_expected_int(domain);
+    check_expected_int(type);
+    check_expected_int(protocol);
     return mock_type(int);
 }
 
 int __wrap_connect(int fd, const struct sockaddr *addr, socklen_t addrlen)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     (void)addr;
     (void)addrlen;
     return mock_type(int);
@@ -60,7 +60,7 @@ int __wrap_connect(int fd, const struct sockaddr *addr, socklen_t addrlen)
 int __wrap_bind(int fd, const struct sockaddr *addr, socklen_t addrlen)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     (void)addr;
     (void)addrlen;
     return mock_type(int);
@@ -69,7 +69,7 @@ int __wrap_bind(int fd, const struct sockaddr *addr, socklen_t addrlen)
 int __wrap_listen(int fd, int backlog)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     (void)backlog;
     return mock_type(int);
 }
@@ -77,7 +77,7 @@ int __wrap_listen(int fd, int backlog)
 int __wrap_accept(int fd, struct sockaddr *addr, socklen_t *addrlen)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     (void)addr;
     (void)addrlen;
     return mock_type(int);
@@ -86,7 +86,7 @@ int __wrap_accept(int fd, struct sockaddr *addr, socklen_t *addrlen)
 int __wrap_close(int fd)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     return mock_type(int);
 }
 
@@ -96,9 +96,9 @@ int __wrap_getsockopt(int fd, int level, int optname, void *optval,
     int rc;
 
     function_called();
-    check_expected(fd);
-    check_expected(level);
-    check_expected(optname);
+    check_expected_int(fd);
+    check_expected_int(level);
+    check_expected_int(optname);
     rc = mock_type(int);
     if (rc == 0) {
         if (optval != NULL)
@@ -115,10 +115,10 @@ int __wrap_setsockopt(int fd, int level, int optname, const void *optval,
     int on = (optval != NULL) ? *(const int *)optval : 0;
 
     function_called();
-    check_expected(fd);
-    check_expected(level);
-    check_expected(optname);
-    check_expected(on);
+    check_expected_int(fd);
+    check_expected_int(level);
+    check_expected_int(optname);
+    check_expected_int(on);
     (void)optlen;
     return mock_type(int);
 }
@@ -126,15 +126,15 @@ int __wrap_setsockopt(int fd, int level, int optname, const void *optval,
 int __wrap_BIO_socket_nbio(int fd, int mode)
 {
     function_called();
-    check_expected(fd);
-    check_expected(mode);
+    check_expected_int(fd);
+    check_expected_int(mode);
     return mock_type(int);
 }
 
 int __wrap_BIO_sock_should_retry(int i)
 {
     function_called();
-    check_expected(i);
+    check_expected_int(i);
     return mock_type(int);
 }
 
@@ -143,44 +143,44 @@ int __wrap_BIO_sock_should_retry(int i)
 static void expect_socket(int domain, int type, int protocol, int rc)
 {
     expect_function_call(__wrap_socket);
-    expect_value(__wrap_socket, domain, domain);
-    expect_value(__wrap_socket, type, type);
-    expect_value(__wrap_socket, protocol, protocol);
+    expect_int_value(__wrap_socket, domain, domain);
+    expect_int_value(__wrap_socket, type, type);
+    expect_int_value(__wrap_socket, protocol, protocol);
     will_return(__wrap_socket, rc);
 }
 
 static void expect_connect(int fd, int rc)
 {
     expect_function_call(__wrap_connect);
-    expect_value(__wrap_connect, fd, fd);
+    expect_int_value(__wrap_connect, fd, fd);
     will_return(__wrap_connect, rc);
 }
 
 static void expect_bind(int fd, int rc)
 {
     expect_function_call(__wrap_bind);
-    expect_value(__wrap_bind, fd, fd);
+    expect_int_value(__wrap_bind, fd, fd);
     will_return(__wrap_bind, rc);
 }
 
 static void expect_listen(int fd, int rc)
 {
     expect_function_call(__wrap_listen);
-    expect_value(__wrap_listen, fd, fd);
+    expect_int_value(__wrap_listen, fd, fd);
     will_return(__wrap_listen, rc);
 }
 
 static void expect_accept(int fd, int rc)
 {
     expect_function_call(__wrap_accept);
-    expect_value(__wrap_accept, fd, fd);
+    expect_int_value(__wrap_accept, fd, fd);
     will_return(__wrap_accept, rc);
 }
 
 static void expect_close(int fd, int rc)
 {
     expect_function_call(__wrap_close);
-    expect_value(__wrap_close, fd, fd);
+    expect_int_value(__wrap_close, fd, fd);
     will_return(__wrap_close, rc);
 }
 
@@ -188,9 +188,9 @@ static void expect_getsockopt(int fd, int level, int optname, int rc,
     int value, socklen_t outlen)
 {
     expect_function_call(__wrap_getsockopt);
-    expect_value(__wrap_getsockopt, fd, fd);
-    expect_value(__wrap_getsockopt, level, level);
-    expect_value(__wrap_getsockopt, optname, optname);
+    expect_int_value(__wrap_getsockopt, fd, fd);
+    expect_int_value(__wrap_getsockopt, level, level);
+    expect_int_value(__wrap_getsockopt, optname, optname);
     will_return(__wrap_getsockopt, rc);
     if (rc == 0) {
         will_return(__wrap_getsockopt, value);
@@ -201,25 +201,25 @@ static void expect_getsockopt(int fd, int level, int optname, int rc,
 static void expect_setsockopt(int fd, int level, int optname, int on, int rc)
 {
     expect_function_call(__wrap_setsockopt);
-    expect_value(__wrap_setsockopt, fd, fd);
-    expect_value(__wrap_setsockopt, level, level);
-    expect_value(__wrap_setsockopt, optname, optname);
-    expect_value(__wrap_setsockopt, on, on);
+    expect_int_value(__wrap_setsockopt, fd, fd);
+    expect_int_value(__wrap_setsockopt, level, level);
+    expect_int_value(__wrap_setsockopt, optname, optname);
+    expect_int_value(__wrap_setsockopt, on, on);
     will_return(__wrap_setsockopt, rc);
 }
 
 static void expect_nbio(int fd, int mode, int rc)
 {
     expect_function_call(__wrap_BIO_socket_nbio);
-    expect_value(__wrap_BIO_socket_nbio, fd, fd);
-    expect_value(__wrap_BIO_socket_nbio, mode, mode);
+    expect_int_value(__wrap_BIO_socket_nbio, fd, fd);
+    expect_int_value(__wrap_BIO_socket_nbio, mode, mode);
     will_return(__wrap_BIO_socket_nbio, rc);
 }
 
 static void expect_should_retry(int i, int rc)
 {
     expect_function_call(__wrap_BIO_sock_should_retry);
-    expect_value(__wrap_BIO_sock_should_retry, i, i);
+    expect_int_value(__wrap_BIO_sock_should_retry, i, i);
     will_return(__wrap_BIO_sock_should_retry, rc);
 }
 

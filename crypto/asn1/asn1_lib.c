@@ -433,7 +433,7 @@ int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
 
     if ((size_t)str->length != alloc_len) {
         uint8_t *c;
-        c = OPENSSL_realloc(str->length == 0 ? NULL : str->data, alloc_len);
+        c = OPENSSL_realloc(str->data, alloc_len);
         if (c == NULL)
             return 0;
         str->data = c;

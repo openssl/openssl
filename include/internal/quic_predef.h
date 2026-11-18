@@ -20,7 +20,6 @@ typedef struct quic_fifd_st QUIC_FIFD;
 typedef struct quic_cfq_st QUIC_CFQ;
 typedef struct ossl_quic_tx_packetiser_st OSSL_QUIC_TX_PACKETISER;
 typedef struct ossl_ackm_st OSSL_ACKM;
-typedef struct quic_srt_elem_st QUIC_SRT_ELEM;
 typedef struct ossl_cc_data_st OSSL_CC_DATA;
 typedef struct ossl_cc_method_st OSSL_CC_METHOD;
 typedef struct quic_stream_map_st QUIC_STREAM_MAP;

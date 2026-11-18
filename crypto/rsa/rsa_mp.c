@@ -82,6 +82,11 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
             if (pinfo->pp == NULL)
                 goto err;
         }
+        if (BN_num_bits(p1) > OPENSSL_RSA_MAX_MODULUS_BITS
+            || BN_num_bits(p2) > OPENSSL_RSA_MAX_MODULUS_BITS) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MULTI_PRIME_KEY);
+            goto err;
+        }
         if (!BN_mul(pinfo->pp, p1, p2, ctx))
             goto err;
         /* save previous one */

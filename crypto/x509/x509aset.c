@@ -145,22 +145,24 @@ void X509_ACERT_set0_holder_digest(X509_ACERT *x,
 
 int X509_ACERT_set1_issuerName(X509_ACERT *x, const X509_NAME *name)
 {
+    X509_ACERT_ISSUER *issuer = &x->acinfo->issuer;
     X509_ACERT_ISSUER_V2FORM *v2Form;
 
-    v2Form = x->acinfo->issuer.u.v2Form;
-
     /* only v2Form is supported, so always create that version */
-    if (v2Form == NULL) {
+    if (issuer->type != X509_ACERT_ISSUER_V2 || issuer->u.v2Form == NULL) {
         v2Form = X509_ACERT_ISSUER_V2FORM_new();
         if (v2Form == NULL) {
             ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             return 0;
         }
-        x->acinfo->issuer.u.v2Form = v2Form;
-        x->acinfo->issuer.type = X509_ACERT_ISSUER_V2;
+        /* a decoded certificate may hold a v1Form issuer in the same union */
+        if (issuer->type != X509_ACERT_ISSUER_V2)
+            GENERAL_NAMES_free(issuer->u.v1Form);
+        issuer->u.v2Form = v2Form;
+        issuer->type = X509_ACERT_ISSUER_V2;
     }
 
-    return replace_dirName(&v2Form->issuerName, name);
+    return replace_dirName(&issuer->u.v2Form->issuerName, name);
 }
 
 int X509_ACERT_set1_serialNumber(X509_ACERT *x, const ASN1_INTEGER *serial)

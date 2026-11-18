@@ -817,7 +817,7 @@ static int evp_md_cache_constants(EVP_MD *md)
         &algid_absent);
     params[4] = OSSL_PARAM_construct_end();
     ok = evp_do_md_getparams(md, params) > 0;
-    if (mdsize > INT_MAX || blksz > INT_MAX)
+    if ((mdsize > EVP_MAX_MD_SIZE) || (blksz > INT_MAX))
         ok = 0;
     if (ok) {
         md->block_size = (int)blksz;

@@ -140,7 +140,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     size_t mac_size = 0;
     size_t rechdrsize = dtls_get_rec_header_size(rl->packet[0]);
     unsigned char md[EVP_MAX_MD_SIZE];
-    SSL_MAC_BUF macbuf = { NULL };
+    unsigned char *macbuf = NULL;
     int ret = 0;
 
     rr = &rl->rrec[0];
@@ -248,8 +248,8 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         /* rl->md_ctx != NULL => mac_size != -1 */
 
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
-        if (i == 0 || macbuf.mac == NULL
-            || CRYPTO_memcmp(md, macbuf.mac, mac_size) != 0)
+        if (i == 0 || macbuf == NULL
+            || CRYPTO_memcmp(md, macbuf, mac_size) != 0)
             enc_err = 0;
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
             enc_err = 0;

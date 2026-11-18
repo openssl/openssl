@@ -4,8 +4,11 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
      use Time::Piece;
+     use File::Basename;
+     use File::Path qw(mkpath);
 
      use OpenSSL::Util;
+     use OpenSSL::Config::Query;
 
      our $makedep_scheme = $config{makedep_scheme};
      our $makedepcmd = platform->makedepcmd();
@@ -65,6 +68,35 @@
              }
          }
          return @result;
+     }
+
+     # Write a list, one item per line, to a file while the build file is
+     # generated. The doc stamps hand such a file to mkpod2man.pl and
+     # mkpod2html.pl instead of having the shell expand nine hundred paths
+     # onto a single command line. The file is only rewritten when the list
+     # changes, and is left read-only like the other generated files.
+     sub write_list_file {
+         my $file = shift;
+         my $list = join('', map { "$_\n" } @_);
+         my $old;
+
+         if (open my $fh, '<', $file) {
+             local $/;
+             $old = <$fh>;
+             close $fh;
+         }
+         return if defined $old && $old eq $list;
+
+         mkpath(dirname($file));
+         open my $fh, '>', "$file.new"
+             or die "Trying to create $file.new: $!";
+         print $fh $list;
+         close $fh
+             or die "Trying to write $file.new: $!";
+         chmod 0444, "$file.new"
+             or die "Trying to change mode of $file.new: $!";
+         rename "$file.new", $file
+             or die "Trying to rename $file.new to $file: $!";
      }
      '';
 -}
@@ -276,14 +308,16 @@ HTMLDOCS7={-
                         @{$unified_info{htmldocs}->{man7}})) -}
 
 # The pods every HTML page is made from, which is what the whole set is
-# converted from in one go.  Each page's pod is the first element of its
-# generator, the same place generatesrc() below takes it from.
+# converted from in one go. The list is also written to
+# doc/html/.htmldocs.files for the stamp's recipe, see write_list_file().
 HTMLPODS={-
+        my @htmlpods =
+            @{OpenSSL::Config::Query->new(info => \%unified_info)
+                                    ->get_htmlpods()};
+
+        write_list_file('doc/html/.htmldocs.files', @htmlpods);
         join(" \\\n" . ' ' x 9,
-             fill_lines(" ", $COLUMNS - 9,
-                        map { $unified_info{generate}->{$_}->[0] }
-                        map { @{$unified_info{htmldocs}->{$_} // []} }
-                        qw(man1 man3 man5 man7))) -}
+             fill_lines(" ", $COLUMNS - 9, @htmlpods)) -}
 
 MANDOCS1={-
         join(" \\\n" . ' ' x 9,
@@ -303,14 +337,16 @@ MANDOCS7={-
                         @{$unified_info{mandocs}->{man7}})) -}
 
 # The pods every manual page is made from, which is what the whole manual
-# is formatted from in one go.  Each page's pod is the first element of its
-# generator, the same place generatesrc() below takes it from.
+# is formatted from in one go. The list is also written to
+# doc/man/.mandocs.files for the stamp's recipe, see write_list_file().
 MANPODS={-
+        my @manpods =
+            @{OpenSSL::Config::Query->new(info => \%unified_info)
+                                    ->get_manpods()};
+
+        write_list_file('doc/man/.mandocs.files', @manpods);
         join(" \\\n" . ' ' x 8,
-             fill_lines(" ", $COLUMNS - 8,
-                        map { $unified_info{generate}->{$_}->[0] }
-                        map { @{$unified_info{mandocs}->{$_} // []} }
-                        qw(man1 man3 man5 man7))) -}
+             fill_lines(" ", $COLUMNS - 8, @manpods)) -}
 
 APPS_OPENSSL="{- use File::Spec::Functions;
                  catfile("apps","openssl") -}"
@@ -596,15 +632,30 @@ build_man_docs: doc/man/.mandocs.stamp ## Create manpages
 # as arguments -- so a stamp is enough to order the work, and the per-page
 # rules below stay available for building one page by name.
 doc/man/.mandocs.stamp: {- $config{manpage_format} eq "roff"
-                           ? '$(MANPODS)'
+                           ? 'doc/man/.mandocs.files'
                            : '$(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)' -}
 {- $config{manpage_format} eq "roff"
    ? "\t" . '@$(ECHO) "Formatting the manual pages"'
      . "\n\t" . '@$(PERL) $(SRCDIR)/util/mkpod2man.pl -o doc/man \\'
      . "\n\t\t" . '-m "$(MANSUFFIX)" -d "$(RELEASE_DATE)" -r "$(VERSION)" \\'
-     . "\n\t\t" . '$(MANPODS)'
+     . "\n\t\t" . '-f doc/man/.mandocs.files'
      . "\n\t" . '@touch $@'
    : "\t" . '@touch $@' -}
+
+# The pod lists are written when the build file is generated, see
+# write_list_file(), which is also what keeps their contents current: the
+# list can only change when the configuration does, and that regenerates
+# this file. These rules make a missing list again, still without the list
+# ever reaching a command line, and remake it when one of its pods is
+# edited. That refreshes the list's timestamp, which is how the stamp,
+# depending only on the list, learns that a pod changed. They deliberately
+# don't depend on configdata.pm, write_list_file() leaves an unchanged list
+# older than it, and refreshing the list would make the stamps redo the
+# whole set for nothing.
+doc/man/.mandocs.files: $(MANPODS)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl doc/man
+	@$(PERL) $(SRCDIR)/util/file-from-stdout.pl $@ \
+		$(PERL) configdata.pm --query 'get_manpods()'
 
 build_html_docs: doc/html/.htmldocs.stamp ## Create HTML documentation
 
@@ -613,11 +664,16 @@ build_html_docs: doc/html/.htmldocs.stamp ## Create HTML documentation
 # process per page.  Nothing depends on an individual page -- the install
 # recipe takes them as arguments -- so a stamp is enough to order the work,
 # and the per-page rules below stay available for one page by name.
-doc/html/.htmldocs.stamp: $(HTMLPODS)
+doc/html/.htmldocs.stamp: doc/html/.htmldocs.files
 	@$(ECHO) "Converting the manual pages to HTML"
 	@$(PERL) $(SRCDIR)/util/mkpod2html.pl -o doc/html \
-		-r "$(SRCDIR)/doc" $(HTMLPODS)
+		-r "$(SRCDIR)/doc" -f doc/html/.htmldocs.files
 	@touch $@
+
+doc/html/.htmldocs.files: $(HTMLPODS)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl doc/html
+	@$(PERL) $(SRCDIR)/util/file-from-stdout.pl $@ \
+		$(PERL) configdata.pm --query 'get_htmlpods()'
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
@@ -736,6 +792,8 @@ clean: libclean ## Clean the workspace, keep the configuration
 
 distclean: clean cov-clean ## Clean and remove the configuration
 	$(RM) include/openssl/configuration.h
+	$(RM) doc/man/.mandocs.files
+	$(RM) doc/html/.htmldocs.files
 	$(RM) configdata.pm
 	$(RM) Makefile
 

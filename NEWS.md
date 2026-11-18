@@ -31,8 +31,15 @@ OpenSSL 4.2
 
   * Added SSL_CTX_set_quic_cid_prefix() for prefix-based QUIC CID routing
     in multi-process servers.
+    
+  * TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
+
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
+
+  * Added support for deriving several `EVP_SKEY` objects and IVs from a
+    single KDF operation, as TLS requires. New API `EVP_KDF_derive_SKEYs()`,
+    `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` have been added.
 
 OpenSSL 4.1
 -----------
@@ -2689,6 +2696,7 @@ OpenSSL 0.9.x
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
 [RFC 9147]: https://datatracker.ietf.org/doc/html/rfc9147
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [issue tracker]: https://github.com/openssl/openssl/issues

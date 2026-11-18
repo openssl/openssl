@@ -462,9 +462,10 @@ int OSSL_CMP_ITAV_get1_certReqTemplate(const OSSL_CMP_ITAV *itav,
 err:
     OSSL_CRMF_CERTTEMPLATE_free(*certTemplate);
     *certTemplate = NULL;
-    sk_OSSL_CMP_ATAV_pop_free(*keySpec, OSSL_CMP_ATAV_free);
-    if (keySpec != NULL)
+    if (keySpec != NULL) {
+        sk_OSSL_CMP_ATAV_pop_free(*keySpec, OSSL_CMP_ATAV_free);
         *keySpec = NULL;
+    }
     return 0;
 }
 

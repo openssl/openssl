@@ -106,19 +106,19 @@ jobs:
             # Debian 11 LTS ended 2026-08-31 and bullseye moved to
             # archive.debian.org.
             setup: sed -i 's|http://deb.debian.org|http://archive.debian.org|' /etc/apt/sources.list
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/debian:12
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/debian:13
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:20.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:22.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:24.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:26.04
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/fedora:42
             install: dnf install -y gcc make perl-core
           - image: docker.io/library/fedora:43
@@ -184,7 +184,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15, macos-15-intel]
+        os: [macos-15, macos-15-intel, macos-26, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
@@ -356,6 +356,76 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
+  linux-aarch64-graviton4:
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    runs-on: graviton4-zoo
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fips-acvp
+            config: enable-fips enable-acvp-tests enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+          # Older CPUs' code paths via the armcap they would detect, a subset of Graviton4's.
+          # Graviton3: no SVE2
+          - name: graviton3
+            config: enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+            armcap: '0x139fd'
+          # Graviton2: ARMv8.0 crypto extensions only
+          - name: graviton2
+            config: enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+            armcap: '0xbd'
+          - name: no-cpu-features
+            config: enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+            armcap: '0x0'
+          - name: no-asm
+            config: no-asm enable-fips
+          - name: no-shared
+            config: no-shared enable-fips enable-ec_nistp_64_gcc_128
+          # gcc 11's ASan makes every process exit take seconds on aarch64 (LSan walks
+          # a 32-bit-style allocator); gcc 14's runtime does not.
+          - name: asan-ubsan
+            config: CC=gcc14-gcc CXX=gcc14-g++ --debug enable-asan enable-ubsan enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5
+    name: linux-aarch64-graviton4 (${{ matrix.name }})
+    env:
+      HARNESS_JOBS: 8
+      # On by default in gcc 14's runtime and very slow on aarch64; gcc 11 had it off.
+      ASAN_OPTIONS: detect_stack_use_after_return=0
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: config
+      run: ./config --strict-warnings ${{ matrix.config }}
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j8
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+        ./util/opensslwrap.sh info -cpusettings
+    - name: make test
+      if: matrix.armcap == ''
+      run: .github/workflows/make-test
+    - name: make test (OPENSSL_armcap=${{ matrix.armcap }})
+      if: matrix.armcap != ''
+      env:
+        OPENSSL_armcap: ${{ matrix.armcap }}
+      run: .github/workflows/make-test
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: "ci@linux-aarch64-graviton4-${{ matrix.name }}"
+        path: artifacts.tar.gz
+
   linux-x86:
     needs: [validate-dispatch-inputs]
     if: |
@@ -374,7 +444,7 @@ jobs:
         echo "CONTAINER_ID=$CONTAINER_ID" >> "$GITHUB_ENV"
     - name: install dependencies
       run:
-        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make"
+        podman exec -t $CONTAINER_ID sh -c "apt-get update && apt-get install -y gcc perl make libc6-dev"
     - name: config
       run: |
         podman exec -t $CONTAINER_ID sh -c \
@@ -503,7 +573,7 @@ jobs:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -512,21 +582,21 @@ jobs:
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
@@ -547,7 +617,7 @@ jobs:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -556,7 +626,7 @@ jobs:
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -565,7 +635,7 @@ jobs:
         run: |
           ./configdata.pm --dump
     - name: make
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64
@@ -574,7 +644,7 @@ jobs:
         run: |
           make -j4
     - name: make test
-      uses: cross-platform-actions/action@faa0c6197e94aacf1c5956460152c8380d3560a5 #v1.5.0
+      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: openbsd
         architecture: x86-64

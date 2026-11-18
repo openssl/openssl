@@ -602,23 +602,28 @@ static int mlx_kem_set_params(void *vkey, const OSSL_PARAM params[])
     if (key == NULL || !mlx_set_params_decoder(params, &p))
         return 0;
 
+    if (p.propq == NULL && p.pub == NULL)
+        return 1;
+
+    /* Neither the property query nor the public key can change once set */
+    if (mlx_kem_have_pubkey(key)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
+        return 0;
+    }
+
     if (p.propq != NULL) {
-        OPENSSL_free(key->propq);
-        key->propq = NULL;
-        if (!OSSL_PARAM_get_utf8_string(p.propq, &key->propq, 0))
+        char *propq = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p.propq, &propq, 0))
             return 0;
+        OPENSSL_free(key->propq);
+        key->propq = propq;
     }
 
     if (p.pub == NULL)
         return 1;
 
-    /* Key mutation is reportedly generally not allowed */
-    if (mlx_kem_have_pubkey(key)) {
-        ERR_raise_data(ERR_LIB_PROV,
-            PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-            "keys cannot be mutated");
-        return 0;
-    }
     /* An unlikely failure mode is the parameter having some unexpected type */
     if (!OSSL_PARAM_get_octet_string_ptr(p.pub, &pubenc, &publen))
         return 0;

@@ -881,7 +881,14 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         if (direction == OSSL_RECORD_DIRECTION_READ)
             dtls1_clear_received_buffer(s);
 
-        dtls1_clear_sent_buffer(s, 1);
+        /*
+         * The client's early data belongs to the same flight as its
+         * ClientHello, which has not been answered yet. Keep it buffered so
+         * that it can still be retransmitted.
+         */
+        if (!(direction == OSSL_RECORD_DIRECTION_WRITE
+                && (which & SSL3_CC_EARLY) != 0))
+            dtls1_clear_sent_buffer(s, 1);
     }
 
     if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,

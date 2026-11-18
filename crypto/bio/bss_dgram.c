@@ -550,8 +550,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
     bio_dgram_data *data = NULL;
-#ifndef __DJGPP__
-    /* There are currently no cases where this is used on djgpp/watt32. */
+#if !defined(__DJGPP__) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU) || defined(IP_DONTFRAG) || defined(IP_DONTFRAGMENT) || defined(IPV6_DONTFRAG) || defined(IPV6_MTU_DISCOVER))
     int sockopt_val = 0;
 #endif
     int d_errno;
@@ -745,8 +744,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
     case BIO_CTRL_DGRAM_DETECT_PEER_ADDR: {
-        BIO_ADDR xaddr, *p = &data->peer;
-        socklen_t xaddr_len = sizeof(xaddr.sa);
+        BIO_ADDR xaddr = { 0 }, *p = &data->peer;
+        socklen_t xaddr_len = sizeof(xaddr);
 
         if (BIO_ADDR_family(p) == AF_UNSPEC) {
             if (getpeername(b->num, (void *)&xaddr.sa, &xaddr_len) == 0

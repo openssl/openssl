@@ -18,9 +18,9 @@ test vignettes for network protocol testing applications. While it is currently
 used for QUIC, it has been designed to be agnostic so that it can be adapted to
 other protocols in future if desired.
 
-In particular, unlike the older multistream test framework, it does not assume a
-single client and a single server. Examples of vignettes designed to be
-supported by the RADIX test framework in future include:
+In particular, it does not assume a single client and a single server. Examples
+of vignettes designed to be supported by the RADIX test framework in future
+include:
 
 - single client ↔ single server
 - multiple clients ↔ single server
@@ -31,48 +31,43 @@ supported by the RADIX test framework in future include:
 given to support of multi-process and multi-node testing in the future, though
 this is not currently supported.
 
-Differences to `quic_multistream_test`
---------------------------------------
+Distinctive features
+--------------------
 
-The RADIX test features the following improvements relative to the
-`quic_multistream_test` framework:
+The RADIX test framework has the following features:
 
-- Due to usage of the new QUIC server API, opcodes are no longer duplicated
-  into “C” and “S” variants. There is symmetry between all endpoints in this
-  regard. The legacy `QUIC_TSERVER` facility is not used and will eventually
-  be retired once other test suites no longer rely on it.
+- Because it uses the QUIC server API, opcodes are not split into “C” and “S”
+  variants. All endpoints are treated symmetrically. The legacy `QUIC_TSERVER`
+  facility is not used and will eventually be retired once other test suites
+  no longer rely on it.
 
 - The framework is not limited to two objects (client and server),
   but can instead instantiate an arbitrary number of SSL objects and pass these
   to operations. Other kinds of object could be supported in future if needed.
 
-- Scripts are now generated dynamically at launch time by functions rather
-  than hardcoding them into the executable. This has the advantage that scripts
-  can be generated dynamically. In particular, this allows very long
+- Scripts are generated dynamically at launch time by functions rather than
+  hardcoded into the executable. In particular, this allows very long
   procedurally generated test scripts which would be impractical to write
   by hand. This can be used for stress testing, for example.
 
-- As a result of the fact that scripts are now generated dynamically, the
-  in-memory representation of script operations has been improved as the ability
-  to write a script operation as an initializer list is no longer required. The
-  new representation is simpler, more compact, and more flexible. A stack-based
-  approach allows arbitrary argument types to be passed as operands to an
-  operation, rather than having a fixed number of operands of fixed type for all
-  script operations.
+- Because scripts are generated dynamically, script operations need not be
+  expressible as initializer lists, so their in-memory representation is
+  simple, compact, and flexible. A stack-based approach allows arbitrary
+  argument types to be passed as operands to an operation, rather than having
+  a fixed number of operands of fixed type for all script operations.
 
-- Scripts are now named, rather than numbered, giving more useful debug output,
+- Scripts are named, rather than numbered, giving more useful debug output,
   and hopefully reducing the frequency of merge conflicts.
 
-- Debug logging has in general been significantly improved and has been designed
-  to be accessible and useful.
+- Debug output includes a listing of each generated script (with its name,
+  source location and description), a trace of each executed operation, and
+  the final state of the operand stack.
 
-- Logging of child threads is now buffered and printed after a test is complete,
+- Logging of child threads is buffered and printed after a test is complete,
   which avoids non-deterministic interleaving of test output.
 
-- The number of core opcodes for the interpreter has been dramatically reduced
-  and now the vast majority of test operations are performed via `OP_FUNC`,
-  which is similar to `OP_CHECK`. This change is largely transparent to the
-  test developer.
+- The interpreter has a small number of core opcodes; the vast majority of
+  test operations are performed via `OP_FUNC`.
 
 - In the future, multi-process or multi-node testing will be supported.
   The expectation is that multi-node testing will be facilitated by having the
@@ -88,12 +83,10 @@ The RADIX test features the following improvements relative to the
   protocol-specific bindings and support code, test operation definitions, and
   script definitions.
 
-- It is no longer needed to explicitly set the ALPN using an opcode when
-  establishing a connection using QUIC. Since ALPN is required for QUIC, the
-  first opcode of every test was used to set the ALPN to the same string, which
-  was redundant. This is now done automatically.
+- Since ALPN is required for QUIC, it is set automatically when establishing
+  a QUIC connection; scripts do not need an opcode to set it.
 
-- An explicit `OP_END` is no longer needed.
+- Scripts do not need to end with an explicit `OP_END`.
 
 Blocking operations
 -------------------

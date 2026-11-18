@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 #include "internal/sockets.h"
 
 #include <stdarg.h>
@@ -14,7 +18,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <limits.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 #ifndef OPENSSL_NO_SOCK
 #include <netinet/in.h>
 #endif
@@ -63,7 +67,7 @@ static void expect_BIO_ADDR_new(int ok)
 static void expect_BIO_ADDR_copy(const BIO_ADDR *src, int rc)
 {
     expect_function_call(__wrap_BIO_ADDR_copy);
-    expect_value(__wrap_BIO_ADDR_copy, src, src);
+    expect_uint_value(__wrap_BIO_ADDR_copy, src, cast_ptr_to_uintmax_type(src));
     will_return(__wrap_BIO_ADDR_copy, rc);
 }
 
@@ -79,8 +83,8 @@ static int fake_next_write(BIO *b, const char *data, size_t datal,
     int rc;
 
     function_called();
-    check_expected(datal);
-    check_expected(data);
+    check_expected_uint(datal);
+    check_expected_ptr(data);
     BIO_clear_retry_flags(b);
     rc = mock_type(int);
     if (rc < 0 && mock_type(int))
@@ -98,7 +102,7 @@ static int fake_next_read(BIO *b, char *data, size_t datal, size_t *readbytes)
     int rc;
 
     function_called();
-    check_expected(datal);
+    check_expected_uint(datal);
     BIO_clear_retry_flags(b);
     *readbytes = 0;
     rc = mock_type(int);
@@ -123,7 +127,7 @@ static long fake_next_ctrl(BIO *b, int cmd, long num, void *ptr)
     if (cmd == BIO_CTRL_EOF)
         return fake_next_eof;
     function_called();
-    check_expected(cmd);
+    check_expected_int(cmd);
     return mock_type(long);
 }
 
@@ -131,8 +135,9 @@ static long fake_next_cb_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     (void)b;
     function_called();
-    check_expected(cmd);
-    check_expected_ptr(fp);
+    check_expected_int(cmd);
+    /* fp is a function pointer; check_expected_ptr() trips -pedantic */
+    check_expected_fnptr(fp);
     return mock_type(long);
 }
 
@@ -148,10 +153,10 @@ static int fake_next_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     (void)stride;
     (void)flags;
     function_called();
-    check_expected(num_msg);
-    check_expected(data_len);
-    check_expected(data);
-    check_expected(peer_family);
+    check_expected_uint(num_msg);
+    check_expected_uint(data_len);
+    check_expected_ptr(data);
+    check_expected_int(peer_family);
     *msgs_processed = mock_type(size_t);
     return mock_type(int);
 }
@@ -161,7 +166,7 @@ static void expect_next_write(const void *content, size_t len, int rc,
     int retry)
 {
     expect_function_call(fake_next_write);
-    expect_value(fake_next_write, datal, len);
+    expect_uint_value(fake_next_write, datal, len);
     if (content != NULL)
         expect_memory(fake_next_write, data, content, len);
     else
@@ -175,7 +180,7 @@ static void expect_next_read(size_t len, const void *payload, int rc,
     int retry)
 {
     expect_function_call(fake_next_read);
-    expect_value(fake_next_read, datal, len);
+    expect_uint_value(fake_next_read, datal, len);
     will_return(fake_next_read, rc);
     if (rc > 0)
         will_return(fake_next_read, payload);
@@ -186,15 +191,15 @@ static void expect_next_read(size_t len, const void *payload, int rc,
 static void expect_next_ctrl(int cmd, long rc)
 {
     expect_function_call(fake_next_ctrl);
-    expect_value(fake_next_ctrl, cmd, cmd);
+    expect_int_value(fake_next_ctrl, cmd, cmd);
     will_return(fake_next_ctrl, rc);
 }
 
 static void expect_next_cb_ctrl(int cmd, BIO_info_cb *fp, long rc)
 {
     expect_function_call(fake_next_cb_ctrl);
-    expect_value(fake_next_cb_ctrl, cmd, cmd);
-    expect_value(fake_next_cb_ctrl, fp, fp);
+    expect_int_value(fake_next_cb_ctrl, cmd, cmd);
+    expect_uint_value(fake_next_cb_ctrl, fp, cast_ptr_to_uintmax_type(fp));
     will_return(fake_next_cb_ctrl, rc);
 }
 
@@ -203,10 +208,10 @@ static void expect_next_sendmmsg(const void *content, size_t len, int family,
     size_t processed, int rc)
 {
     expect_function_call(fake_next_sendmmsg);
-    expect_value(fake_next_sendmmsg, num_msg, 1);
-    expect_value(fake_next_sendmmsg, data_len, len);
+    expect_uint_value(fake_next_sendmmsg, num_msg, 1);
+    expect_uint_value(fake_next_sendmmsg, data_len, len);
     expect_memory(fake_next_sendmmsg, data, content, len);
-    expect_value(fake_next_sendmmsg, peer_family, family);
+    expect_int_value(fake_next_sendmmsg, peer_family, family);
     will_return(fake_next_sendmmsg, processed);
     will_return(fake_next_sendmmsg, rc);
 }

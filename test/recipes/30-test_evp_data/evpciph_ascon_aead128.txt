@@ -18898,3 +18898,25 @@ Reason = bad decrypt
 
 # TestCount: 121
 
+
+Title = Ascon AEAD 128 only accepts a 16 byte nonce
+
+# Same as the first test with the last byte of the IV removed
+Cipher = ascon-aead128
+Key = 68143878109DE6D99EB51700335475DA
+IV = 57254555E1B4B4EF38E895E37A88A8
+Plaintext = 
+AAD = 
+Tag = F341833ACC65733F95A3E5E64B20BB0F
+Ciphertext = 
+Result = INVALID_IV_LENGTH
+
+# Same as the first test with a byte appended to the IV
+Cipher = ascon-aead128
+Key = 68143878109DE6D99EB51700335475DA
+IV = 57254555E1B4B4EF38E895E37A88A8A300
+Plaintext = 
+AAD = 
+Tag = F341833ACC65733F95A3E5E64B20BB0F
+Ciphertext = 
+Result = INVALID_IV_LENGTH

@@ -21,7 +21,7 @@ int main(void)
 #include <stddef.h>
 #include <setjmp.h>
 #include <string.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 
 #include "bio_local.h"
 
@@ -76,8 +76,8 @@ FILE *__wrap_openssl_fopen(const char *filename, const char *mode)
     FILE *fp;
 
     function_called();
-    check_expected(filename);
-    check_expected(mode);
+    check_expected_ptr(filename);
+    check_expected_ptr(mode);
     fp = mock_ptr_type(FILE *);
     if (fp == NULL)
         errno = mock_type(int);
@@ -90,8 +90,8 @@ size_t __wrap_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
         return __real_fread(ptr, size, nmemb, stream);
     function_called();
     check_expected_ptr(ptr);
-    check_expected(size);
-    check_expected(nmemb);
+    check_expected_uint(size);
+    check_expected_uint(nmemb);
     check_expected_ptr(stream);
     return mock_type(size_t);
 }
@@ -102,8 +102,8 @@ size_t __wrap_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
         return __real_fwrite(ptr, size, nmemb, stream);
     function_called();
     check_expected_ptr(ptr);
-    check_expected(size);
-    check_expected(nmemb);
+    check_expected_uint(size);
+    check_expected_uint(nmemb);
     check_expected_ptr(stream);
     return mock_type(size_t);
 }
@@ -114,8 +114,8 @@ int __wrap_fseek(FILE *stream, long offset, int whence)
         return __real_fseek(stream, offset, whence);
     function_called();
     check_expected_ptr(stream);
-    check_expected(offset);
-    check_expected(whence);
+    check_expected_int(offset);
+    check_expected_int(whence);
     return mock_type(int);
 }
 
@@ -172,7 +172,7 @@ char *__wrap_fgets(char *s, int size, FILE *stream)
         return __real_fgets(s, size, stream);
     function_called();
     check_expected_ptr(s);
-    check_expected(size);
+    check_expected_int(size);
     check_expected_ptr(stream);
     data = mock_ptr_type(const char *);
     if (data == NULL)
@@ -199,10 +199,10 @@ static void expect_openssl_fopen(const char *filename, const char *mode,
 static void expect_fread(void *ptr, size_t nmemb, FILE *stream, size_t rc)
 {
     expect_function_call(__wrap_fread);
-    expect_value(__wrap_fread, ptr, ptr);
-    expect_value(__wrap_fread, size, 1);
-    expect_value(__wrap_fread, nmemb, nmemb);
-    expect_value(__wrap_fread, stream, stream);
+    expect_uint_value(__wrap_fread, ptr, cast_ptr_to_uintmax_type(ptr));
+    expect_uint_value(__wrap_fread, size, 1);
+    expect_uint_value(__wrap_fread, nmemb, nmemb);
+    expect_uint_value(__wrap_fread, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_fread, rc);
 }
 
@@ -210,54 +210,54 @@ static void expect_fwrite(const void *ptr, size_t nmemb, FILE *stream,
     size_t rc)
 {
     expect_function_call(__wrap_fwrite);
-    expect_value(__wrap_fwrite, ptr, ptr);
-    expect_value(__wrap_fwrite, size, 1);
-    expect_value(__wrap_fwrite, nmemb, nmemb);
-    expect_value(__wrap_fwrite, stream, stream);
+    expect_uint_value(__wrap_fwrite, ptr, cast_ptr_to_uintmax_type(ptr));
+    expect_uint_value(__wrap_fwrite, size, 1);
+    expect_uint_value(__wrap_fwrite, nmemb, nmemb);
+    expect_uint_value(__wrap_fwrite, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_fwrite, rc);
 }
 
 static void expect_fseek(FILE *stream, long offset, int whence, int rc)
 {
     expect_function_call(__wrap_fseek);
-    expect_value(__wrap_fseek, stream, stream);
-    expect_value(__wrap_fseek, offset, offset);
-    expect_value(__wrap_fseek, whence, whence);
+    expect_uint_value(__wrap_fseek, stream, cast_ptr_to_uintmax_type(stream));
+    expect_int_value(__wrap_fseek, offset, offset);
+    expect_int_value(__wrap_fseek, whence, whence);
     will_return(__wrap_fseek, rc);
 }
 
 static void expect_ftell(FILE *stream, long rc)
 {
     expect_function_call(__wrap_ftell);
-    expect_value(__wrap_ftell, stream, stream);
+    expect_uint_value(__wrap_ftell, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_ftell, rc);
 }
 
 static void expect_feof(FILE *stream, int rc)
 {
     expect_function_call(__wrap_feof);
-    expect_value(__wrap_feof, stream, stream);
+    expect_uint_value(__wrap_feof, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_feof, rc);
 }
 
 static void expect_ferror(FILE *stream, int rc)
 {
     expect_function_call(__wrap_ferror);
-    expect_value(__wrap_ferror, stream, stream);
+    expect_uint_value(__wrap_ferror, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_ferror, rc);
 }
 
 static void expect_fclose(FILE *stream, int rc)
 {
     expect_function_call(__wrap_fclose);
-    expect_value(__wrap_fclose, stream, stream);
+    expect_uint_value(__wrap_fclose, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_fclose, rc);
 }
 
 static void expect_fflush(FILE *stream, int rc)
 {
     expect_function_call(__wrap_fflush);
-    expect_value(__wrap_fflush, stream, stream);
+    expect_uint_value(__wrap_fflush, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_fflush, rc);
 }
 
@@ -265,9 +265,9 @@ static void expect_fflush(FILE *stream, int rc)
 static void expect_fgets(char *s, int size, FILE *stream, const char *data)
 {
     expect_function_call(__wrap_fgets);
-    expect_value(__wrap_fgets, s, s);
-    expect_value(__wrap_fgets, size, size);
-    expect_value(__wrap_fgets, stream, stream);
+    expect_uint_value(__wrap_fgets, s, cast_ptr_to_uintmax_type(s));
+    expect_int_value(__wrap_fgets, size, size);
+    expect_uint_value(__wrap_fgets, stream, cast_ptr_to_uintmax_type(stream));
     will_return(__wrap_fgets, data);
 }
 

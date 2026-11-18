@@ -134,6 +134,9 @@ int ossl_quic_rstream_read(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
 {
     OSSL_TIME rtt = get_rtt(qrs);
 
+    if (qrs->fs.range_locked)
+        return 0;
+
     if (!read_internal(qrs, buf, size, readbytes, fin, 1))
         return 0;
 
@@ -173,6 +176,9 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
     size_t rec_len_;
     int ok;
 
+    if (qrs->fs.range_locked)
+        return 0;
+
     ok = ossl_sframe_set_peek(&qrs->fs, &iterator, &qrs->head_range, &record_,
         fin);
     if (ok == 0) {
@@ -192,6 +198,8 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
     }
 
     rec_len_ = (size_t)(qrs->head_range.end - qrs->head_range.start);
+    if (!ossl_sframe_set_lock_range(&qrs->fs, &qrs->head_range))
+        return 0;
     *rec_len = rec_len_;
     *record = record_;
 
@@ -210,6 +218,10 @@ int ossl_quic_rstream_release_record(QUIC_RSTREAM *qrs, size_t read_len)
         offset = qrs->head_range.start + read_len;
     }
 
+    if (!qrs->fs.range_locked)
+        return 0;
+
+    ossl_sframe_set_unlock_range(&qrs->fs);
     if (!ossl_sframe_set_move_offset(&qrs->fs, offset))
         return 0;
 

@@ -74,7 +74,14 @@ static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n
 
 static unsigned long hash_stream(const QUIC_STREAM *s)
 {
-    return (unsigned long)s->id;
+    /*
+     * The low two bits of a stream ID identify its initiator and direction.
+     * Folding in bits from the stream ordinal improves bucket use for
+     * consecutive IDs of one type. With mixed stream types, this can produce
+     * longer chains than the original hash at some intermediate table sizes
+     * while LHASH expands.
+     */
+    return (unsigned long)(s->id ^ (s->id >> 2));
 }
 
 static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
@@ -297,9 +304,30 @@ static ossl_unused int qsm_send_part_permits_gc(const QUIC_STREAM *qs)
     }
 }
 
+static int qsm_recv_part_is_terminal(const QUIC_STREAM *qs)
+{
+    switch (qs->recv_state) {
+    case QUIC_RSTREAM_STATE_DATA_RECVD:
+    case QUIC_RSTREAM_STATE_DATA_READ:
+    case QUIC_RSTREAM_STATE_RESET_RECVD:
+    case QUIC_RSTREAM_STATE_RESET_READ:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
 {
-    int recv_stream_fully_drained = 0; /* TODO(QUIC FUTURE): Optimisation */
+    /*
+     * Once the receive part has reached a terminal state (all data received
+     * or the peer reset the stream) there is nothing more the peer can send
+     * which we need to track, so we do not need to wait for STOP_SENDING to
+     * be acknowledged. Note that STOP_SENDING may never be sent at all in
+     * this case (e.g. if the peer's RESET_STREAM arrives first), so waiting
+     * for it would leak the stream for the lifetime of the connection.
+     */
+    int recv_stream_fully_drained = qsm_recv_part_is_terminal(qs);
 
     /*
      * If sstream has no FIN, we auto-reset it at marked-for-deletion time, so

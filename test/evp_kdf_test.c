@@ -251,6 +251,1238 @@ static int test_kdf_tls1_prf_1byte_seed(void)
     return ret;
 }
 
+static int test_kdf_tls1_prf_derive_multi_consistency(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx_raw = NULL, *kctx_multi = NULL;
+    unsigned char raw_block[64];
+    unsigned char reassembled[64];
+    size_t mac_key_len = 10, cipher_key_len = 16, iv_len = 6;
+    size_t total = 2 * (mac_key_len + cipher_key_len + iv_len);
+    OSSL_PARAM *params = NULL;
+    OSSL_PARAM multi_params[7];
+    OSSL_PARAM *mp = multi_params;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *raw = NULL;
+    size_t raw_len = 0;
+    const unsigned char *iv = NULL;
+    size_t iv_len_out = 0;
+
+    params = construct_tls1_prf_params("sha256", "secret", "seed");
+    if (!TEST_ptr(params))
+        goto err;
+
+    /* Derive raw key block */
+    if (!TEST_ptr(kctx_raw = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_int_gt(EVP_KDF_derive(kctx_raw, raw_block, total, params), 0))
+        goto err;
+
+    /* Derive via multi-derive */
+    if (!TEST_ptr(kctx_multi = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "sha256", 0);
+    *mp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *mp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN,
+        &iv_len);
+    *mp = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx_multi, multi_params), 0))
+        goto err;
+
+    /* Reassemble from individual keys and IVs */
+    memset(reassembled, 0, sizeof(reassembled));
+
+    /* client_MAC_key */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx_multi, OSSL_KDF_PURPOSE_CLIENT_MAC_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+        || !TEST_size_t_eq(raw_len, mac_key_len))
+        goto err;
+    memcpy(reassembled, raw, raw_len);
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* server_MAC_key */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx_multi, OSSL_KDF_PURPOSE_SERVER_MAC_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+        || !TEST_size_t_eq(raw_len, mac_key_len))
+        goto err;
+    memcpy(reassembled + mac_key_len, raw, raw_len);
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* client_cipher_key */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx_multi, OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+        || !TEST_size_t_eq(raw_len, cipher_key_len))
+        goto err;
+    memcpy(reassembled + 2 * mac_key_len, raw, raw_len);
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* server_cipher_key */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx_multi, OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+        || !TEST_size_t_eq(raw_len, cipher_key_len))
+        goto err;
+    memcpy(reassembled + 2 * mac_key_len + cipher_key_len, raw, raw_len);
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* client_IV */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx_multi, OSSL_KDF_PURPOSE_CLIENT_IV, &iv, &iv_len_out), 1)
+        || !TEST_size_t_eq(iv_len_out, iv_len))
+        goto err;
+    memcpy(reassembled + 2 * (mac_key_len + cipher_key_len), iv, iv_len_out);
+
+    /* server_IV */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx_multi, OSSL_KDF_PURPOSE_SERVER_IV, &iv, &iv_len_out), 1)
+        || !TEST_size_t_eq(iv_len_out, iv_len))
+        goto err;
+    memcpy(reassembled + 2 * (mac_key_len + cipher_key_len) + iv_len, iv, iv_len_out);
+
+    /* Verify match */
+    if (!TEST_mem_eq(raw_block, total, reassembled, total))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx_raw);
+    EVP_KDF_CTX_free(kctx_multi);
+    OPENSSL_free(params);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_derive_multi_bad_purpose(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM multi_params[7];
+    OSSL_PARAM *mp = multi_params;
+    size_t mac_key_len = 10, cipher_key_len = 16, iv_len = 6;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *iv = NULL;
+    size_t iv_len_out = 0;
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "sha256", 0);
+    *mp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *mp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN,
+        &iv_len);
+    *mp = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, multi_params), 0))
+        goto err;
+
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx, "nonexistent", NULL)))
+        goto err;
+
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, "nonexistent", &iv, &iv_len_out), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_derive_multi_no_derive(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *iv = NULL;
+    size_t iv_len_out = 0;
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx, OSSL_KDF_PURPOSE_CLIENT_MAC_KEY, NULL)))
+        goto err;
+
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_IV, &iv, &iv_len_out), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Naming the cipher the key is for is enough: the provider takes the key
+ * length from it and settles on its own key type, while the MAC keys, whose
+ * length only TLS knows, stay generic secrets of the length asked for.
+ */
+static int test_kdf_tls1_prf_derive_multi_keytypes(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *raw;
+    size_t raw_len;
+    size_t mac_key_len = 32, iv_len = 16;
+    OSSL_PARAM params[9], *p = params;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    /* No cipher_key_len: AES-128-CBC already says it is 16 bytes */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CBC", 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC, "HMAC", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL))
+        || !TEST_true(EVP_SKEY_is_a(skey, OSSL_SKEY_TYPE_AES))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+        || !TEST_size_t_eq(raw_len, 16))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_CLIENT_MAC_KEY, NULL))
+        || !TEST_true(EVP_SKEY_is_a(skey, OSSL_SKEY_TYPE_GENERIC))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+        || !TEST_size_t_eq(raw_len, mac_key_len))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Duplicating a context duplicates the derivation result with it: every
+ * purpose yields the same key or IV, of the same type, from either context,
+ * and the two are independent once one is freed.
+ */
+static int test_kdf_tls1_prf_derive_multi_dup(void)
+{
+    static const char *const key_purposes[] = {
+        OSSL_KDF_PURPOSE_CLIENT_MAC_KEY, OSSL_KDF_PURPOSE_SERVER_MAC_KEY,
+        OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY
+    };
+    static const char *const iv_purposes[] = {
+        OSSL_KDF_PURPOSE_CLIENT_IV, OSSL_KDF_PURPOSE_SERVER_IV
+    };
+    int ret = 0, i;
+    EVP_KDF_CTX *kctx = NULL, *copy = NULL, *fresh = NULL, *fresh_copy = NULL;
+    EVP_SKEY *skey = NULL, *dkey = NULL;
+    const unsigned char *raw, *draw, *iv, *div;
+    size_t raw_len, draw_len, iv_len_out, div_len;
+    unsigned char saved_iv[16];
+    size_t saved_iv_len;
+    size_t mac_key_len = 32, iv_len = 16;
+    OSSL_PARAM params[9], *p = params;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CBC", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    /* A context with no derivation result duplicates fine */
+    if (!TEST_ptr(fresh = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_ptr(fresh_copy = EVP_KDF_CTX_dup(fresh)))
+        goto err;
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0)
+        || !TEST_ptr(copy = EVP_KDF_CTX_dup(kctx)))
+        goto err;
+
+    for (i = 0; i < (int)OSSL_NELEM(key_purposes); i++) {
+        if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx, key_purposes[i], NULL))
+            || !TEST_ptr(dkey = EVP_KDF_CTX_get1_SKEY(copy, key_purposes[i],
+                             NULL))
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw, &raw_len), 1)
+            || !TEST_int_eq(EVP_SKEY_get0_raw_key(dkey, &draw, &draw_len), 1)
+            || !TEST_mem_eq(raw, raw_len, draw, draw_len)
+            || !TEST_str_eq(EVP_SKEY_get0_skeymgmt_name(skey),
+                EVP_SKEY_get0_skeymgmt_name(dkey)))
+            goto err;
+        EVP_SKEY_free(skey);
+        EVP_SKEY_free(dkey);
+        skey = dkey = NULL;
+    }
+
+    for (i = 0; i < (int)OSSL_NELEM(iv_purposes); i++) {
+        if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, iv_purposes[i], &iv,
+                             &iv_len_out),
+                1)
+            || !TEST_int_eq(EVP_KDF_CTX_get0_IV(copy, iv_purposes[i], &div,
+                                &div_len),
+                1)
+            || !TEST_mem_eq(iv, iv_len_out, div, div_len))
+            goto err;
+        /* The copy must own its IV, not point into the original */
+        if (!TEST_ptr_ne((void *)iv, (void *)div))
+            goto err;
+    }
+
+    /*
+     * Freeing the original must leave the copy intact.  The IVs matter most
+     * here: EVP_KDF_CTX_get0_IV() hands out a pointer into the context.
+     */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(copy, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &div, &div_len),
+            1)
+        || !TEST_size_t_le(div_len, sizeof(saved_iv)))
+        goto err;
+    memcpy(saved_iv, div, div_len);
+    saved_iv_len = div_len;
+
+    EVP_KDF_CTX_free(kctx);
+    kctx = NULL;
+
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(copy, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &div, &div_len),
+            1)
+        || !TEST_mem_eq(div, div_len, saved_iv, saved_iv_len))
+        goto err;
+    if (!TEST_ptr(dkey = EVP_KDF_CTX_get1_SKEY(copy,
+                      OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL))
+        || !TEST_true(EVP_SKEY_is_a(dkey, OSSL_SKEY_TYPE_AES)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_SKEY_free(dkey);
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_CTX_free(copy);
+    EVP_KDF_CTX_free(fresh);
+    EVP_KDF_CTX_free(fresh_copy);
+    return ret;
+}
+
+/*
+ * A key length the requested type cannot accept must be rejected by
+ * EVP_KDF_derive_SKEYs() itself, not left to surface at collection time.
+ */
+static int test_kdf_tls1_prf_derive_multi_bad_keylen(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    size_t mac_key_len = 16, cipher_key_len = 10, iv_len = 6;
+    OSSL_PARAM params[9], *p = params;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    /* AES-128-CBC takes a 16 byte key, so 10 contradicts it */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CBC", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_int_le(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * An AEAD ciphersuite derives no MAC keys at all.  Those slots must simply
+ * be absent rather than making the whole derivation fail.
+ */
+static int test_kdf_tls1_prf_derive_multi_no_mac_keys(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    EVP_SKEY *skey = NULL;
+    size_t mac_key_len = 0, cipher_key_len = 16, iv_len = 12;
+    OSSL_PARAM params[9], *p = params;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CBC", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL))
+        || !TEST_true(EVP_SKEY_is_a(skey, OSSL_SKEY_TYPE_AES)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                           OSSL_KDF_PURPOSE_CLIENT_MAC_KEY, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Test that a failed EVP_KDF_derive_SKEYs() call properly clears
+ * previous derivation results (TLS1-PRF version)
+ */
+static int test_kdf_tls1_prf_derive_multi_clear_on_fail(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    EVP_SKEY *skey = NULL;
+    OSSL_PARAM params_ok[8], params_bad[8], *p;
+    size_t mac_key_len = 20, cipher_key_len = 16, iv_len = 12;
+    const unsigned char *iv = NULL;
+    size_t iv_out_len = 0;
+
+    /* First, do a successful derivation */
+    p = params_ok;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        "AES-128-CBC", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params_ok), 0))
+        goto err;
+
+    /* Verify we can retrieve keys */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify we can retrieve the IV */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &iv, &iv_out_len),
+            1))
+        goto err;
+
+    /* Now call derive_SKEYs again with invalid params (invalid digest) */
+    p = params_bad;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "NONEXISTENT", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN, &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN, &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    /* This should fail (invalid digest) */
+    if (!TEST_int_le(EVP_KDF_derive_SKEYs(kctx, params_bad), 0))
+        goto err;
+
+    /* After the failed call, previous keys should be cleared */
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                           OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL)))
+        goto err;
+
+    /* IV should also be cleared */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &iv, &iv_out_len),
+            0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Test that EVP_KDF_CTX_get_params() succeeds even when purpose params
+ * are requested before any multi-derive (backward compatibility)
+ */
+static int test_kdf_tls1_prf_get_params_before_derive(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM get_params[6], *p;
+    char client_mac_type[64] = "";
+    char server_cipher_type[64] = "";
+    size_t size = 0;
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    /* Query gettable params including purpose types before any derive */
+    p = get_params;
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &size);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PURPOSE_CLIENT_MAC_KEY,
+        client_mac_type, sizeof(client_mac_type));
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY,
+        server_cipher_type, sizeof(server_cipher_type));
+    *p = OSSL_PARAM_construct_end();
+
+    /*
+     * This should succeed even though no multi-derive has been done.
+     * The purpose params will be left unmodified, size should be SIZE_MAX.
+     */
+    if (!TEST_true(EVP_KDF_CTX_get_params(kctx, get_params)))
+        goto err;
+
+    /* Size should be set */
+    if (!TEST_size_t_eq(size, SIZE_MAX))
+        goto err;
+
+    /* Purpose params should be unmodified (empty strings) */
+    if (!TEST_str_eq(client_mac_type, "")
+        || !TEST_str_eq(server_cipher_type, ""))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Test that EVP_KDF_CTX_get_params() succeeds for HKDF before any
+ * multi-derive (HKDF doesn't support multi-derive but lists the params)
+ */
+static int test_kdf_hkdf_get_params_with_purpose(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM get_params[4], *p;
+    OSSL_PARAM set_params[3], *sp;
+    char client_key_type[64] = "";
+    size_t size = 0;
+    unsigned char key[32];
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF)))
+        goto err;
+
+    /* Set minimal params for plain HKDF */
+    memset(key, 0x42, sizeof(key));
+    sp = set_params;
+    *sp++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *sp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key, sizeof(key));
+    *sp = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(EVP_KDF_CTX_set_params(kctx, set_params)))
+        goto err;
+
+    /* Query including purpose param (which plain HKDF doesn't use) */
+    p = get_params;
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &size);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PURPOSE_CLIENT_KEY,
+        client_key_type, sizeof(client_key_type));
+    *p = OSSL_PARAM_construct_end();
+
+    /*
+     * This should succeed. The purpose param should be left unmodified
+     * since plain HKDF doesn't do multi-derive.
+     */
+    if (!TEST_true(EVP_KDF_CTX_get_params(kctx, get_params)))
+        goto err;
+
+    /* Purpose param should be unmodified (empty string) */
+    if (!TEST_str_eq(client_key_type, ""))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Test that TLS1-PRF accepts NULL cipher (zero-length cipher key)
+ * for NULL-encryption TLS 1.2 suites like TLS_RSA_WITH_NULL_SHA256
+ */
+static int test_kdf_tls1_prf_null_cipher(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    EVP_SKEY *skey = NULL;
+    OSSL_PARAM params[7], *p;
+    size_t mac_key_len = 20, cipher_key_len = 0;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN, &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN, &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "NULL", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    /* This should succeed with NULL cipher (zero-length cipher key) */
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify we can get MAC keys but not cipher keys */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_CLIENT_MAC_KEY, NULL)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Cipher key should not be available (length is 0) */
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                           OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_get0_iv(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[8], *p;
+    size_t mac_key_len = 0, cipher_key_len = 16, iv_len = 4;
+    const unsigned char *client_iv = NULL, *server_iv = NULL;
+    size_t client_iv_len = 0, server_iv_len = 0;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN, &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN, &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "AES-128-GCM", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify get0_IV works with client_iv purpose */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &client_iv, &client_iv_len),
+            1))
+        goto err;
+    if (!TEST_ptr(client_iv) || !TEST_size_t_eq(client_iv_len, iv_len))
+        goto err;
+
+    /* Verify get0_IV works with server_iv purpose */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
+                         &server_iv, &server_iv_len),
+            1))
+        goto err;
+    if (!TEST_ptr(server_iv) || !TEST_size_t_eq(server_iv_len, iv_len))
+        goto err;
+
+    /* Verify the IVs are different */
+    if (!TEST_mem_ne(client_iv, client_iv_len, server_iv, server_iv_len))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_get0_iv_rejects_keys(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[8], *p;
+    size_t mac_key_len = 20, cipher_key_len = 16, iv_len = 4;
+    const unsigned char *iv = NULL;
+    size_t iv_len_out = 0;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN, &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN, &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "AES-128-CBC", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify get0_IV rejects client_MAC_key purpose */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_MAC_KEY,
+                         &iv, &iv_len_out),
+            0))
+        goto err;
+
+    /* Verify get0_IV rejects server_MAC_key purpose */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_MAC_KEY,
+                         &iv, &iv_len_out),
+            0))
+        goto err;
+
+    /* Verify get0_IV rejects client_cipher_key purpose */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY,
+                         &iv, &iv_len_out),
+            0))
+        goto err;
+
+    /* Verify get0_IV rejects server_cipher_key purpose */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY,
+                         &iv, &iv_len_out),
+            0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_tls1_prf_get1_skey_rejects_ivs(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[8], *p;
+    size_t mac_key_len = 0, cipher_key_len = 16, iv_len = 4;
+    EVP_SKEY *skey = NULL;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        (unsigned char *)"secret", 6);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (unsigned char *)"seed", 4);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN, &mac_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN, &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "AES-128-GCM", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify get1_SKEY rejects client_iv purpose */
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                           OSSL_KDF_PURPOSE_CLIENT_IV, NULL)))
+        goto err;
+
+    /* Verify get1_SKEY rejects server_iv purpose */
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                           OSSL_KDF_PURPOSE_SERVER_IV, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_tls13_derive_multi_consistency(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx_key = NULL, *kctx_iv = NULL, *kctx_multi = NULL;
+    unsigned char raw_key[16], raw_iv[12];
+    size_t cipher_key_len = 16, iv_len = 12;
+    OSSL_PARAM key_params[7], iv_params[7], multi_params[8];
+    OSSL_PARAM *kp, *ip, *mp;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *export_raw = NULL;
+    size_t export_len = 0;
+    const unsigned char *iv_out = NULL;
+    size_t iv_out_len = 0;
+    static const unsigned char traffic_secret[] = {
+        0xc8, 0x05, 0x83, 0xa9, 0x0e, 0x99, 0x5c, 0x48,
+        0x96, 0x00, 0x49, 0x2a, 0x5d, 0xa6, 0x42, 0xe6,
+        0xb1, 0xf6, 0x79, 0xba, 0x67, 0x48, 0x28, 0x79,
+        0x2d, 0xf0, 0x87, 0xb9, 0x39, 0x63, 0x61, 0x71
+    };
+    static const unsigned char prefix[] = {
+        0x74, 0x6c, 0x73, 0x31, 0x33, 0x20
+    };
+    int mode_expand = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+
+    /* Derive "key" separately - RFC 8446 uses empty context for key/IV */
+    kp = key_params;
+    *kp++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *kp++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *kp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *kp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *kp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
+        (void *)"key", 3);
+    *kp = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx_key = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF))
+        || !TEST_int_gt(EVP_KDF_derive(kctx_key, raw_key, sizeof(raw_key),
+                            key_params),
+            0))
+        goto err;
+
+    /* Derive "iv" separately - RFC 8446 uses empty context for key/IV */
+    ip = iv_params;
+    *ip++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *ip++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *ip++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *ip++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *ip++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
+        (void *)"iv", 2);
+    *ip = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx_iv = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF))
+        || !TEST_int_gt(EVP_KDF_derive(kctx_iv, raw_iv, sizeof(raw_iv),
+                            iv_params),
+            0))
+        goto err;
+
+    /* Multi-derive - empty context per RFC 8446 */
+    mp = multi_params;
+    *mp++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *mp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *mp++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *mp++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *mp = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx_multi = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx_multi, multi_params), 0))
+        goto err;
+
+    /* Both purposes name the same key: the traffic secret encodes direction */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx_multi,
+                      OSSL_KDF_PURPOSE_SERVER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &export_raw, &export_len), 1)
+        || !TEST_mem_eq(export_raw, export_len, raw_key, sizeof(raw_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify key matches */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx_multi,
+                      OSSL_KDF_PURPOSE_CLIENT_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &export_raw, &export_len), 1)
+        || !TEST_size_t_eq(export_len, sizeof(raw_key))
+        || !TEST_mem_eq(export_raw, export_len, raw_key, sizeof(raw_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify IV matches */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx_multi,
+                         OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &iv_out, &iv_out_len),
+            1)
+        || !TEST_size_t_eq(iv_out_len, sizeof(raw_iv))
+        || !TEST_mem_eq(iv_out, iv_out_len, raw_iv, sizeof(raw_iv)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx_key);
+    EVP_KDF_CTX_free(kctx_iv);
+    EVP_KDF_CTX_free(kctx_multi);
+    return ret;
+}
+
+static int test_kdf_tls13_derive_multi_bad_purpose(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[6];
+    OSSL_PARAM *p = params;
+    size_t cipher_key_len = 16, iv_len = 12;
+    int mode_expand = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+    static const unsigned char secret[32] = { 0 };
+    EVP_SKEY *skey = NULL;
+    const unsigned char *iv = NULL;
+    size_t iv_out_len = 0;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)secret, sizeof(secret));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF))
+        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx, "nonexistent", NULL)))
+        goto err;
+
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, "nonexistent", &iv, &iv_out_len), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Test using published RFC 8448 test vectors to verify correctness
+ * RFC 8448 section 3, pages 10-11: server application traffic secret,
+ * key, and IV from the simple 1-RTT handshake example.
+ * Tests that DATA parameter is properly ignored per RFC 8446 section 7.3.
+ */
+static int test_kdf_tls13_rfc8448_vectors(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *raw_key = NULL, *raw_iv = NULL;
+    size_t raw_key_len = 0, raw_iv_len = 0;
+    OSSL_PARAM params[8], *p;
+    size_t cipher_key_len = 16, iv_len = 12;
+    int mode_expand = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+    /* Server application traffic secret from RFC 8448 section 3, page 11 */
+    static const unsigned char traffic_secret[32] = {
+        0xa1, 0x1a, 0xf9, 0xf0, 0x55, 0x31, 0xf8, 0x56,
+        0xad, 0x47, 0x11, 0x6b, 0x45, 0xa9, 0x50, 0x32,
+        0x82, 0x04, 0xb4, 0xf4, 0x4b, 0xfb, 0x6b, 0x3a,
+        0x4b, 0x4f, 0x1f, 0x3f, 0xcb, 0x63, 0x16, 0x43
+    };
+    /* Transcript hash from RFC 8448 section 3, page 10 */
+    static const unsigned char transcript_hash[32] = {
+        0x96, 0x08, 0x10, 0x2a, 0x0f, 0x1c, 0xcc, 0x6d,
+        0xb6, 0x25, 0x0b, 0x7b, 0x7e, 0x41, 0x7b, 0x1a,
+        0x00, 0x0e, 0xaa, 0xda, 0x3d, 0xaa, 0xe4, 0x77,
+        0x7a, 0x76, 0x86, 0xc9, 0xff, 0x83, 0xdf, 0x13
+    };
+    /* "tls13 " prefix in hex for EBCDIC compatibility */
+    static const unsigned char prefix[] = {
+        0x74, 0x6c, 0x73, 0x31, 0x33, 0x20
+    };
+    /* Expected server write key from RFC 8448 section 3, page 11 */
+    static const unsigned char expected_key[16] = {
+        0x9f, 0x02, 0x28, 0x3b, 0x6c, 0x9c, 0x07, 0xef,
+        0xc2, 0x6b, 0xb9, 0xf2, 0xac, 0x92, 0xe3, 0x56
+    };
+    /* Expected server write IV from RFC 8448 section 3, page 11 */
+    static const unsigned char expected_iv[12] = {
+        0xcf, 0x78, 0x2b, 0x88, 0xdd, 0x83,
+        0x54, 0x9a, 0xad, 0xf1, 0xe9, 0x84
+    };
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    /* Case 1: No DATA parameter - empty context per RFC 8446 */
+    p = params;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify key matches RFC 8448 published value */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_SERVER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len), 1)
+        || !TEST_size_t_eq(raw_key_len, sizeof(expected_key))
+        || !TEST_mem_eq(raw_key, raw_key_len, expected_key, sizeof(expected_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify IV matches RFC 8448 published value */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
+                         &raw_iv, &raw_iv_len),
+            1)
+        || !TEST_size_t_eq(raw_iv_len, sizeof(expected_iv))
+        || !TEST_mem_eq(raw_iv, raw_iv_len, expected_iv, sizeof(expected_iv)))
+        goto err;
+
+    EVP_KDF_CTX_free(kctx);
+    kctx = NULL;
+
+    /* Case 2: DATA supplied in derive_SKEYs params - should be ignored */
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
+        (void *)transcript_hash, sizeof(transcript_hash));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify key still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_SERVER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len), 1)
+        || !TEST_size_t_eq(raw_key_len, sizeof(expected_key))
+        || !TEST_mem_eq(raw_key, raw_key_len, expected_key, sizeof(expected_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify IV still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
+                         &raw_iv, &raw_iv_len),
+            1)
+        || !TEST_size_t_eq(raw_iv_len, sizeof(expected_iv))
+        || !TEST_mem_eq(raw_iv, raw_iv_len, expected_iv, sizeof(expected_iv)))
+        goto err;
+
+    EVP_KDF_CTX_free(kctx);
+    kctx = NULL;
+
+    /* Case 3: DATA set on context via set_params, then derive_SKEYs called */
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF)))
+        goto err;
+
+    /*
+     * Set MODE and DATA on context first (simulates reused context after
+     * deriving traffic secret which sets DATA to transcript hash)
+     */
+    p = params;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
+        (void *)transcript_hash, sizeof(transcript_hash));
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_CTX_set_params(kctx, params), 0))
+        goto err;
+
+    /* Now derive without passing DATA again */
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)traffic_secret, sizeof(traffic_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+        (void *)prefix, sizeof(prefix));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params), 0))
+        goto err;
+
+    /* Verify key still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_SERVER_KEY, NULL))
+        || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len), 1)
+        || !TEST_size_t_eq(raw_key_len, sizeof(expected_key))
+        || !TEST_mem_eq(raw_key, raw_key_len, expected_key, sizeof(expected_key)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify IV still matches RFC 8448 - DATA should be ignored */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_SERVER_IV,
+                         &raw_iv, &raw_iv_len),
+            1)
+        || !TEST_size_t_eq(raw_iv_len, sizeof(expected_iv))
+        || !TEST_mem_eq(raw_iv, raw_iv_len, expected_iv, sizeof(expected_iv)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+/*
+ * Test that a failed EVP_KDF_derive_SKEYs() call properly clears
+ * previous derivation results
+ */
+static int test_kdf_tls13_derive_multi_clear_on_fail(void)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params_ok[6], params_bad[6];
+    OSSL_PARAM *p;
+    size_t cipher_key_len = 16, iv_len = 12, zero_len = 0;
+    int mode_expand = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+    static const unsigned char secret[32] = {
+        0xc8, 0x05, 0x83, 0xa9, 0x0e, 0x99, 0x5c, 0x48,
+        0x96, 0x00, 0x49, 0x2a, 0x5d, 0xa6, 0x42, 0xe6,
+        0xb1, 0xf6, 0x79, 0xba, 0x67, 0x48, 0x28, 0x79,
+        0x2d, 0xf0, 0x87, 0xb9, 0x39, 0x63, 0x61, 0x71
+    };
+    EVP_SKEY *skey = NULL;
+    const unsigned char *iv = NULL;
+    size_t iv_out_len = 0;
+
+    /* First, do a successful derivation */
+    p = params_ok;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)secret, sizeof(secret));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &iv_len);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_3_KDF))
+        || !TEST_int_gt(EVP_KDF_derive_SKEYs(kctx, params_ok), 0))
+        goto err;
+
+    /* Verify we can retrieve the key */
+    if (!TEST_ptr(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                      OSSL_KDF_PURPOSE_CLIENT_KEY, NULL)))
+        goto err;
+    EVP_SKEY_free(skey);
+    skey = NULL;
+
+    /* Verify we can retrieve the IV */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &iv, &iv_out_len),
+            1))
+        goto err;
+
+    /* Now call derive_SKEYs again with invalid params (zero lengths) */
+    p = params_bad;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode_expand);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "SHA256", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        (void *)secret, sizeof(secret));
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN, &zero_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &zero_len);
+    *p = OSSL_PARAM_construct_end();
+
+    /* This should fail (zero lengths) */
+    if (!TEST_int_le(EVP_KDF_derive_SKEYs(kctx, params_bad), 0))
+        goto err;
+
+    /* After the failed call, previous keys should be cleared */
+    if (!TEST_ptr_null(skey = EVP_KDF_CTX_get1_SKEY(kctx,
+                           OSSL_KDF_PURPOSE_CLIENT_KEY, NULL)))
+        goto err;
+
+    /* IV should also be cleared */
+    if (!TEST_int_eq(EVP_KDF_CTX_get0_IV(kctx, OSSL_KDF_PURPOSE_CLIENT_IV,
+                         &iv, &iv_out_len),
+            0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
 static OSSL_PARAM *construct_hkdf_params(char *digest, char *key,
     size_t keylen, char *salt, char *info)
 {
@@ -787,6 +2019,77 @@ err:
     return ret;
 }
 
+/*
+ * While watching, remember the blocks of |watch_len| bytes that are
+ * allocated, and note if one of them still holds |watch_key| when freed.
+ */
+static CRYPTO_malloc_fn saved_malloc;
+static CRYPTO_realloc_fn saved_realloc;
+static CRYPTO_free_fn saved_free;
+static void *watched[16];
+static size_t nwatched;
+static const unsigned char *watch_key;
+static size_t watch_len;
+static int key_left;
+
+static void watch_forget(void *ptr, int check)
+{
+    size_t i;
+
+    for (i = 0; i < nwatched; i++) {
+        if (watched[i] != ptr)
+            continue;
+        if (check && memcmp(ptr, watch_key, watch_len) == 0)
+            key_left = 1;
+        watched[i] = watched[--nwatched];
+        return;
+    }
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = saved_malloc(num, file, line);
+
+    if (ret != NULL && num == watch_len && nwatched < OSSL_NELEM(watched))
+        watched[nwatched++] = ret;
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_forget(ptr, 0);
+    if (ret != NULL && num == watch_len && nwatched < OSSL_NELEM(watched))
+        watched[nwatched++] = ret;
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_forget(ptr, 1);
+    saved_free(ptr, file, line);
+}
+
+static int watch_start(const unsigned char *key, size_t len)
+{
+    CRYPTO_get_mem_functions(&saved_malloc, &saved_realloc, &saved_free);
+    if (!CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free))
+        return 0;
+    nwatched = 0;
+    watch_key = key;
+    watch_len = len;
+    key_left = 0;
+    return 1;
+}
+
+static void watch_stop(void)
+{
+    CRYPTO_set_mem_functions(saved_malloc, saved_realloc, saved_free);
+}
+
 static int test_kdf_pbkdf1_skey(void)
 {
     int ret = 0;
@@ -806,6 +2109,7 @@ static int test_kdf_pbkdf1_skey(void)
     };
     const unsigned char *export = NULL;
     size_t export_size = 0;
+    int watching;
 
     if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
         goto err;
@@ -829,9 +2133,19 @@ static int test_kdf_pbkdf1_skey(void)
                          salt, strlen((char *)salt), NULL))
         || !TEST_ptr(kctx = get_kdfbyname_libctx(libctx, OSSL_KDF_NAME_PBKDF1))
         || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
-        || !TEST_true(EVP_KDF_CTX_set_SKEY(kctx, skey_in, OSSL_KDF_PARAM_SALT))
-        || !TEST_ptr(skey_out = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
-                         NULL, sizeof(out), NULL))
+        || !TEST_true(EVP_KDF_CTX_set_SKEY(kctx, skey_in, OSSL_KDF_PARAM_SALT)))
+        goto err;
+
+    /* The derived key must not be left in a buffer freed while deriving */
+    if (!(watching = watch_start(expected, sizeof(expected))))
+        TEST_info("cannot replace the allocator, not checking the key is cleared");
+    skey_out = EVP_KDF_derive_SKEY(kctx, NULL, OSSL_SKEY_TYPE_GENERIC,
+        NULL, sizeof(out), NULL);
+    if (watching)
+        watch_stop();
+
+    if (!TEST_ptr(skey_out)
+        || (watching && !TEST_false(key_left))
         || !TEST_int_eq(EVP_SKEY_get0_raw_key(skey_out, &export, &export_size), 1)
         || !TEST_mem_eq(export, export_size, expected, sizeof(expected)))
         goto err;
@@ -2017,6 +3331,39 @@ err:
 }
 #endif /* OPENSSL_NO_SRTPKDF */
 
+#ifndef OPENSSL_NO_SNMPKDF
+static int test_kdf_snmpkdf_rejected_password(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[4], rejected[2];
+    unsigned char password[] = "password";
+    unsigned char eid[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    unsigned char dummy = 0;
+    unsigned char expected[32], out[sizeof(expected)];
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        password, sizeof(password) - 1);
+    params[2] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
+        eid, sizeof(eid));
+    params[3] = OSSL_PARAM_construct_end();
+    rejected[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        &dummy, 0);
+    rejected[1] = OSSL_PARAM_construct_end();
+
+    ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SNMPKDF))
+        && TEST_true(EVP_KDF_derive(kctx, expected, sizeof(expected), params))
+        && TEST_false(EVP_KDF_CTX_set_params(kctx, rejected))
+        && TEST_true(EVP_KDF_derive(kctx, out, sizeof(out), NULL))
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_SNMPKDF */
+
 #ifndef OPENSSL_NO_SSHKDF
 static int test_kdf_sshkdf(void)
 {
@@ -2475,7 +3822,33 @@ int setup_tests(void)
     ADD_TEST(test_kdf_tls1_prf_1byte_secret);
     ADD_TEST(test_kdf_tls1_prf_empty_seed);
     ADD_TEST(test_kdf_tls1_prf_1byte_seed);
+    ADD_TEST(test_kdf_tls1_prf_get_params_before_derive);
+    /* Multi-derive tests require FIPS provider 4.2.0+ or non-FIPS */
+    if (fips_provider_version_ge(NULL, 4, 2, 0)) {
+        /*
+         * NULL cipher test requires non-FIPS provider (FIPS has no NULL cipher)
+         * Skip if any FIPS provider is loaded
+         */
+        if (!OSSL_PROVIDER_available(NULL, "fips"))
+            ADD_TEST(test_kdf_tls1_prf_null_cipher);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_consistency);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_bad_purpose);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_no_derive);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_keytypes);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_dup);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_bad_keylen);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_no_mac_keys);
+        ADD_TEST(test_kdf_tls1_prf_derive_multi_clear_on_fail);
+        ADD_TEST(test_kdf_tls1_prf_get0_iv);
+        ADD_TEST(test_kdf_tls1_prf_get0_iv_rejects_keys);
+        ADD_TEST(test_kdf_tls1_prf_get1_skey_rejects_ivs);
+        ADD_TEST(test_kdf_tls13_derive_multi_consistency);
+        ADD_TEST(test_kdf_tls13_derive_multi_bad_purpose);
+        ADD_TEST(test_kdf_tls13_rfc8448_vectors);
+        ADD_TEST(test_kdf_tls13_derive_multi_clear_on_fail);
+    }
     ADD_TEST(test_kdf_hkdf);
+    ADD_TEST(test_kdf_hkdf_get_params_with_purpose);
     ADD_TEST(test_kdf_hkdf_invalid_digest);
     ADD_TEST(test_kdf_hkdf_fixed_digest_change_digest);
     ADD_TEST(test_kdf_hkdf_fixed_digest_preserve_digest);
@@ -2508,6 +3881,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_SRTPKDF
     ADD_TEST(test_kdf_srtpkdf_size);
+#endif
+#ifndef OPENSSL_NO_SNMPKDF
+    ADD_TEST(test_kdf_snmpkdf_rejected_password);
 #endif
 #ifndef OPENSSL_NO_SSHKDF
     ADD_TEST(test_kdf_sshkdf);

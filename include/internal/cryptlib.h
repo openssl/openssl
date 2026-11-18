@@ -137,8 +137,6 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
 
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
 
-int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
-    CRYPTO_EX_DATA *ad);
 int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
     long argl, void *argp,
     CRYPTO_EX_new *new_func,

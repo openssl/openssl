@@ -6,6 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 #include "internal/sockets.h"
 #include "internal/statem.h"
 #include <openssl/rand.h>
@@ -2037,6 +2042,14 @@ err:
 #define OP_SIMPLE_PAIR_CONN_ND() \
     (OP_SIMPLE_PAIR_CONN(),      \
         OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE))
+
+/* Thread-assisted client and listener linked by an in-memory dgram pair. */
+#define OP_SIMPLE_PAIR_CONN_TA()  \
+    (OP_NEW_SSL_L_MEM(L),         \
+        OP_NEW_SSL_C_TA_MEM(C),   \
+        OP_LINK_DGRAM_PAIR(C, L), \
+        OP_LISTEN(L),             \
+        OP_CONNECT_WAIT(C))
 
 #define OP_NEW_STREAM(conn_name, stream_name, flags) \
     (OP_SELECT_SSL(0, conn_name),                    \

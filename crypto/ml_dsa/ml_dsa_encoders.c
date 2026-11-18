@@ -394,6 +394,8 @@ static int poly_encode_signed_two_to_power_12(const POLY *p, WPACKET *pkt)
 
         if (!WPACKET_allocate_bytes(pkt, 13, &out))
             return 0;
+        if (out == NULL)
+            return 0;
 
         a1 = mod_sub_64(range, *in++);
         a1 |= mod_sub_64(range, *in++) << 13;
@@ -563,6 +565,8 @@ static int poly_encode_signed_two_to_power_17(const POLY *p, WPACKET *pkt)
         uint32_t z0, z1, z2;
 
         if (!WPACKET_allocate_bytes(pkt, 9, &out))
+            return 0;
+        if (out == NULL)
             return 0;
 
         z0 = mod_sub(range, *in++);

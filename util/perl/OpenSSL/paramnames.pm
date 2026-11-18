@@ -176,7 +176,8 @@ my %params = (
     'OSSL_DIGEST_PARAM_XOF' =>          "xof",          # int, 0 or 1
     'OSSL_DIGEST_PARAM_ALGID_ABSENT' => "algid-absent", # int, 0 or 1
     'OSSL_DIGEST_PARAM_FUNCTION_NAME' =>    "function-name", # utf8 string
-    'OSSL_DIGEST_PARAM_CUSTOMIZATION' =>    "customization", # utf8 string
+    'OSSL_DIGEST_PARAM_CUSTOMIZATION' =>    "customization", # utf8 string or octet string
+    'OSSL_DIGEST_PARAM_DOMAIN_SEPARATOR' => "domain-separator", # uint
     'OSSL_DIGEST_PARAM_FIPS_APPROVED_INDICATOR' => '*OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',
     'OSSL_DIGEST_PARAM_PROPERTIES' => '*OSSL_ALG_PARAM_PROPERTIES',# utf8 string
 
@@ -270,6 +271,23 @@ my %params = (
     'OSSL_KDF_PARAM_FIPS_DIGEST_CHECK' => '*OSSL_PKEY_PARAM_FIPS_DIGEST_CHECK',
     'OSSL_KDF_PARAM_FIPS_KEY_CHECK' => '*OSSL_PKEY_PARAM_FIPS_KEY_CHECK',
     'OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR' => '*OSSL_ALG_PARAM_FIPS_APPROVED_INDICATOR',
+
+# Multi-key derivation parameters
+    'OSSL_KDF_PARAM_MAC_KEY_LEN' =>    "mac_key_len",             # size_t
+    'OSSL_KDF_PARAM_CIPHER_KEY_LEN' => "cipher_key_len",          # size_t
+    'OSSL_KDF_PARAM_IV_LEN' =>         "iv_len",                  # size_t
+
+# Multi-key derivation purpose strings (TLS 1.2)
+    'OSSL_KDF_PURPOSE_CLIENT_MAC_KEY' =>    "client_MAC_key",
+    'OSSL_KDF_PURPOSE_SERVER_MAC_KEY' =>    "server_MAC_key",
+    'OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY' => "client_cipher_key",
+    'OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY' => "server_cipher_key",
+    'OSSL_KDF_PURPOSE_CLIENT_IV' =>         "client_iv",
+    'OSSL_KDF_PURPOSE_SERVER_IV' =>         "server_iv",
+
+# Multi-key derivation purpose strings (TLS 1.3)
+    'OSSL_KDF_PURPOSE_CLIENT_KEY' =>        "client_key",
+    'OSSL_KDF_PURPOSE_SERVER_KEY' =>        "server_key",
 
 # Known RAND names
     'OSSL_RAND_PARAM_STATE' =>                   "state",

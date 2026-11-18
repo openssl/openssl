@@ -813,6 +813,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     const size_t *srvrtuples;
     uint16_t *first_group_in_tuple;
     size_t clnt_num_groups, srvr_num_groups, srvr_num_tuples;
+    size_t srvr_groups_remaining;
     PACKET *encoded_pubkey_arr = NULL;
     uint16_t *keyshares_arr = NULL;
     size_t keyshares_cnt = 0;
@@ -899,9 +900,22 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
      * Remark: Selection priority different for client- or server-preference
      */
     first_group_in_tuple = (uint16_t *)srvrgroups;
+    srvr_groups_remaining = srvr_num_groups;
     for (current_tuple = 0; current_tuple < srvr_num_tuples; current_tuple++) {
         size_t number_of_groups_in_tuple = srvrtuples[current_tuple];
         int prio_group_idx = 0, candidate_group_idx = 0;
+
+        /*
+         * The tuple sizes must partition srvrgroups exactly. A tuple larger
+         * than the groups still left means the group and tuple lists have
+         * come from different sources, which is an internal error: stop here
+         * rather than reading past the end of srvrgroups.
+         */
+        if (number_of_groups_in_tuple > srvr_groups_remaining) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        srvr_groups_remaining -= number_of_groups_in_tuple;
 
         /* Server or client preference ? */
         if (s->options & SSL_OP_SERVER_PREFERENCE) {
@@ -1108,12 +1122,10 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    if (group_id != s->s3.group_id
-        || s->s3.tmp.new_cipher
-            != ssl_get_cipher_by_char(s, ciphdata, 0)) {
+    if (s->s3.tmp.new_cipher != ssl_get_cipher_by_char(s, ciphdata, 0)) {
         /*
-         * We chose a different cipher or group id this time around to what is
-         * in the cookie. Something must have changed.
+         * We chose a different cipher this time around to what is in the
+         * cookie. Something must have changed.
          */
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
         return 0;
@@ -1202,7 +1214,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (key_share) {
         if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_key_share)
             || !WPACKET_start_sub_packet_u16(&hrrpkt)
-            || !WPACKET_put_bytes_u16(&hrrpkt, s->s3.group_id)
+            || !WPACKET_put_bytes_u16(&hrrpkt, group_id)
             || !WPACKET_close(&hrrpkt)) {
             WPACKET_cleanup(&hrrpkt);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1232,6 +1244,9 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     /* Act as if this ClientHello came after a HelloRetryRequest */
     s->hello_retry_request = SSL_HRR_PENDING;
+    /* The key_share parsing then checks the client sent the group we asked for */
+    if (key_share)
+        s->s3.group_id = group_id;
 
     s->ext.cookieok = 1;
 #endif

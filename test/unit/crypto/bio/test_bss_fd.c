@@ -20,7 +20,7 @@ int main(void)
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 
 #include "bio_local.h"
 
@@ -40,9 +40,9 @@ ssize_t __wrap_read(int fd, void *buf, size_t count)
     ssize_t rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(count);
+    check_expected_uint(count);
     rc = mock_type(ssize_t);
     if (rc <= 0)
         errno = mock_type(int);
@@ -54,9 +54,9 @@ ssize_t __wrap_write(int fd, const void *buf, size_t count)
     ssize_t rc;
 
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
     check_expected_ptr(buf);
-    check_expected(count);
+    check_expected_uint(count);
     rc = mock_type(ssize_t);
     if (rc <= 0)
         errno = mock_type(int);
@@ -66,9 +66,9 @@ ssize_t __wrap_write(int fd, const void *buf, size_t count)
 off_t __wrap_lseek(int fd, off_t offset, int whence)
 {
     function_called();
-    check_expected(fd);
-    check_expected(offset);
-    check_expected(whence);
+    check_expected_int(fd);
+    check_expected_int(offset);
+    check_expected_int(whence);
 
     return mock_type(off_t);
 }
@@ -76,7 +76,7 @@ off_t __wrap_lseek(int fd, off_t offset, int whence)
 int __wrap_close(int fd)
 {
     function_called();
-    check_expected(fd);
+    check_expected_int(fd);
 
     return mock_type(int);
 }
@@ -91,9 +91,9 @@ static void expect_read(int fd, const void *buf, size_t count, ssize_t rc,
     int errnoval)
 {
     expect_function_call(__wrap_read);
-    expect_value(__wrap_read, fd, fd);
-    expect_value(__wrap_read, buf, buf);
-    expect_value(__wrap_read, count, count);
+    expect_int_value(__wrap_read, fd, fd);
+    expect_uint_value(__wrap_read, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_read, count, count);
     will_return(__wrap_read, rc);
     if (rc <= 0)
         will_return(__wrap_read, errnoval);
@@ -103,9 +103,9 @@ static void expect_write(int fd, const void *buf, size_t count, ssize_t rc,
     int errnoval)
 {
     expect_function_call(__wrap_write);
-    expect_value(__wrap_write, fd, fd);
-    expect_value(__wrap_write, buf, buf);
-    expect_value(__wrap_write, count, count);
+    expect_int_value(__wrap_write, fd, fd);
+    expect_uint_value(__wrap_write, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(__wrap_write, count, count);
     will_return(__wrap_write, rc);
     if (rc <= 0)
         will_return(__wrap_write, errnoval);
@@ -114,16 +114,16 @@ static void expect_write(int fd, const void *buf, size_t count, ssize_t rc,
 static void expect_lseek(int fd, off_t offset, int whence, off_t rc)
 {
     expect_function_call(__wrap_lseek);
-    expect_value(__wrap_lseek, fd, fd);
-    expect_value(__wrap_lseek, offset, offset);
-    expect_value(__wrap_lseek, whence, whence);
+    expect_int_value(__wrap_lseek, fd, fd);
+    expect_int_value(__wrap_lseek, offset, offset);
+    expect_int_value(__wrap_lseek, whence, whence);
     will_return(__wrap_lseek, rc);
 }
 
 static void expect_close(int fd, int rc)
 {
     expect_function_call(__wrap_close);
-    expect_value(__wrap_close, fd, fd);
+    expect_int_value(__wrap_close, fd, fd);
     will_return(__wrap_close, rc);
 }
 

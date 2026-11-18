@@ -470,7 +470,7 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
     CMS_EnvelopedData *envData = NULL;
     BIO *privbio = NULL;
     EVP_CIPHER *cipher = NULL;
-    X509 *recip = ctx->validatedSrvCert; /* this is the client cert */
+    X509 *recip = ctx->validatedPeerCert; /* this is the client cert */
     STACK_OF(X509) *encryption_recips = sk_X509_new_reserve(NULL, 1);
 
     if (encryption_recips == NULL

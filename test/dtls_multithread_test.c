@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -25,6 +29,10 @@ static char *privkey = NULL;
 #define POLL_TIMEOUT_SEC 5
 #define MAX_POLL_RETRIES 50
 
+#if defined(_AIX) && !defined(__64BIT__)
+#undef revents
+#undef events
+#endif
 /*
  * Per-thread state for server connection handlers
  */

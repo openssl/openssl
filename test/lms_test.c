@@ -9,7 +9,10 @@
 
 #include <openssl/core_names.h>
 #include <openssl/decoder.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
+#include "crypto/evp.h"
 #include "crypto/lms.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -232,6 +235,43 @@ end:
     EVP_PKEY_free(key[2]);
     EVP_PKEY_free(key[1]);
     EVP_PKEY_free(key[0]);
+    return ret;
+}
+
+/* Keys are immutable once they have a public key */
+static int lms_key_immutable_test(void)
+{
+    int ret = 0;
+    EVP_KEYMGMT *keymgmt = NULL;
+    void *keydata = NULL;
+    LMS_ACVP_TEST_DATA *td = &lms_testdata[1];
+    OSSL_PARAM pub_params[2];
+
+    pub_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PUB_KEY, (void *)td->pub, td->publen);
+    pub_params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(libctx, "LMS", propq))
+        || !TEST_ptr(keydata = evp_keymgmt_newdata(keymgmt, NULL))
+        || !TEST_true(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, pub_params)))
+        goto end;
+
+    /* A second import must fail and leave the key as it was */
+    if (!TEST_false(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, pub_params))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_KEY_IMMUTABLE_ONCE_SET)
+        || !TEST_true(evp_keymgmt_has(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY)))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    if (keymgmt != NULL)
+        evp_keymgmt_freedata(keymgmt, keydata);
+    EVP_KEYMGMT_free(keymgmt);
     return ret;
 }
 
@@ -594,6 +634,12 @@ int setup_tests(void)
     ADD_TEST(lms_bad_pub_len_test);
     ADD_TEST(lms_key_validate_test);
     ADD_TEST(lms_key_eq_test);
+    /*
+     * Older FIPS providers do not enforce the immutability checks, so only
+     * run this test where the provider (if any) is at least 4.2.0.
+     */
+    if (fips_provider_version_ge(libctx, 4, 2, 0))
+        ADD_TEST(lms_key_immutable_test);
     ADD_TEST(lms_key_decode_test);
     ADD_TEST(lms_pubkey_decoder_test);
     ADD_TEST(lms_pubkey_decoder_fail_test);

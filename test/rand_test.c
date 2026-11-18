@@ -23,6 +23,7 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include "crypto/rand.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 static char *configfile;
@@ -152,6 +153,81 @@ static int test_rand_uniform(void)
 
     res = 1;
 err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
+/*
+ * ossl_rand_hash_salt() must hand out a salt from each of its sources and
+ * leave no errors behind:
+ *
+ * idx 0: a fresh library context, served by RAND_bytes_ex().
+ * idx 1: only the null provider is loaded, so RAND is unavailable and the
+ *        salt comes from the operating system entropy sources. With strict
+ *        seeding, which enable-fips-jitter builds force, those are skipped
+ *        and this covers the fallback of idx 2 instead.
+ * idx 2: strict seeding from a TEST-RAND seed source that has no entropy,
+ *        so RAND fails, the operating system sources must not stand in for
+ *        the seed source, and the salt comes from the time, counter, process
+ *        and thread id fallback. Not run in enable-fips-jitter builds, which
+ *        force the JITTER seed source.
+ */
+static int test_rand_hash_salt(int idx)
+{
+    static const size_t lens[] = { 1, 8, 16, 17, 40 };
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *nullprov = NULL;
+    unsigned char a[40], b[40];
+    size_t i;
+    int ok, res = 0;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
+        goto err;
+    if (idx == 1 && !TEST_ptr(nullprov = OSSL_PROVIDER_load(ctx, "null")))
+        goto err;
+    if (idx == 2 && !TEST_true(OSSL_LIB_CTX_load_config(ctx, strictconfigfile)))
+        goto err;
+
+    /* Make sure each case gets the source it is about */
+    if (idx > 0) {
+        ERR_set_mark();
+        ok = RAND_bytes_ex(ctx, a, sizeof(a), 0) <= 0;
+#ifndef OPENSSL_RAND_SEED_NONE
+        /* Without strict seeding the operating system sources serve it */
+        if (idx == 1 && !ossl_rand_seed_source_strict(ctx)) {
+            unsigned char *seed = NULL;
+            size_t seed_len = ossl_rand_get_entropy(ctx, &seed, 8 * 16, 16, 16);
+
+            ok = ok && seed_len == 16;
+            ossl_rand_cleanup_entropy(ctx, seed, seed_len);
+        }
+#endif
+        /* Strict seeding keeps the operating system sources out */
+        if (idx == 2)
+            ok = ok && ossl_rand_seed_source_strict(ctx);
+        ERR_pop_to_mark();
+        if (!TEST_true(ok))
+            goto err;
+    }
+
+    /* Only errors raised by ossl_rand_hash_salt() itself count below */
+    ERR_clear_error();
+    if (!TEST_true(ossl_rand_hash_salt(ctx, a, 0)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(lens); i++)
+        if (!TEST_true(ossl_rand_hash_salt(ctx, a, lens[i]))
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            goto err;
+
+    /* Consecutive salts must differ */
+    if (!TEST_true(ossl_rand_hash_salt(ctx, a, sizeof(a)))
+        || !TEST_true(ossl_rand_hash_salt(ctx, b, sizeof(b)))
+        || !TEST_mem_ne(a, sizeof(a), b, sizeof(b)))
+        goto err;
+
+    res = 1;
+err:
+    OSSL_PROVIDER_unload(nullprov);
     OSSL_LIB_CTX_free(ctx);
     return res;
 }
@@ -1210,6 +1286,11 @@ int setup_tests(void)
     ADD_TEST(test_jitter_fips_indicator);
 #endif
     ADD_TEST(test_rand_uniform);
+#ifdef OPENSSL_NO_FIPS_JITTER
+    ADD_ALL_TESTS(test_rand_hash_salt, 3);
+#else
+    ADD_ALL_TESTS(test_rand_hash_salt, 2);
+#endif
     ADD_TEST(test_rand_primary_seed_stored);
 
     if (OSSL_PROVIDER_available(NULL, "fips")

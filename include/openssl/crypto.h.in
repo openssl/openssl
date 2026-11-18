@@ -268,6 +268,13 @@ int CRYPTO_free_ex_index(int class_index, int idx);
  * given class (invokes whatever per-class callbacks are applicable)
  */
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
+/**
+ * @brief Initialize the exdata part of a structure, associated with the
+ * given library context.
+ * @see CRYPTO_new_ex_data_ex(3)
+ */
+int CRYPTO_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
+    CRYPTO_EX_DATA *ad);
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     const CRYPTO_EX_DATA *from);
 

@@ -1,0 +1,36 @@
+From e8e15b31dc01963f3c4995f63f699e68d8724c22 Mon Sep 17 00:00:00 2001
+From: Richard Levitte <levitte@openssl.foundation>
+Date: Tue, 17 Nov 2026 12:54:04 +0100
+Subject: [PATCH] constify k5tls OpenSSL plugin
+
+X509_get_ext() and X509_get_subject_name() return const pointers in
+OpenSSL 4.x.
+---
+ src/plugins/tls/k5tls/openssl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/plugins/tls/k5tls/openssl.c b/src/plugins/tls/k5tls/openssl.c
+index 3b0b29a5f..6bc2c3d4b 100644
+--- a/src/plugins/tls/k5tls/openssl.c
++++ b/src/plugins/tls/k5tls/openssl.c
+@@ -162,7 +162,7 @@ static GENERAL_NAMES *
+ get_cert_sans(const X509 *x)
+ {
+     int ext;
+-    X509_EXTENSION *san_ext;
++    const X509_EXTENSION *san_ext;
+ 
+     ext = X509_get_ext_by_NID(x, NID_subject_alt_name, -1);
+     if (ext < 0)
+@@ -178,7 +178,7 @@ get_cert_sans(const X509 *x)
+ static int
+ get_cert_cn(const X509 *x, char *buf, size_t bufsize)
+ {
+-    X509_NAME *name;
++    const X509_NAME *name;
+ 
+     name = X509_get_subject_name(x);
+     if (name == NULL)
+-- 
+2.55.0
+

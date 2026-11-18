@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <string.h>
 #include <openssl/bio.h>
 #include "testutil.h"
 
@@ -97,6 +99,38 @@ err:
     return ret;
 }
 
+/*
+ * A read that asks for more than the buffer size/offset fields can
+ * hold must fail, not overflow the size calculation in
+ * readbuffer_resize() and write past the end of the cache buffer.
+ */
+static int test_readbuffer_huge_read(void)
+{
+    int ret = 0;
+    BIO *mem = NULL, *readbuf = NULL, *chain = NULL;
+    char data[8192];
+    char out[sizeof(data)];
+
+    memset(data, 'A', sizeof(data));
+    if (!TEST_ptr(mem = BIO_new_mem_buf(data, (int)sizeof(data)))
+        || !TEST_ptr(readbuf = BIO_new(BIO_f_readbuffer())))
+        goto err;
+
+    chain = BIO_push(readbuf, mem);
+    readbuf = NULL;
+    mem = NULL;
+
+    if (!TEST_int_le(BIO_read(chain, out, INT_MAX), 0))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free_all(chain);
+    BIO_free_all(mem);
+    BIO_free(readbuf);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -128,5 +162,6 @@ int setup_tests(void)
     filename = test_get_argument(0);
 
     ADD_ALL_TESTS(test_readbuffer_file_bio, 3);
+    ADD_TEST(test_readbuffer_huge_read);
     return 1;
 }

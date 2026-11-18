@@ -89,8 +89,6 @@ static void ch_on_txp_ack_tx(const OSSL_QUIC_FRAME_ACK *ack, uint32_t pn_space,
     void *arg);
 static void ch_record_state_transition(QUIC_CHANNEL *ch, uint32_t new_state);
 
-DEFINE_LHASH_OF_EX(QUIC_SRT_ELEM);
-
 typedef struct cfq_data_retire_cid {
     uint64_t rtcid_seq;
     QUIC_CHANNEL *rtcid_ch;
