@@ -31,10 +31,7 @@
    ""
 -}
 
-SUBDIRS=crypto ssl apps util fuzz providers doc
-IF[{- !$disabled{cms} -}]
-  SUBDIRS=cms
-ENDIF
+SUBDIRS=crypto ssl apps util fuzz providers doc cms
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF

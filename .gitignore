@@ -211,6 +211,7 @@ providers/implementations/rands/test_rng.inc
 # Generated error code files (from crypto/err/openssl.txt)
 /cms/cms_err.c
 /cms/ts_err.c
+/cms/pkcs7err.c
 /crypto/asn1/asn1_err.c
 /crypto/async/async_err.c
 /crypto/bio/bio_err.c
@@ -235,7 +236,6 @@ providers/implementations/rands/test_rng.inc
 /crypto/ocsp/ocsp_err.c
 /crypto/pem/pem_err.c
 /crypto/pkcs12/pk12err.c
-/crypto/pkcs7/pkcs7err.c
 /crypto/property/property_err.c
 /crypto/rand/rand_err.c
 /crypto/rsa/rsa_err.c
