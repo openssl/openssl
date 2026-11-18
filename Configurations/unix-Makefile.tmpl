@@ -1552,7 +1552,7 @@ renumber: build_generated
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(CMSHEADERS)
-	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; print' \
+	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; s/:DEPRECATEDIN_4_2$$/:/; print' \
                 $(SRCDIR)/util/libcms.num
 	@ : {- output_on() if $disabled{cms}; "" -}
 
@@ -1571,7 +1571,7 @@ ordinals: build_generated
                 --ordinals $(SRCDIR)/util/libcms.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(CMSHEADERS)
-	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; print' \
+	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; s/:DEPRECATEDIN_4_2$$/:/; print' \
                 $(SRCDIR)/util/libcms.num
 	@ : {- output_on() if $disabled{cms}; "" -}
 

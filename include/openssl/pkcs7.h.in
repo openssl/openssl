@@ -238,136 +238,225 @@ typedef struct pkcs7_st {
 /* CRLF ASCII canonicalisation */
 #define SMIME_ASCIICRLF 0x80000
 
-DECLARE_ASN1_FUNCTIONS(PKCS7_ISSUER_AND_SERIAL)
+#if defined(OSSL_LIBCMS_NAMES)
+#define OSSL_PKCS7_DEPRECATEDIN_4_2
+#else
+#define OSSL_PKCS7_DEPRECATEDIN_4_2 OSSL_DEPRECATEDIN_4_2
+#endif /* defined(OSSL_LIBCMS_NAMES) */
 
-int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
+/**
+ * @brief Not deprecated: frees the PKCS7 objects returned by the PKCS#12
+ * API.  Deprecate it together with the PKCS12 functions that take or
+ * return PKCS7.
+ * @see PKCS7_free(3)
+ */
+void PKCS7_free(PKCS7 *a);
+
+/*
+ * The PKCS7 API in libcrypto is deprecated in favor of the same API
+ * provided by libcms.  The libcms header provides the declarations
+ * below without deprecation, under libcms's own symbol names.
+ */
+#if !defined(OPENSSL_NO_DEPRECATED_4_2) || defined(OSSL_LIBCMS_NAMES)
+
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_ISSUER_AND_SERIAL)
+
+/** @see PKCS7_ISSUER_AND_SERIAL_digest(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
     const EVP_MD *type, unsigned char *md,
     unsigned int *len);
 #ifndef OPENSSL_NO_STDIO
-PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7);
-int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7);
+/** @see d2i_PKCS7_fp(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7);
+/** @see i2d_PKCS7_fp(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7);
 #endif
-DECLARE_ASN1_DUP_FUNCTION(PKCS7)
-PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7);
-int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7);
-int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
-int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
+DECLARE_ASN1_DUP_FUNCTION_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7)
+/** @see d2i_PKCS7_bio(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7);
+/** @see i2d_PKCS7_bio(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7);
+/** @see i2d_PKCS7_bio_stream(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
+/** @see PEM_write_bio_PKCS7_stream(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 /** @see PEM_read_bio_PKCS7(3) */
-PKCS7 *PEM_read_bio_PKCS7(BIO *out, PKCS7 **x, pem_password_cb *cb, void *u);
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PEM_read_bio_PKCS7(BIO *out, PKCS7 **x, pem_password_cb *cb, void *u);
 /** @see PEM_write_bio_PKCS7(3) */
-int PEM_write_bio_PKCS7(BIO *out, const PKCS7 *x);
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PEM_write_bio_PKCS7(BIO *out, const PKCS7 *x);
 #if !defined(OPENSSL_NO_STDIO)
 /** @see PEM_read_PKCS7(3) */
-PKCS7 *PEM_read_PKCS7(FILE *out, PKCS7 **x, pem_password_cb *cb, void *u);
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PEM_read_PKCS7(FILE *out, PKCS7 **x, pem_password_cb *cb, void *u);
 /** @see PEM_write_PKCS7(3) */
-int PEM_write_PKCS7(FILE *out, const PKCS7 *x);
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PEM_write_PKCS7(FILE *out, const PKCS7 *x);
 #endif /* !defined(OPENSSL_NO_STDIO) */
 
-DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNER_INFO)
-DECLARE_ASN1_FUNCTIONS(PKCS7_RECIP_INFO)
-DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNED)
-DECLARE_ASN1_FUNCTIONS(PKCS7_ENC_CONTENT)
-DECLARE_ASN1_FUNCTIONS(PKCS7_ENVELOPE)
-DECLARE_ASN1_FUNCTIONS(PKCS7_SIGN_ENVELOPE)
-DECLARE_ASN1_FUNCTIONS(PKCS7_DIGEST)
-DECLARE_ASN1_FUNCTIONS(PKCS7_ENCRYPT)
-DECLARE_ASN1_FUNCTIONS(PKCS7)
-PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_SIGNER_INFO)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_RECIP_INFO)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_SIGNED)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_ENC_CONTENT)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_ENVELOPE)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_SIGN_ENVELOPE)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_DIGEST)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_ENCRYPT)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7, PKCS7)
+/** @see PKCS7_new(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PKCS7_new(void);
+/** @see PKCS7_new_ex(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 
-DECLARE_ASN1_ITEM(PKCS7_ATTR_SIGN)
-DECLARE_ASN1_ITEM(PKCS7_ATTR_VERIFY)
+DECLARE_ASN1_ITEM_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_ATTR_SIGN)
+DECLARE_ASN1_ITEM_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7_ATTR_VERIFY)
 
-DECLARE_ASN1_NDEF_FUNCTION(PKCS7)
-DECLARE_ASN1_PRINT_FUNCTION(PKCS7)
+DECLARE_ASN1_NDEF_FUNCTION_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7)
+DECLARE_ASN1_PRINT_FUNCTION_attr(OSSL_PKCS7_DEPRECATEDIN_4_2, PKCS7)
 
-long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);
 
-int PKCS7_type_is_other(PKCS7 *p7);
-int PKCS7_set_type(PKCS7 *p7, int type);
-int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other);
-int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data);
-int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
+/** @see PKCS7_type_is_other(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_type_is_other(PKCS7 *p7);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set_type(PKCS7 *p7, int type);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     const EVP_MD *dgst);
-int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si);
-int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *p7i);
-int PKCS7_add_certificate(PKCS7 *p7, X509 *cert);
-int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl);
-int PKCS7_content_new(PKCS7 *p7, int nid);
-int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *p7i);
+/** @see PKCS7_add_certificate(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_certificate(PKCS7 *p7, X509 *cert);
+/** @see PKCS7_add_crl(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_content_new(PKCS7 *p7, int nid);
+/** @see PKCS7_dataVerify(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx,
     BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si);
-int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     const X509 *signer);
 
-BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio);
-int PKCS7_dataFinal(PKCS7 *p7, BIO *bio);
-BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_dataFinal(PKCS7 *p7, BIO *bio);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert);
 
-PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509,
     EVP_PKEY *pkey, const EVP_MD *dgst);
-X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
-int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md);
-STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7);
 
-PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509);
-void PKCS7_SIGNER_INFO_get0_algs(PKCS7_SIGNER_INFO *si, EVP_PKEY **pk,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 void PKCS7_SIGNER_INFO_get0_algs(PKCS7_SIGNER_INFO *si, EVP_PKEY **pk,
     X509_ALGOR **pdig, X509_ALGOR **psig);
-void PKCS7_RECIP_INFO_get0_alg(PKCS7_RECIP_INFO *ri, X509_ALGOR **penc);
-int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri);
-int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509);
-int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher);
-#if !defined(OPENSSL_NO_DEPRECATED_4_1)
-OSSL_DEPRECATEDIN_4_1 int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7);
-#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 void PKCS7_RECIP_INFO_get0_alg(PKCS7_RECIP_INFO *ri, X509_ALGOR **penc);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher);
 
-PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx);
-ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7);
-const ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk);
-int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int type,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx);
+/** @see PKCS7_get_octet_string(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 const ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int type,
     void *data);
-int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
     void *value);
-const ASN1_TYPE *PKCS7_get_attribute(const PKCS7_SIGNER_INFO *si, int nid);
-const ASN1_TYPE *PKCS7_get_signed_attribute(const PKCS7_SIGNER_INFO *si, int nid);
-int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 const ASN1_TYPE *PKCS7_get_attribute(const PKCS7_SIGNER_INFO *si, int nid);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 const ASN1_TYPE *PKCS7_get_signed_attribute(const PKCS7_SIGNER_INFO *si, int nid);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
     STACK_OF(X509_ATTRIBUTE) *sk);
-int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
     STACK_OF(X509_ATTRIBUTE) *sk);
 
-PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
+/** @see PKCS7_sign(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
     BIO *data, int flags);
-PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
+/** @see PKCS7_sign_ex(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
     BIO *data, int flags, OSSL_LIB_CTX *libctx, const char *propq);
 
-PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7,
+/** @see PKCS7_sign_add_signer(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7,
     X509 *signcert, EVP_PKEY *pkey,
     const EVP_MD *md, int flags);
 
-int PKCS7_final(PKCS7 *p7, BIO *data, int flags);
-int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_final(PKCS7 *p7, BIO *data, int flags);
+/** @see PKCS7_verify(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
     BIO *indata, BIO *out, int flags);
-STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int flags);
-PKCS7 *PKCS7_encrypt(const STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher, int flags);
-PKCS7 *PKCS7_encrypt_ex(const STACK_OF(X509) *certs, BIO *in,
+/** @see PKCS7_get0_signers(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int flags);
+/** @see PKCS7_encrypt(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PKCS7_encrypt(const STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher, int flags);
+/** @see PKCS7_encrypt_ex(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *PKCS7_encrypt_ex(const STACK_OF(X509) *certs, BIO *in,
     const EVP_CIPHER *cipher, int flags,
     OSSL_LIB_CTX *libctx, const char *propq);
-int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data,
+/** @see PKCS7_decrypt(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data,
     int flags);
 
-int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
     STACK_OF(X509_ALGOR) *cap);
-STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si);
-int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg);
 
-int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid);
-int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t);
-int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
     const unsigned char *md, int mdlen);
 
-int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
-PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7);
-PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
+/** @see SMIME_write_PKCS7(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
+/** @see SMIME_read_PKCS7_ex(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7);
+/** @see SMIME_read_PKCS7(3) */
+OSSL_PKCS7_DEPRECATEDIN_4_2 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
 
-BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_PKCS7_DEPRECATEDIN_4_2 BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);
+
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) || defined(OSSL_LIBCMS_NAMES) */
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_1) && !defined(OSSL_LIBCMS_NAMES)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_1 int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) && !defined(OSSL_LIBCMS_NAMES) */
 
 #ifdef __cplusplus
 }
