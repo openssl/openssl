@@ -211,13 +211,37 @@ int ossl_quic_sstream_mark_lost(QUIC_SSTREAM *qss,
     uint64_t end)
 {
     UINT_RANGE r;
+    UINT_SET_ITEM *acked;
+
     r.start = start;
     r.end = end;
 
     /*
      * We lost a range of stream data bytes, so reinsert them into the new set,
      * so that they are returned once more by ossl_quic_sstream_get_stream_frame.
+     * Bytes already ACKed in another packet, such as a PTO probe, are skipped.
      */
+    for (acked = ossl_list_uint_set_tail(&qss->acked_set);
+        acked != NULL && acked->range.end >= r.start;
+        acked = ossl_list_uint_set_prev(acked)) {
+        if (acked->range.start > r.end)
+            continue;
+
+        if (acked->range.end < r.end) {
+            UINT_RANGE gap;
+
+            gap.start = acked->range.end + 1;
+            gap.end = r.end;
+            if (!ossl_uint_set_insert(&qss->new_set, &gap))
+                return 0;
+        }
+
+        if (acked->range.start <= r.start)
+            return 1;
+
+        r.end = acked->range.start - 1;
+    }
+
     if (!ossl_uint_set_insert(&qss->new_set, &r))
         return 0;
 
@@ -243,7 +267,12 @@ int ossl_quic_sstream_mark_acked(QUIC_SSTREAM *qss,
     r.start = start;
     r.end = end;
 
-    if (!ossl_uint_set_insert(&qss->acked_set, &r))
+    /*
+     * A copy of the range may still be queued for retransmission. Remove it
+     * first, so that a failure never leaves a byte both NEW and ACKED.
+     */
+    if (!ossl_uint_set_remove(&qss->new_set, &r)
+        || !ossl_uint_set_insert(&qss->acked_set, &r))
         return 0;
 
     qss_cull(qss);
