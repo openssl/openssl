@@ -23,7 +23,7 @@ my @buffer_tests = (
     [ "ECDSA", [qw(ec)], "ecdsap521" ],
 );
 
-plan tests => 25 + scalar @buffer_tests;
+plan tests => 26 + scalar @buffer_tests;
 
 foreach my $test (@buffer_tests) {
     my ($name, $disabled, $algorithm) = @$test;
@@ -47,8 +47,55 @@ foreach my $test (@buffer_tests) {
     };
 }
 
-ok(run(app(['openssl', 'speed', '-testmode'])),
-       "Simple test of all speed algorithms");
+subtest "Multi-process EC results exclude incompatible curves" => sub {
+    plan skip_all => "Multi option is not supported by this OpenSSL build"
+        if $^O =~ /^(VMS|MSWin32)$/;
+    plan skip_all => "EC and ECX support are required"
+        if disabled("ec", "ecx");
+
+    local $ENV{OPENSSL_CONF} = srctop_file("test", "default.cnf");
+    local $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+
+    foreach my $test (
+        [ "ecdsa", "EC", "X25519|X448" ],
+        [ "ecdh", "ecdh", "Ed25519|Ed448" ],
+    ) {
+        my ($algorithm, $label, $incompatible) = @$test;
+        my $stdout = "speed-multi-ec.out";
+
+        ok(run(app(['openssl', 'speed', '-testmode', '-multi', 2, $algorithm],
+                   stdout => $stdout)),
+           "multi-process $algorithm succeeds");
+        open my $fh, '<', $stdout or die "Cannot open $stdout: $!";
+        my $output = do { local $/; <$fh> };
+        close $fh;
+        unlink $stdout;
+
+        like($output, qr/^\s*\d+ bits \Q$label\E \(prime256v1\)/m,
+             "$algorithm reports a compatible curve");
+        unlike($output, qr/^\s*\d+ bits \Q$label\E \((?:$incompatible)\)/m,
+               "$algorithm does not report incompatible curves");
+    }
+    done_testing();
+};
+
+subtest "Simple test of all speed algorithms" => sub {
+    local $ENV{OPENSSL_CONF} = srctop_file("test", "default.cnf");
+    local $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+    my $stderr = "speed-default.err";
+
+    ok(run(app(['openssl', 'speed', '-testmode', '-mr'], stderr => $stderr)),
+       "default algorithms succeed");
+    open my $fh, '<', $stderr or die "Cannot open $stderr: $!";
+    my $output = do { local $/; <$fh> };
+    close $fh;
+    unlink $stderr;
+
+    unlike($output, qr/(?:sign|verify) setup failure|ECDH key generation failure/,
+           "default selections do not attempt incompatible EC operations");
+
+    done_testing();
+};
 
 #Test various options to speed. In all cases we use the -testmode option to
 #ensure we don't spend too long in this test. That option also causes the speed

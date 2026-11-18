@@ -2193,6 +2193,7 @@ int speed_main(int argc, char **argv)
             && strcmp(sig_name, "SIPHASH")
             && strcmp(sig_name, "POLY1305")
             && strcmp(sig_name, "CMAC")
+            && strcmp(sig_name, "LMS") /* verification only */
             && strcmp(sig_name, "SM2")) { /* skip alg */
             if (sigs_algs_len + 1 >= MAX_SIG_NUM) {
                 BIO_puts(bio_err,
@@ -2283,14 +2284,6 @@ int speed_main(int argc, char **argv)
         if (strcmp(algo, "ecdh") == 0) {
             memset(ecdh_doit, 1, sizeof(ecdh_doit));
             algo_found = 1;
-        }
-        for (i = 0; i < EC_NUM; i++) {
-            /* Negative values are ECDH-only curves */
-            if (ec_curves[i].mdsig < 0)
-                ecdsa_doit[i] = 0;
-            /* Positive values are signature-only curves */
-            if (ec_curves[i].mdsig > 0)
-                ecdh_doit[i] = 0;
         }
         if (opt_found(algo, ecdsa_choices, &i)) {
             ecdsa_doit[i] = 2;
@@ -2427,25 +2420,6 @@ int speed_main(int argc, char **argv)
 #endif
     }
 
-#ifndef NO_FORK
-    if (multi && do_multi(multi, size_num))
-        goto show_res;
-#endif
-
-    for (i = 0; i < loopargs_len; ++i) {
-        if (domlock) {
-#if defined(_WIN32)
-            (void)VirtualLock(loopargs[i].buf_malloc, buflen);
-            (void)VirtualLock(loopargs[i].buf2_malloc, buflen);
-#elif defined(OPENSSL_SYS_LINUX)
-            (void)mlock(loopargs[i].buf_malloc, buflen);
-            (void)mlock(loopargs[i].buf_malloc, buflen);
-#endif
-        }
-        memset(loopargs[i].buf_malloc, 0, buflen);
-        memset(loopargs[i].buf2_malloc, 0, buflen);
-    }
-
     /* No parameters; turn on everything. */
     if (argc == 0 && !doit[D_EVP] && !doit[D_HMAC]
         && !doit[D_EVP_CMAC] && !do_kems && !do_sigs) {
@@ -2493,6 +2467,34 @@ int speed_main(int argc, char **argv)
         memset(sigs_doit, 1, sizeof(sigs_doit));
         do_sigs = 1;
     }
+    for (i = 0; i < EC_NUM; i++) {
+        /* Negative values are ECDH-only curves */
+        if (ec_curves[i].mdsig < 0)
+            ecdsa_doit[i] = 0;
+        /* Positive values are signature-only curves */
+        if (ec_curves[i].mdsig > 0)
+            ecdh_doit[i] = 0;
+    }
+
+#ifndef NO_FORK
+    if (multi && do_multi(multi, size_num))
+        goto show_res;
+#endif
+
+    for (i = 0; i < loopargs_len; ++i) {
+        if (domlock) {
+#if defined(_WIN32)
+            (void)VirtualLock(loopargs[i].buf_malloc, buflen);
+            (void)VirtualLock(loopargs[i].buf2_malloc, buflen);
+#elif defined(OPENSSL_SYS_LINUX)
+            (void)mlock(loopargs[i].buf_malloc, buflen);
+            (void)mlock(loopargs[i].buf_malloc, buflen);
+#endif
+        }
+        memset(loopargs[i].buf_malloc, 0, buflen);
+        memset(loopargs[i].buf2_malloc, 0, buflen);
+    }
+
     for (i = 0; i < ALGOR_NUM; i++)
         if (doit[i])
             pr_header++;
