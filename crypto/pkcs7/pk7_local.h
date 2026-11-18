@@ -23,6 +23,10 @@
  * creates.
  */
 #define PKCS7_STATE_STREAMING 0x100
+/**
+ * @brief Suppress synthesis of signingTime, preserving caller-supplied attributes.
+ */
+#define PKCS7_STATE_NO_SIGNING_TIME 0x200
 
 ASN1_OCTET_STRING *ossl_pkcs7_get0_stream_content(PKCS7 *p7);
 

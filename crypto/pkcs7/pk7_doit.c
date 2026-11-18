@@ -721,13 +721,23 @@ static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)
     return NULL;
 }
 
-static int do_pkcs7_signed_attrib(PKCS7_SIGNER_INFO *si, EVP_MD_CTX *mctx)
+/**
+ * @brief Add the content digest and optional signing time, then sign attributes.
+ * @param si signer whose signed attributes are updated and signed
+ * @param mctx content digest context to finalise
+ * @param no_signing_time nonzero to suppress automatic signing-time insertion;
+ * an explicitly supplied signing time is preserved regardless of this setting
+ * @returns 1 on success, 0 on failure
+ */
+static int do_pkcs7_signed_attrib(PKCS7_SIGNER_INFO *si, EVP_MD_CTX *mctx,
+    int no_signing_time)
 {
     unsigned char md_data[EVP_MAX_MD_SIZE];
     unsigned int md_len;
 
-    /* Add signing time if not already present */
-    if (!PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime)) {
+    /* Add signing time unless disabled or already supplied by the caller. */
+    if (!no_signing_time
+        && !PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime)) {
         if (!PKCS7_add0_attrib_signing_time(si, NULL)) {
             ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
             return 0;
@@ -874,7 +884,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
              * sign the attributes
              */
             if (sk_X509_ATTRIBUTE_num(sk) > 0) {
-                if (!do_pkcs7_signed_attrib(si, ctx_tmp))
+                if (!do_pkcs7_signed_attrib(si, ctx_tmp,
+                        (p7->state & PKCS7_STATE_NO_SIGNING_TIME) != 0))
                     goto err;
             } else {
                 unsigned char *abuf = NULL;

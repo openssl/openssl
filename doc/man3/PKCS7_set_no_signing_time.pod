@@ -1,0 +1,73 @@
+=pod
+
+=head1 NAME
+
+PKCS7_set_no_signing_time, PKCS7_OP_SET_NO_SIGNING_TIME
+- control automatic PKCS#7 signing-time attributes
+
+=head1 SYNOPSIS
+
+ #include <openssl/pkcs7.h>
+
+ long PKCS7_set_no_signing_time(PKCS7 *p7, int no_signing_time);
+
+=head1 DESCRIPTION
+
+PKCS7_set_no_signing_time() controls whether finalisation automatically adds
+signingTime attributes to the signers in I<p7>. The content type of I<p7>
+must have been set to signedData or signedAndEnvelopedData.
+
+If I<no_signing_time> is nonzero, automatic insertion is disabled. If it is
+zero, the default behaviour is restored: a signingTime attribute containing
+the current time is added to each signer with signed attributes that does
+not already have one.
+
+This setting applies to all signers in I<p7>. It does not remove or replace
+an explicitly supplied signingTime attribute, and does not affect the other
+signed attributes. It has no effect on signers without signed attributes.
+Changing the setting does not modify an already computed signature.
+
+Call this macro before finalising with PKCS7_dataFinal(), PKCS7_final(),
+or a streaming encoder. For an object created using L<PKCS7_sign(3)>, use
+B<PKCS7_PARTIAL> or B<PKCS7_STREAM> to defer finalisation until after the
+setting has been applied.
+
+The setting is processing state, not part of the ASN.1 encoding. It is not
+preserved by encoding and decoding I<p7>, including PKCS7_dup(). A decoded
+or duplicated object uses the default behaviour for subsequent finalisation
+unless the setting is applied again.
+
+PKCS7_set_no_signing_time() is a macro implemented using PKCS7_ctrl().
+The equivalent control operation is:
+
+ PKCS7_ctrl(p7, PKCS7_OP_SET_NO_SIGNING_TIME, no_signing_time, NULL);
+
+B<PKCS7_OP_SET_NO_SIGNING_TIME> selects this operation. The I<larg> argument
+is zero to restore automatic insertion or nonzero to suppress it. The
+I<parg> argument is unused and should be NULL.
+
+=head1 RETURN VALUES
+
+PKCS7_set_no_signing_time() returns 1 on success, including when restoring
+the default behaviour, or 0 if the content type is unsupported.
+The equivalent PKCS7_ctrl() operation returns the same values.
+
+=head1 SEE ALSO
+
+L<PKCS7_sign(3)>, L<PKCS7_sign_add_signer(3)>, L<CMS_sign(3)>
+
+=head1 HISTORY
+
+PKCS7_set_no_signing_time() and B<PKCS7_OP_SET_NO_SIGNING_TIME> were added in
+OpenSSL 4.2.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License"). You may not use
+this file except in compliance with the License. You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

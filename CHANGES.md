@@ -33,6 +33,12 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added `PKCS7_set_no_signing_time()`, a macro using `PKCS7_ctrl()`, to
+   suppress automatic signing-time attributes during PKCS#7 finalisation
+   without removing other signed attributes or caller-supplied signing times.
+
+   *Duncan Ogilvie*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*

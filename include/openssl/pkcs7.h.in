@@ -184,6 +184,11 @@ typedef struct pkcs7_st {
 
 #define PKCS7_OP_SET_DETACHED_SIGNATURE 1
 #define PKCS7_OP_GET_DETACHED_SIGNATURE 2
+/**
+ * @brief Control automatic signing-time insertion through PKCS7_ctrl().
+ * @see PKCS7_set_no_signing_time(3)
+ */
+#define PKCS7_OP_SET_NO_SIGNING_TIME 3
 
 #define PKCS7_get_signed_attributes(si) ((si)->auth_attr)
 #define PKCS7_get_attributes(si) ((si)->unauth_attr)
@@ -200,6 +205,12 @@ typedef struct pkcs7_st {
     PKCS7_ctrl(p, PKCS7_OP_SET_DETACHED_SIGNATURE, v, NULL)
 #define PKCS7_get_detached(p) \
     PKCS7_ctrl(p, PKCS7_OP_GET_DETACHED_SIGNATURE, 0, NULL)
+/**
+ * @brief Control automatic signing-time insertion during finalisation.
+ * @see PKCS7_set_no_signing_time(3)
+ */
+#define PKCS7_set_no_signing_time(p7, no_signing_time) \
+    (PKCS7_ctrl((p7), PKCS7_OP_SET_NO_SIGNING_TIME, (no_signing_time), NULL))
 
 #define PKCS7_is_detached(p7) (PKCS7_type_is_signed(p7) && PKCS7_get_detached(p7))
 
