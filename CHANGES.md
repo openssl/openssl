@@ -33,6 +33,17 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * QUIC: a receiver now buffers at most 1024 disjoint ranges of
+   out-of-order data per stream. Flow control only bounds the highest
+   offset a peer may send, so a peer sending tiny fragments separated by
+   gaps could otherwise make the receiver keep one range per fragment.
+   A peer that exceeds the limit is treated as violating flow control
+   and the connection is closed with FLOW_CONTROL_ERROR. A conforming
+   sender retransmits lost data and stays well below the limit.
+   <!-- https://github.com/openssl/openssl/pull/33346 -->
+
+   *Duc Anh Luu*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
