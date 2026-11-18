@@ -157,14 +157,24 @@ L<BIO_should_retry(3)>.  In such a case it is advisable to sleep a little in
 between, using L<BIO_wait(3)> on the read BIO to prevent a busy loop.
 See OSSL_HTTP_REQ_CTX_set_expected() how the response content type,
 the response body, the HTTP transfer timeout, and "keep-alive" are treated.
-Any error message body is consumed
-if a C<Content-Type> header is not included or its value starts with C<text/>.
-This is used for tracing the body contents if HTTP tracing is enabled.
-If the C<Content-Length> header is present in the response
-and its value exceeds the maximum allowed response content length
-or the response is an error message with its body length exceeding this value
-or the content is an ASN.1-encoded structure with a length exceeding this value
-or both length indications are present but disagree then an error occurs.
+
+The client rejects responses with status 1xx, 204, or 304. Once their headers
+have been parsed, OSSL_HTTP_REQ_CTX_nbio() returns 0 and leaves any subsequent
+bytes available on I<rbio>, including when HTTP tracing is enabled.
+
+For other rejected responses, OSSL_HTTP_REQ_CTX_nbio() may read the body
+for diagnostics when HTTP tracing is enabled. This read can require a retry.
+If C<Content-Length> is present, tracing ends after that many bytes, including
+when the length is zero. An earlier end of input raises an additional error
+for the length mismatch. Without C<Content-Length>, tracing continues until
+the end of input. In either case the function returns 0 when it finishes
+tracing the rejected response. With HTTP tracing disabled it reports the
+response error without waiting for the body.
+
+The maximum response content length applies to the C<Content-Length> value,
+the length of an expected ASN.1 structure, and the number of error body bytes
+read for tracing. If both C<Content-Length> and the ASN.1 length are available,
+they must agree.
 
 OSSL_HTTP_REQ_CTX_nbio_d2i() is like OSSL_HTTP_REQ_CTX_nbio() but on success
 in addition parses the response, which must be a DER-encoded ASN.1 structure,
@@ -190,8 +200,10 @@ reading the response header. If the response was expected to be ASN.1 encoded,
 its contents can be read via this BIO, which does not support streaming.
 The returned BIO pointer must not be freed by the caller.
 
-OSSL_HTTP_REQ_CTX_get_resp_len() returns the size of the response contents
-in I<rctx> if provided by the server as C<Content-Length> header field, else 0.
+OSSL_HTTP_REQ_CTX_get_resp_len() returns the response length recorded in
+I<rctx>. This may come from C<Content-Length>, from the length of an expected
+ASN.1 structure, or from reading a traced error body to the end of input.
+It returns 0 if the recorded length is zero or the length is unknown.
 
 OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum allowed
 response content length for I<rctx> to I<len>. If not set or I<len> is 0
@@ -276,8 +288,8 @@ OSSL_HTTP_REQ_CTX_exchange() and OSSL_HTTP_REQ_CTX_get0_mem_bio()
 return a pointer to a B<BIO> on success as described above or NULL on failure.
 The returned BIO must not be freed by the caller.
 
-OSSL_HTTP_REQ_CTX_get_resp_len() returns the size of the response contents
-or 0 if not available or an error occurred.
+OSSL_HTTP_REQ_CTX_get_resp_len() returns the recorded response length,
+or 0 if the length is unknown or I<rctx> is NULL.
 
 OSSL_HTTP_is_alive() returns 1 if its argument is non-NULL
 and the client requested a persistent connection

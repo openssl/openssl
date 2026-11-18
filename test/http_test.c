@@ -108,8 +108,12 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
             <= 0)
             return 0;
 
-    if (strcmp(status, "399") == 0) /* HTTP_STATUS_CODES_FATAL_ERROR */
-        return BIO_puts(out, "\r\n") == 2; /* empty content */
+    if (strcmp(status, "399") == 0) { /* HTTP_STATUS_CODES_FATAL_ERROR */
+        static const char empty_content_header[] = "Content-Length: 0\r\n\r\n";
+
+        /* The mock keeps the response BIO open after the empty body. */
+        return BIO_puts(out, empty_content_header) == (int)sizeof(empty_content_header) - 1;
+    }
 
     if (is_get) { /* construct new header and body */
         if (txt != NULL)
@@ -737,6 +741,7 @@ typedef struct resp_test_fixture_st {
     int exp_reason; /**< Expected HTTP error reason code if exp_ret == 0 */
     size_t expected_body_len; /**< Expected ASN.1 body length on success */
     int expect_alive; /**< Expected connection persistence on success */
+    int close_response; /**< Signal EOF after supplying this response */
 } RESP_TEST_FIXTURE;
 
 /**
@@ -759,7 +764,7 @@ typedef struct resp_test_fixture_st {
  * @param rctx context created by new_nbio_ctx()
  * @param wbio request BIO of |rctx|
  * @param rbio response BIO chain of |rctx|
- * @param fixture response to receive and expected outcome
+ * @param fixture response and expected outcome, including whether to signal EOF
  * @param piecemeal if nonzero, provide the response one byte per call
  * of OSSL_HTTP_REQ_CTX_nbio(), else all at once
  * @returns 1 if all checks pass, else 0
@@ -774,6 +779,7 @@ static int exchange(OSSL_HTTP_REQ_CTX *rctx, BIO *wbio, BIO *rbio,
     int ret = -1, found_ka = 0, chunk;
 
     (void)BIO_reset(wbio);
+    BIO_set_mem_eof_return(BIO_next(rbio), -1);
     if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
             NULL, NULL, RPATH))
         || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, fixture->expected_ct,
@@ -803,6 +809,8 @@ static int exchange(OSSL_HTTP_REQ_CTX *rctx, BIO *wbio, BIO *rbio,
         /* provide to the buffer part/all of the response */
         if (!TEST_int_eq(BIO_write(BIO_next(rbio), fixture->resp + i, chunk), chunk))
             return 0;
+        if (fixture->close_response && i + (size_t)chunk == fixture->resp_len)
+            BIO_set_mem_eof_return(BIO_next(rbio), 0);
         ret = OSSL_HTTP_REQ_CTX_nbio(rctx);
     }
 
@@ -864,13 +872,15 @@ static const RESP_TEST_FIXTURE split_resp_tests[] = {
      * The piecemeal case checks preservation of the status code across calls.
      * If it were reset to 0, the expected Content-Type mismatch would not
      * be reported and the test would fail.
+     * EOF delimits the empty error body when HTTP tracing is enabled.
      */
     { RESP("HTTP/1.1 200 OK\r\n"
            "Content-Type: text/plain\r\n"
            "\r\n"),
         .expect_asn1 = 1,
         .exp_ret = 0,
-        .exp_reason = HTTP_R_CONTENT_TYPE_MISMATCH },
+        .exp_reason = HTTP_R_CONTENT_TYPE_MISMATCH,
+        .close_response = 1 },
     /* expected Content-Type was given before end of headers */
     { RESP("HTTP/1.0 200 OK\r\n"
            "Content-Type: text/plain\r\n"
