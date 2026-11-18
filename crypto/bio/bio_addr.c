@@ -150,7 +150,7 @@ int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
         memset(&ap->s_in, 0, sizeof(ap->s_in));
         ap->s_in.sin_family = family;
         ap->s_in.sin_port = port;
-        ap->s_in.sin_addr = *(struct in_addr *)where;
+        memcpy(&ap->s_in.sin_addr, where, sizeof(struct in_addr));
         return 1;
     }
 #if OPENSSL_USE_IPV6
@@ -160,7 +160,7 @@ int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
         memset(&ap->s_in6, 0, sizeof(ap->s_in6));
         ap->s_in6.sin6_family = family;
         ap->s_in6.sin6_port = port;
-        ap->s_in6.sin6_addr = *(struct in6_addr *)where;
+        memcpy(&ap->s_in6.sin6_addr, where, sizeof(struct in6_addr));
         return 1;
     }
 #endif
