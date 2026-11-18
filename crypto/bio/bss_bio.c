@@ -199,7 +199,7 @@ static int bio_read(BIO *bio, char *buf, int size_)
 static ossl_ssize_t bio_nread0(BIO *bio, char **buf)
 {
     struct bio_bio_st *b, *peer_b;
-    ossl_ssize_t num;
+    size_t num;
 
     BIO_clear_retry_flags(bio);
 
@@ -223,14 +223,14 @@ static ossl_ssize_t bio_nread0(BIO *bio, char **buf)
     }
 
     num = peer_b->len;
-    if (peer_b->size < peer_b->offset + num)
+    if (num > peer_b->size - peer_b->offset)
         /* no ring buffer wrap-around for non-copying interface */
         num = peer_b->size - peer_b->offset;
     assert(num > 0);
 
     if (buf != NULL)
         *buf = peer_b->buf + peer_b->offset;
-    return num;
+    return (ossl_ssize_t)num;
 }
 
 static ossl_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
@@ -373,7 +373,7 @@ static ossl_ssize_t bio_nwrite0(BIO *bio, char **buf)
     write_offset = b->offset + b->len;
     if (write_offset >= b->size)
         write_offset -= b->size;
-    if (write_offset + num > b->size)
+    if (num > b->size - write_offset)
         /*
          * no ring buffer wrap-around for non-copying interface (to fulfil
          * the promise by BIO_ctrl_get_write_guarantee, BIO_nwrite may have

@@ -12,7 +12,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cmocka.h>
+#include "../cmocka_compat.h"
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>

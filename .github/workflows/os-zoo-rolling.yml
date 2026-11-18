@@ -96,7 +96,7 @@ jobs:
           - image: docker.io/library/debian:unstable
             install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/ubuntu:rolling
-            install: apt-get update && apt-get install -y gcc make perl
+            install: apt-get update && apt-get install -y gcc make perl libc6-dev
           - image: docker.io/library/fedora:rawhide
             install: dnf install -y gcc make perl-core
     runs-on: ubuntu-latest

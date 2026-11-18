@@ -230,6 +230,7 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
     } else if (EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
         if (ctx->op.keymgmt.genctx != NULL && ctx->keymgmt != NULL)
             evp_keymgmt_gen_cleanup(ctx->keymgmt, ctx->op.keymgmt.genctx);
+        ctx->op.keymgmt.genctx = NULL;
     }
 }
 

@@ -33,6 +33,17 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added an opt-in CMP client option to require `EnvelopedData` when receiving
+   centrally generated private keys. This allows clients to reject the
+   deprecated `EncryptedValue` alternative and enforce authenticated key
+   delivery as required by the Lightweight CMP Profile (RFC 9483).
+
+   *quickroom*
+   
+ * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
+
+   *Filip Skokan*
+
  * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
    `CRYPTO_new_ex_data()`.
 
@@ -48,6 +59,10 @@ OpenSSL 4.2
    `SSL_dup()` to copy an SSL object.
 
    *Matt Caswell*
+
+ * Added optimized ML-KEM NTT and inverse NTT implementations for AArch64.
+
+   *Shane Lontis*
 
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
@@ -113,6 +128,21 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/33035 -->
 
    *Iva Marinova*
+
+ * Added support for deriving several symmetric keys and IVs from a single
+   KDF operation. `EVP_KDF_derive_SKEYs()` performs the derivation and
+   `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` collect the
+   individual results by purpose, for example "client_cipher_key" or
+   "server_iv". TLS1-PRF and TLS13-KDF implement it, so a TLS 1.2 key block
+   can be produced in one call. The caller names the cipher and MAC the keys
+   are for and the provider chooses the key type accordingly, which lets a
+   provider holding its keys on a token derive them all in a single
+   operation without ever exposing the raw bytes. Providers implement this
+   through the new `OSSL_FUNC_kdf_derive_multi()` and its companion
+   functions.
+   <!-- https://github.com/openssl/openssl/pull/33082 -->
+
+   *Dmitry Belyavskiy*
 
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
    `X509_OBJECT_up_ref_count()` does not reference count the `X509_OBJECT`
@@ -24698,6 +24728,7 @@ ndif
 [RFC 9846]: https://datatracker.ietf.org/doc/html/rfc9846
 [RFC 9846 Section 4.3.10]: https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.10
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
 [SECG SEC 1 Section 2.3.4]: https://www.secg.org/sec1-v2.pdf#subsubsection.2.3.4
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final

@@ -53,6 +53,35 @@ int EVP_KDF_CTX_set_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *key, const char *paramname)
 EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
     const char *key_type, const char *propquery,
     size_t keylen, const OSSL_PARAM params[]);
+/**
+ * Perform multi-key derivation producing several keys and IVs in one operation
+ * @param ctx KDF context
+ * @param params parameters including key sizes and IV lengths
+ * @return 1 on success, 0 on failure
+ * @see EVP_KDF_derive_SKEYs(3)
+ */
+int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
+/**
+ * Retrieve a derived key by purpose string from a preceding EVP_KDF_derive_SKEYs() call
+ * @param ctx KDF context
+ * @param purpose purpose string (e.g., OSSL_KDF_PURPOSE_CLIENT_KEY)
+ * @param propquery property query string (may be NULL)
+ * @return owned EVP_SKEY pointer on success, NULL if absent or on error
+ * @see EVP_KDF_CTX_get1_SKEY(3)
+ */
+EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose,
+    const char *propquery);
+/**
+ * Retrieve a derived IV by purpose string from a preceding EVP_KDF_derive_SKEYs() call
+ * @param ctx KDF context
+ * @param purpose purpose string (e.g., OSSL_KDF_PURPOSE_CLIENT_IV)
+ * @param pIV pointer to receive IV pointer (not owned by caller)
+ * @param pIVlen pointer to receive IV length
+ * @return 1 on success, 0 if absent or on error
+ * @see EVP_KDF_CTX_get0_IV(3)
+ */
+int EVP_KDF_CTX_get0_IV(EVP_KDF_CTX *ctx, const char *purpose,
+    const unsigned char **pIV, size_t *pIVlen);
 int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
 int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
 int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);

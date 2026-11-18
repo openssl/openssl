@@ -74,7 +74,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         || !ossl_cmp_ctx_set1_newChain(ctx, certs)
         || !ossl_cmp_ctx_set1_caPubs(ctx, certs)
         || !ossl_cmp_ctx_set1_extraCertsIn(ctx, certs)
-        || !ossl_cmp_ctx_set1_validatedSrvCert(ctx, cert)
+        || !ossl_cmp_ctx_set1_validatedPeerCert(ctx, cert)
         || !TEST_ptr(bytes = ASN1_OCTET_STRING_new())
         || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
         || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
@@ -92,7 +92,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
             && ctx->newChain == NULL
             && ctx->caPubs == NULL
             && ctx->extraCertsIn == NULL
-            && ctx->validatedSrvCert == NULL
+            && ctx->validatedPeerCert == NULL
             && ctx->transactionID == NULL
             && ctx->senderNonce == NULL
             && ctx->recipNonce == NULL))
@@ -749,6 +749,9 @@ void cleanup_tests(void)
 DEFINE_SET_GET_ARG_FN(set, get, option, 35, int) /* OPT_IGNORE_KEYUSAGE */
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_35, int, -1, IS_0,
     1 /* true */, DROP)
+DEFINE_SET_GET_ARG_FN(set, get, option, 28, int) /* OPT_REQUIRE_ENVELOPED_DATA */
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_28, int, -1, IS_0,
+    1 /* true */, DROP)
 
 DEFINE_SET_CB_TEST(log_cb)
 
@@ -765,7 +768,13 @@ DEFINE_SET_CB_TEST(transfer_cb)
 DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
-DEFINE_SET_GET_TEST(ossl_cmp, ctx, 1, 0, 0, validatedSrvCert, X509)
+
+static X509 *OSSL_CMP_CTX_get0_validatedPeerCert(const CMP_CTX *ctx)
+{
+    return OSSL_CMP_CTX_get0_validatedSrvCert(ctx);
+}
+DEFINE_SET_GET_TEST(ossl_cmp, ctx, 1, 0, 0, validatedPeerCert, X509)
+
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trusted,
     X509_STORE *, NULL,
@@ -828,6 +837,7 @@ int setup_tests(void)
 
     /* various CMP options: */
     ADD_TEST(test_CTX_set_get_option_35);
+    ADD_TEST(test_CTX_set_get_option_28);
     /* CMP-specific callback for logging and outputting the error queue: */
     ADD_TEST(test_CTX_set_get_log_cb);
     /*
@@ -858,7 +868,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set_get_transfer_cb_arg);
     /* server authentication: */
     ADD_TEST(test_CTX_set1_get0_srvCert);
-    ADD_TEST(test_CTX_set1_get0_validatedSrvCert);
+    ADD_TEST(test_CTX_set1_get0_validatedPeerCert);
     ADD_TEST(test_CTX_set1_get0_expected_sender);
     ADD_TEST(test_CTX_set0_get0_trusted);
     ADD_TEST(test_CTX_set1_get0_untrusted);

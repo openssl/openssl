@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 #include "internal/sockets.h"
 
 #ifndef OPENSSL_NO_SOCK
@@ -18,7 +22,7 @@
 #include <errno.h>
 #include <time.h>
 #include <netinet/in.h>
-#include <cmocka.h>
+#include "../../cmocka_compat.h"
 #include "bio_local.h"
 
 #define FAKE_SOCKET 42
@@ -55,11 +59,11 @@ int __wrap_BIO_lookup(const char *host, const char *service,
     int rc;
 
     function_called();
-    check_expected(host);
-    check_expected(service);
-    check_expected(lookup_type);
-    check_expected(family);
-    check_expected(socktype);
+    check_expected_ptr(host);
+    check_expected_ptr(service);
+    check_expected_int(lookup_type);
+    check_expected_int(family);
+    check_expected_int(socktype);
     rc = mock_type(int);
     if (rc == 1)
         *res = mock_ptr_type(BIO_ADDRINFO *);
@@ -69,28 +73,28 @@ int __wrap_BIO_lookup(const char *host, const char *service,
 int __wrap_BIO_socket(int domain, int socktype, int protocol, int options)
 {
     function_called();
-    check_expected(domain);
-    check_expected(socktype);
-    check_expected(protocol);
-    check_expected(options);
+    check_expected_int(domain);
+    check_expected_int(socktype);
+    check_expected_int(protocol);
+    check_expected_int(options);
     return mock_type(int);
 }
 
 int __wrap_BIO_listen(int sock, const BIO_ADDR *addr, int options)
 {
     function_called();
-    check_expected(sock);
+    check_expected_int(sock);
     check_expected_ptr(addr);
-    check_expected(options);
+    check_expected_int(options);
     return mock_type(int);
 }
 
 int __wrap_BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options)
 {
     function_called();
-    check_expected(accept_sock);
+    check_expected_int(accept_sock);
     check_expected_ptr(addr);
-    check_expected(options);
+    check_expected_int(options);
     return mock_type(int);
 }
 
@@ -98,8 +102,8 @@ int __wrap_BIO_sock_info(int sock, enum BIO_sock_info_type type,
     union BIO_sock_info_u *info)
 {
     function_called();
-    check_expected(sock);
-    check_expected(type);
+    check_expected_int(sock);
+    check_expected_int(type);
     (void)info; /* addr field left untouched; cache addr is zeroed already */
     return mock_type(int);
 }
@@ -107,14 +111,14 @@ int __wrap_BIO_sock_info(int sock, enum BIO_sock_info_type type,
 int __wrap_BIO_sock_should_retry(int i)
 {
     function_called();
-    check_expected(i);
+    check_expected_int(i);
     return mock_type(int);
 }
 
 int __wrap_BIO_closesocket(int sock)
 {
     function_called();
-    check_expected(sock);
+    check_expected_int(sock);
     return mock_type(int);
 }
 
@@ -162,7 +166,7 @@ static int fake_sink_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
     function_called();
     check_expected_ptr(buf);
-    check_expected(size);
+    check_expected_uint(size);
     BIO_clear_retry_flags(b);
     ret = mock_type(int);
     if (ret > 0) {
@@ -182,7 +186,7 @@ static int fake_sink_write(BIO *b, const char *buf, size_t size,
 
     function_called();
     check_expected_ptr(buf);
-    check_expected(size);
+    check_expected_uint(size);
     BIO_clear_retry_flags(b);
     ret = mock_type(int);
     if (ret > 0) {
@@ -234,7 +238,7 @@ static void expect_BIO_lookup(BIO_ADDRINFO *res, int rc)
     expect_function_call(__wrap_BIO_lookup);
     expect_any(__wrap_BIO_lookup, host);
     expect_any(__wrap_BIO_lookup, service);
-    expect_value(__wrap_BIO_lookup, lookup_type, BIO_LOOKUP_SERVER);
+    expect_int_value(__wrap_BIO_lookup, lookup_type, BIO_LOOKUP_SERVER);
     expect_any(__wrap_BIO_lookup, family);
     expect_any(__wrap_BIO_lookup, socktype);
     will_return(__wrap_BIO_lookup, rc);
@@ -247,10 +251,10 @@ static void expect_BIO_socket(int domain, int socktype, int protocol,
     int options, int rc)
 {
     expect_function_call(__wrap_BIO_socket);
-    expect_value(__wrap_BIO_socket, domain, domain);
-    expect_value(__wrap_BIO_socket, socktype, socktype);
-    expect_value(__wrap_BIO_socket, protocol, protocol);
-    expect_value(__wrap_BIO_socket, options, options);
+    expect_int_value(__wrap_BIO_socket, domain, domain);
+    expect_int_value(__wrap_BIO_socket, socktype, socktype);
+    expect_int_value(__wrap_BIO_socket, protocol, protocol);
+    expect_int_value(__wrap_BIO_socket, options, options);
     will_return(__wrap_BIO_socket, rc);
 }
 
@@ -258,40 +262,40 @@ static void expect_BIO_listen(int sock, const BIO_ADDR *addr, int options,
     int rc)
 {
     expect_function_call(__wrap_BIO_listen);
-    expect_value(__wrap_BIO_listen, sock, sock);
-    expect_value(__wrap_BIO_listen, addr, addr);
-    expect_value(__wrap_BIO_listen, options, options);
+    expect_int_value(__wrap_BIO_listen, sock, sock);
+    expect_uint_value(__wrap_BIO_listen, addr, cast_ptr_to_uintmax_type(addr));
+    expect_int_value(__wrap_BIO_listen, options, options);
     will_return(__wrap_BIO_listen, rc);
 }
 
 static void expect_BIO_accept_ex(int sock, int options, int rc)
 {
     expect_function_call(__wrap_BIO_accept_ex);
-    expect_value(__wrap_BIO_accept_ex, accept_sock, sock);
+    expect_int_value(__wrap_BIO_accept_ex, accept_sock, sock);
     expect_any(__wrap_BIO_accept_ex, addr);
-    expect_value(__wrap_BIO_accept_ex, options, options);
+    expect_int_value(__wrap_BIO_accept_ex, options, options);
     will_return(__wrap_BIO_accept_ex, rc);
 }
 
 static void expect_BIO_sock_info(int sock, int rc)
 {
     expect_function_call(__wrap_BIO_sock_info);
-    expect_value(__wrap_BIO_sock_info, sock, sock);
-    expect_value(__wrap_BIO_sock_info, type, BIO_SOCK_INFO_ADDRESS);
+    expect_int_value(__wrap_BIO_sock_info, sock, sock);
+    expect_int_value(__wrap_BIO_sock_info, type, BIO_SOCK_INFO_ADDRESS);
     will_return(__wrap_BIO_sock_info, rc);
 }
 
 static void expect_BIO_sock_should_retry(int i, int rc)
 {
     expect_function_call(__wrap_BIO_sock_should_retry);
-    expect_value(__wrap_BIO_sock_should_retry, i, i);
+    expect_int_value(__wrap_BIO_sock_should_retry, i, i);
     will_return(__wrap_BIO_sock_should_retry, rc);
 }
 
 static void expect_BIO_closesocket(int sock, int rc)
 {
     expect_function_call(__wrap_BIO_closesocket);
-    expect_value(__wrap_BIO_closesocket, sock, sock);
+    expect_int_value(__wrap_BIO_closesocket, sock, sock);
     will_return(__wrap_BIO_closesocket, rc);
 }
 
@@ -318,8 +322,8 @@ static void expect_fake_sink_read(const void *buf, size_t size, int rc,
     int retry)
 {
     expect_function_call(fake_sink_read);
-    expect_value(fake_sink_read, buf, buf);
-    expect_value(fake_sink_read, size, size);
+    expect_uint_value(fake_sink_read, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(fake_sink_read, size, size);
     will_return(fake_sink_read, rc);
     if (rc <= 0)
         will_return(fake_sink_read, retry);
@@ -329,8 +333,8 @@ static void expect_fake_sink_write(const void *buf, size_t size, int rc,
     int retry)
 {
     expect_function_call(fake_sink_write);
-    expect_value(fake_sink_write, buf, buf);
-    expect_value(fake_sink_write, size, size);
+    expect_uint_value(fake_sink_write, buf, cast_ptr_to_uintmax_type(buf));
+    expect_uint_value(fake_sink_write, size, size);
     will_return(fake_sink_write, rc);
     if (rc <= 0)
         will_return(fake_sink_write, retry);

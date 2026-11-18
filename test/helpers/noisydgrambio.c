@@ -285,7 +285,7 @@ static void flip_bits(unsigned char *msg, size_t msg_len, uint16_t flip,
     /* None of these border conditions should happen but check them anyway */
     if (msg_len < 2)
         return;
-    if (msg_len < flip_offset + 2)
+    if (flip_offset > msg_len - 2)
         flip_offset = msg_len - 2;
 
 #ifdef OSSL_NOISY_DGRAM_DEBUG

@@ -11,6 +11,7 @@
 #define OPENSSL_HASHTABLE_H
 #pragma once
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -141,7 +142,8 @@ typedef struct ht_config_st {
  */
 static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t *buf, size_t len)
 {
-    if (key->keysize + len > key->bufsize)
+    assert(key->keysize <= key->bufsize);
+    if (len > key->bufsize - key->keysize)
         return 0;
     memcpy(&key->keybuf[key->keysize], buf, len);
     key->keysize += len;
@@ -165,6 +167,7 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
 #define HT_COPY_RAW_KEY_CASE(key, buf, len)                                            \
     do {                                                                               \
         size_t tmplen = (size_t)(len);                                                 \
+        assert((key)->keysize <= (key)->bufsize);                                      \
         if (tmplen > (key)->bufsize - (key)->keysize)                                  \
             tmplen = (key)->bufsize - (key)->keysize;                                  \
         ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, tmplen); \
@@ -182,6 +185,7 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
         HT_INIT_KEY((key));                 \
         (key)->key_header.keybuf = (buf);   \
         (key)->key_header.keysize = (len);  \
+        (key)->key_header.bufsize = (len);  \
     } while (0)
 
 #define HT_KEY_GET_HASH(key) (key)->key_header.cached_hash
@@ -354,8 +358,11 @@ static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, cons
      * so check that we don't overflow here, and truncate if
      * we copy more space than we have available
      */
-    if (key != NULL && key->keysize + len > key->bufsize)
-        len = (size_t)(key->bufsize - key->keysize);
+    if (key != NULL) {
+        assert(key->keysize <= key->bufsize);
+        if (len > key->bufsize - key->keysize)
+            len = key->bufsize - key->keysize;
+    }
 
     for (i = 0; i < len && src[i] != '\0'; i++)
         tgt[i] = case_adjust & src[i];
