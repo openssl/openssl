@@ -199,6 +199,21 @@ int ossl_quic_sstream_mark_lost(QUIC_SSTREAM *qss,
  */
 int ossl_quic_sstream_mark_lost_fin(QUIC_SSTREAM *qss);
 
+/**
+ * @brief Gets the first unacknowledged range of stream data at or after an
+ * offset.
+ *
+ * (TX packetiser use.)
+ *
+ * @param qss   the send stream
+ * @param from  the offset to search from
+ * @param start receives the first offset of the range
+ * @param end   receives the last offset of the range, inclusive
+ * @returns 1 if such a range exists, or 0 otherwise
+ */
+int ossl_quic_sstream_get_first_unacked(QUIC_SSTREAM *qss, uint64_t from,
+    uint64_t *start, uint64_t *end);
+
 /*
  * (RX/ACKM use.) Marks a logical range of the send stream as having been
  * acknowledged, meaning that the storage for the data in that range of the

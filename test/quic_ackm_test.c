@@ -506,7 +506,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
                     goto err;
             } else {
                 if (!TEST_int_eq(test_probe_counts(&probe, 0, 0,
-                                     space == QUIC_PN_SPACE_INITIAL,
+                                     space == QUIC_PN_SPACE_INITIAL ? 2 : 0,
                                      space == QUIC_PN_SPACE_HANDSHAKE,
                                      space == QUIC_PN_SPACE_APP),
                         1))
