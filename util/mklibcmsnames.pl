@@ -51,13 +51,14 @@ foreach my $header ("$top/cms/cms_local.h", "$top/include/internal/cms.h") {
 # see it.
 $names{'ossl_err_load_CMS_strings'} = 1;
 $names{'ossl_err_load_TS_strings'} = 1;
+$names{'ossl_err_load_PKCS7_strings'} = 1;
 
 # ASN.1 items and functions.  A template whose END macro is the static_
 # form defines a static item, which cannot collide, so only the others
 # matter.  The IMPLEMENT_ASN1_* macros define the encode and allocate
 # functions for the same types.
 # Only the sources built into libcms
-foreach my $src (glob("$top/cms/cms_*.c $top/cms/ts_*.c")) {
+foreach my $src (glob("$top/cms/cms_*.c $top/cms/ts_*.c $top/cms/pk7_*.c $top/cms/bio_pk7.c")) {
     open my $fh, '<', $src or die "$src: $!\n";
     while (<$fh>) {
         # Every template names its type in the _END macro, wherever the
