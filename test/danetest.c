@@ -413,7 +413,6 @@ static const unsigned char edkey[] = {
     0x69, 0xae, 0x1c, 0xc9, 0x3f, 0xd7, 0xf7, 0xe7, 0x1c, 0x2f, 0xfa, 0x34,
     0x18, 0x24, 0x20, 0x18, 0x94, 0xcd, 0x29, 0x10
 };
-static int edlen = sizeof(edkey);
 
 static int run_trusted_ee_test(void)
 {
@@ -452,7 +451,7 @@ static int run_trusted_ee_test(void)
      * and in the end fall back to DANE-TA(2).
      */
     if (!TEST_int_gt(SSL_dane_tlsa_add(ssl, 2, 1, 0, cakbuf, caklen), 0)
-        || !TEST_int_gt(SSL_dane_tlsa_add(ssl, 1, 1, 0, edkey, edlen), 0))
+        || !TEST_int_gt(SSL_dane_tlsa_add(ssl, 1, 1, 0, edkey, sizeof(edkey)), 0))
         goto end;
 
     /* Now "verify" the certificate, this should succeed. */

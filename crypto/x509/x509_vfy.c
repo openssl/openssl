@@ -3585,15 +3585,12 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
     int ix, i;
 
     /*
-     * If, when PKIX-TA/PKIX-EE records are present, a trust store lookup of a
-     * self-signed EE certificate took place and found it in the trust store,
-     * the untrusted count could be 0, but since we're checking DANE-TA(2)
-     * records, no PKIX-?? records matched, but a DANE-TA(2) trust-anchor
-     * key could still a valid signer of the EE certificate.  (Should we
-     * require the certificate to be a CA certificate???)
+     * When a self-signed leaf was replaced by its trust store copy,
+     * num_untrusted is 0 and the leaf itself is checked against the keys.
      */
     ix = ctx->num_untrusted > 0 ? ctx->num_untrusted - 1 : 0;
-    if ((cert = sk_X509_value(ctx->chain, ix)) == NULL)
+    cert = sk_X509_value(ctx->chain, ix);
+    if (!ossl_assert(cert != NULL))
         return X509_TRUST_UNTRUSTED;
 
     for (i = 0; i < recnum; ++i) {
