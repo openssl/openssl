@@ -64,8 +64,8 @@ open OUT, "| \"$^X\" $xlate $flavour \"$output\""
 # Only caller-saved GPRs and vector registers are used, so both entry points
 # are leaf functions and require no stack frame.
 #
-# The public ABI supplies a zeta-table pointer in x1.  It is intentionally
-# unused: this implementation embeds each z (the twiddle) next to its
+# Each entry point takes only the coefficient pointer in x0.  This
+# implementation embeds each z (the twiddle) next to its
 # c = floor(2^31*z/q), as required by the Neon multiplication sequence.
 my $q = 8380417;
 my $q_low_halfword = sprintf("0x%x", $q & 0xffff);
@@ -81,8 +81,8 @@ my $ntt_reduction_coefficients_per_iteration = 4 * $vector_lanes;
 my $ntt_reduction_iterations =
     $polynomial_coefficients / $ntt_reduction_coefficients_per_iteration;
 
-my ($inout_coefficients, $unused_zetas, $group_ptr, $even_ptr, $odd_ptr,
-    $group_count, $vector_count, $zc_ptr) = map("x$_", (0..7));
+my ($inout_coefficients, $group_ptr, $even_ptr, $odd_ptr,
+    $group_count, $vector_count, $zc_ptr) = map("x$_", (0, 2..7));
 my ($z_word, $c_word, $q_word) =
     map("w$_", (8..10));
 
@@ -675,8 +675,6 @@ ___
 # Compute the 256-coefficient NTT in place.
 #   inout_coefficients (in,out): x0 points to coefficients that enter in
 #       [0,q) and leave in [0,q).
-#   unused_zetas (in): x1 contains the ABI-provided zeta-table pointer; this
-#       implementation uses its embedded z and c table instead.
 # Output: Generated code returns the reduced NTT coefficients in the input
 # polynomial.
 $code .= <<___;
@@ -718,8 +716,6 @@ ___
 # Compute the 256-coefficient iNTT in place.
 #   inout_coefficients (in,out): x0 points to coefficients that enter in
 #       [0,q) and leave in [0,q).
-#   unused_zetas (in): x1 contains the ABI-provided zeta-table pointer; this
-#       implementation uses its embedded z and c table instead.
 # Output: Generated code returns the reduced polynomial coefficients in the
 # input polynomial.
 $code .= <<___;
