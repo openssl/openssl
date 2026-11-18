@@ -480,9 +480,11 @@ conditions based on something in the passed variables, for example:
 Build-file programming with the "unified" build system
 ======================================================
 
-"Build files" are called `Makefile` on Unix-like operating systems,
-`descrip.mms` for MMS on VMS, `makefile` for `nmake` on Windows,
-`build.ninja` for Ninja, etc.
+By default, `Configure` generates `Makefile` for `make` on Unix-like
+targets, `makefile` for `nmake` on native Windows targets, and
+`descrip.mms` for MMS on OpenVMS.  On both Unix-like and native Windows
+targets, `Configure` can also generate `build.ninja` for Ninja.  To select
+it, set `BUILDFILE=build.ninja` when running `Configure`.
 
 To use the "unified" build system, the target configuration needs to
 set the three items `build_scheme`, `build_file` and `build_command`.
