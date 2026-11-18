@@ -10,7 +10,7 @@
 #include <limits.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/pkcs7.h>
+#include <libcms/pkcs7.h>
 #include "fuzzer.h"
 
 int FuzzerInitialize(int *argc, char ***argv)

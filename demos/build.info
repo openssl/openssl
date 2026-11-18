@@ -25,7 +25,7 @@ IF[{- !$disabled{"dgram"} -}]
     ENDIF
 ENDIF
 
-IF[{- !$disabled{"des"} -}]
+IF[{- !$disabled{"cms"} && !$disabled{"des"} -}]
  IF[{- !$disabled{"deprecated"} -}]
     SUBDIRS=smime
  ENDIF
