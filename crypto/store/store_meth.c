@@ -39,6 +39,10 @@ static void free_loader(void *method)
         ossl_provider_free(loader->prov);
         CRYPTO_FREE_REF(&loader->refcnt);
     }
+    if (loader != NULL && loader->no_store != 0) {
+        OPENSSL_free((char *)loader->propdef);
+        OPENSSL_free((char *)loader->description);
+    }
     OPENSSL_free(loader);
 }
 
@@ -198,9 +202,18 @@ static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
     if ((loader = new_loader(prov)) == NULL)
         return NULL;
     loader->scheme_id = scheme_id;
-    loader->propdef = algodef->property_definition;
-    loader->description = algodef->algorithm_description;
     loader->no_store = no_store;
+    if (no_store == 0) {
+        loader->propdef = algodef->property_definition;
+        loader->description = algodef->algorithm_description;
+    } else if ((algodef->property_definition != NULL
+                   && (loader->propdef = OPENSSL_strdup(algodef->property_definition))
+                       == NULL)
+        || (algodef->algorithm_description != NULL
+            && (loader->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL)) {
+        free_loader(loader);
+        return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
