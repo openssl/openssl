@@ -191,21 +191,30 @@ X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
 X509_SIG *PKCS8_set0_pbe_ex(const char *pass, int passlen,
     PKCS8_PRIV_KEY_INFO *p8inf, X509_ALGOR *pbe,
     OSSL_LIB_CTX *ctx, const char *propq);
-PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk);
-STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7);
-PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7);
+/** @see PKCS12_pack_p7encdata(3) */
+OSSL_DEPRECATEDIN_4_2 PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     unsigned char *salt, int saltlen, int iter,
     STACK_OF(PKCS12_SAFEBAG) *bags);
-PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
+/** @see PKCS12_pack_p7encdata_ex(3) */
+OSSL_DEPRECATEDIN_4_2 PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
     unsigned char *salt, int saltlen, int iter,
     STACK_OF(PKCS12_SAFEBAG) *bags,
     OSSL_LIB_CTX *ctx, const char *propq);
 
-STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
     int passlen);
 
-int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes);
-STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /** @see PKCS12_get1_authsafes(3) */
 STACK_OF(PKCS12_AUTHSAFE) *PKCS12_get1_authsafes(const PKCS12 *p12);
@@ -389,15 +398,21 @@ PKCS12_SAFEBAG *PKCS12_add_key_ex(STACK_OF(PKCS12_SAFEBAG) **pbags,
 
 PKCS12_SAFEBAG *PKCS12_add_secret(STACK_OF(PKCS12_SAFEBAG) **pbags,
     int nid_type, const unsigned char *value, int len);
-int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_add_safe(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
     int safe_nid, int iter, const char *pass);
-int PKCS12_add_safe_ex(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
+/** @see PKCS12_add_safe_ex(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_add_safe_ex(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
     int safe_nid, int iter, const char *pass,
     OSSL_LIB_CTX *ctx, const char *propq);
 
-PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
-PKCS12 *PKCS12_add_safes_ex(STACK_OF(PKCS7) *safes, int p7_nid,
+/** @see PKCS12_add_safes(3) */
+OSSL_DEPRECATEDIN_4_2 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
+/** @see PKCS12_add_safes_ex(3) */
+OSSL_DEPRECATEDIN_4_2 PKCS12 *PKCS12_add_safes_ex(STACK_OF(PKCS7) *safes, int p7_nid,
     OSSL_LIB_CTX *ctx, const char *propq);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int i2d_PKCS12_bio(BIO *bp, const PKCS12 *p12);
 #ifndef OPENSSL_NO_STDIO

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* The deprecated PKCS7-typed PKCS#12 functions are tested here */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,8 +29,16 @@ static int write_files = 0;
 
 static int legacy = 0;
 
-/* Set this to use the PKCS12_AUTHSAFE functions in place of the PKCS7 ones */
+/*
+ * Set this to use the PKCS12_AUTHSAFE functions in place of the deprecated
+ * PKCS7-typed ones.  It is always set when the deprecated functions are not
+ * available.
+ */
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int authsafe = 0;
+#else
+static int authsafe = 1;
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static OSSL_LIB_CTX *test_ctx = NULL;
 static const char *test_propq = NULL;
@@ -86,6 +97,89 @@ static const char *get_propq(void)
 {
     return legacy ? NULL : test_propq;
 }
+
+/* --------------------------------------------------------------------------
+ * The deprecated PKCS7-typed PKCS#12 functions
+ */
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+static PKCS12 *pkcs7_add_safes(PKCS12_BUILDER *pb)
+{
+    if (legacy)
+        return PKCS12_add_safes(pb->safes, 0);
+    return PKCS12_add_safes_ex(pb->safes, 0, test_ctx, test_propq);
+}
+
+/* Adds a plain safe if |enc| is NULL, otherwise an encrypted one */
+static int pkcs7_add_safe(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
+{
+    if (enc == NULL)
+        return PKCS12_add_safe(&pb->safes, pb->bags, -1, 0, NULL);
+    if (legacy)
+        return PKCS12_add_safe(&pb->safes, pb->bags, enc->nid, enc->iter,
+            enc->pass);
+    return PKCS12_add_safe_ex(&pb->safes, pb->bags, enc->nid, enc->iter,
+        enc->pass, test_ctx, test_propq);
+}
+
+static STACK_OF(PKCS12_SAFEBAG) *pkcs7_decode_safe(PKCS12_BUILDER *pb, int idx,
+    const PKCS12_ENC *enc)
+{
+    PKCS7 *p7 = sk_PKCS7_value(pb->safes, idx);
+    int bagnid;
+
+    if (!TEST_ptr(p7))
+        return NULL;
+
+    bagnid = OBJ_obj2nid(p7->type);
+    if (enc != NULL) {
+        if (!TEST_int_eq(bagnid, NID_pkcs7_encrypted))
+            return NULL;
+        return PKCS12_unpack_p7encdata(p7, enc->pass, (int)strlen(enc->pass));
+    }
+    if (!TEST_int_eq(bagnid, NID_pkcs7_data))
+        return NULL;
+    return PKCS12_unpack_p7data(p7);
+}
+
+static int pkcs7_unpack_safes(PKCS12_BUILDER *pb, const PKCS12 *p12)
+{
+    pb->safes = PKCS12_unpack_authsafes(p12);
+    return pb->safes != NULL;
+}
+
+static void pkcs7_free_safes(PKCS12_BUILDER *pb)
+{
+    sk_PKCS7_pop_free(pb->safes, PKCS7_free);
+    pb->safes = NULL;
+}
+#else
+/* Unreachable: |authsafe| is always set without the deprecated functions */
+static PKCS12 *pkcs7_add_safes(PKCS12_BUILDER *pb)
+{
+    return NULL;
+}
+
+static int pkcs7_add_safe(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
+{
+    return 0;
+}
+
+static STACK_OF(PKCS12_SAFEBAG) *pkcs7_decode_safe(PKCS12_BUILDER *pb, int idx,
+    const PKCS12_ENC *enc)
+{
+    return NULL;
+}
+
+static int pkcs7_unpack_safes(PKCS12_BUILDER *pb, const PKCS12 *p12)
+{
+    return 0;
+}
+
+static void pkcs7_free_safes(PKCS12_BUILDER *pb)
+{
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* --------------------------------------------------------------------------
  * Test data load functions
@@ -171,16 +265,13 @@ static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
     }
     if (authsafe)
         p12 = PKCS12_add_authsafes(pb->authsafes, 0, get_libctx(), get_propq());
-    else if (legacy)
-        p12 = PKCS12_add_safes(pb->safes, 0);
     else
-        p12 = PKCS12_add_safes_ex(pb->safes, 0, test_ctx, test_propq);
+        p12 = pkcs7_add_safes(pb);
     if (!TEST_ptr(p12)) {
         pb->success = 0;
         goto err;
     }
-    sk_PKCS7_pop_free(pb->safes, PKCS7_free);
-    pb->safes = NULL;
+    pkcs7_free_safes(pb);
     sk_PKCS12_AUTHSAFE_pop_free(pb->authsafes, PKCS12_AUTHSAFE_free);
     pb->authsafes = NULL;
 
@@ -297,7 +388,7 @@ void end_contentinfo(PKCS12_BUILDER *pb)
             if (!TEST_true(PKCS12_add_authsafe(&pb->authsafes, pb->bags, -1, 0,
                     NULL, get_libctx(), get_propq())))
                 pb->success = 0;
-        } else if (!TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, -1, 0, NULL))) {
+        } else if (!TEST_true(pkcs7_add_safe(pb, NULL))) {
             pb->success = 0;
         }
     }
@@ -313,15 +404,8 @@ void end_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
                     enc->nid, enc->iter, enc->pass,
                     get_libctx(), get_propq())))
                 pb->success = 0;
-        } else if (legacy) {
-            if (!TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, enc->nid,
-                    enc->iter, enc->pass)))
-                pb->success = 0;
-        } else {
-            if (!TEST_true(PKCS12_add_safe_ex(&pb->safes, pb->bags, enc->nid,
-                    enc->iter, enc->pass, test_ctx,
-                    test_propq)))
-                pb->success = 0;
+        } else if (!TEST_true(pkcs7_add_safe(pb, enc))) {
+            pb->success = 0;
         }
     }
     sk_PKCS12_SAFEBAG_pop_free(pb->bags, PKCS12_SAFEBAG_free);
@@ -350,34 +434,14 @@ static STACK_OF(PKCS12_SAFEBAG) *decode_authsafe(STACK_OF(PKCS12_AUTHSAFE) *auth
 static STACK_OF(PKCS12_SAFEBAG) *decode_contentinfo(PKCS12_BUILDER *pb, int idx,
     const PKCS12_ENC *enc)
 {
-    STACK_OF(PKCS7) *safes = pb->safes;
-    STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
-    int bagnid;
-    PKCS7 *p7;
+    STACK_OF(PKCS12_SAFEBAG) *bags;
 
     if (authsafe)
         return decode_authsafe(pb->authsafes, idx, enc);
-    p7 = sk_PKCS7_value(safes, idx);
-
-    if (!TEST_ptr(p7))
-        goto err;
-
-    bagnid = OBJ_obj2nid(p7->type);
-    if (enc) {
-        if (!TEST_int_eq(bagnid, NID_pkcs7_encrypted))
-            goto err;
-        bags = PKCS12_unpack_p7encdata(p7, enc->pass, (int)strlen(enc->pass));
-    } else {
-        if (!TEST_int_eq(bagnid, NID_pkcs7_data))
-            goto err;
-        bags = PKCS12_unpack_p7data(p7);
-    }
+    bags = pkcs7_decode_safe(pb, idx, enc);
     if (!TEST_ptr(bags))
-        goto err;
-
+        return NULL;
     return bags;
-err:
-    return NULL;
 }
 
 /* -------------------------------------------------------------------------
@@ -725,8 +789,7 @@ static int unpack_authsafes(PKCS12_BUILDER *pb, const PKCS12 *p12)
         pb->authsafes = PKCS12_get1_authsafes(p12);
         return TEST_ptr(pb->authsafes);
     }
-    pb->safes = PKCS12_unpack_authsafes(p12);
-    return TEST_ptr(pb->safes);
+    return TEST_true(pkcs7_unpack_safes(pb, p12));
 }
 
 void start_check_pkcs12(PKCS12_BUILDER *pb)
@@ -810,8 +873,7 @@ void end_check_pkcs12(PKCS12_BUILDER *pb)
     if (!pb->success)
         return;
 
-    sk_PKCS7_pop_free(pb->safes, PKCS7_free);
-    pb->safes = NULL;
+    pkcs7_free_safes(pb);
     sk_PKCS12_AUTHSAFE_pop_free(pb->authsafes, PKCS12_AUTHSAFE_free);
     pb->authsafes = NULL;
 }

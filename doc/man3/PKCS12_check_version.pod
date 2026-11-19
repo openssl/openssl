@@ -25,7 +25,7 @@ adding the check to these functions would potentially break existing
 PKCS12 files. Instead of adding an B<_ex> variant of all these functions,
 the function PKCS12_check_version() has been added instead.
 PKCS12_check_version() should be called after loading a PKCS #12
-object, before calling either PKCS12_parse() or PKCS12_unpack_authsafes().
+object, before calling either PKCS12_parse() or PKCS12_get1_authsafes().
 
 =head1 RETURN VALUES
 

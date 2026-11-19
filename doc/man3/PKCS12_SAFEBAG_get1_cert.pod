@@ -92,8 +92,8 @@ Other functions return a valid object of the specified type or NULL if an error 
 =head1 SEE ALSO
 
 L<PKCS12_create(3)>,
-L<PKCS12_add_safe(3)>,
-L<PKCS12_add_safes(3)>,
+L<PKCS12_add_authsafe(3)>,
+L<PKCS12_add_authsafes(3)>,
 L<PKCS12_decrypt_secretbag(3)>,
 L<EVP_SKEY_get0_algorithm_id(3)>
 
