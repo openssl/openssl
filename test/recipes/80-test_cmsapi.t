@@ -16,7 +16,9 @@ plan skip_all => "CMS is disabled in this build" if disabled("cms");
 
 plan tests => 1;
 
-my @rootcert = disabled("ec") ? () : (srctop_file("test", certs, "root-cert.pem"));
+# The embedded CMS blob in test_cms_overlong_relative_dist_points carries
+# an Ed25519 signer cert, which cannot be decoded in a no-ecx build.
+my @rootcert = disabled("ecx") ? () : (srctop_file("test", "certs", "root-cert.pem"));
 
 ok(run(test(["cmsapitest", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem"),
