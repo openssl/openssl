@@ -18,6 +18,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/param_build.h>
+#include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include <crypto/ml_kem.h>
 #include "crypto/evp.h"
@@ -471,6 +472,52 @@ err:
     EVP_PKEY_CTX_free(genctx);
     return ret;
 }
+
+/*
+ * The public key of an MLX key can be set only until the key has one.
+ * Afterwards it is refused.
+ */
+static int test_mlx_kem_set_params_immutable(int idx)
+{
+    const char *alg = mlx_kem_algs[idx];
+    EVP_PKEY *keypair = NULL;
+    EVP_KEYMGMT *keymgmt = NULL;
+    void *keydata = NULL;
+    unsigned char *pub = NULL;
+    size_t publen = 0;
+    OSSL_PARAM pub_params[2];
+    int ret = 0;
+
+    /* A source of public key bytes of the right size */
+    if (!TEST_ptr(keypair = EVP_PKEY_Q_keygen(testctx, NULL, alg))
+        || !TEST_size_t_gt(publen = EVP_PKEY_get1_encoded_public_key(keypair,
+                               &pub),
+            0))
+        goto err;
+
+    pub_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, pub, publen);
+    pub_params[1] = OSSL_PARAM_construct_end();
+
+    /* An empty key accepts the public key, once */
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(testctx, alg, NULL))
+        || !TEST_ptr(keydata = evp_keymgmt_newdata(keymgmt))
+        || !TEST_true(evp_keymgmt_set_params(keymgmt, keydata, pub_params))
+        || !TEST_false(evp_keymgmt_set_params(keymgmt, keydata, pub_params))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE))
+        goto err;
+
+    ret = 1;
+err:
+    ERR_clear_error();
+    if (keymgmt != NULL)
+        evp_keymgmt_freedata(keymgmt, keydata);
+    EVP_KEYMGMT_free(keymgmt);
+    OPENSSL_free(pub);
+    EVP_PKEY_free(keypair);
+    return ret;
+}
 #endif /* OPENSSL_NO_EC */
 
 int setup_tests(void)
@@ -502,6 +549,7 @@ int setup_tests(void)
     ADD_TEST(test_ml_kem);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_mlx_kem_dup_partial_selection, OSSL_NELEM(mlx_kem_algs));
+    ADD_ALL_TESTS(test_mlx_kem_set_params_immutable, OSSL_NELEM(mlx_kem_algs));
 #endif
     return 1;
 }

@@ -9,6 +9,7 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/param_build.h>
 #include <openssl/self_test.h>
 #include <openssl/proverr.h>
@@ -115,6 +116,14 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
+
+    /* Once a key has a public component, it is no longer changed */
+    if (ossl_slh_dsa_key_has(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
+        ERR_raise_data(ERR_LIB_PROV,
+            PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+            "keys cannot be mutated");
+        return 0;
+    }
 
     if ((selection & SLH_DSA_POSSIBLE_SELECTIONS) == 0)
         return 0;
