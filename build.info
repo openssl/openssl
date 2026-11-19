@@ -31,7 +31,7 @@
    ""
 -}
 
-SUBDIRS=crypto ssl apps util fuzz providers doc
+SUBDIRS=crypto ssl apps util fuzz providers doc x509pmi
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF

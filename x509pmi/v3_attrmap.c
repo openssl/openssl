@@ -9,7 +9,7 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 #include "pmi_local.h"
 
 ASN1_SEQUENCE(OSSL_ATAV) = {

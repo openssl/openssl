@@ -12,7 +12,7 @@
 #include <crypto/x509_acert.h>
 #include <openssl/x509_acert.h>
 #include "crypto/asn1.h"
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 #include <crypto/asn1.h>
 
