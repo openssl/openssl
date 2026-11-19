@@ -10,7 +10,7 @@
 
 #include "fuzzer.h"
 #include <openssl/err.h>
-#include <openssl/pkcs7.h>
+#include <libcms/pkcs7.h>
 #include <openssl/x509.h>
 #include <stdio.h>
 

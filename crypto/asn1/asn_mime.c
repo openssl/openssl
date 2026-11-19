@@ -15,6 +15,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
+#include <openssl/pkcs7.h>
 #include "crypto/evp.h"
 #include "internal/bio.h"
 #include "asn1_local.h"

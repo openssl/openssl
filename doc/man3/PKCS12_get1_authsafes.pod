@@ -1,0 +1,159 @@
+=pod
+
+=head1 NAME
+
+PKCS12_get1_authsafes, PKCS12_set1_authsafes,
+PKCS12_add_authsafe, PKCS12_add_authsafes,
+PKCS12_AUTHSAFE_new_data, PKCS12_AUTHSAFE_new_encrypted, PKCS12_AUTHSAFE_free,
+PKCS12_AUTHSAFE_get_type, PKCS12_AUTHSAFE_get0_alg, PKCS12_AUTHSAFE_get1_bags
+- Read and build the authenticated safes of a PKCS#12 structure
+
+=head1 SYNOPSIS
+
+ #include <openssl/pkcs12.h>
+
+ STACK_OF(PKCS12_AUTHSAFE) *PKCS12_get1_authsafes(const PKCS12 *p12);
+ int PKCS12_set1_authsafes(PKCS12 *p12,
+                           const STACK_OF(PKCS12_AUTHSAFE) *authsafes);
+
+ int PKCS12_add_authsafe(STACK_OF(PKCS12_AUTHSAFE) **pauthsafes,
+                         const STACK_OF(PKCS12_SAFEBAG) *bags,
+                         int safe_nid, int iter, const char *pass,
+                         OSSL_LIB_CTX *libctx, const char *propq);
+ PKCS12 *PKCS12_add_authsafes(const STACK_OF(PKCS12_AUTHSAFE) *authsafes,
+                              int p7_nid, OSSL_LIB_CTX *libctx,
+                              const char *propq);
+
+ PKCS12_AUTHSAFE *PKCS12_AUTHSAFE_new_data(const STACK_OF(PKCS12_SAFEBAG) *bags);
+ PKCS12_AUTHSAFE *PKCS12_AUTHSAFE_new_encrypted(int pbe_nid,
+                                                const char *pass, int passlen,
+                                                const unsigned char *salt,
+                                                int saltlen, int iter,
+                                                const STACK_OF(PKCS12_SAFEBAG) *bags,
+                                                OSSL_LIB_CTX *libctx,
+                                                const char *propq);
+ void PKCS12_AUTHSAFE_free(PKCS12_AUTHSAFE *authsafe);
+
+ int PKCS12_AUTHSAFE_get_type(const PKCS12_AUTHSAFE *authsafe);
+ const X509_ALGOR *PKCS12_AUTHSAFE_get0_alg(const PKCS12_AUTHSAFE *authsafe);
+ STACK_OF(PKCS12_SAFEBAG) *PKCS12_AUTHSAFE_get1_bags(const PKCS12_AUTHSAFE *authsafe,
+                                                     const char *pass,
+                                                     int passlen,
+                                                     OSSL_LIB_CTX *libctx,
+                                                     const char *propq);
+
+=head1 DESCRIPTION
+
+The contents of a B<PKCS12> structure are a sequence of authenticated safes,
+each represented by a B<PKCS12_AUTHSAFE>. An authsafe holds a set of
+B<PKCS12_SAFEBAG>s, and is either plain (a PKCS#7 I<data> content type) or
+encrypted with a password (a PKCS#7 I<encryptedData> content type).
+
+PKCS12_get1_authsafes() returns the authsafes of I<p12>.
+
+PKCS12_set1_authsafes() sets the authsafes of I<p12> to copies of
+I<authsafes>, replacing any it had. Encrypted authsafes are copied as they are,
+without decryption. The contents of I<p12> protected by its MAC change, so a
+MAC is set with L<PKCS12_set_mac(3)> afterwards.
+
+PKCS12_add_authsafe() creates an authsafe containing I<bags> and appends it to
+I<*pauthsafes>, which is created if it is NULL. The type of the authsafe depends
+on the value of I<safe_nid>:
+
+=over 4
+
+=item * If I<safe_nid> is -1, a plain authsafe is created.
+
+=item * If I<safe_nid> is a PBE algorithm or cipher NID, an encrypted authsafe
+is created. The algorithm uses the NUL terminated I<pass> as the password and
+I<iter> as the iteration count. If I<iter> is zero then a default iteration
+count of 2048 is used.
+
+=item * If I<safe_nid> is 0, an encrypted authsafe is created using a default
+PBE algorithm.
+
+=back
+
+PKCS12_add_authsafes() creates a B<PKCS12> structure containing I<authsafes>.
+The authsafes are enclosed within a PKCS#7 contentInfo of type I<p7_nid>, which
+is B<NID_pkcs7_data> if I<p7_nid> is 0 or negative. B<NID_pkcs7_data> is the
+only supported type.
+
+PKCS12_AUTHSAFE_new_data() creates a plain authsafe containing I<bags>.
+
+PKCS12_AUTHSAFE_new_encrypted() creates an authsafe containing I<bags>,
+encrypted with the PBE algorithm or cipher I<pbe_nid>. The password I<pass> is
+of length I<passlen>, or NUL terminated if I<passlen> is -1. The I<saltlen>
+bytes at I<salt> are used as the salt; if I<salt> is NULL a random salt of
+length I<saltlen> is generated, or of a default length if I<saltlen> is 0.
+I<iter> is the iteration count, with zero selecting a default of 2048.
+
+PKCS12_AUTHSAFE_free() frees I<authsafe>. If I<authsafe> is NULL nothing is
+done.
+
+PKCS12_AUTHSAFE_get_type() returns the content type NID of I<authsafe>. This is
+B<NID_pkcs7_data> for a plain authsafe and B<NID_pkcs7_encrypted> for an
+encrypted authsafe; other content types are reported by their NID.
+
+PKCS12_AUTHSAFE_get0_alg() returns the encryption algorithm of an encrypted
+I<authsafe>.
+
+PKCS12_AUTHSAFE_get1_bags() returns the safe bags of I<authsafe>. An encrypted
+authsafe is decrypted with the password I<pass> of length I<passlen>, or NUL
+terminated if I<passlen> is -1. I<pass> and I<passlen> are ignored for a plain
+authsafe.
+
+The functions taking a library context I<libctx> and property query I<propq>
+use them to fetch algorithm implementations.
+
+=head1 NOTES
+
+These functions make assumptions regarding the encoding of the given password.
+See L<passphrase-encoding(7)> for more information.
+
+=head1 RETURN VALUES
+
+PKCS12_get1_authsafes() returns a stack of authsafes, which the caller frees
+with sk_PKCS12_AUTHSAFE_pop_free() and PKCS12_AUTHSAFE_free(), or NULL on
+error.
+
+PKCS12_set1_authsafes() and PKCS12_add_authsafe() return 1 for success or 0
+for failure.
+
+PKCS12_add_authsafes() returns a new B<PKCS12> structure or NULL on error.
+
+PKCS12_AUTHSAFE_new_data() and PKCS12_AUTHSAFE_new_encrypted() return a new
+authsafe or NULL on error.
+
+PKCS12_AUTHSAFE_get_type() returns a NID, or B<NID_undef> on error.
+
+PKCS12_AUTHSAFE_get0_alg() returns an internal pointer that must not be freed,
+or NULL if I<authsafe> is not encrypted.
+
+PKCS12_AUTHSAFE_get1_bags() returns a stack of safe bags, which the caller
+frees with sk_PKCS12_SAFEBAG_pop_free() and PKCS12_SAFEBAG_free(), or NULL on
+error.
+
+=head1 CONFORMING TO
+
+IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
+
+=head1 SEE ALSO
+
+L<PKCS12_create(3)>, L<PKCS12_init_ex(3)>, L<PKCS12_set_mac(3)>,
+L<PKCS12_SAFEBAG_create_cert(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.2.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

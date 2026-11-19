@@ -26,6 +26,7 @@
  * cases increases its link count) in the parent and so both should be freed up.
  */
 
+#include "internal/deprecated.h"
 #include "crmf_local.h"
 #include <openssl/asn1t.h>
 #include "internal/constant_time.h"

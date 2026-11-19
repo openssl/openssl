@@ -66,7 +66,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(BIGNUM),
     ASN1_ITEM_ref(CBIGNUM),
     ASN1_ITEM_ref(CERTIFICATEPOLICIES),
-#ifndef OPENSSL_NO_CMS
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     ASN1_ITEM_ref(CMS_ContentInfo),
     ASN1_ITEM_ref(CMS_EnvelopedData),
     ASN1_ITEM_ref(CMS_ReceiptRequest),
@@ -132,6 +132,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(PKCS12_SAFEBAGS),
     ASN1_ITEM_ref(PKCS12_SAFEBAG),
     ASN1_ITEM_ref(PKCS12),
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ASN1_ITEM_ref(PKCS7_ATTR_SIGN),
     ASN1_ITEM_ref(PKCS7_ATTR_VERIFY),
     ASN1_ITEM_ref(PKCS7_DIGEST),
@@ -144,6 +145,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(PKCS7_SIGNER_INFO),
     ASN1_ITEM_ref(PKCS7_SIGN_ENVELOPE),
     ASN1_ITEM_ref(PKCS7),
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ASN1_ITEM_ref(PKCS8_PRIV_KEY_INFO),
     ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
     ASN1_ITEM_ref(POLICYINFO),

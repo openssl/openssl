@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * The PKCS7 and PKCS7-typed PKCS#12 APIs are deprecated for public use, but
+ * still ok for internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
@@ -310,18 +316,7 @@ int PKCS12_add_safe_ex(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
         free_safes = 1;
     }
 
-    if (nid_safe == 0)
-#ifdef OPENSSL_NO_RC2
-        nid_safe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-#else
-        nid_safe = NID_pbe_WithSHA1And40BitRC2_CBC;
-#endif
-
-    if (nid_safe == -1)
-        p7 = PKCS12_pack_p7data(bags);
-    else
-        p7 = PKCS12_pack_p7encdata_ex(nid_safe, pass, -1, NULL, 0, iter, bags, ctx, propq);
-    if (p7 == NULL)
+    if ((p7 = ossl_pkcs12_pack_safe(bags, nid_safe, iter, pass, ctx, propq)) == NULL)
         goto err;
 
     if (!sk_PKCS7_push(*psafes, p7))

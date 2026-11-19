@@ -998,35 +998,35 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
     int passlen, int options, char *pempass,
     const EVP_CIPHER *enc)
 {
-    STACK_OF(PKCS7) *asafes = NULL;
+    STACK_OF(PKCS12_AUTHSAFE) *asafes = NULL;
     int i, bagnid;
     int ret = 0;
-    PKCS7 *p7;
+    PKCS12_AUTHSAFE *asafe;
 
-    if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
+    if ((asafes = PKCS12_get1_authsafes(p12)) == NULL)
         return 0;
-    for (i = 0; i < sk_PKCS7_num(asafes); i++) {
+    for (i = 0; i < sk_PKCS12_AUTHSAFE_num(asafes); i++) {
         STACK_OF(PKCS12_SAFEBAG) *bags;
+        const X509_ALGOR *alg;
 
-        p7 = sk_PKCS7_value(asafes, i);
-        bagnid = OBJ_obj2nid(p7->type);
+        asafe = sk_PKCS12_AUTHSAFE_value(asafes, i);
+        bagnid = PKCS12_AUTHSAFE_get_type(asafe);
         if (bagnid == NID_pkcs7_data) {
-            bags = PKCS12_unpack_p7data(p7);
             if (options & INFO)
                 BIO_puts(bio_err, "PKCS7 Data\n");
         } else if (bagnid == NID_pkcs7_encrypted) {
             if (options & INFO) {
                 BIO_puts(bio_err, "PKCS7 Encrypted data: ");
-                if (p7->d.encrypted == NULL) {
+                if ((alg = PKCS12_AUTHSAFE_get0_alg(asafe)) == NULL)
                     BIO_puts(bio_err, "<no data>\n");
-                } else {
-                    alg_print(p7->d.encrypted->enc_data->algorithm);
-                }
+                else
+                    alg_print(alg);
             }
-            bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
         } else {
             continue;
         }
+        bags = PKCS12_AUTHSAFE_get1_bags(asafe, pass, passlen,
+            app_get0_libctx(), app_get0_propq());
         if (bags == NULL)
             goto err;
         if (!dump_certs_pkeys_bags(out, bags, pass, passlen,
@@ -1039,7 +1039,7 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
     ret = 1;
 
 err:
-    sk_PKCS7_pop_free(asafes, PKCS7_free);
+    sk_PKCS12_AUTHSAFE_pop_free(asafes, PKCS12_AUTHSAFE_free);
     return ret;
 }
 

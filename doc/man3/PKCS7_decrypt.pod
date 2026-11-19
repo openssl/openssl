@@ -6,7 +6,7 @@ PKCS7_decrypt - decrypt content from a PKCS#7 envelopedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
 
@@ -49,6 +49,12 @@ be better if it could look up the correct key and certificate from a database.
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<PKCS7_encrypt(3)>, L<EVP_PKEY_decrypt(3)>
+
+=head1 HISTORY
+
+PKCS7_decrypt() moved to the new libcms library in OpenSSL 4.2.
+A deprecated variant remains in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

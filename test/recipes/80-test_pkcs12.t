@@ -57,7 +57,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_err =  disabled('err') || disabled('autoerrinit');
 
-plan tests => 122 + ($no_fips ? 0 : 5);
+plan tests => 125 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -65,6 +65,10 @@ ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
 ok(run(test(["pkcs12_format_test", "-legacy"])), "test pkcs12 formats using legacy APIs");
 # Test with a non-default library context (and no loaded providers in the default context)
 ok(run(test(["pkcs12_format_test", "-context"])), "test pkcs12 formats using a non-default library context");
+# Repeat the above with the PKCS12_AUTHSAFE APIs
+ok(run(test(["pkcs12_format_test", "-authsafe"])), "test pkcs12 formats using the authsafe APIs");
+ok(run(test(["pkcs12_format_test", "-authsafe", "-legacy"])), "test pkcs12 formats using the authsafe APIs and legacy APIs");
+ok(run(test(["pkcs12_format_test", "-authsafe", "-context"])), "test pkcs12 formats using the authsafe APIs and a non-default library context");
 
 SKIP: {
      skip "VMS doesn't have command line UTF-8 support yet in DCL", 1

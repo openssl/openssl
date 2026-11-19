@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* The PKCS7 APIs are deprecated for public use, but still ok for internal use. */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>

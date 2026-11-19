@@ -7,7 +7,7 @@ TS_RESP_CTX_free - Timestamp response context object creation
 
 =head1 SYNOPSIS
 
- #include <openssl/ts.h>
+ #include <libcms/ts.h>
 
  TS_RESP_CTX *TS_RESP_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  TS_RESP_CTX *TS_RESP_CTX_new(void);
@@ -37,6 +37,10 @@ otherwise it returns a pointer to the newly allocated structure.
 =head1 HISTORY
 
 The function TS_RESP_CTX_new_ex() was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/ts.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

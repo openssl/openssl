@@ -19,7 +19,7 @@ L CRYPTO        include/openssl/cryptoerr.h     crypto/cpt_err.c                
 L EC            include/openssl/ecerr.h         crypto/ec/ec_err.c                      include/crypto/ecerr.h
 L SSL           include/openssl/sslerr.h        crypto/ssl_err.c                        crypto/sslerr.h
 L BIO           include/openssl/bioerr.h        crypto/bio/bio_err.c                    include/crypto/bioerr.h
-L PKCS7         include/openssl/pkcs7err.h      crypto/pkcs7/pkcs7err.c                 include/crypto/pkcs7err.h
+L PKCS7         include/openssl/pkcs7err.h      cms/pkcs7err.c                          include/crypto/pkcs7err.h
 L X509V3        include/openssl/x509v3err.h     crypto/x509/v3err.c                     include/crypto/x509v3err.h
 L PKCS12        include/openssl/pkcs12err.h     crypto/pkcs12/pk12err.c                 include/crypto/pkcs12err.h
 L RAND          include/openssl/randerr.h       crypto/rand/rand_err.c                  include/crypto/randerr.h
@@ -27,8 +27,8 @@ L DSO           NONE                            crypto/dso/dso_err.c            
 L OCSP          include/openssl/ocsperr.h       crypto/ocsp/ocsp_err.c                  include/crypto/ocsperr.h
 L UI            include/openssl/uierr.h         crypto/ui/ui_err.c                      include/crypto/uierr.h
 L COMP          include/openssl/comperr.h       crypto/comp/comp_err.c                  include/crypto/comperr.h
-L TS            include/openssl/tserr.h         crypto/ts/ts_err.c                      include/crypto/tserr.h
-L CMS           include/openssl/cmserr.h        crypto/cms/cms_err.c                    include/crypto/cmserr.h
+L TS            include/openssl/tserr.h         cms/ts_err.c                            include/crypto/tserr.h
+L CMS           include/openssl/cmserr.h        cms/cms_err.c                           include/crypto/cmserr.h
 L CRMF          include/openssl/crmferr.h       crypto/crmf/crmf_err.c                  include/crypto/crmferr.h
 L CMP           include/openssl/cmperr.h        crypto/cmp/cmp_err.c                    include/crypto/cmperr.h
 L CT            include/openssl/cterr.h         crypto/ct/ct_err.c                      include/crypto/cterr.h

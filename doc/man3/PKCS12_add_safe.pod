@@ -9,6 +9,10 @@ PKCS12_add_safes, PKCS12_add_safes_ex - Create and add objects to a PKCS#12 stru
 
  #include <openssl/pkcs12.h>
 
+The following functions have been deprecated since OpenSSL 4.2, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
  int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
                     int safe_nid, int iter, const char *pass);
  int PKCS12_add_safe_ex(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
@@ -69,11 +73,14 @@ IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
 
 =head1 SEE ALSO
 
-L<PKCS12_create(3)>
+L<PKCS12_create(3)>, L<PKCS12_add_authsafe(3)>
 
 =head1 HISTORY
 
 PKCS12_add_safe_ex() and PKCS12_add_safes_ex() were added in OpenSSL 3.0.
+
+All of these functions were deprecated in OpenSSL 4.2. Use
+PKCS12_add_authsafe() and PKCS12_add_authsafes() instead.
 
 =head1 COPYRIGHT
 

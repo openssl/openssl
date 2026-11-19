@@ -7,13 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* The PKCS7 APIs are deprecated for public use, but still ok for internal use. */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
-#include "crypto/pkcs7/pk7_local.h"
+#include "cms/pk7_local.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 
@@ -265,4 +268,22 @@ STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
     p7ctx = &p12->authsafes->ctx;
 
     return ossl_pkcs12_unpack_authsafes_ex(p12, ossl_pkcs7_ctx_get0_libctx(p7ctx), ossl_pkcs7_ctx_get0_propq(p7ctx));
+}
+
+PKCS7 *ossl_pkcs12_pack_safe(const STACK_OF(PKCS12_SAFEBAG) *bags,
+    int nid_safe, int iter, const char *pass,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    STACK_OF(PKCS12_SAFEBAG) *sk = (STACK_OF(PKCS12_SAFEBAG) *)bags;
+
+    if (nid_safe == -1)
+        return PKCS12_pack_p7data(sk);
+    if (nid_safe == 0)
+#ifdef OPENSSL_NO_RC2
+        nid_safe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+#else
+        nid_safe = NID_pbe_WithSHA1And40BitRC2_CBC;
+#endif
+    return PKCS12_pack_p7encdata_ex(nid_safe, pass, -1, NULL, 0, iter, sk,
+        libctx, propq);
 }

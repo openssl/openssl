@@ -38,6 +38,10 @@ struct PKCS12_SAFEBAG_st {
     STACK_OF(X509_ATTRIBUTE) *attrib;
 };
 
+struct PKCS12_AUTHSAFE_st {
+    PKCS7 *p7; /**< the ContentInfo encoding of the authsafe */
+};
+
 struct pkcs12_bag_st {
     ASN1_OBJECT *type;
     union {
@@ -65,6 +69,22 @@ STACK_OF(PKCS7) *ossl_pkcs12_unpack_authsafes_ex(const PKCS12 *p12,
     OSSL_LIB_CTX *libctx, const char *propq);
 STACK_OF(PKCS12_SAFEBAG) *ossl_pkcs12_unpack_p7encdata_ex(PKCS7 *p7,
     const char *pass, int passlen,
+    OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Packs a stack of safe bags into a PKCS#7 ContentInfo for use as a
+ * PKCS#12 authenticated safe.
+ * @param bags the safe bags to pack
+ * @param nid_safe -1 for a data ContentInfo, 0 for an encrypted ContentInfo
+ *                 using the default PBE algorithm, or the NID of the PBE
+ *                 algorithm or cipher for an encrypted ContentInfo
+ * @param iter the PBE iteration count
+ * @param pass the NUL terminated password used for encryption
+ * @param libctx the library context for fetching algorithms
+ * @param propq the property query for fetching algorithms
+ * @returns the new ContentInfo, or NULL on error
+ */
+PKCS7 *ossl_pkcs12_pack_safe(const STACK_OF(PKCS12_SAFEBAG) *bags,
+    int nid_safe, int iter, const char *pass,
     OSSL_LIB_CTX *libctx, const char *propq);
 
 #endif /* !defined(OSSL_LIBCRYPTO_PKCS12_P12_LOCAL_H) */

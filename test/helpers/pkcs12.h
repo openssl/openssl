@@ -43,6 +43,7 @@ typedef struct pkcs12_builder {
     int success;
     BIO *p12bio;
     STACK_OF(PKCS7) *safes;
+    STACK_OF(PKCS12_AUTHSAFE) *authsafes;
     int safe_idx;
     STACK_OF(PKCS12_SAFEBAG) *bags;
     int bag_idx;
@@ -55,6 +56,12 @@ typedef struct pkcs12_builder {
 /* Global settings */
 void PKCS12_helper_set_write_files(int enable);
 void PKCS12_helper_set_legacy(int enable);
+/**
+ * @brief Selects the PKCS12_AUTHSAFE functions in place of the PKCS7-typed
+ * PKCS#12 functions for building and checking PKCS#12 structures.
+ * @param enable nonzero to use the PKCS12_AUTHSAFE functions
+ */
+void PKCS12_helper_set_authsafe(int enable);
 void PKCS12_helper_set_libctx(OSSL_LIB_CTX *libctx);
 void PKCS12_helper_set_propq(const char *propq);
 

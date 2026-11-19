@@ -75,7 +75,7 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          bio_readbuffer_test user_property_test pkcs7_test upcallstest \
+          bio_readbuffer_test user_property_test upcallstest \
           provfetchtest prov_config_test libctx_config_test rand_test \
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
@@ -544,7 +544,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[pkcs7_test]=pkcs7_test.c
   INCLUDE[pkcs7_test]=../include ../apps/include
-  DEPEND[pkcs7_test]=../libcrypto libtestutil.a
+  DEPEND[pkcs7_test]=../libcms ../libcrypto libtestutil.a
 
   SOURCE[byteorder_test]=byteorder_test.c
   INCLUDE[byteorder_test]=../include ../apps/include
@@ -647,7 +647,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[bio_memleak_test]=bio_memleak_test.c
   INCLUDE[bio_memleak_test]=../include ../apps/include
-  DEPEND[bio_memleak_test]=../libcrypto libtestutil.a
+  IF[{- !$disabled{cms} -}]
+    DEPEND[bio_memleak_test]=../libcms ../libcrypto libtestutil.a
+  ELSE
+    DEPEND[bio_memleak_test]=../libcrypto libtestutil.a
+  ENDIF
 
   SOURCE[bio_ndef_test]=bio_ndef_test.c
   INCLUDE[bio_ndef_test]=../include ../apps/include
@@ -810,7 +814,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[x509_test]=x509_test.c
   INCLUDE[x509_test]=../include ../apps/include
-  DEPEND[x509_test]=../libcrypto libtestutil.a
+  IF[{- !$disabled{cms} -}]
+    DEPEND[x509_test]=../libcms ../libcrypto libtestutil.a
+  ELSE
+    DEPEND[x509_test]=../libcrypto libtestutil.a
+  ENDIF
 
   SOURCE[recordlentest]=recordlentest.c helpers/ssltestlib.c
   INCLUDE[recordlentest]=../include ../apps/include
@@ -858,10 +866,10 @@ IF[{- !$disabled{tests} -}]
   DEPEND[servername_test]=../libcrypto ../libssl libtestutil.a
 
   IF[{- !$disabled{cms} -}]
-    PROGRAMS{noinst}=cmsapitest
+    PROGRAMS{noinst}=cmsapitest pkcs7_test
     SOURCE[cmsapitest]=cmsapitest.c
     INCLUDE[cmsapitest]=../include ../apps/include
-    DEPEND[cmsapitest]=../libcrypto libtestutil.a
+    DEPEND[cmsapitest]=../libcms ../libcrypto libtestutil.a
   ENDIF
 
   IF[{- !$disabled{psk} -}]

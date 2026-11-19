@@ -1040,6 +1040,7 @@ typedef enum OPTION_choice {
     OPT_WRITE,
     OPT_LEGACY,
     OPT_CONTEXT,
+    OPT_AUTHSAFE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -1050,6 +1051,7 @@ const OPTIONS *test_get_options(void)
         { "write", OPT_WRITE, '-', "Write PKCS12 objects to file" },
         { "legacy", OPT_LEGACY, '-', "Test the legacy APIs" },
         { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
+        { "authsafe", OPT_AUTHSAFE, '-', "Test the PKCS12_AUTHSAFE APIs" },
         { NULL }
     };
     return options;
@@ -1069,6 +1071,9 @@ int setup_tests(void)
             break;
         case OPT_CONTEXT:
             default_libctx = 0;
+            break;
+        case OPT_AUTHSAFE:
+            PKCS12_helper_set_authsafe(1);
             break;
         case OPT_TEST_CASES:
             break;

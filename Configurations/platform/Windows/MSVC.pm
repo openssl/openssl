@@ -20,7 +20,7 @@ sub pdbext              { '.pdb' }
 sub sharedname {
     return platform::BASE::__concat(platform::BASE->sharedname($_[1]),
                                     "-",
-                                    $_[0]->shlib_version_as_filename(),
+                                    $_[0]->shlib_version_as_filename($_[1]),
                                     ($target{multilib} // '' ),
                                     ($_[0]->shlibvariant() // ''));
 }

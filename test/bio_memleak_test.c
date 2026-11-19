@@ -10,6 +10,9 @@
 #include <string.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
+#if !defined(OPENSSL_NO_CMS)
+#include <libcms/pkcs7.h>
+#endif /* !defined(OPENSSL_NO_CMS) */
 
 #include "testutil.h"
 
@@ -221,6 +224,7 @@ finish:
     return ok;
 }
 
+#if !defined(OPENSSL_NO_CMS)
 static int error_callback_fired;
 static long BIO_error_callback(BIO *bio, int cmd, const char *argp,
     size_t len, int argi,
@@ -277,6 +281,7 @@ finish:
     PKCS7_free(p7);
     return ok;
 }
+#endif /* !defined(OPENSSL_NO_CMS) */
 
 int setup_tests(void)
 {
@@ -286,6 +291,8 @@ int setup_tests(void)
     ADD_TEST(test_bio_rdonly_mem_buf);
     ADD_TEST(test_bio_rdwr_rdonly);
     ADD_TEST(test_bio_nonclear_rst);
+#if !defined(OPENSSL_NO_CMS)
     ADD_TEST(test_bio_i2d_ASN1_mime);
+#endif /* !defined(OPENSSL_NO_CMS) */
     return 1;
 }

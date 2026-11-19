@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * The PKCS7 and PKCS7-typed PKCS#12 APIs are deprecated for public use, but
+ * still ok for internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include <openssl/core_names.h>
-#include "crypto/pkcs7/pk7_local.h"
+#include "cms/pk7_local.h"
 #include "p12_local.h"
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 

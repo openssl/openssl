@@ -766,6 +766,35 @@ were added in OpenSSL 3.5.
 
 d2i_IPAddrBlocks() and i2d_IPAddrBlocks() were added in OpenSSL 4.1.
 
+d2i_CMS_ContentInfo(), d2i_CMS_ReceiptRequest(), d2i_CMS_bio(),
+i2d_CMS_ContentInfo(), i2d_CMS_ReceiptRequest() and i2d_CMS_bio() moved to the
+new libcms library in OpenSSL 4.2. Deprecated variants remain in libcrypto,
+declared in F<< <openssl/cms.h> >>, until a future major release.  See
+L<libcms(7)>.
+
+d2i_TS_ACCURACY(), d2i_TS_MSG_IMPRINT(), d2i_TS_MSG_IMPRINT_bio(),
+d2i_TS_MSG_IMPRINT_fp(), d2i_TS_REQ(), d2i_TS_REQ_bio(), d2i_TS_REQ_fp(),
+d2i_TS_RESP(), d2i_TS_RESP_bio(), d2i_TS_RESP_fp(), d2i_TS_STATUS_INFO(),
+d2i_TS_TST_INFO(), d2i_TS_TST_INFO_bio(), d2i_TS_TST_INFO_fp(),
+i2d_TS_ACCURACY(), i2d_TS_MSG_IMPRINT(), i2d_TS_MSG_IMPRINT_bio(),
+i2d_TS_MSG_IMPRINT_fp(), i2d_TS_REQ(), i2d_TS_REQ_bio(), i2d_TS_REQ_fp(),
+i2d_TS_RESP(), i2d_TS_RESP_bio(), i2d_TS_RESP_fp(), i2d_TS_STATUS_INFO(),
+i2d_TS_TST_INFO(), i2d_TS_TST_INFO_bio() and i2d_TS_TST_INFO_fp() moved to the
+new libcms library in OpenSSL 4.2. Deprecated variants remain in libcrypto,
+declared in F<< <openssl/ts.h> >>, until a future major release.  See
+L<libcms(7)>.
+
+d2i_PKCS7(), d2i_PKCS7_DIGEST(), d2i_PKCS7_ENCRYPT(), d2i_PKCS7_ENC_CONTENT(),
+d2i_PKCS7_ENVELOPE(), d2i_PKCS7_ISSUER_AND_SERIAL(), d2i_PKCS7_RECIP_INFO(),
+d2i_PKCS7_SIGNED(), d2i_PKCS7_SIGNER_INFO(), d2i_PKCS7_SIGN_ENVELOPE(),
+d2i_PKCS7_bio(), d2i_PKCS7_fp(), i2d_PKCS7(), i2d_PKCS7_DIGEST(),
+i2d_PKCS7_ENCRYPT(), i2d_PKCS7_ENC_CONTENT(), i2d_PKCS7_ENVELOPE(),
+i2d_PKCS7_ISSUER_AND_SERIAL(), i2d_PKCS7_NDEF(), i2d_PKCS7_RECIP_INFO(),
+i2d_PKCS7_SIGNED(), i2d_PKCS7_SIGNER_INFO(), i2d_PKCS7_SIGN_ENVELOPE(),
+i2d_PKCS7_bio() and i2d_PKCS7_fp() moved to the new libcms library in
+OpenSSL 4.2. Deprecated variants remain in libcrypto, declared in
+F<< <openssl/pkcs7.h> >>, until a future major release.  See L<libcms(7)>.
+
 =head1 COPYRIGHT
 
 Copyright 1998-2026 The OpenSSL Project Authors. All Rights Reserved.

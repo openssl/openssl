@@ -1983,6 +1983,10 @@ DEPEND[html/man3/PKCS12_gen_mac.html]=man3/PKCS12_gen_mac.pod
 GENERATE[html/man3/PKCS12_gen_mac.html]=man3/PKCS12_gen_mac.pod
 DEPEND[man/man3/PKCS12_gen_mac.3]=man3/PKCS12_gen_mac.pod
 GENERATE[man/man3/PKCS12_gen_mac.3]=man3/PKCS12_gen_mac.pod
+DEPEND[html/man3/PKCS12_get1_authsafes.html]=man3/PKCS12_get1_authsafes.pod
+GENERATE[html/man3/PKCS12_get1_authsafes.html]=man3/PKCS12_get1_authsafes.pod
+DEPEND[man/man3/PKCS12_get1_authsafes.3]=man3/PKCS12_get1_authsafes.pod
+GENERATE[man/man3/PKCS12_get1_authsafes.3]=man3/PKCS12_get1_authsafes.pod
 DEPEND[html/man3/PKCS12_get_friendlyname.html]=man3/PKCS12_get_friendlyname.pod
 GENERATE[html/man3/PKCS12_get_friendlyname.html]=man3/PKCS12_get_friendlyname.pod
 DEPEND[man/man3/PKCS12_get_friendlyname.3]=man3/PKCS12_get_friendlyname.pod
@@ -3587,6 +3591,7 @@ html/man3/PKCS12_create.html \
 html/man3/PKCS12_decrypt_secretbag.html \
 html/man3/PKCS12_decrypt_skey.html \
 html/man3/PKCS12_gen_mac.html \
+html/man3/PKCS12_get1_authsafes.html \
 html/man3/PKCS12_get_friendlyname.html \
 html/man3/PKCS12_init.html \
 html/man3/PKCS12_item_decrypt_d2i.html \
@@ -4272,6 +4277,7 @@ man/man3/PKCS12_create.3 \
 man/man3/PKCS12_decrypt_secretbag.3 \
 man/man3/PKCS12_decrypt_skey.3 \
 man/man3/PKCS12_gen_mac.3 \
+man/man3/PKCS12_get1_authsafes.3 \
 man/man3/PKCS12_get_friendlyname.3 \
 man/man3/PKCS12_init.3 \
 man/man3/PKCS12_item_decrypt_d2i.3 \
@@ -5045,6 +5051,10 @@ DEPEND[html/man7/fips_module.html]=man7/fips_module.pod
 GENERATE[html/man7/fips_module.html]=man7/fips_module.pod
 DEPEND[man/man7/fips_module.7]=man7/fips_module.pod
 GENERATE[man/man7/fips_module.7]=man7/fips_module.pod
+DEPEND[html/man7/libcms.html]=man7/libcms.pod
+GENERATE[html/man7/libcms.html]=man7/libcms.pod
+DEPEND[man/man7/libcms.7]=man7/libcms.pod
+GENERATE[man/man7/libcms.7]=man7/libcms.pod
 DEPEND[html/man7/life_cycle-cipher.html]=man7/life_cycle-cipher.pod
 GENERATE[html/man7/life_cycle-cipher.html]=man7/life_cycle-cipher.pod
 DEPEND[man/man7/life_cycle-cipher.7]=man7/life_cycle-cipher.pod
@@ -5389,6 +5399,7 @@ html/man7/ct.html \
 html/man7/des_modes.html \
 html/man7/evp.html \
 html/man7/fips_module.html \
+html/man7/libcms.html \
 html/man7/life_cycle-cipher.html \
 html/man7/life_cycle-digest.html \
 html/man7/life_cycle-kdf.html \
@@ -5557,6 +5568,7 @@ man/man7/ct.7 \
 man/man7/des_modes.7 \
 man/man7/evp.7 \
 man/man7/fips_module.7 \
+man/man7/libcms.7 \
 man/man7/life_cycle-cipher.7 \
 man/man7/life_cycle-digest.7 \
 man/man7/life_cycle-kdf.7 \

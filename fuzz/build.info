@@ -9,8 +9,7 @@
 -}
 
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
-  PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server smime
-  PROGRAMS{noinst}=pkcs7_verify
+  PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server
   PROGRAMS{noinst}=store
   PROGRAMS{noinst}=pkcs12 punycode pem decoder hashtable acert
   PROGRAMS{noinst}=v3name x509v3
@@ -33,7 +32,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   ENDIF
 
   IF[{- !$disabled{"cms"} -}]
-    PROGRAMS{noinst}=cms cms_verify
+    PROGRAMS{noinst}=cms cms_verify pkcs7_verify smime
   ENDIF
 
   IF[{- !$disabled{"ct"} -}]
@@ -86,11 +85,11 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
-  DEPEND[cms]=../libcrypto {- $ex_lib -}
+  DEPEND[cms]=../libcms ../libcrypto {- $ex_lib -}
 
   SOURCE[cms_verify]=cms_verify.c driver.c
   INCLUDE[cms_verify]=../include {- $ex_inc -}
-  DEPEND[cms_verify]=../libcrypto {- $ex_lib -}
+  DEPEND[cms_verify]=../libcms ../libcrypto {- $ex_lib -}
 
   SOURCE[pkcs12]=pkcs12.c driver.c
   INCLUDE[pkcs12]=../include {- $ex_inc -}
@@ -146,11 +145,11 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[smime]=smime.c driver.c
   INCLUDE[smime]=../include {- $ex_inc -}
-  DEPEND[smime]=../libcrypto ../libssl {- $ex_lib -}
+  DEPEND[smime]=../libcms ../libcrypto ../libssl {- $ex_lib -}
 
   SOURCE[pkcs7_verify]=pkcs7_verify.c driver.c
   INCLUDE[pkcs7_verify]=../include {- $ex_inc -}
-  DEPEND[pkcs7_verify]=../libcrypto {- $ex_lib -}
+  DEPEND[pkcs7_verify]=../libcms ../libcrypto {- $ex_lib -}
 
   SOURCE[v3name]=v3name.c driver.c
   INCLUDE[v3name]=../include {- $ex_inc -}
@@ -204,8 +203,7 @@ ENDIF
 IF[{- !$disabled{tests} -}]
   $FUZZTESTSRC=test-corpus.c ../test/mfail/mfail.c
 
-  PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test smime-test
-  PROGRAMS{noinst}=pkcs7_verify-test
+  PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test
   PROGRAMS{noinst}=store-test
   PROGRAMS{noinst}=pkcs12-test punycode-test pem-test decoder-test hashtable-test acert-test
   PROGRAMS{noinst}=v3name-test x509v3-test
@@ -228,7 +226,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{"cms"} -}]
-    PROGRAMS{noinst}=cms-test cms_verify-test
+    PROGRAMS{noinst}=cms-test cms_verify-test pkcs7_verify-test smime-test
   ENDIF
 
   IF[{- !$disabled{"ct"} -}]
@@ -294,11 +292,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[cms-test]=cms.c $FUZZTESTSRC
   INCLUDE[cms-test]=../include ../test/mfail
-  DEPEND[cms-test]=../libcrypto.a
+  DEPEND[cms-test]=../libcms.a ../libcrypto.a
 
   SOURCE[cms_verify-test]=cms_verify.c $FUZZTESTSRC
   INCLUDE[cms_verify-test]=../include ../test/mfail
-  DEPEND[cms_verify-test]=../libcrypto.a
+  DEPEND[cms_verify-test]=../libcms.a ../libcrypto.a
 
   SOURCE[pkcs12-test]=pkcs12.c $FUZZTESTSRC
   INCLUDE[pkcs12-test]=../include ../test/mfail
@@ -354,11 +352,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[smime-test]=smime.c $FUZZTESTSRC
   INCLUDE[smime-test]=../include ../test/mfail
-  DEPEND[smime-test]=../libcrypto.a ../libssl.a
+  DEPEND[smime-test]=../libcms.a ../libcrypto.a ../libssl.a
 
   SOURCE[pkcs7_verify-test]=pkcs7_verify.c $FUZZTESTSRC
   INCLUDE[pkcs7_verify-test]=../include ../test/mfail
-  DEPEND[pkcs7_verify-test]=../libcrypto.a
+  DEPEND[pkcs7_verify-test]=../libcms.a ../libcrypto.a
 
   SOURCE[v3name-test]=v3name.c $FUZZTESTSRC
   INCLUDE[v3name-test]=../include ../test/mfail

@@ -17,20 +17,20 @@
 
 static char *find_friendly_name(PKCS12 *p12)
 {
-    STACK_OF(PKCS7) *safes;
+    STACK_OF(PKCS12_AUTHSAFE) *safes;
     int n, m;
     char *name = NULL;
-    PKCS7 *safe;
+    PKCS12_AUTHSAFE *safe;
     STACK_OF(PKCS12_SAFEBAG) *bags;
     PKCS12_SAFEBAG *bag;
 
-    if ((safes = PKCS12_unpack_authsafes(p12)) == NULL)
+    if ((safes = PKCS12_get1_authsafes(p12)) == NULL)
         return NULL;
 
-    for (n = 0; n < sk_PKCS7_num(safes) && name == NULL; n++) {
-        safe = sk_PKCS7_value(safes, n);
-        if (OBJ_obj2nid(safe->type) != NID_pkcs7_data
-            || (bags = PKCS12_unpack_p7data(safe)) == NULL)
+    for (n = 0; n < sk_PKCS12_AUTHSAFE_num(safes) && name == NULL; n++) {
+        safe = sk_PKCS12_AUTHSAFE_value(safes, n);
+        if (PKCS12_AUTHSAFE_get_type(safe) != NID_pkcs7_data
+            || (bags = PKCS12_AUTHSAFE_get1_bags(safe, NULL, 0, NULL, NULL)) == NULL)
             continue;
 
         for (m = 0; m < sk_PKCS12_SAFEBAG_num(bags) && name == NULL; m++) {
@@ -40,7 +40,7 @@ static char *find_friendly_name(PKCS12 *p12)
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
     }
 
-    sk_PKCS7_pop_free(safes, PKCS7_free);
+    sk_PKCS12_AUTHSAFE_pop_free(safes, PKCS12_AUTHSAFE_free);
 
     return name;
 }

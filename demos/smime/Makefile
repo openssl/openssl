@@ -1,6 +1,6 @@
 #
 # To run the demos when linked with a shared library (default) ensure that
-# libcrypto is on the library path. For example, to run the
+# libcms and libcrypto are on the library path. For example, to run the
 # sm_enc demo:
 #
 #    LD_LIBRARY_PATH=../.. ./sms_enc
@@ -13,7 +13,7 @@ TESTS = smenc \
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
-LDLIBS  = -lcrypto
+LDLIBS  = -lcms -lcrypto
 
 all: $(TESTS)
 
