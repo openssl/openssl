@@ -1793,6 +1793,15 @@ typedef struct {
     long next_off;
     int offset_mismatch; /* a fragment did not start where the last ended */
     int rejections; /* number of writes this BIO rejected */
+    /*
+     * The first rejected write, kept to compare with the first write accepted
+     * afterwards. The record sequence number may legitimately change on the
+     * retry, so only the data after the record header is compared.
+     */
+    unsigned char rejected[8192];
+    size_t rejected_len;
+    int retry_compared; /* the write after the rejection was compared */
+    int retry_mismatch; /* ... and it differed from the rejected one */
 } frag_bio;
 
 /*
@@ -1842,12 +1851,26 @@ static int frag_write(BIO *bio, const char *buf, size_t len, size_t *written)
     f->write_calls++;
 
     if (f->allowed <= 0) {
-        f->rejections++;
+        if (f->rejections++ == 0 && len <= sizeof(f->rejected)) {
+            memcpy(f->rejected, buf, len);
+            f->rejected_len = len;
+        }
         BIO_set_retry_write(bio);
         *written = 0;
         return 0;
     }
     f->allowed--;
+
+    if (f->rejected_len > 0 && !f->retry_compared) {
+        f->retry_compared = 1;
+        if (len != f->rejected_len
+            || len < DTLS1_RT_HEADER_LENGTH
+            || memcmp(buf + DTLS1_RT_HEADER_LENGTH,
+                   f->rejected + DTLS1_RT_HEADER_LENGTH,
+                   len - DTLS1_RT_HEADER_LENGTH)
+                != 0)
+            f->retry_mismatch = 1;
+    }
 
     {
         long off, flen;
@@ -2508,15 +2531,19 @@ static void frag_retry_msg_cb(int write_p, int version, int content_type,
  * idx bit 0: DTLS 1.3 instead of 1.2
  * idx bit 1: set a msg callback (it restores the overwritten payload but not
  *            the offset)
+ * idx bit 2: use an MTU and ClientHello larger than the 4096 byte buffering
+ *            BIO. Fragments that size bypass the buffer, so the rejection is
+ *            returned by the record write itself, not by the flush, and the
+ *            retry has to rebuild the fragment.
  */
 static int test_dtls_fragment_write_retry(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-    int dtls13 = idx & 1, msg_cb = (idx >> 1) & 1;
+    int dtls13 = idx & 1, msg_cb = (idx >> 1) & 1, large = (idx >> 2) & 1;
     int ret, i;
-    static unsigned char alpn[750];
+    static unsigned char alpn[14000];
     size_t j, used = 0;
     BIO *c_to_s_bio = NULL, *frag_wbio;
     frag_bio *fb;
@@ -2539,7 +2566,7 @@ static int test_dtls_fragment_write_retry(int idx)
     SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, NULL);
 
     /* Pad the ClientHello out via ALPN so it needs multiple fragments. */
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < (large ? 56 : 3); j++) {
         char name[250];
         int n = snprintf(name, sizeof(name), "proto-%04zu-%s", j,
             "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
@@ -2567,7 +2594,7 @@ static int test_dtls_fragment_write_retry(int idx)
         SSL_set_msg_callback(clientssl, frag_retry_msg_cb);
 
     SSL_set_options(clientssl, SSL_OP_NO_QUERY_MTU);
-    if (!TEST_true(SSL_set_mtu(clientssl, 256)))
+    if (!TEST_true(SSL_set_mtu(clientssl, large ? 6000 : 256)))
         goto end;
 
     /* See test_dtls_client_retransmit() for why the extra reference. */
@@ -2606,6 +2633,12 @@ static int test_dtls_fragment_write_retry(int idx)
     /* Every fragment started where the previous one ended. */
     if (!TEST_int_gt(fb->rejections, 0)
         || !TEST_false(fb->offset_mismatch))
+        goto end;
+
+    /* The retry carried the same handshake header and payload as the reject. */
+    if (!TEST_size_t_gt(fb->rejected_len, DTLS1_RT_HEADER_LENGTH)
+        || !TEST_true(fb->retry_compared)
+        || !TEST_false(fb->retry_mismatch))
         goto end;
 
     testresult = 1;
@@ -3100,7 +3133,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_dtls_connect_state_after_client_hello, 2);
 #if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
-    ADD_ALL_TESTS(test_dtls_fragment_write_retry, 4);
+    ADD_ALL_TESTS(test_dtls_fragment_write_retry, 8);
 #endif
 
     return 1;
