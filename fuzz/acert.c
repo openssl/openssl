@@ -8,7 +8,7 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#include <openssl/x509_acert.h>
+#include <libx509pmi/x509_acert.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
