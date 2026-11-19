@@ -193,12 +193,11 @@ ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
             key->prov_flags |= ML_KEM_KEY_PREFER_SEED;
         else
             key->prov_flags &= ~ML_KEM_KEY_PREFER_SEED;
+        key->prov_flags &= ~ML_KEM_KEY_PCT_TYPE;
         if (OPENSSL_strcasecmp(pct_type, "random") == 0)
             key->prov_flags |= ML_KEM_KEY_RANDOM_PCT;
         else if (OPENSSL_strcasecmp(pct_type, "fixed") == 0)
             key->prov_flags |= ML_KEM_KEY_FIXED_PCT;
-        else
-            key->prov_flags &= ~ML_KEM_KEY_PCT_TYPE;
     }
     return key;
 }
