@@ -9882,6 +9882,83 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * A ticket is still used only once:
+ * 0: resumed after a HelloRetryRequest for a key_share group, then not again
+ * 1: resumed after a HelloRetryRequest with a cookie, then not again
+ * 2: connection A's first ClientHello gets a HelloRetryRequest for a group
+ *    and uses the ticket up. Connection B cannot resume with it, and A's
+ *    second ClientHello still can.
+ * 3: connection A's first ClientHello gets a HelloRetryRequest with a cookie
+ *    and does not use the ticket up. Connection B resumes with it, so A's
+ *    second ClientHello cannot.
+ */
+static int test_anti_replay_single_use(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL;
+    int testresult = 0, reused = 0, ret;
+    int hrr = (idx % 2 == 0) ? AR_GROUP_HRR : AR_STATELESS_HRR;
+
+    if (!anti_replay_setup(&sctx, &cctx, &sess))
+        goto end;
+
+    if (idx < 2) {
+        if (!anti_replay_resume(sctx, cctx, sess, hrr, &reused)
+            || !TEST_true(reused)
+            /* A second use without a HelloRetryRequest could accept 0-RTT */
+            || !anti_replay_resume(sctx, cctx, sess, AR_NO_HRR, &reused)
+            || !TEST_false(reused))
+            goto end;
+        testresult = 1;
+        goto end;
+    }
+
+    /* Connection A: the first ClientHello and the HelloRetryRequest */
+    if (!anti_replay_objects(sctx, cctx, sess, hrr, &serverssl, &clientssl))
+        goto end;
+    if (hrr == AR_GROUP_HRR) {
+        if (!TEST_int_le(ret = SSL_connect(clientssl), 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret),
+                SSL_ERROR_WANT_READ)
+            || !TEST_int_le(ret = SSL_accept(serverssl), 0)
+            || !TEST_int_eq(SSL_get_error(serverssl, ret),
+                SSL_ERROR_WANT_READ))
+            goto end;
+    } else {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_WANT_READ))
+            || !TEST_int_eq(SSL_stateless(serverssl), 0))
+            goto end;
+    }
+
+    /* Connection B */
+    if (!anti_replay_resume(sctx, cctx, sess, AR_NO_HRR, &reused)
+        || !TEST_int_eq(reused, hrr == AR_STATELESS_HRR))
+        goto end;
+
+    /* Connection A: the second ClientHello */
+    if (hrr == AR_STATELESS_HRR
+        && (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_WANT_READ))
+            || !TEST_int_eq(SSL_stateless(serverssl), 1)))
+        goto end;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_session_reused(serverssl), hrr == AR_GROUP_HRR))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
@@ -20738,6 +20815,7 @@ int setup_tests(void)
     ADD_TEST(test_stateless);
     ADD_TEST(test_stateless_psk);
     ADD_ALL_TESTS(test_anti_replay_ticket_kept, 3);
+    ADD_ALL_TESTS(test_anti_replay_single_use, 4);
 #endif
     ADD_ALL_TESTS(test_export_key_mat, 6);
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
