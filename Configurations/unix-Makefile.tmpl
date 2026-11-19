@@ -1476,7 +1476,8 @@ errors:
            include/internal/asn1.h
            include/internal/sslconf.h );
    my @x509pmiheaders_tmpl =
-       qw( include/openssl/x509_acert.h include/openssl/x509v3.h );
+       qw( include/openssl/x509_acert.h include/openssl/x509v3.h
+           include/libx509pmi/x509_acert.h );
    my @cryptoskipheaders = ( @sslheaders_tmpl,
        qw( include/openssl/conf_api.h
            include/openssl/ebcdic.h
@@ -1486,7 +1487,7 @@ errors:
    our %cryptoheaders = ();
    our %sslheaders = ();
    our %x509pmiheaders = ();
-   foreach my $d ( qw( include/openssl include/internal ) ) {
+   foreach my $d ( qw( include/openssl include/internal include/libx509pmi ) ) {
        my @header_patterns =
            map { catfile($config{sourcedir}, $d, $_) } ( '*.h', '*.h.in' );
        foreach my $f ( map { glob($_) } @header_patterns ) {

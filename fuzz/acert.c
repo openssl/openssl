@@ -17,6 +17,8 @@
 int FuzzerInitialize(int *argc, char ***argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    if (!OSSL_X509PMI_init())
+        return 0;
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     return 1;

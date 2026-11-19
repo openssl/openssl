@@ -8,5 +8,5 @@ $PMISRC=\
 
 SOURCE[../libcrypto]=$PMISRC
 
-SOURCE[../libx509pmi]=$PMISRC
+SOURCE[../libx509pmi]=$PMISRC pmi_init.c
 DEFINE[../libx509pmi]=OSSL_LIBX509PMI_NAMES
