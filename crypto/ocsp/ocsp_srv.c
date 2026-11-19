@@ -234,12 +234,26 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
     return i;
 }
 
+/* Free whichever of the name or the key is currently set in |respid| */
+static void ocsp_respid_clear(OCSP_RESPID *respid)
+{
+    if (respid->type == V_OCSP_RESPID_NAME)
+        X509_NAME_free(respid->value.byName);
+    else if (respid->type == V_OCSP_RESPID_KEY)
+        ASN1_OCTET_STRING_free(respid->value.byKey);
+    respid->value.byName = NULL;
+}
+
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert)
 {
-    if (!X509_NAME_set(&respid->value.byName, X509_get_subject_name(cert)))
+    X509_NAME *byName = X509_NAME_dup(X509_get_subject_name(cert));
+
+    if (byName == NULL)
         return 0;
 
+    ocsp_respid_clear(respid);
     respid->type = V_OCSP_RESPID_NAME;
+    respid->value.byName = byName;
 
     return 1;
 }
@@ -268,6 +282,7 @@ int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
         goto err;
     }
 
+    ocsp_respid_clear(respid);
     respid->type = V_OCSP_RESPID_KEY;
     respid->value.byKey = byKey;
 
