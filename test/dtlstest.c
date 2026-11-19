@@ -612,6 +612,8 @@ end:
 
 /* An external PSK that the server can look up only after the cookie exchange */
 static SSL_SESSION *deferred_psk = NULL;
+/* The server's copy of it */
+static SSL_SESSION *deferred_srv_psk = NULL;
 static int deferred_psk_known = 0;
 static const unsigned char deferred_psk_id[] = "deferred";
 
@@ -635,9 +637,9 @@ static int deferred_find_session_cb(SSL *ssl, const unsigned char *identity,
         || identity_len != sizeof(deferred_psk_id) - 1
         || memcmp(identity, deferred_psk_id, identity_len) != 0)
         return 1;
-    if (!SSL_SESSION_up_ref(deferred_psk))
+    if (!SSL_SESSION_up_ref(deferred_srv_psk))
         return 0;
-    *sess = deferred_psk;
+    *sess = deferred_srv_psk;
     return 1;
 }
 
@@ -649,12 +651,16 @@ static int deferred_find_session_cb(SSL *ssl, const unsigned char *identity,
  * 1: the PSK is still unknown then, which the cookie no longer excuses
  * 2: as 0 with a PSK-only key exchange, so the second key_share is not used
  * 3: as 2 on a server that also has a certificate
+ * 4: the server knows the identity from the start, but with another key: the
+ *    first ClientHello still gets a HelloRetryRequest, as for an unknown
+ *    identity, not an alert
  */
 static int test_cookie_exchange_deferred_psk(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0, ret;
+    static const unsigned char other_key[SHA256_DIGEST_LENGTH] = { 0xff };
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(), DTLS1_3_VERSION, 0,
@@ -683,13 +689,23 @@ static int test_cookie_exchange_deferred_psk(int idx)
         || !TEST_true(SSL_SESSION_set_protocol_version(deferred_psk,
             DTLS1_3_VERSION)))
         goto end;
+    if (idx == 4) {
+        if (!TEST_ptr(deferred_srv_psk = SSL_SESSION_dup(deferred_psk))
+            || !TEST_true(SSL_SESSION_set1_master_key(deferred_srv_psk,
+                other_key, sizeof(other_key))))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_SESSION_up_ref(deferred_psk)))
+            goto end;
+        deferred_srv_psk = deferred_psk;
+    }
 
     client_hello_count = client_hello_cookie_count = 0;
-    deferred_psk_known = 0;
+    deferred_psk_known = (idx == 4);
 
     /*
-     * First ClientHello: the server has neither the PSK nor a certificate and
-     * still answers with a HelloRetryRequest, not an alert.
+     * First ClientHello: the server cannot use a PSK for it and still answers
+     * with a HelloRetryRequest, not an alert.
      */
     if (!TEST_int_le(ret = SSL_connect(clientssl), 0)
         || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ)
@@ -701,12 +717,20 @@ static int test_cookie_exchange_deferred_psk(int idx)
 
     deferred_psk_known = (idx != 1);
 
-    if (idx == 1) {
-        /* The second ClientHello is held to the usual PSK checks */
+    if (idx == 1 || idx == 4) {
+        /*
+         * The second ClientHello is held to the usual PSK checks. The client
+         * and the server share one error queue: the server's reason comes
+         * first, then the alert the client reads in the last SSL_connect().
+         */
         if (!TEST_false(create_ssl_connection(serverssl, clientssl,
                 SSL_ERROR_SSL))
             || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
-                SSL_R_BAD_EXTENSION)
+                idx == 1 ? SSL_R_BAD_EXTENSION
+                         : SSL_R_BINDER_DOES_NOT_VERIFY)
+            || !TEST_int_le(SSL_connect(clientssl), 0)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_TLSV1_ALERT_DECRYPT_ERROR)
             || !TEST_int_eq(client_hello_count, 2)
             || !TEST_int_eq(client_hello_cookie_count, 1))
             goto end;
@@ -727,6 +751,8 @@ static int test_cookie_exchange_deferred_psk(int idx)
 end:
     SSL_SESSION_free(deferred_psk);
     deferred_psk = NULL;
+    SSL_SESSION_free(deferred_srv_psk);
+    deferred_srv_psk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -3224,7 +3250,7 @@ int setup_tests(void)
     ADD_TEST(test_cookie);
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_ALL_TESTS(test_cookie_exchange, 5);
-    ADD_ALL_TESTS(test_cookie_exchange_deferred_psk, 4);
+    ADD_ALL_TESTS(test_cookie_exchange_deferred_psk, 5);
 #endif
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
