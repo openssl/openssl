@@ -650,11 +650,19 @@ err:
     return ok;
 }
 
+/*
+ * If tolerate_failure is set, tolerates the connection attempt itself failing
+ * (rather than the connection later closing after a successful handshake),
+ * for scripts where fault injection is expected to prevent the handshake
+ * from completing at all.
+ */
 DEF_FUNC(hf_connect_wait)
 {
     int ok = 0, ret;
     SSL *ssl;
+    uint64_t tolerate_failure;
 
+    F_POP(tolerate_failure);
     REQUIRE_SSL(ssl);
 
     /* if not started */
@@ -678,7 +686,7 @@ DEF_FUNC(hf_connect_wait)
         if (is_want(ssl, ret))
             F_SPIN_AGAIN();
 
-        if (!TEST_int_eq(ret, 1))
+        if (!tolerate_failure && !TEST_int_eq(ret, 1))
             goto err;
     }
 
@@ -1181,6 +1189,12 @@ err:
 
 #define OP_CONNECT_WAIT(name) \
     (OP_SELECT_SSL(0, name),  \
+        OP_PUSH_U64(0),       \
+        OP_FUNC(hf_connect_wait))
+
+#define OP_CONNECT_WAIT_OR_FAIL(name) \
+    (OP_SELECT_SSL(0, name),          \
+        OP_PUSH_U64(1),               \
         OP_FUNC(hf_connect_wait))
 
 #define OP_LISTEN(name)      \
