@@ -29,6 +29,9 @@
 
 /**
  * Returns whether the QUIC object is operating in server mode.
+ *
+ * @param s The QUIC SSL object to query.
+ * @returns 1 if the object is a server, 0 otherwise.
  */
 int ossl_quic_is_server(const SSL *s);
 
