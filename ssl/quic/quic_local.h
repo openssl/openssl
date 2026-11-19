@@ -27,6 +27,9 @@
 
 #ifndef OPENSSL_NO_QUIC
 
+/**
+ * Returns whether the QUIC object is operating in server mode.
+ */
 int ossl_quic_is_server(const SSL *s);
 
 /*
