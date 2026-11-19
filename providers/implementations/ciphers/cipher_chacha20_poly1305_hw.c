@@ -13,6 +13,23 @@
 #include "internal/endian.h"
 #include "cipher_chacha20_poly1305.h"
 
+/* Start of a message: the fused path is eligible again and holds no AAD. */
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+#define FUSE_RESET(c)                                       \
+    ((c)->fuse_state = FUSE_UNDECIDED, (c)->aad_buflen = 0, \
+        (c)->fuse_aad_done = 0)
+
+#if defined(__GNUC__) && defined(__ELF__)
+/*
+ * The test defines this. Production leaves it unresolved, so the address
+ * is NULL and the record path does not call it.
+ */
+extern void ossl_chacha20_poly1305_tls_fused_record(void) __attribute__((weak));
+#endif
+#else
+#define FUSE_RESET(c) ((void)0)
+#endif
+
 static int chacha_poly1305_tls_init(PROV_CIPHER_CTX *bctx,
     unsigned char *aad, size_t alen)
 {
@@ -39,6 +56,7 @@ static int chacha_poly1305_tls_init(PROV_CIPHER_CTX *bctx,
     ctx->chacha.counter[2] = ctx->nonce[1] ^ CHACHA_U8TOU32(aad);
     ctx->chacha.counter[3] = ctx->nonce[2] ^ CHACHA_U8TOU32(aad + 4);
     ctx->mac_inited = 0;
+    FUSE_RESET(ctx);
 
     return POLY1305_BLOCK_SIZE; /* tag length */
 }
@@ -65,6 +83,7 @@ static int chacha20_poly1305_initkey(PROV_CIPHER_CTX *bctx,
     ctx->len.text = 0;
     ctx->aad = 0;
     ctx->mac_inited = 0;
+    FUSE_RESET(ctx);
     ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
 
     if (bctx->enc)
@@ -84,6 +103,7 @@ static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
     ctx->len.text = 0;
     ctx->aad = 0;
     ctx->mac_inited = 0;
+    FUSE_RESET(ctx);
     ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
 
     /* pad on the left */
@@ -125,6 +145,47 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
     unsigned char *buf, *tohash, *ctr, storage[sizeof(zero) + 32];
 
     DECLARE_IS_ENDIAN;
+
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+    /*
+     * tls_aad is the 13-byte TLS AAD; the kernel pads it.  counter[1..3]
+     * is the RFC 7905 nonce.  Encrypt appends the tag.  Decrypt compares
+     * it and wipes the output, without PROV_R_BAD_DECRYPT.
+     */
+    if (ossl_chacha20_poly1305_avx512_available()) {
+        unsigned char tag[POLY1305_BLOCK_SIZE];
+
+#if defined(__GNUC__) && defined(__ELF__)
+        if (ossl_chacha20_poly1305_tls_fused_record != NULL)
+            ossl_chacha20_poly1305_tls_fused_record();
+#endif
+
+        if (!ossl_chacha20_poly1305_avx512(out, in, plen, ctx->tls_aad,
+                EVP_AEAD_TLS1_AAD_LEN, ctx->chacha.key.d, ctx->chacha.counter,
+                tag, bctx->enc))
+            return 0;
+
+        ctx->len.aad = EVP_AEAD_TLS1_AAD_LEN;
+        ctx->len.text = plen;
+        ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
+
+        if (bctx->enc) {
+            memcpy(ctx->tag, tag, POLY1305_BLOCK_SIZE);
+            memcpy(out + plen, tag, POLY1305_BLOCK_SIZE);
+        } else if (CRYPTO_memcmp(tag, in + plen, POLY1305_BLOCK_SIZE) != 0) {
+            OPENSSL_cleanse(tag, sizeof(tag));
+            if (plen != 0)
+                memset(out, 0, plen);
+            return 0;
+        } else {
+            len -= POLY1305_BLOCK_SIZE;
+        }
+        OPENSSL_cleanse(tag, sizeof(tag));
+
+        *out_padlen = len;
+        return 1;
+    }
+#endif
 
     buf = storage + ((0 - (size_t)storage) & 15); /* align */
     ctr = buf + CHACHA_BLK_SIZE;
@@ -265,6 +326,111 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
 static const unsigned char zero[CHACHA_BLK_SIZE] = { 0 };
 #endif /* OPENSSL_SMALL_FOOTPRINT */
 
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+/*
+ * Fused path.  The kernel owns the MAC.  Short AAD was held so init can
+ * see the payload length.  Longer AAD is streamed here with hint 0.
+ */
+static int chacha20_poly1305_fused_cipher(PROV_CIPHER_CTX *bctx,
+    unsigned char *out, size_t *outl,
+    const unsigned char *in, size_t inl)
+{
+    PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)bctx;
+    size_t olen = 0;
+
+    if (!ctx->mac_inited) {
+        size_t hint = (out != NULL) ? inl : 0;
+
+        /* Nonce is counter[1..3].  The kernel ignores counter[0]. */
+        ossl_chacha20_poly1305_avx512_init(&ctx->fused, ctx->chacha.key.d,
+            ctx->chacha.counter, hint);
+        ctx->len.aad = ctx->aad_buflen;
+        ctx->len.text = 0;
+        if (ctx->aad_buflen != 0)
+            ossl_chacha20_poly1305_avx512_aad(&ctx->fused, ctx->aad_buf,
+                ctx->aad_buflen);
+        ctx->aad_buflen = 0;
+        ctx->aad = 0;
+        ctx->mac_inited = 1;
+        ctx->fuse_aad_done = 0;
+    }
+
+    if (in != NULL && out == NULL) {
+        if (ctx->fuse_aad_done) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+            return 0;
+        }
+        ossl_chacha20_poly1305_avx512_aad(&ctx->fused, in, inl);
+        ctx->len.aad += inl;
+        *outl = 0;
+        return 1;
+    }
+
+    if (!ctx->fuse_aad_done) {
+        ossl_chacha20_poly1305_avx512_aad_done(&ctx->fused);
+        ctx->fuse_aad_done = 1;
+    }
+
+    if (in != NULL) {
+        if (!ossl_chacha20_poly1305_avx512_cipher(&ctx->fused, out, in, inl,
+                bctx->enc)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
+            *outl = 0;
+            return 0;
+        }
+        ctx->len.text += inl;
+        olen = inl;
+    } else { /* explicit final */
+        unsigned char temp[POLY1305_BLOCK_SIZE];
+
+        ossl_chacha20_poly1305_avx512_final(&ctx->fused,
+            bctx->enc ? ctx->tag : temp,
+            ctx->len.aad, ctx->len.text);
+        ctx->mac_inited = 0;
+        FUSE_RESET(ctx);
+        if (!bctx->enc && CRYPTO_memcmp(temp, ctx->tag, ctx->tag_len) != 0) {
+            OPENSSL_cleanse(temp, sizeof(temp));
+            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+            return 0;
+        }
+        OPENSSL_cleanse(temp, sizeof(temp));
+    }
+
+    *outl = olen;
+    return 1;
+}
+
+/*
+ * One decision per message.  TLS leaves this off; tls_cipher calls the
+ * one-shot when the CPU can run the kernel.  A small-footprint build
+ * keeps TLS two-pass.  AAD that fits stays undecided until the first
+ * payload.  Longer AAD starts the kernel with hint 0.  Without the
+ * kernel the message stays two-pass.  Payload length does not select
+ * two-pass.
+ */
+static int chacha20_poly1305_fuse_decide(PROV_CHACHA20_POLY1305_CTX *ctx,
+    unsigned char *out, const unsigned char *in, size_t inl)
+{
+    if (ctx->tls_payload_length != NO_TLS_PAYLOAD_LENGTH
+        || !ossl_chacha20_poly1305_avx512_available()) {
+        ctx->fuse_state = FUSE_OFF;
+    } else if (in != NULL && out == NULL) { /* aad */
+        if (inl > sizeof(ctx->aad_buf) - ctx->aad_buflen) {
+            ctx->fuse_state = FUSE_ON;
+        } else {
+            memcpy(ctx->aad_buf + ctx->aad_buflen, in, inl);
+            ctx->aad_buflen += inl;
+        }
+    } else if (in != NULL) {
+        ctx->fuse_state = FUSE_ON;
+    } else {
+        ctx->fuse_state = FUSE_OFF;
+    }
+
+    return ctx->fuse_state;
+}
+#endif /* CHACHA20_POLY1305_AVX512_CAPABLE */
+
 static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
     unsigned char *out, size_t *outl,
     const unsigned char *in, size_t inl)
@@ -276,6 +442,18 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
     int rv = 0;
 
     DECLARE_IS_ENDIAN;
+
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+    if (ctx->fuse_state == FUSE_UNDECIDED
+        && chacha20_poly1305_fuse_decide(ctx, out, in, inl)
+            == FUSE_UNDECIDED) {
+        *outl = 0; /* aad buffered, nothing decided yet */
+        ctx->aad = 1;
+        return 1;
+    }
+    if (ctx->fuse_state == FUSE_ON)
+        return chacha20_poly1305_fused_cipher(bctx, out, outl, in, inl);
+#endif
 
     if (!ctx->mac_inited) {
         if (plen != NO_TLS_PAYLOAD_LENGTH && out != NULL) {
@@ -300,6 +478,15 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
             ctx->aad = 1;
         }
     }
+
+#ifdef CHACHA20_POLY1305_AVX512_CAPABLE
+    if (ctx->aad_buflen != 0) { /* replay AAD held back by the fuse decision */
+        Poly1305_Update(poly, ctx->aad_buf, ctx->aad_buflen);
+        ctx->len.aad += ctx->aad_buflen;
+        ctx->aad_buflen = 0;
+        ctx->aad = 1;
+    }
+#endif
 
     if (in != NULL) { /* aad or text */
         if (out == NULL) { /* aad */
@@ -377,6 +564,7 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
         }
         Poly1305_Final(poly, bctx->enc ? ctx->tag : temp);
         ctx->mac_inited = 0;
+        FUSE_RESET(ctx);
 
         if (in != NULL && inl != plen) {
             if (bctx->enc) {
