@@ -554,7 +554,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
             if (BIO_write(out, linebuf, len) != len)
                 goto err;
         }
-        if (len < 0)
+        if (len < 0 && !BIO_eof(in))
             goto err;
     } else {
         int eolcnt = 0;
@@ -584,7 +584,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
                     goto err;
             }
         }
-        if (len < 0)
+        if (len < 0 && !BIO_eof(in))
             goto err;
     }
     ret = 1;

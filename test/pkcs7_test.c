@@ -76,6 +76,7 @@ static int smime_crlf_copy_read_error_test(void)
 {
     BIO_METHOD *method = NULL;
     BIO *in = NULL, *out = NULL, *eof_in = NULL, *eof_out = NULL;
+    BIO *mem_in = NULL, *mem_out = NULL;
     int ret = 0;
 
     if (!TEST_ptr(method = BIO_meth_new(BIO_TYPE_SOURCE_SINK,
@@ -103,6 +104,11 @@ static int smime_crlf_copy_read_error_test(void)
         || !TEST_ptr(eof_out = BIO_new(BIO_s_mem()))
         || !TEST_true(SMIME_crlf_copy(eof_in, eof_out, SMIME_BINARY)))
         goto end;
+    if (!TEST_ptr(mem_in = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(mem_out = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(BIO_write(mem_in, "complete", 8), 8)
+        || !TEST_true(SMIME_crlf_copy(mem_in, mem_out, SMIME_BINARY)))
+        goto end;
 
     ret = 1;
 end:
@@ -110,6 +116,8 @@ end:
     BIO_free(out);
     BIO_free(eof_in);
     BIO_free(eof_out);
+    BIO_free(mem_in);
+    BIO_free(mem_out);
     BIO_meth_free(method);
     return ret;
 }
