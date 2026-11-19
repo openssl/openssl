@@ -37,6 +37,13 @@
  */
 #define MAX_DP_NAMES 16
 
+/*
+ * Maximum number of name comparisons the CRL scope checks of one
+ * certificate may perform, over all candidate CRLs.  The product of two
+ * counts clamped to CRL_SCOPE_CHECK_MAX + 1 must fit in an unsigned int.
+ */
+#define CRL_SCOPE_CHECK_MAX 65534
+
 /* CRL score values */
 #define CRL_SCORE_NOCRITICAL 0x100 /* No unhandled critical extensions */
 #define CRL_SCORE_SCOPE 0x080 /* certificate is within CRL scope */
@@ -84,8 +91,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-    unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
+static int crl_crldp_check(X509_STORE_CTX *ctx, X509 *x, X509_CRL *crl,
+    int crl_score, unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
     int *vfy_cb_err);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
@@ -1452,6 +1459,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     ctx->current_issuer = NULL;
     ctx->current_crl_score = 0;
     ctx->current_reasons = 0;
+    ctx->current_crl_scope_checks = 0;
 
     /* skip if cert is apparently self-signed */
     if (ctx->current_cert->ex_flags & EXFLAG_SS)
@@ -1846,7 +1854,8 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
         return 0;
 
     /* Check cert for matching CRL distribution points */
-    if (crl_crldp_check(x, crl, crl_score, &crl_reasons, crldp_names, vfy_cb_err)) {
+    if (crl_crldp_check(ctx, x, crl, crl_score, &crl_reasons, crldp_names,
+            vfy_cb_err)) {
         /* If no new reasons reject */
         if ((crl_reasons & ~tmp_reasons) == 0)
             return 0;
@@ -2088,9 +2097,62 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
     return 0;
 }
 
+/*
+ * Return the number of items |n| for use in a CRL scope check cost, with a
+ * negative count (from sk_*_num(NULL)) taken as 0.  Any count above
+ * CRL_SCOPE_CHECK_MAX exceeds the budget by itself, so it is clamped to
+ * CRL_SCOPE_CHECK_MAX + 1: the costs computed from such counts then cannot
+ * overflow.
+ */
+static unsigned int crl_scope_count(int n)
+{
+    if (n <= 0)
+        return 0;
+    return n > CRL_SCOPE_CHECK_MAX ? CRL_SCOPE_CHECK_MAX + 1 : (unsigned int)n;
+}
+
+/*
+ * Number of names idp_check_dp() may compare on behalf of the distribution
+ * point name |dpn|: a relative name, like an absent one, counts as one.
+ * Any count above CRL_SCOPE_CHECK_MAX exceeds the budget by itself, so it
+ * is clamped to CRL_SCOPE_CHECK_MAX + 1: the costs computed from such counts
+ * then cannot overflow.
+ */
+static unsigned int dp_name_count(const DIST_POINT_NAME *dpn)
+{
+    unsigned int n;
+
+    if (dpn == NULL || dpn->type == 1)
+        return 1;
+    n = crl_scope_count(sk_GENERAL_NAME_num(dpn->name.fullname));
+    return n > 0 ? n : 1;
+}
+
+/*
+ * Account for |cost| more name comparisons in the CRL scope check of the
+ * current certificate.  Both the certificate's distribution points and the
+ * candidate CRLs can come from an unauthenticated source, such as a CMS
+ * message, and every distribution point is matched against every CRL before
+ * any signature has been checked, so the total is bounded much as
+ * NAME_CHECK_MAX bounds the name constraints check.  On failure sets
+ * |*vfy_cb_err| and returns 0.
+ */
+static int crl_scope_charge(X509_STORE_CTX *ctx, unsigned int cost,
+    int *vfy_cb_err)
+{
+    if (cost > CRL_SCOPE_CHECK_MAX - ctx->current_crl_scope_checks) {
+        ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT,
+            "Too many names to compare in CRL scope check");
+        *vfy_cb_err = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+    ctx->current_crl_scope_checks += cost;
+    return 1;
+}
+
 /* Check CRLDP and IDP */
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-    unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
+static int crl_crldp_check(X509_STORE_CTX *ctx, X509 *x, X509_CRL *crl,
+    int crl_score, unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
     int *vfy_cb_err)
 {
     int i;
@@ -2108,14 +2170,26 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
         X509_NAME *dpname;
+        unsigned int cost;
         int match;
 
+        /* The pair itself and the comparisons of crldp_check_crlissuer() */
+        cost = 1 + crl_scope_count(sk_GENERAL_NAME_num(dp->CRLissuer));
+        if (!crl_scope_charge(ctx, cost, vfy_cb_err))
+            return 0;
         if (!crldp_check_crlissuer(dp, crl, crl_score))
             continue;
-        if (crl->idp == NULL) {
+        if (crl->idp == NULL || crl->idp->distpoint == NULL
+            || dp->distpoint == NULL) {
+            /* idp_check_dp() would match without comparing any names */
             match = 1;
         } else {
-            if (dp->distpoint != NULL && dp->distpoint->type == 1) {
+            /* The comparisons of idp_check_dp() */
+            cost = dp_name_count(dp->distpoint)
+                * dp_name_count(crl->idp->distpoint);
+            if (!crl_scope_charge(ctx, cost, vfy_cb_err))
+                return 0;
+            if (dp->distpoint->type == 1) {
                 if (*crldp_names == NULL) {
                     *crldp_names = get_crldp_full_names(x);
                     if (*crldp_names == NULL) {
