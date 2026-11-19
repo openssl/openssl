@@ -3190,7 +3190,14 @@ static int test_ssl_client_as_ossl_quic_method(void)
      * returns an error to us
      */
     testssl = SSL_new(cctx);
-    if (!TEST_ptr(testssl))
+    if (!TEST_ptr(testssl)
+        || !TEST_false(SSL_is_server(testssl)))
+        goto err;
+    SSL_set_accept_state(testssl);
+    if (!TEST_true(SSL_is_server(testssl)))
+        goto err;
+    SSL_set_connect_state(testssl);
+    if (!TEST_false(SSL_is_server(testssl)))
         goto err;
     if (!TEST_int_eq(SSL_listen_ex(qlistener, testssl), -1))
         goto err;
@@ -3242,6 +3249,8 @@ static int test_ssl_listen_ex(void)
                       SSL_DOMAIN_FLAG_MULTI_THREAD))
         || !create_quic_ssl_objects_ex(sctx, cctx, domain,
             &qlistener, &clientssl, 1))
+        goto err;
+    if (!TEST_false(SSL_is_server(domain)))
         goto err;
 
     qmctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_method());
@@ -3334,6 +3343,7 @@ static int test_ssl_listen_ex(void)
     preconf = NULL;
 
     if (!TEST_int_eq(SSL_listen_ex(qlistener, serverssl), 1)
+        || !TEST_true(SSL_is_server(serverssl))
         || !TEST_size_t_eq(SSL_get_accept_connection_queue_len(qlistener), 0)
         || !TEST_true(SSL_get_domain_flags(serverssl,
             &connection_domain_flags))
@@ -3386,6 +3396,7 @@ static int test_ssl_listen_ex(void)
         || !TEST_true(SSL_set_default_stream_mode(clientssl,
             SSL_DEFAULT_STREAM_MODE_NONE))
         || !TEST_ptr(cstream = SSL_new_stream(clientssl, 0))
+        || !TEST_false(SSL_is_server(cstream))
         || !TEST_true(SSL_write_ex(cstream, msg, sizeof(msg), &written))
         || !TEST_size_t_eq(written, sizeof(msg))
         || !TEST_int_eq(SSL_handle_events(serverssl), 1))
@@ -3393,6 +3404,7 @@ static int test_ssl_listen_ex(void)
 
     sstream = SSL_accept_stream(serverssl, 0);
     if (!TEST_ptr(sstream)
+        || !TEST_true(SSL_is_server(sstream))
         || !TEST_true(SSL_get_domain_flags(sstream, &stream_domain_flags))
         || !TEST_uint64_t_eq(stream_domain_flags, listener_domain_flags)
         || !TEST_ptr_eq(SSL_get0_domain(sstream),
@@ -3534,6 +3546,13 @@ static int test_ssl_accept_connection(void)
         goto err;
 
     if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    if (!TEST_false(SSL_is_server(clientssl)))
+        goto err;
+    SSL_set_connect_state(clientssl);
+    if (!TEST_false(SSL_is_server(clientssl))
+        || !TEST_true(SSL_is_server(qlistener)))
         goto err;
 
     /* Calling SSL_accept() on a listener is expected to fail */

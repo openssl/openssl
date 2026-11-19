@@ -27,6 +27,8 @@
 
 #ifndef OPENSSL_NO_QUIC
 
+int ossl_quic_is_server(const SSL *s);
+
 /*
  * QUIC stream SSL object (QSSO) type. This implements the API personality layer
  * for QSSO objects, wrapping the QUIC-native QUIC_STREAM object and tracking
