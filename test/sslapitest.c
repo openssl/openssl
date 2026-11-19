@@ -9712,6 +9712,176 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * With anti-replay (max_early_data > 0 and no SSL_OP_NO_ANTI_REPLAY) the
+ * server keeps its tickets in the session cache and uses each one only once.
+ * These tests check when a ticket is used up.
+ */
+#if defined(OPENSSL_NO_EC)
+#define AR_HRR_GROUP "ffdhe3072"
+#define AR_HRR_GROUP_NID NID_ffdhe3072
+#else
+#define AR_HRR_GROUP "P-384"
+#define AR_HRR_GROUP_NID NID_secp384r1
+#endif
+
+/* How the server answers the first ClientHello of a resumption */
+enum {
+    AR_NO_HRR, /* ServerHello */
+    AR_GROUP_HRR, /* HelloRetryRequest for a key_share group */
+    AR_STATELESS_HRR /* HelloRetryRequest with a cookie, SSL_stateless() */
+};
+
+/* Make a server with anti-replay on and a session to resume from it */
+static int anti_replay_setup(SSL_CTX **sctx, SSL_CTX **cctx,
+    SSL_SESSION **sess)
+{
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int ret = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            sctx, cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_max_early_data(*sctx,
+            SSL3_RT_MAX_PLAIN_LENGTH)))
+        return 0;
+
+    /* The arrival of CCS messages can confuse SSL_stateless() */
+    SSL_CTX_clear_options(*cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    SSL_CTX_set_stateless_cookie_generate_cb(*sctx,
+        generate_stateless_cookie_callback);
+    SSL_CTX_set_stateless_cookie_verify_cb(*sctx,
+        verify_stateless_cookie_callback);
+
+    if (!TEST_true(create_ssl_objects(*sctx, *cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(*sess = SSL_get1_session(clientssl)))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+    ret = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    return ret;
+}
+
+/*
+ * Create the objects for a resumption of |sess|. For AR_GROUP_HRR the server
+ * accepts only a group the client does not send a key_share for.
+ */
+static int anti_replay_objects(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL_SESSION *sess, int hrr, SSL **serverssl, SSL **clientssl)
+{
+    return TEST_true(create_ssl_objects(sctx, cctx, serverssl, clientssl,
+               NULL, NULL))
+        && TEST_true(SSL_set_session(*clientssl, sess))
+        && (hrr != AR_GROUP_HRR
+            || TEST_true(SSL_set1_groups_list(*serverssl, AR_HRR_GROUP)));
+}
+
+/* Complete a resumption started by anti_replay_objects() */
+static int anti_replay_finish(SSL *serverssl, SSL *clientssl, int hrr,
+    int *reused)
+{
+    if (hrr == AR_STATELESS_HRR
+        && (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_WANT_READ))
+            || !TEST_int_eq(SSL_stateless(serverssl), 0)
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_WANT_READ))
+            || !TEST_int_eq(SSL_stateless(serverssl), 1)))
+        return 0;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        return 0;
+    /* Check that the HelloRetryRequest did happen */
+    if (hrr == AR_GROUP_HRR
+        && !TEST_int_eq(SSL_get_negotiated_group(serverssl),
+            AR_HRR_GROUP_NID))
+        return 0;
+    *reused = SSL_session_reused(serverssl);
+    return 1;
+}
+
+/* Resume |sess| and report in |*reused| whether the server resumed it */
+static int anti_replay_resume(SSL_CTX *sctx, SSL_CTX *cctx, SSL_SESSION *sess,
+    int hrr, int *reused)
+{
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int ret = 0;
+
+    if (!anti_replay_objects(sctx, cctx, sess, hrr, &serverssl, &clientssl)
+        || !anti_replay_finish(serverssl, clientssl, hrr, reused))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+    ret = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    return ret;
+}
+
+/*
+ * A ticket is not used up by a ClientHello that does not resume:
+ * 0: the first ClientHello gets a HelloRetryRequest for a key_share group
+ * 1: the first ClientHello gets a HelloRetryRequest with a cookie
+ * 2: a ClientHello whose binder does not verify
+ */
+static int test_anti_replay_ticket_kept(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL, *forged = NULL;
+    static const int hrr[] = { AR_GROUP_HRR, AR_STATELESS_HRR, AR_NO_HRR };
+    unsigned char key[EVP_MAX_MD_SIZE] = { 0 };
+    size_t keylen;
+    int testresult = 0, reused = 0;
+
+    if (!anti_replay_setup(&sctx, &cctx, &sess))
+        goto end;
+
+    if (idx == 2) {
+        /* Same ticket, other key: the client's binder does not verify */
+        if (!TEST_ptr(forged = SSL_SESSION_dup(sess))
+            || !TEST_size_t_gt(keylen = SSL_SESSION_get_master_key(sess, NULL,
+                                   0),
+                0)
+            || !TEST_size_t_le(keylen, sizeof(key))
+            || !TEST_true(SSL_SESSION_set1_master_key(forged, key, keylen))
+            || !anti_replay_objects(sctx, cctx, forged, AR_NO_HRR,
+                &serverssl, &clientssl)
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_SSL))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+                SSL_R_BINDER_DOES_NOT_VERIFY))
+            goto end;
+        ERR_clear_error();
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+    }
+
+    if (!anti_replay_resume(sctx, cctx, sess, hrr[idx], &reused)
+        || !TEST_true(reused))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(forged);
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
@@ -20567,6 +20737,7 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_stateless);
     ADD_TEST(test_stateless_psk);
+    ADD_ALL_TESTS(test_anti_replay_ticket_kept, 3);
 #endif
     ADD_ALL_TESTS(test_export_key_mat, 6);
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
