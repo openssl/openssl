@@ -373,11 +373,13 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
             break;
         }
 
-        /* Ensure the URXE is big enough. */
+        /*
+         * Ensure the URXE is big enough. Failing to allocate says nothing about
+         * the network, and may pass, so it is not a permanent failure.
+         */
         urxe = dgram_demux_reserve_urxe(demux, urxe, demux->mtu);
         if (urxe == NULL)
-            /* Allocation error, fail. */
-            return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+            return DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
 
         /* Ensure we zero any fields added to BIO_MSG at a later date. */
         memset(&msg[i], 0, sizeof(BIO_MSG));
@@ -541,8 +543,12 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     }
 
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
+        /*
+         * Failing to allocate says nothing about the network, and may pass, so
+         * it must not fail every connection from now on.
+         */
         if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
-            ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+            ret = DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL;
             goto end;
         }
 
@@ -573,8 +579,13 @@ end:
                 demux->permanent_error = ERR_PACK(ERR_LIB_BIO, 0, ERR_R_INTERNAL_ERROR);
         }
         error = demux->permanent_error;
+        ERR_clear_last_mark();
+    } else if (ret == DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL) {
+        /* Nothing is wrong that the caller can be told, so leave no error. */
+        ERR_pop_to_mark();
+    } else {
+        ERR_clear_last_mark();
     }
-    ERR_clear_last_mark();
 
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);

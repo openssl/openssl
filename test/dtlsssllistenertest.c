@@ -5451,7 +5451,7 @@ static int test_dtls_poll_listener_alloc_failure(void)
         goto end;
 
     if (triggered) {
-        if (!TEST_int_eq(ERR_GET_LIB(error), ERR_LIB_SSL)
+        if (!TEST_int_eq(ERR_GET_LIB(error), ERR_LIB_CRYPTO)
             || !TEST_int_eq(ERR_GET_REASON(error), ERR_R_MALLOC_FAILURE))
             goto end;
 
@@ -5498,6 +5498,105 @@ end:
 }
 
 #endif /* OPENSSL_THREADS */
+
+static CRYPTO_malloc_fn demux_oom_base_malloc;
+static CRYPTO_realloc_fn demux_oom_base_realloc;
+static CRYPTO_free_fn demux_oom_base_free;
+static int demux_oom_armed;
+static int demux_oom_hits;
+
+/* The smallest allocation the demux makes for a datagram buffer */
+#define DEMUX_OOM_MIN_SIZE 1024
+
+/* Fail the next datagram buffer allocation, once, if armed. */
+static void *demux_oom_malloc(size_t num, const char *file, int line)
+{
+    if (demux_oom_armed && num >= DEMUX_OOM_MIN_SIZE) {
+        demux_oom_armed = 0;
+        demux_oom_hits++;
+        return NULL;
+    }
+    return demux_oom_base_malloc(num, file, line);
+}
+
+static void *demux_oom_realloc(void *ptr, size_t num, const char *file,
+    int line)
+{
+    if (demux_oom_armed && num >= DEMUX_OOM_MIN_SIZE) {
+        demux_oom_armed = 0;
+        demux_oom_hits++;
+        return NULL;
+    }
+    return demux_oom_base_realloc(ptr, num, file, line);
+}
+
+/*
+ * A failure to allocate a datagram buffer says nothing about the socket, and
+ * can pass. It must not be kept as the demux's permanent error, which would
+ * fail every connection on the listener from then on.
+ */
+static int test_dtls_demux_alloc_failure_not_permanent(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    DTLS_LISTENER *dl;
+    int ret, wrapped = 0, testresult = 0;
+
+    if (!mfail_is_installed())
+        return TEST_skip("the allocator cannot be replaced without MFAIL");
+
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(cctx = SSL_CTX_new(DTLS_client_method()))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+    dl = (DTLS_LISTENER *)listener;
+
+    CRYPTO_get_mem_functions(&demux_oom_base_malloc, &demux_oom_base_realloc,
+        &demux_oom_base_free);
+    if (!TEST_true(CRYPTO_set_mem_functions(demux_oom_malloc,
+            demux_oom_realloc, demux_oom_base_free)))
+        goto end;
+    wrapped = 1;
+
+    ERR_clear_error();
+    demux_oom_hits = 0;
+    demux_oom_armed = 1;
+    ret = ossl_dgram_demux_pump(dl->demux);
+    demux_oom_armed = 0;
+    CRYPTO_set_mem_functions(demux_oom_base_malloc, demux_oom_base_realloc,
+        demux_oom_base_free);
+    wrapped = 0;
+
+    if (!TEST_int_eq(demux_oom_hits, 1)
+        || !TEST_int_eq(ret, DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL)
+        || !TEST_ulong_eq(ossl_dgram_demux_get_error(dl->demux), 0)
+        || !TEST_false(ossl_dtls_listener_has_failed(dl))
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto end;
+
+    /* The next pump allocates normally and finds nothing to read. */
+    ret = ossl_dgram_demux_pump(dl->demux);
+    if (!TEST_int_ne(ret, DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL)
+        || !TEST_ulong_eq(ossl_dgram_demux_get_error(dl->demux), 0)
+        || !TEST_false(ossl_dtls_listener_has_failed(dl)))
+        goto end;
+
+    testresult = 1;
+end:
+    demux_oom_armed = 0;
+    if (wrapped)
+        CRYPTO_set_mem_functions(demux_oom_base_malloc, demux_oom_base_realloc,
+            demux_oom_base_free);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    ERR_clear_error();
+    return testresult;
+}
 
 #if defined(OPENSSL_THREADS)
 /* Longer than the one-second SSL_poll() calls guarded by these helpers. */
@@ -5686,7 +5785,7 @@ static int test_dtls_poll_registration_failure(void)
         || !TEST_size_t_eq(count, !ret && registration.translation_started ? 1 : 0))
         goto end;
     if (!ret && !registration.translation_started
-        && (!TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_SSL)
+        && (!TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_CRYPTO)
             || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), ERR_R_MALLOC_FAILURE)))
         goto end;
     if (ret && !TEST_true(registration.registered))
@@ -10348,6 +10447,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_listener_enters_blocking_section);
     ADD_MFAIL_NO_CHECK_TEST(test_dtls_poll_listener_alloc_failure);
 #endif
+    ADD_TEST(test_dtls_demux_alloc_failure_not_permanent);
     ADD_TEST(test_dtls_poll_conn_honours_retransmit_timer);
     ADD_TEST(test_dtls_timer_stopped_when_retransmits_exhausted);
 

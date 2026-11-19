@@ -748,10 +748,8 @@ static int poll_block(SSL_POLL_ITEM *items,
     ossl_rio_poll_builder_init(&rpb);
 
     skipped = OPENSSL_zalloc(num_items);
-    if (skipped == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (skipped == NULL)
         goto out;
-    }
 
     if (!poll_translate(items, num_items, stride, &wctx, &rpb,
             &earliest_wakeup_deadline,

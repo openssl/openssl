@@ -647,35 +647,26 @@ static void recv_error_release_join(struct recv_error_thread_args *ta)
 }
 
 /*
- * For idx 0..4, a permanent listener receive error discovered by another thread
- * must wake a registered connection or listener waiter. The handshaken DTLS
- * client stays idle, the real socket stays live, and no timer or network data
- * can supply the wakeup. Only production error handling can signal the notifier.
- * idx 0/1 wait with SSL_poll; idx 2/3 wait with blocking SSL_read_ex.
- * Within idx 0..3, even indices discover failure through listener polling;
- * odd indices use a second accepted connection's read, which pumps the shared
- * demux directly. idx 4 blocks in SSL_accept_connection and uses the second
- * connection's read to discover failure without concurrent listener polling.
- * idx 5 forces SSL_write_ex into its internal write wait with a retryable send,
- * then discovers failure through the second connection at descriptor translation.
- * The UDP socket remains writable: this checks terminal failure across the write
- * wait, not notifier wakeup from an OS-blocked send. No send may be retried after
- * that failure, and the writer must receive the original transport diagnostic.
- * idx 6 polls two distinct children of one listener. Failure is discovered by
- * a third child after both poll items reach descriptor translation. They share
- * one listener registration, which cleanup must release before draining. The
- * worker watchdog bounds a deadlock; the finite poll timeout cannot bound
- * cleanup after the OS wait returns.
- * idx 7 uses the same retryable send as idx 5, but substitutes a full socketpair
- * endpoint for the write-poll descriptor. Its peer is never drained or closed
- * while the worker runs, so writability cannot end the wait. The descriptor
- * barrier orders failure injection; it does not prove an OS sleep has begun.
- * Production notification must allow prompt completion despite the nonwritable
- * descriptor. The watchdog aborts if the writer remains stuck.
- * idx 8 polls only EC on the child. An independent idle listener supplies a
- * descriptor barrier after that child's translation, without registering on
- * its behalf. Shared failure must wake the poll before its finite deadline;
- * the unrelated listener must report no event.
+ * A permanent receive error found through a listener's shared demux must wake
+ * every waiter registered on that listener or its connections. The handshaken
+ * client stays idle and the socket stays live, so no timer or network data can
+ * supply the wakeup: only the production error handling can signal the waiter.
+ *
+ * idx 0: SSL_poll waits on a connection; listener polling finds the failure.
+ * idx 1: SSL_poll waits on a connection; a second connection's read finds it.
+ * idx 2: a blocking SSL_read_ex waits; listener polling finds the failure.
+ * idx 3: a blocking SSL_read_ex waits; a second connection's read finds it.
+ * idx 4: SSL_accept_connection blocks; a second connection's read finds it.
+ * idx 5: SSL_write_ex waits after a retryable send; a second connection finds
+ *        the failure. The send is not retried and the writer gets the original
+ *        transport error.
+ * idx 6: SSL_poll waits on two children of one listener; a third child finds
+ *        the failure once both are waiting.
+ * idx 7: as idx 5, but the write-poll descriptor is a full socketpair endpoint
+ *        that never becomes writable, so only the notifier can end the wait.
+ * idx 8: SSL_poll waits for EC only on a child, with an unrelated idle listener
+ *        as the other item; the poll must end early and the listener must
+ *        report no event.
  */
 static int test_dtls_listener_recv_error_notifier(int idx)
 {
