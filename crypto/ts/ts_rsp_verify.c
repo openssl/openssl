@@ -494,6 +494,8 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
         if (!EVP_DigestUpdate(md_ctx, buffer, length))
             goto err;
     }
+    if (length < 0)
+        goto err;
     if (!EVP_DigestFinal(md_ctx, *imprint, NULL))
         goto err;
     EVP_MD_CTX_free(md_ctx);

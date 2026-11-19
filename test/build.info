@@ -921,6 +921,14 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[time_offset_test]=../include ../apps/include
   DEPEND[time_offset_test]=../libcrypto libtestutil.a
 
+  IF[{- !$disabled{ts} -}]
+    PROGRAMS{noinst}=ts_verify_test
+  ENDIF
+
+  SOURCE[ts_verify_test]=ts_verify_test.c
+  INCLUDE[ts_verify_test]=../include ../apps/include
+  DEPEND[ts_verify_test]=../libcrypto libtestutil.a
+
   SOURCE[conf_include_test]=conf_include_test.c
   INCLUDE[conf_include_test]=../include ../apps/include
   DEPEND[conf_include_test]=../libcrypto libtestutil.a
