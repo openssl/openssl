@@ -327,6 +327,41 @@ end:
     return ret;
 }
 
+/*
+ * A failed EVP_CipherUpdate() must be reported by BIO_get_cipher_status(),
+ * however much is read at once. Key wrap ciphers fail in EVP_CipherUpdate()
+ * when the integrity check of the unwrapped key fails. Test 0 reads 256
+ * bytes at a time, test 1 reads 4096.
+ */
+static int test_bio_enc_wrap_fail(int idx)
+{
+    /* Not the AES-128-WRAP of anything under KEY */
+    static const unsigned char wrapped[24] = { 0 };
+    unsigned char out[4096];
+    int outl = idx == 0 ? 256 : (int)sizeof(out);
+    EVP_CIPHER_CTX *ctx = NULL;
+    BIO *mem = NULL, *cbio = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(mem = BIO_new_mem_buf(wrapped, sizeof(wrapped)))
+        || !TEST_ptr(cbio = BIO_new(BIO_f_cipher()))
+        || !TEST_ptr(BIO_push(cbio, mem))
+        || !TEST_int_gt(BIO_get_cipher_ctx(cbio, &ctx), 0))
+        goto end;
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+    if (!TEST_true(EVP_CipherInit_ex(ctx, EVP_aes_128_wrap(), NULL, KEY, NULL,
+            DECRYPT))
+        || !TEST_int_le(BIO_read(cbio, out, outl), 0)
+        || !TEST_int_le(BIO_get_cipher_status(cbio), 0))
+        goto end;
+
+    ret = 1;
+end:
+    BIO_free(cbio);
+    BIO_free(mem);
+    return ret;
+}
+
 static int test_bio_enc_dup(void)
 {
     BIO *b = NULL, *dup = NULL;
@@ -362,6 +397,7 @@ int setup_tests(void)
 #endif
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
+    ADD_ALL_TESTS(test_bio_enc_wrap_fail, 2);
     ADD_TEST(test_bio_enc_dup);
     return 1;
 }
