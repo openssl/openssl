@@ -2730,18 +2730,6 @@ int tls_handle_alpn(SSL_CONNECTION *s)
     return 1;
 }
 
-/* Return 1 if the server has a certificate of any type configured, else 0 */
-static int have_any_cert(SSL_CONNECTION *s)
-{
-    size_t i;
-
-    for (i = 0; i < s->ssl_pkey_num; i++) {
-        if (ssl_has_cert(s, (int)i))
-            return 1;
-    }
-    return 0;
-}
-
 WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
 {
     const SSL_CIPHER *cipher;
@@ -2773,7 +2761,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                      * if a binder had failed.  See tls_parse_ctos_psk().  The
                      * reason stays SSL_R_CERT_CB_ERROR.
                      */
-                    if (s->ext.psk_unknown_identity && !have_any_cert(s))
+                    if (s->ext.psk_unknown_identity && !ssl_has_any_cert(s))
                         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_CERT_CB_ERROR);
                     else
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR);
@@ -2799,7 +2787,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 s->s3.tmp.new_cipher = cipher;
             }
             if (!s->hit) {
-                if (s->ext.psk_unknown_identity && !have_any_cert(s)) {
+                if (s->ext.psk_unknown_identity && !ssl_has_any_cert(s)) {
                     /*
                      * No certificate to fall back on: use decrypt_error to
                      * keep the alert the same as if the binder failed.
@@ -2807,7 +2795,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                      * do this in constant time compared to verifying the
                      * binder.  None of this code is constant time anyway.
                      */
-                    SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+                    SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_NO_CERTIFICATE_SET);
                     goto err;
                 }
                 if (!tls_choose_sigalg(s, 1)) {

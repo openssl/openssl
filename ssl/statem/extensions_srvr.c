@@ -1345,7 +1345,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     SSL_SESSION *sess = NULL;
     unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
     s->ext.psk_unknown_identity = 0;
@@ -1395,12 +1394,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
             return 0;
         }
-        /*
-         * The callback may have switched the connection to another context,
-         * which can free the one we looked up above.
-         */
-        sctx = SSL_CONNECTION_GET_CTX(s);
-
 #ifndef OPENSSL_NO_PSK
         if (sess == NULL
             && s->psk_server_callback != NULL
@@ -1569,13 +1562,19 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             continue;
         }
 
-        md = ssl_md(sctx, sess->cipher->algorithm2);
+        /*
+         * The callbacks above get the SSL and may switch it to another
+         * SSL_CTX, which can free the one it had.  So this function does not
+         * keep the connection's SSL_CTX in a local variable, it looks it up
+         * again wherever it is needed.
+         */
+        md = ssl_md(SSL_CONNECTION_GET_CTX(s), sess->cipher->algorithm2);
         if (md == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         if (!EVP_MD_is_a(md,
-                EVP_MD_get0_name(ssl_md(sctx,
+                EVP_MD_get0_name(ssl_md(SSL_CONNECTION_GET_CTX(s),
                     s->s3.tmp.new_cipher->algorithm2)))) {
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
@@ -1600,13 +1599,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     if (sess == NULL) {
-        size_t j;
-
-        for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
-            ;
-        if (j == s->ssl_pkey_num
+        if (!ssl_has_any_cert(s)
             && s->cert->cert_cb == NULL
-            && sctx->ext.servername_cb == NULL
+            && SSL_CONNECTION_GET_CTX(s)->ext.servername_cb == NULL
             && s->session_ctx->ext.servername_cb == NULL) {
             /*
              * No certificate, and no callback that could supply one later, so
@@ -1616,7 +1611,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              * time compared to verifying the binder.  None of this code is
              * constant time anyway.
              */
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_PSK_IDENTITY_NOT_FOUND);
             goto err;
         }
         /*

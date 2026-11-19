@@ -3189,7 +3189,6 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     SSL_HMAC hctx, *constructed_hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (eticklen == 0) {
         /*
@@ -3333,7 +3332,13 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     slen += declen;
     p = sdec;
 
-    sess = d2i_SSL_SESSION_ex(NULL, &p, slen, sctx->libctx, sctx->propq);
+    /*
+     * The ticket key callback above may have switched the connection to
+     * another SSL_CTX, which can free the one it had, so look it up here.
+     */
+    sess = d2i_SSL_SESSION_ex(NULL, &p, slen,
+        SSL_CONNECTION_GET_CTX(s)->libctx,
+        SSL_CONNECTION_GET_CTX(s)->propq);
     slen -= (int)(p - sdec);
     OPENSSL_free(sdec);
     if (sess) {

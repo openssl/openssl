@@ -2053,7 +2053,7 @@ static int test_tls13_external_psk_digest_not_offered(void)
     return test;
 }
 
-#ifndef OPENSSL_NO_CHACHA
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 /*
  * TLS 1.3 0-RTT suppressed while the ClientHello is still being flushed.
  *
@@ -2137,7 +2137,7 @@ end:
     SSL_CTX_free(s);
     return test;
 }
-#endif
+#endif /* !OPENSSL_NO_CHACHA && !OPENSSL_NO_POLY1305 */
 
 static int sni_switch_cb(SSL *ssl, int *alert, void *arg)
 {
@@ -2360,16 +2360,28 @@ static int switch_ctx_find_cb(SSL *ssl, const unsigned char *id, size_t idlen,
     return SSL_set_SSL_CTX(ssl, switch_target) != NULL;
 }
 
+#ifndef OPENSSL_NO_PSK
+static unsigned int switch_ctx_psk_server_cb(SSL *ssl, const char *identity,
+    unsigned char *psk, unsigned int max_psk_len)
+{
+    (void)SSL_set_SSL_CTX(ssl, switch_target);
+    return 0;
+}
+#endif
+
 /*
- * The PSK find callback switches the connection to another context and
- * reports that it has no session.  That context has an SNI callback that
+ * A server PSK callback switches the connection to another context and
+ * reports that it has no PSK.  That context has an SNI callback that
  * supplies the certificate, so the handshake must fall back to a full one.
  * The check for a callback must look at the context the connection has now,
- * not the one it had before the PSK callback ran.  The server is first
- * switched to an intermediate context.  With idx 1 the application drops its
- * own reference, so the callback's switch frees that context.
+ * not the one it had before the PSK callback ran.
+ *
+ * The server is first switched to an intermediate context.  With an odd idx
+ * the application drops its own reference, so the callback's switch frees
+ * that context.  With idx 0 and 1 the switch is made by the PSK find session
+ * callback, with idx 2 and 3 by the legacy PSK server callback.
  */
-static int test_tls13_psk_find_cb_switches_ctx(int idx)
+static int test_tls13_psk_cb_switches_ctx(int idx)
 {
     SSL_CTX *c = NULL, *s = NULL, *mid = NULL, *target = NULL, *vhost = NULL;
     struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
@@ -2392,7 +2404,7 @@ static int test_tls13_psk_find_cb_switches_ctx(int idx)
     if (test == 0)
         goto end;
 
-    if (idx == 1) {
+    if ((idx & 1) != 0) {
         SSL_CTX_free(mid);
         mid = NULL;
     }
@@ -2401,7 +2413,12 @@ static int test_tls13_psk_find_cb_switches_ctx(int idx)
     probe_known = 0;
     probe_wrong_key = 0;
     SSL_set_psk_use_session_callback(conn.c.ssl, probe_psk_use_cb);
-    SSL_set_psk_find_session_callback(conn.s.ssl, switch_ctx_find_cb);
+#ifndef OPENSSL_NO_PSK
+    if ((idx & 2) != 0)
+        SSL_set_psk_server_callback(conn.s.ssl, switch_ctx_psk_server_cb);
+    else
+#endif
+        SSL_set_psk_find_session_callback(conn.s.ssl, switch_ctx_find_cb);
     test = TEST_true(SSL_set_tlsext_host_name(conn.c.ssl, "review.example"))
         && TEST_true(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0))
         && TEST_int_eq(late_cert_calls, 1)
@@ -2962,8 +2979,12 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_sni_session_ctx);
     ADD_ALL_TESTS(test_tls13_ticket_unknown_late_cert, 2);
     ADD_ALL_TESTS(test_tls13_psk_unknown_identity_alert, 4);
-    ADD_ALL_TESTS(test_tls13_psk_find_cb_switches_ctx, 2);
-#ifndef OPENSSL_NO_CHACHA
+#ifndef OPENSSL_NO_PSK
+    ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 4);
+#else
+    ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 2);
+#endif
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_ALL_TESTS(test_tls13_suppress_early_data_want_write, 2);
 #endif
     ADD_ALL_TESTS(test_tls13_psk_bad_server_session, 4);
