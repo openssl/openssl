@@ -5548,7 +5548,8 @@ static int test_dtls_demux_alloc_failure_not_permanent(void)
 
     if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
         || !TEST_ptr(cctx = SSL_CTX_new(DTLS_client_method()))
-        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
     dl = (DTLS_LISTENER *)listener;
