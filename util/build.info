@@ -5,3 +5,9 @@ ENDIF
 SCRIPTS{noinst}=wrap.pl
 SOURCE[wrap.pl]=wrap.pl.in
 DEPEND[wrap.pl]=../configdata.pm
+
+# The prove plugin for running tests, with the source and build
+# directories baked in.  Used by the run_tests target in the build
+# files.
+DEPEND[]=perl/OpenSSL/TestHarness.pm
+GENERATE[perl/OpenSSL/TestHarness.pm]=perl/OpenSSL/TestHarness.pm.in
