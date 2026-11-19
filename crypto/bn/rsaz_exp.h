@@ -53,6 +53,16 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
     BN_ULONG k0_2,
     int factor_size);
 
+/* 2048-bit modulus (public BN_mod_exp_mont fast path). */
+int ossl_rsaz_mod_exp_avx512_x1(BN_ULONG *res,
+    const BN_ULONG *base,
+    const BN_ULONG *exp,
+    const BN_ULONG *m,
+    const BN_ULONG *RR,
+    BN_ULONG k0,
+    int factor_size,
+    int exp_bits);
+
 static ossl_inline void bn_select_words(BN_ULONG *r, BN_ULONG mask,
     const BN_ULONG *a,
     const BN_ULONG *b, size_t num)
