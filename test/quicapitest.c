@@ -5784,6 +5784,81 @@ end:
     return testresult;
 }
 
+static int test_quic_set0_bio_leak(void)
+{
+    int testresult = 0;
+    unsigned int i;
+    SSL_CTX *ctx_client = NULL;
+    SSL_CTX *ctx_server = NULL;
+    SSL *ssl_c = NULL;
+    SSL *ssl_l = NULL;
+    SSL *ssl[2];
+    BIO *bio = NULL;
+
+    ctx_client = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    if (!TEST_ptr(ctx_client))
+        goto end;
+
+    ctx_server = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method());
+    if (!TEST_ptr(ctx_server))
+        goto end;
+
+    ssl_c = SSL_new(ctx_client);
+    if (!TEST_ptr(ssl_c))
+        goto end;
+
+    ssl_l = SSL_new_listener(ctx_server, 0);
+    if (!TEST_ptr(ssl_l))
+        goto end;
+
+    bio = BIO_new(BIO_s_dgram_mem());
+    if (!TEST_ptr(bio))
+        goto end;
+
+    ssl[0] = ssl_c;
+    ssl[1] = ssl_l;
+
+    for (i = 0; i < 2; i++) {
+        /*
+         * obtain reference to bio and pass it to SSL as reader bio
+         */
+        if (!TEST_true(BIO_up_ref(bio)))
+            goto end;
+        SSL_set0_rbio(ssl[i], bio);
+
+        /*
+         * obtain reference to bio and pass it to SSL as writer bio
+         */
+        if (!TEST_true(BIO_up_ref(bio)))
+            goto end;
+        SSL_set0_wbio(ssl[i], bio);
+
+        /*
+         * try to trigger reference leak. Setting the same bio to
+         * ssl instance must free the reference to bio. The caller
+         * to SSL_set0_{r,w}bio() always looses ownership.
+         */
+        if (!TEST_true(BIO_up_ref(bio)))
+            goto end;
+        SSL_set0_rbio(ssl[i], bio);
+
+        if (!TEST_true(BIO_up_ref(bio)))
+            goto end;
+        SSL_set0_wbio(ssl[i], bio);
+    }
+
+    testresult = 1;
+
+end:
+    BIO_free(bio);
+    SSL_free(ssl_l);
+    SSL_free(ssl_c);
+    SSL_CTX_free(ctx_server);
+    SSL_CTX_free(ctx_client);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -5956,6 +6031,7 @@ int setup_tests(void)
     ADD_MFAIL_TEST(test_ssl_new_mfail);
     ADD_TEST(test_pending_limit);
     ADD_TEST(test_reject_pending_conn);
+    ADD_TEST(test_quic_set0_bio_leak);
 
     return 1;
 err:
