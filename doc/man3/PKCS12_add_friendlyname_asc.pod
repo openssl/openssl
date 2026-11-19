@@ -40,6 +40,11 @@ Returns 1 for success or 0 for failure.
 
 L<PKCS12_get_friendlyname(3)>
 
+=head1 HISTORY
+
+PKCS12_add_friendlyname_asc() and PKCS12_add_friendlyname_uni() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.

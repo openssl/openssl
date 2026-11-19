@@ -126,6 +126,8 @@ L<passphrase-encoding(7)>
 PKCS12_key_gen_asc_ex(), PKCS12_key_gen_uni_ex() and PKCS12_key_gen_utf8_ex()
 were added in OpenSSL 3.0.
 
+PKCS12_key_gen_asc() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.

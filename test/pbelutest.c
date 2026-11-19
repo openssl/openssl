@@ -7,9 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/evp.h>
 #include "testutil.h"
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Password based encryption (PBE) table ordering test.
  * Attempt to look up all supported algorithms.
@@ -42,9 +45,12 @@ static int test_pbelu(void)
     }
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int setup_tests(void)
 {
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_pbelu);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     return 1;
 }

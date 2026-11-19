@@ -184,6 +184,9 @@ In OpenSSL 3.2 the default salt length changed from 8 bytes to 16 bytes for PBE2
 related functions such as PKCS5_pbe2_set().
 This is required for PBKDF2 FIPS compliance.
 
+PKCS5_pbe2_set(), PKCS5_pbe_set0_algor() and PKCS5_pbkdf2_set() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.

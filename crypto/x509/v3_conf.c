@@ -9,6 +9,8 @@
 
 /* extension creation utilities */
 
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"

@@ -9,6 +9,8 @@
 
 /* X509 v3 extension utilities */
 
+#include "internal/deprecated.h"
+
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include <stdio.h>

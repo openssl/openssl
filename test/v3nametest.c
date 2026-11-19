@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 
 #include <openssl/e_os2.h>
@@ -772,6 +774,7 @@ end:
 }
 
 #if !defined(OPENSSL_NO_RFC3779)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_x509v3_addr_get_safi(void)
 {
 
@@ -801,6 +804,7 @@ err:
     IPAddressFamily_free(f);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 int setup_tests(void)
@@ -813,7 +817,9 @@ int setup_tests(void)
     ADD_TEST(test_GENERAL_NAME_cmp);
 
 #if !defined(OPENSSL_NO_RFC3779)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_x509v3_addr_get_safi);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
     return 1;
 }

@@ -130,6 +130,8 @@ ERR_get_error_line(), ERR_get_error_line_data(), ERR_peek_error_line_data()
 and ERR_peek_last_error_line_data() became deprecated in OpenSSL 3.0.
 
 
+ERR_peek_last_error_line() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.

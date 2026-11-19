@@ -101,6 +101,10 @@ this function.
 L<PKCS12_create(3)>, L<ERR_get_error(3)>,
 L<passphrase-encoding(7)>
 
+=head1 HISTORY
+
+PKCS12_newpass() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.

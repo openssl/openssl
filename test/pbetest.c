@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
@@ -72,13 +74,20 @@ static int test_pkcs5_pbe(const EVP_CIPHER *cipher, const EVP_MD *md,
     if (!TEST_ptr(ctx))
         goto err;
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     algor = X509_ALGOR_new();
+    if (!TEST_ptr(algor)
+        || !TEST_true(PKCS5_pbe_set0_algor(algor, EVP_CIPHER_nid(cipher),
+            pbe_iter, pbe_salt, sizeof(pbe_salt))))
+        goto err;
+#else
+    algor = PKCS5_pbe_set_ex(EVP_CIPHER_nid(cipher), pbe_iter, pbe_salt,
+        sizeof(pbe_salt), NULL);
     if (!TEST_ptr(algor))
         goto err;
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
-    if (!TEST_true(PKCS5_pbe_set0_algor(algor, EVP_CIPHER_nid(cipher), pbe_iter,
-            pbe_salt, sizeof(pbe_salt)))
-        || !TEST_true(PKCS5_PBE_keyivgen(ctx, pbe_password, (int)strlen(pbe_password),
+    if (!TEST_true(PKCS5_PBE_keyivgen(ctx, pbe_password, (int)strlen(pbe_password),
             algor->parameter, cipher, md, 1))
         || !TEST_true(EVP_CipherUpdate(ctx, out, &i, pbe_plaintext,
             sizeof(pbe_plaintext))))

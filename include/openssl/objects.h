@@ -49,9 +49,12 @@ typedef struct obj_name_st {
 #define OBJ_create_and_add_object(a, b, c) OBJ_create(a, b, c)
 
 int OBJ_NAME_init(void);
-int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
     int (*cmp_func)(const char *, const char *),
     void (*free_func)(const char *, int, const char *));
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const char *OBJ_NAME_get(const char *name, int type);
 int OBJ_NAME_add(const char *name, int type, const char *data);
 int OBJ_NAME_remove(const char *name, int type);
@@ -161,7 +164,10 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
         flags)
 
 int OBJ_new_nid(int num);
-int OBJ_add_object(const ASN1_OBJECT *obj);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OBJ_add_object(const ASN1_OBJECT *obj);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int OBJ_create(const char *oid, const char *sn, const char *ln);
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #define OBJ_cleanup() \

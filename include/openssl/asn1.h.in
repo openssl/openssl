@@ -564,8 +564,11 @@ int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a,
 #endif
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
-int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see ASN1_BIT_STRING_check(3) */
+OSSL_DEPRECATEDIN_4_2 int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
     const unsigned char *flags, int flags_len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
 OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
@@ -625,7 +628,11 @@ int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data,
 /* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS(ASN1_VISIBLESTRING)
-DECLARE_ASN1_FUNCTIONS(ASN1_UNIVERSALSTRING)
+DECLARE_ASN1_ITEM(ASN1_UNIVERSALSTRING)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, ASN1_UNIVERSALSTRING)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ASN1_UNIVERSALSTRING, ASN1_UNIVERSALSTRING)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(ASN1_UTF8STRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_NULL)
 DECLARE_ASN1_FUNCTIONS(ASN1_BMPSTRING)
@@ -641,14 +648,27 @@ OSSL_DEPRECATEDIN_4_1 int UTF8_putc(unsigned char *str, int len, unsigned long v
 -}
 /* clang-format on */
 
-DECLARE_ASN1_FUNCTIONS_name(ASN1_STRING, ASN1_PRINTABLE)
-
-DECLARE_ASN1_FUNCTIONS_name(ASN1_STRING, DIRECTORYSTRING)
+DECLARE_ASN1_ITEM(ASN1_PRINTABLE)
+DECLARE_ASN1_ITEM(DIRECTORYSTRING)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr(OSSL_DEPRECATEDIN_4_2, ASN1_STRING, ASN1_PRINTABLE)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ASN1_STRING, ASN1_PRINTABLE)
+DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr(OSSL_DEPRECATEDIN_4_2, ASN1_STRING, DIRECTORYSTRING)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ASN1_STRING, DIRECTORYSTRING)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS_name(ASN1_STRING, DISPLAYTEXT)
 DECLARE_ASN1_FUNCTIONS(ASN1_PRINTABLESTRING)
-DECLARE_ASN1_FUNCTIONS(ASN1_T61STRING)
+DECLARE_ASN1_ITEM(ASN1_T61STRING)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, ASN1_T61STRING)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ASN1_T61STRING, ASN1_T61STRING)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(ASN1_IA5STRING)
-DECLARE_ASN1_FUNCTIONS(ASN1_GENERALSTRING)
+DECLARE_ASN1_ITEM(ASN1_GENERALSTRING)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, ASN1_GENERALSTRING)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ASN1_GENERALSTRING, ASN1_GENERALSTRING)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(ASN1_UTCTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_GENERALIZEDTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_TIME)
@@ -674,10 +694,17 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b);
 
 int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
-int i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a);
-int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a);
-int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type);
 int i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a);
 
@@ -700,7 +727,10 @@ int ASN1_ENUMERATED_set_int64(ASN1_ENUMERATED *a, int64_t r);
 
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
 long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a);
-ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see BN_to_ASN1_ENUMERATED(3) */
+OSSL_DEPRECATEDIN_4_2 ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 BIGNUM *ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn);
 
 /* General */
@@ -712,8 +742,12 @@ unsigned long ASN1_tag2bit(int tag);
 /* SPECIALS */
 int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int *pclass, long omax);
-int ASN1_check_infinite_end(unsigned char **p, long len);
-int ASN1_const_check_infinite_end(const unsigned char **p, long len);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int ASN1_check_infinite_end(unsigned char **p, long len);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int ASN1_const_check_infinite_end(const unsigned char **p, long len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void ASN1_put_object(unsigned char **pp, int constructed, int length,
     int tag, int xclass);
 int ASN1_put_eoc(unsigned char **pp);
@@ -798,7 +832,10 @@ int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
 int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int off);
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
     unsigned char *buf, int off);
-int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
     int dump);
 const char *ASN1_tag2str(int tag);
@@ -885,24 +922,46 @@ int ASN1_item_print(BIO *out, const ASN1_VALUE *ifld, int indent,
     const ASN1_ITEM *it, const ASN1_PCTX *pctx);
 ASN1_PCTX *ASN1_PCTX_new(void);
 void ASN1_PCTX_free(ASN1_PCTX *p);
-unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags);
 
-ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb)(ASN1_SCTX *ctx));
-void ASN1_SCTX_free(ASN1_SCTX *p);
-const ASN1_ITEM *ASN1_SCTX_get_item(ASN1_SCTX *p);
-const ASN1_TEMPLATE *ASN1_SCTX_get_template(ASN1_SCTX *p);
-unsigned long ASN1_SCTX_get_flags(ASN1_SCTX *p);
-void ASN1_SCTX_set_app_data(ASN1_SCTX *p, void *data);
-void *ASN1_SCTX_get_app_data(ASN1_SCTX *p);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb)(ASN1_SCTX *ctx));
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void ASN1_SCTX_free(ASN1_SCTX *p);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const ASN1_ITEM *ASN1_SCTX_get_item(ASN1_SCTX *p);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const ASN1_TEMPLATE *ASN1_SCTX_get_template(ASN1_SCTX *p);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long ASN1_SCTX_get_flags(ASN1_SCTX *p);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void ASN1_SCTX_set_app_data(ASN1_SCTX *p, void *data);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *ASN1_SCTX_get_app_data(ASN1_SCTX *p);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const BIO_METHOD *BIO_f_asn1(void);
 
@@ -921,7 +980,10 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
     int ctype_nid, int econt_nid,
     STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
     OSSL_LIB_CTX *libctx, const char *propq);
-ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see SMIME_read_ASN1(3) */
+OSSL_DEPRECATEDIN_4_2 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, int flags, BIO **bcont,
     const ASN1_ITEM *it, ASN1_VALUE **x,
     OSSL_LIB_CTX *libctx, const char *propq);

@@ -9,6 +9,8 @@
 
 /* X509 v3 extension utilities */
 
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>

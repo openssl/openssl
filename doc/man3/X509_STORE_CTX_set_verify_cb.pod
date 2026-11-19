@@ -230,6 +230,12 @@ and X509_STORE_CTX_get_cleanup() functions were added in OpenSSL 1.1.0.
 
 X509_STORE_CTX_print_verify_cb() was added in OpenSSL 3.0.
 
+X509_STORE_CTX_get_cleanup(), X509_STORE_CTX_get_lookup_crls(),
+X509_STORE_CTX_get_lookup_certs(), X509_STORE_CTX_get_check_policy(),
+X509_STORE_CTX_get_cert_crl(), X509_STORE_CTX_get_check_crl(),
+X509_STORE_CTX_get_get_crl() and X509_STORE_CTX_get_check_revocation() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2009-2023 The OpenSSL Project Authors. All Rights Reserved.

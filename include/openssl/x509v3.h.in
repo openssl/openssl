@@ -548,24 +548,41 @@ typedef struct x509_purpose_st {
 DECLARE_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 DECLARE_ASN1_FUNCTIONS(OSSL_BASIC_ATTR_CONSTRAINTS)
 
-DECLARE_ASN1_FUNCTIONS(SXNET)
-DECLARE_ASN1_FUNCTIONS(SXNETID)
+DECLARE_ASN1_ALLOC_FUNCTIONS(SXNET)
+DECLARE_ASN1_ITEM(SXNET)
+DECLARE_ASN1_ALLOC_FUNCTIONS(SXNETID)
+DECLARE_ASN1_ITEM(SXNETID)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, SXNET, SXNET)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, SXNETID, SXNETID)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
 int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen);
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
     int userlen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, const char *user,
     int userlen);
 
-ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
-ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone);
 
 DECLARE_ASN1_FUNCTIONS(AUTHORITY_KEYID)
 
-DECLARE_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
+DECLARE_ASN1_ITEM(PKEY_USAGE_PERIOD)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, PKEY_USAGE_PERIOD)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, PKEY_USAGE_PERIOD, PKEY_USAGE_PERIOD)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_ASN1_FUNCTIONS(GENERAL_NAME)
 DECLARE_ASN1_DUP_FUNCTION(GENERAL_NAME)
@@ -602,8 +619,11 @@ DECLARE_ASN1_FUNCTIONS(EDIPARTYNAME)
 int OTHERNAME_cmp(OTHERNAME *a, OTHERNAME *b);
 void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value);
 void *GENERAL_NAME_get0_value(const GENERAL_NAME *a, int *ptype);
-int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
     ASN1_OBJECT *oid, ASN1_TYPE *value);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int GENERAL_NAME_get0_otherName(const GENERAL_NAME *gen,
     ASN1_OBJECT **poid, ASN1_TYPE **pvalue);
 
@@ -613,20 +633,41 @@ ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, const char *str);
 
 DECLARE_ASN1_FUNCTIONS(EXTENDED_KEY_USAGE)
-int i2a_ACCESS_DESCRIPTION(BIO *bp, const ACCESS_DESCRIPTION *a);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int i2a_ACCESS_DESCRIPTION(BIO *bp, const ACCESS_DESCRIPTION *a);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
-DECLARE_ASN1_ALLOC_FUNCTIONS(TLS_FEATURE)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, TLS_FEATURE)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_ASN1_FUNCTIONS(CERTIFICATEPOLICIES)
 DECLARE_ASN1_FUNCTIONS(POLICYINFO)
 DECLARE_ASN1_FUNCTIONS(POLICYQUALINFO)
-DECLARE_ASN1_FUNCTIONS(USERNOTICE)
-DECLARE_ASN1_FUNCTIONS(NOTICEREF)
+DECLARE_ASN1_ITEM(USERNOTICE)
+/** @see USERNOTICE_new(3) */
+USERNOTICE *USERNOTICE_new(void);
+DECLARE_ASN1_ITEM(NOTICEREF)
+/** @see NOTICEREF_new(3) */
+NOTICEREF *NOTICEREF_new(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, USERNOTICE, USERNOTICE)
+/** @see USERNOTICE_free(3) */
+OSSL_DEPRECATEDIN_4_2 void USERNOTICE_free(USERNOTICE *a);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, NOTICEREF, NOTICEREF)
+/** @see NOTICEREF_free(3) */
+OSSL_DEPRECATEDIN_4_2 void NOTICEREF_free(NOTICEREF *a);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_ASN1_FUNCTIONS(CRL_DIST_POINTS)
 DECLARE_ASN1_FUNCTIONS(DIST_POINT)
 DECLARE_ASN1_FUNCTIONS(DIST_POINT_NAME)
-DECLARE_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
+DECLARE_ASN1_ALLOC_FUNCTIONS(ISSUING_DIST_POINT)
+DECLARE_ASN1_ITEM(ISSUING_DIST_POINT)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ISSUING_DIST_POINT, ISSUING_DIST_POINT)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname);
 
@@ -684,22 +725,33 @@ X509_EXTENSION *X509V3_EXT_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *name, const char *value);
 int X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509 *cert);
-int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509_REQ *req);
-int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509_CRL *crl);
 
-int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
     STACK_OF(CONF_VALUE) **extlist);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
 int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash);
 #endif
 
-char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section);
-void X509V3_string_free(X509V3_CTX *ctx, char *str);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void X509V3_string_free(X509V3_CTX *ctx, char *str);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section);
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
     X509_REQ *req, X509_CRL *crl, int flags);
@@ -708,8 +760,11 @@ int X509V3_set_issuer_pkey(X509V3_CTX *ctx, EVP_PKEY *pkey);
 
 int X509V3_add_value(const char *name, const char *value,
     STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_uchar(const char *name, const unsigned char *value,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509V3_add_value_uchar(const char *name, const unsigned char *value,
     STACK_OF(CONF_VALUE) **extlist);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509V3_add_value_bool(const char *name, int asn1_bool,
     STACK_OF(CONF_VALUE) **extlist);
 int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
@@ -720,7 +775,10 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, const ASN1_ENUMERATED *aint);
 char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *meth,
     const ASN1_ENUMERATED *aint);
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
-int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509V3_EXT_add_alias(int nid_to, int nid_from);
 void X509V3_EXT_cleanup(void);
 
@@ -777,7 +835,10 @@ int X509_PURPOSE_get_by_id(int id);
 int X509_PURPOSE_add(int id, int trust, int flags,
     int (*ck)(const X509_PURPOSE *, const X509 *, int),
     const char *name, const char *sname, void *arg);
-void X509_PURPOSE_cleanup(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_PURPOSE_cleanup(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_PURPOSE_cleanup(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 X509_PURPOSE *X509_PURPOSE_get0(int idx);
 int X509_PURPOSE_get_id(const X509_PURPOSE *);
@@ -787,7 +848,10 @@ int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 int X509_PURPOSE_set(int *p, int purpose);
 
 STACK_OF(OPENSSL_STRING) *X509_get1_email(const X509 *x);
-STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509_email_free(STACK_OF(OPENSSL_STRING) *sk);
 STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x);
 
@@ -875,10 +939,15 @@ typedef struct ASIdentifiers_st {
     ASIdentifierChoice *asnum, *rdi;
 } ASIdentifiers;
 
-DECLARE_ASN1_FUNCTIONS(ASRange)
-DECLARE_ASN1_FUNCTIONS(ASIdOrRange)
-DECLARE_ASN1_FUNCTIONS(ASIdentifierChoice)
-DECLARE_ASN1_FUNCTIONS(ASIdentifiers)
+DECLARE_ASN1_ALLOC_FUNCTIONS(ASIdentifiers)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, ASRange)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, ASIdOrRange)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, ASIdentifierChoice)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, ASIdentifiers, ASIdentifiers)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const ASN1_ITEM *ASIdentifiers_it(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 typedef struct IPAddressRange_st {
     ASN1_BIT_STRING *min, *max;
@@ -927,10 +996,18 @@ typedef struct IPAddressFamily_st {
 
 typedef STACK_OF(IPAddressFamily) IPAddrBlocks;
 
-DECLARE_ASN1_FUNCTIONS(IPAddressRange)
-DECLARE_ASN1_FUNCTIONS(IPAddressOrRange)
-DECLARE_ASN1_FUNCTIONS(IPAddressChoice)
-DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(IPAddressFamily, IPAddressFamily)
+/** @see IPAddressFamily_free(3) */
+void IPAddressFamily_free(IPAddressFamily *a);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, IPAddressRange)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, IPAddressOrRange)
+DECLARE_ASN1_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, IPAddressChoice)
+/** @see IPAddressFamily_new(3) */
+OSSL_DEPRECATEDIN_4_2 IPAddressFamily *IPAddressFamily_new(void);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const ASN1_ITEM *IPAddressFamily_it(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(IPAddrBlocks)
 
 /*
@@ -953,11 +1030,17 @@ DECLARE_ASN1_FUNCTIONS(IPAddrBlocks)
  * since some of the encodings (particularly for IP address prefixes
  * and ranges) are a bit tedious to work with directly.
  */
-int X509v3_asid_add_inherit(ASIdentifiers *asid, int which);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_asid_add_inherit(ASIdentifiers *asid, int which);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which,
     ASN1_INTEGER *min, ASN1_INTEGER *max);
-int X509v3_addr_add_inherit(IPAddrBlocks *addr,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_addr_add_inherit(IPAddrBlocks *addr,
     unsigned afi, const unsigned *safi);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509v3_addr_add_prefix(IPAddrBlocks *addr,
     unsigned afi, const unsigned *safi,
     unsigned char *a, const int prefixlen);
@@ -977,7 +1060,10 @@ int X509v3_addr_get_range(IPAddressOrRange *aor, unsigned afi,
 /*
  * Canonical forms.
  */
-int X509v3_asid_is_canonical(ASIdentifiers *asid);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_asid_is_canonical(ASIdentifiers *asid);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509v3_addr_is_canonical(IPAddrBlocks *addr);
 int X509v3_asid_canonize(ASIdentifiers *asid);
 int X509v3_addr_canonize(IPAddrBlocks *addr);
@@ -987,19 +1073,29 @@ int X509v3_addr_canonize(IPAddrBlocks *addr);
  */
 int X509v3_asid_inherits(ASIdentifiers *asid);
 int X509v3_addr_inherits(IPAddrBlocks *addr);
-int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b);
-int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Check whether RFC 3779 extensions nest properly in chains.
  */
-int X509v3_asid_validate_path(X509_STORE_CTX *);
-int X509v3_addr_validate_path(X509_STORE_CTX *);
-int X509v3_asid_validate_resource_set(const STACK_OF(X509) *chain,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_asid_validate_path(X509_STORE_CTX *);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_addr_validate_path(X509_STORE_CTX *);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_asid_validate_resource_set(const STACK_OF(X509) *chain,
     ASIdentifiers *ext,
     int allow_inheritance);
-int X509v3_addr_validate_resource_set(const STACK_OF(X509) *chain,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509v3_addr_validate_resource_set(const STACK_OF(X509) *chain,
     IPAddrBlocks *ext, int allow_inheritance);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #endif /* OPENSSL_NO_RFC3779 */
 

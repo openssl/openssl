@@ -16,6 +16,8 @@
  *
  */
 
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <errno.h>
 
