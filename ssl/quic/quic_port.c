@@ -216,7 +216,7 @@ static int port_init(QUIC_PORT *port)
         || !EVP_EncryptInit_ex(port->token_ctx, cipher, NULL, NULL, NULL)
         || (key_len = EVP_CIPHER_CTX_get_key_length(port->token_ctx)) <= 0
         || (token_key = OPENSSL_malloc(key_len)) == NULL
-        || !RAND_priv_bytes_ex(port->engine->libctx, token_key, key_len, 0)
+        || RAND_priv_bytes_ex(port->engine->libctx, token_key, key_len, 0) <= 0
         || !EVP_EncryptInit_ex(port->token_ctx, NULL, NULL, token_key, NULL))
         goto err;
 
@@ -1115,7 +1115,7 @@ static int encrypt_validation_token(const QUIC_PORT *port,
     data = ciphertext + iv_len;
     tag = data + pt_len;
 
-    if (!RAND_bytes_ex(port->engine->libctx, ciphertext, iv_len, 0)
+    if (RAND_bytes_ex(port->engine->libctx, ciphertext, iv_len, 0) <= 0
         || !EVP_EncryptInit_ex(port->token_ctx, NULL, NULL, NULL, iv)
         || !EVP_EncryptUpdate(port->token_ctx, data, &len, plaintext, (int)pt_len)
         || !EVP_EncryptFinal_ex(port->token_ctx, data + pt_len, &len)
@@ -1610,7 +1610,7 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
      * data, as we won't use it anyway
      */
     rscid.id_len = 8;
-    if (!RAND_bytes_ex(ch->port->engine->libctx, rscid.id, 8, 0)) {
+    if (RAND_bytes_ex(ch->port->engine->libctx, rscid.id, 8, 0) <= 0) {
         OPENSSL_free(ct_buf);
         return;
     }
