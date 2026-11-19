@@ -18,6 +18,10 @@
 #include <assert.h>
 #include "word.h"
 
+#if defined(__riscv_vector)
+#include <riscv_vector.h>
+#endif /* defined(__riscv_vector) */
+
 #define NLIMBS (64 / sizeof(word_t))
 #define X_SER_BYTES 56
 #define SER_BYTES 56
@@ -143,6 +147,21 @@ void gf_sub_RAW(gf out, const gf a, const gf b)
     uint64_t co1 = ((1ULL << 56) - 1) * 2, co2 = co1 - 2;
     unsigned int i;
 
+#if defined(__riscv_vector)
+    {
+        size_t vl = __riscv_vsetvl_e64m4(NLIMBS);
+        if (vl == NLIMBS) {
+            vuint64m4_t va = __riscv_vle64_v_u64m4(a->limb, vl);
+            vuint64m4_t vb = __riscv_vle64_v_u64m4(b->limb, vl);
+            vuint64m4_t vr = __riscv_vsub_vv_u64m4(va, vb, vl);
+            __riscv_vse64_v_u64m4(out->limb,
+                                  __riscv_vadd_vx_u64m4(vr, co1, vl), vl);
+            out->limb[NLIMBS / 2] -= 2; /* co2 == co1 - 2 */
+            gf_weak_reduce(out);
+            return;
+        }
+    }
+#endif /* defined(__riscv_vector) */
     for (i = 0; i < NLIMBS; i++)
         out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
 
@@ -160,6 +179,33 @@ void gf_weak_reduce(gf a)
     unsigned int i;
 
     a->limb[NLIMBS / 2] += tmp;
+#if defined(__riscv_vector)
+    /*
+     * Single-pass weak reduction using a full-width vector register group.
+     * NLIMBS == 8 here (ARCH_WORD_BITS == 64), and e64/m4 gives VLMAX >= 8
+     * for every valid VLEN (the ISA requires VLEN >= 128), so the whole
+     * 8-limb array is reduced in one pass.  This replaces the compiler's
+     * fixed vsetivli zero,2,e64,m1 + vrgather lowering of the scalar loop.
+     * The vl == NLIMBS test is a guard: if a shorter vector were ever
+     * returned the scalar loop below still runs.
+     *
+     * Bit-exact with the scalar path.  tmp = limb[7] >> 56 has already been
+     * added into limb[4] above, so vs[i] = limb[i] >> 56 and vslide1up
+     * injects tmp into lane 0: limb[0] = (limb[0] & mask) + tmp, and lane i
+     * (i >= 1) receives limb[i-1] >> 56.
+     */
+    {
+        size_t vl = __riscv_vsetvl_e64m4(NLIMBS);
+        if (vl == NLIMBS) {
+            vuint64m4_t va = __riscv_vle64_v_u64m4(a->limb, vl);
+            vuint64m4_t vs = __riscv_vsrl_vx_u64m4(va, 56, vl);
+            vuint64m4_t vc = __riscv_vslide1up_vx_u64m4(vs, tmp, vl);
+            vuint64m4_t vm = __riscv_vand_vx_u64m4(va, mask, vl);
+            __riscv_vse64_v_u64m4(a->limb, __riscv_vadd_vv_u64m4(vm, vc, vl), vl);
+            return;
+        }
+    }
+#endif /* defined(__riscv_vector) */
     for (i = NLIMBS - 1; i > 0; i--)
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
     a->limb[0] = (a->limb[0] & mask) + tmp;
@@ -251,6 +297,21 @@ static ossl_inline void gf_cond_neg(gf x, mask_t neg)
 static ossl_inline void gf_cond_swap(gf x, gf_s *RESTRICT y, mask_t swap)
 {
     size_t i;
+
+#if defined(__riscv_vector)
+    {
+        size_t vl = __riscv_vsetvl_e64m4(NLIMBS);
+        if (vl == NLIMBS) {
+            vuint64m4_t vx = __riscv_vle64_v_u64m4(x->limb, vl);
+            vuint64m4_t vy = __riscv_vle64_v_u64m4(y->limb, vl);
+            vuint64m4_t vt = __riscv_vxor_vv_u64m4(vx, vy, vl);
+            vt = __riscv_vand_vx_u64m4(vt, (uint64_t)swap, vl);
+            __riscv_vse64_v_u64m4(x->limb, __riscv_vxor_vv_u64m4(vx, vt, vl), vl);
+            __riscv_vse64_v_u64m4(y->limb, __riscv_vxor_vv_u64m4(vy, vt, vl), vl);
+            return;
+        }
+    }
+#endif /* defined(__riscv_vector) */
 
     for (i = 0; i < NLIMBS; i++) {
 #if ARCH_WORD_BITS == 32
