@@ -36,7 +36,51 @@ other source changes are needed.
 Both steps are required: libcms exports the API under its own symbol names, so
 switching headers without also linking libcms will fail to link.
 
+F<< <openssl/x509.h> >> no longer includes F<< <openssl/pkcs7.h> >>, and
+F<< <openssl/pem.h> >> no longer declares the PEM functions for PKCS#7. Code
+using the PKCS#7 API includes F<< <libcms/pkcs7.h> >> itself.
+
 See L<libcms(7)>.
+
+=head3 PKCS#12 authenticated safes without PKCS#7
+
+The PKCS#12 functions that take or return B<PKCS7> objects are deprecated,
+along with PKCS7_free(). The authenticated safes of a PKCS#12 structure are
+handled as B<PKCS12_AUTHSAFE> objects instead:
+
+=over 4
+
+=item *
+
+PKCS12_unpack_authsafes() and PKCS12_pack_authsafes() are replaced by
+PKCS12_get1_authsafes() and PKCS12_set1_authsafes().
+
+=item *
+
+PKCS12_pack_p7data(), PKCS12_pack_p7encdata() and
+PKCS12_pack_p7encdata_ex() are replaced by PKCS12_AUTHSAFE_new_data() and
+PKCS12_AUTHSAFE_new_encrypted().
+
+=item *
+
+PKCS12_unpack_p7data() and PKCS12_unpack_p7encdata() are replaced by
+PKCS12_AUTHSAFE_get1_bags().
+
+=item *
+
+PKCS12_add_safe(), PKCS12_add_safe_ex(), PKCS12_add_safes() and
+PKCS12_add_safes_ex() are replaced by PKCS12_add_authsafe() and
+PKCS12_add_authsafes().
+
+=item *
+
+PKCS7_free() on an authsafe is replaced by PKCS12_AUTHSAFE_free(), and access
+to the B<PKCS7> structure fields by PKCS12_AUTHSAFE_get_type() and
+PKCS12_AUTHSAFE_get0_alg().
+
+=back
+
+See L<PKCS12_get1_authsafes(3)>.
 
 =head3 Deprecation of X509_OBJECT_up_ref_count()
 
