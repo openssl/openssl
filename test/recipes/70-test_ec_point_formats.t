@@ -66,8 +66,8 @@ $proxy->serverflags("-tls1_2");
 $proxy->cipherc("ECDHE-RSA-AES128-SHA256");
 $proxy->ciphers("ECDHE-RSA-AES128-SHA256");
 $proxy->start() or plan skip_all => "Unable to start up proxy for tests";
-plan tests => 4;
-ok($fatal_alert,
+plan tests => 9;
+is($fatal_alert, TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
     "Server rejects ClientHello whose ec_point_formats omits uncompressed");
 
 # Test 2: a non-conforming list in the ServerHello -- the client must
@@ -80,7 +80,7 @@ $proxy->serverflags("-tls1_2");
 $proxy->cipherc("ECDHE-RSA-AES128-SHA256");
 $proxy->ciphers("ECDHE-RSA-AES128-SHA256");
 $proxy->start();
-ok($fatal_alert,
+is($fatal_alert, TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
     "Client rejects ServerHello whose ec_point_formats omits uncompressed");
 
 # Mutating a ClientHello on the wire breaks the handshake transcript
@@ -138,6 +138,55 @@ SKIP: {
         "TLS 1.2 non-ECC server tolerates ec_point_formats missing uncompressed");
 }
 
+# ECDHE-PSK has a separate key-exchange bit from ECDHE.  Check normal
+# ServerHello emission as well as rejection of either peer's invalid list.
+SKIP: {
+    skip "PSK disabled", 5 if disabled("psk");
+
+    start_ecdhe_psk(undef);
+    ok(TLSProxy::Message->success(), "ECDHE-PSK handshake completes");
+
+    my ($serverhello) = grep {
+        $_->mt == TLSProxy::Message::MT_SERVER_HELLO
+    } @{$proxy->message_list};
+    is(defined $serverhello ? $serverhello->ciphersuite : undef, 0xc035,
+        "Negotiated ECDHE-PSK-AES128-CBC-SHA");
+    my $formats = defined $serverhello
+        ? $serverhello->extension_data->{TLSProxy::Message::EXT_EC_POINT_FORMATS}
+        : undef;
+    ok(defined $formats && length($formats) > 1
+        && unpack("C", $formats) == length($formats) - 1
+        && index(substr($formats, 1), "\x00") >= 0,
+        "ECDHE-PSK ServerHello includes uncompressed point format");
+
+    # set_extension() also inserts the extension if the server omitted it.
+    # Check the sender and exact alert, not a later transcript failure.
+    start_ecdhe_psk(\&mangle_ec_point_formats_serverhello);
+    is($fatal_alert, TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
+        "ECDHE-PSK client rejects ServerHello without uncompressed");
+
+    start_ecdhe_psk(\&mangle_ec_point_formats_clienthello);
+    is($fatal_alert, TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
+        "ECDHE-PSK server rejects ClientHello without uncompressed");
+}
+
+sub start_ecdhe_psk
+{
+    my $filter = shift;
+    my $psk = "0102030405060708090a0b0c0d0e0f10";
+    my $flags = "-tls1_2 -groups P-256 -psk $psk";
+
+    $fatal_alert = 0;
+    $proxy->clear();
+    $proxy->filter($filter);
+    $proxy->clientflags($flags);
+    $proxy->serverflags($flags);
+    # TLSProxy's CBC record decoder expects a 20-byte (SHA-1) MAC.
+    $proxy->cipherc("ECDHE-PSK-AES128-CBC-SHA");
+    $proxy->ciphers("ECDHE-PSK-AES128-CBC-SHA");
+    $proxy->start();
+}
+
 sub mangle_ec_point_formats_clienthello
 {
     my $proxy = shift;
@@ -155,8 +204,8 @@ sub mangle_ec_point_formats_clienthello
     }
 
     my $last_record = @{$proxy->{record_list}}[-1];
-    $fatal_alert = 1
-        if defined $last_record && $last_record->is_fatal_alert(1);
+    my $alert = defined $last_record ? $last_record->is_fatal_alert(1) : 0;
+    $fatal_alert = $alert if $alert;
 }
 
 sub mangle_ec_point_formats_serverhello
@@ -178,6 +227,6 @@ sub mangle_ec_point_formats_serverhello
     }
 
     my $last_record = @{$proxy->{record_list}}[-1];
-    $fatal_alert = 1
-        if defined $last_record && $last_record->is_fatal_alert(0);
+    my $alert = defined $last_record ? $last_record->is_fatal_alert(0) : 0;
+    $fatal_alert = $alert if $alert;
 }
