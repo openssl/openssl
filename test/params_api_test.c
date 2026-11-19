@@ -861,6 +861,70 @@ static int test_param_copy_null(void)
     OSSL_PARAM_free(cp1);
     return ret;
 }
+/*
+ * OSSL_PARAM(3) allows a NULL |data| when requesting parameters, and gettable
+ * tables are made of such elements.  OSSL_PARAM_dup() must copy them as they
+ * are, whatever their type.
+ */
+static const unsigned int dup_null_data_types[] = {
+    OSSL_PARAM_INTEGER, OSSL_PARAM_UNSIGNED_INTEGER, OSSL_PARAM_REAL,
+    OSSL_PARAM_UTF8_STRING, OSSL_PARAM_OCTET_STRING,
+    OSSL_PARAM_UTF8_PTR, OSSL_PARAM_OCTET_PTR
+};
+
+static int test_param_dup_null_data(int tstid)
+{
+    unsigned int type = dup_null_data_types[tstid / 2];
+    size_t size = tstid % 2 == 0 ? 0 : 8;
+    int a = 42, val = 0, ret;
+    OSSL_PARAM param[3], *cp = NULL, *p;
+
+    param[0].key = "nodata";
+    param[0].data_type = type;
+    param[0].data = NULL;
+    param[0].data_size = size;
+    param[0].return_size = OSSL_PARAM_UNMODIFIED;
+    param[1] = OSSL_PARAM_construct_int("a", &a);
+    param[2] = OSSL_PARAM_construct_end();
+
+    ret = TEST_ptr(cp = OSSL_PARAM_dup(param))
+        && TEST_ptr(p = OSSL_PARAM_locate(cp, "nodata"))
+        && TEST_uint_eq(p->data_type, type)
+        && TEST_ptr_null(p->data)
+        && TEST_size_t_eq(p->data_size, size)
+        && TEST_ptr(p = OSSL_PARAM_locate(cp, "a"))
+        && TEST_ptr_ne(p->data, &a)
+        && TEST_true(OSSL_PARAM_get_int(p, &val))
+        && TEST_int_eq(val, a);
+    if (!ret)
+        TEST_note("data_type %u, data_size %zu", type, size);
+    OSSL_PARAM_free(cp);
+    return ret;
+}
+
+static int test_param_dup_gettable(void)
+{
+    static const OSSL_PARAM gettable[] = {
+        OSSL_PARAM_utf8_ptr("name", NULL, 0),
+        OSSL_PARAM_utf8_string("version", NULL, 0),
+        OSSL_PARAM_int("status", NULL),
+        OSSL_PARAM_octet_string("seed", NULL, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM *cp = NULL;
+    size_t i;
+    int ret;
+
+    ret = TEST_ptr(cp = OSSL_PARAM_dup(gettable));
+    for (i = 0; ret && gettable[i].key != NULL; i++)
+        ret = TEST_ptr_eq(cp[i].key, gettable[i].key)
+            && TEST_uint_eq(cp[i].data_type, gettable[i].data_type)
+            && TEST_ptr_null(cp[i].data)
+            && TEST_size_t_eq(cp[i].data_size, gettable[i].data_size);
+    OSSL_PARAM_free(cp);
+    return ret;
+}
+
 static int test_param_merge(void)
 {
     int val, ret;
@@ -937,6 +1001,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_construct, 4);
     ADD_TEST(test_param_modified);
     ADD_TEST(test_param_copy_null);
+    ADD_ALL_TESTS(test_param_dup_null_data,
+        2 * OSSL_NELEM(dup_null_data_types));
+    ADD_TEST(test_param_dup_gettable);
     ADD_TEST(test_param_merge);
     ADD_TEST(test_param_clear_free);
     return 1;
