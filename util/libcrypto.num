@@ -5753,3 +5753,13 @@ EVP_KDF_CTX_get1_SKEY                   ?	4_2_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_IV                     ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data_ex                   ?	4_2_0	EXIST::FUNCTION:
+PKCS12_get1_authsafes                   ?	4_2_0	EXIST::FUNCTION:
+PKCS12_set1_authsafes                   ?	4_2_0	EXIST::FUNCTION:
+PKCS12_add_authsafe                     ?	4_2_0	EXIST::FUNCTION:
+PKCS12_add_authsafes                    ?	4_2_0	EXIST::FUNCTION:
+PKCS12_AUTHSAFE_new_data                ?	4_2_0	EXIST::FUNCTION:
+PKCS12_AUTHSAFE_new_encrypted           ?	4_2_0	EXIST::FUNCTION:
+PKCS12_AUTHSAFE_free                    ?	4_2_0	EXIST::FUNCTION:
+PKCS12_AUTHSAFE_get_type                ?	4_2_0	EXIST::FUNCTION:
+PKCS12_AUTHSAFE_get0_alg                ?	4_2_0	EXIST::FUNCTION:
+PKCS12_AUTHSAFE_get1_bags               ?	4_2_0	EXIST::FUNCTION:

@@ -827,6 +827,120 @@ err:
     return ret;
 }
 
+static int check_authsafe(const PKCS12_AUTHSAFE *authsafe, int nid,
+    const char *pass, const unsigned char *secret, int secret_len)
+{
+    STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
+    const PKCS12_SAFEBAG *bag;
+    const ASN1_TYPE *obj;
+    int ret = 0;
+
+    if (!TEST_int_eq(PKCS12_AUTHSAFE_get_type(authsafe), nid)
+        || !TEST_ptr(bags = PKCS12_AUTHSAFE_get1_bags(authsafe, pass, -1,
+                         testctx, NULL))
+        || !TEST_int_eq(sk_PKCS12_SAFEBAG_num(bags), 1)
+        || !TEST_ptr(bag = sk_PKCS12_SAFEBAG_value(bags, 0))
+        || !TEST_int_eq(PKCS12_SAFEBAG_get_nid(bag), NID_secretBag)
+        || !TEST_ptr(obj = PKCS12_SAFEBAG_get0_bag_obj(bag))
+        || !TEST_int_eq(obj->type, V_ASN1_OCTET_STRING)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(obj->value.octet_string),
+            ASN1_STRING_get_length(obj->value.octet_string),
+            secret, secret_len))
+        goto err;
+    ret = 1;
+err:
+    sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+    return ret;
+}
+
+static int test_authsafes(void)
+{
+    static const unsigned char secret[] = "authsafe secret";
+    static const unsigned char salt[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    STACK_OF(PKCS12_SAFEBAG) *bags = NULL, *got = NULL;
+    STACK_OF(PKCS12_AUTHSAFE) *authsafes = NULL, *decoded = NULL;
+    STACK_OF(PKCS12_AUTHSAFE) *copied = NULL;
+    PKCS12_AUTHSAFE *authsafe = NULL;
+    PKCS12 *p12 = NULL, *p12dec = NULL, *p12copy = NULL;
+    const X509_ALGOR *alg;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int der_len, ret = 0;
+
+    if (!TEST_ptr(PKCS12_add_secret(&bags, NID_pkcs7_data, secret,
+            sizeof(secret)))
+        || !TEST_true(PKCS12_add_authsafe(&authsafes, bags, -1, 0, NULL,
+            testctx, NULL))
+        || !TEST_true(PKCS12_add_authsafe(&authsafes, bags, NID_aes_256_cbc,
+            0, "pass", testctx, NULL))
+        || !TEST_ptr(authsafe = PKCS12_AUTHSAFE_new_data(bags))
+        || !TEST_int_gt(sk_PKCS12_AUTHSAFE_push(authsafes, authsafe), 0))
+        goto err;
+    authsafe = NULL;
+    if (!TEST_ptr(authsafe = PKCS12_AUTHSAFE_new_encrypted(NID_aes_128_cbc,
+                      "pass", 4, salt, sizeof(salt), 0, bags, testctx, NULL))
+        || !TEST_int_gt(sk_PKCS12_AUTHSAFE_push(authsafes, authsafe), 0))
+        goto err;
+    authsafe = NULL;
+
+    if (!TEST_ptr(p12 = PKCS12_add_authsafes(authsafes, 0, testctx, NULL))
+        || !TEST_true(PKCS12_set_mac(p12, "pass", -1, NULL, 0, 0, NULL))
+        || !TEST_int_gt(der_len = i2d_PKCS12(p12, &der), 0))
+        goto err;
+
+    p = der;
+    if (!TEST_ptr(p12dec = PKCS12_init_ex(NID_pkcs7_data, testctx, NULL))
+        || !TEST_ptr(d2i_PKCS12(&p12dec, &p, der_len))
+        || !TEST_true(PKCS12_verify_mac(p12dec, "pass", -1))
+        || !TEST_ptr(decoded = PKCS12_get1_authsafes(p12dec))
+        || !TEST_int_eq(sk_PKCS12_AUTHSAFE_num(decoded), 4)
+        || !check_authsafe(sk_PKCS12_AUTHSAFE_value(decoded, 0),
+            NID_pkcs7_data, NULL, secret, sizeof(secret))
+        || !check_authsafe(sk_PKCS12_AUTHSAFE_value(decoded, 1),
+            NID_pkcs7_encrypted, "pass", secret, sizeof(secret))
+        || !check_authsafe(sk_PKCS12_AUTHSAFE_value(decoded, 2),
+            NID_pkcs7_data, NULL, secret, sizeof(secret))
+        || !check_authsafe(sk_PKCS12_AUTHSAFE_value(decoded, 3),
+            NID_pkcs7_encrypted, "pass", secret, sizeof(secret)))
+        goto err;
+
+    if (!TEST_ptr_null(PKCS12_AUTHSAFE_get0_alg(sk_PKCS12_AUTHSAFE_value(decoded, 0)))
+        || !TEST_ptr(alg = PKCS12_AUTHSAFE_get0_alg(sk_PKCS12_AUTHSAFE_value(decoded, 1)))
+        || !TEST_int_eq(OBJ_obj2nid(alg->algorithm), NID_pbes2))
+        goto err;
+
+    ERR_set_mark();
+    if (!TEST_ptr_null(got = PKCS12_AUTHSAFE_get1_bags(sk_PKCS12_AUTHSAFE_value(decoded, 1),
+                           "wrong", -1, testctx, NULL))) {
+        ERR_pop_to_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    /* Encrypted authsafes copy to another PKCS12 without decryption. */
+    if (!TEST_ptr(p12copy = PKCS12_init_ex(NID_pkcs7_data, testctx, NULL))
+        || !TEST_true(PKCS12_set1_authsafes(p12copy, decoded))
+        || !TEST_ptr(copied = PKCS12_get1_authsafes(p12copy))
+        || !TEST_int_eq(sk_PKCS12_AUTHSAFE_num(copied), 4)
+        || !check_authsafe(sk_PKCS12_AUTHSAFE_value(copied, 3),
+            NID_pkcs7_encrypted, "pass", secret, sizeof(secret)))
+        goto err;
+
+    ret = 1;
+err:
+    sk_PKCS12_SAFEBAG_pop_free(got, PKCS12_SAFEBAG_free);
+    sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+    PKCS12_AUTHSAFE_free(authsafe);
+    sk_PKCS12_AUTHSAFE_pop_free(authsafes, PKCS12_AUTHSAFE_free);
+    sk_PKCS12_AUTHSAFE_pop_free(decoded, PKCS12_AUTHSAFE_free);
+    sk_PKCS12_AUTHSAFE_pop_free(copied, PKCS12_AUTHSAFE_free);
+    OPENSSL_free(der);
+    PKCS12_free(p12copy);
+    PKCS12_free(p12dec);
+    PKCS12_free(p12);
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -899,6 +1013,7 @@ int setup_tests(void)
         ADD_TEST(test_parse_ex_skey);
         ADD_ALL_TESTS(test_parse_ex_libctx, 2);
         ADD_ALL_TESTS(test_parse_ex_skey_libctx, 4);
+        ADD_TEST(test_authsafes);
     }
     return 1;
 }
