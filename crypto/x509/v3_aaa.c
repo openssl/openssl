@@ -10,8 +10,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509.h>
-#include <crypto/x509.h>
 #include "ext_dat.h"
+#include "pmi_local.h"
 
 ASN1_CHOICE(OSSL_ALLOWED_ATTRIBUTES_CHOICE) = {
     ASN1_IMP(OSSL_ALLOWED_ATTRIBUTES_CHOICE, choice.attributeType, ASN1_OBJECT,
@@ -63,7 +63,7 @@ static int i2r_ALLOWED_ATTRIBUTES_CHOICE(X509V3_EXT_METHOD *method,
             return 0;
         for (j = 0; j < X509_ATTRIBUTE_count(attr); j++) {
             av = X509_ATTRIBUTE_get0_type(attr, j);
-            if (ossl_print_attribute_value(out, attr_nid, av, indent + 4) <= 0)
+            if (ossl_x509pmi_print_attribute_value(out, attr_nid, av, indent + 4) <= 0)
                 return 0;
             if (BIO_puts(out, "\n") <= 0)
                 return 0;
