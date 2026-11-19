@@ -849,6 +849,7 @@ done:
 }
 
 #ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_pkcs8key_nid_bio(void)
 {
     int ret;
@@ -881,6 +882,7 @@ static int test_pkcs8key_nid_bio(void)
     OSSL_PROVIDER_unload(provider);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif /* OPENSSL_NO_DES */
 
 static int test_alternative_default(void)
@@ -1741,6 +1743,7 @@ end:
 }
 
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_evp_pbe_alg_add(void)
 {
     int ret = 0;
@@ -1766,6 +1769,7 @@ static int test_evp_pbe_alg_add(void)
 err:
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 /*
@@ -1927,7 +1931,9 @@ int setup_tests(void)
     ADD_TEST(test_pkey_export_null);
     ADD_TEST(test_pkey_export);
 #ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_pkcs8key_nid_bio);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
     ADD_ALL_TESTS(test_PEM_read_bio_negative, OSSL_NELEM(keydata));
     ADD_ALL_TESTS(test_PEM_read_bio_negative_wrong_password, 2);
@@ -1941,7 +1947,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_md_ctx_serialize, 13);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_evp_pbe_alg_add);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
     return 1;
 }

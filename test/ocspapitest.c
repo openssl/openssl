@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <limits.h>
 #include <string.h>
 
@@ -53,6 +55,7 @@ end:
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int get_cert(X509 **cert_out)
 {
     BIO *certbio;
@@ -70,6 +73,7 @@ end:
     X509_free(cert);
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static OCSP_BASICRESP *make_dummy_resp(void)
 {
@@ -216,6 +220,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_ocsp_url_svcloc_new(void)
 {
     static const char *urls[] = {
@@ -244,6 +249,7 @@ err:
     X509_free(issuer);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * A request whose signer and issuer are decoded in their own library
@@ -304,7 +310,9 @@ int setup_tests(void)
     ADD_TEST(test_resp_find_last_int_max);
     ADD_TEST(test_resp_signer);
     ADD_ALL_TESTS(test_access_description, 3);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_ocsp_url_svcloc_new);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_req_verify_signer_libctx);
 #endif
     return 1;

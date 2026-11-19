@@ -137,6 +137,7 @@ const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs)
     return bs->signature;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 const X509_ALGOR *OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs)
 {
     return &bs->signatureAlgorithm;
@@ -146,6 +147,7 @@ const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs)
 {
     return &bs->tbsResponseData;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Return number of OCSP_SINGLERESP responses present in a basic response */
 
@@ -192,6 +194,7 @@ int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
     ASN1_OCTET_STRING **pid,
     X509_NAME **pname)
@@ -211,6 +214,7 @@ int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
         return 0;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Look single response matching a given certificate ID */
 int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last)

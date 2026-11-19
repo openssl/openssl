@@ -236,6 +236,7 @@ void *GENERAL_NAME_get0_value(const GENERAL_NAME *a, int *ptype)
     }
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
     ASN1_OBJECT *oid, ASN1_TYPE *value)
 {
@@ -249,6 +250,7 @@ int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
     GENERAL_NAME_set0_value(gen, GEN_OTHERNAME, oth);
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int GENERAL_NAME_get0_otherName(const GENERAL_NAME *gen,
     ASN1_OBJECT **poid, ASN1_TYPE **pvalue)

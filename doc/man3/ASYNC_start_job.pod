@@ -367,6 +367,8 @@ added in OpenSSL 1.1.0.
 ASYNC_set_mem_functions(), ASYNC_get_mem_functions() were added
 in OpenSSL 3.2.
 
+ASYNC_block_pause() and ASYNC_unblock_pause() were deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.

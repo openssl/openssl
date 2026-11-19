@@ -445,6 +445,7 @@ ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job)
     return job->waitctx;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void ASYNC_block_pause(void)
 {
     async_ctx *ctx;
@@ -479,3 +480,4 @@ void ASYNC_unblock_pause(void)
     if (ctx->blocked > 0)
         ctx->blocked--;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

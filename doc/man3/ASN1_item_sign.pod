@@ -222,6 +222,8 @@ L<X509_verify(3)>
 
 ASN1_item_sign_ex() and ASN1_item_verify_ex() were added in OpenSSL 3.0.
 
+ASN1_item_sign() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.

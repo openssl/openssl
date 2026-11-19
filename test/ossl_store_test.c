@@ -327,6 +327,7 @@ static int test_store_delete_null_uri(void)
     return TEST_int_eq(OSSL_STORE_delete(NULL, NULL, NULL, NULL, NULL, NULL), 0);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_fake_store_names(void)
 {
     OSSL_STORE_CTX *sctx = NULL;
@@ -382,6 +383,7 @@ err:
     OSSL_STORE_close(sctx);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_fake_store_open_ex(void)
 {
@@ -459,6 +461,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_fake_store_find(void)
 {
     OSSL_STORE_CTX *sctx = NULL;
@@ -549,6 +552,7 @@ err:
     OSSL_STORE_close(sctx);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_fake_store_loading_started(void)
 {
@@ -789,10 +793,14 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_store_get_params, 3);
     if (sm2file != NULL)
         ADD_TEST(test_store_attach_unregistered_scheme);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_fake_store_names);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_fake_store_open_ex);
     ADD_TEST(test_fake_store_params);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_fake_store_find);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_fake_store_loading_started);
     ADD_TEST(test_fake_store_post_process);
     ADD_TEST(test_fake_store_attach);

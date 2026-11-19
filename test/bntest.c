@@ -6,6 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -862,6 +864,7 @@ err:
     return st;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_gf2m_sqr(void)
 {
     BIGNUM *a = NULL, *b[2] = { NULL, NULL }, *c = NULL, *d = NULL;
@@ -900,6 +903,7 @@ err:
     BN_free(d);
     return st;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_gf2m_modinv(void)
 {
@@ -990,6 +994,7 @@ err:
     return st;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_gf2m_modexp(void)
 {
     BIGNUM *a = NULL, *b[2] = { NULL, NULL }, *c = NULL, *d = NULL;
@@ -1135,6 +1140,7 @@ err:
     BN_free(e);
     return st;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 static int test_kronecker(void)
@@ -3509,12 +3515,16 @@ int setup_tests(void)
         ADD_TEST(test_gf2m_add);
         ADD_TEST(test_gf2m_mod);
         ADD_TEST(test_gf2m_mul);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
         ADD_TEST(test_gf2m_sqr);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
         ADD_TEST(test_gf2m_modinv);
         ADD_TEST(test_gf2m_moddiv);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
         ADD_TEST(test_gf2m_modexp);
         ADD_TEST(test_gf2m_modsqrt);
         ADD_TEST(test_gf2m_modsolvequad);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
         ADD_ALL_TESTS(test_is_prime, (int)OSSL_NELEM(primes));
         ADD_ALL_TESTS(test_not_prime, (int)OSSL_NELEM(not_primes));

@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
 #define _DARWIN_C_SOURCE
 #endif
@@ -528,6 +530,7 @@ static void test_addr_dup_ipv4(void **state)
 
 /* BIO_ADDR_path_string */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 #ifndef OPENSSL_NO_UNIX_SOCK
 static void test_path_string_unix(void **state)
 {
@@ -554,6 +557,7 @@ static void test_path_string_non_unix(void **state)
     BIO_ADDR_rawmake(&ap, AF_INET, &addr4, sizeof(addr4), htons(80));
     assert_null(BIO_ADDR_path_string(&ap));
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* BIO_ADDRINFO accessors */
 
@@ -1096,11 +1100,13 @@ int main(void)
         /* BIO_ADDR_dup */
         ADDR_TEST(test_addr_dup_null),
         ADDR_TEST(test_addr_dup_ipv4),
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     /* BIO_ADDR_path_string */
 #ifndef OPENSSL_NO_UNIX_SOCK
         ADDR_TEST(test_path_string_unix),
 #endif
         ADDR_TEST(test_path_string_non_unix),
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
         /* BIO_ADDRINFO accessors */
         ADDR_TEST(test_addrinfo_next_null),
         ADDR_TEST(test_addrinfo_next),

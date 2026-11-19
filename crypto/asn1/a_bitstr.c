@@ -189,6 +189,7 @@ int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
     return ((a->data[w] & v) != 0);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Checks if the given bit string contains only bits specified by
  * the flags vector. Returns 0 if there is at least one bit set in 'a'
@@ -214,6 +215,7 @@ int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
     }
     return ok;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *out_length,
     int *out_unused_bits)

@@ -238,8 +238,12 @@ int OCSP_response_status(OCSP_RESPONSE *resp);
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
 const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs);
-const X509_ALGOR *OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs);
-const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see OCSP_resp_get0_tbs_sigalg(3) */
+OSSL_DEPRECATEDIN_4_2 const X509_ALGOR *OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs);
+/** @see OCSP_resp_get0_respdata(3) */
+OSSL_DEPRECATEDIN_4_2 const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
     const STACK_OF(X509) *extra_certs);
 
@@ -250,9 +254,12 @@ const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
 int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
     const ASN1_OCTET_STRING **pid,
     const X509_NAME **pname);
-int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see OCSP_resp_get1_id(3) */
+OSSL_DEPRECATEDIN_4_2 int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
     ASN1_OCTET_STRING **pid,
     X509_NAME **pname);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
 int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
@@ -303,62 +310,107 @@ int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
     const char *propq);
-int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see OCSP_RESPID_match(3) */
+OSSL_DEPRECATEDIN_4_2 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
 
-X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
 
-X509_EXTENSION *OCSP_accept_responses_new(char **oids);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_accept_responses_new(char **oids);
 
-X509_EXTENSION *OCSP_archive_cutoff_new(char *tim);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_archive_cutoff_new(char *tim);
 
-X509_EXTENSION *OCSP_url_svcloc_new(const X509_NAME *issuer, const char **urls);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_url_svcloc_new(const X509_NAME *issuer, const char **urls);
 
-int OCSP_REQUEST_get_ext_count(OCSP_REQUEST *x);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_REQUEST_get_ext_count(OCSP_REQUEST *x);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos);
-int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
     int lastpos);
-int OCSP_REQUEST_get_ext_by_critical(OCSP_REQUEST *x, int crit, int lastpos);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_REQUEST_get_ext_by_critical(OCSP_REQUEST *x, int crit, int lastpos);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const X509_EXTENSION *OCSP_REQUEST_get_ext(OCSP_REQUEST *x, int loc);
-X509_EXTENSION *OCSP_REQUEST_delete_ext(OCSP_REQUEST *x, int loc);
-void *OCSP_REQUEST_get1_ext_d2i(OCSP_REQUEST *x, int nid, int *crit,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_REQUEST_delete_ext(OCSP_REQUEST *x, int loc);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *OCSP_REQUEST_get1_ext_d2i(OCSP_REQUEST *x, int nid, int *crit,
     int *idx);
-int OCSP_REQUEST_add1_ext_i2d(OCSP_REQUEST *x, int nid, void *value, int crit,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_REQUEST_add1_ext_i2d(OCSP_REQUEST *x, int nid, void *value, int crit,
     unsigned long flags);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int OCSP_REQUEST_add_ext(OCSP_REQUEST *x, const X509_EXTENSION *ex, int loc);
 
-int OCSP_ONEREQ_get_ext_count(OCSP_ONEREQ *x);
-int OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos);
-int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj, int lastpos);
-int OCSP_ONEREQ_get_ext_by_critical(OCSP_ONEREQ *x, int crit, int lastpos);
-const X509_EXTENSION *OCSP_ONEREQ_get_ext(OCSP_ONEREQ *x, int loc);
-X509_EXTENSION *OCSP_ONEREQ_delete_ext(OCSP_ONEREQ *x, int loc);
-void *OCSP_ONEREQ_get1_ext_d2i(OCSP_ONEREQ *x, int nid, int *crit, int *idx);
-int OCSP_ONEREQ_add1_ext_i2d(OCSP_ONEREQ *x, int nid, void *value, int crit,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_ONEREQ_get_ext_count(OCSP_ONEREQ *x);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj, int lastpos);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_ONEREQ_get_ext_by_critical(OCSP_ONEREQ *x, int crit, int lastpos);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const X509_EXTENSION *OCSP_ONEREQ_get_ext(OCSP_ONEREQ *x, int loc);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_ONEREQ_delete_ext(OCSP_ONEREQ *x, int loc);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *OCSP_ONEREQ_get1_ext_d2i(OCSP_ONEREQ *x, int nid, int *crit, int *idx);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_ONEREQ_add1_ext_i2d(OCSP_ONEREQ *x, int nid, void *value, int crit,
     unsigned long flags);
-int OCSP_ONEREQ_add_ext(OCSP_ONEREQ *x, const X509_EXTENSION *ex, int loc);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_ONEREQ_add_ext(OCSP_ONEREQ *x, const X509_EXTENSION *ex, int loc);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int OCSP_BASICRESP_get_ext_count(OCSP_BASICRESP *x);
 int OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos);
-int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
     int lastpos);
-int OCSP_BASICRESP_get_ext_by_critical(OCSP_BASICRESP *x, int crit,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_BASICRESP_get_ext_by_critical(OCSP_BASICRESP *x, int crit,
     int lastpos);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const X509_EXTENSION *OCSP_BASICRESP_get_ext(OCSP_BASICRESP *x, int loc);
-X509_EXTENSION *OCSP_BASICRESP_delete_ext(OCSP_BASICRESP *x, int loc);
-void *OCSP_BASICRESP_get1_ext_d2i(OCSP_BASICRESP *x, int nid, int *crit,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_BASICRESP_delete_ext(OCSP_BASICRESP *x, int loc);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *OCSP_BASICRESP_get1_ext_d2i(OCSP_BASICRESP *x, int nid, int *crit,
     int *idx);
-int OCSP_BASICRESP_add1_ext_i2d(OCSP_BASICRESP *x, int nid, void *value,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_BASICRESP_add1_ext_i2d(OCSP_BASICRESP *x, int nid, void *value,
     int crit, unsigned long flags);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int OCSP_BASICRESP_add_ext(OCSP_BASICRESP *x, const X509_EXTENSION *ex, int loc);
 
 int OCSP_SINGLERESP_get_ext_count(OCSP_SINGLERESP *x);
-int OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos);
-int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
     int lastpos);
-int OCSP_SINGLERESP_get_ext_by_critical(OCSP_SINGLERESP *x, int crit,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int OCSP_SINGLERESP_get_ext_by_critical(OCSP_SINGLERESP *x, int crit,
     int lastpos);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const X509_EXTENSION *OCSP_SINGLERESP_get_ext(OCSP_SINGLERESP *x, int loc);
-X509_EXTENSION *OCSP_SINGLERESP_delete_ext(OCSP_SINGLERESP *x, int loc);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_EXTENSION *OCSP_SINGLERESP_delete_ext(OCSP_SINGLERESP *x, int loc);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void *OCSP_SINGLERESP_get1_ext_d2i(OCSP_SINGLERESP *x, int nid, int *crit,
     int *idx);
 int OCSP_SINGLERESP_add1_ext_i2d(OCSP_SINGLERESP *x, int nid, void *value,
@@ -367,20 +419,52 @@ int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, const X509_EXTENSION *ex, int lo
 const OCSP_CERTID *OCSP_SINGLERESP_get0_id(const OCSP_SINGLERESP *x);
 
 DECLARE_ASN1_FUNCTIONS(OCSP_SINGLERESP)
-DECLARE_ASN1_FUNCTIONS(OCSP_CERTSTATUS)
-DECLARE_ASN1_FUNCTIONS(OCSP_REVOKEDINFO)
+DECLARE_ASN1_ITEM(OCSP_CERTSTATUS)
+DECLARE_ASN1_ITEM(OCSP_REVOKEDINFO)
+/** @see OCSP_REVOKEDINFO_new(3) */
+OCSP_REVOKEDINFO *OCSP_REVOKEDINFO_new(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, OCSP_CERTSTATUS)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_CERTSTATUS, OCSP_CERTSTATUS)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_REVOKEDINFO, OCSP_REVOKEDINFO)
+/** @see OCSP_REVOKEDINFO_free(3) */
+OSSL_DEPRECATEDIN_4_2 void OCSP_REVOKEDINFO_free(OCSP_REVOKEDINFO *a);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(OCSP_BASICRESP)
-DECLARE_ASN1_FUNCTIONS(OCSP_RESPDATA)
+DECLARE_ASN1_ITEM(OCSP_RESPDATA)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, OCSP_RESPDATA)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_RESPDATA, OCSP_RESPDATA)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(OCSP_RESPID)
 DECLARE_ASN1_FUNCTIONS(OCSP_RESPONSE)
-DECLARE_ASN1_FUNCTIONS(OCSP_RESPBYTES)
-DECLARE_ASN1_FUNCTIONS(OCSP_ONEREQ)
+DECLARE_ASN1_ITEM(OCSP_RESPBYTES)
+/** @see OCSP_RESPBYTES_new(3) */
+OCSP_RESPBYTES *OCSP_RESPBYTES_new(void);
+DECLARE_ASN1_ALLOC_FUNCTIONS(OCSP_ONEREQ)
+DECLARE_ASN1_ITEM(OCSP_ONEREQ)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_RESPBYTES, OCSP_RESPBYTES)
+/** @see OCSP_RESPBYTES_free(3) */
+OSSL_DEPRECATEDIN_4_2 void OCSP_RESPBYTES_free(OCSP_RESPBYTES *a);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_ONEREQ, OCSP_ONEREQ)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(OCSP_CERTID)
 DECLARE_ASN1_FUNCTIONS(OCSP_REQUEST)
-DECLARE_ASN1_FUNCTIONS(OCSP_SIGNATURE)
-DECLARE_ASN1_FUNCTIONS(OCSP_REQINFO)
-DECLARE_ASN1_FUNCTIONS(OCSP_CRLID)
-DECLARE_ASN1_FUNCTIONS(OCSP_SERVICELOC)
+DECLARE_ASN1_ALLOC_FUNCTIONS(OCSP_SIGNATURE)
+DECLARE_ASN1_ITEM(OCSP_SIGNATURE)
+DECLARE_ASN1_ITEM(OCSP_REQINFO)
+DECLARE_ASN1_ALLOC_FUNCTIONS(OCSP_CRLID)
+DECLARE_ASN1_ITEM(OCSP_CRLID)
+DECLARE_ASN1_ALLOC_FUNCTIONS(OCSP_SERVICELOC)
+DECLARE_ASN1_ITEM(OCSP_SERVICELOC)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_SIGNATURE, OCSP_SIGNATURE)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, OCSP_REQINFO)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_REQINFO, OCSP_REQINFO)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_CRLID, OCSP_CRLID)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, OCSP_SERVICELOC, OCSP_SERVICELOC)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const char *OCSP_response_status_str(long s);
 const char *OCSP_cert_status_str(long s);

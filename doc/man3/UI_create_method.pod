@@ -208,6 +208,10 @@ L<UI(3)>, L<CRYPTO_get_ex_data(3)>, L<UI_STRING(3)>
 The UI_method_set_data_duplicator(), UI_method_get_data_duplicator()
 and UI_method_get_data_destructor() functions were added in OpenSSL 1.1.1.
 
+UI_method_set_data_duplicator(), UI_method_get_data_duplicator(),
+UI_method_get_data_destructor() and UI_method_get_prompt_constructor() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.

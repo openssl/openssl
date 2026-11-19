@@ -26,7 +26,9 @@
  * that applications may define.  I only really use the free function field.
  */
 static LHASH_OF(OBJ_NAME) *names_lh = NULL;
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int names_type_num = OBJ_NAME_TYPE_NUM;
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 static CRYPTO_RWLOCK *obj_lock = NULL;
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
@@ -59,6 +61,7 @@ int OBJ_NAME_init(void)
     return RUN_ONCE(&init, o_names_init);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
     int (*cmp_func)(const char *, const char *),
     void (*free_func)(const char *, int, const char *))
@@ -109,6 +112,7 @@ out:
     CRYPTO_THREAD_unlock(obj_lock);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
 {

@@ -16,6 +16,7 @@
 #include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_STDIO
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 {
     BIO *b;
@@ -30,6 +31,7 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
     BIO_free(b);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 int X509_CRL_print(BIO *out, const X509_CRL *x)

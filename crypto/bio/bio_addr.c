@@ -325,6 +325,7 @@ char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric)
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 char *BIO_ADDR_path_string(const BIO_ADDR *ap)
 {
 #ifndef OPENSSL_NO_UNIX_SOCK
@@ -333,6 +334,7 @@ char *BIO_ADDR_path_string(const BIO_ADDR *ap)
 #endif
     return NULL;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * BIO_ADDR_sockaddr - non-public routine to return the struct sockaddr

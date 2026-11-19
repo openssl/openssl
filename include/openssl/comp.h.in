@@ -34,7 +34,10 @@ extern "C" {
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth);
 const COMP_METHOD *COMP_CTX_get_method(const COMP_CTX *ctx);
-int COMP_CTX_get_type(const COMP_CTX *comp);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see COMP_CTX_get_type(3) */
+OSSL_DEPRECATEDIN_4_2 int COMP_CTX_get_type(const COMP_CTX *comp);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int COMP_get_type(const COMP_METHOD *meth);
 const char *COMP_get_name(const COMP_METHOD *meth);
 void COMP_CTX_free(COMP_CTX *ctx);

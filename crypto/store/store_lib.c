@@ -726,6 +726,7 @@ const char *OSSL_STORE_INFO_get0_NAME(const OSSL_STORE_INFO *info)
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info)
 {
     if (info->type == OSSL_STORE_INFO_NAME)
@@ -733,6 +734,7 @@ char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info)
     ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_NAME);
     return NULL;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const char *OSSL_STORE_INFO_get0_NAME_description(const OSSL_STORE_INFO *info)
 {
@@ -741,6 +743,7 @@ const char *OSSL_STORE_INFO_get0_NAME_description(const OSSL_STORE_INFO *info)
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info)
 {
     if (info->type == OSSL_STORE_INFO_NAME)
@@ -748,6 +751,7 @@ char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info)
     ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_NAME);
     return NULL;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 EVP_PKEY *OSSL_STORE_INFO_get0_PARAMS(const OSSL_STORE_INFO *info)
 {
@@ -1022,6 +1026,7 @@ void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search)
 }
 
 /* Search term accessors */
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion)
 {
     return criterion->search_type;
@@ -1055,6 +1060,7 @@ const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion)
 {
     return criterion->digest;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     OSSL_LIB_CTX *libctx, const char *propq,

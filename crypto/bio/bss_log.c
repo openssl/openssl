@@ -49,6 +49,8 @@ void *_malloc32(__size_t);
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+
 #ifndef NO_SYSLOG
 
 #if defined(OPENSSL_SYS_WIN32)
@@ -374,3 +376,6 @@ const BIO_METHOD *BIO_s_log(void)
     return NULL;
 }
 #endif /* NO_SYSLOG */
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

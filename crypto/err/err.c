@@ -407,10 +407,12 @@ unsigned long ERR_peek_last_error(void)
     return get_error_values(EV_PEEK_LAST, NULL, NULL, NULL, NULL, NULL);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 unsigned long ERR_peek_last_error_line(const char **file, int *line)
 {
     return get_error_values(EV_PEEK_LAST, file, line, NULL, NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 unsigned long ERR_peek_last_error_func(const char **func)
 {
@@ -768,6 +770,7 @@ static int err_set_error_data_int(char *data, size_t size, int flags,
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void ERR_set_error_data(char *data, int flags)
 {
     /*
@@ -786,6 +789,7 @@ void ERR_set_error_data(char *data, int flags)
      */
     err_set_error_data_int(data, strlen(data) + 1, flags, 1);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void ERR_add_error_data(int num, ...)
 {

@@ -115,10 +115,12 @@ int *X509_REQ_get_extension_nids(void)
     return ext_nids;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void X509_REQ_set_extension_nids(int *nids)
 {
     ext_nids = nids;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 STACK_OF(X509_EXTENSION) *
 ossl_x509_req_get1_extensions_by_nid(const X509_REQ *req, int nid)
@@ -224,11 +226,13 @@ int X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid, int lastpos)
     return X509at_get_attr_by_NID(req->req_info.attributes, nid, lastpos);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
     int lastpos)
 {
     return X509at_get_attr_by_OBJ(req->req_info.attributes, obj, lastpos);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc)
 {
@@ -261,6 +265,7 @@ int X509_REQ_add1_attr(X509_REQ *req, X509_ATTRIBUTE *attr)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_REQ_add1_attr_by_OBJ(X509_REQ *req,
     const ASN1_OBJECT *obj, int type,
     const unsigned char *bytes, int len)
@@ -275,6 +280,7 @@ int X509_REQ_add1_attr_by_OBJ(X509_REQ *req,
     req->req_info.enc.modified = 1;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_REQ_add1_attr_by_NID(X509_REQ *req,
     int nid, int type,

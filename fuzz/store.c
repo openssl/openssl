@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <limits.h>
 #include <openssl/bio.h>
 #include <openssl/core_names.h>
@@ -103,8 +105,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
         switch (OSSL_STORE_INFO_get_type(info)) {
         case OSSL_STORE_INFO_NAME:
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
             OPENSSL_free(OSSL_STORE_INFO_get1_NAME(info));
             OPENSSL_free(OSSL_STORE_INFO_get1_NAME_description(info));
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
             break;
         case OSSL_STORE_INFO_PARAMS:
             EVP_PKEY_free(OSSL_STORE_INFO_get1_PARAMS(info));

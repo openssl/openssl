@@ -699,6 +699,8 @@ From OpenSSL 3.0 they are all functions.
 EVP_PKEY_CTX_set_rsa_keygen_pubexp(), EVP_PKEY_CTX_get0_dh_kdf_ukm(),
 and EVP_PKEY_CTX_get0_ecdh_kdf_ukm() were deprecated in OpenSSL 3.0.
 
+EVP_PKEY_CTX_md() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.

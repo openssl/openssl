@@ -38,6 +38,7 @@ int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage)
 
 /* Add a friendlyname to a safebag */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
     int namelen)
 {
@@ -48,6 +49,7 @@ int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
     else
         return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
     int namelen)
@@ -60,6 +62,7 @@ int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
         return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
     const unsigned char *name, int namelen)
 {
@@ -80,6 +83,7 @@ int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
     else
         return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PKCS12_add1_attr_by_NID(PKCS12_SAFEBAG *bag, int nid, int type,
     const unsigned char *bytes, int len)

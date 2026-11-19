@@ -240,6 +240,7 @@ int BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
     return BN_mod(r, r, m, ctx);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
     if (!BN_lshift1(r, a))
@@ -247,6 +248,7 @@ int BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
     bn_check_top(r);
     return BN_nnmod(r, r, m, ctx);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * BN_mod_lshift1 variant that may be used if a is non-negative and less than
@@ -262,6 +264,7 @@ int BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
     BN_CTX *ctx)
 {
@@ -284,6 +287,7 @@ int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
     BN_free(abs_m);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * BN_mod_lshift variant that may be used if a is non-negative and less than

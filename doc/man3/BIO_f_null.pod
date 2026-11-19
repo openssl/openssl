@@ -27,6 +27,10 @@ As may be apparent a null filter BIO is not particularly useful.
 
 BIO_f_null() returns the null filter BIO method.
 
+=head1 HISTORY
+
+BIO_f_null() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

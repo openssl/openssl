@@ -326,6 +326,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
 {
     OSSL_LIB_CTX *libctx;
@@ -336,3 +337,4 @@ int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
     ossl_x509_get0_libctx(cert, &libctx, &propq);
     return OCSP_RESPID_match_ex(respid, cert, libctx, propq);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

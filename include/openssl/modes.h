@@ -94,22 +94,28 @@ size_t CRYPTO_cts128_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key,
     unsigned char ivec[16], cbc128_f cbc);
 
-size_t CRYPTO_nistcts128_encrypt_block(const unsigned char *in,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 size_t CRYPTO_nistcts128_encrypt_block(const unsigned char *in,
     unsigned char *out, size_t len,
     const void *key,
     unsigned char ivec[16],
     block128_f block);
-size_t CRYPTO_nistcts128_encrypt(const unsigned char *in, unsigned char *out,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 size_t CRYPTO_nistcts128_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key,
     unsigned char ivec[16], cbc128_f cbc);
-size_t CRYPTO_nistcts128_decrypt_block(const unsigned char *in,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 size_t CRYPTO_nistcts128_decrypt_block(const unsigned char *in,
     unsigned char *out, size_t len,
     const void *key,
     unsigned char ivec[16],
     block128_f block);
-size_t CRYPTO_nistcts128_decrypt(const unsigned char *in, unsigned char *out,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 size_t CRYPTO_nistcts128_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key,
     unsigned char ivec[16], cbc128_f cbc);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 typedef struct gcm128_context GCM128_CONTEXT;
 
@@ -190,9 +196,12 @@ typedef void (*ocb128_f)(const unsigned char *in, unsigned char *out,
     const unsigned char L_[][16],
     unsigned char checksum[16]);
 
-OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
     block128_f encrypt, block128_f decrypt,
     ocb128_f stream);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
     block128_f encrypt, block128_f decrypt,
     ocb128_f stream);

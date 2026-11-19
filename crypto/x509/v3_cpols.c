@@ -78,14 +78,54 @@ ASN1_SEQUENCE(USERNOTICE) = {
     ASN1_OPT(USERNOTICE, exptext, DISPLAYTEXT)
 } ASN1_SEQUENCE_END(USERNOTICE)
 
-IMPLEMENT_ASN1_FUNCTIONS(USERNOTICE)
+USERNOTICE *USERNOTICE_new(void)
+{
+    return (USERNOTICE *)ASN1_item_new(ASN1_ITEM_rptr(USERNOTICE));
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+USERNOTICE *d2i_USERNOTICE(USERNOTICE **a, const unsigned char **in, long len)
+{
+    return (USERNOTICE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(USERNOTICE));
+}
+
+int i2d_USERNOTICE(const USERNOTICE *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(USERNOTICE));
+}
+
+void USERNOTICE_free(USERNOTICE *a)
+{
+    ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(USERNOTICE));
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 ASN1_SEQUENCE(NOTICEREF) = {
     ASN1_SIMPLE(NOTICEREF, organization, DISPLAYTEXT),
     ASN1_SEQUENCE_OF(NOTICEREF, noticenos, ASN1_INTEGER)
 } ASN1_SEQUENCE_END(NOTICEREF)
 
-IMPLEMENT_ASN1_FUNCTIONS(NOTICEREF)
+NOTICEREF *NOTICEREF_new(void)
+{
+    return (NOTICEREF *)ASN1_item_new(ASN1_ITEM_rptr(NOTICEREF));
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+NOTICEREF *d2i_NOTICEREF(NOTICEREF **a, const unsigned char **in, long len)
+{
+    return (NOTICEREF *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(NOTICEREF));
+}
+
+int i2d_NOTICEREF(const NOTICEREF *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(NOTICEREF));
+}
+
+void NOTICEREF_free(NOTICEREF *a)
+{
+    ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(NOTICEREF));
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, const char *value)

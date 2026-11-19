@@ -37,11 +37,13 @@ void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash)
  * terms of the new CONF interface.
  */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int CONF_set_default_method(CONF_METHOD *meth)
 {
     default_CONF_method = meth;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
     long *eline)
@@ -66,6 +68,7 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
 }
 
 #ifndef OPENSSL_NO_STDIO
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
     long *eline)
 {
@@ -79,6 +82,7 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
     BIO_free(btmp);
     return ltmp;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp,
@@ -121,6 +125,7 @@ char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
     }
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
     const char *name)
 {
@@ -139,6 +144,7 @@ long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
     ERR_pop_to_mark();
     return status == 0 ? 0L : result;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void CONF_free(LHASH_OF(CONF_VALUE) *conf)
 {
@@ -148,6 +154,7 @@ void CONF_free(LHASH_OF(CONF_VALUE) *conf)
 }
 
 #ifndef OPENSSL_NO_STDIO
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 {
     BIO *btmp;
@@ -161,6 +168,7 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
     BIO_free(btmp);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
@@ -379,6 +387,7 @@ long _CONF_get_number(const CONF *conf, const char *section,
 }
 
 #ifndef OPENSSL_NO_STDIO
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int NCONF_dump_fp(const CONF *conf, FILE *out)
 {
     BIO *btmp;
@@ -391,6 +400,7 @@ int NCONF_dump_fp(const CONF *conf, FILE *out)
     BIO_free(btmp);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
 int NCONF_dump_bio(const CONF *conf, BIO *out)

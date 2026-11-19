@@ -152,11 +152,13 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 {
     return EVP_PBE_CipherInit_ex(pbe_obj, pass, passlen, param, ctx, en_de, NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe2);
 
@@ -215,6 +217,7 @@ err:
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
     EVP_PBE_KEYGEN *keygen)
 {
@@ -232,6 +235,7 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
     return EVP_PBE_alg_add_type(EVP_PBE_TYPE_OUTER, nid,
         cipher_nid, md_nid, keygen);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
     EVP_PBE_KEYGEN **pkeygen, EVP_PBE_KEYGEN_EX **pkeygen_ex)
@@ -283,6 +287,7 @@ void EVP_PBE_cleanup(void)
     pbe_algs = NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
 {
     const EVP_PBE_CTL *tpbe;
@@ -297,3 +302,4 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
         *ppbe_nid = tpbe->pbe_nid;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

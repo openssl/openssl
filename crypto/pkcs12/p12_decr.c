@@ -174,6 +174,7 @@ void *PKCS12_item_decrypt_d2i_ex(const X509_ALGOR *algor, const ASN1_ITEM *it,
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
     const char *pass, int passlen,
     const ASN1_OCTET_STRING *oct, int zbuf)
@@ -181,6 +182,7 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
     return PKCS12_item_decrypt_d2i_ex(algor, it, pass, passlen, oct, zbuf,
         NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Encode ASN1 structure and encrypt, return OCTET STRING if zbuf set zero
@@ -222,6 +224,7 @@ err:
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     const ASN1_ITEM *it,
     const char *pass, int passlen,
@@ -229,3 +232,4 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
 {
     return PKCS12_item_i2d_encrypt_ex(algor, it, pass, passlen, obj, zbuf, NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

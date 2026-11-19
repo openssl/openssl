@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -72,6 +74,7 @@ static const char *expected_key_file = NULL;
 static int mismatched_key_pass = 0;
 static int num_skeys = 0;
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
 {
     int ret = 0;
@@ -110,6 +113,7 @@ err:
     OSSL_STACK_OF_X509_free(ca2);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int pkcs12_parse_test(void)
 {
@@ -138,8 +142,10 @@ static int pkcs12_parse_test(void)
             goto err;
         if ((has_ca && !TEST_ptr(ca)) || (!has_ca && !TEST_ptr_null(ca)))
             goto err;
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
         if (has_key && !changepass(p12, key, cert, ca))
             goto err;
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     }
     ret = 1;
 err:

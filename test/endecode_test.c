@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
@@ -910,8 +912,15 @@ static int check_public_MSBLOB(const char *file, const int line,
     const char *type,
     const void *data, size_t data_len)
 {
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     const unsigned char *datap = data;
     EVP_PKEY *pkey = b2i_PublicKey(&datap, (long)data_len);
+#else
+    BIO *bio = BIO_new_mem_buf(data, (int)data_len);
+    EVP_PKEY *pkey = bio == NULL ? NULL : b2i_PublicKey_bio(bio);
+
+    BIO_free(bio);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     int ok = TEST_FL_ptr(pkey);
 
     EVP_PKEY_free(pkey);

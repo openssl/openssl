@@ -17,6 +17,8 @@
 
 #include <crypto/asn1.h>
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+
 /* PKCS#12 password change routine */
 
 static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
@@ -265,3 +267,6 @@ done:
         PBEPARAM_free(pbe);
     return ret;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

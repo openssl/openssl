@@ -623,10 +623,12 @@ long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
     return (long)r;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai)
 {
     return bn_to_asn1_string(bn, ai, V_ASN1_ENUMERATED);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 BIGNUM *ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn)
 {

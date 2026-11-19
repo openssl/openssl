@@ -12,6 +12,8 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+
 /*
  * BIO_put and BIO_get both add to the digest, BIO_gets returns the digest
  */
@@ -126,3 +128,6 @@ static int nullf_puts(BIO *bp, const char *str)
     BIO_copy_next_retry(bp);
     return ret;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

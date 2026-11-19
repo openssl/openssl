@@ -69,6 +69,8 @@ L<PKCS12_create(3)>
 
 PKCS12_add_secret() and PKCS12_add_key_ex() were added in OpenSSL 3.0.
 
+PKCS12_add_key() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.

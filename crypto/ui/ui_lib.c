@@ -142,6 +142,7 @@ static int general_allocate_string(UI *ui, const char *prompt,
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int general_allocate_boolean(UI *ui,
     const char *prompt,
     const char *action_desc,
@@ -188,6 +189,7 @@ static int general_allocate_boolean(UI *ui,
     }
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Returns the index to the place in the stack or -1 for error.  Uses a
@@ -232,6 +234,7 @@ int UI_add_verify_string(UI *ui, const char *prompt, int flags,
         maxsize, test_buf);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
     char *result_buf, int minsize, int maxsize,
     const char *test_buf)
@@ -311,6 +314,7 @@ err:
     OPENSSL_free(cancel_chars_copy);
     return -1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int UI_add_info_string(UI *ui, const char *text)
 {
@@ -318,6 +322,7 @@ int UI_add_info_string(UI *ui, const char *text)
         NULL);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int UI_dup_info_string(UI *ui, const char *text)
 {
     char *text_copy = NULL;
@@ -359,6 +364,7 @@ int UI_dup_error_string(UI *ui, const char *text)
         OPENSSL_free(text_copy);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 char *UI_construct_prompt(UI *ui, const char *phrase_desc,
     const char *object_name)
@@ -396,6 +402,7 @@ void *UI_add_user_data(UI *ui, void *user_data)
     return old_data;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int UI_dup_user_data(UI *ui, void *user_data)
 {
     void *duplicate = NULL;
@@ -417,12 +424,14 @@ int UI_dup_user_data(UI *ui, void *user_data)
 
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void *UI_get0_user_data(UI *ui)
 {
     return ui->user_data;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 const char *UI_get0_result(UI *ui, int i)
 {
     if (i < 0) {
@@ -435,6 +444,7 @@ const char *UI_get0_result(UI *ui, int i)
     }
     return UI_get0_result_string(sk_UI_STRING_value(ui->strings, i));
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int UI_get_result_length(UI *ui, int i)
 {
@@ -676,6 +686,7 @@ int UI_method_set_closer(UI_METHOD *method, int (*closer)(UI *ui))
     return -1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int UI_method_set_data_duplicator(UI_METHOD *method,
     void *(*duplicator)(UI *ui, void *ui_data),
     void (*destructor)(UI *ui, void *ui_data))
@@ -687,6 +698,7 @@ int UI_method_set_data_duplicator(UI_METHOD *method,
     }
     return -1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int UI_method_set_prompt_constructor(UI_METHOD *method,
     char *(*prompt_constructor)(UI *ui,
@@ -740,6 +752,7 @@ int (*UI_method_get_closer(const UI_METHOD *method))(UI *)
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))(UI *, const char *, const char *)
 {
     if (method != NULL)
@@ -760,6 +773,7 @@ void (*UI_method_get_data_destructor(const UI_METHOD *method))(UI *, void *)
         return method->ui_destroy_data;
     return NULL;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const void *UI_method_get_ex_data(const UI_METHOD *method, int idx)
 {
@@ -841,6 +855,7 @@ const char *UI_get0_test_string(UI_STRING *uis)
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int UI_get_result_minsize(UI_STRING *uis)
 {
     switch (uis->type) {
@@ -855,6 +870,7 @@ int UI_get_result_minsize(UI_STRING *uis)
     }
     return -1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int UI_get_result_maxsize(UI_STRING *uis)
 {

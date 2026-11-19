@@ -122,6 +122,8 @@ functions were added in OpenSSL 1.1.0a.
 
 The OCSP_basic_sign_ctx() function was added in OpenSSL 1.1.1.
 
+OCSP_RESPID_match() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.

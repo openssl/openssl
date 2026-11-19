@@ -22,6 +22,7 @@
  * passing details to a callback.
  */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb)(ASN1_SCTX *ctx))
 {
     ASN1_SCTX *ret = OPENSSL_zalloc(sizeof(*ret));
@@ -61,3 +62,4 @@ void *ASN1_SCTX_get_app_data(ASN1_SCTX *p)
 {
     return p->app_data;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

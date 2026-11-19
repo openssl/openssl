@@ -43,6 +43,7 @@ void X509_LOOKUP_meth_free(X509_LOOKUP_METHOD *method)
     OPENSSL_free(method);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_LOOKUP_meth_set_new_item(X509_LOOKUP_METHOD *method,
     int (*new_item)(X509_LOOKUP *ctx))
 {
@@ -92,6 +93,7 @@ int (*X509_LOOKUP_meth_get_shutdown(const X509_LOOKUP_METHOD *method))(X509_LOOK
 {
     return method->shutdown;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_LOOKUP_meth_set_ctrl(
     X509_LOOKUP_METHOD *method,
@@ -101,6 +103,7 @@ int X509_LOOKUP_meth_set_ctrl(
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_LOOKUP_ctrl_fn X509_LOOKUP_meth_get_ctrl(const X509_LOOKUP_METHOD *method)
 {
     return method->ctrl;
@@ -157,3 +160,4 @@ X509_LOOKUP_get_by_alias_fn X509_LOOKUP_meth_get_get_by_alias(
 {
     return method->get_by_alias;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

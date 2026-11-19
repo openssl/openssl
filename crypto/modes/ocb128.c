@@ -124,6 +124,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
     return ctx->l + idx;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Create a new OCB128_CONTEXT
  */
@@ -144,6 +145,7 @@ OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
 
     return NULL;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Initialise an existing OCB128_CONTEXT

@@ -82,10 +82,12 @@ err:
     return i;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent)
 {
     return asn1_parse2(bp, &pp, len, 0, 0, indent, 0);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
     int dump)

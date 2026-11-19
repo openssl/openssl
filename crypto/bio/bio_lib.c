@@ -807,6 +807,7 @@ BIO *BIO_pop(BIO *b)
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 BIO *BIO_get_retry_BIO(BIO *bio, int *reason)
 {
     BIO *b, *last;
@@ -824,6 +825,7 @@ BIO *BIO_get_retry_BIO(BIO *bio, int *reason)
         *reason = last->retry_reason;
     return last;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int BIO_get_retry_reason(BIO *bio)
 {

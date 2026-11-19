@@ -124,15 +124,26 @@ typedef struct x509_trust_st {
 #define X509_TRUST_UNTRUSTED 3
 
 int X509_TRUST_set(int *t, int trust);
-int X509_TRUST_get_count(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_TRUST_get_count(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 X509_TRUST *X509_TRUST_get0(int idx);
 int X509_TRUST_get_by_id(int id);
-int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, const X509 *, int),
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, const X509 *, int),
     const char *name, int arg1, void *arg2);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509_TRUST_cleanup(void);
-int X509_TRUST_get_flags(const X509_TRUST *xp);
-char *X509_TRUST_get0_name(const X509_TRUST *xp);
-int X509_TRUST_get_trust(const X509_TRUST *xp);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_TRUST_get_flags(const X509_TRUST *xp);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 char *X509_TRUST_get0_name(const X509_TRUST *xp);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_TRUST_get_trust(const X509_TRUST *xp);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_trusted(const X509 *x);
 int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
@@ -142,8 +153,11 @@ void X509_reject_clear(X509 *x);
 const STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(const X509 *x);
 const STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(const X509 *x);
 
-int (*X509_TRUST_set_default(int (*trust)(int, const X509 *, int)))(int, const X509 *,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int (*X509_TRUST_set_default(int (*trust)(int, const X509 *, int)))(int, const X509 *,
     int);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509_check_trust(const X509 *x, int id, int flags);
 
 int X509_verify_cert(X509_STORE_CTX *ctx);
@@ -451,45 +465,72 @@ void X509_STORE_set_verify(X509_STORE *xs, X509_STORE_CTX_verify_fn verify);
     X509_STORE_set_verify((ctx), (func))
 void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
     X509_STORE_CTX_verify_fn verify);
-X509_STORE_CTX_verify_fn X509_STORE_get_verify(const X509_STORE *xs);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_verify_fn X509_STORE_get_verify(const X509_STORE *xs);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509_STORE_set_verify_cb(X509_STORE *xs,
     X509_STORE_CTX_verify_cb verify_cb);
 #define X509_STORE_set_verify_cb_func(ctx, func) \
     X509_STORE_set_verify_cb((ctx), (func))
 X509_STORE_CTX_verify_cb X509_STORE_get_verify_cb(const X509_STORE *xs);
-void X509_STORE_set_get_issuer(X509_STORE *xs,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_STORE_set_get_issuer(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_get_issuer(X509_STORE *xs,
     X509_STORE_CTX_get_issuer_fn get_issuer);
-X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE *xs);
+/** @see X509_STORE_get_get_issuer(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE *xs);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509_STORE_set_check_issued(X509_STORE *xs,
     X509_STORE_CTX_check_issued_fn check_issued);
-X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(const X509_STORE *s);
-void X509_STORE_set_check_revocation(X509_STORE *xs,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_STORE_get_check_issued(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(const X509_STORE *s);
+/** @see X509_STORE_set_check_revocation(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_check_revocation(X509_STORE *xs,
     X509_STORE_CTX_check_revocation_fn check_revocation);
-X509_STORE_CTX_check_revocation_fn
+/** @see X509_STORE_get_check_revocation(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_revocation_fn
 X509_STORE_get_check_revocation(const X509_STORE *xs);
-void X509_STORE_set_get_crl(X509_STORE *xs,
+/** @see X509_STORE_set_get_crl(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_get_crl(X509_STORE *xs,
     X509_STORE_CTX_get_crl_fn get_crl);
-X509_STORE_CTX_get_crl_fn X509_STORE_get_get_crl(const X509_STORE *xs);
-void X509_STORE_set_check_crl(X509_STORE *xs,
+/** @see X509_STORE_get_get_crl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_get_crl_fn X509_STORE_get_get_crl(const X509_STORE *xs);
+/** @see X509_STORE_set_check_crl(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_check_crl(X509_STORE *xs,
     X509_STORE_CTX_check_crl_fn check_crl);
-X509_STORE_CTX_check_crl_fn X509_STORE_get_check_crl(const X509_STORE *xs);
-void X509_STORE_set_cert_crl(X509_STORE *xs,
+/** @see X509_STORE_get_check_crl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_crl_fn X509_STORE_get_check_crl(const X509_STORE *xs);
+/** @see X509_STORE_set_cert_crl(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_cert_crl(X509_STORE *xs,
     X509_STORE_CTX_cert_crl_fn cert_crl);
-X509_STORE_CTX_cert_crl_fn X509_STORE_get_cert_crl(const X509_STORE *xs);
-void X509_STORE_set_check_policy(X509_STORE *xs,
+/** @see X509_STORE_get_cert_crl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_cert_crl_fn X509_STORE_get_cert_crl(const X509_STORE *xs);
+/** @see X509_STORE_set_check_policy(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_check_policy(X509_STORE *xs,
     X509_STORE_CTX_check_policy_fn check_policy);
-X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(const X509_STORE *s);
-void X509_STORE_set_lookup_certs(X509_STORE *xs,
+/** @see X509_STORE_get_check_policy(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(const X509_STORE *s);
+/** @see X509_STORE_set_lookup_certs(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_lookup_certs(X509_STORE *xs,
     X509_STORE_CTX_lookup_certs_fn lookup_certs);
-X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const X509_STORE *s);
+/** @see X509_STORE_get_lookup_certs(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const X509_STORE *s);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509_STORE_set_lookup_crls(X509_STORE *xs,
     X509_STORE_CTX_lookup_crls_fn lookup_crls);
 #define X509_STORE_set_lookup_crls_cb(ctx, func) \
     X509_STORE_set_lookup_crls((ctx), (func))
-X509_STORE_CTX_lookup_crls_fn X509_STORE_get_lookup_crls(const X509_STORE *xs);
-void X509_STORE_set_cleanup(X509_STORE *xs,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_STORE_get_lookup_crls(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_lookup_crls_fn X509_STORE_get_lookup_crls(const X509_STORE *xs);
+/** @see X509_STORE_set_cleanup(3) */
+OSSL_DEPRECATEDIN_4_2 void X509_STORE_set_cleanup(X509_STORE *xs,
     X509_STORE_CTX_cleanup_fn cleanup);
-X509_STORE_CTX_cleanup_fn X509_STORE_get_cleanup(const X509_STORE *xs);
+/** @see X509_STORE_get_cleanup(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_cleanup_fn X509_STORE_get_cleanup(const X509_STORE *xs);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #define X509_STORE_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE, l, p, newf, dupf, freef)
@@ -520,16 +561,28 @@ X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(const X509_STORE_CTX *ctx)
 X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_check_issued_fn X509_STORE_CTX_get_check_issued(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_revocation_fn X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_STORE_CTX_get_check_revocation(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_revocation_fn X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void X509_STORE_CTX_set_get_crl(X509_STORE_CTX *ctx,
     X509_STORE_CTX_get_crl_fn get_crl);
-X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_policy_fn X509_STORE_CTX_get_check_policy(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(const X509_STORE_CTX *ctx);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_STORE_CTX_get_get_crl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx);
+/** @see X509_STORE_CTX_get_check_crl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx);
+/** @see X509_STORE_CTX_get_cert_crl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx);
+/** @see X509_STORE_CTX_get_check_policy(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_check_policy_fn X509_STORE_CTX_get_check_policy(const X509_STORE_CTX *ctx);
+/** @see X509_STORE_CTX_get_lookup_certs(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(const X509_STORE_CTX *ctx);
+/** @see X509_STORE_CTX_get_lookup_crls(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(const X509_STORE_CTX *ctx);
+/** @see X509_STORE_CTX_get_cleanup(3) */
+OSSL_DEPRECATEDIN_4_2 X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(const X509_STORE_CTX *ctx);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #define X509_STORE_CTX_get_chain X509_STORE_CTX_get0_chain
@@ -584,45 +637,66 @@ typedef int (*X509_LOOKUP_get_by_alias_fn)(X509_LOOKUP *ctx,
 X509_LOOKUP_METHOD *X509_LOOKUP_meth_new(const char *name);
 void X509_LOOKUP_meth_free(X509_LOOKUP_METHOD *method);
 
-int X509_LOOKUP_meth_set_new_item(X509_LOOKUP_METHOD *method,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_LOOKUP_meth_set_new_item(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_new_item(X509_LOOKUP_METHOD *method,
     int (*new_item)(X509_LOOKUP *ctx));
-int (*X509_LOOKUP_meth_get_new_item(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
+/** @see X509_LOOKUP_meth_get_new_item(3) */
+OSSL_DEPRECATEDIN_4_2 int (*X509_LOOKUP_meth_get_new_item(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
 
-int X509_LOOKUP_meth_set_free(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_free(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_free(X509_LOOKUP_METHOD *method,
     void (*free_fn)(X509_LOOKUP *ctx));
-void (*X509_LOOKUP_meth_get_free(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
+/** @see X509_LOOKUP_meth_get_free(3) */
+OSSL_DEPRECATEDIN_4_2 void (*X509_LOOKUP_meth_get_free(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
 
-int X509_LOOKUP_meth_set_init(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_init(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_init(X509_LOOKUP_METHOD *method,
     int (*init)(X509_LOOKUP *ctx));
-int (*X509_LOOKUP_meth_get_init(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
+/** @see X509_LOOKUP_meth_get_init(3) */
+OSSL_DEPRECATEDIN_4_2 int (*X509_LOOKUP_meth_get_init(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
 
-int X509_LOOKUP_meth_set_shutdown(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_shutdown(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_shutdown(X509_LOOKUP_METHOD *method,
     int (*shutdown)(X509_LOOKUP *ctx));
-int (*X509_LOOKUP_meth_get_shutdown(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
+/** @see X509_LOOKUP_meth_get_shutdown(3) */
+OSSL_DEPRECATEDIN_4_2 int (*X509_LOOKUP_meth_get_shutdown(const X509_LOOKUP_METHOD *method))(X509_LOOKUP *ctx);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_LOOKUP_meth_set_ctrl(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_ctrl_fn ctrl_fn);
-X509_LOOKUP_ctrl_fn X509_LOOKUP_meth_get_ctrl(const X509_LOOKUP_METHOD *method);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_LOOKUP_meth_get_ctrl(3) */
+OSSL_DEPRECATEDIN_4_2 X509_LOOKUP_ctrl_fn X509_LOOKUP_meth_get_ctrl(const X509_LOOKUP_METHOD *method);
 
-int X509_LOOKUP_meth_set_get_by_subject(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_get_by_subject(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_get_by_subject(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_get_by_subject_fn fn);
-X509_LOOKUP_get_by_subject_fn X509_LOOKUP_meth_get_get_by_subject(
+/** @see X509_LOOKUP_meth_get_get_by_subject(3) */
+OSSL_DEPRECATEDIN_4_2 X509_LOOKUP_get_by_subject_fn X509_LOOKUP_meth_get_get_by_subject(
     const X509_LOOKUP_METHOD *method);
 
-int X509_LOOKUP_meth_set_get_by_issuer_serial(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_get_by_issuer_serial(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_get_by_issuer_serial(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_get_by_issuer_serial_fn fn);
-X509_LOOKUP_get_by_issuer_serial_fn X509_LOOKUP_meth_get_get_by_issuer_serial(
+/** @see X509_LOOKUP_meth_get_get_by_issuer_serial(3) */
+OSSL_DEPRECATEDIN_4_2 X509_LOOKUP_get_by_issuer_serial_fn X509_LOOKUP_meth_get_get_by_issuer_serial(
     const X509_LOOKUP_METHOD *method);
 
-int X509_LOOKUP_meth_set_get_by_fingerprint(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_get_by_fingerprint(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_get_by_fingerprint(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_get_by_fingerprint_fn fn);
-X509_LOOKUP_get_by_fingerprint_fn X509_LOOKUP_meth_get_get_by_fingerprint(
+/** @see X509_LOOKUP_meth_get_get_by_fingerprint(3) */
+OSSL_DEPRECATEDIN_4_2 X509_LOOKUP_get_by_fingerprint_fn X509_LOOKUP_meth_get_get_by_fingerprint(
     const X509_LOOKUP_METHOD *method);
 
-int X509_LOOKUP_meth_set_get_by_alias(X509_LOOKUP_METHOD *method,
+/** @see X509_LOOKUP_meth_set_get_by_alias(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_meth_set_get_by_alias(X509_LOOKUP_METHOD *method,
     X509_LOOKUP_get_by_alias_fn fn);
-X509_LOOKUP_get_by_alias_fn X509_LOOKUP_meth_get_get_by_alias(
+/** @see X509_LOOKUP_meth_get_get_by_alias(3) */
+OSSL_DEPRECATEDIN_4_2 X509_LOOKUP_get_by_alias_fn X509_LOOKUP_meth_get_get_by_alias(
     const X509_LOOKUP_METHOD *method);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_STORE_add_cert(X509_STORE *xs, const X509 *x);
 int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x);
@@ -649,21 +723,30 @@ int X509_load_cert_crl_file_ex(X509_LOOKUP *ctx, const char *file, int type,
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method);
 void X509_LOOKUP_free(X509_LOOKUP *ctx);
-int X509_LOOKUP_init(X509_LOOKUP *ctx);
-int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_LOOKUP_init(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_init(X509_LOOKUP *ctx);
+/** @see X509_LOOKUP_by_subject(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret,
     OSSL_LIB_CTX *libctx, const char *propq);
-int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_LOOKUP_by_issuer_serial(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name,
     const ASN1_INTEGER *serial,
     X509_OBJECT *ret);
-int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+/** @see X509_LOOKUP_by_fingerprint(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const unsigned char *bytes, int len,
     X509_OBJECT *ret);
-int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+/** @see X509_LOOKUP_by_alias(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const char *str, int len, X509_OBJECT *ret);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data);
 void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx);
 X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx);
@@ -758,9 +841,13 @@ int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
 int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
     STACK_OF(ASN1_OBJECT) *policies);
 
-int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_VERIFY_PARAM_set_inh_flags(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param,
     uint32_t flags);
-uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param);
+/** @see X509_VERIFY_PARAM_get_inh_flags(3) */
+OSSL_DEPRECATEDIN_4_2 uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx);
 int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
@@ -830,9 +917,13 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 
 void X509_policy_tree_free(X509_POLICY_TREE *tree);
 
-int X509_policy_tree_level_count(const X509_POLICY_TREE *tree);
-X509_POLICY_LEVEL *X509_policy_tree_get0_level(const X509_POLICY_TREE *tree,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_policy_tree_level_count(const X509_POLICY_TREE *tree);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_POLICY_LEVEL *X509_policy_tree_get0_level(const X509_POLICY_TREE *tree,
     int i);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 STACK_OF(X509_POLICY_NODE)
 *X509_policy_tree_get0_policies(const X509_POLICY_TREE *tree);
@@ -840,16 +931,22 @@ STACK_OF(X509_POLICY_NODE)
 STACK_OF(X509_POLICY_NODE)
 *X509_policy_tree_get0_user_policies(const X509_POLICY_TREE *tree);
 
-int X509_policy_level_node_count(X509_POLICY_LEVEL *level);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_policy_level_node_count(X509_POLICY_LEVEL *level);
 
-X509_POLICY_NODE *X509_policy_level_get0_node(const X509_POLICY_LEVEL *level,
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_POLICY_NODE *X509_policy_level_get0_node(const X509_POLICY_LEVEL *level,
     int i);
 
-const ASN1_OBJECT *X509_policy_node_get0_policy(const X509_POLICY_NODE *node);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const ASN1_OBJECT *X509_policy_node_get0_policy(const X509_POLICY_NODE *node);
 
-STACK_OF(POLICYQUALINFO)
-*X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node);
-const X509_POLICY_NODE *X509_policy_node_get0_parent(const X509_POLICY_NODE *node);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 STACK_OF(POLICYQUALINFO) *X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const X509_POLICY_NODE *X509_policy_node_get0_parent(const X509_POLICY_NODE *node);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #ifdef __cplusplus
 }

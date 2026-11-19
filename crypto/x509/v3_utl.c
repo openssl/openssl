@@ -85,6 +85,7 @@ int X509V3_add_value(const char *name, const char *value,
         extlist);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509V3_add_value_uchar(const char *name, const unsigned char *value,
     STACK_OF(CONF_VALUE) **extlist)
 {
@@ -92,6 +93,7 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
         value != NULL ? strlen((const char *)value) : 0,
         extlist);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
     size_t vallen, STACK_OF(CONF_VALUE) **extlist)
@@ -119,6 +121,7 @@ int X509V3_add_value_bool(const char *name, int asn1_bool,
     return X509V3_add_value(name, "FALSE", extlist);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
     STACK_OF(CONF_VALUE) **extlist)
 {
@@ -126,6 +129,7 @@ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
         return X509V3_add_value(name, "TRUE", extlist);
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static char *bignum_to_string(const BIGNUM *bn)
 {
@@ -468,6 +472,7 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x)
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x)
 {
     GENERAL_NAMES *gens;
@@ -481,6 +486,7 @@ STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x)
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,
     GENERAL_NAMES *gens)

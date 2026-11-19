@@ -10,7 +10,7 @@
 
 #include <openssl/macros.h>
 
-#ifndef OPENSSL_NO_ARIA
+#if !defined(OPENSSL_NO_ARIA) && !defined(OPENSSL_NO_DEPRECATED_4_2)
 #include "crypto/evp.h"
 
 IMPLEMENT_BLOCK_CIPHER(aria_128, ks, aria, EVP_ARIA_KEY,
@@ -75,4 +75,4 @@ BLOCK_CIPHER_aead(256, ccm, CCM)
 
 #else
 NON_EMPTY_TRANSLATION_UNIT
-#endif
+#endif /* !defined(OPENSSL_NO_ARIA) && !defined(OPENSSL_NO_DEPRECATED_4_2) */

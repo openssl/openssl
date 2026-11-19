@@ -378,6 +378,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /* A lookup method that reports every name found and adds none to the store */
 static int found_not_cached(X509_LOOKUP *lu, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret)
@@ -442,6 +443,7 @@ err:
     X509_NAME_free(name);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Test to trigger memory failures in X509_STORE_add_cert.
@@ -537,7 +539,9 @@ int setup_tests(void)
     ADD_TEST(test_load_cert_file);
     ADD_TEST(test_load_same_cn_certs);
     ADD_TEST(test_store_same_name_order);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_store_get1_not_cached);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_MFAIL_NO_CHECK_TEST(test_x509_pem_read_mfail);
     ADD_MFAIL_TEST(test_x509_store_add_mfail);
     ADD_MFAIL_TEST(test_x509_get1_objects_mfail);

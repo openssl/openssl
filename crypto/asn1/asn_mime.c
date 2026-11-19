@@ -520,10 +520,12 @@ ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, int flags, BIO **bcont,
     return val;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 {
     return SMIME_read_ASN1_ex(bio, 0, bcont, it, NULL, NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Copy text from one BIO to another making the output CRLF at EOL */
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
