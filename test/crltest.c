@@ -1084,6 +1084,82 @@ static const char *kCrlMismatchedSigAlg[] = {
  * with |root| (and |root2| if non-NULL).
  * Returns a value from X509_V_ERR_xxx or X509_V_OK.
  */
+/*
+ * Leaf issued by kRoot (serial 0x1001, key kLeafPrivateKey) with two CRL
+ * distribution points that split the revocation reasons between them:
+ *   http://crl.example.com/a.crl: keyCompromise, cACompromise,
+ *                                 affiliationChanged, superseded
+ *   http://crl.example.com/b.crl: cessationOfOperation, certificateHold,
+ *                                 privilegeWithdrawn, aACompromise
+ */
+static const char *kLeafTwoDP[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIECzCCAvOgAwIBAgICEAEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVT\n",
+    "MRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUw\n",
+    "EwYDVQQKDAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhv\n",
+    "cml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EwHhcNMjYwMzEwMTIw\n",
+    "MDAwWhcNMjcwMzEwMTIwMDAwWjBAMQswCQYDVQQGEwJVUzEVMBMGA1UECgwMRXhh\n",
+    "bXBsZSBDb3JwMRowGAYDVQQDDBF0d29kcC5leGFtcGxlLmNvbTCCASIwDQYJKoZI\n",
+    "hvcNAQEBBQADggEPADCCAQoCggEBAKSuf+LYfmahQUGet4JsLlvfE3WvcHCCtufF\n",
+    "Zu2hzt1KgqvwKWimmCVMlmpuzSoNyLn+xdTYDtXyiP/M52aep3+tgUZvdWv7kxCV\n",
+    "u8728RWOmSasl+gqXLulP7C7ZIxSG+0APz9Y5ApafL+ykxAK0dprMYkB49S3Phn5\n",
+    "uiULjBWcEs9gLqzsr/zvRB0qN9Ly3at2XiZJzjfmkXB0OA0VFswxGl6HG3kIzLzs\n",
+    "4YJgoOZdUZO2jGaOgp+rVPQvuVJVefUrYlyaLGd9Dt/YKPoxhlnvEK3khYz69dPH\n",
+    "CwaCZXwzsJdaqYE2p7Us26ce3rEnWcz6gUIe//VQRohSEq0fZbUCAwEAAaOBvTCB\n",
+    "ujAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIFoDAdBgNVHQ4EFgQU7Y2XD9s8\n",
+    "Xb5gnFtGbfrjd8ICMZowHwYDVR0jBBgwFoAU/hQOExsJZ8tKDUvaT/PvkLVD2zMw\n",
+    "WgYDVR0fBFMwUTAmoCCgHoYcaHR0cDovL2NybC5leGFtcGxlLmNvbS9hLmNybIEC\n",
+    "A3gwJ6AgoB6GHGh0dHA6Ly9jcmwuZXhhbXBsZS5jb20vYi5jcmyBAwcHgDANBgkq\n",
+    "hkiG9w0BAQsFAAOCAQEAUKxiGTzY2Wut55ZUFBhXnRuoPjqVNL0OcsI3bjb2NI8w\n",
+    "k/Jpqn91WiGxV4sk9bPsEIMUolw1OELWRYI5bZZKB+zhwZXzTmADo5rh06WBC4HT\n",
+    "eViQa17AGcbLW8Pkyrp83wPwJbiU4v3HSwndWd1ZbpbiAlrKFw6BhTUu6e+Z2shX\n",
+    "/WYaSX0oY2d0QfU12cjpdOOpNqGFldqjri3VK0mr4DHRaJ0HjNE+JurwQfmdSwvS\n",
+    "mJncvyS/f2AAjLQKowXwjsIlz++g4zY01b74qK5IQQukmV2G0JKeO0ijQ4J2FS9k\n",
+    "smgKZ3TrdNV5tNPdBjwGcsiOvaKXj9/xjLJji5Ul4A==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+/* Empty CRL from kRoot scoped to the first distribution point of kLeafTwoDP */
+static const char *kCrlTwoDPA[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICQDCCASgCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDEyMDAwMFoXDTM2\n",
+    "MDMwMTEyMDAwMFqgYzBhMB8GA1UdIwQYMBaAFP4UDhMbCWfLSg1L2k/z75C1Q9sz\n",
+    "MDIGA1UdHAEB/wQoMCagIKAehhxodHRwOi8vY3JsLmV4YW1wbGUuY29tL2EuY3Js\n",
+    "gwIDeDAKBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAOCAQEAV/waOBM06jEvwpZH\n",
+    "RB3rcFdD8qoQup5GY2l6NSljM6Qv4MSNoevuXyQz3I6UXlgy+vnQ7OGorzzTXl99\n",
+    "QQ0qSrIjB3DDh4jkkQeeNjJgvX1Nm/KOYoqnqSUyPfuUirA8WBvPTcWvUWlI8coa\n",
+    "PwGLoMOBVgzgnI5Q8NINCYxI46/amMqRjnUIikezNR5qs7Fo29qLaR7PawLWM/mp\n",
+    "U0aqmZB+dInAucgwOZiSY/K5Mc3ju3g8ohEm3GV0X46OjU1oy+JRBxmNaenspHz4\n",
+    "6gs0pCLGTt3wcP6CYvV05D2xsjFCj5PTVseNxbEpuwzr2QphtA/727BVcm9lnvqd\n",
+    "2b8/0w==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/* Empty CRL from kRoot scoped to the second distribution point of kLeafTwoDP */
+static const char *kCrlTwoDPB[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICQTCCASkCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDEyMDAwMFoXDTM2\n",
+    "MDMwMTEyMDAwMFqgZDBiMB8GA1UdIwQYMBaAFP4UDhMbCWfLSg1L2k/z75C1Q9sz\n",
+    "MDMGA1UdHAEB/wQpMCegIKAehhxodHRwOi8vY3JsLmV4YW1wbGUuY29tL2IuY3Js\n",
+    "gwMHB4AwCgYDVR0UBAMCAQIwDQYJKoZIhvcNAQELBQADggEBAA+6FcbDF9XU7XjQ\n",
+    "4PIT8M1JQsXy+Jt3oem353Yo4DeY/9jYeADtaaG8TEtX2NImwLMMFRgS/s+Tz8IX\n",
+    "drzansx9rGf6oSog8sqzTYJ7hThPLkYmVxnncF6J6SAeYeg0zdBdoLdh+HF0j5l0\n",
+    "yb2AbPWRC99zkqLGHypecZda/S4Iw9rRKLXxAdUx5cO+7rvneWVYNPqucFZQxSL9\n",
+    "sLWTeolISeEe5unWvgomfxh7FDTOhkXDuWyogI4b3/B4RvsinqxqNx0Y+44d1SfI\n",
+    "oGIInDcvLKo2vDg84iMdQsh7f/9t/6H1DrpcNkRjNcPwt2fstEkaKdvgw3MaH4ll\n",
+    "pxRMHlU=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static int verify_ex(X509 *leaf, X509 *root, X509 *root2,
     STACK_OF(X509) *untrusted, STACK_OF(X509_CRL) *crls,
     unsigned long flags, time_t verification_time, int store_root)
@@ -1501,6 +1577,109 @@ err:
     X509_free(root);
     X509_free(leaf);
     return status == X509_V_OK;
+}
+
+/*
+ * Reasons covered by kCrlTwoDPA and kCrlTwoDPB, in the representation used by
+ * X509_STORE_CTX_set_current_reasons().
+ */
+#define TWO_DP_REASONS_A 0x0078
+#define TWO_DP_REASONS_B 0x8007
+
+static int two_dp_calls;
+static int two_dp_set_reasons;
+
+/*
+ * Returns kCrlTwoDPA on the first call and kCrlTwoDPB afterwards, so that
+ * kLeafTwoDP is only fully covered after the second call.
+ */
+static int get_crl_two_dp_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+{
+    int first = two_dp_calls++ == 0;
+
+    *crl = CRL_from_strings(first ? kCrlTwoDPA : kCrlTwoDPB);
+    if (two_dp_set_reasons)
+        X509_STORE_CTX_set_current_reasons(ctx,
+            first ? TWO_DP_REASONS_A
+                  : TWO_DP_REASONS_A | TWO_DP_REASONS_B);
+    return *crl != NULL;
+}
+
+/* Always returns kCrlTwoDPA, which never covers all reasons */
+static int get_crl_two_dp_same_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+{
+    two_dp_calls++;
+    *crl = CRL_from_strings(kCrlTwoDPA);
+    return *crl != NULL;
+}
+
+/*
+ * The reasons covered by the CRLs returned by a get_crl callback must
+ * accumulate across the distribution points of a certificate.
+ *
+ * idx 0: the callback returns one CRL per distribution point
+ * idx 1: as idx 0, but the callback also sets the current reasons itself
+ * idx 2: the callback keeps returning the same CRL, which adds no new reasons
+ *        the second time and is therefore rejected as out of scope
+ */
+static int test_crl_get_fn_multiple_dp(int idx)
+{
+    X509 *root = X509_from_strings(kRoot);
+    X509 *leaf = X509_from_strings(kLeafTwoDP);
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509_STORE *store = X509_STORE_new();
+    X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
+    STACK_OF(X509) *roots = sk_X509_new_null();
+    int expected = idx == 2 ? X509_V_ERR_DIFFERENT_CRL_SCOPE : X509_V_OK;
+    int status = X509_V_ERR_UNSPECIFIED;
+    int testresult = 0;
+
+    two_dp_calls = 0;
+    two_dp_set_reasons = idx == 1;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(root)
+        || !TEST_ptr(leaf)
+        || !TEST_ptr(store)
+        || !TEST_ptr(param)
+        || !TEST_ptr(roots))
+        goto err;
+
+    /* Create a stack; upref the cert because we free it below. */
+    if (!TEST_true(X509_up_ref(root)))
+        goto err;
+    if (!TEST_true(sk_X509_push(roots, root))) {
+        X509_free(root);
+        goto err;
+    }
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
+        goto err;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, roots);
+    X509_STORE_CTX_set_get_crl(ctx, idx == 2 ? &get_crl_two_dp_same_fn : &get_crl_two_dp_fn);
+    X509_VERIFY_PARAM_set_time(param, kVerify);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_EXTENDED_CRL_SUPPORT);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+
+    ERR_clear_error();
+    status = X509_verify_cert(ctx) == 1 ? X509_V_OK
+                                        : X509_STORE_CTX_get_error(ctx);
+
+    if (!TEST_int_eq(status, expected)
+        || !TEST_int_eq(two_dp_calls, 2))
+        goto err;
+
+    testresult = 1;
+err:
+    OSSL_STACK_OF_X509_free(roots);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(root);
+    X509_free(leaf);
+    return testresult;
 }
 
 static int test_crl_delta_indicator(void)
@@ -2011,6 +2190,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_cert_issuer_ext);
     ADD_TEST(test_crl_date_invalid);
     ADD_TEST(test_crl_get_fn_score);
+    ADD_ALL_TESTS(test_crl_get_fn_multiple_dp, 3);
     ADD_TEST(test_crl_delta_indicator);
     ADD_TEST(test_crl_delta_valid);
     ADD_TEST(test_crl_number);
