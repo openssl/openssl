@@ -269,3 +269,21 @@ STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
 
     return ossl_pkcs12_unpack_authsafes_ex(p12, ossl_pkcs7_ctx_get0_libctx(p7ctx), ossl_pkcs7_ctx_get0_propq(p7ctx));
 }
+
+PKCS7 *ossl_pkcs12_pack_safe(const STACK_OF(PKCS12_SAFEBAG) *bags,
+    int nid_safe, int iter, const char *pass,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    STACK_OF(PKCS12_SAFEBAG) *sk = (STACK_OF(PKCS12_SAFEBAG) *)bags;
+
+    if (nid_safe == -1)
+        return PKCS12_pack_p7data(sk);
+    if (nid_safe == 0)
+#ifdef OPENSSL_NO_RC2
+        nid_safe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+#else
+        nid_safe = NID_pbe_WithSHA1And40BitRC2_CBC;
+#endif
+    return PKCS12_pack_p7encdata_ex(nid_safe, pass, -1, NULL, 0, iter, sk,
+        libctx, propq);
+}

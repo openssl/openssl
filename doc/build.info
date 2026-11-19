@@ -1983,6 +1983,10 @@ DEPEND[html/man3/PKCS12_gen_mac.html]=man3/PKCS12_gen_mac.pod
 GENERATE[html/man3/PKCS12_gen_mac.html]=man3/PKCS12_gen_mac.pod
 DEPEND[man/man3/PKCS12_gen_mac.3]=man3/PKCS12_gen_mac.pod
 GENERATE[man/man3/PKCS12_gen_mac.3]=man3/PKCS12_gen_mac.pod
+DEPEND[html/man3/PKCS12_get1_authsafes.html]=man3/PKCS12_get1_authsafes.pod
+GENERATE[html/man3/PKCS12_get1_authsafes.html]=man3/PKCS12_get1_authsafes.pod
+DEPEND[man/man3/PKCS12_get1_authsafes.3]=man3/PKCS12_get1_authsafes.pod
+GENERATE[man/man3/PKCS12_get1_authsafes.3]=man3/PKCS12_get1_authsafes.pod
 DEPEND[html/man3/PKCS12_get_friendlyname.html]=man3/PKCS12_get_friendlyname.pod
 GENERATE[html/man3/PKCS12_get_friendlyname.html]=man3/PKCS12_get_friendlyname.pod
 DEPEND[man/man3/PKCS12_get_friendlyname.3]=man3/PKCS12_get_friendlyname.pod
@@ -3587,6 +3591,7 @@ html/man3/PKCS12_create.html \
 html/man3/PKCS12_decrypt_secretbag.html \
 html/man3/PKCS12_decrypt_skey.html \
 html/man3/PKCS12_gen_mac.html \
+html/man3/PKCS12_get1_authsafes.html \
 html/man3/PKCS12_get_friendlyname.html \
 html/man3/PKCS12_init.html \
 html/man3/PKCS12_item_decrypt_d2i.html \
@@ -4272,6 +4277,7 @@ man/man3/PKCS12_create.3 \
 man/man3/PKCS12_decrypt_secretbag.3 \
 man/man3/PKCS12_decrypt_skey.3 \
 man/man3/PKCS12_gen_mac.3 \
+man/man3/PKCS12_get1_authsafes.3 \
 man/man3/PKCS12_get_friendlyname.3 \
 man/man3/PKCS12_init.3 \
 man/man3/PKCS12_item_decrypt_d2i.3 \
