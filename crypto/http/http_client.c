@@ -1088,6 +1088,7 @@ BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx)
 
     if (rv == 0) {
         if (rctx->redirection_url == NULL) { /* an error occurred */
+            rctx->keep_alive = 0; /* the rest of the response may be unread: do not reuse the connection */
             if (rctx->len_to_send > 0)
                 ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_SENDING);
             else
