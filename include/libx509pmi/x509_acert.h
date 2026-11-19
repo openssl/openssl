@@ -30,4 +30,19 @@
 #include <libx509pmi/names.h>
 #include <openssl/x509_acert.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif /* defined(__cplusplus) */
+
+/**
+ * @brief Initialises libx509pmi; required before any other libx509pmi call.
+ * @returns 1 on success, 0 on failure
+ * @see OSSL_X509PMI_init(3)
+ */
+int OSSL_X509PMI_init(void);
+
+#if defined(__cplusplus)
+}
+#endif /* defined(__cplusplus) */
+
 #endif /* !defined(LIBX509PMI_X509_ACERT_H) */

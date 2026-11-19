@@ -204,6 +204,9 @@ int setup_tests(void)
         return 0;
     }
 
+    if (!TEST_true(OSSL_X509PMI_init()) || !TEST_true(OSSL_X509PMI_init()))
+        return 0;
+
     cnt = test_get_argument_count();
     if (cnt < 1) {
         TEST_error("Must specify at least 1 attribute certificate file\n");

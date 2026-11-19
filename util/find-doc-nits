@@ -1468,6 +1468,7 @@ if ( $opt_c ) {
 }
 
 # Populate %state
+loadnum('util/libx509pmi.num', 'x509pmi');
 loadnum('util/libcrypto.num', 'crypto');
 loadnum('util/libssl.num', 'ssl');
 loadnum('util/other.syms', 'other');
