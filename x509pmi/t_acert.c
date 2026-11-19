@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <libx509pmi/names.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
