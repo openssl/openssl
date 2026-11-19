@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -801,6 +801,52 @@ err:
     return ok;
 }
 
+/*
+ * EVP_PKEY_CTX_set_dh_paramgen_type() goes through the ctrl to OSSL_PARAM
+ * translation, which used to build a UTF8 string parameter with a NULL data
+ * pointer and crash the provider for any type value.
+ */
+static int dh_set_dh_paramgen_type_test(void)
+{
+    int ok = 0;
+    EVP_PKEY_CTX *paramgen_ctx = NULL, *paramgen_dhx_ctx = NULL;
+
+    paramgen_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DH, 0);
+    if (!TEST_ptr(paramgen_ctx)
+        || !TEST_int_eq(EVP_PKEY_paramgen_init(paramgen_ctx), 1))
+        goto err;
+    /* Tested function is called here */
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_dh_paramgen_type(paramgen_ctx,
+                         DH_PARAMGEN_TYPE_GENERATOR),
+            1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_dh_paramgen_type(paramgen_ctx,
+                            DH_PARAMGEN_TYPE_GROUP),
+            1))
+        goto err;
+    /* Negative tests: unknown type, and a DHX-only type on a DH context */
+    if (!TEST_int_le(EVP_PKEY_CTX_set_dh_paramgen_type(paramgen_ctx, 99), 0)
+        || !TEST_int_le(EVP_PKEY_CTX_set_dh_paramgen_type(paramgen_ctx,
+                            DH_PARAMGEN_TYPE_FIPS_186_4),
+            0))
+        goto err;
+
+    paramgen_dhx_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DHX, 0);
+    if (!TEST_ptr(paramgen_dhx_ctx)
+        || !TEST_int_eq(EVP_PKEY_paramgen_init(paramgen_dhx_ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_dh_paramgen_type(paramgen_dhx_ctx,
+                            DH_PARAMGEN_TYPE_FIPS_186_4),
+            1)
+        || !TEST_int_le(EVP_PKEY_CTX_set_dh_paramgen_type(paramgen_dhx_ctx,
+                            DH_PARAMGEN_TYPE_GENERATOR),
+            0))
+        goto err;
+    ok = 1;
+err:
+    EVP_PKEY_CTX_free(paramgen_ctx);
+    EVP_PKEY_CTX_free(paramgen_dhx_ctx);
+    return ok;
+}
+
 static int dh_get_nid(void)
 {
     int ok = 0;
@@ -949,6 +995,7 @@ int setup_tests(void)
     ADD_TEST(dh_load_pkcs3_namedgroup_privlen_test);
     ADD_TEST(dh_rfc5114_fix_nid_test);
     ADD_TEST(dh_set_dh_nid_test);
+    ADD_TEST(dh_set_dh_paramgen_type_test);
 #endif
     return 1;
 }

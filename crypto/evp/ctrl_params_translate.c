@@ -1086,10 +1086,16 @@ static int fix_dh_paramgen_type(enum state state,
     if (ctx->action_type != OSSL_ACTION_SET)
         return 0;
 
-    if (state == PRE_CTRL_STR_TO_PARAMS) {
-        int id;
+    /*
+     * The provider parameter is the name of the type, so the numeric type
+     * from EVP_PKEY_CTX_set_dh_paramgen_type() (|p1|) or from a ctrl string
+     * (|p2|) must be translated to it.
+     */
+    if (state == PRE_CTRL_TO_PARAMS || state == PRE_CTRL_STR_TO_PARAMS) {
+        int id = ctx->p1;
 
-        if (!ossl_strtoint(ctx->p2, NULL, 10, &id)) {
+        if (state == PRE_CTRL_STR_TO_PARAMS
+            && !ossl_strtoint(ctx->p2, NULL, 10, &id)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
         }
