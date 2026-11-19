@@ -1550,6 +1550,8 @@ renumber: build_generated
                 $(X509PMIHEADERS)
 	$(PERL) $(SRCDIR)/util/mklibx509pminames.pl \
                 --filter-num $(SRCDIR)/util/libx509pmi.num $(SRCDIR)
+	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; s/:DEPRECATEDIN_4_2$$/:/; print' \
+                $(SRCDIR)/util/libx509pmi.num
 
 .PHONY: ordinals
 ordinals: build_generated
@@ -1567,6 +1569,8 @@ ordinals: build_generated
                 $(X509PMIHEADERS)
 	$(PERL) $(SRCDIR)/util/mklibx509pminames.pl \
                 --filter-num $(SRCDIR)/util/libx509pmi.num $(SRCDIR)
+	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; s/:DEPRECATEDIN_4_2$$/:/; print' \
+                $(SRCDIR)/util/libx509pmi.num
 
 test_ordinals:
 	"$(MAKE)" run_tests TESTS=test_ordinals
