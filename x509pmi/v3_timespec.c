@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 static const char *const WEEKDAY_NAMES[7] = {
     "SUN",

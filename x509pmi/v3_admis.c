@@ -18,7 +18,7 @@
 #include <openssl/safestack.h>
 
 #include "v3_admis.h"
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 ASN1_SEQUENCE(NAMING_AUTHORITY) = {
     ASN1_OPT(NAMING_AUTHORITY, namingAuthorityId, ASN1_OBJECT),

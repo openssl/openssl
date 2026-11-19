@@ -10,7 +10,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 ASN1_SEQUENCE(OSSL_ROLE_SPEC_CERT_ID) = {
     ASN1_EXP(OSSL_ROLE_SPEC_CERT_ID, roleName, GENERAL_NAME, 0),
