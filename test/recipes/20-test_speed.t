@@ -97,20 +97,21 @@ subtest "Simple test of all speed algorithms" => sub {
     done_testing();
 };
 
-#Test various options to speed. In all cases we use the -testmode option to
-#ensure we don't spend too long in this test. That option also causes the speed
-#app to return an error code if anything unexpectedly goes wrong.
+# Exercise options with small symmetric and public-key selections rather than
+# repeating the expensive default selection. Test mode reports operation errors.
 
 
 SKIP: {
     skip "Multi option is not supported by this OpenSSL build", 1
        if $^O =~ /^(VMS|MSWin32)$/;
 
-    ok(run(app(['openssl', 'speed', '-testmode', '-multi', 2])),
+    ok(run(app(['openssl', 'speed', '-testmode', '-multi', 2,
+                'sha256', 'rsa2048'])),
            "Test the multi option");
 }
 
-ok(run(app(['openssl', 'speed', '-testmode', '-misalign', 1])),
+ok(run(app(['openssl', 'speed', '-testmode', '-misalign', 1,
+            'sha256', 'rsa2048'])),
        "Test the misalign option");
 
 SKIP: {
@@ -136,7 +137,7 @@ ok(run(app(['openssl', 'speed', '-testmode', '-signature-algorithms'])),
 ok(run(app(['openssl', 'speed', '-testmode', '-primes', 3, 'rsa1024'])),
        "Test the primes option");
 
-ok(run(app(['openssl', 'speed', '-testmode', '-mr'])),
+ok(run(app(['openssl', 'speed', '-testmode', '-mr', 'sha256', 'rsa2048'])),
        "Test the mr option");
 
 ok(run(app(['openssl', 'speed', '-testmode', '-decrypt', '-evp', 'aes-128-cbc'])),
@@ -163,7 +164,8 @@ SKIP: {
     skip "ASYNC/threads not supported by this OpenSSL build", 1
         if disabled("async") || disabled("threads");
 
-    ok(run(app(['openssl', 'speed', '-testmode', '-async_jobs', '1'])),
+    ok(run(app(['openssl', 'speed', '-testmode', '-async_jobs', '1',
+                'sha256', 'rsa2048'])),
         "Test the async_jobs option");
 }
 
@@ -171,14 +173,15 @@ SKIP: {
     skip "Mlock option is not supported by this OpenSSL build", 1
        if $^O !~ /^(linux|MSWin32)$/;
 
-       ok(run(app(['openssl', 'speed', '-testmode', '-mlock'])),
+       ok(run(app(['openssl', 'speed', '-testmode', '-mlock',
+                   'sha256', 'rsa2048'])),
               "Test the mlock option");
 }
 
 #We don't expect these options to have an effect in testmode but we at least
 #test that the option parsing works ok
 ok(run(app(['openssl', 'speed', '-testmode', '-seconds', 1, '-bytes', 16,
-            '-elapsed'])),
+            '-elapsed', 'sha256', 'rsa2048'])),
        "Test the seconds, bytes and elapsed options");
 
 #Test that this won't crash on sparc
