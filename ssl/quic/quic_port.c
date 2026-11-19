@@ -876,7 +876,7 @@ static void port_rx_pre(QUIC_PORT *port)
  */
 static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
     const QUIC_CONN_ID *dcid,
-    const QUIC_CONN_ID *odcid, OSSL_QRX *qrx,
+    const QUIC_CONN_ID *odcid, int validated, OSSL_QRX *qrx,
     QUIC_CHANNEL **new_ch)
 {
     QUIC_CHANNEL *ch;
@@ -920,20 +920,22 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
             return;
         }
 
-    if (odcid->id_len != 0) {
-        /*
-         * If we have an odcid, then we went through server address validation
-         * and as such, this channel need not conform to the 3x validation cap
-         * See RFC 9000 s. 8.1
-         */
+    /*
+     * A valid token (from a Retry or a NEW_TOKEN frame) validated the client
+     * address, so this channel need not conform to the 3x validation cap.
+     * See RFC 9000 s. 8.1
+     */
+    if (validated)
         ossl_quic_tx_packetiser_set_validated(ch->txp);
+    if (odcid->id_len != 0) {
+        /* A Retry took place: odcid is the client's first DCID */
         if (!ossl_quic_bind_channel(ch, peer, dcid, odcid)) {
             ossl_quic_channel_free(ch);
             return;
         }
     } else {
         /*
-         * No odcid means we didn't do server validation, so we need to
+         * No odcid means no Retry took place, so we need to
          * generate a cid via ossl_quic_channel_on_new_conn
          */
         if (!ossl_quic_channel_on_new_conn(ch, peer, dcid)) {
@@ -1537,8 +1539,9 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
 
     /*
      * Set ODCID and SCID. If the token is from a RETRY packet, retrieve both
-     * from the token. Otherwise, generate a new ODCID and use the header's
-     * source connection ID for SCID.
+     * from the token. Otherwise (a NEW_TOKEN token) no Retry took place: the
+     * ODCID stays empty and the client's DCID is the original DCID
+     * (RFC 9000 s. 7.3).
      */
     if (token.is_retry) {
         /*
@@ -1556,9 +1559,6 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
                 != 0)
             goto err;
         *odcid = token.odcid;
-    } else {
-        if (!ossl_quic_lcidm_get_unused_cid(port->lcidm, odcid))
-            goto err;
     }
 
     /*
@@ -1631,7 +1631,8 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
     }
 
     ch->pending_new_token = ct_buf;
-    ch->pending_new_token_len = ct_len;
+    /* No Retry Integrity Tag follows a NEW_TOKEN token */
+    ch->pending_new_token_len = ct_len - QUIC_RETRY_INTEGRITY_TAG_LEN;
 
     cleanup_validation_token(&token);
 }
@@ -1650,6 +1651,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CONN_ID odcid;
     uint8_t gen_new_token = 0;
     uint8_t is_retry_token = 0;
+    int validated = 0;
     OSSL_QRX *qrx = NULL, *qrx_ref;
     OSSL_QRX *qrx_src = NULL;
     OSSL_QRX_ARGS qrx_args = { 0 };
@@ -1807,10 +1809,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * a NEW_TOKEN frame during a prior connection, which we should still
      * validate here
      */
-    if (hdr.token != NULL
-        && port_validate_token(&hdr, port, &e->peer,
-               &odcid, &gen_new_token, &is_retry_token)
-            == 0) {
+    if (hdr.token != NULL)
+        validated = port_validate_token(&hdr, port, &e->peer,
+            &odcid, &gen_new_token, &is_retry_token);
+    if (hdr.token != NULL && !validated) {
         /*
          * RFC 9000 s 8.1.3
          * When a server receives an Initial packet with an address
@@ -1871,7 +1873,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
             goto undesirable;
     }
     port_bind_channel(port, &e->peer, &hdr.dst_conn_id,
-        &odcid, qrx_ref, &new_ch);
+        &odcid, validated, qrx_ref, &new_ch);
 
     /*
      * if packet validates it gets moved to channel, we've just bound
