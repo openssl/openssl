@@ -30,6 +30,8 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "internal/skey.h"
+#include "crypto/types.h"
 #include "prov/securitycheck.h"
 #include "providers/implementations/macs/hmac_prov.inc"
 
@@ -46,6 +48,7 @@ static OSSL_FUNC_mac_get_ctx_params_fn hmac_get_ctx_params;
 static OSSL_FUNC_mac_settable_ctx_params_fn hmac_settable_ctx_params;
 static OSSL_FUNC_mac_set_ctx_params_fn hmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn hmac_init;
+static OSSL_FUNC_mac_init_skey_fn hmac_init_skey;
 static OSSL_FUNC_mac_update_fn hmac_update;
 static OSSL_FUNC_mac_final_fn hmac_final;
 
@@ -212,6 +215,18 @@ static int hmac_init(void *vmacctx, const unsigned char *key,
     return HMAC_Init_ex(macctx->ctx, NULL, 0, NULL, NULL);
 }
 
+/* For built-in providers we can directly access the data and length. */
+static int hmac_init_skey(void *vmacctx, void *skeydata,
+    const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    if (key == NULL)
+        return 0;
+
+    return hmac_init(vmacctx, key->data, key->length, params);
+}
+
 static int hmac_update(void *vmacctx, const unsigned char *data,
     size_t datalen)
 {
@@ -346,6 +361,7 @@ const OSSL_DISPATCH ossl_hmac_functions[] = {
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))hmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))hmac_free },
     { OSSL_FUNC_MAC_INIT, (void (*)(void))hmac_init },
+    { OSSL_FUNC_MAC_INIT_SKEY, (void (*)(void))hmac_init_skey },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))hmac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))hmac_final },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
@@ -374,6 +390,7 @@ const OSSL_DISPATCH ossl_hmac_internal_functions[] = {
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))hmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))hmac_free },
     { OSSL_FUNC_MAC_INIT, (void (*)(void))hmac_init },
+    { OSSL_FUNC_MAC_INIT_SKEY, (void (*)(void))hmac_init_skey },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))hmac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))hmac_final },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
