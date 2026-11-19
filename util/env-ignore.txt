@@ -1,0 +1,28 @@
+# System, platform, and third-party environment variables.
+#
+# These are NOT OpenSSL-specific and should never need documentation in
+# openssl-env(7) or internal docs.  find-doc-nits -a silently skips them.
+#
+# One variable name per line.  Blank lines and lines beginning with #
+# are ignored.
+
+# Address/Memory sanitizer runtime options
+ASAN_OPTIONS
+MSAN_OPTIONS
+
+# Memory-debugging (glibc)
+MALLOC_PERTURB_
+
+# Locale
+LANG
+LC_ALL
+
+# Platform / OS
+LIBPATH
+MSYS2_ARG_CONV_EXCL
+NUMBER_OF_PROCESSORS
+TEMP
+TMP
+
+# Reproducible-builds standard (not OpenSSL-specific)
+SOURCE_DATE_EPOCH
