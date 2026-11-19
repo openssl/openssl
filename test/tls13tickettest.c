@@ -2221,13 +2221,20 @@ end:
     return test;
 }
 
-static int probe_alert;
+static int probe_alert, probe_reason;
 static int probe_known, probe_wrong_key;
 
+/*
+ * Record the alert the server sends, and the reason for it.  The reason is
+ * taken from the server's own error queue, which already holds the error that
+ * led to the alert.  It never goes on the wire.
+ */
 static void probe_alert_cb(const SSL *ssl, int where, int ret)
 {
-    if ((where & SSL_CB_ALERT) != 0 && (where & SSL_CB_WRITE) != 0)
+    if ((where & SSL_CB_ALERT) != 0 && (where & SSL_CB_WRITE) != 0) {
         probe_alert = ret & 0xff;
+        probe_reason = ERR_GET_REASON(ERR_peek_last_error());
+    }
 }
 
 static int probe_psk_use_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
@@ -2265,11 +2272,18 @@ static int probe_reject_alpn(SSL *ssl, const unsigned char **out,
  * Run a handshake that is bound to fail against a server with no certificate,
  * and return the alert the server sent.  The client offers a PSK that is either
  * known to the server (with the wrong key, so the binder fails) or not known.
+ * Both sides are limited to the PSK's ciphersuite.  Otherwise the server may
+ * select one with a different hash and drop the known PSK without verifying
+ * its binder.
+ *
  * The case selects an additional failure the handshake would also hit if it
  * got past the PSK: 0 none, 1 no shared signature algorithms, 2 ALPN rejected,
  * 3 a certificate callback that supplies no certificate.
+ *
+ * Returns the alert, or -1 if the handshake did not fail, and sets *reason to
+ * the server's local error reason.
  */
-static int psk_failure_alert(int variant, int known)
+static int psk_failure_alert(int variant, int known, int *reason)
 {
     static const unsigned char alpn[] = { 2, 'h', '2' };
     SSL_CTX *c = NULL, *s = NULL;
@@ -2278,6 +2292,8 @@ static int psk_failure_alert(int variant, int known)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
             TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, NULL, NULL))
+        || !TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
         || !TEST_true(set_ctx_callbacks(c, s)))
         goto end;
     if (variant == 1
@@ -2294,6 +2310,7 @@ static int psk_failure_alert(int variant, int known)
     probe_known = known;
     probe_wrong_key = 1;
     probe_alert = -1;
+    probe_reason = 0;
     if (!TEST_true(tls_channel_init(c, s, &conn)))
         goto end;
     SSL_set_psk_use_session_callback(conn.c.ssl, probe_psk_use_cb);
@@ -2301,6 +2318,7 @@ static int psk_failure_alert(int variant, int known)
     SSL_set_info_callback(conn.s.ssl, probe_alert_cb);
     if (TEST_false(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0)))
         alert = probe_alert;
+    *reason = probe_reason;
 end:
     tls_channel_fini(&conn);
     SSL_CTX_free(c);
@@ -2316,14 +2334,21 @@ end:
  * defers the check, since the callback may supply a certificate, and checks
  * that run before the callback, such as a missing signature_algorithms
  * extension, can still give a different alert.
+ *
+ * The alerts are the same, but the server's local error reasons differ.  They
+ * are checked to make sure the known identity gets as far as its binder, and
+ * the unknown one does not.
  */
 static int test_tls13_psk_unknown_identity_alert(int idx)
 {
-    int unknown = psk_failure_alert(idx, 0);
-    int bad_binder = psk_failure_alert(idx, 1);
+    int unknown_reason = 0, bad_binder_reason = 0;
+    int unknown = psk_failure_alert(idx, 0, &unknown_reason);
+    int bad_binder = psk_failure_alert(idx, 1, &bad_binder_reason);
 
     return TEST_int_eq(bad_binder, SSL_AD_DECRYPT_ERROR)
-        && TEST_int_eq(unknown, bad_binder);
+        && TEST_int_eq(unknown, bad_binder)
+        && TEST_int_eq(bad_binder_reason, SSL_R_BINDER_DOES_NOT_VERIFY)
+        && TEST_int_ne(unknown_reason, SSL_R_BINDER_DOES_NOT_VERIFY);
 }
 
 static SSL_CTX *switch_target;
