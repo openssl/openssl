@@ -251,6 +251,17 @@ int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 
 int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 {
+    /*
+     * Supplying a key starts the MAC operation, as documented for the "key"
+     * parameter: it is the same as EVP_MAC_init() with a NULL key and these
+     * parameters.  Going through the implementation's init function, rather
+     * than just recording the new state here, matters for the implementations
+     * that only store a key given as a parameter and set up their working
+     * state from it in init (KMAC, BLAKE2).
+     */
+    if (ctx->meth->init != NULL
+        && OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY) != NULL)
+        return EVP_MAC_init(ctx, NULL, 0, params);
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->algctx, params);
     return 1;

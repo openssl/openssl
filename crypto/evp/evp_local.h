@@ -80,8 +80,10 @@ struct evp_mac_ctx_st {
      * at EVP_MAC_STATE_NEW (zero), a successful EVP_MAC_init() or
      * EVP_MAC_init_SKEY() moves to INITIALISED, a failed one back to NEW,
      * EVP_MAC_update() to UPDATED and EVP_MAC_final()/EVP_MAC_finalXOF() to
-     * FINALISED.  EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF()
-     * are rejected in the NEW and FINALISED states.
+     * FINALISED.  EVP_MAC_CTX_set_params() counts as EVP_MAC_init() when it
+     * is given a key.  EVP_MAC_update(),
+     * EVP_MAC_final() and EVP_MAC_finalXOF() are rejected in the NEW and
+     * FINALISED states.
      */
     enum {
         EVP_MAC_STATE_NEW = 0,
