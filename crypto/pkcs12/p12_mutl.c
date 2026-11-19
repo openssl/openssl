@@ -157,8 +157,9 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
         goto err;
     }
 
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, pbkdf2_salt->data, pbkdf2_salt->length,
-            ASN1_INTEGER_get(pbkdf2_param->iter), kdf_md, keylen, key)
+    if (ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, pbkdf2_salt->data,
+            pbkdf2_salt->length, ASN1_INTEGER_get(pbkdf2_param->iter),
+            kdf_md, keylen, key, ctx, propq)
         <= 0) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -498,15 +499,20 @@ int PKCS12_set_pbmac1_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
             ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_SALT_LENGTH);
             goto err;
         }
-        if (saltlen > 0) {
-            known_salt = OPENSSL_malloc(saltlen);
-            if (known_salt == NULL)
-                goto err;
+        /*
+         * Generate the salt here, so that the PBKDF2 parameters and the
+         * MacData use the same one. Left to themselves, both would generate
+         * a different salt of their own.
+         */
+        if (saltlen == 0)
+            saltlen = PKCS12_SALT_LEN;
+        known_salt = OPENSSL_malloc(saltlen);
+        if (known_salt == NULL)
+            goto err;
 
-            if (RAND_bytes_ex(libctx, known_salt, saltlen, 0) <= 0) {
-                ERR_raise(ERR_LIB_PKCS12, ERR_R_RAND_LIB);
-                goto err;
-            }
+        if (RAND_bytes_ex(libctx, known_salt, saltlen, 0) <= 0) {
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_RAND_LIB);
+            goto err;
         }
     }
 
