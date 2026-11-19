@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <libx509pmi/names.h>
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>

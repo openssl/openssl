@@ -44,6 +44,9 @@ LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. include
 INCLUDE[libssl]=. include
 DEPEND[libssl]=libcrypto
+LIBS{shlib_version=1}=libx509pmi
+INCLUDE[libx509pmi]=. include
+DEPEND[libx509pmi]=libcrypto
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
@@ -548,6 +551,8 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+GENERATE[include/libx509pmi/names.h]=util/mklibx509pminames.pl
+DEPEND[]=include/libx509pmi/names.h
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
@@ -556,6 +561,10 @@ IF[{- defined $target{shared_defflag} -}]
   GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
   GENERATE[libssl.ld]=util/libssl.num libssl
   DEPEND[libcrypto.ld libssl.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
+
+  SHARED_SOURCE[libx509pmi]=libx509pmi.ld
+  GENERATE[libx509pmi.ld]=util/libx509pmi.num libx509pmi LIBX509PMI --symbol-prefix=LIBX509PMI_
+  DEPEND[libx509pmi.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
@@ -565,6 +574,10 @@ IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
   SHARED_SOURCE[libssl]=libssl.rc
+
+  GENERATE[libx509pmi.rc]=util/mkrc.pl libx509pmi
+  DEPEND[libx509pmi.rc]=configdata.pm
+  SHARED_SOURCE[libx509pmi]=libx509pmi.rc
 ENDIF
 
 # These files set the build directory up for CMake inclusion.

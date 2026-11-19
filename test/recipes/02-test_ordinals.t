@@ -11,10 +11,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_ordinals");
 
-plan tests => 2;
+plan tests => 3;
 
 ok(testordinals(srctop_file("util", "libcrypto.num")), "Test libcrypto.num");
 ok(testordinals(srctop_file("util", "libssl.num")), "Test libssl.num");
+ok(testordinals(srctop_file("util", "libx509pmi.num")), "Test libx509pmi.num");
 
 sub testordinals
 {
