@@ -39,6 +39,7 @@ static int wsa_init_done = 0;
 #include <sys/select.h>
 #endif
 #endif
+#include "crypto/err.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -65,7 +66,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
         }
         BIO_ADDRINFO_free(res);
     } else {
-        ERR_add_error_data(2, "host=", str);
+        ossl_err_add_error_fmt("host=%s", ossl_string_or_null(str));
     }
 
     return ret;
@@ -93,7 +94,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
         }
         BIO_ADDRINFO_free(res);
     } else {
-        ERR_add_error_data(2, "host=", str);
+        ossl_err_add_error_fmt("host=%s", str);
     }
 
     return ret;

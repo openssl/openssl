@@ -48,6 +48,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
+#include "x509_local.h"
 
 #include <crypto/asn1.h>
 
@@ -100,24 +101,24 @@ static int process_pci_value(CONF_VALUE *val,
     if (strcmp(val->name, "language") == 0) {
         if (*language) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_POLICY_LANGUAGE_ALREADY_DEFINED);
-            X509V3_conf_err(val);
+            ossl_X509v3_conf_err(val);
             return 0;
         }
         if ((*language = OBJ_txt2obj(val->value, 0)) == NULL) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            X509V3_conf_err(val);
+            ossl_X509v3_conf_err(val);
             return 0;
         }
     } else if (strcmp(val->name, "pathlen") == 0) {
         if (*pathlen) {
             ERR_raise(ERR_LIB_X509V3,
                 X509V3_R_POLICY_PATH_LENGTH_ALREADY_DEFINED);
-            X509V3_conf_err(val);
+            ossl_X509v3_conf_err(val);
             return 0;
         }
         if (!X509V3_get_value_int(val, pathlen)) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_POLICY_PATH_LENGTH);
-            X509V3_conf_err(val);
+            ossl_X509v3_conf_err(val);
             return 0;
         }
     } else if (strcmp(val->name, "policy") == 0) {
@@ -129,7 +130,7 @@ static int process_pci_value(CONF_VALUE *val,
             *policy = ASN1_OCTET_STRING_new();
             if (*policy == NULL) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
-                X509V3_conf_err(val);
+                ossl_X509v3_conf_err(val);
                 return 0;
             }
             free_policy = 1;
@@ -138,7 +139,7 @@ static int process_pci_value(CONF_VALUE *val,
             unsigned char *tmp_data2 = OPENSSL_hexstr2buf(valp, &val_len);
 
             if (!tmp_data2) {
-                X509V3_conf_err(val);
+                ossl_X509v3_conf_err(val);
                 goto err;
             }
 
@@ -159,7 +160,7 @@ static int process_pci_value(CONF_VALUE *val,
                 OPENSSL_free((*policy)->data);
                 (*policy)->data = NULL;
                 (*policy)->length = 0;
-                X509V3_conf_err(val);
+                ossl_X509v3_conf_err(val);
                 goto err;
             }
             OPENSSL_free(tmp_data2);
@@ -176,7 +177,7 @@ static int process_pci_value(CONF_VALUE *val,
             BIO *b = BIO_new_file(valp, "r");
             if (!b) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_BIO_LIB);
-                X509V3_conf_err(val);
+                ossl_X509v3_conf_err(val);
                 goto err;
             }
             while ((n = BIO_read(b, buf, sizeof(buf))) > 0
@@ -191,7 +192,7 @@ static int process_pci_value(CONF_VALUE *val,
                     OPENSSL_free((*policy)->data);
                     (*policy)->data = NULL;
                     (*policy)->length = 0;
-                    X509V3_conf_err(val);
+                    ossl_X509v3_conf_err(val);
                     BIO_free_all(b);
                     goto err;
                 }
@@ -205,7 +206,7 @@ static int process_pci_value(CONF_VALUE *val,
 
             if (n < 0) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_BIO_LIB);
-                X509V3_conf_err(val);
+                ossl_X509v3_conf_err(val);
                 goto err;
             }
         } else if (CHECK_AND_SKIP_PREFIX(valp, "text:")) {
@@ -226,16 +227,16 @@ static int process_pci_value(CONF_VALUE *val,
                 OPENSSL_free((*policy)->data);
                 (*policy)->data = NULL;
                 (*policy)->length = 0;
-                X509V3_conf_err(val);
+                ossl_X509v3_conf_err(val);
                 goto err;
             }
         } else {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_INCORRECT_POLICY_SYNTAX_TAG);
-            X509V3_conf_err(val);
+            ossl_X509v3_conf_err(val);
             goto err;
         }
         if (!tmp_data) {
-            X509V3_conf_err(val);
+            ossl_X509v3_conf_err(val);
             goto err;
         }
     }
@@ -264,7 +265,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
 
         if (!cnf->name || (*cnf->name != '@' && !cnf->value)) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_PROXY_POLICY_SETTING);
-            X509V3_conf_err(cnf);
+            ossl_X509v3_conf_err(cnf);
             goto err;
         }
         if (*cnf->name == '@') {
@@ -274,7 +275,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
             sect = X509V3_get_section(ctx, cnf->name + 1);
             if (!sect) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SECTION);
-                X509V3_conf_err(cnf);
+                ossl_X509v3_conf_err(cnf);
                 goto err;
             }
             for (j = 0; success_p && j < sk_CONF_VALUE_num(sect); j++) {
@@ -286,7 +287,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             if (!process_pci_value(cnf, &language, &pathlen, &policy)) {
-                X509V3_conf_err(cnf);
+                ossl_X509v3_conf_err(cnf);
                 goto err;
             }
         }

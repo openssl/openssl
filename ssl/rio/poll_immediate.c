@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <inttypes.h>
 #include "internal/common.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_reactor_wait_ctx.h"
@@ -616,7 +617,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
         default:
             ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                 "SSL_poll does not support unknown poll descriptor "
-                "type %d",
+                "type %" PRIu32,
                 item->desc.type);
             FAIL_ITEM(i);
         }
@@ -837,7 +838,7 @@ static int poll_readout(SSL_POLL_ITEM *items,
         default:
             ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                 "SSL_poll does not support unknown poll descriptor "
-                "type %d",
+                "type %" PRIu32,
                 item->desc.type);
             FAIL_ITEM(i);
         }
