@@ -8,7 +8,6 @@
  */
 
 #include <string.h>
-#include <crypto/ctype.h>
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
@@ -254,8 +253,7 @@ static int check_asn1_attribute(const char **value)
         return 0;
 
     p += 5;
-    while (ossl_isspace(*p))
-        p++;
+    p += strspn(p, " \t\n\v\f\r");
 
     *value = p;
     return 1;
