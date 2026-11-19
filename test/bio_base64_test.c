@@ -809,6 +809,73 @@ done:
     return ok;
 }
 
+/*
+ * BIO_reset() on a base64 BIO in read mode must return it to its initial
+ * state.  Helper: a read chain over a memory BIO without retry on EOF.
+ */
+static BIO *b64_read_chain(BIO **mem)
+{
+    BIO *b64 = BIO_new(BIO_f_base64());
+
+    *mem = BIO_new(BIO_s_mem());
+    if (b64 == NULL || *mem == NULL) {
+        BIO_free(b64);
+        BIO_free(*mem);
+        return NULL;
+    }
+    BIO_set_mem_eof_return(*mem, 0);
+    return BIO_push(b64, *mem);
+}
+
+/* No decoded bytes of the previous input may remain pending */
+static int test_bio_base64_reset_pending(void)
+{
+    static const char in[] = "Rk9PQkFSQkFaRk9PQkFSQkFaRk9PQkFSQkFaRk9PQkFS\n";
+    char buf[8];
+    BIO *mem, *b64;
+    int ok;
+
+    if (!TEST_ptr(b64 = b64_read_chain(&mem)))
+        return 0;
+    ok = TEST_int_eq(BIO_write(mem, in, sizeof(in) - 1), (int)sizeof(in) - 1)
+        && TEST_int_eq(BIO_read(b64, buf, 3), 3)
+        && TEST_int_gt(BIO_pending(b64), 0)
+        && TEST_int_eq((int)BIO_reset(b64), 1)
+        && TEST_int_eq(BIO_pending(b64), 0)
+        && TEST_int_eq(BIO_wpending(b64), 0);
+    BIO_free_all(b64);
+    return ok;
+}
+
+/*
+ * An over-long line without a newline in the previous input must not cause
+ * the first line of the next input to be skipped
+ */
+static int test_bio_base64_reset_long_line(void)
+{
+    static const char line[] = "aGVsbG8gd29ybGQ=\n";
+    char longline[1024], buf[64];
+    BIO *mem, *b64;
+    int n, ok = 0;
+
+    if (!TEST_ptr(b64 = b64_read_chain(&mem)))
+        return 0;
+    memset(longline, ':', sizeof(longline));
+    if (!TEST_int_eq(BIO_write(mem, longline, sizeof(longline)),
+            (int)sizeof(longline))
+        || !TEST_int_le(BIO_read(b64, buf, sizeof(buf)), 0)
+        || !TEST_int_eq((int)BIO_reset(b64), 1)
+        || !TEST_int_eq(BIO_write(mem, line, sizeof(line) - 1),
+            (int)sizeof(line) - 1))
+        goto done;
+    n = BIO_read(b64, buf, sizeof(buf));
+    ok = TEST_mem_eq(buf, n > 0 ? n : 0, "hello world", 11);
+
+done:
+    BIO_free_all(b64);
+    return ok;
+}
+
 int setup_tests(void)
 {
     int numidx;
@@ -868,6 +935,8 @@ int setup_tests(void)
         B64_WRITE_INJECT_COUNT * 2 * B64_WRITE_SCENARIO_COUNT
             * B64_WRITE_TEST_INPUT_COUNT);
     ADD_TEST(test_bio_base64_no_nl);
+    ADD_TEST(test_bio_base64_reset_pending);
+    ADD_TEST(test_bio_base64_reset_long_line);
     return 1;
 }
 
