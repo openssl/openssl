@@ -4014,6 +4014,40 @@ DEF_SCRIPT(new_connid, "verify remote peer does not send excessive amount of NEW
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR, 0, 0);
 }
 
+DEF_FUNC(corrupt_dcid)
+{
+    static QUIC_CONN_ID corrupt_dcid;
+
+    memcpy(&corrupt_dcid, init_dcid, sizeof(QUIC_CONN_ID));
+    corrupt_dcid.id[0] = corrupt_dcid.id[0] ^ 0x55;
+    init_dcid = &corrupt_dcid;
+
+    return 1;
+}
+
+DEF_SCRIPT(ver_neg_check_dcid, "version negotiation must come with matching dcid")
+{
+    OP_NEW_SSL_L_LISTEN(L);
+
+    OP_SELECT_SSL(0, L);
+    OP_FUNC(script_75_arm_version_neg);
+
+    OP_NEW_SSL_C(C);
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(get_init_dcid);
+    OP_FUNC(corrupt_dcid);
+    OP_SET_PEER_ADDR_FROM(C, L);
+    OP_CONNECT_WAIT(C);
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+}
+
 /*
  * List of Test Scripts
  * ============================================================================
@@ -4135,4 +4169,5 @@ static SCRIPT_INFO *const scripts[] = {
     USE(script_105),
     USE(script_106),
     USE(new_connid),
+    USE(ver_neg_check_dcid),
 };

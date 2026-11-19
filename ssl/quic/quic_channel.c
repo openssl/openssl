@@ -4420,3 +4420,8 @@ uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch)
 {
     return ch->path_response_tx;
 }
+
+const QUIC_CONN_ID *ossl_quic_channel_get_init_dcid(const QUIC_CHANNEL *ch)
+{
+    return &ch->init_dcid;
+}
