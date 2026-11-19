@@ -1811,6 +1811,17 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             }
         }
 
+        /*
+         * A key_share kept from the first ClientHello must not outlive a
+         * retried ClientHello that has none, or with a PSK-only key exchange
+         * the handshake secret is never generated.
+         */
+        if (!sent && s->s3.peer_tmp != NULL) {
+            EVP_PKEY_free(s->s3.peer_tmp);
+            s->s3.peer_tmp = NULL;
+            s->s3.group_id = 0;
+        }
+
         if (s->s3.peer_tmp != NULL) {
             /* We have a suitable key_share */
             if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
@@ -1823,6 +1834,8 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                 return 1;
             }
         } else {
+            int psk_deferred;
+
             /* No suitable key_share */
             if (s->hello_retry_request == SSL_HRR_NONE && sent
                 && (!s->hit
@@ -1836,7 +1849,15 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                     return 1;
                 }
             }
-            if (!s->hit
+            /*
+             * A PSK deferred by tls_parse_ctos_psk() until the cookie is
+             * valid may still allow a PSK-only key exchange, so it gets the
+             * cookie HelloRetryRequest below like a PSK that is found.
+             */
+            psk_deferred = !s->hit && tls_hrr_cookie_pending(s)
+                && s->clienthello != NULL
+                && s->clienthello->pre_proc_exts[TLSEXT_IDX_psk].present;
+            if ((!s->hit && !psk_deferred)
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
                 /* Nothing left we can do - just fail */
                 SSLfatal(s, sent ? SSL_AD_HANDSHAKE_FAILURE : SSL_AD_MISSING_EXTENSION,
