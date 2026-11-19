@@ -8732,6 +8732,66 @@ end:
 }
 #endif /* OPENSSL_NO_DTLS1_3 */
 
+/*
+ * ASAN fails for this test when transfer of bio reference ownership to DTLS
+ * ssl listener object is mishandled.
+ */
+static int test_dtls_set0_bio_leak(void)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *bio = NULL;
+
+    ctx = SSL_CTX_new(DTLS_server_method());
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    ssl = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD);
+    if (!TEST_ptr(ssl))
+        goto end;
+
+    bio = BIO_new(BIO_s_dgram_mem());
+    if (!TEST_ptr(bio))
+        goto end;
+
+    /*
+     * obtain reference to bio and pass it to SSL as reader bio
+     */
+    if (!TEST_true(BIO_up_ref(bio)))
+        goto end;
+    SSL_set0_rbio(ssl, bio);
+
+    /*
+     * obtain reference to bio and pass it to SSL as writer bio
+     */
+    if (!TEST_true(BIO_up_ref(bio)))
+        goto end;
+    SSL_set0_wbio(ssl, bio);
+
+    /*
+     * try to trigger reference leak. Setting the same bio to
+     * ssl instance must free the reference to bio. The caller
+     * to SSL_set0_{r,w}bio() always looses ownership.
+     */
+    if (!TEST_true(BIO_up_ref(bio)))
+        goto end;
+    SSL_set0_rbio(ssl, bio);
+
+    if (!TEST_true(BIO_up_ref(bio)))
+        goto end;
+    SSL_set0_wbio(ssl, bio);
+
+    testresult = 1;
+
+end:
+    BIO_free(bio);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -8904,5 +8964,6 @@ int setup_tests(void)
     ADD_TEST(test_dtls12_listener_alert_after_hvr_frees_pending);
 #endif
 
+    ADD_TEST(test_dtls_set0_bio_leak);
     return 1;
 }
