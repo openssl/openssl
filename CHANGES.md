@@ -100,10 +100,12 @@ OpenSSL 4.2
    life_cycle-mac(7).  `EVP_MAC_update()`, `EVP_MAC_final()` and
    `EVP_MAC_finalXOF()` fail with an error when called on an `EVP_MAC_CTX`
    that has not been initialised with `EVP_MAC_init()` or
-   `EVP_MAC_init_SKEY()`, including one whose key was only supplied through
-   `EVP_MAC_CTX_set_params()`, or that has already been finalised and not
-   been re-initialised since.  A failed `EVP_MAC_init()` or
-   `EVP_MAC_init_SKEY()` leaves the context uninitialised.
+   `EVP_MAC_init_SKEY()`, or that has already been finalised and not been
+   re-initialised since.  A failed `EVP_MAC_init()` or `EVP_MAC_init_SKEY()`
+   leaves the context uninitialised.  Supplying the key through
+   `EVP_MAC_CTX_set_params()` initialises the context too: with the
+   `OSSL_MAC_PARAM_KEY` parameter it is equivalent to `EVP_MAC_init()` with
+   a NULL key and the same parameters, for every MAC implementation.
    <!-- https://github.com/openssl/openssl/pull/33084-->
 
    *Daniel Kubec*

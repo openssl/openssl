@@ -12501,6 +12501,8 @@ static int test_ssl_get_shared_ciphers(int tst)
 static const char *appdata = "Hello World";
 static int gen_tick_called, dec_tick_called, tick_key_cb_called;
 static int tick_key_renew = 0;
+/* Key the ticket HMAC with EVP_MAC_CTX_set_params() only, as documented */
+static int tick_key_set_params = 0;
 static SSL_TICKET_RETURN tick_dec_ret = SSL_TICKET_RETURN_ABORT;
 
 static int gen_tick_cb(SSL *s, void *arg)
@@ -12603,7 +12605,7 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
 {
     const unsigned char tick_aes_key[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
     unsigned char tick_hmac_key[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-    OSSL_PARAM params[2];
+    OSSL_PARAM params[3], *p = params;
     EVP_CIPHER *aes128cbc;
     int ret;
 
@@ -12618,13 +12620,18 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
 
     memset(iv, 0, AES_BLOCK_SIZE);
     memset(key_name, 0, 16);
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
         "SHA256", 0);
-    params[1] = OSSL_PARAM_construct_end();
+    if (tick_key_set_params)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+            tick_hmac_key, sizeof(tick_hmac_key));
+    *p = OSSL_PARAM_construct_end();
     if (aes128cbc == NULL
         || !EVP_CipherInit_ex(ctx, aes128cbc, NULL, tick_aes_key, iv, enc)
-        || !EVP_MAC_init(hctx, tick_hmac_key, sizeof(tick_hmac_key),
-            params))
+        || !(tick_key_set_params
+                ? EVP_MAC_CTX_set_params(hctx, params)
+                : EVP_MAC_init(hctx, tick_hmac_key, sizeof(tick_hmac_key),
+                      params)))
         ret = -1;
     else
         ret = tick_key_renew ? 2 : 1;
@@ -12656,6 +12663,10 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
  * Test 17: TLSv1.3, ticket key callback, ticket, renewal
  * Test 18: TLSv1.2, ticket key callback, no ticket
  * Test 19: TLSv1.3, ticket key callback, no ticket
+ * Test 20: TLSv1.2, ticket key callback using set_params, ticket, no renewal
+ * Test 21: TLSv1.3, ticket key callback using set_params, ticket, no renewal
+ * Test 22: TLSv1.2, ticket key callback using set_params, ticket, renewal
+ * Test 23: TLSv1.3, ticket key callback using set_params, ticket, renewal
  */
 static int test_ticket_callbacks(int tst)
 {
@@ -12681,12 +12692,18 @@ static int test_ticket_callbacks(int tst)
 
     /* Which tests the ticket key callback should request renewal for */
 
-    if (tst == 10 || tst == 11 || tst == 16 || tst == 17)
+    if (tst == 10 || tst == 11 || tst == 16 || tst == 17 || tst >= 22)
         tick_key_renew = 1;
     else if (tst == 12 || tst == 13 || tst == 18 || tst == 19)
         tick_key_renew = -1; /* abort sending the ticket/0-length ticket */
     else
         tick_key_renew = 0;
+
+    /*
+     * Tests 20 to 23 only supply the HMAC key and digest through
+     * EVP_MAC_CTX_set_params(), without calling EVP_MAC_init()
+     */
+    tick_key_set_params = (tst >= 20);
 
     /* Which tests the decrypt ticket callback should request renewal for */
     switch (tst) {
@@ -12902,6 +12919,7 @@ static int clienthello_cb_server_random(const SSL_METHOD *smeth,
             tick_key_evp_cb_server_random)))
         goto end;
     tick_key_renew = 0;
+    tick_key_set_params = 0;
     tick_key_cb_called = 0;
 
     sni_cb_random_cnt = dec_tick_cb_random_cnt = tick_key_cb_random_cnt = 0;
@@ -19984,7 +20002,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
-    ADD_ALL_TESTS(test_ticket_callbacks, 20);
+    ADD_ALL_TESTS(test_ticket_callbacks, 24);
     ADD_ALL_TESTS(test_tls_clienthello_cb_server_random, 2);
 #ifndef OPENSSL_NO_DTLS
     ADD_ALL_TESTS(test_dtls_clienthello_cb_server_random, 2);

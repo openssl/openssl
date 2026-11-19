@@ -150,7 +150,8 @@ Note: There are additional requirements for some MAC algorithms during
 re-initialization (i.e. calling EVP_MAC_init() on an EVP_MAC after EVP_MAC_final()
 has been called on the same object).  See the NOTES section below.
 
-EVP_MAC_init() must be called before EVP_MAC_update() and EVP_MAC_final().
+EVP_MAC_init() must be called before EVP_MAC_update() and EVP_MAC_final(),
+unless the key is supplied with EVP_MAC_CTX_set_params(), see below.
 
 EVP_MAC_init_SKEY() is similar to EVP_MAC_init() but it accepts an opaque
 B<EVP_SKEY> object as a key.
@@ -171,15 +172,15 @@ EVP_MAC_finalXOF() does the final computation for an XOF based MAC and stores
 the result in the memory pointed at by I<out> of size I<outsize>.
 
 EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF() require I<ctx> to
-have been initialised with EVP_MAC_init() or EVP_MAC_init_SKEY() and fail
-otherwise.  Once EVP_MAC_final() or EVP_MAC_finalXOF() has been called,
-I<ctx> is finalised and these three functions fail again until it is
-re-initialised.  A failed EVP_MAC_init() or EVP_MAC_init_SKEY() leaves
-I<ctx> uninitialised, whatever its state was before, as the implementation
-may have been partially re-initialised.  Calling EVP_MAC_final() with
-I<out> set to NULL to query the output length is possible in any state, and
-a copy made with EVP_MAC_CTX_dup() is in the same state as the original.
-Supplying a key with EVP_MAC_CTX_set_params() does not initialise I<ctx>.
+have been initialised with EVP_MAC_init() or EVP_MAC_init_SKEY(), or by
+supplying a key with EVP_MAC_CTX_set_params(), and fail otherwise.  Once
+EVP_MAC_final() or EVP_MAC_finalXOF() has been called, I<ctx> is finalised
+and these three functions fail again until it is re-initialised.  A failed
+EVP_MAC_init() or EVP_MAC_init_SKEY() leaves I<ctx> uninitialised, whatever
+its state was before, as the implementation may have been partially
+re-initialised.  Calling EVP_MAC_final() with I<out> set to NULL to query the
+output length is possible in any state, and a copy made with
+EVP_MAC_CTX_dup() is in the same state as the original.
 
 EVP_MAC_get_params() retrieves details about the implementation
 I<mac>.
@@ -204,6 +205,11 @@ Note that a parameter that is unknown in the underlying context is
 simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
+If I<params> contain the B<OSSL_MAC_PARAM_KEY> ("key") parameter, the call
+is equivalent to calling EVP_MAC_init() with a NULL I<key> and those
+I<params>: I<ctx> is initialised, or re-initialised with any input supplied
+so far being discarded, and a failure leaves I<ctx> uninitialised.
+Parameters without a key never change whether I<ctx> is initialised.
 
 EVP_MAC_gettable_params() returns an L<OSSL_PARAM(3)> array that describes
 the retrievable and settable parameters.  EVP_MAC_gettable_params()
@@ -268,9 +274,12 @@ The standard parameter names are:
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
 Its value is the MAC key as an array of bytes.
+Setting it with EVP_MAC_CTX_set_params() initialises the context, in the
+same way as passing the key to EVP_MAC_init() does.
 
 For MACs that use an underlying computation algorithm, the algorithm
-must be set first, see "cipher" and "digest" parameters below.
+must be set first, or along with the key, see "cipher" and "digest"
+parameters below.
 
 =item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
@@ -510,6 +519,9 @@ The EVP_MAC_init_SKEY() function was added in OpenSSL 3.5.
 Since OpenSSL 4.2, EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF()
 fail on a context that has not been initialised, or that has been finalised
 and not re-initialised since. Previously results of such calls were undefined.
+Whether a key supplied with EVP_MAC_CTX_set_params() left the context usable
+without a call to EVP_MAC_init() was up to the implementation before
+OpenSSL 4.2; it now always initialises the context.
 
 =head1 COPYRIGHT
 
