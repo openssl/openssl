@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/bio.h>
 #include <openssl/objects.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
@@ -18,6 +19,100 @@
 
 static X509 *smimecap_cert = NULL;
 static EVP_PKEY *smimecap_privkey = NULL;
+
+static int hard_error_create(BIO *bio)
+{
+    int *offset = OPENSSL_zalloc(sizeof(*offset));
+
+    if (offset == NULL)
+        return 0;
+    BIO_set_data(bio, offset);
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int hard_error_destroy(BIO *bio)
+{
+    OPENSSL_free(BIO_get_data(bio));
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+    return 1;
+}
+
+static int hard_error_read(BIO *bio, char *out, int outl)
+{
+    static const char prefix[] = "prefix-before-read-error";
+    int *offset = BIO_get_data(bio);
+    int remaining = (int)sizeof(prefix) - 1 - *offset;
+    int n;
+
+    if (remaining <= 0)
+        return -1;
+    n = remaining < outl ? remaining : outl;
+    memcpy(out, prefix + *offset, (size_t)n);
+    *offset += n;
+    return n;
+}
+
+static int hard_error_gets(BIO *bio, char *out, int outl)
+{
+    return hard_error_read(bio, out, outl);
+}
+
+static long hard_error_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    int *offset = BIO_get_data(bio);
+
+    (void)num;
+    (void)ptr;
+    if (cmd == BIO_CTRL_RESET) {
+        *offset = 0;
+        return 1;
+    }
+    return 0;
+}
+
+static int smime_crlf_copy_read_error_test(void)
+{
+    BIO_METHOD *method = NULL;
+    BIO *in = NULL, *out = NULL, *eof_in = NULL, *eof_out = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(method = BIO_meth_new(BIO_TYPE_SOURCE_SINK,
+                      "hard-error-source"))
+        || !TEST_int_eq(BIO_meth_set_create(method, hard_error_create), 1)
+        || !TEST_int_eq(BIO_meth_set_destroy(method, hard_error_destroy), 1)
+        || !TEST_int_eq(BIO_meth_set_read(method, hard_error_read), 1)
+        || !TEST_int_eq(BIO_meth_set_gets(method, hard_error_gets), 1)
+        || !TEST_int_eq(BIO_meth_set_ctrl(method, hard_error_ctrl), 1)
+        || !TEST_ptr(in = BIO_new(method))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem())))
+        goto end;
+
+    if (!TEST_int_eq(SMIME_crlf_copy(in, out, SMIME_BINARY), 0))
+        goto end;
+    if (!TEST_true(BIO_reset(in))
+        || !TEST_int_eq(SMIME_crlf_copy(in, out, 0), 0))
+        goto end;
+    if (smimecap_cert != NULL && smimecap_privkey != NULL
+        && (!TEST_true(BIO_reset(in))
+            || !TEST_ptr_null(PKCS7_sign(smimecap_cert, smimecap_privkey, NULL,
+                in, PKCS7_BINARY))))
+        goto end;
+    if (!TEST_ptr(eof_in = BIO_new_mem_buf("complete", -1))
+        || !TEST_ptr(eof_out = BIO_new(BIO_s_mem()))
+        || !TEST_true(SMIME_crlf_copy(eof_in, eof_out, SMIME_BINARY)))
+        goto end;
+
+    ret = 1;
+end:
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(eof_in);
+    BIO_free(eof_out);
+    BIO_meth_free(method);
+    return ret;
+}
 
 static int smimecap_has_nid(STACK_OF(X509_ALGOR) *smcap, int nid)
 {
@@ -626,6 +721,7 @@ int setup_tests(void)
         }
     }
 
+    ADD_TEST(smime_crlf_copy_read_error_test);
     ADD_TEST(pkcs7_issuer_and_serial_negative_idx_test);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(pkcs7_verify_test);
