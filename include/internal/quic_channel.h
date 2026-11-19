@@ -556,6 +556,12 @@ uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch);
  * of NEW_CONNECTION_ID.
  */
 uint64_t ossl_quic_channel_get_on_new_conn_id_handled(const QUIC_CHANNEL *ch);
+/**
+ * ossl_quic_channel_get_init_dcid() is just for testing purposes
+ * @param ch pointer to channel which initial connection id is to be retrieved
+ * @returns pointer to initial destination connection id used by connect()
+ */
+const QUIC_CONN_ID *ossl_quic_channel_get_init_dcid(const QUIC_CHANNEL *ch);
 #endif
 
 #endif
