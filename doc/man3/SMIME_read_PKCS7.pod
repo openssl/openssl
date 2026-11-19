@@ -6,7 +6,7 @@ SMIME_read_PKCS7_ex, SMIME_read_PKCS7 - parse S/MIME message
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7);
  PKCS7 *SMIME_read_PKCS7(BIO *in, BIO **bcont);
@@ -75,6 +75,10 @@ L<PKCS7_decrypt(3)>
 =head1 HISTORY
 
 The function SMIME_read_PKCS7_ex() was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

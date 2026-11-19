@@ -6,7 +6,7 @@ PKCS7_get_octet_string - return octet string from a PKCS#7 envelopedData structu
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7);
 
@@ -27,6 +27,12 @@ PKCS7_get_octet_string() returns an ASN1_OCTET_STRING pointer.
 =head1 SEE ALSO
 
 L<PKCS7_type_is_data(3)>
+
+=head1 HISTORY
+
+PKCS7_get_octet_string() moved to the new libcms library in OpenSSL 4.2.
+A deprecated variant remains in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

@@ -7,7 +7,7 @@ PKCS7_add_certificate, PKCS7_add_crl - add information to PKCS7 structure
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
                                           EVP_PKEY *pkey, const EVP_MD *md, int flags);
@@ -101,6 +101,10 @@ L<PKCS7_final(3)>, L<PKCS7_verify(3)>
 =head1 HISTORY
 
 The PPKCS7_sign_add_signer() function was added in OpenSSL 1.0.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

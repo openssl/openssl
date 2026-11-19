@@ -16,7 +16,7 @@ i2d_ASN1_bio_stream, i2d_CMS_bio_stream, i2d_PKCS7_bio_stream
 
  int i2d_CMS_bio_stream(BIO *out, CMS_ContentInfo *cms, BIO *data, int flags);
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *data, int flags);
 
@@ -66,6 +66,10 @@ were added in OpenSSL 1.0.0.
 
 i2d_CMS_bio_stream() moved to the new libcms library in OpenSSL 4.2.
 A deprecated variant remains in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
+
+i2d_PKCS7_bio_stream() moved to the new libcms library in OpenSSL 4.2.
+A deprecated variant remains in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
 until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
