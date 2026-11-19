@@ -164,13 +164,35 @@ OpenSSL 4.2
 
    *John Claus*
 
- * The CMS and TS APIs in libcrypto are deprecated.
+ * The CMS, TS and PKCS7 APIs in libcrypto are deprecated.
    The same APIs, without deprecation, is now provided by the new libcms
-   library, reached through the `<libcms/cms.h>` and `<libcms/ts.h>`
-   headers.  Note that switching to it requires both using these headers
-   and linking with libcms, since libcms exports the API under its own
-   symbol names.  libcrypto keeps exporting the deprecated symbols for ABI
-   compatibility until removed in a future major release.
+   library, reached through the `<libcms/cms.h>`, `<libcms/ts.h>` and
+   `<libcms/pkcs7.h>` headers.  Note that switching to it requires both
+   using these headers and linking with libcms, since libcms exports the
+   API under its own symbol names.  libcrypto keeps exporting the
+   deprecated symbols for ABI compatibility until removed in a future
+   major release.
+
+   `<openssl/x509.h>` no longer includes `<openssl/pkcs7.h>`, and
+   `<openssl/pem.h>` no longer declares the PKCS7 PEM functions.  Code
+   using the PKCS7 API must include `<libcms/pkcs7.h>`, or the deprecated
+   `<openssl/pkcs7.h>`, itself.
+
+   *Bob Beck*
+
+ * Added the `PKCS12_AUTHSAFE` type, with `PKCS12_get1_authsafes()`,
+   `PKCS12_set1_authsafes()`, `PKCS12_add_authsafe()`,
+   `PKCS12_add_authsafes()`, `PKCS12_AUTHSAFE_new_data()`,
+   `PKCS12_AUTHSAFE_new_encrypted()`, `PKCS12_AUTHSAFE_free()`,
+   `PKCS12_AUTHSAFE_get_type()`, `PKCS12_AUTHSAFE_get0_alg()` and
+   `PKCS12_AUTHSAFE_get1_bags()`, to read and build the authenticated safes
+   of a PKCS#12 structure without the PKCS7 API.  The PKCS#12 functions
+   they replace, `PKCS12_pack_p7data()`, `PKCS12_unpack_p7data()`,
+   `PKCS12_pack_p7encdata()`, `PKCS12_pack_p7encdata_ex()`,
+   `PKCS12_unpack_p7encdata()`, `PKCS12_pack_authsafes()`,
+   `PKCS12_unpack_authsafes()`, `PKCS12_add_safe()`,
+   `PKCS12_add_safe_ex()`, `PKCS12_add_safes()` and `PKCS12_add_safes_ex()`,
+   and `PKCS7_free()` are deprecated.
 
    *Bob Beck*
 
