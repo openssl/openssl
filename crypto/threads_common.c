@@ -89,6 +89,33 @@
 #include <crypto/sparse_array.h>
 #include "internal/cryptlib.h"
 #include "internal/threads_common.h"
+#include "internal/ossl_rbtree.h"
+
+struct per_thread_ctx_data {
+    OSSL_RBT_ENTRY(per_thread_ctx_data) rb_entry;
+    void *libctx;
+    void *data;
+};
+
+struct per_thread_key_data {
+    OSSL_RBT_HEAD(key_data, per_thread_key_data) my_key_data;
+};
+
+static int key_cmp(const struct per_thread_ctx_data *a,
+    const struct per_thread_ctx_data *b)
+{
+    uintptr_t ap = (uintptr_t)a->libctx;
+    uintptr_t bp = (uintptr_t)b->libctx;
+
+    if (ap == bp) {
+        return 0;
+    } else {
+        return (ap < bp) ? -1 : 1;
+    }
+}
+
+OSSL_RBT_PROTOTYPE(key_data, per_thread_ctx_data, rb_entry, key_cmp)
+OSSL_RBT_GENERATE(key_data, per_thread_ctx_data, rb_entry, key_cmp);
 
 /**
  * @struct CTX_TABLE_ENTRY
@@ -123,7 +150,7 @@ DEFINE_SPARSE_ARRAY_OF(CTX_TABLE_ENTRY);
  *
  */
 typedef struct master_key_entry {
-    SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) *ctx_table;
+    struct per_thread_key_data *ctx_tree;
 } MASTER_KEY_ENTRY;
 
 /**
@@ -171,7 +198,13 @@ static CRYPTO_ONCE master_once = CRYPTO_ONCE_STATIC_INIT;
  */
 static void clean_master_key_id(MASTER_KEY_ENTRY *entry)
 {
-    ossl_sa_CTX_TABLE_ENTRY_free(entry->ctx_table);
+    struct per_thread_ctx_data *idx, *save_idx;
+    OSSL_RBT_FOREACH_SAFE (idx, key_data, &entry->ctx_tree->my_key_data, save_idx) {
+        OSSL_RBT_REMOVE(key_data, &entry->ctx_tree->my_key_data, idx);
+        OPENSSL_free(idx);
+    }
+    OPENSSL_free(entry->ctx_tree);
+    entry->ctx_tree = NULL;
 }
 
 /**
@@ -196,7 +229,7 @@ static void clean_master_key(void *data)
         return;
 
     for (i = 0; i < CRYPTO_THREAD_LOCAL_KEY_MAX; i++) {
-        if (mkey[i].ctx_table != NULL)
+        if (mkey[i].ctx_tree != NULL)
             clean_master_key_id(&mkey[i]);
     }
     OPENSSL_free(mkey);
@@ -258,7 +291,8 @@ static void init_master_key(void)
 void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ctx)
 {
     MASTER_KEY_ENTRY *mkey;
-    CTX_TABLE_ENTRY ctxd;
+    struct per_thread_ctx_data *ctxd;
+    struct per_thread_ctx_data key;
 
     ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
@@ -290,7 +324,7 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
      * Get the specific data entry in the master key
      * table for the key id we are searching for
      */
-    if (mkey[id].ctx_table == NULL)
+    if (mkey[id].ctx_tree == NULL)
         return NULL;
 
     /*
@@ -301,12 +335,13 @@ void *CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id, OSSL_LIB_CTX *ct
      * the pointer to a unitptr_t, we can use that as an ordinal index into
      * the sparse array.
      */
-    ctxd = ossl_sa_CTX_TABLE_ENTRY_get(mkey[id].ctx_table, (uintptr_t)ctx);
+    key.libctx = ctx;
+    ctxd = OSSL_RBT_FIND(key_data, &mkey[id].ctx_tree->my_key_data, &key);
 
     /*
      * If we find an entry for the passed in context, return its data pointer
      */
-    return ctxd;
+    return ctxd == NULL ? NULL : ctxd->data;
 }
 
 /**
@@ -337,6 +372,9 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     OSSL_LIB_CTX *ctx, void *data)
 {
     MASTER_KEY_ENTRY *mkey;
+    struct per_thread_ctx_data *ctxd = NULL;
+    struct per_thread_key_data *new_key_data = NULL;
+    struct per_thread_ctx_data key;
 
     ctx = (ctx == CRYPTO_THREAD_NO_CONTEXT) ? NULL : ossl_lib_ctx_get_concrete(ctx);
     /*
@@ -374,14 +412,15 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
     /*
      * Find the entry that we are looking for using our id index
      */
-    if (mkey[id].ctx_table == NULL) {
+    if (mkey[id].ctx_tree == NULL) {
 
-        /*
-         * Didn't find it, that's ok, just add it now
-         */
-        mkey[id].ctx_table = ossl_sa_CTX_TABLE_ENTRY_new();
-        if (mkey[id].ctx_table == NULL)
+        new_key_data = OPENSSL_zalloc(sizeof(struct per_thread_key_data));
+        if (new_key_data == NULL)
             return 0;
+
+        OSSL_RBT_INIT(key_data, &new_key_data->my_key_data);
+
+        mkey[id].ctx_tree = new_key_data;
     }
 
     /*
@@ -391,8 +430,17 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
      *
      * Assign to the entry in the table so that we can find it later
      */
-    return ossl_sa_CTX_TABLE_ENTRY_set(mkey[id].ctx_table,
-        (uintptr_t)ctx, data);
+    key.libctx = ctx;
+    ctxd = OSSL_RBT_FIND(key_data, &mkey[id].ctx_tree->my_key_data, &key);
+    if (ctxd == NULL) {
+        ctxd = OPENSSL_zalloc(sizeof(struct per_thread_ctx_data));
+        if (ctxd == NULL)
+            return 0;
+        ctxd->libctx = ctx;
+        OSSL_RBT_INSERT(key_data, &mkey[id].ctx_tree->my_key_data, ctxd);
+    }
+    ctxd->data = data;
+    return 1;
 }
 
 void CRYPTO_THREAD_clean_local(void)
