@@ -139,7 +139,7 @@ static int dtls1_hm_fragment_flatten(SSL_CONNECTION *s, hm_fragment *frag)
     /* Each was checked to lie within the message when it was saved */
     while (pos < frag->saved_len) {
         const unsigned char *p = frag->saved + pos;
-        unsigned long off, len;
+        size_t off, len;
 
         n2l3(p, off);
         n2l3(p, len);
@@ -205,8 +205,11 @@ static int dtls1_hm_fragment_read(SSL_CONNECTION *s, hm_fragment *frag,
     }
 
     need = frag->saved_len + HM_SAVED_HDR_LEN + len;
-    if (!ossl_assert(need <= msg_len))
+    if (!ossl_assert(need <= msg_len)) {
+        /* The body has not been read, so the connection cannot go on */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     if (need > frag->saved_alloc) {
         /* Grow geometrically, so that many small fragments cost little */
