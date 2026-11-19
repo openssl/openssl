@@ -1467,13 +1467,19 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
 
     switch (alg) {
     case TLSEXT_comp_cert_zlib:
-        method = COMP_zlib();
+        ERR_set_mark();
+        method = COMP_zlib_oneshot();
+        ERR_pop_to_mark();
         break;
     case TLSEXT_comp_cert_brotli:
+        ERR_set_mark();
         method = COMP_brotli_oneshot();
+        ERR_pop_to_mark();
         break;
     case TLSEXT_comp_cert_zstd:
+        ERR_set_mark();
         method = COMP_zstd_oneshot();
+        ERR_pop_to_mark();
         break;
     default:
         goto err;
