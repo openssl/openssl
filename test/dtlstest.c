@@ -2857,6 +2857,8 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
+
 /*
  * Handshake message reassembly: memory held for incomplete messages.
  *
@@ -3063,8 +3065,6 @@ static void memtrk_uninstall(void)
     memtrk_cap = 0;
     memtrk_cnt = 0;
 }
-
-#if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
 
 /* Largest fragment body a test record carries */
 #define REASM_MAX_BODY 1024
