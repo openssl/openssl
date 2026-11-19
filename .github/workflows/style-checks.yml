@@ -15,17 +15,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-python@v7
       - name: "Fetch the base commit"
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # actions/checkout fetches a single commit by default
           # (fetch-depth: 1), so the pull request's base commit is not
           # present and pre-commit cannot work out which files changed.
+          #
+          # We need to figure out the merge base to compare only the PR's
+          # commits.
+          REPO='${{ github.repository }}'
+          BASE='${{ github.event.pull_request.base.sha }}'
+          HEAD='${{ github.event.pull_request.head.sha }}'
+          MERGE_BASE=`gh api "repos/${REPO}/compare/${BASE}...${HEAD}" --jq '.merge_base_commit.sha'`
+          MERGE_BASE_NON_SHA=`printf '%s' "$MERGE_BASE" | tr -d '[0-9a-f]'`
+
+          # Falling back to target branch's HEAD
+          if [ -z "$MERGE_BASE" -o -n "$MERGE_BASE_NON_SHA" ]; then
+              echo "Safety checks failed, falling back to target branch's HEAD"
+              printf "%s\n" \
+                  "MERGE_BASE='${MERGE_BASE}'" \
+                  "MERGE_BASE_NON_SHA='${MERGE_BASE_NON_SHA}'"
+              MERGE_BASE='${{ github.event.pull_request.base.sha }}'
+          fi
+          printf '%s\n' "MERGE_BASE=${MERGE_BASE}" >> "$GITHUB_ENV"
+
           # Depth 1 is enough here: the diff needs the base commit's tree,
           # not its history.
-          git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
+          git fetch --depth=1 origin "${MERGE_BASE}"
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd #v3.0.1
         with:
           extra_args: >-
-            --from-ref ${{ github.event.pull_request.base.sha }}
+            --from-ref '${{ env.MERGE_BASE }}'
             --to-ref HEAD
