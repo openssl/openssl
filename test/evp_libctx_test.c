@@ -627,6 +627,16 @@ static int kem_rsa_gen_recover(void)
             ret = 0;
     }
 
+    /* Test that providing a too short secretlen fails */
+    if (fips_provider_version_match(libctx, ">=4.2.0")) {
+        ctlen = sizeof(ct);
+        secretlen = 32;
+        if (!TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
+                             &secretlen),
+                0))
+            ret = 0;
+    }
+
     EVP_PKEY_free(pub);
     EVP_PKEY_free(priv);
     EVP_PKEY_CTX_free(rctx);
