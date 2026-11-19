@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* The deprecated PKCS7-typed PKCS#12 functions are tested here */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -511,10 +514,36 @@ err:
     return ret;
 }
 
+/* Copies the authsafes of |src| to |dst| as they are, without a MAC. */
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+static int copy_authsafes(const PKCS12 *src, PKCS12 *dst)
+{
+    STACK_OF(PKCS7) *safes;
+    int ret;
+
+    if (!TEST_ptr(safes = PKCS12_unpack_authsafes(src)))
+        return 0;
+    ret = TEST_true(PKCS12_pack_authsafes(dst, safes));
+    sk_PKCS7_pop_free(safes, PKCS7_free);
+    return ret;
+}
+#else
+static int copy_authsafes(const PKCS12 *src, PKCS12 *dst)
+{
+    STACK_OF(PKCS12_AUTHSAFE) *authsafes;
+    int ret;
+
+    if (!TEST_ptr(authsafes = PKCS12_get1_authsafes(src)))
+        return 0;
+    ret = TEST_true(PKCS12_set1_authsafes(dst, authsafes));
+    sk_PKCS12_AUTHSAFE_pop_free(authsafes, PKCS12_AUTHSAFE_free);
+    return ret;
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
+
 static int test_parse_ex_skey_libctx(int idx)
 {
     PKCS12 *src = NULL, *p12 = NULL;
-    STACK_OF(PKCS7) *safes = NULL;
     PKCS12_PARSE_CTX *ctx = NULL;
     STACK_OF(EVP_SKEY) *skeys = NULL;
     int ret = 0;
@@ -522,8 +551,7 @@ static int test_parse_ex_skey_libctx(int idx)
     if (in_file == NULL || num_skeys == 0)
         return 1;
 
-    if (!TEST_ptr(src = PKCS12_load(in_file))
-        || !TEST_ptr(safes = PKCS12_unpack_authsafes(src)))
+    if (!TEST_ptr(src = PKCS12_load(in_file)))
         goto err;
 
     if (!TEST_ptr(p12 = PKCS12_init_ex(NID_pkcs7_data, testctx,
@@ -531,7 +559,7 @@ static int test_parse_ex_skey_libctx(int idx)
         goto err;
 
     /* Omit the MAC so the test reaches decryption of the secret bag. */
-    if (!TEST_true(PKCS12_pack_authsafes(p12, safes))
+    if (!copy_authsafes(src, p12)
         || !TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
         goto err;
     PKCS12_PARSE_CTX_set_skeys(ctx, &skeys);
@@ -556,7 +584,6 @@ static int test_parse_ex_skey_libctx(int idx)
 err:
     sk_EVP_SKEY_pop_free(skeys, EVP_SKEY_free);
     PKCS12_PARSE_CTX_free(ctx);
-    sk_PKCS7_pop_free(safes, PKCS7_free);
     PKCS12_free(p12);
     PKCS12_free(src);
     return ret;
