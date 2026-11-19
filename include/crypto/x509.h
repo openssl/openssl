@@ -293,6 +293,8 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     int current_crl_score;
     /* Reason mask */
     unsigned int current_reasons;
+    /* Name comparisons spent on CRL scope checks for current_cert */
+    unsigned int current_crl_scope_checks;
     /* For CRL path validation: parent context */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
