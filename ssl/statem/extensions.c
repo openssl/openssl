@@ -1367,17 +1367,22 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     int was_ticket = (SSL_get_options(ssl) & SSL_OP_NO_TICKET) == 0;
 
-    if (!ossl_assert(sctx != NULL) || !ossl_assert(s->session_ctx != NULL)) {
+    if (!ossl_assert(SSL_CONNECTION_GET_CTX(s) != NULL)
+        || !ossl_assert(s->session_ctx != NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    if (sctx->ext.servername_cb != NULL)
-        ret = sctx->ext.servername_cb(ussl, &altmp,
-            sctx->ext.servername_arg);
+    /*
+     * The callback gets the SSL and may switch it to another SSL_CTX, which
+     * can free the one it had.  So the connection's SSL_CTX is not kept in a
+     * local variable here, it is looked up again wherever it is needed.
+     */
+    if (SSL_CONNECTION_GET_CTX(s)->ext.servername_cb != NULL)
+        ret = SSL_CONNECTION_GET_CTX(s)->ext.servername_cb(ussl, &altmp,
+            SSL_CONNECTION_GET_CTX(s)->ext.servername_arg);
     else if (s->session_ctx->ext.servername_cb != NULL)
         ret = s->session_ctx->ext.servername_cb(ussl, &altmp,
             s->session_ctx->ext.servername_arg);
@@ -1407,9 +1412,11 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
      * context, to avoid the confusing situation of having sess_accept_good
      * exceed sess_accept (zero) for the new context.
      */
-    if (SSL_IS_FIRST_HANDSHAKE(s) && sctx != s->session_ctx
+    if (SSL_IS_FIRST_HANDSHAKE(s)
+        && SSL_CONNECTION_GET_CTX(s) != s->session_ctx
         && s->hello_retry_request == SSL_HRR_NONE) {
-        ssl_tsan_counter(sctx, &sctx->stats.sess_accept);
+        ssl_tsan_counter(SSL_CONNECTION_GET_CTX(s),
+            &SSL_CONNECTION_GET_CTX(s)->stats.sess_accept);
         ssl_tsan_decr(s->session_ctx, &s->session_ctx->stats.sess_accept);
     }
 
