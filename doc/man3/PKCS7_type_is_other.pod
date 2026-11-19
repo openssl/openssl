@@ -6,7 +6,7 @@ PKCS7_type_is_other - determine content type of PKCS#7 envelopedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  int PKCS7_type_is_other(PKCS7 *p7);
 
@@ -29,6 +29,12 @@ PKCS7_type_is_other() returns either 0 if the content type is matched or 1 other
 =head1 SEE ALSO
 
 L<PKCS7_type_is_data(3)>, L<PKCS7_get_octet_string(3)>
+
+=head1 HISTORY
+
+PKCS7_type_is_other() moved to the new libcms library in OpenSSL 4.2.
+A deprecated variant remains in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

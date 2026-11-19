@@ -6,7 +6,7 @@ SMIME_write_PKCS7 - convert PKCS#7 structure to S/MIME format
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  int SMIME_write_PKCS7(BIO *out, PKCS7 *p7, BIO *data, int flags);
 
@@ -57,6 +57,12 @@ SMIME_write_PKCS7() returns 1 for success or 0 for failure.
 L<ERR_get_error(3)>, L<PKCS7_sign(3)>,
 L<PKCS7_verify(3)>, L<PKCS7_encrypt(3)>
 L<PKCS7_decrypt(3)>
+
+=head1 HISTORY
+
+SMIME_write_PKCS7() moved to the new libcms library in OpenSSL 4.2.
+A deprecated variant remains in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

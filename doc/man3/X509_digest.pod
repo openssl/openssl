@@ -32,7 +32,7 @@ PKCS7_ISSUER_AND_SERIAL_digest
  int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                       unsigned char *md, unsigned int *len);
 
- #include <openssl/pkcs7.h>
+ #include <libcms/pkcs7.h>
 
  int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
                                     const EVP_MD *type, unsigned char *md,
@@ -78,6 +78,10 @@ L<EVP_sha1(3)>
 =head1 HISTORY
 
 The X509_digest_sig() function was added in OpenSSL 3.0.
+
+PKCS7_ISSUER_AND_SERIAL_digest() moved to the new libcms library in OpenSSL 4.2.
+A deprecated variant remains in libcrypto, declared in F<< <openssl/pkcs7.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
