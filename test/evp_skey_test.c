@@ -693,6 +693,70 @@ end:
     return ret;
 }
 
+static int test_hmac_skey(void)
+{
+    int ret = 0;
+    EVP_MAC *hmac = NULL;
+    EVP_MAC_CTX *ctx_skey = NULL, *ctx_raw = NULL;
+    EVP_SKEY *skey = NULL;
+    unsigned char key[KEY_SIZE] = {
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59, 0x53, 0x4B, 0x45, 0x59
+    };
+    const unsigned char data[] = "Test data for HMAC";
+    unsigned char mac_skey[64], mac_raw[64];
+    size_t mac_skey_len = sizeof(mac_skey);
+    size_t mac_raw_len = sizeof(mac_raw);
+    OSSL_PARAM params[2];
+
+    deflprov = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+
+    /* Create EVP_SKEY from raw key */
+    if (!TEST_ptr(skey = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_GENERIC,
+                      key, sizeof(key), NULL)))
+        goto end;
+
+    /* Fetch HMAC */
+    if (!TEST_ptr(hmac = EVP_MAC_fetch(libctx, "HMAC", NULL)))
+        goto end;
+
+    /* Set digest parameter */
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    /* Compute HMAC using SKEY */
+    if (!TEST_ptr(ctx_skey = EVP_MAC_CTX_new(hmac))
+        || !TEST_true(EVP_MAC_init_SKEY(ctx_skey, skey, params))
+        || !TEST_true(EVP_MAC_update(ctx_skey, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(ctx_skey, mac_skey, &mac_skey_len,
+            sizeof(mac_skey))))
+        goto end;
+
+    /* Compute HMAC using raw key for comparison */
+    if (!TEST_ptr(ctx_raw = EVP_MAC_CTX_new(hmac))
+        || !TEST_true(EVP_MAC_init(ctx_raw, key, sizeof(key), params))
+        || !TEST_true(EVP_MAC_update(ctx_raw, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(ctx_raw, mac_raw, &mac_raw_len,
+            sizeof(mac_raw))))
+        goto end;
+
+    /* Compare the results */
+    if (!TEST_mem_eq(mac_skey, mac_skey_len, mac_raw, mac_raw_len))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_MAC_CTX_free(ctx_skey);
+    EVP_MAC_CTX_free(ctx_raw);
+    EVP_MAC_free(hmac);
+    EVP_SKEY_free(skey);
+    OSSL_PROVIDER_unload(deflprov);
+    return ret;
+}
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -711,6 +775,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DES
     ADD_TEST(test_des_raw_skey);
 #endif
+    ADD_TEST(test_hmac_skey);
 
     return 1;
 }
