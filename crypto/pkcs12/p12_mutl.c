@@ -215,6 +215,21 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     X509_SIG_get0(p12->mac->dinfo, &macalg, NULL);
     X509_ALGOR_get0(&macoid, NULL, NULL, macalg);
     if (OBJ_obj2nid(macoid) == NID_pbmac1) {
+        if (pbmac1_md_nid == NID_undef) {
+            /* Take the HMAC digest from the PBMAC1 messageAuthScheme */
+            PBMAC1PARAM *param;
+            const ASN1_OBJECT *hmac_oid;
+
+            param = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBMAC1PARAM),
+                macalg->parameter);
+            if (param == NULL) {
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_UNSUPPORTED);
+                return 0;
+            }
+            X509_ALGOR_get0(&hmac_oid, NULL, NULL, param->messageAuthScheme);
+            pbmac1_md_nid = ossl_hmac2mdnid(OBJ_obj2nid(hmac_oid));
+            PBMAC1PARAM_free(param);
+        }
         if (OBJ_obj2txt(md_name, sizeof(md_name), OBJ_nid2obj(pbmac1_md_nid), 0) < 0)
             return 0;
     } else {
@@ -311,40 +326,15 @@ int ossl_pkcs12_verify_mac(PKCS12 *p12, const char *pass, int passlen,
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
     const ASN1_OCTET_STRING *macoct;
-    const X509_ALGOR *macalg;
-    const ASN1_OBJECT *macoid;
 
     if (p12->mac == NULL) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_ABSENT);
         return 0;
     }
 
-    X509_SIG_get0(p12->mac->dinfo, &macalg, NULL);
-    X509_ALGOR_get0(&macoid, NULL, NULL, macalg);
-    if (OBJ_obj2nid(macoid) == NID_pbmac1) {
-        PBMAC1PARAM *param = NULL;
-        const ASN1_OBJECT *hmac_oid;
-        int md_nid = NID_undef;
-
-        param = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBMAC1PARAM), macalg->parameter);
-        if (param == NULL) {
-            ERR_raise(ERR_LIB_PKCS12, ERR_R_UNSUPPORTED);
-            return 0;
-        }
-        X509_ALGOR_get0(&hmac_oid, NULL, NULL, param->messageAuthScheme);
-        md_nid = ossl_hmac2mdnid(OBJ_obj2nid(hmac_oid));
-
-        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, md_nid, NID_undef, NULL, libctx, propq)) {
-            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
-            PBMAC1PARAM_free(param);
-            return 0;
-        }
-        PBMAC1PARAM_free(param);
-    } else {
-        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, NID_undef, NID_undef, NULL, libctx, propq)) {
-            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
-            return 0;
-        }
+    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen, NID_undef, NID_undef, NULL, libctx, propq)) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
+        return 0;
     }
     X509_SIG_get0(p12->mac->dinfo, NULL, &macoct);
     if ((maclen != ASN1_STRING_get_length(macoct))
