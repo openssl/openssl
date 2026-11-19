@@ -265,8 +265,11 @@ sub start_ech_client_server
         my $s_client_pid = open3(*sc_input, my $s_client_o,
                                  my $s_client_e,
                                  $shlib_wrap, $apps_openssl, @s_client_cmd);
-        print sc_input "Q\n";
-        close(sc_input);
+        {
+            local $SIG{PIPE} = "IGNORE";
+            print sc_input "Q\n";
+            close(sc_input);
+        }
         waitpid($s_client_pid, 0);
         my $stillthere = kill 0, $s_server_pid;
         if ($stillthere) {
