@@ -939,6 +939,7 @@ PEM_R_MISSING_DEK_IV:129:missing dek iv
 PEM_R_NOT_DEK_INFO:105:not dek info
 PEM_R_NOT_ENCRYPTED:106:not encrypted
 PEM_R_NOT_PROC_TYPE:107:not proc type
+PEM_R_NO_CONTENT:134:no content
 PEM_R_NO_START_LINE:108:no start line
 PEM_R_PROBLEMS_GETTING_PASSWORD:109:problems getting password
 PEM_R_PVK_DATA_TOO_SHORT:124:pvk data too short
