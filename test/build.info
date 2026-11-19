@@ -1528,7 +1528,7 @@ ENDIF
 
   SOURCE[x509_acert_test]=x509_acert_test.c
   INCLUDE[x509_acert_test]=../include ../apps/include
-  DEPEND[x509_acert_test]=../libcrypto libtestutil.a
+  DEPEND[x509_acert_test]=../libx509pmi ../libcrypto libtestutil.a
 
   SOURCE[x509_req_test]=x509_req_test.c
   INCLUDE[x509_req_test]=../include ../apps/include
