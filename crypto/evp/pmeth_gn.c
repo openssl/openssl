@@ -165,6 +165,7 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
             != NULL);
 
     ctx->keygen_info = NULL;
+    ctx->keygen_info_count = 0;
 
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_DEPRECATED_3_6)
     /* In case |*ppkey| was originally a legacy key */
@@ -180,6 +181,11 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     goto end;
 
 end:
+    /* Never leave the stack buffer attached to |ctx| */
+    if (ctx != NULL && ctx->keygen_info == gentmp) {
+        ctx->keygen_info = NULL;
+        ctx->keygen_info_count = 0;
+    }
     if (ret <= 0) {
         if (allocated_pkey != NULL)
             *ppkey = NULL;
@@ -247,7 +253,7 @@ int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
 {
     if (idx == -1)
         return ctx->keygen_info_count;
-    if (idx < 0 || idx > ctx->keygen_info_count)
+    if (idx < 0 || idx >= ctx->keygen_info_count)
         return 0;
     return ctx->keygen_info[idx];
 }
