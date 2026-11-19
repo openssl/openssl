@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `openssl speed` memory leaks in DSA parameter generation and
+   EdDSA/SM2 digest contexts.
+
+   *Tobias Brick*
+
  * Fixed the default `openssl speed` EC selection enabling signature-only
    algorithms for key agreement and key-agreement-only algorithms for signing.
    Initialize and filter selections before forking so multi-process runs report

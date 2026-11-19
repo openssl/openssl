@@ -4073,6 +4073,8 @@ int speed_main(int argc, char **argv)
             loopargs[i].sig_max_sig_len[testnum] = max_sig_len;
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
+            EVP_PKEY_CTX_free(ctx_params);
+            EVP_PKEY_free(pkey_params);
             EVP_PKEY_free(pkey);
             EVP_SIGNATURE_free(alg);
             pkey = NULL;
@@ -4080,6 +4082,8 @@ int speed_main(int argc, char **argv)
 
         sig_err_break:
             dofail();
+            EVP_PKEY_CTX_free(ctx_params);
+            EVP_PKEY_free(pkey_params);
             EVP_PKEY_free(pkey);
             EVP_SIGNATURE_free(alg);
             op_count = 1;
@@ -4342,6 +4346,8 @@ end:
         for (k = 0; k < EC_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].pk_sign_ctx[k]);
             EVP_PKEY_CTX_free(loopargs[i].pk_verify_ctx[k]);
+            EVP_MD_CTX_free(loopargs[i].md_sign_ctx[k]);
+            EVP_MD_CTX_free(loopargs[i].md_verify_ctx[k]);
         }
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
