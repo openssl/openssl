@@ -30,7 +30,7 @@ static char *x509_cert_fileptr = NULL;
 
 static void get_windows_default_path(char *pathname, const char *suffix)
 {
-    char *ossldir;
+    const char *ossldir;
 
     ossldir = ossl_get_openssldir();
 
