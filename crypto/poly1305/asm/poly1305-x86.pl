@@ -74,7 +74,7 @@ if ($sse2) {
 		$avx = ($2>=3.0) + ($2>3.0);
 	}
 
-	if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+	if (!$avx && $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E 2>&1`
 		=~ /#define __clang_major__.([0-9]+)/) {
 		if ($1) {
 			$avx = ($1>=11); #icx started with clang 11
