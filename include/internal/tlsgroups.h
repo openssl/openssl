@@ -71,6 +71,31 @@
 #define OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024 0x11ED
 #define OSSL_TLS_GROUP_ID_curveSM2MLKEM768 0x11EE
 
+/**
+ * @brief Check whether a group is a hybrid group whose key share starts with
+ * an EC point.
+ *
+ * In these ECDHE-MLKEM hybrid groups the ECDH share comes first in the key
+ * share, in both the ClientHello and the ServerHello. TLS 1.3 requires that
+ * EC point to be in the uncompressed form (RFC 8446 section 4.2.8.2).
+ *
+ * @param group_id the TLS group ID to check
+ * @returns 1 if the key share of the group starts with an EC point, 0
+ *          otherwise
+ */
+static ossl_inline int is_ec_first_hybrid_group(const uint16_t group_id)
+{
+    switch (group_id) {
+    case OSSL_TLS_GROUP_ID_SecP256r1MLKEM512:
+    case OSSL_TLS_GROUP_ID_SecP256r1MLKEM768:
+    case OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024:
+    case OSSL_TLS_GROUP_ID_curveSM2MLKEM768:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 /*
  * RFC 7919: "Codepoints ... between 256 and 511, inclusive ... are set aside
  * for FFDHE groups"
