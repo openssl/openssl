@@ -3083,22 +3083,111 @@ end:
  * tests inject hand-built handshake fragments into a server and check how much
  * memory is held, and that what is held is freed.
  *
- * Memory is measured with an allocator installed by global_init(), which wraps
- * whatever allocator the test framework has installed.
+ * Memory is measured with an allocator that wraps the one the test framework
+ * has installed, for as long as a test's server exists. Allocations are
+ * recorded by address, not by a header, so memory allocated before the wrapper
+ * was installed can still be freed through it, and the reverse.
  */
-
-#define MEMTRK_HDR 16
 
 static CRYPTO_malloc_fn memtrk_base_malloc;
 static CRYPTO_realloc_fn memtrk_base_realloc;
 static CRYPTO_free_fn memtrk_base_free;
 static size_t memtrk_live_bytes;
-static int memtrk_enabled;
+
+typedef struct {
+    void *ptr;
+    size_t size;
+} memtrk_ent;
+
+/* Open addressing, with the capacity a power of two; libc is used for it */
+static memtrk_ent *memtrk_tab;
+static size_t memtrk_cap;
+static size_t memtrk_cnt;
 
 /* The next allocation of memtrk_fail_size bytes fails, once, if armed */
 static size_t memtrk_fail_size;
 static int memtrk_fail_armed;
 static int memtrk_fail_hits;
+
+static size_t memtrk_hash(const void *ptr, size_t cap)
+{
+    uint64_t h = (uint64_t)(uintptr_t)ptr;
+
+    h ^= h >> 17;
+    h *= UINT64_C(0x9E3779B97F4A7C15);
+    h ^= h >> 29;
+    return (size_t)(h & (cap - 1));
+}
+
+/* Index of ptr in the table, or memtrk_cap if it is not there */
+static size_t memtrk_find(const void *ptr)
+{
+    size_t i;
+
+    if (memtrk_cap == 0)
+        return memtrk_cap;
+    for (i = memtrk_hash(ptr, memtrk_cap); memtrk_tab[i].ptr != NULL;
+        i = (i + 1) & (memtrk_cap - 1))
+        if (memtrk_tab[i].ptr == ptr)
+            return i;
+    return memtrk_cap;
+}
+
+static int memtrk_grow(void)
+{
+    size_t cap = memtrk_cap == 0 ? 1024 : memtrk_cap * 2;
+    memtrk_ent *tab = calloc(cap, sizeof(*tab));
+    size_t i, j;
+
+    if (tab == NULL)
+        return 0;
+    for (i = 0; i < memtrk_cap; i++) {
+        if (memtrk_tab[i].ptr == NULL)
+            continue;
+        for (j = memtrk_hash(memtrk_tab[i].ptr, cap); tab[j].ptr != NULL;
+            j = (j + 1) & (cap - 1))
+            continue;
+        tab[j] = memtrk_tab[i];
+    }
+    free(memtrk_tab);
+    memtrk_tab = tab;
+    memtrk_cap = cap;
+    return 1;
+}
+
+static int memtrk_add(void *ptr, size_t size)
+{
+    size_t i;
+
+    if ((memtrk_cnt + 1) * 2 > memtrk_cap && !memtrk_grow())
+        return 0;
+    for (i = memtrk_hash(ptr, memtrk_cap); memtrk_tab[i].ptr != NULL;
+        i = (i + 1) & (memtrk_cap - 1))
+        continue;
+    memtrk_tab[i].ptr = ptr;
+    memtrk_tab[i].size = size;
+    memtrk_cnt++;
+    memtrk_live_bytes += size;
+    return 1;
+}
+
+/* Forget the entry at index i, closing the gap it leaves in its probe run */
+static void memtrk_del(size_t i)
+{
+    const size_t mask = memtrk_cap - 1;
+    size_t j, k;
+
+    memtrk_live_bytes -= memtrk_tab[i].size;
+    for (j = (i + 1) & mask; memtrk_tab[j].ptr != NULL; j = (j + 1) & mask) {
+        k = memtrk_hash(memtrk_tab[j].ptr, memtrk_cap);
+        if (i <= j ? (i < k && k <= j) : (i < k || k <= j))
+            continue;
+        memtrk_tab[i] = memtrk_tab[j];
+        i = j;
+    }
+    memtrk_tab[i].ptr = NULL;
+    memtrk_cnt--;
+}
 
 static int memtrk_should_fail(size_t num)
 {
@@ -3111,35 +3200,34 @@ static int memtrk_should_fail(size_t num)
 
 static void *memtrk_malloc(size_t num, const char *file, int line)
 {
-    unsigned char *p;
+    void *p;
 
     if (num == 0 || memtrk_should_fail(num))
         return NULL;
-    p = memtrk_base_malloc(num + MEMTRK_HDR, file, line);
-    if (p == NULL)
+    p = memtrk_base_malloc(num, file, line);
+    if (p != NULL && !memtrk_add(p, num)) {
+        memtrk_base_free(p, file, line);
         return NULL;
-    memcpy(p, &num, sizeof(num));
-    memtrk_live_bytes += num;
-    return p + MEMTRK_HDR;
+    }
+    return p;
 }
 
 static void memtrk_free(void *ptr, const char *file, int line)
 {
-    unsigned char *p;
-    size_t num;
+    size_t i;
 
     if (ptr == NULL)
         return;
-    p = (unsigned char *)ptr - MEMTRK_HDR;
-    memcpy(&num, p, sizeof(num));
-    memtrk_live_bytes -= num;
-    memtrk_base_free(p, file, line);
+    i = memtrk_find(ptr);
+    if (i != memtrk_cap)
+        memtrk_del(i);
+    memtrk_base_free(ptr, file, line);
 }
 
 static void *memtrk_realloc(void *ptr, size_t num, const char *file, int line)
 {
-    unsigned char *p;
-    size_t oldnum;
+    void *p;
+    size_t i;
 
     if (ptr == NULL)
         return memtrk_malloc(num, file, line);
@@ -3149,51 +3237,49 @@ static void *memtrk_realloc(void *ptr, size_t num, const char *file, int line)
     }
     if (memtrk_should_fail(num))
         return NULL;
-    p = (unsigned char *)ptr - MEMTRK_HDR;
-    memcpy(&oldnum, p, sizeof(oldnum));
-    p = memtrk_base_realloc(p, num + MEMTRK_HDR, file, line);
+    i = memtrk_find(ptr);
+    p = memtrk_base_realloc(ptr, num, file, line);
     if (p == NULL)
         return NULL;
-    memtrk_live_bytes = memtrk_live_bytes - oldnum + num;
-    memcpy(p, &num, sizeof(num));
-    return p + MEMTRK_HDR;
+    /* Memory which was not recorded when it was allocated stays unrecorded */
+    if (i != memtrk_cap) {
+        memtrk_del(i);
+        if (!memtrk_add(p, num)) {
+            memtrk_base_free(p, file, line);
+            return NULL;
+        }
+    }
+    return p;
 }
 
 /*
- * Without MFAIL installed the allocator in use is the library's default, which
- * dispatches through the installed functions: wrapping it would call itself.
- * The libc functions stand in for it.
+ * Install the allocator wrapper around the one in use, as the other tests
+ * which count allocations do, and restore it with memtrk_uninstall(). The
+ * framework's allocator is installed from the start, so this only fails if it
+ * is not (OPENSSL_TEST_MFAIL_DISABLE), when the library's default allocator
+ * would be wrapped by something it calls.
  */
-static void *memtrk_libc_malloc(size_t num, const char *file, int line)
-{
-    return malloc(num);
-}
-
-static void *memtrk_libc_realloc(void *ptr, size_t num, const char *file,
-    int line)
-{
-    return realloc(ptr, num);
-}
-
-static void memtrk_libc_free(void *ptr, const char *file, int line)
-{
-    free(ptr);
-}
-
-int global_init(void)
+static int memtrk_install(void)
 {
     CRYPTO_get_mem_functions(&memtrk_base_malloc, &memtrk_base_realloc,
         &memtrk_base_free);
     if (memtrk_base_malloc == CRYPTO_malloc
         || memtrk_base_realloc == CRYPTO_realloc
-        || memtrk_base_free == CRYPTO_free) {
-        memtrk_base_malloc = memtrk_libc_malloc;
-        memtrk_base_realloc = memtrk_libc_realloc;
-        memtrk_base_free = memtrk_libc_free;
-    }
-    /* Not fatal: the tests which need the counter are skipped without it. */
-    memtrk_enabled = CRYPTO_set_mem_functions(memtrk_malloc, memtrk_realloc, memtrk_free);
-    return 1;
+        || memtrk_base_free == CRYPTO_free)
+        return 0;
+    memtrk_live_bytes = 0;
+    return CRYPTO_set_mem_functions(memtrk_malloc, memtrk_realloc,
+        memtrk_free);
+}
+
+static void memtrk_uninstall(void)
+{
+    CRYPTO_set_mem_functions(memtrk_base_malloc, memtrk_base_realloc,
+        memtrk_base_free);
+    free(memtrk_tab);
+    memtrk_tab = NULL;
+    memtrk_cap = 0;
+    memtrk_cnt = 0;
 }
 
 #if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
@@ -3211,7 +3297,11 @@ typedef struct {
     int err; /* SSL error after the last record was read */
     size_t base; /* live bytes once the server is set up */
     size_t bio_base; /* of which the memory BIO's buffer */
+    int tracking; /* memtrk_install() was done */
 } REASM_TEST_FIXTURE;
+
+/* Bytes recorded and not freed when the last fixture was freed */
+static size_t reasm_leftover;
 
 static void reasm_fx_free(REASM_TEST_FIXTURE *fx)
 {
@@ -3220,6 +3310,11 @@ static void reasm_fx_free(REASM_TEST_FIXTURE *fx)
     fx->ssl = NULL;
     fx->sctx = NULL;
     fx->rbio = NULL;
+    if (fx->tracking) {
+        reasm_leftover = memtrk_live_bytes;
+        memtrk_uninstall();
+        fx->tracking = 0;
+    }
 }
 
 /* Size of the buffer behind the memory BIO the fragments are written to */
@@ -3242,6 +3337,9 @@ static int reasm_fx_new_ver(REASM_TEST_FIXTURE *fx, int version)
     BIO *rbio = NULL, *wbio = NULL;
 
     memset(fx, 0, sizeof(*fx));
+
+    /* The tests which need the counts skip themselves if it cannot be done */
+    fx->tracking = memtrk_install();
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(), NULL,
             version, version,
@@ -3408,7 +3506,7 @@ static int test_dtls_reassembly_future_messages_memory(void)
     unsigned int seq;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
@@ -3445,7 +3543,7 @@ static int test_dtls_reassembly_current_message_memory(int idx)
     REASM_TEST_FIXTURE fx;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
 #ifdef OPENSSL_NO_DTLS1_2
     if (idx == 0)
@@ -3490,7 +3588,7 @@ static int test_dtls_reassembly_tiny_fragments_buffer(void)
     size_t count, i;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
@@ -3530,7 +3628,7 @@ static int test_dtls_reassembly_duplicate_flood(void)
     size_t i;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
@@ -3573,7 +3671,7 @@ static int test_dtls_reassembly_duplicate_fragments_buffer(void)
     size_t i, count;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
 
     /* How many one byte fragments, with gaps, are saved before the buffer */
@@ -3634,7 +3732,7 @@ static int test_dtls_reassembly_refragmented_max_message(void)
     size_t max, off, len;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
@@ -3723,7 +3821,7 @@ static int test_dtls_reassembly_complete_message_memory(int idx)
     size_t off;
     int i, ok = 1, testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
@@ -3811,15 +3909,15 @@ static int test_dtls_reassembly_cleanup(int idx)
 {
     size_t before;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
 
     if (!reasm_cleanup_cycle(idx, 0))
         return 0;
-    before = memtrk_live_bytes;
+    before = reasm_leftover;
     if (!reasm_cleanup_cycle(idx, 1))
         return 0;
-    return TEST_size_t_le(memtrk_live_bytes, before);
+    return TEST_size_t_le(reasm_leftover, before);
 }
 
 /*
@@ -3839,7 +3937,7 @@ static int test_dtls_reassembly_alloc_failure(int idx)
     const size_t msg_len = 1000, frag_len = 400, whole_len = 777;
     int testresult = 0;
 
-    if (!memtrk_enabled)
+    if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
     if (!reasm_fx_new(&fx))
         return 0;
