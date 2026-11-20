@@ -15,7 +15,7 @@ rsp_cert = signer_only.crt
 rsp_key = new.key
 rsp_crl = newcrl.pem
 rsp_capubs = trusted.crt
-rsp_extracerts = signer_issuing.crt
+rsp_extracerts = issuing_inter.pem
 
 rsp_newwithnew = newWithNew.pem
 rsp_newwithold = newWithOld.pem
