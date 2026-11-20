@@ -708,9 +708,25 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 add_sc = ossl_cms_add1_signing_cert(si, sc);
                 ESS_SIGNING_CERT_free(sc);
             } else {
-                if ((sc2 = OSSL_ESS_signing_cert_v2_new_init(md, signer,
-                         NULL, 1))
-                    == NULL)
+                const EVP_MD *cert_md = md;
+                EVP_MD *sha256 = NULL;
+
+                /*
+                 * The certificate hash in ESSCertIDv2 must be a fixed-length
+                 * digest. If the signer digest is an XOF (e.g. SHAKE256 for
+                 * ML-DSA), use the RFC 5035 default of SHA-256 instead.
+                 */
+                if (EVP_MD_xof(md)) {
+                    sha256 = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx),
+                        SN_sha256, ossl_cms_ctx_get0_propq(ctx));
+                    if (sha256 == NULL)
+                        goto err;
+                    cert_md = sha256;
+                }
+                sc2 = OSSL_ESS_signing_cert_v2_new_init(cert_md, signer,
+                    NULL, 1);
+                EVP_MD_free(sha256);
+                if (sc2 == NULL)
                     goto err;
                 add_sc = ossl_cms_add1_signing_cert_v2(si, sc2);
                 ESS_SIGNING_CERT_V2_free(sc2);
