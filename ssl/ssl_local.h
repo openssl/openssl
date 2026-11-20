@@ -1860,6 +1860,15 @@ struct ssl_connection_st {
          */
         SSL_SESSION *early_data_session;
 
+        /*
+         * Server side, with anti-replay: the session whose ticket this
+         * connection removed from the session cache. A HelloRetryRequest for
+         * a key_share group is decided only after that, so the retried
+         * ClientHello uses this session instead of the cache. Freed at
+         * handshake reset and connection free.
+         */
+        SSL_SESSION *anti_replay_session;
+
         /* This is the list of algorithms the peer supports that we also support */
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
 

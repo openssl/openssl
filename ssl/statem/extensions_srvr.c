@@ -1351,6 +1351,30 @@ static SSL_TICKET_STATUS tls_get_stateful_ticket(SSL_CONNECTION *s, PACKET *tick
     return SSL_TICKET_SUCCESS;
 }
 
+/*
+ * No PSK in the ClientHello can be used. Returns 1 to continue with a full
+ * handshake, or 0 after SSLfatal() when there is no certificate for one.
+ */
+static int tls_psk_not_found(SSL_CONNECTION *s)
+{
+    size_t j;
+
+    for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
+        ;
+    if (j < s->ssl_pkey_num) {
+        /* A certificate exists. Fallback to a full handshake */
+        return 1;
+    }
+    /*
+     * decrypt_error here to keep the alert the same as if the binder
+     * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
+     * in constant time compared to verifying the binder. None of this code
+     * is constant time anyway.
+     */
+    SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+    return 0;
+}
+
 int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
@@ -1362,6 +1386,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     const EVP_MD *md = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    /* Each ticket is used only once, see "Check for replay" below */
+    int anti_replay = s->max_early_data > 0
+        && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -1495,14 +1522,27 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
              * is no point in using full stateless tickets.
              */
-            if ((s->options & SSL_OP_NO_TICKET) != 0
-                || (s->max_early_data > 0
-                    && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))
+            if (anti_replay
+                && s->hello_retry_request == SSL_HRR_PENDING
+                && s->ext.anti_replay_session != NULL
+                && PACKET_equal(&identity,
+                    s->ext.anti_replay_session->session_id,
+                    s->ext.anti_replay_session->session_id_length)) {
+                /* This connection's first ClientHello used the ticket up */
+                if (!SSL_SESSION_up_ref(s->ext.anti_replay_session)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                sess = s->ext.anti_replay_session;
+                s->ext.ticket_expected = 1;
+                ret = SSL_TICKET_SUCCESS;
+            } else if ((s->options & SSL_OP_NO_TICKET) != 0 || anti_replay) {
                 ret = tls_get_stateful_ticket(s, &identity, &sess);
-            else
+            } else {
                 ret = tls_decrypt_ticket(s, PACKET_data(&identity),
                     PACKET_remaining(&identity), NULL, 0,
                     &sess);
+            }
 
             if (ret == SSL_TICKET_EMPTY) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1516,15 +1556,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             }
             if (ret == SSL_TICKET_NONE || ret == SSL_TICKET_NO_DECRYPT)
                 continue;
-
-            /* Check for replay */
-            if (s->max_early_data > 0
-                && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0
-                && !SSL_CTX_remove_session(s->session_ctx, sess)) {
-                SSL_SESSION_free(sess);
-                sess = NULL;
-                continue;
-            }
 
             /* Undo ticket age obfuscation modulo 2^32 (RFC 9846, 4.3.11.1). */
             age = ossl_ms2time((uint32_t)(ticket_agel - sess->ext.tick_age_add));
@@ -1607,24 +1638,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         break;
     }
 
-    if (sess == NULL) {
-        size_t j;
-
-        for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
-            ;
-        if (j < s->ssl_pkey_num) {
-            /* A certificate exists. Fallback to a full handshake */
-            return 1;
-        }
-        /*
-         * decrypt_error here to keep the alert the same as if the binder
-         * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
-         * in constant time compared to verifying the binder. None of this code
-         * is constant time anyway.
-         */
-        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
-    }
+    if (sess == NULL)
+        return tls_psk_not_found(s);
 
     binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);
@@ -1652,6 +1667,36 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         != 1) {
         /* SSLfatal() already called */
         goto err;
+    }
+
+    /*
+     * Check for replay: with anti-replay each ticket is used only once. Use
+     * it up only now that the binder has verified, so that a ClientHello
+     * that cannot resume does not use it up.
+     */
+    if (!ext && anti_replay && sess != s->ext.anti_replay_session) {
+        if (tls_hrr_cookie_required(s) && !s->ext.cookieok) {
+            /*
+             * This ClientHello is answered with a HelloRetryRequest, so it
+             * cannot resume. The one with the valid cookie uses the ticket
+             * up. That also works for a stateless server, which keeps nothing
+             * from this ClientHello.
+             */
+            s->ext.early_data_ok = 0;
+        } else if (!SSL_CTX_remove_session(s->session_ctx, sess)) {
+            /* Used up already, by a replay or by another connection */
+            SSL_SESSION_free(sess);
+            s->ext.early_data_ok = 0;
+            return tls_psk_not_found(s);
+        } else {
+            /* Kept for a HelloRetryRequest for a key_share group */
+            if (!SSL_SESSION_up_ref(sess)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            SSL_SESSION_free(s->ext.anti_replay_session);
+            s->ext.anti_replay_session = sess;
+        }
     }
 
     s->ext.tick_identity = id;

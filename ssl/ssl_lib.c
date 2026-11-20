@@ -622,6 +622,8 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->ext.early_exporter_ready = 0;
     SSL_SESSION_free(sc->ext.early_data_session);
     sc->ext.early_data_session = NULL;
+    SSL_SESSION_free(sc->ext.anti_replay_session);
+    sc->ext.anti_replay_session = NULL;
     sc->ext.tick_age_checked = 0;
     sc->ext.tick_age_ms = 0;
 
@@ -1642,6 +1644,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     }
     SSL_SESSION_free(s->psksession);
     SSL_SESSION_free(s->ext.early_data_session);
+    SSL_SESSION_free(s->ext.anti_replay_session);
     OPENSSL_free(s->psksession_id);
 
     ssl_cert_free(s->cert);
