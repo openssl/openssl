@@ -151,10 +151,13 @@ records may be added via L<SSL_add_expected_rpk(3)> or L<SSL_dane_tlsa_add(3)>.
 
 X509_build_chain() builds a certificate chain starting from I<target>, using
 the same chain-construction algorithm as X509_verify_cert() (see
-L</X509_verify_cert and X509_STORE_CTX_verify> above). It internally uses a
-B<X509_STORE_CTX> structure associated with the library context I<libctx>
-and property query string I<propq>, both of which may be NULL. The role of
-I<certs> depends on I<store>:
+L</X509_verify_cert and X509_STORE_CTX_verify> above). It does not verify
+certificate signatures or validate the resulting chain.
+Applications that need to validate the chain should use X509_verify_cert().
+
+X509_build_chain() internally uses a B<X509_STORE_CTX> structure associated
+with the library context I<libctx> and property query string I<propq>, both
+of which may be NULL. The role of I<certs> depends on I<store>:
 
 =over 4
 
