@@ -13,8 +13,6 @@
 #ifndef FIPS_MODULE
 #include <openssl/async.h>
 #endif
-#include <stdbool.h>
-
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
 #include <openssl/core_names.h>
@@ -758,9 +756,10 @@ int ossl_rand_seed_source_strict(OSSL_LIB_CTX *ctx)
     return dgbl != NULL && rand_seed_source_strict(dgbl);
 }
 #endif /* !FIPS_MODULE */
+typedef enum { DRBG_PRIMARY, DRBG_SECONDARY } drbg_kind;
 
 static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
-    bool primary)
+    drbg_kind kind)
 {
     EVP_RAND *rand;
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
@@ -776,7 +775,7 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
 
     if (dgbl == NULL)
         return NULL;
-    if (primary) {
+    if (kind == DRBG_PRIMARY) {
         default_params = dgbl->default_primary_params;
         reseed_time_interval = PRIMARY_RESEED_TIME_INTERVAL;
         reseed_interval = PRIMARY_RESEED_INTERVAL;
@@ -898,7 +897,7 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     /* The FIPS provider has entropy health tests instead of the primary */
     ret = rand_new_crngt(ctx, seed);
 #else /* FIPS_MODULE */
-    ret = rand_new_drbg(ctx, seed, true);
+    ret = rand_new_drbg(ctx, seed, DRBG_PRIMARY);
 #endif /* FIPS_MODULE */
 
     if (ret == NULL)
@@ -969,7 +968,7 @@ static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY, ctx) == NULL
             && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
-        rand = rand_new_drbg(ctx, primary, false);
+        rand = rand_new_drbg(ctx, primary, DRBG_SECONDARY);
         if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PUB_KEY, ctx, rand)) {
             EVP_RAND_CTX_free(rand);
             rand = NULL;
@@ -1011,7 +1010,7 @@ static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PUB_KEY, ctx) == NULL
             && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
-        rand = rand_new_drbg(ctx, primary, false);
+        rand = rand_new_drbg(ctx, primary, DRBG_SECONDARY);
         if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY, ctx, rand)) {
             EVP_RAND_CTX_free(rand);
             rand = NULL;
