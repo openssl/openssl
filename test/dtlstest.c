@@ -2545,6 +2545,7 @@ static int test_dtls_fragment_write_retry(int idx)
     int ret, i;
     static unsigned char alpn[14000];
     size_t j, used = 0;
+    const size_t nprotos = large ? 56 : 3;
     BIO *c_to_s_bio = NULL, *frag_wbio;
     frag_bio *fb;
     int version = dtls13 ? DTLS1_3_VERSION : DTLS1_2_VERSION;
@@ -2566,7 +2567,7 @@ static int test_dtls_fragment_write_retry(int idx)
     SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, NULL);
 
     /* Pad the ClientHello out via ALPN so it needs multiple fragments. */
-    for (j = 0; j < (large ? 56 : 3); j++) {
+    for (j = 0; j < nprotos; j++) {
         char name[250];
         int n = snprintf(name, sizeof(name), "proto-%04zu-%s", j,
             "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
