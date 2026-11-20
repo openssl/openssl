@@ -366,6 +366,45 @@ err:
     return ret;
 }
 
+static int test_rsa_pkcs1_small_modulus(int idx)
+{
+    static const char *n_hex[] = {
+        "40000D914048DA4E07",
+        "400043D1329839BA402B"
+    };
+    static const char *d_hex[] = {
+        "3E59CEDDEC148C331",
+        "1A8F219583E3BC44BD8D"
+    };
+    RSA *key = NULL;
+    BIGNUM *n = NULL, *e = NULL, *d = NULL;
+    unsigned char ctext[1] = { 0x5d };
+    unsigned char ptext[256];
+    int ret = 0;
+
+    if (!TEST_ptr(key = RSA_new())
+        || !TEST_true(BN_hex2bn(&n, n_hex[idx]))
+        || !TEST_true(BN_hex2bn(&e, "10001"))
+        || !TEST_true(BN_hex2bn(&d, d_hex[idx]))
+        || !TEST_true(RSA_set0_key(key, n, e, d)))
+        goto err;
+    n = e = d = NULL;
+
+    if (!TEST_int_lt(RSA_size(key), RSA_PKCS1_PADDING_SIZE))
+        goto err;
+
+    ret = TEST_int_eq(RSA_private_decrypt(sizeof(ctext), ctext, ptext, key,
+                          RSA_PKCS1_PADDING),
+        -1);
+
+err:
+    BN_free(n);
+    BN_free(e);
+    BN_free(d);
+    RSA_free(key);
+    return ret;
+}
+
 static const struct {
     int bits;
     unsigned int r;
@@ -759,6 +798,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rsa_oaep, 3);
     ADD_MFAIL_ALL_TESTS(test_rsa_pkcs1_mfail, 3);
     ADD_MFAIL_ALL_TESTS(test_rsa_oaep_mfail, 3);
+    ADD_ALL_TESTS(test_rsa_pkcs1_small_modulus, 2);
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     ADD_TEST(test_rsa_saos);
     ADD_TEST(test_EVP_rsa_legacy_key);
