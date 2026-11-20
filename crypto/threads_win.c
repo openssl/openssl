@@ -429,7 +429,24 @@ void ossl_rcu_call(CRYPTO_RCU_LOCK *lock, CRYPTO_RCU_CB_ITEM *item,
 
 void *ossl_rcu_uptr_deref(void **p)
 {
-    return (void *)*p;
+#if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
+    && !defined(USE_ATOMIC_FALLBACKS)
+    return __atomic_load_n(p, __ATOMIC_ACQUIRE);
+#elif defined(_MSC_VER) && defined(ReadLongPtrAcquire)
+    /* ReadPointerAcquire is inline in SDKs that define ReadLongPtrAcquire. */
+    void *ret = ReadPointerAcquire(p);
+
+#if defined(_M_IX86) || defined(_M_X64)
+    /* Keep the SDK's volatile load ordered even with /volatile:iso. */
+    _ReadWriteBarrier();
+#endif
+    return ret;
+#else
+    void *ret = *(void *volatile *)p;
+
+    MemoryBarrier();
+    return ret;
+#endif
 }
 
 void ossl_rcu_assign_uptr(void **p, void **v)
