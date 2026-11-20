@@ -295,9 +295,9 @@ static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
         || !TEST_ptr(parent = EVP_RAND_CTX_new(parent_alg, NULL))
         || !TEST_ptr(crngt = EVP_RAND_CTX_new(crngt_alg, parent))
         || !TEST_true(EVP_RAND_instantiate(parent, 0, 0,
-            (unsigned char *)"abc", 3, p))
+            (const unsigned char *)"abc", 3, p))
         || !TEST_true(EVP_RAND_instantiate(crngt, 0, 0,
-            (unsigned char *)"def", 3, NULL))
+            (const unsigned char *)"def", 3, NULL))
         || !TEST_size_t_le(gen, sizeof(out)))
         goto err;
 
@@ -1249,12 +1249,12 @@ static int test_rand_drbg_mfail(void)
 
     MFAIL_start();
     rc = (drbg = EVP_RAND_CTX_new(drbg_alg, parent)) != NULL
-        && EVP_RAND_instantiate(drbg, 0, 0, (unsigned char *)"abc", 3,
+        && EVP_RAND_instantiate(drbg, 0, 0, (const unsigned char *)"abc", 3,
             drbg_params)
         && EVP_RAND_generate(drbg, buf, sizeof(buf), 0, 0, NULL, 0)
-        && EVP_RAND_reseed(drbg, 0, NULL, 0, (unsigned char *)"xyz", 3)
+        && EVP_RAND_reseed(drbg, 0, NULL, 0, (const unsigned char *)"xyz", 3)
         && EVP_RAND_generate(drbg, buf, sizeof(buf), 0, 0,
-            (unsigned char *)"adin", 4);
+            (const unsigned char *)"adin", 4);
     MFAIL_end();
 
 end:

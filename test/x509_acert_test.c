@@ -181,7 +181,7 @@ static int test_set1_issuerName_v1form(void)
         || !TEST_ptr_null(X509_ACERT_get0_issuerName(acert))
         || !TEST_ptr(name = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-            (unsigned char *)"test", -1, -1, 0))
+            (const unsigned char *)"test", -1, -1, 0))
         || !TEST_true(X509_ACERT_set1_issuerName(acert, name))
         || !TEST_ptr(got = X509_ACERT_get0_issuerName(acert))
         || !TEST_int_eq(X509_NAME_cmp(got, name), 0))

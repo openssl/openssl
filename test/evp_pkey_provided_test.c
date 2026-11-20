@@ -149,7 +149,7 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
 
     if (/* Output Encrypted private key in PEM form */
         !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
-            (unsigned char *)"pass", 4,
+            (const unsigned char *)"pass", 4,
             NULL, NULL))
         /* Output zero-length passphrase encrypted private key in PEM form */
         || !TEST_true(PEM_write_bio_PKCS8PrivateKey(bio_out, pk,
@@ -282,7 +282,7 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
     if (type == PRIV_PEM) {
         /* Set a passphrase to be used later */
         if (!TEST_true(OSSL_ENCODER_CTX_set_passphrase(ctx,
-                (unsigned char *)"pass",
+                (const unsigned char *)"pass",
                 4)))
             goto err;
 

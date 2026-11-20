@@ -859,9 +859,9 @@ static int test_x509_name_multivalued_rdn_mfail(void)
 
     if (!TEST_ptr(name = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-            (unsigned char *)"Alice", -1, -1, 0))
+            (const unsigned char *)"Alice", -1, -1, 0))
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC,
-            (unsigned char *)"Engineering", -1, -1, -1)))
+            (const unsigned char *)"Engineering", -1, -1, -1)))
         goto end;
 
     MFAIL_start();

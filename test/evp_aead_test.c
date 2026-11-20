@@ -1336,7 +1336,7 @@ static int test_evp_stale_key_reinit(int idx)
     unsigned char tag_onestep[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int blocksz = 0, tmplen = 0, testresult = 0, i = 0;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     ivparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IVLEN, &ivlen);
     ivparams[1] = OSSL_PARAM_construct_end();
@@ -1626,7 +1626,7 @@ static int test_gcm_reinit(int idx)
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *type = NULL;
     size_t taglen = sizeof(tag);
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC";

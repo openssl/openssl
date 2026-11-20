@@ -823,7 +823,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
         if (cmp_type != a->type)
             return 0;
         if (cmp_type == V_ASN1_IA5STRING)
-            rv = equal(a->data, a->length, (unsigned char *)b, blen, flags);
+            rv = equal(a->data, a->length, (const unsigned char *)b, blen, flags);
         else if (a->length == (int)blen && !memcmp(a->data, b, blen))
             rv = 1;
         if (rv > 0 && peername != NULL) {
@@ -842,7 +842,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
              */
             return -1;
         }
-        rv = equal(astr, astrlen, (unsigned char *)b, blen, flags);
+        rv = equal(astr, astrlen, (const unsigned char *)b, blen, flags);
         if (rv > 0 && peername != NULL) {
             *peername = OPENSSL_strndup((char *)astr, astrlen);
             if (*peername == NULL) {
@@ -1032,7 +1032,7 @@ int ossl_x509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
 {
     if (chk == NULL)
         return -2;
-    return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, 0, NULL);
+    return do_x509_check(x, (const char *)chk, chklen, flags, GEN_IPADD, 0, NULL);
 }
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
@@ -1047,7 +1047,7 @@ int X509_check_email(const X509 *x, const char *chk, size_t chklen,
      * NUL in string length).
      */
     if (chklen == 0)
-        chklen = strlen((char *)chk);
+        chklen = strlen((const char *)chk);
     else if (memchr(chk, '\0', chklen > 1 ? chklen - 1 : chklen))
         return -2;
     if (chklen > 1 && chk[chklen - 1] == '\0')

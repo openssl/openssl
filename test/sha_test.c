@@ -18,7 +18,7 @@ static int test_static_sha_common(const char *input, size_t length,
         unsigned char *md))
 {
     unsigned char buf[EVP_MAX_MD_SIZE], *sbuf;
-    const unsigned char *in = (unsigned char *)input;
+    const unsigned char *in = (const unsigned char *)input;
     const size_t in_len = strlen(input);
 
     sbuf = (*md)(in, in_len, buf);

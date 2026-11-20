@@ -2838,7 +2838,7 @@ static int read_config(void)
             char *conf_argv[3];
             char arg1[82];
 
-            snprintf(arg1, 81, "-%s", (char *)opt->name);
+            snprintf(arg1, 81, "-%s", (const char *)opt->name);
             conf_argv[0] = prog;
             conf_argv[1] = arg1;
             if (opt->valtype == '-') {

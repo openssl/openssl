@@ -41,7 +41,7 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
         passlen = (int)strlen(pass);
     }
     if (salt == NULL && saltlen == 0)
-        salt = (unsigned char *)empty;
+        salt = (const unsigned char *)empty;
 
     kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, propq);
     if (kdf == NULL)

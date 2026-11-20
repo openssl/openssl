@@ -198,7 +198,7 @@ static int test_load_certs_by_name(int idx)
     if (idx == 0) {
         /* Look up a separately encoded but equivalent name. */
         if (!TEST_true(X509_NAME_add_entry_by_txt(name1, "CN", MBSTRING_ASC,
-                (unsigned char *)" WWW.EXAMPLE.TEST ", -1, -1, 0)))
+                (const unsigned char *)" WWW.EXAMPLE.TEST ", -1, -1, 0)))
             goto err;
     } else {
         /* Empty names have a null canonical encoding with length zero. */
@@ -210,7 +210,7 @@ static int test_load_certs_by_name(int idx)
 
     if (!TEST_ptr(nameA = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(nameA, "CN", MBSTRING_ASC,
-            (unsigned char *)"alpha.test", -1, -1, 0))
+            (const unsigned char *)"alpha.test", -1, -1, 0))
         || !TEST_ptr(certA = X509_dup(cert1))
         || !TEST_true(X509_set_subject_name(certA, nameA))
         || !TEST_ptr(crl2 = X509_CRL_new())

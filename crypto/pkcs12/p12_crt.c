@@ -73,7 +73,7 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
 
     if (cert) {
         if (name == NULL)
-            name = (char *)X509_alias_get0(cert, &namelen);
+            name = (const char *)X509_alias_get0(cert, &namelen);
         if (keyidlen > 0) {
             pkeyid = keyid;
             pkeyidlen = keyidlen;

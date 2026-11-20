@@ -300,7 +300,7 @@ int X509_ACERT_add_attr_nconf(CONF *conf, const char *section,
         } else {
             ret = X509_ACERT_add1_attr_by_txt(acert, v->name,
                 V_ASN1_OCTET_STRING,
-                (unsigned char *)value,
+                (const unsigned char *)value,
                 (int)strlen(value));
             if (!ret)
                 goto err;

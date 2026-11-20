@@ -573,7 +573,7 @@ static int IKEV2_GEN(OSSL_LIB_CTX *libctx, unsigned char *seedkey, const size_t 
     memcpy(nonce, ni, ni_len);
     memcpy(nonce + ni_len, nr, nr_len);
 
-    mac = EVP_MAC_fetch(libctx, (char *)"HMAC", NULL);
+    mac = EVP_MAC_fetch(libctx, (const char *)"HMAC", NULL);
     if ((mac == NULL)
         || ((ctx = EVP_MAC_CTX_new(mac)) == NULL)
         || (!EVP_MAC_init(ctx, nonce, ni_len + nr_len, params))

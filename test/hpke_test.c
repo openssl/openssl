@@ -19,7 +19,7 @@
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;
-static char *testpropq = "provider=default";
+static const char *testpropq = "provider=default";
 static int verbose = 0;
 
 typedef struct {
@@ -383,7 +383,7 @@ static int x25519kdfsha256_hkdfsha256_aes128gcm_psk_test(void)
         first_expected_shared_secret, sizeof(first_expected_shared_secret),
         ksinfo, sizeof(ksinfo),
         NULL, 0, /* No Auth */
-        psk, sizeof(psk), (char *)pskid
+        psk, sizeof(psk), (const char *)pskid
     };
     const TEST_AEADDATA aeaddata[] = {
         { 0,
@@ -1302,7 +1302,7 @@ static int test_hpke_oddcalls(void)
     unsigned char clear[OSSL_HPKE_TSTSIZE];
     size_t clearlen = sizeof(clear);
     unsigned char fake_ikm[OSSL_HPKE_TSTSIZE];
-    char *badpropq = "yeah, this won't work";
+    const char *badpropq = "yeah, this won't work";
     uint64_t lseq = 0;
     char giant_pskid[OSSL_HPKE_MAX_PARMLEN + 10];
     unsigned char info[OSSL_HPKE_TSTSIZE];
@@ -1390,13 +1390,13 @@ static int test_hpke_oddcalls(void)
         goto end;
     /* set bad length psk */
     if (!TEST_false(OSSL_HPKE_CTX_set1_psk(ctx, "foo",
-            (unsigned char *)"bar", -1)))
+            (const unsigned char *)"bar", -1)))
         goto end;
     /* set bad length pskid */
     memset(giant_pskid, 'A', sizeof(giant_pskid) - 1);
     giant_pskid[sizeof(giant_pskid) - 1] = '\0';
     if (!TEST_false(OSSL_HPKE_CTX_set1_psk(ctx, giant_pskid,
-            (unsigned char *)"bar", 3)))
+            (const unsigned char *)"bar", 3)))
         goto end;
     /* still no psk really set so encap fails */
     if (!TEST_false(OSSL_HPKE_encap(ctx, enc, &enclen, pub, publen, NULL, 0)))
@@ -1435,7 +1435,7 @@ static int test_hpke_oddcalls(void)
         goto end;
     /* bad mode for psk */
     if (!TEST_false(OSSL_HPKE_CTX_set1_psk(ctx, "foo",
-            (unsigned char *)"bar", 3)))
+            (const unsigned char *)"bar", 3)))
         goto end;
     /* seal before encap */
     if (!TEST_false(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,

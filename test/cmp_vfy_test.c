@@ -578,10 +578,10 @@ static int test_msg_check_update_malicious_sender(void)
         || !TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_ptr(hdr = OSSL_CMP_MSG_get0_header(fixture->msg))
         || !TEST_int_eq(X509_NAME_add_entry_by_txt(expected, "CN", MBSTRING_ASC,
-                            (unsigned char *)"%n", -1, -1, 0),
+                            (const unsigned char *)"%n", -1, -1, 0),
             1)
         || !TEST_int_eq(X509_NAME_add_entry_by_txt(actual, "CN", MBSTRING_ASC,
-                            (unsigned char *)"actual", -1, -1, 0),
+                            (const unsigned char *)"actual", -1, -1, 0),
             1)
         || !TEST_int_eq(ossl_cmp_hdr_set1_sender(hdr, expected), 1)
         || !TEST_int_eq(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, actual), 1)) {

@@ -5834,7 +5834,7 @@ int setup_tests(void)
 {
     size_t n;
     char *config_file = NULL;
-    char *provider_name = NULL;
+    const char *provider_name = NULL;
 
     OPTION_CHOICE o;
 

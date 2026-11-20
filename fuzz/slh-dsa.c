@@ -492,7 +492,7 @@ bob_done:
  */
 struct op_table_entry {
     /** Name of the operation. */
-    char *name;
+    const char *name;
 
     /**
      * @brief Function pointer for setting up the operation.
