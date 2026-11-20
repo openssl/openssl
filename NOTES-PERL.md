@@ -25,9 +25,9 @@ has told us the following:
  - on Linux distributions based on RPMs, you will need to install
    `perl-core` rather than just `perl`.
 
-You MUST have at least Perl version 5.10.0 installed.  This minimum
-requirement is due to our use of regexp backslash sequence \R among
-other features that didn't exist in core Perl before that version.
+You MUST have at least Perl version 5.26.0 installed.  This minimum
+requirement aligns with the oldest Perl versions shipped as the system
+Perl on the platforms we support building on.
 
 Perl on Windows
 ---------------
@@ -67,20 +67,13 @@ Required Perl modules
 ---------------------
 
 We do our best to limit ourselves to core Perl modules to keep the
-requirements down. There are just a few exceptions.
+requirements down. There is just one exception.
 
  * Text::Template this is required *for building*
 
    To avoid unnecessary initial hurdles, we include a copy of this module
    in the source. It will work as a fallback if the module isn't already
    installed.
-
- * `Test::More` this is required *for testing*
-
-   We require the minimum version to be 0.96, which appeared in Perl 5.13.4,
-   because that version was the first to have all the features we're using.
-   This module is required for testing only!  If you don't plan on running
-   the tests, you don't need to bother with this one.
 
 Notes on installing a Perl module
 ---------------------------------

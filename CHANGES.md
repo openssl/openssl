@@ -224,6 +224,12 @@ OpenSSL 4.2
 
    *Alex Gaynor*
 
+ * Raised the minimum required Perl version from 5.10.0 to 5.26.0.  Perl
+   5.26.x is the oldest Perl shipped as the system Perl on maintained
+   platforms (RHEL 8, SLES 15, Ubuntu 18.04).
+
+   *Richard Levitte*
+
 OpenSSL 4.1
 -----------
 

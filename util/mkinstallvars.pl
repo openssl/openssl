@@ -10,7 +10,7 @@
 # form, or passed as variable assignments on the command line.
 # The result is a Perl module creating the package OpenSSL::safe::installdata.
 
-use 5.10.0;
+use 5.26.0;
 use strict;
 use warnings;
 use Carp;
