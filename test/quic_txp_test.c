@@ -1686,6 +1686,528 @@ static int test_script(int idx)
 }
 
 /*
+ * Helpers for the Initial PTO scripts. The byte at offset o of their CRYPTO
+ * data is o % 251, so each probe payload can be checked against its offset.
+ * probe_crypto_end is the end of the CRYPTO data carried by the probes so far.
+ */
+static uint64_t probe_crypto_end;
+
+static void fill_pto_crypto(unsigned char *buf, size_t len)
+{
+    size_t i;
+
+    for (i = 0; i < len; ++i)
+        buf[i] = (unsigned char)(i % 251);
+}
+
+static int check_crypto_data(struct helper *h)
+{
+    size_t i;
+
+    if (!TEST_uint64_t_gt(h->frame.crypto.len, 0))
+        return 0;
+
+    for (i = 0; i < h->frame.crypto.len; ++i)
+        if (!TEST_uchar_eq(h->frame.crypto.data[i],
+                (unsigned char)((h->frame.crypto.offset + i) % 251)))
+            return 0;
+
+    return 1;
+}
+
+static int trigger_pto(struct helper *h)
+{
+    return TEST_true(ossl_ackm_on_timeout(h->args.ackm));
+}
+
+static int check_first_probe(struct helper *h)
+{
+    probe_crypto_end = h->frame.crypto.offset + h->frame.crypto.len;
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 0)
+        && check_crypto_data(h);
+}
+
+static int check_next_probe(struct helper *h)
+{
+    if (!TEST_uint64_t_eq(h->frame.crypto.offset, probe_crypto_end)
+        || !check_crypto_data(h))
+        return 0;
+
+    probe_crypto_end += h->frame.crypto.len;
+    return 1;
+}
+
+static int check_nothing_sent(struct helper *h)
+{
+    QUIC_TXP_STATUS status;
+
+    return TEST_true(ossl_quic_tx_packetiser_generate(h->txp, &status))
+        && TEST_size_t_eq(status.sent_pkt, 0);
+}
+
+/* Keep the PTO tests usable on branches that lack flush_qtx */
+static int pto_flush_qtx(struct helper *h)
+{
+    ossl_qtx_finish_dgram(h->args.qtx);
+    ossl_qtx_flush_net(h->args.qtx);
+    return 1;
+}
+
+/* Initial PTO with four packets of CRYPTO data in flight */
+static unsigned char pto_crypto_1[3600];
+
+static const struct script_op pto_script_1[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_1,
+        sizeof(pto_crypto_1) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* two probes carry consecutive data */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    /* the rest of pto_crypto_1 stays in flight */
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Initial PTO with two full packets of CRYPTO data in flight */
+static unsigned char pto_crypto_2[2312];
+
+static int check_all_sent_2(struct helper *h)
+{
+    return TEST_uint64_t_eq(probe_crypto_end, sizeof(pto_crypto_2));
+}
+
+static const struct script_op pto_script_2[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_2,
+        sizeof(pto_crypto_2) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    /* together, the two probes carry all the CRYPTO data */
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_2 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Initial PTO with CRYPTO data of one packet in flight */
+static unsigned char pto_crypto_3[64];
+
+static int check_all_sent_3(struct helper *h)
+{
+    return TEST_uint64_t_eq(probe_crypto_end, sizeof(pto_crypto_3));
+}
+
+static const struct script_op pto_script_3[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_3 },
+    { OPK_EXPECT_NO_FRAME },
+    /* with nothing more to resend, a single probe is sent */
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Initial PTO with an acknowledged gap in the CRYPTO data */
+static unsigned char pto_crypto_4[64];
+
+static int ack_gap_4(struct helper *h)
+{
+    return TEST_true(ossl_quic_sstream_mark_acked(
+        h->args.crypto[QUIC_PN_SPACE_INITIAL], 16, 31));
+}
+
+static int check_before_gap_4(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 0)
+        && TEST_uint64_t_eq(h->frame.crypto.len, 16)
+        && check_crypto_data(h);
+}
+
+static int check_after_gap_4(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 32)
+        && TEST_uint64_t_eq(h->frame.crypto.len, 32)
+        && check_crypto_data(h);
+}
+
+static const struct script_op pto_script_4[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_4,
+        sizeof(pto_crypto_4) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ack_gap_4 },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* both ranges around the gap go into the first probe */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_before_gap_4 },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_after_gap_4 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Discarding the Initial space clears a pending PTO probe */
+static int check_pto_pending(struct helper *h)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
+
+    return TEST_uint_gt(probe->pto[QUIC_PN_SPACE_INITIAL], 0);
+}
+
+static int check_anti_deadlock_pending(struct helper *h)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
+
+    return TEST_uint_gt(probe->anti_deadlock_initial, 0);
+}
+
+static int discard_initial(struct helper *h)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
+
+    return TEST_true(ossl_ackm_on_pkt_space_discarded(h->args.ackm,
+               QUIC_PN_SPACE_INITIAL))
+        && TEST_uint_eq(probe->pto[QUIC_PN_SPACE_INITIAL], 0)
+        && TEST_uint_eq(probe->anti_deadlock_initial, 0);
+}
+
+static const struct script_op pto_script_5[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_CHECK, 0, 0, NULL, 0, check_pto_pending },
+    { OPK_CHECK, 0, 0, NULL, 0, discard_initial },
+    { OPK_END }
+};
+
+/* Discarding the Initial space clears a pending anti-deadlock probe */
+static const struct script_op pto_script_6[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    /* with nothing in flight, the timeout asks for an anti-deadlock probe */
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_CHECK, 0, 0, NULL, 0, check_anti_deadlock_pending },
+    { OPK_CHECK, 0, 0, NULL, 0, discard_initial },
+    { OPK_END }
+};
+
+/* Initial PTO with a CRYPTO tail that has never been sent */
+static unsigned char pto_crypto_5[2377];
+
+static int check_tail_7(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 2313)
+        && TEST_uint64_t_eq(h->frame.crypto.len, 64)
+        && check_crypto_data(h);
+}
+
+static const struct script_op pto_script_7[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_5, 2313 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    /* the tail is queued but not sent before the PTO */
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_5 + 2313, 64 },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* the first probe sends the queued tail */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_tail_7 },
+    { OPK_EXPECT_NO_FRAME },
+    /* the second probe resends the unacknowledged data from the start */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Initial PTO with the first packet of CRYPTO data lost and queued */
+static int lose_head_8(struct helper *h)
+{
+    return TEST_true(ossl_quic_sstream_mark_lost(
+        h->args.crypto[QUIC_PN_SPACE_INITIAL], 0, 1156));
+}
+
+static const struct script_op pto_script_8[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_2,
+        sizeof(pto_crypto_2) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, lose_head_8 },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* the first probe sends the lost data, the second what follows it */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_2 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Initial PTO with the second packet of CRYPTO data lost and queued */
+static int lose_tail_9(struct helper *h)
+{
+    return TEST_true(ossl_quic_sstream_mark_lost(
+        h->args.crypto[QUIC_PN_SPACE_INITIAL], 1157, 2311));
+}
+
+static int check_tail_9(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 1157)
+        && TEST_uint64_t_eq(h->frame.crypto.len, 1155)
+        && check_crypto_data(h);
+}
+
+static const struct script_op pto_script_9[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_2,
+        sizeof(pto_crypto_2) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, lose_tail_9 },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* the first probe sends the lost data, the second resends from the start */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_tail_9 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Scripts that need an unvalidated path, set up by OPK_NO_VALIDATION */
+#ifdef OPK_NO_VALIDATION
+/* Initial PTO probes when anti-amplification credit runs out */
+static int rx_initial_10(struct helper *h)
+{
+    OSSL_ACKM_RX_PKT pkt = { 0 };
+
+    pkt.time = fake_now(NULL);
+    pkt.pkt_space = QUIC_PN_SPACE_INITIAL;
+    pkt.is_ack_eliciting = 1;
+    return TEST_true(ossl_ackm_on_rx_packet(h->args.ackm, &pkt));
+}
+
+static const struct script_op pto_script_10[] = {
+    { OPK_NO_VALIDATION },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    /* 3 * 1600 = 4800 covers the four datagrams of pto_crypto_1 */
+    { OPK_ADD_CREDIT, 1600 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_1,
+        sizeof(pto_crypto_1) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* credit for one datagram, so the second probe is not sent yet */
+    { OPK_ADD_CREDIT, 400 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, flush_qtx },
+    { OPK_RX_PKT_NONE },
+    /* receiving an Initial packet adds credit and an ACK to send */
+    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_10 },
+    { OPK_ADD_CREDIT, 1000 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    /* the rest of pto_crypto_1 stays in flight */
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Two Initial PTOs while anti-amplification credit runs out */
+static const struct script_op pto_script_11[] = {
+    { OPK_NO_VALIDATION },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    /* 3 * 1600 = 4800 covers the four datagrams of pto_crypto_1 */
+    { OPK_ADD_CREDIT, 1600 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_1,
+        sizeof(pto_crypto_1) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* credit for one datagram, so the second probe is not sent yet */
+    { OPK_ADD_CREDIT, 400 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    /* a second PTO tops the pending probes up to two */
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_ADD_CREDIT, 1200 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+#endif
+
+static const struct script_op *const pto_scripts[] = {
+    pto_script_1,
+    pto_script_2,
+    pto_script_3,
+    pto_script_4,
+    pto_script_5,
+    pto_script_6,
+    pto_script_7,
+    pto_script_8,
+    pto_script_9,
+#ifdef OPK_NO_VALIDATION
+    pto_script_10,
+    pto_script_11,
+#endif
+};
+
+static int test_pto_script(int idx)
+{
+    return run_script(idx, pto_scripts[idx]);
+}
+
+/*
  * Dynamic Script 1.
  *
  * This script exists to test the interactions between multiple packets (ELs) in
@@ -1768,6 +2290,12 @@ static int test_dyn_script_1(int idx)
 
 int setup_tests(void)
 {
+    fill_pto_crypto(pto_crypto_1, sizeof(pto_crypto_1));
+    fill_pto_crypto(pto_crypto_2, sizeof(pto_crypto_2));
+    fill_pto_crypto(pto_crypto_3, sizeof(pto_crypto_3));
+    fill_pto_crypto(pto_crypto_4, sizeof(pto_crypto_4));
+    fill_pto_crypto(pto_crypto_5, sizeof(pto_crypto_5));
+    ADD_ALL_TESTS(test_pto_script, OSSL_NELEM(pto_scripts));
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,
         (int)(OSSL_NELEM(dyn_script_1_crypto_1a)
