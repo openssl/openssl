@@ -33,6 +33,25 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed excessive memory allocation for incomplete DTLS handshake messages.
+
+   Severity: Low
+
+   Issue summary: A DTLS peer can make a server allocate a buffer of the
+   length claimed in a handshake message header, up to `max_cert_list` bytes,
+   for each of the ten future messages the receive window allows, by sending
+   a few small fragments.
+
+   Impact summary: A remote, unauthenticated peer can cause significant
+   memory pressure on a DTLS server, and possibly a Denial of Service.
+
+   Reported by: Yuqi Qiu (Nankai University AOSP Lab), Xiang Li (Nankai
+   University AOSP Lab) and Joel Sing.
+
+   ([CVE-2026-95690])
+
+   *Ryan Hooper*
+
  * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
    `CRYPTO_new_ex_data()`.
 
@@ -24672,6 +24691,7 @@ ndif
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-95690]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95690
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
