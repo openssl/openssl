@@ -8498,6 +8498,30 @@ end:
 }
 #endif /*OPENSSL_NO_DES */
 
+static int test_evp_pkey_derive_init_clears_peer(void)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *key = NULL, *peer = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(testctx, NULL, "EC", "P-256"))
+        || !TEST_ptr(peer = EVP_PKEY_Q_keygen(testctx, NULL, "EC", "P-256"))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, key, NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_derive_set_peer(ctx, peer), 0)
+        || !TEST_ptr(EVP_PKEY_CTX_get0_peerkey(ctx))
+        || !TEST_int_gt(EVP_PKEY_derive_init(ctx), 0)
+        || !TEST_ptr_null(EVP_PKEY_CTX_get0_peerkey(ctx)))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(peer);
+    return testresult;
+}
+
 static int test_evp_cipher_pipeline(void)
 {
     OSSL_PROVIDER *fake_pipeline = NULL;
@@ -9667,6 +9691,7 @@ int setup_tests(void)
     ADD_TEST(test_evp_cipher_negative_length);
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
+    ADD_TEST(test_evp_pkey_derive_init_clears_peer);
     ADD_TEST(test_evp_cipher_pipeline);
 
     ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
