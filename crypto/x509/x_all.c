@@ -228,6 +228,7 @@ int X509_set_unsigned(X509 *x)
     const X509_NAME *issuer;
     X509_NAME *placeholder = NULL;
     static const unsigned char empty[] = "";
+    int ret = 0;
 
     if (!x509_prepare_for_signing(x))
         return 0;
@@ -239,20 +240,17 @@ int X509_set_unsigned(X509 *x)
                 OBJ_nid2obj(NID_id_rdna_unsigned), V_ASN1_UTF8STRING, empty, 0, -1, 0)
             || !X509_set_issuer_name(x, placeholder))
             goto err;
-        X509_NAME_free(placeholder);
     }
 
     (void)X509_ALGOR_set0(&x->cert_info.signature,
         OBJ_nid2obj(NID_id_alg_unsigned), V_ASN1_UNDEF, NULL);
     (void)X509_ALGOR_set0(&x->sig_alg,
         OBJ_nid2obj(NID_id_alg_unsigned), V_ASN1_UNDEF, NULL);
-    if (!ASN1_BIT_STRING_set1(&x->signature, NULL, 0, 0))
-        goto err;
-    return 1;
+    ret = ASN1_BIT_STRING_set1(&x->signature, NULL, 0, 0);
 
 err:
     X509_NAME_free(placeholder);
-    return 0;
+    return ret;
 }
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
