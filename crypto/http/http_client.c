@@ -819,8 +819,12 @@ next_io:
             line_end = strchr(value, '\r');
             if (line_end == NULL)
                 line_end = strchr(value, '\n');
-            if (line_end != NULL)
+            if (line_end != NULL) {
                 *line_end = '\0';
+                while (line_end > value
+                    && (line_end[-1] == ' ' || line_end[-1] == '\t'))
+                    *--line_end = '\0';
+            }
         }
         if (value != NULL && line_end != NULL) {
             if (rctx->state == OHS_REDIRECT
