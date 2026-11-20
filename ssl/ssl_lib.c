@@ -4765,6 +4765,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                 keylog_bio = get_sslkeylog_bio(keylogfile);
                 if (keylog_bio == NULL) {
                     OSSL_TRACE(TLS, "Unable to create keylog bio\n");
+                    CRYPTO_THREAD_unlock(keylog_lock);
                     goto out;
                 }
                 BIO_set_callback_ex(keylog_bio, check_keylog_bio_free);
