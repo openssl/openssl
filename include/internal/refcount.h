@@ -174,20 +174,20 @@ typedef struct {
 
 #ifdef OPENSSL_THREADS
 
-static ossl_unused ossl_inline bool CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
+static ossl_inline bool CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     return CRYPTO_atomic_add(&refcnt->val, 1, ret, refcnt->lock) ? true : false;
 }
 
-static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
+static ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     return CRYPTO_atomic_add(&refcnt->val, -1, ret, refcnt->lock);
 }
 
 #define CRYPTO_NEW_FREE_DEFINED 1
-static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int n)
+static ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int n)
 {
     refcnt->val = n;
     refcnt->lock = CRYPTO_THREAD_lock_new();
@@ -198,7 +198,7 @@ static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int 
     return 1;
 }
 
-static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
+static ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
 {
     if (refcnt != NULL)
         CRYPTO_THREAD_lock_free(refcnt->lock);
@@ -206,7 +206,7 @@ static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
 
 #else /* OPENSSL_THREADS */
 
-static ossl_unused ossl_inline bool CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
+static ossl_inline bool CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     refcnt->val++;
@@ -214,7 +214,7 @@ static ossl_unused ossl_inline bool CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
     return true;
 }
 
-static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
+static ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     refcnt->val--;
@@ -226,13 +226,13 @@ static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
 #endif
 
 #ifndef CRYPTO_NEW_FREE_DEFINED
-static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int n)
+static ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int n)
 {
     refcnt->val = n;
     return 1;
 }
 
-static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
+static ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
 {
 }
 #endif /* CRYPTO_NEW_FREE_DEFINED */
