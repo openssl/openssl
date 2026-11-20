@@ -41,6 +41,12 @@ sub tconversion {
         @openssl_args = ($opts{-args}) if ref $opts{-args} eq '';
     }
     @openssl_args = ($testtype) unless @openssl_args;
+    # Program options, placed before the command
+    my @progopts;
+    if (defined $opts{-progopts}) {
+        @progopts = @{$opts{-progopts}} if ref $opts{-progopts} eq 'ARRAY';
+        @progopts = ($opts{-progopts}) if ref $opts{-progopts} eq '';
+    }
 
     my $n = scalar @conversionforms;
     my $totaltests =
@@ -53,7 +59,7 @@ sub tconversion {
     $totaltests -= $n if ($testtype eq "pvk"); # no comparisons of the pvk form
     plan tests => $totaltests;
 
-    my @cmd = ("openssl", @openssl_args);
+    my @cmd = ("openssl", @progopts, @openssl_args);
 
     my $init;
     if (scalar @openssl_args > 0 && $openssl_args[0] eq "pkey") {

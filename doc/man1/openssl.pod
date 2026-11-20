@@ -505,10 +505,17 @@ This section describes some common options with common behavior.
 
 =head2 Program Options
 
-These options can be specified without a command specified to get help
-or version information.
+These options are given before the command. B<-help> and B<-version>
+can be specified without a command to get help or version information.
 
 =over 4
+
+=item B<-allow-insecure-private-keys>
+
+Disables the check that rejects a private key or seed whose encoding is
+evidently not key material, for the rest of the invocation. See
+L<CRYPTO_secret_check_enable(3)>. Intended for test suites that use
+deliberately degenerate keys.
 
 =item B<-help>
 

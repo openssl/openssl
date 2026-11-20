@@ -989,6 +989,13 @@ AS Identifiers".
 
 Build support for Stream Control Transmission Protocol (SCTP).
 
+### no-secret-check
+
+Don't check private keys and seeds, as they are loaded or imported, for
+an encoding that is evidently not key material. The check can still be
+turned on at run time or in the configuration file; see
+`CRYPTO_secret_check_enable(3)`.
+
 ### no-shared
 
 Do not create shared libraries, only static ones.

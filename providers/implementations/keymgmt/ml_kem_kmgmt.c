@@ -20,6 +20,7 @@
 #include "crypto/ml_kem.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/secret_check.h"
 #include "internal/sizes.h"
 #include "prov/der_hkdf.h"
 #include "prov/der_wrap.h"
@@ -419,6 +420,11 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
             return 0;
         if (seedlen != 0 && seedlen != ML_KEM_SEED_BYTES) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+            return 0;
+        }
+        if (seedlen != 0 && ossl_secret_check_enabled()
+            && !ossl_secret_bytes_check(seedenc, seedlen, 0)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_SECRET_NOT_KEY_MATERIAL);
             return 0;
         }
     }
