@@ -1206,8 +1206,11 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
         return;
 
     /* Returns 0 if no change. */
-    if (!quic_set0_net_rbio(ctx.obj, net_rbio))
+    if (!quic_set0_net_rbio(ctx.obj, net_rbio)) {
+        /* we are supposed to consume net_rbio */
+        BIO_free_all(net_rbio);
         return;
+    }
 }
 
 void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
@@ -1218,8 +1221,11 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
         return;
 
     /* Returns 0 if no change. */
-    if (!quic_set0_net_wbio(ctx.obj, net_wbio))
+    if (!quic_set0_net_wbio(ctx.obj, net_wbio)) {
+        /* we are supposed to consume net_wbio */
+        BIO_free_all(net_wbio);
         return;
+    }
 }
 
 BIO *ossl_quic_conn_get_net_rbio(const SSL *s)
