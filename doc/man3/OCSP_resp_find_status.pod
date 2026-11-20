@@ -4,6 +4,7 @@
 
 OCSP_resp_find_status, OCSP_resp_count,
 OCSP_resp_get0, OCSP_resp_find, OCSP_single_get0_status,
+OCSP_SINGLERESP_get0_id,
 OCSP_resp_get0_produced_at, OCSP_resp_get0_signature,
 OCSP_resp_get0_tbs_sigalg, OCSP_resp_get0_respdata,
 OCSP_resp_get0_certs, OCSP_resp_get0_signer,
@@ -28,6 +29,8 @@ OCSP_check_validity, OCSP_basic_verify
                              ASN1_GENERALIZEDTIME **revtime,
                              ASN1_GENERALIZEDTIME **thisupd,
                              ASN1_GENERALIZEDTIME **nextupd);
+
+ const OCSP_CERTID *OCSP_SINGLERESP_get0_id(const OCSP_SINGLERESP *single);
 
  const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(
                              const OCSP_BASICRESP* single);
@@ -79,6 +82,12 @@ matching entry after I<last> or starting from the beginning if I<last> is -1.
 
 OCSP_single_get0_status() extracts the fields of I<single> in I<*reason>,
 I<*revtime>, I<*thisupd> and I<*nextupd>.
+
+OCSP_SINGLERESP_get0_id() returns a pointer to the B<OCSP_CERTID> contained
+in I<single>. This is more efficient than using OCSP_resp_find() when the
+application already has the B<OCSP_SINGLERESP> and needs to obtain its
+certificate ID, for example when iterating through responses using
+OCSP_resp_get0().
 
 OCSP_resp_get0_produced_at() extracts the B<producedAt> field from the
 single response I<bs>.
@@ -155,6 +164,9 @@ or -1 on error, such as when I<id> was not found.
 
 OCSP_single_get0_status() returns the status of I<single> or -1 if an error
 occurred.
+
+OCSP_SINGLERESP_get0_id() returns a pointer to the B<OCSP_CERTID> within
+I<single>. This is an internal pointer that must not be freed by the caller.
 
 OCSP_resp_get0_produced_at() returns the B<producedAt> field from I<bs>.
 
