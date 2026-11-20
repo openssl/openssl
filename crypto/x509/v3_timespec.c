@@ -63,7 +63,7 @@ ASN1_SEQUENCE(OSSL_DAY_TIME_BAND) = {
 } ASN1_SEQUENCE_END(OSSL_DAY_TIME_BAND)
 
 ASN1_CHOICE(OSSL_NAMED_DAY) = {
-    ASN1_SET_OF(OSSL_NAMED_DAY, choice.intNamedDays, ASN1_ENUMERATED),
+    ASN1_SIMPLE(OSSL_NAMED_DAY, choice.intNamedDays, ASN1_ENUMERATED),
     ASN1_SIMPLE(OSSL_NAMED_DAY, choice.bitNamedDays, ASN1_BIT_STRING),
 } ASN1_CHOICE_END(OSSL_NAMED_DAY)
 
@@ -434,7 +434,7 @@ static int i2r_OSSL_PERIOD(X509V3_EXT_METHOD *method,
             }
             switch (nd->type) {
             case (OSSL_NAMED_DAY_TYPE_INT):
-                if (!ASN1_INTEGER_get_int64(&small_val, nd->choice.intNamedDays))
+                if (!ASN1_ENUMERATED_get_int64(&small_val, nd->choice.intNamedDays))
                     return 0;
                 if (!print_int_named_day(out, small_val))
                     return 0;
