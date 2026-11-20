@@ -1,0 +1,67 @@
+=pod
+
+=head1 NAME
+
+libx509pmi - OpenSSL library for X.509 attribute certificates
+
+=head1 SYNOPSIS
+
+ #include <libx509pmi/x509_acert.h>
+ #include <libx509pmi/x509v3.h>
+
+=head1 DESCRIPTION
+
+libx509pmi provides the OpenSSL implementation of the X.509 Privilege
+Management Infrastructure (PMI): attribute certificates (RFC 5755) and the
+attribute certificate extensions and attribute syntaxes of ITU-T X.509.
+
+This functionality has historically been part of libcrypto, where it is
+deprecated since OpenSSL 4.2 but remains exported for ABI compatibility
+until a future major release.  New code should use libx509pmi.
+
+The libx509pmi headers declare the same functions as are deprecated in the
+libcrypto headers F<< <openssl/x509_acert.h> >> and
+F<< <openssl/x509v3.h> >>, without deprecation.  An application must call
+L<OSSL_X509PMI_init(3)> before calling any other libx509pmi function.
+
+=head2 Migrating from libcrypto
+
+Code using an API that moved from libcrypto to libx509pmi compiles
+unchanged against libx509pmi.  Include the libx509pmi header in place of
+the libcrypto header of the same name, call L<OSSL_X509PMI_init(3)>, and
+link with libx509pmi (a F<libx509pmi.pc> pkg-config file is installed).
+A libx509pmi header must be included before the corresponding deprecated
+header would otherwise be reached, including indirectly through headers
+such as F<< <openssl/cms.h> >> or F<< <openssl/ocsp.h> >>; getting this
+wrong is caught with a preprocessor error.
+
+libx509pmi exports the API under symbol names of its own: the libx509pmi
+header maps every name to the same name with a B<LIBX509PMI_> prefix at
+compile time, so that for example B<X509_ACERT_new> becomes
+B<LIBX509PMI_X509_ACERT_new>.  Code built against the libx509pmi header
+therefore requires linking with libx509pmi and cannot silently keep
+resolving the deprecated symbols from libcrypto.  The renaming is
+invisible at the API level, but tools that operate on symbol names, such
+as dlsym(3) or debuggers, see the B<LIBX509PMI_*> names.
+
+=head1 SEE ALSO
+
+L<OSSL_X509PMI_init(3)>, L<X509_ACERT_get0_holder_baseCertId(3)>,
+L<X509_ACERT_add1_attr(3)>, L<X509_ACERT_print_ex(3)>,
+L<OSSL_IETF_ATTR_SYNTAX(3)>, L<ADMISSIONS(3)>
+
+=head1 HISTORY
+
+libx509pmi was added in OpenSSL 4.2, at the same time as this functionality
+was deprecated in libcrypto.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

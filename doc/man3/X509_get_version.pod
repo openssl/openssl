@@ -20,7 +20,7 @@ certificate request or CRL version
  long X509_CRL_get_version(const X509_CRL *crl);
  int X509_CRL_set_version(X509_CRL *x, long version);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  int X509_ACERT_set_version(X509_ACERT *x, long version);
  long X509_ACERT_get_version(const X509_ACERT *x);
@@ -83,6 +83,11 @@ functions in OpenSSL 1.1.0, in previous versions they were macros.
 
 X509_ACERT_get_version(), X509_ACERT_set_version()
 were added in OpenSSL 3.4.
+
+X509_ACERT_get_version() and X509_ACERT_set_version() moved to the new
+libx509pmi library in OpenSSL 4.2. Deprecated variants remain in libcrypto,
+declared in F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

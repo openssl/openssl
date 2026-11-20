@@ -21,7 +21,7 @@ sign certificate, certificate request, or CRL signature
  int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  int X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx);
@@ -81,6 +81,11 @@ and X509_CRL_sign_ctx() functions were added in OpenSSL 1.0.1.
 
 The X509_ACERT_sign() and X509_ACERT_sign_ctx() functions were added
 in OpenSSL 3.4.
+
+X509_ACERT_sign() and X509_ACERT_sign_ctx() moved to the new libx509pmi
+library in OpenSSL 4.2. Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

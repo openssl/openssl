@@ -33,6 +33,21 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The X.509 attribute certificate (PMI) API in libcrypto is deprecated,
+   together with the PMI extension and attribute types declared in
+   `<openssl/x509v3.h>`, including the `ADMISSIONS`, `ADMISSION_SYNTAX`,
+   `NAMING_AUTHORITY` and `PROFESSION_INFO` types and their functions.
+   The same API, without deprecation, is provided by the new libx509pmi
+   library, reached through the `<libx509pmi/x509_acert.h>` and
+   `<libx509pmi/x509v3.h>` headers.  Applications using it must call the
+   new `OSSL_X509PMI_init()` first.  Switching to libx509pmi requires both
+   using these headers and linking with libx509pmi, since libx509pmi
+   exports the API under its own symbol names.  libcrypto keeps exporting
+   the deprecated symbols for ABI compatibility until removed in a future
+   major release.
+
+   *Bob Beck*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
