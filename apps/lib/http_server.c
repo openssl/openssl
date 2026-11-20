@@ -449,7 +449,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         *(value++) = '\0';
         while (*value == ' ')
             value++;
-        /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
+        /* https://www.rfc-editor.org/rfc/rfc9112#section-9.3 Persistence */
         if (found_keep_alive != NULL
             && OPENSSL_strcasecmp(key, "Connection") == 0) {
             if (OPENSSL_strcasecmp(value, "keep-alive") == 0)

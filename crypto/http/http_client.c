@@ -885,7 +885,7 @@ next_io:
                 }
             }
 
-            /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
+            /* https://www.rfc-editor.org/rfc/rfc9112#section-9.3 Persistence */
             if (OPENSSL_strcasecmp(key, "Connection") == 0) {
                 if (OPENSSL_strcasecmp(value, "keep-alive") == 0)
                     rctx->found_keep_alive = 1;
@@ -1576,7 +1576,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
         /*-
          * The first line is the HTTP response.
-         * According to RFC 7230, it is formatted exactly like this:
+         * According to RFC 9112 section 4, it is formatted like this:
          * HTTP/d.d ddd reason text\r\n
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
@@ -1602,7 +1602,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         }
         mbufp += HTTP_VERSION_STR_LEN;
 
-        /* RFC 7231 4.3.6: any 2xx status code is valid */
+        /* RFC 9110 section 9.3.6: any 2xx status code is valid */
         if (!HAS_PREFIX(mbufp, " 2")) {
             if (ossl_isspace(*mbufp))
                 mbufp++;
