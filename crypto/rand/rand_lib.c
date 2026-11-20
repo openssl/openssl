@@ -820,7 +820,7 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     *p++ = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
         &reseed_time_interval);
     *p = OSSL_PARAM_construct_end();
-    if ((merged_params = OSSL_PARAM_merge(params, default_params)) == NULL) {
+    if ((merged_params = OSSL_PARAM_merge(default_params, params)) == NULL) {
         ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
         EVP_RAND_CTX_free(ctx);
         return NULL;
