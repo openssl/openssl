@@ -33,6 +33,13 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added an opt-in CMP client option to require `EnvelopedData` when receiving
+   centrally generated private keys. This allows clients to reject the
+   deprecated `EncryptedValue` alternative and enforce authenticated key
+   delivery as required by the Lightweight CMP Profile (RFC 9483).
+
+   *quickroom*
+   
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*

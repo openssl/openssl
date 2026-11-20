@@ -921,6 +921,9 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, transactionID)
     case OSSL_CMP_OPT_DISABLE_CONFIRM:
         ctx->disableConfirm = val;
         break;
+    case OSSL_CMP_OPT_REQUIRE_ENVELOPED_DATA:
+        ctx->require_enveloped_data = val;
+        break;
     case OSSL_CMP_OPT_UNPROTECTED_SEND:
         ctx->unprotectedSend = val;
         break;
@@ -1014,6 +1017,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->implicitConfirm;
     case OSSL_CMP_OPT_DISABLE_CONFIRM:
         return ctx->disableConfirm;
+    case OSSL_CMP_OPT_REQUIRE_ENVELOPED_DATA:
+        return ctx->require_enveloped_data;
     case OSSL_CMP_OPT_UNPROTECTED_SEND:
         return ctx->unprotectedSend;
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:

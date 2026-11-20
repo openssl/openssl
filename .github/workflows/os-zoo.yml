@@ -577,7 +577,7 @@ jobs:
       with:
         operating_system: freebsd
         version: "14.4"
-        shutdown_vm: false
+        shell: cpa.sh {0}
         run: |
           sudo pkg install -y gcc perl5
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
@@ -586,20 +586,21 @@ jobs:
       with:
         operating_system: freebsd
         version: "14.4"
-        shutdown_vm: false
+        shell: cpa.sh {0}
         run: ./configdata.pm --dump
     - name: make
       uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
-        shutdown_vm: false
+        shell: cpa.sh {0}
         run: make -j4
     - name: make test
       uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
         operating_system: freebsd
         version: "14.4"
+        shell: cpa.sh {0}
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
