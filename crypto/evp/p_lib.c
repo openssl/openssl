@@ -2425,6 +2425,9 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
     if (pkey != NULL) {
         if (evp_pkey_is_provided(pkey)) {
+            /* Without a set_params method the key cannot change */
+            if (pkey->keymgmt->set_params == NULL)
+                return 1;
             pkey->dirty_cnt++;
             return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
         }
