@@ -43,6 +43,8 @@ typedef struct {
     size_t Npk; /* length of public key */
     size_t Nsk; /* length of raw private key */
     uint8_t bitmask;
+    unsigned int auth : 1;
+    unsigned int one_stage_kdf : 1;
 } OSSL_HPKE_KEM_INFO;
 
 /*
@@ -97,6 +99,21 @@ int ossl_hpke_labeled_expand(EVP_KDF_CTX *kctx,
     const unsigned char *suiteid, size_t suiteidlen,
     const char *label,
     const unsigned char *info, size_t infolen);
+
+/**
+ * @brief Derive HPKE key pair material using a domain-separated XOF.
+ *
+ * @param out Output buffer.
+ * @param outlen Requested output length, at most UINT16_MAX.
+ * @param md_xof XOF digest implementation.
+ * @param kemid HPKE KEM identifier.
+ * @param ikm Input keying material.
+ * @param ikmlen Length of the input keying material.
+ * @returns 1 on success, or 0 on failure.
+ */
+int ossl_hpke_keypair_derive_xof(unsigned char *out, size_t outlen,
+    EVP_MD *md_xof, uint16_t kemid,
+    const unsigned char *ikm, size_t ikmlen);
 
 EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     OSSL_LIB_CTX *libctx, const char *propq);
