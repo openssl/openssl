@@ -555,12 +555,24 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         /* If MSTRING type set the underlying type */
         strtmp = (ASN1_STRING *)*pval;
         utype = strtmp->type;
+
+        if (utype < 0 && utype != V_ASN1_OTHER) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE);
+            return -1;
+        }
+
         *putype = utype;
     } else if (it->utype == V_ASN1_ANY) {
         /* If ANY set type and pointer to value */
         ASN1_TYPE *typ;
         typ = (ASN1_TYPE *)*pval;
         utype = typ->type;
+
+        if (utype < 0 && utype != V_ASN1_OTHER) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE);
+            return -1;
+        }
+
         *putype = utype;
         pval = (const ASN1_VALUE **)&typ->value.asn1_value; /* actually is const */
     } else
