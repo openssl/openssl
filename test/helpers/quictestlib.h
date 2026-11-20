@@ -51,6 +51,25 @@ int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     int flags, QUIC_TSERVER **qtserv, SSL **cssl,
     QTEST_FAULT **fault, BIO **tracebio);
 
+/**
+ * @brief As qtest_create_quic_objects() but the server is a QUIC listener.
+ * @param libctx library context
+ * @param clientctx client SSL_CTX
+ * @param serverctx server SSL_CTX, or NULL to create one
+ * @param certfile server certificate file
+ * @param keyfile server private key file
+ * @param flags QTEST_FLAG_* values or'd together, or 0
+ * @param listener receives the listener
+ * @param cssl receives the client; created if *cssl is NULL
+ * @param fault receives the fault injector, or NULL if not needed
+ * @param tracebio receives the client trace BIO, or NULL
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_create_quic_objects_ex(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+    SSL_CTX *serverctx, char *certfile, char *keyfile,
+    int flags, SSL **listener, SSL **cssl,
+    QTEST_FAULT **fault, BIO **tracebio);
+
 /* Where QTEST_FLAG_FAKE_TIME is used, add millis to the current time */
 void qtest_add_time(uint64_t millis);
 
@@ -77,6 +96,16 @@ int qtest_supports_blocking(void);
  */
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
+/**
+ * @brief Run the handshake between the client and a listener.
+ * @param listener listener
+ * @param clientssl client
+ * @param sconn receives the accepted server connection; caller frees it
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_create_quic_connection_ssl(SSL *listener, SSL *clientssl,
+    SSL **sconn);
+
 /*
  * Check if both client and server have no data to read and are waiting on a
  * timeout. If so, wait until the timeout has expired.
@@ -89,6 +118,18 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv);
  */
 int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
     int wanterr);
+
+/**
+ * @brief As qtest_create_quic_connection_ssl() but stops successfully if the
+ * client reports SSL_get_error() value |wanterr|.
+ * @param listener listener
+ * @param clientssl client
+ * @param sconn receives the accepted server connection; caller frees it
+ * @param wanterr SSL_ERROR_* value to stop at
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_create_quic_connection_ssl_ex(SSL *listener, SSL *clientssl,
+    SSL **sconn, int wanterr);
 
 /*
  * Shutdown the client SSL object gracefully
