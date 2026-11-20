@@ -324,6 +324,15 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provider_status_test]=../include ../apps/include
   DEPEND[provider_status_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=provider_child_teardown_test provider_null_libctx_test
+  SOURCE[provider_child_teardown_test]=provider_child_teardown_test.c
+  INCLUDE[provider_child_teardown_test]=../include ../apps/include
+  DEPEND[provider_child_teardown_test]=../libcrypto libtestutil.a
+
+  SOURCE[provider_null_libctx_test]=provider_null_libctx_test.c
+  INCLUDE[provider_null_libctx_test]=../include ../apps/include
+  DEPEND[provider_null_libctx_test]=../libcrypto libtestutil.a
+
   SOURCE[pairwise_fail_test]=pairwise_fail_test.c
   INCLUDE[pairwise_fail_test]=../include ../apps/include
   DEPEND[pairwise_fail_test]=../libcrypto libtestutil.a
