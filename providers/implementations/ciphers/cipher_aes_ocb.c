@@ -140,6 +140,9 @@ static int aes_ocb_init(void *vctx, const unsigned char *key, size_t keylen,
         }
         if (!ctx->base.hw->init(&ctx->base, key, keylen))
             return 0;
+        /* Re-apply an already applied nonce under the new key. */
+        if (iv == NULL && ctx->iv_state == IV_STATE_COPIED)
+            ctx->iv_state = IV_STATE_BUFFERED;
     }
     return aes_ocb_set_ctx_params(ctx, params);
 }
