@@ -866,7 +866,7 @@ int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
     char *val = NULL;
     OSSL_PARAM param[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    param[0].key = (const char *)name;
+    param[0].key = name;
     param[0].data_type = OSSL_PARAM_UTF8_PTR;
     param[0].data = (void *)&val;
     param[0].data_size = sizeof(val);
