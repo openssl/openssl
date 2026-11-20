@@ -230,6 +230,27 @@ err:
     return testresult;
 }
 
+static int test_bio_pair_reset(void)
+{
+    BIO *a = NULL, *b = NULL;
+    char buf[16];
+    int testresult = 0;
+
+    if (!TEST_int_eq(BIO_new_bio_pair(&a, 0, &b, 0), 1)
+        || !TEST_int_eq(BIO_write(a, "first-input", 11), 11)
+        || !TEST_int_eq(BIO_read(b, buf, 4), 4)
+        || !TEST_size_t_eq(BIO_ctrl_pending(b), 7)
+        || !TEST_int_eq(BIO_reset(a), 1)
+        || !TEST_size_t_eq(BIO_ctrl_pending(b), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(a);
+    BIO_free(b);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -238,6 +259,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_bio_core);
+    ADD_TEST(test_bio_pair_reset);
     ADD_TEST(test_bio_vprintf_boundary);
     ADD_TEST(test_bio_printf_c99_length_modifiers);
     return 1;
