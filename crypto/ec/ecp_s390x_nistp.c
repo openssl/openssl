@@ -18,8 +18,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "ec_local.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h"
 #include "arch/s390x_arch.h"
 
 /* Size of parameter blocks */
@@ -49,17 +49,17 @@
 #define S390X_PAD(n) (n == 80 ? 14 : 0)
 
 /*
- * Serialise an OSSL_FN scalar big-endian into a len-byte buffer, straight from
+ * Serialise an OSSL_FSN scalar big-endian into a len-byte buffer, straight from
  * its little-endian limbs (never a BIGNUM).  A value wider than len is rejected.
  */
-static int s390x_fn_scalar_be(unsigned char *out, int len, const OSSL_FN *scalar)
+static int s390x_fsn_scalar_be(unsigned char *out, int len, const OSSL_FSN *scalar)
 {
-    const OSSL_FN_ULONG *w = ossl_fn_get_words(scalar);
-    size_t dsize = ossl_fn_get_dsize(scalar), i, j;
+    const OSSL_FSN_ULONG *w = ossl_fsn_get_words(scalar);
+    size_t dsize = ossl_fsn_get_dsize(scalar), i, j;
 
     memset(out, 0, len);
     for (i = 0; i < dsize; i++) {
-        OSSL_FN_ULONG d = w[i];
+        OSSL_FSN_ULONG d = w[i];
 
         for (j = 0; j < sizeof(d); j++) {
             size_t off = i * sizeof(d) + j;
@@ -77,8 +77,8 @@ static int s390x_fn_scalar_be(unsigned char *out, int len, const OSSL_FN *scalar
 /*
  * Shared PCC scalar multiplication core: r = scalar * point, where the scalar
  * is already serialised big-endian into a len-byte buffer.  point must be a
- * finite point.  Both the BIGNUM (ec_GFp_s390x_nistp_mul) and OSSL_FN
- * (ec_GFp_s390x_nistp_mul_fn) entry points wrap this; only the scalar
+ * finite point.  Both the BIGNUM (ec_GFp_s390x_nistp_mul) and OSSL_FSN
+ * (ec_GFp_s390x_nistp_mul_fsn) entry points wrap this; only the scalar
  * serialisation differs between them.
  */
 static int ec_GFp_s390x_nistp_pcc(const EC_GROUP *group, EC_POINT *r,
@@ -166,24 +166,24 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
 }
 
 /*-
- * OSSL_FN counterpart of ec_GFp_s390x_nistp_mul() and this method's 'mul_fn'
- * slot, reached from EC_POINT_mul_fn() when the scalar is secret.  It covers the
+ * OSSL_FSN counterpart of ec_GFp_s390x_nistp_mul() and this method's 'mul_fsn'
+ * slot, reached from EC_POINT_mul_fsn() when the scalar is secret.  It covers the
  * single-scalar cases the PCC path serves (scalar*G for key generation,
  * scalar*point for ECDH), which is all a secret scalar needs.
  *
  * Only the scalar changes representation: it is serialised big-endian straight
- * from the OSSL_FN limbs, so it never takes BIGNUM form, and then fed to the
+ * from the OSSL_FSN limbs, so it never takes BIGNUM form, and then fed to the
  * shared ec_GFp_s390x_nistp_pcc() core.
  */
-static int ec_GFp_s390x_nistp_mul_fn(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point,
-    OSSL_FN_CTX *fnctx, unsigned int fc, int len)
+static int ec_GFp_s390x_nistp_mul_fsn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FSN *scalar, const EC_POINT *point,
+    OSSL_FSN_CTX *fsnctx, unsigned int fc, int len)
 {
     unsigned char scalar_be[S390X_SIZE_P521];
     BN_CTX *ctx = NULL;
     int ret = 0;
 
-    (void)fnctx; /* fixed-width vectors; no OSSL_FN scratch context needed */
+    (void)fsnctx; /* fixed-width vectors; no OSSL_FSN scratch context needed */
 
     if (scalar == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -197,10 +197,10 @@ static int ec_GFp_s390x_nistp_mul_fn(const EC_GROUP *group, EC_POINT *r,
             return 0;
         }
     }
-    if (EC_POINT_is_at_infinity(group, point) || OSSL_FN_is_zero(scalar))
+    if (EC_POINT_is_at_infinity(group, point) || OSSL_FSN_is_zero(scalar))
         return EC_POINT_set_to_infinity(group, r);
 
-    if (!s390x_fn_scalar_be(scalar_be, len, scalar)) {
+    if (!s390x_fsn_scalar_be(scalar_be, len, scalar)) {
         ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         goto err;
     }
@@ -488,22 +488,22 @@ ret:
             S390X_SIZE_P##bits);                                                    \
     }                                                                               \
                                                                                     \
-    static int ec_GFp_s390x_nistp##bits##_mul_fn(const EC_GROUP *group,             \
+    static int ec_GFp_s390x_nistp##bits##_mul_fsn(const EC_GROUP *group,            \
         EC_POINT *r,                                                                \
-        const OSSL_FN *scalar,                                                      \
+        const OSSL_FSN *scalar,                                                     \
         const EC_POINT *point,                                                      \
-        OSSL_FN_CTX *fnctx)                                                         \
+        OSSL_FSN_CTX *fsnctx)                                                       \
     {                                                                               \
-        return ec_GFp_s390x_nistp_mul_fn(group, r, scalar, point, fnctx,            \
+        return ec_GFp_s390x_nistp_mul_fsn(group, r, scalar, point, fsnctx,          \
             S390X_SCALAR_MULTIPLY_P##bits,                                          \
             S390X_SIZE_P##bits);                                                    \
     }                                                                               \
                                                                                     \
-    static size_t ec_GFp_s390x_nistp##bits##_mul_fn_ctx_size(                       \
-        const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,                  \
+    static size_t ec_GFp_s390x_nistp##bits##_mul_fsn_ctx_size(                      \
+        const EC_GROUP *group, EC_POINT *r, const OSSL_FSN *scalar,                 \
         const EC_POINT *point)                                                      \
     {                                                                               \
-        return OSSL_FN_CTX_SIZE_NONE;                                               \
+        return OSSL_FSN_CTX_SIZE_NONE;                                              \
     }                                                                               \
                                                                                     \
     static ECDSA_SIG *ecdsa_s390x_nistp##bits##_sign_sig(const unsigned char *dgst, \
@@ -587,8 +587,8 @@ ret:
             ossl_ec_GFp_simple_ladder_step,                                         \
             ossl_ec_GFp_simple_ladder_post,                                         \
             0, /* group_full_init */                                                \
-            ec_GFp_s390x_nistp##bits##_mul_fn,                                      \
-            ec_GFp_s390x_nistp##bits##_mul_fn_ctx_size,                             \
+            ec_GFp_s390x_nistp##bits##_mul_fsn,                                     \
+            ec_GFp_s390x_nistp##bits##_mul_fsn_ctx_size,                            \
             ossl_ec_GFp_simple_point_get_affine_coords_bytes                        \
         };                                                                          \
         static const EC_METHOD *ret;                                                \

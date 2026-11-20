@@ -19,57 +19,57 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h"
 #include "rsa_local.h"
 
 /* X9.31 RSA key derivation and generation */
 
 /*
- * Derive one X9.31 prime into |p| on an OSSL_FN view, converting at the
+ * Derive one X9.31 prime into |p| on an OSSL_FSN view, converting at the
  * BIGNUM boundary.  |Xp|, |Xp1|, |Xp2| are read-only inputs, |p1|, |p2|
  * optional outputs.
  */
-static int rsa_fn_x931_derive_prime(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
+static int rsa_fsn_x931_derive_prime(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     const BIGNUM *Xp, const BIGNUM *Xp1,
     const BIGNUM *Xp2, const BIGNUM *e,
     BN_GENCB *cb, OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_p = NULL, *fn_p1 = NULL, *fn_p2 = NULL;
-    const OSSL_FN *fn_Xp, *fn_Xp1, *fn_Xp2, *fn_e;
-    size_t pl, fn_size;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_p = NULL, *fsn_p1 = NULL, *fsn_p2 = NULL;
+    const OSSL_FSN *fsn_Xp, *fsn_Xp1, *fsn_Xp2, *fsn_e;
+    size_t pl, fsn_size;
     int ret = 0;
 
-    fn_Xp = bn_get_ossl_fn(Xp);
-    fn_Xp1 = bn_get_ossl_fn(Xp1);
-    fn_Xp2 = bn_get_ossl_fn(Xp2);
-    fn_e = bn_get_ossl_fn(e);
-    if (fn_Xp == NULL || fn_e == NULL)
+    fsn_Xp = bn_get_ossl_fsn(Xp);
+    fsn_Xp1 = bn_get_ossl_fsn(Xp1);
+    fsn_Xp2 = bn_get_ossl_fsn(Xp2);
+    fsn_e = bn_get_ossl_fsn(e);
+    if (fsn_Xp == NULL || fsn_e == NULL)
         return 0;
-    pl = ossl_fn_get_dsize((OSSL_FN *)fn_Xp);
+    pl = ossl_fsn_get_dsize((OSSL_FSN *)fsn_Xp);
 
-    fn_p = bn_acquire_ossl_fn(p, (int)pl);
-    if (fn_p == NULL)
+    fsn_p = bn_acquire_ossl_fsn(p, (int)pl);
+    if (fsn_p == NULL)
         return 0;
     if (p1 != NULL
-        && (fn_p1 = bn_acquire_ossl_fn(p1, (int)pl)) == NULL)
+        && (fsn_p1 = bn_acquire_ossl_fsn(p1, (int)pl)) == NULL)
         goto err;
     if (p2 != NULL
-        && (fn_p2 = bn_acquire_ossl_fn(p2, (int)pl)) == NULL)
+        && (fsn_p2 = bn_acquire_ossl_fsn(p2, (int)pl)) == NULL)
         goto err;
 
-    fn_size = OSSL_FN_X931_derive_prime_ctx_size_from_nums(fn_p, fn_p1, fn_p2,
-        fn_Xp, fn_Xp1, fn_Xp2, fn_e);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_X931_derive_prime_ctx_size_from_nums(fsn_p, fsn_p1, fsn_p2,
+        fsn_Xp, fsn_Xp1, fsn_Xp2, fsn_e);
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_X931_derive_prime(fn_p, fn_p1, fn_p2, fn_Xp, fn_Xp1,
-            fn_Xp2, fn_e, fn_ctx, cb, libctx))
+    if (!OSSL_FSN_X931_derive_prime(fsn_p, fsn_p1, fsn_p2, fsn_Xp, fsn_Xp1,
+            fsn_Xp2, fsn_e, fsn_ctx, cb, libctx))
         goto err;
 
     ret = 1;
@@ -81,7 +81,7 @@ err:
     bn_release(p, (int)pl);
     bn_release(p1, (int)pl);
     bn_release(p2, (int)pl);
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     return ret;
 }
 
@@ -90,12 +90,12 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     const BIGNUM *Xp, const BIGNUM *Xq1, const BIGNUM *Xq2,
     const BIGNUM *Xq, const BIGNUM *e, BN_GENCB *cb)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
-    OSSL_FN *fn_d = NULL, *fn_n = NULL, *fn_dmp1 = NULL, *fn_dmq1 = NULL;
-    OSSL_FN *fn_iqmp = NULL;
-    const OSSL_FN *fn_p, *fn_q, *fn_e;
-    size_t fn_size, nl = 0, pl = 0, ql = 0;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
+    OSSL_FSN *fsn_d = NULL, *fsn_n = NULL, *fsn_dmp1 = NULL, *fsn_dmq1 = NULL;
+    OSSL_FSN *fsn_iqmp = NULL;
+    const OSSL_FSN *fsn_p, *fsn_q, *fsn_e;
+    size_t fsn_size, nl = 0, pl = 0, ql = 0;
     int ret = 0;
 
     if (rsa == NULL)
@@ -119,7 +119,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
         if (rsa->p == NULL)
             goto err;
 
-        if (!rsa_fn_x931_derive_prime(rsa->p, p1, p2,
+        if (!rsa_fsn_x931_derive_prime(rsa->p, p1, p2,
                 Xp, Xp1, Xp2, e, cb, rsa->libctx))
             goto err;
     }
@@ -128,7 +128,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
         rsa->q = BN_new();
         if (rsa->q == NULL)
             goto err;
-        if (!rsa_fn_x931_derive_prime(rsa->q, q1, q2,
+        if (!rsa_fsn_x931_derive_prime(rsa->q, q1, q2,
                 Xq, Xq1, Xq2, e, cb, rsa->libctx))
             goto err;
     }
@@ -138,23 +138,23 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
 
     /*
      * Since both primes are set we can now calculate all remaining
-     * components on OSSL_FN views.
+     * components on OSSL_FSN views.
      */
-    fn_p = bn_get_ossl_fn(rsa->p);
-    fn_q = bn_get_ossl_fn(rsa->q);
-    fn_e = bn_get_ossl_fn(rsa->e);
-    if (fn_p == NULL || fn_q == NULL || fn_e == NULL)
+    fsn_p = bn_get_ossl_fsn(rsa->p);
+    fsn_q = bn_get_ossl_fsn(rsa->q);
+    fsn_e = bn_get_ossl_fsn(rsa->e);
+    if (fsn_p == NULL || fsn_q == NULL || fsn_e == NULL)
         goto err;
-    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
-    ql = ossl_fn_get_dsize((OSSL_FN *)fn_q);
+    pl = ossl_fsn_get_dsize((OSSL_FSN *)fsn_p);
+    ql = ossl_fsn_get_dsize((OSSL_FSN *)fsn_q);
     nl = pl + ql;
 
     /* n = p*q */
     rsa->n = BN_new();
     if (rsa->n == NULL)
         goto err;
-    fn_n = bn_acquire_ossl_fn(rsa->n, (int)nl);
-    if (fn_n == NULL)
+    fsn_n = bn_acquire_ossl_fsn(rsa->n, (int)nl);
+    if (fsn_n == NULL)
         goto err;
 
     /* d = e^-1 mod LCM(p-1, q-1); dmp1, dmq1, iqmp */
@@ -170,69 +170,69 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
     BN_set_flags(rsa->iqmp, BN_FLG_CONSTTIME);
 
-    fn_d = bn_acquire_ossl_fn(rsa->d, (int)nl);
-    fn_dmp1 = bn_acquire_ossl_fn(rsa->dmp1, (int)pl);
-    fn_dmq1 = bn_acquire_ossl_fn(rsa->dmq1, (int)ql);
-    fn_iqmp = bn_acquire_ossl_fn(rsa->iqmp, (int)pl);
-    if (fn_d == NULL || fn_dmp1 == NULL || fn_dmq1 == NULL || fn_iqmp == NULL)
+    fsn_d = bn_acquire_ossl_fsn(rsa->d, (int)nl);
+    fsn_dmp1 = bn_acquire_ossl_fsn(rsa->dmp1, (int)pl);
+    fsn_dmq1 = bn_acquire_ossl_fsn(rsa->dmq1, (int)ql);
+    fsn_iqmp = bn_acquire_ossl_fsn(rsa->iqmp, (int)pl);
+    if (fsn_d == NULL || fsn_dmp1 == NULL || fsn_dmq1 == NULL || fsn_iqmp == NULL)
         goto err;
 
     /* scratch: r0 (LCM, n-wide), r1 (p-1), r2 (q-1), r3 (gcd) */
-    r0 = OSSL_FN_secure_new_limbs(nl);
-    r1 = OSSL_FN_secure_new_limbs(pl);
-    r2 = OSSL_FN_secure_new_limbs(ql);
-    r3 = OSSL_FN_secure_new_limbs(pl < ql ? pl : ql);
+    r0 = OSSL_FSN_secure_new_limbs(nl);
+    r1 = OSSL_FSN_secure_new_limbs(pl);
+    r2 = OSSL_FSN_secure_new_limbs(ql);
+    r3 = OSSL_FSN_secure_new_limbs(pl < ql ? pl : ql);
     if (r0 == NULL || r1 == NULL || r2 == NULL || r3 == NULL)
         goto err;
 
     /* p-1, q-1 */
-    if (!OSSL_FN_copy(r1, fn_p) || !OSSL_FN_sub_word(r1, 1)
-        || !OSSL_FN_copy(r2, fn_q) || !OSSL_FN_sub_word(r2, 1))
+    if (!OSSL_FSN_copy(r1, fsn_p) || !OSSL_FSN_sub_word(r1, 1)
+        || !OSSL_FSN_copy(r2, fsn_q) || !OSSL_FSN_sub_word(r2, 1))
         goto err;
 
     /*
      * The operations run sequentially in one arena, each in its own frame,
      * so the arena is sized for the largest single operation.
      */
-    fn_size = OSSL_FN_mul_ctx_size_from_nums(fn_n, fn_p, fn_q);
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mul_ctx_size_from_nums(r0, r1, r2));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_gcd_ctx_size_from_nums(r1, r2));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_div_ctx_size_from_nums(r0, NULL, r0, r3));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_inverse_ctx_size_from_nums(fn_d, fn_e, r0));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_ctx_size_from_nums(fn_dmp1, fn_d, r1));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_ctx_size_from_nums(fn_dmq1, fn_d, r2));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_inverse_ctx_size_from_nums(fn_iqmp, fn_q, fn_p));
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_mul_ctx_size_from_nums(fsn_n, fsn_p, fsn_q);
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_mul_ctx_size_from_nums(r0, r1, r2));
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_gcd_ctx_size_from_nums(r1, r2));
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_div_ctx_size_from_nums(r0, NULL, r0, r3));
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_mod_inverse_ctx_size_from_nums(fsn_d, fsn_e, r0));
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_mod_ctx_size_from_nums(fsn_dmp1, fsn_d, r1));
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_mod_ctx_size_from_nums(fsn_dmq1, fsn_d, r2));
+    fsn_size = ossl_fsn_ctx_max_size(fsn_size,
+        OSSL_FSN_mod_inverse_ctx_size_from_nums(fsn_iqmp, fsn_q, fsn_p));
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(rsa->libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_mul(fn_n, fn_p, fn_q, fn_ctx))
+    if (!OSSL_FSN_mul(fsn_n, fsn_p, fsn_q, fsn_ctx))
         goto err;
 
     /* LCM((p-1)(q-1)) into r0 */
-    if (!OSSL_FN_mul(r0, r1, r2, fn_ctx)
-        || !OSSL_FN_gcd(r3, r1, r2, fn_ctx)
-        || !OSSL_FN_div(r0, NULL, r0, r3, fn_ctx))
+    if (!OSSL_FSN_mul(r0, r1, r2, fsn_ctx)
+        || !OSSL_FSN_gcd(r3, r1, r2, fsn_ctx)
+        || !OSSL_FSN_div(r0, NULL, r0, r3, fsn_ctx))
         goto err;
 
     /* d = e^-1 mod LCM */
-    if (!OSSL_FN_mod_inverse(fn_d, fn_e, r0, fn_ctx))
+    if (!OSSL_FSN_mod_inverse(fsn_d, fsn_e, r0, fsn_ctx))
         goto err;
 
     /* dmp1 = d mod (p-1), dmq1 = d mod (q-1), iqmp = q^-1 mod p */
-    if (!OSSL_FN_mod(fn_dmp1, fn_d, r1, fn_ctx)
-        || !OSSL_FN_mod(fn_dmq1, fn_d, r2, fn_ctx)
-        || !OSSL_FN_mod_inverse(fn_iqmp, fn_q, fn_p, fn_ctx))
+    if (!OSSL_FSN_mod(fsn_dmp1, fsn_d, r1, fsn_ctx)
+        || !OSSL_FSN_mod(fsn_dmq1, fsn_d, r2, fsn_ctx)
+        || !OSSL_FSN_mod_inverse(fsn_iqmp, fsn_q, fsn_p, fsn_ctx))
         goto err;
 
     rsa->dirty_cnt++;
@@ -248,11 +248,11 @@ err:
     bn_release(rsa->dmp1, (int)pl);
     bn_release(rsa->dmq1, (int)ql);
     bn_release(rsa->iqmp, (int)pl);
-    OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_clear_free(r0);
-    OSSL_FN_clear_free(r1);
-    OSSL_FN_clear_free(r2);
-    OSSL_FN_clear_free(r3);
+    OSSL_FSN_CTX_free(fsn_ctx);
+    OSSL_FSN_clear_free(r0);
+    OSSL_FSN_clear_free(r1);
+    OSSL_FSN_clear_free(r2);
+    OSSL_FSN_clear_free(r3);
 
     return ret;
 }
@@ -261,31 +261,31 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     BN_GENCB *cb)
 {
     int ok = 0;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *Xp = NULL, *Xq = NULL;
-    size_t xpl, fn_size;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *Xp = NULL, *Xq = NULL;
+    size_t xpl, fsn_size;
 
     /*
      * Xp and Xq carry bits/2 bits, rounded up to a limb, plus the headroom
      * the X931 generator expects.
      */
     xpl = (size_t)((bits / 2 + BN_BITS2 - 1) / BN_BITS2) + 1;
-    Xp = OSSL_FN_secure_new_limbs(xpl);
-    Xq = OSSL_FN_secure_new_limbs(xpl);
+    Xp = OSSL_FSN_secure_new_limbs(xpl);
+    Xq = OSSL_FSN_secure_new_limbs(xpl);
     if (Xp == NULL || Xq == NULL)
         goto error;
 
-    fn_size = OSSL_FN_X931_generate_Xpq_ctx_size_from_nums(Xp);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_X931_generate_Xpq_ctx_size_from_nums(Xp);
+    if (fsn_size == 0)
         goto error;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(rsa->libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto error;
-    if (!OSSL_FN_X931_generate_Xpq(Xp, Xq, bits, fn_ctx, rsa->libctx))
+    if (!OSSL_FSN_X931_generate_Xpq(Xp, Xq, bits, fsn_ctx, rsa->libctx))
         goto error;
-    OSSL_FN_CTX_free(fn_ctx);
-    fn_ctx = NULL;
+    OSSL_FSN_CTX_free(fsn_ctx);
+    fsn_ctx = NULL;
 
     rsa->p = BN_new();
     rsa->q = BN_new();
@@ -294,43 +294,43 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
 
     /* Generate two primes from Xp, Xq */
     {
-        const OSSL_FN *fn_e = bn_get_ossl_fn(e);
-        OSSL_FN *fn_p, *fn_q;
+        const OSSL_FSN *fsn_e = bn_get_ossl_fsn(e);
+        OSSL_FSN *fsn_p, *fsn_q;
 
-        if (fn_e == NULL)
+        if (fsn_e == NULL)
             goto error;
-        fn_p = bn_acquire_ossl_fn(rsa->p, (int)xpl);
-        fn_q = bn_acquire_ossl_fn(rsa->q, (int)xpl);
-        if (fn_p == NULL || fn_q == NULL)
+        fsn_p = bn_acquire_ossl_fsn(rsa->p, (int)xpl);
+        fsn_q = bn_acquire_ossl_fsn(rsa->q, (int)xpl);
+        if (fsn_p == NULL || fsn_q == NULL)
             goto x931_err;
 
-        fn_size = OSSL_FN_X931_generate_prime_ctx_size_from_nums(
-            fn_p, NULL, NULL, Xp, fn_e);
-        if (fn_size == 0)
+        fsn_size = OSSL_FSN_X931_generate_prime_ctx_size_from_nums(
+            fsn_p, NULL, NULL, Xp, fsn_e);
+        if (fsn_size == 0)
             goto x931_err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
-        fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
-        if (fn_ctx == NULL)
+        fsn_ctx = OSSL_FSN_CTX_new_size(rsa->libctx, fsn_size);
+        if (fsn_ctx == NULL)
             goto x931_err;
-        if (!OSSL_FN_X931_generate_prime(fn_p, NULL, NULL, NULL, NULL,
-                Xp, fn_e, fn_ctx, cb, rsa->libctx))
+        if (!OSSL_FSN_X931_generate_prime(fsn_p, NULL, NULL, NULL, NULL,
+                Xp, fsn_e, fsn_ctx, cb, rsa->libctx))
             goto x931_err;
-        OSSL_FN_CTX_free(fn_ctx);
-        fn_ctx = NULL;
+        OSSL_FSN_CTX_free(fsn_ctx);
+        fsn_ctx = NULL;
 
-        fn_size = OSSL_FN_X931_generate_prime_ctx_size_from_nums(
-            fn_q, NULL, NULL, Xq, fn_e);
-        if (fn_size == 0)
+        fsn_size = OSSL_FSN_X931_generate_prime_ctx_size_from_nums(
+            fsn_q, NULL, NULL, Xq, fsn_e);
+        if (fsn_size == 0)
             goto x931_err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
-        fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
-        if (fn_ctx == NULL)
+        fsn_ctx = OSSL_FSN_CTX_new_size(rsa->libctx, fsn_size);
+        if (fsn_ctx == NULL)
             goto x931_err;
-        if (!OSSL_FN_X931_generate_prime(fn_q, NULL, NULL, NULL, NULL,
-                Xq, fn_e, fn_ctx, cb, rsa->libctx))
+        if (!OSSL_FSN_X931_generate_prime(fsn_q, NULL, NULL, NULL, NULL,
+                Xq, fsn_e, fsn_ctx, cb, rsa->libctx))
             goto x931_err;
-        OSSL_FN_CTX_free(fn_ctx);
-        fn_ctx = NULL;
+        OSSL_FSN_CTX_free(fsn_ctx);
+        fsn_ctx = NULL;
 
         /* The generated primes have bits/2 bits, which fits in xpl limbs */
         bn_release(rsa->p, (int)xpl);
@@ -340,8 +340,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     x931_err:
         bn_release(rsa->p, (int)xpl);
         bn_release(rsa->q, (int)xpl);
-        OSSL_FN_CTX_free(fn_ctx);
-        fn_ctx = NULL;
+        OSSL_FSN_CTX_free(fsn_ctx);
+        fsn_ctx = NULL;
         goto error;
     }
 
@@ -359,9 +359,9 @@ generated:
     ok = 1;
 
 error:
-    OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_clear_free(Xp);
-    OSSL_FN_clear_free(Xq);
+    OSSL_FSN_CTX_free(fsn_ctx);
+    OSSL_FSN_clear_free(Xp);
+    OSSL_FSN_clear_free(Xq);
 
     return ok;
 }

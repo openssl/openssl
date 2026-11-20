@@ -96,7 +96,7 @@ The tests are:
   `EVP_PKEY_derive()`, on provider keys.  The private key's limbs and all
   private DRBG output are marked secret, so everything from the
   exponentiation to the output encoding is covered.
-- `test_fn_ct`: individual `OSSL_FN` building blocks, with chosen inputs
+- `test_fsn_ct`: individual `OSSL_FSN` building blocks, with chosen inputs
   that the end-to-end test cannot force.
 
 The daily `ct-validation` CI job runs these on x86-64 and AArch64, each with

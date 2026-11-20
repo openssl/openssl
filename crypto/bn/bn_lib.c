@@ -16,8 +16,8 @@
 #include "internal/endian.h"
 #include "internal/nelem.h"
 #include "internal/constant_time.h"
-#include "crypto/fn.h"
-#include "crypto/fn_constants.h"
+#include "crypto/fsn.h"
+#include "crypto/fsn_constants.h"
 #include "bn_local.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
@@ -79,10 +79,10 @@ int BN_get_params(int which)
 const BIGNUM *BN_value_one(void)
 {
     static const BIGNUM const_one = {
-        .data = (OSSL_FN *)&ossl_fn_static_one_storage.fn,
-        .d = (BN_ULONG *)ossl_fn_static_one_storage.fixed.d,
-        .top = (int)OSSL_NELEM(ossl_fn_static_one_storage.fixed.d),
-        .dmax = (int)OSSL_NELEM(ossl_fn_static_one_storage.fixed.d),
+        .data = (OSSL_FSN *)&ossl_fsn_static_one_storage.fsn,
+        .d = (BN_ULONG *)ossl_fsn_static_one_storage.fixed.d,
+        .top = (int)OSSL_NELEM(ossl_fsn_static_one_storage.fixed.d),
+        .dmax = (int)OSSL_NELEM(ossl_fsn_static_one_storage.fixed.d),
         .flags = BN_FLG_STATIC_DATA,
     };
 
@@ -218,7 +218,7 @@ void BN_clear_free(BIGNUM *a)
         return;
     if (!BN_get_flags(a, BN_FLG_STATIC_DATA)) {
         if (a->data != NULL)
-            OSSL_FN_clear_free(a->data);
+            OSSL_FSN_clear_free(a->data);
         else
             bn_free_d(a, true);
     }
@@ -234,7 +234,7 @@ void BN_free(BIGNUM *a)
         return;
     if (!BN_get_flags(a, BN_FLG_STATIC_DATA)) {
         if (a->data != NULL)
-            OSSL_FN_free(a->data);
+            OSSL_FSN_free(a->data);
         else
             bn_free_d(a, false);
     }
@@ -272,9 +272,9 @@ BIGNUM *BN_secure_new(void)
 
 /* This is used by bn_expand2() */
 /* The caller MUST check that words > b->dmax before calling this */
-static OSSL_FN *bn_expand_internal(const BIGNUM *b, int words)
+static OSSL_FSN *bn_expand_internal(const BIGNUM *b, int words)
 {
-    OSSL_FN *a = NULL;
+    OSSL_FSN *a = NULL;
 
     if (ossl_unlikely(words > BN_MAX_WORDS)) {
         ERR_raise(ERR_LIB_BN, BN_R_BIGNUM_TOO_LONG);
@@ -285,18 +285,18 @@ static OSSL_FN *bn_expand_internal(const BIGNUM *b, int words)
         return NULL;
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
-        a = OSSL_FN_secure_new_limbs(words);
+        a = OSSL_FSN_secure_new_limbs(words);
     else
-        a = OSSL_FN_new_limbs(words);
+        a = OSSL_FSN_new_limbs(words);
     if (ossl_unlikely(a == NULL))
         return NULL;
 
     assert(b->top <= words);
     if (b->top > 0) {
         if (b->data != NULL)
-            ossl_fn_copy_internal(a, b->data, -1);
+            ossl_fsn_copy_internal(a, b->data, -1);
         else if (b->d != NULL)
-            ossl_fn_copy_internal_limbs(a, b->d, b->top);
+            ossl_fsn_copy_internal_limbs(a, b->d, b->top);
     }
 
     return a;
@@ -313,12 +313,12 @@ static OSSL_FN *bn_expand_internal(const BIGNUM *b, int words)
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 {
     if (ossl_likely(words > b->dmax)) {
-        OSSL_FN *a = bn_expand_internal(b, words);
+        OSSL_FSN *a = bn_expand_internal(b, words);
 
         if (ossl_unlikely(!a))
             return NULL;
         if (b->data != NULL)
-            OSSL_FN_clear_free(b->data);
+            OSSL_FSN_clear_free(b->data);
         else if (b->d != NULL)
             bn_free_d(b, true);
         b->data = a;
@@ -330,7 +330,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
     return b;
 }
 
-OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs)
+OSSL_FSN *bn_acquire_ossl_fsn(BIGNUM *b, int limbs)
 {
     if (ossl_unlikely(b == NULL))
         return NULL;
@@ -357,14 +357,14 @@ void bn_release(BIGNUM *b, int limbs)
     bn_correct_top_consttime(b);
 }
 
-const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn)
+const OSSL_FSN *bn_get_ossl_fsn(const BIGNUM *bn)
 {
     if (ossl_unlikely(bn == NULL))
         return NULL;
 
     /* A zero BIGNUM may have no limb array at all, and is still a valid zero */
     if (bn->d == NULL)
-        return &ossl_fn_static_zero_storage.fn;
+        return &ossl_fsn_static_zero_storage.fsn;
     return bn->data;
 }
 
@@ -402,9 +402,9 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 
     if (ossl_likely(bn_words > 0)) {
         if (b->data != NULL)
-            ossl_fn_copy_internal(a->data, b->data, bn_words);
+            ossl_fsn_copy_internal(a->data, b->data, bn_words);
         else if (b->d != NULL)
-            ossl_fn_copy_internal_limbs(a->data, b->d, bn_words);
+            ossl_fsn_copy_internal_limbs(a->data, b->d, bn_words);
     }
     a->neg = b->neg;
     bn_set_top(a, b->top);
@@ -419,7 +419,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 void BN_swap(BIGNUM *a, BIGNUM *b)
 {
     int flags_old_a, flags_old_b;
-    OSSL_FN *tmp_data;
+    OSSL_FSN *tmp_data;
     BN_ULONG *tmp_d;
     int tmp_top, tmp_dmax, tmp_neg;
 
@@ -459,7 +459,7 @@ void BN_clear(BIGNUM *a)
         return;
     bn_check_top(a);
     if (a->data != NULL)
-        OSSL_FN_clear(a->data);
+        OSSL_FSN_clear(a->data);
     else if (a->d != NULL)
         OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
     a->neg = 0;

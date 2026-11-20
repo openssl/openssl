@@ -13,10 +13,10 @@
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
-#include "crypto/ec.h" /* EC_POINT_mul_fn() */
-#include "crypto/bn.h" /* bn_acquire_ossl_fn(), bn_release() */
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h" /* ossl_fn_ctx_{max,add}_size() */
+#include "crypto/ec.h" /* EC_POINT_mul_fsn() */
+#include "crypto/bn.h" /* bn_acquire_ossl_fsn(), bn_release() */
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h" /* ossl_fsn_ctx_{max,add}_size() */
 #include "internal/numbers.h"
 #include "internal/constant_time.h"
 #include <openssl/err.h>
@@ -232,7 +232,7 @@ done:
 
 /**
  * Compute an SM2 signature over a message digest, with the secret scalars
- * kept in OSSL_FN.
+ * kept in OSSL_FSN.
  *
  * @param[in]   key     The signing key.
  * @param[in]   e       The digest of Z_A || M, as computed by
@@ -251,18 +251,18 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     BIGNUM *r = NULL;
     BIGNUM *s = NULL;
     BIGNUM *x1 = NULL;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FSN_CTX *fsnctx = NULL;
     const void *token = NULL;
-    OSSL_FN_MONT_CTX *mont = NULL;
-    const OSSL_FN *order_fn = NULL;
-    OSSL_FN *k = NULL;
-    OSSL_FN *rk = NULL;
-    OSSL_FN *tmp = NULL;
-    OSSL_FN *sf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN *dAf = NULL;
-    OSSL_FN *one = NULL;
-    OSSL_FN *s_acq = NULL;
+    OSSL_FSN_MONT_CTX *mont = NULL;
+    const OSSL_FSN *order_fsn = NULL;
+    OSSL_FSN *k = NULL;
+    OSSL_FSN *rk = NULL;
+    OSSL_FSN *tmp = NULL;
+    OSSL_FSN *sf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN *dAf = NULL;
+    OSSL_FSN *one = NULL;
+    OSSL_FSN *s_acq = NULL;
     int nlimbs;
     size_t need;
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
@@ -304,57 +304,57 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     /*
      * The secret arithmetic below is done in the order's Montgomery domain,
      * never by division.  Its operands must be exactly as wide as the
-     * modulus of the cached order context, so that modulus is order_fn and
+     * modulus of the cached order context, so that modulus is order_fsn and
      * its width is nlimbs throughout.
      */
-    if ((mont = ossl_ec_group_get0_fn_mont_ord(group)) == NULL) {
+    if ((mont = ossl_ec_group_get0_fsn_mont_ord(group)) == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
-    order_fn = OSSL_FN_MONT_CTX_get0_modulus(mont);
-    nlimbs = (int)ossl_fn_get_dsize(order_fn);
+    order_fsn = OSSL_FSN_MONT_CTX_get0_modulus(mont);
+    nlimbs = (int)ossl_fsn_get_dsize(order_fsn);
 
     /*
      * Size the arena for the temporaries below plus the widest of the nested
      * operations.  Every operand handed to those is exactly nlimbs wide.
      */
-    need = ossl_fn_ctx_max_size(
-        ossl_fn_ctx_max_size(
-            OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(nlimbs, nlimbs,
+    need = ossl_fsn_ctx_max_size(
+        ossl_fsn_ctx_max_size(
+            OSSL_FSN_mod_inverse_prime_ctx_size_from_sizes(nlimbs, nlimbs,
                 nlimbs, nlimbs),
-            OSSL_FN_mul_mont_quick_ctx_size_from_sizes(nlimbs, nlimbs, nlimbs,
+            OSSL_FSN_mul_mont_quick_ctx_size_from_sizes(nlimbs, nlimbs, nlimbs,
                 nlimbs)),
-        ossl_ec_group_fn_reduce_ord_ctx_size(group));
-    need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_to_mont_quick_ctx_size_from_sizes(nlimbs, nlimbs, nlimbs));
+        ossl_ec_group_fsn_reduce_ord_ctx_size(group));
+    need = ossl_fsn_ctx_max_size(need,
+        OSSL_FSN_to_mont_quick_ctx_size_from_sizes(nlimbs, nlimbs, nlimbs));
     /*
      * Seven temporaries; rk is one limb wider, see below.
      * The order of the SM2 curve group is fixed, so we don't have to worry
      * about overflow.
      */
-    need = ossl_fn_ctx_add_size(need,
-        OSSL_FN_CTX_size(1, 7, 7 * (size_t)nlimbs + 1));
+    need = ossl_fsn_ctx_add_size(need,
+        OSSL_FSN_CTX_size(1, 7, 7 * (size_t)nlimbs + 1));
     if (need == 0) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
         goto done;
     }
 
     /* k and everything derived from it are secret, hence the secure arena. */
-    fnctx = OSSL_FN_CTX_secure_new_size(libctx, need);
-    if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
+    fsnctx = OSSL_FSN_CTX_secure_new_size(libctx, need);
+    if (fsnctx == NULL || (token = OSSL_FSN_CTX_start(fsnctx)) == NULL)
         goto done;
 
     /*
      * rk holds r + k unreduced, and both are below the order, so it needs one
      * limb more than the order to be sure of not truncating the sum.
      */
-    if ((k = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
-        || (rk = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs + 1)) == NULL
-        || (tmp = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
-        || (sf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
-        || (rf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
-        || (dAf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL
-        || (one = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
+    if ((k = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs)) == NULL
+        || (rk = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs + 1)) == NULL
+        || (tmp = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs)) == NULL
+        || (sf = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs)) == NULL
+        || (rf = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs)) == NULL
+        || (dAf = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs)) == NULL
+        || (one = OSSL_FSN_CTX_get_limbs(fsnctx, token, nlimbs)) == NULL)
         goto done;
 
     /*
@@ -362,8 +362,8 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      * private key BIGNUM may be wider than the order, and is not guaranteed
      * to be reduced.
      */
-    if (!ossl_ec_group_fn_reduce_ord(group, dAf, dA, fnctx)
-        || !OSSL_FN_one(one))
+    if (!ossl_ec_group_fsn_reduce_ord(group, dAf, dA, fsnctx)
+        || !OSSL_FSN_one(one))
         goto done;
 
     /*
@@ -376,15 +376,15 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      *     in clause 4.2.2 of GM/T 0003.1-2012. Then the signature of message M is (r,s).
      */
     for (;;) {
-        if (!OSSL_FN_priv_rand_range(k, order_fn, 0, libctx))
+        if (!OSSL_FSN_priv_rand_range(k, order_fsn, 0, libctx))
             goto done;
 
         /*
          * x1 and hence r are public: r is half the signature, and x1 is
          * recoverable from it.  Only k needs protecting here, which is why
-         * the multiplication goes through EC_POINT_mul_fn().
+         * the multiplication goes through EC_POINT_mul_fsn().
          */
-        if (!EC_POINT_mul_fn(group, kG, k, NULL, NULL)
+        if (!EC_POINT_mul_fsn(group, kG, k, NULL, NULL)
             || !EC_POINT_get_affine_coordinates(group, kG, x1, NULL,
                 ctx)
             || !BN_mod_add(r, e, x1, order, ctx)) {
@@ -397,42 +397,42 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             continue;
 
         /* r is below the order, so this copy drops nothing either. */
-        if (OSSL_FN_copy_truncate(rf, bn_get_ossl_fn(r)) == NULL
-            || !OSSL_FN_add(rk, rf, k))
+        if (OSSL_FSN_copy_truncate(rf, bn_get_ossl_fsn(r)) == NULL
+            || !OSSL_FSN_add(rk, rf, k))
             goto done;
 
-        if (OSSL_FN_cmp(rk, order_fn) == 0)
+        if (OSSL_FSN_cmp(rk, order_fsn) == 0)
             continue;
 
         /*
-         * 1 + dA is an OSSL_FN_add against a one rather than an
-         * OSSL_FN_add_word, because add_word stops as soon as the carry is
+         * 1 + dA is an OSSL_FSN_add against a one rather than an
+         * OSSL_FSN_add_word, because add_word stops as soon as the carry is
          * exhausted and so would run for a length that depends on dA.
          *
-         * (1 + dA)^-1 uses OSSL_FN_mod_inverse_prime(), the constant-time
+         * (1 + dA)^-1 uses OSSL_FSN_mod_inverse_prime(), the constant-time
          * Fermat inverse (a^(n-2) mod n) - as the BIGNUM version did through
          * ossl_ec_group_do_inverse_ord() - so the magnitude of the secret
          * operand does not leak.
          */
-        if (!OSSL_FN_add(sf, dAf, one)
-            || !OSSL_FN_mod_inverse_prime(sf, sf, order_fn, fnctx, mont)
-            || !OSSL_FN_to_mont_quick(tmp, rf, mont, fnctx)
-            || !OSSL_FN_mul_mont_quick(tmp, tmp, dAf, mont, fnctx)
-            || !OSSL_FN_mod_sub_quick(tmp, k, tmp, order_fn)
-            || !OSSL_FN_to_mont_quick(tmp, tmp, mont, fnctx)
-            || !OSSL_FN_mul_mont_quick(rf, tmp, sf, mont, fnctx))
+        if (!OSSL_FSN_add(sf, dAf, one)
+            || !OSSL_FSN_mod_inverse_prime(sf, sf, order_fsn, fsnctx, mont)
+            || !OSSL_FSN_to_mont_quick(tmp, rf, mont, fsnctx)
+            || !OSSL_FSN_mul_mont_quick(tmp, tmp, dAf, mont, fsnctx)
+            || !OSSL_FSN_mod_sub_quick(tmp, k, tmp, order_fsn)
+            || !OSSL_FSN_to_mont_quick(tmp, tmp, mont, fsnctx)
+            || !OSSL_FSN_mul_mont_quick(rf, tmp, sf, mont, fsnctx))
             goto done;
 
         /*
          * rf now holds s, the other half of the signature, which is public
          * from here on; move it into its BIGNUM.
          */
-        CONSTTIME_DECLASSIFY(ossl_fn_get_words(rf), nlimbs * OSSL_FN_BYTES);
-        if ((s_acq = bn_acquire_ossl_fn(s, nlimbs)) == NULL) {
+        CONSTTIME_DECLASSIFY(ossl_fsn_get_words(rf), nlimbs * OSSL_FSN_BYTES);
+        if ((s_acq = bn_acquire_ossl_fsn(s, nlimbs)) == NULL) {
             ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
             goto done;
         }
-        if (OSSL_FN_copy_truncate(s_acq, rf) == NULL) {
+        if (OSSL_FSN_copy_truncate(s_acq, rf) == NULL) {
             bn_release(s, nlimbs);
             s_acq = NULL;
             goto done;
@@ -461,8 +461,8 @@ done:
         BN_free(s);
     }
 
-    OSSL_FN_CTX_end(fnctx, token);
-    OSSL_FN_CTX_free(fnctx);
+    OSSL_FSN_CTX_end(fsnctx, token);
+    OSSL_FSN_CTX_free(fsnctx);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);

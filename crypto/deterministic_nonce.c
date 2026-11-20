@@ -15,9 +15,9 @@
 #include <openssl/kdf.h>
 #include "internal/deterministic_nonce.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
-#include "crypto/fnerr.h"
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h"
+#include "crypto/fsnerr.h"
 
 /*
  * Convert a Bit String to an Integer (See RFC 6979 Section 2.3.2)
@@ -244,7 +244,7 @@ end:
 }
 
 /*
- * The OSSL_FN counterpart of bits2int_consttime() (RFC 6979 Section 2.3.2):
+ * The OSSL_FSN counterpart of bits2int_consttime() (RFC 6979 Section 2.3.2):
  * load the KDF output as a big-endian integer and reduce it to |qlen_bits| bits
  *
  * Params:
@@ -256,79 +256,81 @@ end:
  *     rlen      Length of |rbits| in bytes.
  *
  * Unlike the BIGNUM version there is no sizeof(BN_ULONG) 0xff prefix to mask
- * off: OSSL_FN_from_bytes_be() is already constant-time, so it loads the
+ * off: OSSL_FSN_from_bytes_be() is already constant-time, so it loads the
  * |rlen|-byte (|rlen| * 8 bit) value directly, which is then shifted right to
  * |qlen_bits|.
  *
  * Returns 1 on success, or 0 on error.
  */
-static int fn_bits2int_consttime(OSSL_FN *out, int qlen_bits,
+static int fsn_bits2int_consttime(OSSL_FSN *out, int qlen_bits,
     const unsigned char *rbits, int rlen)
 {
     int shift = rlen * 8 - qlen_bits;
 
-    if (!OSSL_FN_from_bytes_be(out, rbits, (size_t)rlen)) {
+    if (!OSSL_FSN_from_bytes_be(out, rbits, (size_t)rlen)) {
         /* Cannot happen: out was sized wide enough by the caller. */
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     if (shift > 0)
-        return OSSL_FN_rshift(out, out, shift);
+        return OSSL_FSN_rshift(out, out, shift);
     return 1;
 }
 
 /*
- * The OSSL_FN analogue of ossl_gen_deterministic_nonce_rfc6979(): it returns
- * the deterministic nonce 'k' in constant-width OSSL_FN form so that DSA and
+ * The OSSL_FSN analogue of ossl_gen_deterministic_nonce_rfc6979(): it returns
+ * the deterministic nonce 'k' in constant-width OSSL_FSN form so that DSA and
  * ECDSA never have to hold it (or the private key it is derived from) in a
  * BIGNUM.  |q| and the message |hm| are public, so they stay a BIGNUM and a
  * byte string and the public helpers bits2octets() and kdf_setup() are shared
- * with the BIGNUM version; only |priv| and |out| become OSSL_FN.
+ * with the BIGNUM version; only |priv| and |out| become OSSL_FSN.
  *
  * |out| must be sized to hold at least num_bits(|q|) bits; a narrower
- * destination is rejected with OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ * destination is rejected with OSSL_FSN_R_RESULT_ARG_TOO_SMALL.
  *
- * Error reporting: a failure raises an OSSL_FN error here when the step that
+ * Error reporting: a failure raises an OSSL_FSN error here when the step that
  * failed does not report one itself; allocation and the shared bits2octets() /
  * kdf_setup() / EVP_KDF_derive() helpers report their own errors and are not
  * re-raised.
  */
-int ossl_fn_gen_deterministic_nonce_rfc6979(OSSL_FN *out, const BIGNUM *q,
-    const OSSL_FN *priv,
+int ossl_fsn_gen_deterministic_nonce_rfc6979(OSSL_FSN *out, const BIGNUM *q,
+    const OSSL_FSN *priv,
     const unsigned char *hm, size_t hmlen,
     const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_KDF_CTX *kdfctx = NULL;
-    const OSSL_FN *q_fn = NULL;
+    const OSSL_FSN *q_fsn = NULL;
     int ret = 0, rlen = 0, qlen_bits = 0;
     unsigned char *entropyx = NULL, *nonceh = NULL, *rbits = NULL, *buf = NULL;
     size_t allocsz = 0;
 
     if (out == NULL || q == NULL || priv == NULL) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     qlen_bits = BN_num_bits(q);
     if (qlen_bits == 0) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_RANGE);
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_INVALID_RANGE);
         return 0;
     }
 
     /*
      * |out| must be wide enough both to hold the reduced nonce (qlen_bits bits)
      * and to take the intermediate rlen-byte load before it is shifted down; a
-     * qlen_bits-bit destination covers both (see ossl_fn_gen_dsa_nonce() for
+     * qlen_bits-bit destination covers both (see ossl_fsn_gen_dsa_nonce() for
      * the width argument).
      */
-    if (ossl_fn_get_dsize(out) * OSSL_FN_BITS < (size_t)qlen_bits) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+    if (ossl_fsn_get_dsize(out) * OSSL_FSN_BITS < (size_t)qlen_bits) {
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_RESULT_ARG_TOO_SMALL);
         return 0;
     }
-    if ((q_fn = bn_get_ossl_fn(q)) == NULL) {
-        /* Cannot happen: q is non-zero (qlen_bits > 0), so it has an FN view */
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_INTERNAL_ERROR);
+    if ((q_fsn = bn_get_ossl_fsn(q)) == NULL) {
+        /*
+         * Cannot happen: q is non-zero (qlen_bits > 0), so it has an FSN view
+         */
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -344,9 +346,9 @@ int ossl_fn_gen_deterministic_nonce_rfc6979(OSSL_FN *out, const BIGNUM *q,
     nonceh = rbits + rlen;
     entropyx = nonceh + rlen;
 
-    /* entropy = int2octets(priv); the private key is kept in OSSL_FN form. */
-    if (!OSSL_FN_to_bytes_be(priv, entropyx, (size_t)rlen)) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_OVERFLOW);
+    /* entropy = int2octets(priv); the private key is kept in OSSL_FSN form. */
+    if (!OSSL_FSN_to_bytes_be(priv, entropyx, (size_t)rlen)) {
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_OVERFLOW);
         goto end;
     }
     if (!bits2octets(nonceh, q, qlen_bits, rlen, hm, hmlen))
@@ -358,11 +360,11 @@ int ossl_fn_gen_deterministic_nonce_rfc6979(OSSL_FN *out, const BIGNUM *q,
 
     do {
         if (!EVP_KDF_derive(kdfctx, rbits, rlen, NULL)
-            || !fn_bits2int_consttime(out, qlen_bits, rbits, rlen))
+            || !fsn_bits2int_consttime(out, qlen_bits, rbits, rlen))
             goto end;
-    } while (OSSL_FN_is_zero(out)
-        || OSSL_FN_is_one(out)
-        || OSSL_FN_cmp(out, q_fn) >= 0);
+    } while (OSSL_FSN_is_zero(out)
+        || OSSL_FSN_is_one(out)
+        || OSSL_FSN_cmp(out, q_fsn) >= 0);
     ret = 1;
 
 end:

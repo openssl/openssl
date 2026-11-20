@@ -1,0 +1,364 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include "internal/cryptlib.h"
+#include "crypto/fsnerr.h"
+#include "crypto/fsn_constants.h"
+#include "fsn_local.h"
+
+/*-
+ * OSSL_FSN_mod_inverse_ctx_size_from_sizes() calculates a plausible upper bound
+ * for the OSSL_FSN_CTX size.
+ *
+ * Working set (A, B, X, Y, D, M):
+ *   A, B, X, Y, D, M  -- six temporaries, each L limbs, where
+ *   L = max(a->dsize, n->dsize).
+ *
+ *   - L covers the initial B = a (before reduction) and A = n copies.
+ *   - The extended-Euclid coefficients X, Y stay at most |n|
+ *     throughout (standard bound; X and Y are never reduced inside the
+ *     loop), so Y + D*X stays at most |n| and the OSSL_FSN_mul(tmp, D, X)
+ *     call is exact -- the high limbs it may truncate are genuinely zero.
+ *
+ * Nested calls (sequential, so only one nested frame live at a time):
+ *   - initial reduction: OSSL_FSN_mod(B, B, A)        [== OSSL_FSN_div]
+ *   - loop body:         OSSL_FSN_div(D, M, A, B)     [the (D, M) := (A/B, A%B) step]
+ *                        OSSL_FSN_mul(tmp, D, X)      [exact, see above]
+ *                        OSSL_FSN_add(tmp, tmp, Y)
+ *   - final fixup:       OSSL_FSN_sub(Y, n, Y)        [if sign < 0]
+ *                        OSSL_FSN_mod(r, Y, n)        [if reduction needed]
+ *
+ * The dominant nested requirement is that of the two OSSL_FSN_mod() calls
+ * (OSSL_FSN_div() with q == NULL, which makes
+ * OSSL_FSN_div_ctx_size_from_sizes() reserve an extra quotient temporary).
+ * OSSL_FSN_mul's own ctx requirement is zero when r != a and r != b
+ * (tmp != D and tmp != X here), so it contributes no nested frame.
+ * OSSL_FSN_add and OSSL_FSN_sub take no ctx.
+ * The loop-body OSSL_FSN_div(D, M, A, B)'s requirement is bounded by the
+ * OSSL_FSN_mod calls'.  We compute the max of the div and mod sizes to be
+ * safe across the reductions and the loop-body division.
+ */
+size_t OSSL_FSN_mod_inverse_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+    size_t n_dsize)
+{
+    size_t L = a_dsize > n_dsize ? a_dsize : n_dsize;
+    if (ossl_fsn_totalsize(L) == 0)
+        return 0;
+
+    size_t own_size = OSSL_FSN_CTX_size(1, 6, 6 * L);
+
+    /*
+     * Nested: the loop-body division OSSL_FSN_div(D, M, A, B) with all four at
+     * L limbs, and the final reduction OSSL_FSN_mod(r, Y, n).
+     */
+
+    /* OSSL_FSN_div(D, M, A, B): D and M are results, A and B are operands. */
+    size_t div_size = OSSL_FSN_div_ctx_size_from_sizes(L, L, L, L);
+    /* OSSL_FSN_mod(r, Y, n): the final reduction, r is the caller's. */
+    size_t mod_size = OSSL_FSN_mod_ctx_size_from_sizes(r_dsize, L, n_dsize);
+
+    size_t nested_size = ossl_fsn_ctx_max_size(div_size, mod_size);
+    return ossl_fsn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FSN_mod_inverse_ctx_size_from_nums(
+    const OSSL_FSN *r, const OSSL_FSN *a, const OSSL_FSN *n)
+{
+    if (a == NULL || n == NULL)
+        return 0;
+
+    return OSSL_FSN_mod_inverse_ctx_size_from_sizes(OSSL_FSN_size_limbs(r),
+        a->dsize, n->dsize);
+}
+
+/*-
+ * OSSL_FSN_mod_inverse() computes the modular multiplicative inverse of |a|
+ * modulo |n|, i.e. a value |r| such that  r * a == 1  (mod n), with
+ * 0 <= r < n.  It uses the extended-Euclidean algorithm with the
+ * A/B/X/Y/D/M working-set rotation and no value-branching shortcuts.
+ * The invariant comments inside the loop are load-bearing.
+ *
+ * Constant-time profile:
+ *   - No masked conditional swap/select is used, and none is needed: the
+ *     loop rotates working values by pointer reassignment, not by
+ *     value-dependent swaps.
+ *   - What leaks: the iteration count (the while !is_zero(B) loop runs until
+ *     B is reduced to zero, so the count reveals the operands' magnitudes),
+ *     the final is_one(A) test, the OSSL_FSN_cmp(Y, n) test, and the
+ *     if (sign < 0) test.
+ *   - The OSSL_FSN primitives used here (OSSL_FSN_mod, OSSL_FSN_mul,
+ *     OSSL_FSN_add, OSSL_FSN_sub, OSSL_FSN_copy_truncate, OSSL_FSN_one,
+ *     OSSL_FSN_zero, OSSL_FSN_is_zero, OSSL_FSN_is_one) branch only on public
+ *     widths, not on limb values, except that OSSL_FSN_div / OSSL_FSN_mod scan
+ *     the denominator's significant limbs (see OSSL_FSN_div) and OSSL_FSN_cmp
+ *     performs a value comparison.
+ *
+ * OSSL_FSN is unsigned, so the |sign| bookkeeping (an int flipped with -sign)
+ * is kept entirely internal to this function; no sign is returned or passed
+ * across the public(ish) boundary.
+ *
+ * TODO(FIXNUM): a value-branching variant with an odd-n <= 2048-bit fast
+ * path and small-D (is_one / is_word(2) / is_word(4) / single-word) D*X+Y
+ * optimizations is not included here.  It may be added later if a use case
+ * needs the speed and can tolerate its value-branching leak profile.
+ */
+int OSSL_FSN_mod_inverse(OSSL_FSN *r, const OSSL_FSN *a, const OSSL_FSN *n,
+    OSSL_FSN_CTX *ctx)
+{
+    if (ossl_unlikely(r == NULL || a == NULL || n == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    const void *token = OSSL_FSN_CTX_start(ctx);
+    int ret = 0;
+
+    if (token == NULL)
+        return 0;
+
+    /*
+     * The degenerate moduli have no inverse for any a: for n == 0 the
+     * relation r*a == 1 (mod 0) is never satisfiable, and for n == 1 the
+     * only residue in [0, n) is 0, so the identity 1 is not representable
+     * and no element can act as a multiplicative inverse.  Short-circuit
+     * both to NO_INVERSE rather than surfacing the DIV_BY_ZERO the reduction
+     * below would raise for n == 0, and rather than reporting a spurious
+     * r == 0 inverse for n == 1.  This is the only input pre-check; every
+     * other edge case (a == 0, non-coprime) falls out of the algorithm
+     * below.
+     */
+    if (OSSL_FSN_is_zero(n) || OSSL_FSN_is_one(n)) {
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_NO_INVERSE);
+        goto err;
+    }
+
+    size_t al = (size_t)a->dsize;
+    size_t nl = (size_t)n->dsize;
+    size_t L = al > nl ? al : nl;
+
+    OSSL_FSN *A = OSSL_FSN_CTX_get_limbs(ctx, token, L);
+    OSSL_FSN *B = OSSL_FSN_CTX_get_limbs(ctx, token, L);
+    OSSL_FSN *X = OSSL_FSN_CTX_get_limbs(ctx, token, L);
+    OSSL_FSN *Y = OSSL_FSN_CTX_get_limbs(ctx, token, L);
+    OSSL_FSN *D = OSSL_FSN_CTX_get_limbs(ctx, token, L);
+    OSSL_FSN *M = OSSL_FSN_CTX_get_limbs(ctx, token, L);
+    if (A == NULL || B == NULL || X == NULL || Y == NULL
+        || D == NULL || M == NULL)
+        goto err;
+
+    if (!OSSL_FSN_one(X) || !OSSL_FSN_zero(Y))
+        goto err;
+    if (OSSL_FSN_copy_truncate(B, a) == NULL
+        || OSSL_FSN_copy_truncate(A, n) == NULL)
+        goto err;
+
+    if (OSSL_FSN_cmp(B, A) >= 0) {
+        if (!OSSL_FSN_mod(B, B, A, ctx))
+            goto err;
+    }
+
+    /*-
+     * From  B = a mod |n|,  A = |n|  it follows that
+     *
+     *      0 <= B < A,
+     *     -sign*X*a  ==  B   (mod |n|),
+     *      sign*Y*a  ==  A   (mod |n|).
+     */
+
+    int sign = -1;
+    while (!OSSL_FSN_is_zero(B)) {
+        /*-
+         *      0 < B < A,
+         * (*) -sign*X*a  ==  B   (mod |n|),
+         *      sign*Y*a  ==  A   (mod |n|)
+         */
+
+        /* (D, M) := (A/B, A%B) ... */
+        if (!OSSL_FSN_div(D, M, A, B, ctx))
+            goto err;
+
+        /*-
+         * Now
+         *      A = D*B + M;
+         * thus we have
+         * (**)  sign*Y*a  ==  D*B + M   (mod |n|).
+         */
+
+        /* hold on to the original A */
+        OSSL_FSN *tmp = A;
+
+        /* (A, B) := (B, A mod B) ... */
+        A = B;
+        B = M;
+        /* ... so we have  0 <= B < A  again */
+
+        /*-
+         * Since the former  M  is now  B  and the former  B  is now  A,
+         * (**) translates into
+         *       sign*Y*a  ==  D*A + B    (mod |n|),
+         * i.e.
+         *       sign*Y*a - D*A  ==  B    (mod |n|).
+         * Similarly, (*) translates into
+         *      -sign*X*a  ==  A          (mod |n|).
+         *
+         * Thus,
+         *   sign*Y*a + D*sign*X*a  ==  B  (mod |n|),
+         * i.e.
+         *        sign*(Y + D*X)*a  ==  B  (mod |n|).
+         *
+         * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
+         *      -sign*X*a  ==  B   (mod |n|),
+         *       sign*Y*a  ==  A   (mod |n|).
+         * Note that  X  and  Y  stay non-negative all the time.
+         */
+
+        if (!OSSL_FSN_mul(tmp, D, X, ctx))
+            goto err;
+        if (!OSSL_FSN_add(tmp, tmp, Y))
+            goto err;
+
+        M = Y; /* keep the OSSL_FSN object, the value does not
+                * matter */
+        Y = X;
+        X = tmp;
+        sign = -sign;
+    }
+
+    /*-
+     * The while loop (Euclid's algorithm) ends when
+     *      A == gcd(a,n);
+     * we have
+     *       sign*Y*a  ==  A  (mod |n|),
+     * where  Y  is non-negative.
+     */
+
+    if (sign < 0) {
+        if (!OSSL_FSN_sub(Y, n, Y))
+            goto err;
+    }
+
+    if (OSSL_FSN_is_one(A)) {
+        /* Y*a == 1  (mod |n|); A is exactly one. */
+        if (OSSL_FSN_cmp(Y, n) < 0) {
+            if (OSSL_FSN_copy_truncate(r, Y) == NULL)
+                goto err;
+        } else {
+            if (!OSSL_FSN_mod(r, Y, n, ctx))
+                goto err;
+        }
+    } else {
+        /* a and n are not coprime. */
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_NO_INVERSE);
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    OSSL_FSN_CTX_end(ctx, token);
+    return ret;
+}
+
+/*-
+ * OSSL_FSN_mod_inverse_prime_ctx_size_from_sizes() -- arena sizing for
+ * OSSL_FSN_mod_inverse_prime().
+ *
+ * The exponent e = m - 2 the operator computes internally is exactly
+ * m-wide, so |m|'s width stands in for it in the nested
+ * OSSL_FSN_mod_exp_mont_ctx_size_from_sizes() call.  Sizing goes directly to
+ * the Montgomery companion, since that is the path the operator takes.
+ */
+size_t OSSL_FSN_mod_inverse_prime_ctx_size_from_sizes(size_t r_dsize,
+    size_t a_dsize, size_t m_dsize, size_t in_mont_dsize)
+{
+    size_t ml = m_dsize;
+    /* A zero-limb modulus is invalid; OSSL_FSN_mod_inverse_prime() rejects it. */
+    if (ml == 0 || ossl_fsn_totalsize(ml) == 0)
+        return 0;
+
+    /* One frame holding the m-wide exponent scratch e = m - 2. */
+    size_t own_size = OSSL_FSN_CTX_size(1, 1, ml);
+
+    /*
+     * The nested OSSL_FSN_mod_exp_mont() call: base |a|, an m-wide
+     * exponent, modulus |m|, and the caller's Montgomery context, if any,
+     * passed on as is.
+     */
+    size_t nested_size = OSSL_FSN_mod_exp_mont_ctx_size_from_sizes(r_dsize,
+        a_dsize, ml, ml, in_mont_dsize);
+    return ossl_fsn_ctx_add_size(own_size, nested_size);
+}
+
+size_t OSSL_FSN_mod_inverse_prime_ctx_size_from_nums(const OSSL_FSN *r,
+    const OSSL_FSN *a, const OSSL_FSN *m, OSSL_FSN_MONT_CTX *in_mont)
+{
+    if (a == NULL || m == NULL)
+        return 0;
+
+    return OSSL_FSN_mod_inverse_prime_ctx_size_from_sizes(OSSL_FSN_size_limbs(r),
+        a->dsize, m->dsize,
+        in_mont == NULL ? 0 : OSSL_FSN_size_limbs(in_mont->N));
+}
+
+/*-
+ * OSSL_FSN_mod_inverse_prime() computes the modular multiplicative inverse
+ * of |a| modulo the prime |m| as  a^(m-2) mod m,  a Montgomery fixed-window
+ * exponentiation via OSSL_FSN_mod_exp_mont().
+ *
+ * Constant-time profile:
+ *   - The exponent e = m - 2 derives from the modulus alone, so it is
+ *     public in all intended uses; the fixed-window loop iterates over the
+ *     exponent's full allocated width, so the base may be secret: nothing
+ *     branches on its value.  What may leak is limited to the operand
+ *     widths and the modulus.
+ *   - |m| is public: OSSL_FSN_mod_exp_mont() branches on it (the oddness
+ *     check, the m == 1 early exit, the R mod N special case).
+ *
+ * Preconditions (unchecked beyond what OSSL_FSN_mod_exp_mont() enforces):
+ *   - |m| must be prime.  A composite modulus makes the result garbage,
+ *     not an error: the Fermat relation simply does not hold.
+ *   - |m| must be odd; OSSL_FSN_mod_exp_mont() rejects even moduli, so the
+ *     prime 2 and zero are diagnosed, while m == 1 (odd, not prime) yields
+ *     0 through that function's early exit.
+ * a == 0 (mod m) yields 0, which is not an inverse; callers are expected
+ * to handle that case, typically with a retry / reject loop.  The
+ * constant-time profile above requires |a| reduced mod m and m-wide; an
+ * unreduced |a| is still handled correctly, but not in constant time.
+ */
+int OSSL_FSN_mod_inverse_prime(OSSL_FSN *r, const OSSL_FSN *a, const OSSL_FSN *m,
+    OSSL_FSN_CTX *ctx, OSSL_FSN_MONT_CTX *in_mont)
+{
+    const void *token = OSSL_FSN_CTX_start(ctx);
+    OSSL_FSN *e = NULL;
+    int ret = 0;
+
+    if (token == NULL)
+        return 0;
+    if (ossl_unlikely(r == NULL || a == NULL || m == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+    /* OSSL_FSN_mod_exp_mont() validates the modulus further (odd, m != 1). */
+    if (m->dsize <= 0) {
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    /* e = m - 2, exactly m-wide; 2 is the shared static constant. */
+    if ((e = OSSL_FSN_CTX_get_limbs(ctx, token, (size_t)m->dsize)) == NULL)
+        goto err;
+    if (!OSSL_FSN_sub(e, m, &ossl_fsn_static_const_2_storage.fsn))
+        goto err;
+
+    ret = OSSL_FSN_mod_exp_mont(r, a, e, m, ctx, in_mont);
+
+err:
+    OSSL_FSN_CTX_end(ctx, token);
+    return ret;
+}

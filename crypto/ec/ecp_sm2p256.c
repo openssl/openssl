@@ -17,8 +17,8 @@
 #include <string.h>
 #include <openssl/err.h>
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h" /* ossl_fsn_get_words(), ossl_fsn_get_dsize() */
 #include "ec_local.h"
 #include "internal/common.h"
 #include "internal/constant_time.h"
@@ -586,7 +586,7 @@ err:
 }
 
 /*
- * Single secret-scalar multiplication shared by the BIGNUM and OSSL_FN entry
+ * Single secret-scalar multiplication shared by the BIGNUM and OSSL_FSN entry
  * points: out = k*point, or k*generator when point is NULL.  The scalar is
  * supplied as the P256 fixed-width limb array; the point coordinates stay
  * BIGNUMs.  This is the only place the generator-precomputation / variable-point
@@ -602,7 +602,7 @@ static int ecp_sm2p256_mul_one(const EC_GROUP *group, P256_POINT *out,
 
     /*
      * The scalar is secret (e.g. the SM2 signature nonce k, or a private key
-     * reaching here through mul_fn).  Mark it so that under
+     * reaching here through mul_fsn).  Mark it so that under
      * enable-ct-validation any branch or memory index depending on it in the
      * multiplication below is flagged by Valgrind.
      */
@@ -638,22 +638,22 @@ static int ecp_sm2p256_mul_one(const EC_GROUP *group, P256_POINT *out,
 
 /*
  * Write a P256_POINT result into r.  The result may be secret (an ECDH shared
- * point), so store the coordinates through the fixed-width OSSL_FN
+ * point), so store the coordinates through the fixed-width OSSL_FSN
  * representation: bn_release() normalises 'top' in constant time, unlike
  * bn_set_words(), which leaks the leading-zero-limb count via timing.
  */
 static int ecp_sm2p256_set_result(EC_POINT *r, const P256_POINT *p)
 {
-    OSSL_FN *rx = NULL, *ry = NULL, *rz = NULL;
+    OSSL_FSN *rx = NULL, *ry = NULL, *rz = NULL;
     int ok;
 
-    ok = (rx = bn_acquire_ossl_fn(r->X, P256_LIMBS)) != NULL
-        && (ry = bn_acquire_ossl_fn(r->Y, P256_LIMBS)) != NULL
-        && (rz = bn_acquire_ossl_fn(r->Z, P256_LIMBS)) != NULL
-        && ossl_fn_set_words(rx, p->X, P256_LIMBS)
-        && ossl_fn_set_words(ry, p->Y, P256_LIMBS)
-        && ossl_fn_set_words(rz, p->Z, P256_LIMBS);
-    r->Z_is_one = OSSL_FN_is_one(rz);
+    ok = (rx = bn_acquire_ossl_fsn(r->X, P256_LIMBS)) != NULL
+        && (ry = bn_acquire_ossl_fsn(r->Y, P256_LIMBS)) != NULL
+        && (rz = bn_acquire_ossl_fsn(r->Z, P256_LIMBS)) != NULL
+        && ossl_fsn_set_words(rx, p->X, P256_LIMBS)
+        && ossl_fsn_set_words(ry, p->Y, P256_LIMBS)
+        && ossl_fsn_set_words(rz, p->Z, P256_LIMBS);
+    r->Z_is_one = OSSL_FSN_is_one(rz);
     if (rx != NULL)
         bn_release(r->X, P256_LIMBS);
     if (ry != NULL)
@@ -727,27 +727,27 @@ err:
 }
 
 /*-
- * OSSL_FN counterpart of ecp_sm2p256_points_mul() and the 'mul_fn' slot of this
- * method, reached from EC_POINT_mul_fn() when the scalar is secret.  It covers
- * the single-scalar cases, which is all a secret scalar needs; the multi-scalar
- * sum is verification-only and has no secret to protect.
+ * OSSL_FSN counterpart of ecp_sm2p256_points_mul() and the 'mul_fsn' slot of
+ * this method, reached from EC_POINT_mul_fsn() when the scalar is secret.  It
+ * covers the single-scalar cases, which is all a secret scalar needs; the
+ * multi-scalar sum is verification-only and has no secret to protect.
  *
  * The scalar's limbs are already the P256 working array's format, so they are
- * used straight out of the OSSL_FN when it is at least field-wide (no copy, no
+ * used straight out of the OSSL_FSN when it is at least field-wide (no copy, no
  * BIGNUM); a wider value is rejected, a narrower one is zero-extended.  The
  * point coordinates and the result stay BIGNUMs, as in the BIGNUM version.
  */
-static int ecp_sm2p256_points_mul_fn(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point, OSSL_FN_CTX *ctx)
+static int ecp_sm2p256_points_mul_fsn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FSN *scalar, const EC_POINT *point, OSSL_FSN_CTX *ctx)
 {
     int ret = 0;
-    const OSSL_FN_ULONG *w;
+    const OSSL_FSN_ULONG *w;
     size_t dsize, i;
     const BN_ULONG *k;
     ALIGN32 BN_ULONG kbuf[P256_LIMBS] = { 0 };
     ALIGN32 P256_POINT p;
 
-    (void)ctx; /* fixed-width vectors; no OSSL_FN scratch context needed */
+    (void)ctx; /* fixed-width vectors; no OSSL_FSN scratch context needed */
 
     if (scalar == NULL) {
         ECerr(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -756,8 +756,8 @@ static int ecp_sm2p256_points_mul_fn(const EC_GROUP *group, EC_POINT *r,
     if (point != NULL && EC_POINT_is_at_infinity(group, point))
         return EC_POINT_set_to_infinity(group, r);
 
-    w = ossl_fn_get_words(scalar);
-    dsize = ossl_fn_get_dsize(scalar);
+    w = ossl_fsn_get_words(scalar);
+    dsize = ossl_fsn_get_dsize(scalar);
     for (i = P256_LIMBS; i < dsize; i++) {
         if (w[i] != 0) {
             ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
@@ -781,11 +781,11 @@ err:
     return ret;
 }
 
-/* This method needs no scratch context; see ecp_sm2p256_points_mul_fn(). */
-static size_t ecp_sm2p256_points_mul_fn_ctx_size(const EC_GROUP *group,
-    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+/* This method needs no scratch context; see ecp_sm2p256_points_mul_fsn(). */
+static size_t ecp_sm2p256_points_mul_fsn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FSN *scalar, const EC_POINT *point)
 {
-    return OSSL_FN_CTX_SIZE_NONE;
+    return OSSL_FSN_CTX_SIZE_NONE;
 }
 
 static int ecp_sm2p256_field_mul(const EC_GROUP *group, BIGNUM *r,
@@ -892,8 +892,8 @@ const EC_METHOD *EC_GFp_sm2p256_method(void)
         0, /* ladder_step */
         0, /* ladder_post */
         0, /* group_full_init */
-        ecp_sm2p256_points_mul_fn, /* mul_fn */
-        ecp_sm2p256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ecp_sm2p256_points_mul_fsn, /* mul_fsn */
+        ecp_sm2p256_points_mul_fsn_ctx_size, /* mul_fsn_ctx_size */
         ossl_ec_GFp_simple_point_get_affine_coords_bytes
     };
 

@@ -1,0 +1,532 @@
+/*
+ * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/**
+ * @file A set of internal functions to manipulate the OSSL_FSN d array, and
+ * for introspection.
+ */
+
+#ifndef OPENSSL_FSN_INTERN_H
+#define OPENSSL_FSN_INTERN_H
+#pragma once
+
+#include <stdbool.h>
+#include <openssl/bn.h> /* For BN_GENCB */
+#include "internal/common.h"
+#include "internal/safe_math.h"
+#include "crypto/fsn.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+ * Context-size composition helpers, shared by all the *_ctx_size_from_*()
+ * functions, which all compose nested arena budgets the same way: sum the
+ * operation's own scratch frame with the largest nested frame it may need.
+ *
+ * ossl_fsn_ctx_add_size() adds two sizes overflow-safely, and
+ * ossl_fsn_ctx_max_size() picks the larger of two sequential frame budgets.
+ * Both honour the *_ctx_size_from_*() result convention: 0 (error) is sticky,
+ * OSSL_FSN_CTX_SIZE_NONE counts as 0, and a resulting 0 maps back to
+ * OSSL_FSN_CTX_SIZE_NONE.
+ */
+static ossl_inline ossl_unused size_t ossl_fsn_ctx_add_size(size_t a, size_t b)
+{
+    if (ossl_unlikely(a == 0 || b == 0))
+        return 0;
+    a = (a == OSSL_FSN_CTX_SIZE_NONE) ? 0 : a;
+    b = (b == OSSL_FSN_CTX_SIZE_NONE) ? 0 : b;
+    if (ossl_unlikely(b > OSSL_SAFE_MATH_MAXU(size_t) - a))
+        return 0;
+    a += b;
+    return (a == 0) ? OSSL_FSN_CTX_SIZE_NONE : a;
+}
+
+static ossl_inline ossl_unused size_t ossl_fsn_ctx_max_size(size_t a, size_t b)
+{
+    if (ossl_unlikely(a == 0 || b == 0))
+        return 0;
+    a = (a == OSSL_FSN_CTX_SIZE_NONE) ? 0 : a;
+    b = (b == OSSL_FSN_CTX_SIZE_NONE) ? 0 : b;
+    a = (a > b) ? a : b;
+    return (a == 0) ? OSSL_FSN_CTX_SIZE_NONE : a;
+}
+
+#if OSSL_FSN_BYTES == 4
+/* 32-bit systems */
+#define OSSL_FSN_ULONG_C(n) UINT32_C(n)
+#define OSSL_FSN_ULONG64_C(hi32, lo32) OSSL_FSN_ULONG_C(lo32), OSSL_FSN_ULONG_C(hi32)
+#elif OSSL_FSN_BYTES == 8
+/* 64-bit systems */
+#define OSSL_FSN_ULONG_C(n) UINT64_C(n)
+#define OSSL_FSN_ULONG64_C(hi32, lo32) (OSSL_FSN_ULONG_C(hi32) << 32 | OSSL_FSN_ULONG_C(lo32))
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
+
+/*
+ * OSSL_FSN_LIMBS_N gives the number of OSSL_FSN_ULONG limbs needed to hold a
+ * number of bits, rounded up to a whole limb (exact for the group primes,
+ * whose bit counts are all multiples of the limb width).
+ */
+#define OSSL_FSN_LIMBS_N(nbits) (((nbits) + (OSSL_FSN_BITS - 1)) / OSSL_FSN_BITS)
+
+/*
+ * OSSL_FSN_HEADER_FIELDS is the shared field list between the runtime
+ * struct ossl_fsn_st (which appends a flexible array member) and the
+ * static-constant union shapes declared by OSSL_FSN_STATIC_DECLARE (which
+ * append a fixed-size array).  Using the same macro for both guarantees
+ * the header layouts stay in lockstep.
+ */
+#define OSSL_FSN_HEADER_FIELDS                                       \
+    /* Flag: alloced with OSSL_FSN_new() or OSSL_FSN_secure_new() */ \
+    unsigned int is_dynamically_allocated : 1;                       \
+    /* Flag: alloced with OSSL_FSN_secure_new() */                   \
+    unsigned int is_securely_allocated : 1;                          \
+                                                                     \
+    /*                                                               \
+     * The size of the d array that follows, in number of            \
+     * OSSL_FSN_ULONG.  The d array stores the number itself.        \
+     *                                                               \
+     * Note: |dsize| is an int, because it turns out that some       \
+     * lower level (possibly assembler) functions expect that type   \
+     * (especially, that type size).                                 \
+     * This deviates from the design in                              \
+     * doc/designs/fixed-size-large-numbers.md                       \
+     */                                                              \
+    int dsize
+
+struct ossl_fsn_st {
+    OSSL_FSN_HEADER_FIELDS;
+    OSSL_FSN_ULONG d[];
+};
+
+/*
+ * Statically-allocated OSSL_FSN storage for constants.
+ *
+ * These macros allow an OSSL_FSN to exist in .rodata, statically initialized
+ * at compile time.  This is used to back fixed constants (group parameters,
+ * mathematical constants, etc.) so that they can be passed to OSSL_FSN
+ * functions directly, without materialization at runtime.
+ *
+ * The underlying mechanism is a union of the flexible-array-member OSSL_FSN
+ * type and a fixed-size-array type with identical header layout.  The
+ * fixed-size member carries the actual limbs; reading through the OSSL_FSN
+ * member is well-defined because both members share the same initial
+ * header fields, spelled identically through OSSL_FSN_HEADER_FIELDS.
+ */
+
+/*
+ * OSSL_FSN_STATIC_DECLARE(name, nlimbs) declares a union type named
+ * ossl_fsn_static_##name and an extern storage object of that type.
+ *
+ *   name    the suffix used for the union type and storage object
+ *   nlimbs  the number of OSSL_FSN_ULONG limbs in the fixed array
+ */
+#define OSSL_FSN_STATIC_DECLARE(name, nlimbs) \
+    union ossl_fsn_static_##name {            \
+        OSSL_FSN fsn;                         \
+        struct {                              \
+            OSSL_FSN_HEADER_FIELDS;           \
+            OSSL_FSN_ULONG d[nlimbs];         \
+        } fixed;                              \
+    };                                        \
+    extern const union ossl_fsn_static_##name \
+        ossl_fsn_static_##name##_storage
+
+/*
+ * OSSL_FSN_STATIC_DEFINE(name, nlimbs, ...) defines the storage object
+ * declared by OSSL_FSN_STATIC_DECLARE, with the given limb values.
+ *
+ *   ...     the limb values, in little-endian order (least significant
+ *           first), exactly as they would appear in a static array
+ *           initializer for an OSSL_FSN_ULONG array
+ *
+ * Access the OSSL_FSN view of the storage object as
+ *   &ossl_fsn_static_##name##_storage.fsn
+ * Access the raw limbs (as a BN_ULONG array, since OSSL_FSN_ULONG ==
+ * BN_ULONG) as
+ *   (BN_ULONG *)ossl_fsn_static_##name##_storage.fixed.d
+ */
+#define OSSL_FSN_STATIC_DEFINE(name, nlimbs, ...)                  \
+    const union ossl_fsn_static_##name                             \
+        ossl_fsn_static_##name##_storage                           \
+        = {                                                        \
+              .fixed = { .dsize = (nlimbs), .d = { __VA_ARGS__ } } \
+          }
+
+/**
+ * Copy a limb array into an OSSL_FSN at its full allocated width, zero-padding as needed.
+ *
+ * @param[out]  f       the destination.
+ * @param[in]   words   the limbs to copy from, little-endian order.
+ * @param[in]   limbs   the number of limbs available in words; must not exceed f's width.
+ * @returns             1 on success, 0 on error.
+ */
+int ossl_fsn_set_words(OSSL_FSN *f, const OSSL_FSN_ULONG *words, size_t limbs);
+/**
+ * Read-only access to an OSSL_FSN's limb array.
+ *
+ * @param[in]   f       the OSSL_FSN to read.
+ * @returns             the limb array, f->dsize limbs wide, or NULL if the
+ *                      value has no limb storage (a zero value's view).
+ */
+const OSSL_FSN_ULONG *ossl_fsn_get_words(const OSSL_FSN *f);
+
+/**
+ * The allocated width of an OSSL_FSN, in limbs.
+ *
+ * @param[in]   f       the OSSL_FSN to measure.
+ * @returns             the number of limbs (dsize).
+ */
+size_t ossl_fsn_get_dsize(const OSSL_FSN *f);
+
+/**
+ * The product of the primes 3..751 (see SP 800-89 5.3.3 step f), the
+ * small-factors constant used by primality-related key validation.
+ *
+ * @returns             a read-only view on static constant storage; never
+ *                      NULL, never to be freed, cleared, or written to.
+ */
+const OSSL_FSN *ossl_fsn_get0_small_factors(void);
+
+/**
+ * Set the negative flag of an OSSL_FSN.  This is BIGNUM-compatibility
+ * bookkeeping for values that pass through the BIGNUM layer; OSSL_FSN
+ * arithmetic itself is unsigned.
+ *
+ * @param[in,out]  f    the OSSL_FSN to mark.
+ * @param[in]      neg  true to mark negative, false to mark non-negative.
+ */
+void ossl_fsn_set_negative(OSSL_FSN *f, bool neg);
+
+/**
+ * Query the negative flag of an OSSL_FSN; see ossl_fsn_set_negative().
+ *
+ * @param[in]   f       the OSSL_FSN to query.
+ * @returns             true if marked negative, false otherwise.
+ */
+bool ossl_fsn_is_negative(const OSSL_FSN *f);
+/**
+ * Query whether an OSSL_FSN was dynamically allocated (as opposed to
+ * static constant storage or an arena sub-allocation).
+ *
+ * @param[in]   f       the OSSL_FSN to query.
+ * @returns             true if dynamically allocated, false otherwise.
+ */
+bool ossl_fsn_is_dynamically_allocated(const OSSL_FSN *f);
+/**
+ * Query whether an OSSL_FSN's storage is secure memory.
+ *
+ * @param[in]   f       the OSSL_FSN to query.
+ * @returns             true if securely allocated, false otherwise.
+ */
+bool ossl_fsn_is_securely_allocated(const OSSL_FSN *f);
+
+/**
+ * Add two limb vectors of possibly different widths into a result of its
+ * own width: r = a + b, truncated or zero-padded to rl limbs.
+ *
+ * @param[out]  r       result, rl limbs.
+ * @param[in]   rl      number of limbs in r.
+ * @param[in]   a       first addend, al limbs.
+ * @param[in]   al      number of limbs in a.
+ * @param[in]   b       second addend, bl limbs.
+ * @param[in]   bl      number of limbs in b.
+ * @returns             the carry out of max(al, bl) limbs when rl <= max(al, bl),
+ *                      0 otherwise.  Note that this does NOT indicate whether
+ *                      the result fits in rl limbs; non-zero high limbs may have
+ *                      been truncated without generating a carry.
+ */
+OSSL_FSN_ULONG ossl_fsn_add_words(OSSL_FSN_ULONG *r, size_t rl,
+    const OSSL_FSN_ULONG *a, size_t al,
+    const OSSL_FSN_ULONG *b, size_t bl);
+/**
+ * Subtract two limb vectors of possibly different widths from a result of
+ * its own width: r = a - b, over rl limbs.
+ *
+ * @param[out]  r       result, rl limbs.
+ * @param[in]   rl      number of limbs in r.
+ * @param[in]   a       minuend, al limbs.
+ * @param[in]   al      number of limbs in a.
+ * @param[in]   b       subtrahend, bl limbs.
+ * @param[in]   bl      number of limbs in b.
+ * @returns             the borrow out of max(al, bl) limb
+ *                      (i.e. borrow before truncation).
+ */
+OSSL_FSN_ULONG ossl_fsn_sub_words(OSSL_FSN_ULONG *r, size_t rl,
+    const OSSL_FSN_ULONG *a, size_t al,
+    const OSSL_FSN_ULONG *b, size_t bl);
+
+/**
+ * Generate a DSA/ECDSA nonce 0 <= out < range, hedged against RNG failure.
+ * The nonce mixes in |priv| and |message| alongside fresh random bytes, so an
+ * RNG weakness is not fatal as long as |priv| stays secret.  This is the
+ * OSSL_FSN analogue of ossl_bn_gen_dsa_nonce_fixed_top(); |out| must be sized
+ * to hold at least num_bits(|range|) bits.  |libctx| is used to fetch the
+ * digest and for RNG access.
+ *
+ * @param[out]  out          the nonce.
+ * @param[in]   range        the exclusive upper bound of the nonce range.
+ * @param[in]   priv         the private key mixed into the nonce.
+ * @param[in]   message      the message bytes mixed into the nonce.
+ * @param[in]   message_len  the length of message, in bytes.
+ * @param[in]   libctx       the library context for digest and RNG access.
+ * @returns                  1 on success, 0 on error.
+ */
+int ossl_fsn_gen_dsa_nonce(OSSL_FSN *out, const OSSL_FSN *range,
+    const OSSL_FSN *priv, const unsigned char *message,
+    size_t message_len, OSSL_LIB_CTX *libctx);
+
+/**
+ * Miller-Rabin probabilistic primality test (FIPS 186-4 C.3.1, or the
+ * enhanced variant C.3.2 when |enhanced| is nonzero).
+ *
+ * @param[in]   w           the candidate to test.
+ * @param[in]   iterations  the number of rounds.
+ * @param[in]   ctx         the OSSL_FSN_CTX arena for scratch.
+ * @param[in]   cb          an optional BN_GENCB callback, may be NULL.
+ * @param[in]   enhanced    nonzero to use the enhanced C.3.2 variant.
+ * @param[out]  status      the primality verdict (a BN_PRIMETEST_* code).
+ * @param[in]   libctx      the library context.
+ * @returns                 1 on success (|status| is set), 0 on error.
+ */
+int ossl_fsn_miller_rabin_is_prime(const OSSL_FSN *w, int iterations,
+    OSSL_FSN_CTX *ctx, BN_GENCB *cb, int enhanced, int *status,
+    OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_miller_rabin_is_prime()
+ * needs for a candidate of width |w|->dsize.  To size from the width
+ * alone, use ossl_fsn_miller_rabin_is_prime_ctx_size_from_sizes().
+ *
+ * @param[in]   w       the candidate.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_miller_rabin_is_prime_ctx_size_from_nums(const OSSL_FSN *w);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_miller_rabin_is_prime() needs,
+ * from the operand widths alone.
+ *
+ * @param[in]   w_dsize  The width of the candidate, in limbs
+ * @returns              The arena payload size, in bytes.
+ * @retval      0        on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_miller_rabin_is_prime_ctx_size_from_sizes(size_t w_dsize);
+
+/**
+ * Test whether |w| is probably prime, clamping |checks| to a minimum
+ * round count based on the candidate's width.
+ *
+ * @param[in]   w                  the candidate to test.
+ * @param[in]   checks             the requested number of rounds.
+ * @param[in]   ctx                the OSSL_FSN_CTX arena for scratch.
+ * @param[in]   do_trial_division  nonzero to weed out small factors first.
+ * @param[in]   cb                 an optional BN_GENCB callback, may be NULL.
+ * @param[in]   libctx             the library context.
+ * @returns                        1 when probably prime, 0 when composite,
+ *                                 -1 on error.
+ */
+int ossl_fsn_check_prime(const OSSL_FSN *w, int checks, OSSL_FSN_CTX *ctx,
+    int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_check_prime() needs for a
+ * candidate of width |w|->dsize.
+ *
+ * @param[in]   w       the candidate.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_check_prime_ctx_size_from_nums(const OSSL_FSN *w);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_check_prime() needs, from the
+ * operand widths alone.
+ *
+ * @param[in]   w_dsize  The width of the candidate, in limbs
+ * @returns              The arena payload size, in bytes.
+ * @retval      0        on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_check_prime_ctx_size_from_sizes(size_t w_dsize);
+
+/**
+ * Test whether |w| is probably prime, for key generation.  Always
+ * trial-divides; |checks| is used unclamped.
+ *
+ * @param[in]   w           the candidate to test.
+ * @param[in]   checks      the number of rounds.
+ * @param[in]   ctx         the OSSL_FSN_CTX arena for scratch.
+ * @param[in]   cb          an optional BN_GENCB callback, may be NULL.
+ * @param[in]   libctx      the library context.
+ * @returns                 1 when probably prime, 0 when composite,
+ *                          -1 on error.
+ */
+int ossl_fsn_check_generated_prime(const OSSL_FSN *w, int checks,
+    OSSL_FSN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_check_generated_prime()
+ * needs for a candidate of width |w|->dsize.
+ *
+ * @param[in]   w       the candidate.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_check_generated_prime_ctx_size_from_nums(const OSSL_FSN *w);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_check_generated_prime() needs,
+ * from the operand widths alone.
+ *
+ * @param[in]   w_dsize  The width of the candidate, in limbs
+ * @returns              The arena payload size, in bytes.
+ * @retval      0        on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_check_generated_prime_ctx_size_from_sizes(size_t w_dsize);
+
+/**
+ * Generate a probable prime (an RSA p or q candidate) per FIPS 186-5
+ * A.1.6 (Steps 4 & 5), optionally enforcing |p| congruent to |c| mod 8.
+ * |p| and |Xpout| must have room for nlen/2 bits; one limb of headroom
+ * over that width lets a carry past the width be detected rather than
+ * truncated.  Internally generated auxiliary primes and random draws
+ * that are not returned are cleared.
+ *
+ * @param[out]  p       the probable prime.
+ * @param[out]  Xpout   the accepted seed corresponding to p.
+ * @param[out]  p1      the auxiliary prime, may be NULL.
+ * @param[out]  p2      the auxiliary prime, may be NULL.
+ * @param[in]   Xp      the input seed, or NULL to generate one.
+ * @param[in]   Xp1     the auxiliary seed, may be NULL.
+ * @param[in]   Xp2     the auxiliary seed, may be NULL.
+ * @param[in]   nlen    the target modulus length, in bits.
+ * @param[in]   e       the public exponent the prime must suit.
+ * @param[in]   ctx     the OSSL_FSN_CTX arena for scratch.
+ * @param[in]   cb      an optional BN_GENCB callback, may be NULL.
+ * @param[in]   c       nonzero to enforce p congruent to c mod 8.
+ * @param[in]   libctx  the library context.
+ * @returns             1 on success, 0 on error.
+ */
+int ossl_fsn_rsa_fips186_5_gen_prob_primes(OSSL_FSN *p, OSSL_FSN *Xpout,
+    OSSL_FSN *p1, OSSL_FSN *p2, const OSSL_FSN *Xp, const OSSL_FSN *Xp1,
+    const OSSL_FSN *Xp2, int nlen, const OSSL_FSN *e, OSSL_FSN_CTX *ctx,
+    BN_GENCB *cb, uint32_t c, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that
+ * ossl_fsn_rsa_fips186_5_gen_prob_primes() needs.  |p1|, |p2|, |Xp1|
+ * and |Xp2| may be NULL, as for the operation.
+ *
+ * @param[in]   p       the probable prime.
+ * @param[in]   Xpout   the accepted seed.
+ * @param[in]   p1      the auxiliary prime, may be NULL.
+ * @param[in]   p2      the auxiliary prime, may be NULL.
+ * @param[in]   Xp1     the auxiliary seed, may be NULL.
+ * @param[in]   Xp2     the auxiliary seed, may be NULL.
+ * @param[in]   nlen    the target modulus length, in bits.
+ * @param[in]   e       the public exponent the prime must suit.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_rsa_fips186_5_gen_prob_primes_ctx_size_from_nums(
+    const OSSL_FSN *p, const OSSL_FSN *Xpout, const OSSL_FSN *p1,
+    const OSSL_FSN *p2, const OSSL_FSN *Xp1, const OSSL_FSN *Xp2, int nlen,
+    const OSSL_FSN *e);
+
+/**
+ * Calculate the arena payload size that
+ * ossl_fsn_rsa_fips186_5_gen_prob_primes() needs, from the operand widths
+ * alone.
+ *
+ * @param[in]   p_dsize      The width of the probable prime, in limbs
+ * @param[in]   Xpout_dsize  The width of the accepted seed, in limbs
+ * @param[in]   p1_dsize     The width of the first auxiliary prime, in
+ *                           limbs, or 0 if absent
+ * @param[in]   p2_dsize     The width of the second auxiliary prime, in
+ *                           limbs, or 0 if absent
+ * @param[in]   Xp1_dsize    The width of the first auxiliary seed, in
+ *                           limbs, or 0 if absent
+ * @param[in]   Xp2_dsize    The width of the second auxiliary seed, in
+ *                           limbs, or 0 if absent
+ * @param[in]   nlen         The RSA modulus size, in bits
+ * @param[in]   e_dsize      The width of the public exponent, in limbs
+ * @returns                  The arena payload size, in bytes.
+ * @retval      0            on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_rsa_fips186_5_gen_prob_primes_ctx_size_from_sizes(size_t p_dsize,
+    size_t Xpout_dsize, size_t p1_dsize, size_t p2_dsize, size_t Xp1_dsize,
+    size_t Xp2_dsize, int nlen, size_t e_dsize);
+
+/**
+ * Generate a probable prime factor per FIPS 186-5 B.9 from two
+ * auxiliary primes using the Chinese Remainder Theorem.  Same width
+ * contract as ossl_fsn_rsa_fips186_5_gen_prob_primes().
+ *
+ * @param[out]  Y       the derived prime factor.
+ * @param[out]  X       the accepted seed corresponding to Y.
+ * @param[in]   Xin     the input seed, or NULL to generate one.
+ * @param[in]   r1      the first auxiliary prime.
+ * @param[in]   r2      the second auxiliary prime.
+ * @param[in]   nlen    the target modulus length, in bits.
+ * @param[in]   e       the public exponent the prime must suit.
+ * @param[in]   ctx     the OSSL_FSN_CTX arena for scratch.
+ * @param[in]   cb      an optional BN_GENCB callback, may be NULL.
+ * @param[in]   c       nonzero to enforce Y congruent to c mod 8.
+ * @param[in]   libctx  the library context.
+ * @returns             1 on success, 0 on error.
+ */
+int ossl_fsn_rsa_fips186_5_derive_prime(OSSL_FSN *Y, OSSL_FSN *X,
+    const OSSL_FSN *Xin, const OSSL_FSN *r1, const OSSL_FSN *r2, int nlen,
+    const OSSL_FSN *e, OSSL_FSN_CTX *ctx, BN_GENCB *cb, uint32_t c,
+    OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that
+ * ossl_fsn_rsa_fips186_5_derive_prime() needs.
+ *
+ * @param[in]   Y       the derived prime.
+ * @param[in]   X       the accepted seed.
+ * @param[in]   r1      the first auxiliary prime.
+ * @param[in]   r2      the second auxiliary prime.
+ * @param[in]   nlen    the target modulus length, in bits.
+ * @param[in]   e       the public exponent the prime must suit.
+ * @returns             The arena payload size, in bytes.
+ * @retval      0       on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_rsa_fips186_5_derive_prime_ctx_size_from_nums(const OSSL_FSN *Y,
+    const OSSL_FSN *X, const OSSL_FSN *r1, const OSSL_FSN *r2, int nlen,
+    const OSSL_FSN *e);
+
+/**
+ * Calculate the arena payload size that ossl_fsn_rsa_fips186_5_derive_prime()
+ * needs, from the operand widths alone.
+ *
+ * @param[in]   Y_dsize   The width of the derived prime, in limbs
+ * @param[in]   X_dsize   The width of the accepted seed, in limbs
+ * @param[in]   r1_dsize  The width of the first auxiliary prime, in
+ *                        limbs
+ * @param[in]   r2_dsize  The width of the second auxiliary prime, in
+ *                        limbs
+ * @param[in]   nlen      The RSA modulus size, in bits
+ * @param[in]   e_dsize   The width of the public exponent, in limbs
+ * @returns               The arena payload size, in bytes.
+ * @retval      0         on arithmetic overflow or invalid input.
+ */
+size_t ossl_fsn_rsa_fips186_5_derive_prime_ctx_size_from_sizes(size_t Y_dsize,
+    size_t X_dsize, size_t r1_dsize, size_t r2_dsize, int nlen, size_t e_dsize);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

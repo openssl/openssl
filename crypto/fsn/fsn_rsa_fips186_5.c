@@ -1,0 +1,569 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/*
+ * FIPS 186-5 RSA probable-prime helpers, as used by RSA SP 800-56B key
+ * generation.  FIPS 186-4 Table B.1 specifies RSA modulus lengths of 2048
+ * and 3072 bits with the min/max total length of the auxiliary primes;
+ * FIPS 186-5 Table A.1 adds an entry for 4096, included here.
+ *
+ * The primality verdicts (ossl_fsn_check_generated_prime()) intentionally
+ * branch on the candidates' values; that is the whole point of the test.
+ * Everything else branches on public widths and round counts only.
+ */
+#include <openssl/err.h>
+#include "internal/mem_alloc_utils.h"
+#include "crypto/fsnerr.h"
+#include "crypto/bn.h" /* For BN_GENCB / BN_GENCB_call and BN_R_* retryable errors */
+#include "crypto/fsn_constants.h" /* For the inverse-square-root constant */
+#include "fsn_local.h"
+
+/*
+ * Refer to FIPS 186-5 Table B.1 for minimum rounds of Miller Rabin
+ * required for generation of RSA aux primes (p1, p2, q1 and q2).
+ */
+static int ossl_fsn_rsa_fips186_5_aux_prime_MR_rounds(int nbits)
+{
+    if (nbits >= 4096)
+        return 44;
+    if (nbits >= 3072)
+        return 41;
+    if (nbits >= 2048)
+        return 38;
+    return 0; /* Error */
+}
+
+/*
+ * Refer to FIPS 186-5 Table B.1 for minimum rounds of Miller Rabin
+ * required for generation of RSA primes (p and q)
+ */
+static int ossl_fsn_rsa_fips186_5_prime_MR_rounds(int nbits)
+{
+    if (nbits >= 3072)
+        return 4;
+    if (nbits >= 2048)
+        return 5;
+    return 0; /* Error */
+}
+
+/*
+ * FIPS 186-5 Table A.1. "Min length of auxiliary primes p1, p2, q1, q2".
+ * (FIPS 186-5 has an entry for >= 4096 bits).
+ *
+ * Params:
+ *     nbits The key size in bits.
+ * Returns:
+ *     The minimum size of the auxiliary primes or 0 if nbits is invalid.
+ */
+static int ossl_fsn_rsa_fips186_5_aux_prime_min_size(int nbits)
+{
+    if (nbits >= 4096)
+        return 201;
+    if (nbits >= 3072)
+        return 171;
+    if (nbits >= 2048)
+        return 141;
+    return 0;
+}
+
+/*
+ * FIPS 186-5 Table A.1 "Max of len(p1) + len(p2) and
+ * len(q1) + len(q2) for p,q Probable Primes".
+ * (FIPS 186-5 has an entry for >= 4096 bits).
+ * Params:
+ *     nbits The key size in bits.
+ *     c If this is non zero then the probable prime is congruent to c mod 8
+ *       and is 3 bits smaller
+ * Returns:
+ *     The maximum length or 0 if nbits is invalid.
+ */
+static int ossl_fsn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(int nbits,
+    uint32_t c)
+{
+    int reduce_bits = (c == 0) ? 0 : 3;
+
+    if (nbits >= 4096)
+        return 2030 - reduce_bits;
+    if (nbits >= 3072)
+        return 1518 - reduce_bits;
+    if (nbits >= 2048)
+        return 1007 - reduce_bits;
+    return 0;
+}
+
+/*
+ * Find the first odd integer that is a probable prime.
+ *
+ * See section FIPS 186-5 A.1.6 (Steps 4.2/5.2).
+ *
+ * Params:
+ *     Xp1 The passed in starting point to find a probably prime.
+ *     p1 The returned probable prime (first odd integer >= Xp1)
+ *     ctx An OSSL_FSN_CTX object.
+ *     rounds The number of Miller Rabin rounds
+ *     cb An optional callback.
+ *     libctx The library context for the primality test's random draws.
+ * Returns: 1 on success otherwise it returns 0.
+ */
+static int ossl_fsn_rsa_fips186_5_find_aux_prob_prime(const OSSL_FSN *Xp1,
+    OSSL_FSN *p1, OSSL_FSN_CTX *ctx, int rounds, BN_GENCB *cb,
+    OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    int i = 0;
+    int tmp = 0;
+
+    if (OSSL_FSN_copy(p1, Xp1) == NULL)
+        return 0;
+
+    /* Find the first odd number >= Xp1 that is probably prime */
+    for (;;) {
+        i++;
+        if (!BN_GENCB_call(cb, 0, i))
+            goto err;
+        /* MR test with trial division */
+        tmp = ossl_fsn_check_generated_prime(p1, rounds, ctx, cb, libctx);
+        if (tmp > 0)
+            break;
+        if (tmp < 0)
+            goto err;
+        /* Get next odd number */
+        if (!OSSL_FSN_add_word(p1, 2))
+            goto err;
+    }
+    if (!BN_GENCB_call(cb, 2, i))
+        goto err;
+    ret = 1;
+err:
+    return ret;
+}
+
+static ossl_inline int get_multiple_of_y_congruent_to_cmod8(OSSL_FSN *y,
+    const OSSL_FSN *r1r2x2, int c)
+{
+    int i = 0;
+
+    for (i = 0; i < 3; ++i) {
+        /* Check for Y = c mod 8 */
+        if ((OSSL_FSN_get_word(y) & 7) == (OSSL_FSN_ULONG)c)
+            return 1;
+        /* Y = Y + 2r1r2 */
+        if (!OSSL_FSN_add(y, y, r1r2x2))
+            return 0;
+    }
+    /* Fall through for y = y + 6 * r1r2 */
+    return 1;
+}
+
+/*
+ * Estimate the arena payload for ossl_fsn_rsa_fips186_5_derive_prime().
+ * The frame holds nine numbers: |base| of nlen/2 bits and |range| with one
+ * limb of headroom over that, the CRT modulus |r1r2x2|, the interim
+ * products |R| and |tmp|, and the congruence step |r1r2x2_step| of
+ * |r1| + |r2| + 1 limbs each, the doubled auxiliary prime |r1x2|, and
+ * |y1| and |g| of |Y|'s width.  The modular inverses, products and
+ * subtractions, the gcd and the primality checks it calls run
+ * sequentially within that frame, so their nested needs combine by
+ * maximum.
+ */
+size_t ossl_fsn_rsa_fips186_5_derive_prime_ctx_size_from_sizes(size_t Y_dsize,
+    size_t X_dsize, size_t r1_dsize, size_t r2_dsize, int nlen,
+    size_t e_dsize)
+{
+    int bits = nlen >> 1;
+
+    if (nlen <= 0 || bits <= 0 || ossl_fsn_totalsize(Y_dsize) == 0
+        || ossl_fsn_totalsize(r1_dsize) == 0 || ossl_fsn_totalsize(r2_dsize) == 0)
+        return 0;
+
+    size_t bits_limbs = (size_t)bits / OSSL_FSN_BITS
+        + ((size_t)bits % OSSL_FSN_BITS != 0);
+    size_t r1x2_limbs = r1_dsize + 1;
+    size_t r1r2x2_limbs = r1x2_limbs + r2_dsize;
+    size_t limbs = bits_limbs + (bits_limbs + 1) + 4 * r1r2x2_limbs + 1
+        + r1x2_limbs + 2 * Y_dsize;
+    size_t own = OSSL_FSN_CTX_size(1, 9, limbs);
+    /* R, tmp and mod are r1r2x2_limbs wide, y1 has |Y|'s width */
+    size_t inv1 = OSSL_FSN_mod_inverse_ctx_size_from_sizes(r1r2x2_limbs,
+        r1x2_limbs, r2_dsize);
+    size_t inv2 = OSSL_FSN_mod_inverse_ctx_size_from_sizes(r1r2x2_limbs,
+        r2_dsize, r1x2_limbs);
+    size_t mul1 = OSSL_FSN_mul_ctx_size_from_sizes(r1r2x2_limbs, r1r2x2_limbs,
+        r2_dsize);
+    size_t mul2 = OSSL_FSN_mul_ctx_size_from_sizes(r1r2x2_limbs, r1r2x2_limbs,
+        r1x2_limbs);
+    size_t mul3 = OSSL_FSN_mul_ctx_size_from_sizes(r1r2x2_limbs, r1x2_limbs,
+        r2_dsize);
+    size_t msub1 = OSSL_FSN_mod_sub_ctx_size_from_sizes(r1r2x2_limbs,
+        r1r2x2_limbs, r1r2x2_limbs, r1r2x2_limbs);
+    size_t msub2 = OSSL_FSN_mod_sub_ctx_size_from_sizes(Y_dsize, r1r2x2_limbs,
+        X_dsize, r1r2x2_limbs);
+    size_t gcd = OSSL_FSN_gcd_ctx_size_from_sizes(Y_dsize, e_dsize);
+    size_t prime = ossl_fsn_check_generated_prime_ctx_size_from_sizes(Y_dsize);
+    size_t nested = ossl_fsn_ctx_max_size(inv1,
+        ossl_fsn_ctx_max_size(inv2,
+            ossl_fsn_ctx_max_size(mul1,
+                ossl_fsn_ctx_max_size(mul2,
+                    ossl_fsn_ctx_max_size(mul3,
+                        ossl_fsn_ctx_max_size(msub1,
+                            ossl_fsn_ctx_max_size(msub2,
+                                ossl_fsn_ctx_max_size(gcd, prime))))))));
+    return ossl_fsn_ctx_add_size(own, nested);
+}
+
+size_t ossl_fsn_rsa_fips186_5_derive_prime_ctx_size_from_nums(const OSSL_FSN *Y,
+    const OSSL_FSN *X, const OSSL_FSN *r1, const OSSL_FSN *r2, int nlen,
+    const OSSL_FSN *e)
+{
+    if (Y == NULL || X == NULL || r1 == NULL || r2 == NULL || e == NULL)
+        return 0;
+
+    return ossl_fsn_rsa_fips186_5_derive_prime_ctx_size_from_sizes(Y->dsize,
+        X->dsize, r1->dsize, r2->dsize, nlen, e->dsize);
+}
+
+/*
+ * Constructs a probable prime (a candidate for p or q) using 2 auxiliary
+ * prime numbers and the Chinese Remainder Theorem.
+ *
+ * See FIPS 186-5 B.9 "Compute a Probable Prime Factor Based on Auxiliary
+ * Primes". Used by FIPS 186-5 A.1.6 Section (4.3) for p and Section (5.3)
+ * for q.
+ *
+ * |Y|, |X|, |r1|, |r2|, |e| are not NULL.  |Y| must have room for nlen/2
+ * bits; one limb of headroom over that width lets the width check at
+ * (Step 6) see a carry past the width rather than have it truncated.
+ *
+ * The inverse of r1x2 modulo r2 and the inverse of r2 modulo r1x2 imply
+ * the FIPS 186-5 B.9 (Step 1) condition GCD(2r1, r2) == 1.
+ * |R| = ((r2^-1 mod 2r1) * r2) - ((2r1^-1 mod r2) * 2r1) modulo 2r1r2,
+ * computed by modular reduction only, with no sign adjustment.
+ *
+ * Returns: 1 on success otherwise it returns 0.
+ */
+int ossl_fsn_rsa_fips186_5_derive_prime(OSSL_FSN *Y, OSSL_FSN *X,
+    const OSSL_FSN *Xin, const OSSL_FSN *r1, const OSSL_FSN *r2,
+    int nlen, const OSSL_FSN *e, OSSL_FSN_CTX *ctx, BN_GENCB *cb,
+    uint32_t c, OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    int i, imax, rounds;
+    int bits = nlen >> 1;
+    size_t bits_limbs = (size_t)bits / OSSL_FSN_BITS
+        + ((size_t)bits % OSSL_FSN_BITS != 0);
+    size_t r1x2_limbs = (size_t)r1->dsize + 1;
+    size_t r1r2x2_limbs = r1x2_limbs + (size_t)r2->dsize;
+    OSSL_FSN *tmp, *R, *r1r2x2, *r1r2x2_step, *y1, *r1x2;
+    OSSL_FSN *base, *range, *g;
+    const OSSL_FSN *step;
+    const void *token = NULL;
+
+    if ((token = OSSL_FSN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    base = OSSL_FSN_CTX_get_limbs(ctx, token, bits_limbs);
+    range = OSSL_FSN_CTX_get_limbs(ctx, token, bits_limbs + 1);
+    R = OSSL_FSN_CTX_get_limbs(ctx, token, r1r2x2_limbs);
+    tmp = OSSL_FSN_CTX_get_limbs(ctx, token, r1r2x2_limbs);
+    r1r2x2 = OSSL_FSN_CTX_get_limbs(ctx, token, r1r2x2_limbs);
+    y1 = OSSL_FSN_CTX_get_limbs(ctx, token, (size_t)Y->dsize);
+    r1x2 = OSSL_FSN_CTX_get_limbs(ctx, token, r1x2_limbs);
+    g = OSSL_FSN_CTX_get_limbs(ctx, token, (size_t)Y->dsize);
+    r1r2x2_step = OSSL_FSN_CTX_get_limbs(ctx, token, r1r2x2_limbs + 1);
+    if (r1r2x2_step == NULL)
+        goto err;
+
+    if (Xin != NULL && OSSL_FSN_copy(X, Xin) == NULL)
+        goto err;
+
+    /*
+     * We need to generate a random number X in the range
+     * 1/sqrt(2) * 2^(nlen/2) <= X < 2^(nlen/2).
+     * We can rewrite that as:
+     * base = 1/sqrt(2) * 2^(nlen/2)
+     * range = ((2^(nlen/2))) - (1/sqrt(2) * 2^(nlen/2))
+     * X = base + random(range)
+     * We only have the first 256 bits of 1/sqrt(2)
+     */
+    if (Xin == NULL) {
+        size_t isqrt_bits = OSSL_FSN_num_bits(&ossl_fsn_static_inv_sqrt_2_storage.fsn);
+
+        if ((size_t)bits < isqrt_bits)
+            goto err;
+        if (!OSSL_FSN_lshift(base, &ossl_fsn_static_inv_sqrt_2_storage.fsn,
+                bits - (int)isqrt_bits)
+            || !OSSL_FSN_one(range)
+            || !OSSL_FSN_lshift(range, range, bits)
+            || !OSSL_FSN_sub(range, range, base))
+            goto err;
+    }
+
+    /*
+     * (Step 1) GCD(2r1, r2) = 1, and (Step 2)
+     * R = ((r2^-1 mod 2r1) * r2) - ((2r1^-1 mod r2)*2r1).
+     * The GCD test is carried by the inverse computations.
+     */
+    if (!(OSSL_FSN_lshift1(r1x2, r1)
+            && OSSL_FSN_mod_inverse(tmp, r1x2, r2, ctx)
+            && OSSL_FSN_mod_inverse(R, r2, r1x2, ctx)
+            && OSSL_FSN_mul(R, R, r2, ctx)
+            && OSSL_FSN_mul(tmp, tmp, r1x2, ctx)
+            && OSSL_FSN_mul(r1r2x2, r1x2, r2, ctx)
+            /* R = (R * r2 - tmp * r1x2) mod 2r1r2 */
+            && OSSL_FSN_mod_sub(R, R, tmp, r1r2x2, ctx)))
+        goto err;
+
+    /*
+     * With the c mod 8 requirement, the candidate must advance in steps
+     * that preserve the congruence; 8r1r2 is the smallest such multiple
+     * of 2r1r2.
+     */
+    step = r1r2x2;
+    if (c != 0) {
+        if (!OSSL_FSN_lshift(r1r2x2_step, r1r2x2, 2))
+            goto err;
+        step = r1r2x2_step;
+    }
+
+    /*
+     * In FIPS 186-4 imax was set to 5 * nlen/2.
+     * Analysis by Allen Roginsky
+     * (See https://csrc.nist.gov/CSRC/media/Publications/fips/186/4/final/documents/comments-received-fips186-4-december-2015.pdf
+     * page 68) indicates this has a 1 in 2 million chance of failure.
+     * The number has been updated to 20 * nlen/2 as used in
+     * FIPS186-5 Appendix B.9 Step 9.
+     */
+    rounds = ossl_fsn_rsa_fips186_5_prime_MR_rounds(nlen);
+    imax = 20 * bits; /* max = 20/2 * nbits */
+    for (;;) {
+        if (Xin == NULL) {
+            /*
+             * (Step 3) Choose Random X such that
+             *    1/sqrt(2) * 2^(nlen/2) <= Random X <= (2^(nlen/2)) - 1.
+             */
+            if (!OSSL_FSN_priv_rand_range(X, range, 0, libctx)
+                || !OSSL_FSN_add(X, X, base))
+                goto err;
+        }
+        /* (Step 4) Y = X + ((R - X) mod 2r1r2) */
+        if (!OSSL_FSN_mod_sub(Y, R, X, r1r2x2, ctx) || !OSSL_FSN_add(Y, Y, X))
+            goto err;
+        /*
+         * (Step 4.1) If there is an optional requirement that the
+         * computed prime is equal to c mod 8, then choose the value
+         * Y, Y + 2r1r2, Y + 4r1r2 OR Y + 6r1r2 that satisfies the
+         * requirement.
+         */
+        if (c != 0) {
+            if (!get_multiple_of_y_congruent_to_cmod8(Y, r1r2x2, c))
+                goto err;
+        }
+        /* (Step 5) */
+        i = 0;
+        for (;;) {
+            /* (Step 6) */
+            if (OSSL_FSN_num_bits(Y) > (size_t)bits) {
+                if (Xin == NULL)
+                    break; /* Randomly Generated X so Go back to Step 3 */
+                else
+                    goto err; /* X is not random so it will always fail */
+            }
+            if (!BN_GENCB_call(cb, 0, 2))
+                goto err;
+
+            /* (Step 7) If GCD(Y-1) == 1 & Y is probably prime then return Y */
+            if (OSSL_FSN_copy(y1, Y) == NULL || !OSSL_FSN_sub_word(y1, 1))
+                goto err;
+
+            if (!OSSL_FSN_gcd(g, y1, e, ctx))
+                goto err;
+            if (OSSL_FSN_is_one(g)) {
+                int rv = ossl_fsn_check_generated_prime(Y, rounds, ctx, cb,
+                    libctx);
+
+                if (rv > 0)
+                    goto end;
+                if (rv < 0)
+                    goto err;
+            }
+            /* (Step 8-10) */
+            if (++i >= imax) {
+                ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_TOO_MANY_ITERATIONS);
+                goto err;
+            }
+            if (!OSSL_FSN_add(Y, Y, step))
+                goto err;
+        }
+    }
+end:
+    ret = 1;
+    if (!BN_GENCB_call(cb, 3, 0))
+        ret = 0;
+err:
+    if (r1r2x2_step != NULL) {
+        /* r1r2x2_step is allocated last; clear the sensitive temporaries */
+        OSSL_FSN_clear(R);
+        OSSL_FSN_clear(tmp);
+        OSSL_FSN_clear(r1x2);
+        OSSL_FSN_clear(r1r2x2);
+        OSSL_FSN_clear(r1r2x2_step);
+        OSSL_FSN_clear(y1);
+        OSSL_FSN_clear(g);
+    }
+    if (!OSSL_FSN_CTX_end(ctx, token))
+        ret = 0;
+    return ret;
+}
+
+/*
+ * Estimate the arena payload for
+ * ossl_fsn_rsa_fips186_5_gen_prob_primes().  The frame holds one
+ * auxiliary-prime-width temporary for each of |p1|, |p2|, |Xp1| and
+ * |Xp2| that the caller leaves NULL; caller-provided numbers keep
+ * their own width for the nested auxiliary prime hunts.  The hunts
+ * and the prime derivation run sequentially within that frame, so
+ * their nested needs combine by maximum.  Caller-absent auxiliary
+ * primes, whose widths are passed as 0, are budgeted at the auxiliary
+ * prime width.  Returns 0 for an invalid |nlen|, like the operation
+ * itself.
+ */
+size_t ossl_fsn_rsa_fips186_5_gen_prob_primes_ctx_size_from_sizes(
+    size_t p_dsize, size_t Xpout_dsize, size_t p1_dsize, size_t p2_dsize,
+    size_t Xp1_dsize, size_t Xp2_dsize, int nlen, size_t e_dsize)
+{
+    int bitlen = ossl_fsn_rsa_fips186_5_aux_prime_min_size(nlen);
+
+    if (bitlen == 0)
+        return 0;
+
+    size_t bitlimbs = (size_t)bitlen / OSSL_FSN_BITS
+        + ((size_t)bitlen % OSSL_FSN_BITS != 0);
+    size_t w1 = (p1_dsize != 0) ? p1_dsize : bitlimbs;
+    size_t w2 = (p2_dsize != 0) ? p2_dsize : bitlimbs;
+    size_t n_temps = (size_t)(p1_dsize == 0) + (p2_dsize == 0)
+        + (Xp1_dsize == 0) + (Xp2_dsize == 0);
+    size_t own = OSSL_FSN_CTX_size(1, n_temps, n_temps * bitlimbs);
+    size_t hunt1 = ossl_fsn_check_generated_prime_ctx_size_from_sizes(w1);
+    size_t hunt2 = ossl_fsn_check_generated_prime_ctx_size_from_sizes(w2);
+    size_t derive = ossl_fsn_rsa_fips186_5_derive_prime_ctx_size_from_sizes(
+        p_dsize, Xpout_dsize, w1, w2, nlen, e_dsize);
+    size_t nested = ossl_fsn_ctx_max_size(hunt1,
+        ossl_fsn_ctx_max_size(hunt2, derive));
+
+    return ossl_fsn_ctx_add_size(own, nested);
+}
+
+size_t ossl_fsn_rsa_fips186_5_gen_prob_primes_ctx_size_from_nums(
+    const OSSL_FSN *p, const OSSL_FSN *Xpout, const OSSL_FSN *p1,
+    const OSSL_FSN *p2, const OSSL_FSN *Xp1, const OSSL_FSN *Xp2, int nlen,
+    const OSSL_FSN *e)
+{
+    if (p == NULL || Xpout == NULL || e == NULL)
+        return 0;
+
+    return ossl_fsn_rsa_fips186_5_gen_prob_primes_ctx_size_from_sizes(p->dsize,
+        Xpout->dsize, OSSL_FSN_size_limbs(p1), OSSL_FSN_size_limbs(p2),
+        OSSL_FSN_size_limbs(Xp1), OSSL_FSN_size_limbs(Xp2), nlen, e->dsize);
+}
+
+/*
+ * Generate a probable prime (p or q).
+ *
+ * See FIPS 186-5 A.1.6 (Steps 4 & 5)
+ *
+ * |p|, |Xpout| are not NULL.  Same width-contract as
+ * ossl_fsn_rsa_fips186_5_derive_prime().
+ *
+ * Returns: 1 on success otherwise it returns 0.
+ */
+int ossl_fsn_rsa_fips186_5_gen_prob_primes(OSSL_FSN *p, OSSL_FSN *Xpout,
+    OSSL_FSN *p1, OSSL_FSN *p2,
+    const OSSL_FSN *Xp, const OSSL_FSN *Xp1,
+    const OSSL_FSN *Xp2, int nlen,
+    const OSSL_FSN *e, OSSL_FSN_CTX *ctx,
+    BN_GENCB *cb, uint32_t c, OSSL_LIB_CTX *libctx)
+{
+    int ret = 0;
+    OSSL_FSN *p1i = NULL, *p2i = NULL, *Xp1i = NULL, *Xp2i = NULL;
+    int bitlen, rounds;
+    size_t bitlimbs;
+    const void *token = NULL;
+    /* 1 when the values are ours to clear, 0 when returned */
+    int clear_mask = 0;
+
+    if (ossl_unlikely(p == NULL || Xpout == NULL)) {
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if ((token = OSSL_FSN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    bitlen = ossl_fsn_rsa_fips186_5_aux_prime_min_size(nlen);
+    if (bitlen == 0)
+        goto err;
+    bitlimbs = (size_t)bitlen / OSSL_FSN_BITS
+        + ((size_t)bitlen % OSSL_FSN_BITS != 0);
+
+    p1i = (p1 != NULL) ? p1 : OSSL_FSN_CTX_get_limbs(ctx, token, bitlimbs);
+    p2i = (p2 != NULL) ? p2 : OSSL_FSN_CTX_get_limbs(ctx, token, bitlimbs);
+    Xp1i = (Xp1 != NULL) ? (OSSL_FSN *)Xp1 : OSSL_FSN_CTX_get_limbs(ctx, token, bitlimbs);
+    Xp2i = (Xp2 != NULL) ? (OSSL_FSN *)Xp2 : OSSL_FSN_CTX_get_limbs(ctx, token, bitlimbs);
+    if (p1i == NULL || p2i == NULL || Xp1i == NULL || Xp2i == NULL)
+        goto err;
+    clear_mask = (p1 == NULL ? 1 : 0) | (p2 == NULL ? 2 : 0)
+        | (Xp1 == NULL ? 4 : 0) | (Xp2 == NULL ? 8 : 0);
+
+    rounds = ossl_fsn_rsa_fips186_5_aux_prime_MR_rounds(nlen);
+
+    /* (Steps 4.1/5.1): Randomly generate Xp1 if it is not passed in */
+    if (Xp1 == NULL) {
+        /* Set the top and bottom bits to make it odd and the correct size */
+        if (!OSSL_FSN_priv_rand(Xp1i, bitlen, OSSL_FSN_RAND_TOP_ONE,
+                OSSL_FSN_RAND_BOTTOM_ODD, 0, libctx))
+            goto err;
+    }
+    /* (Steps 4.1/5.1): Randomly generate Xp2 if it is not passed in */
+    if (Xp2 == NULL) {
+        /* Set the top and bottom bits to make it odd and the correct size */
+        if (!OSSL_FSN_priv_rand(Xp2i, bitlen, OSSL_FSN_RAND_TOP_ONE,
+                OSSL_FSN_RAND_BOTTOM_ODD, 0, libctx))
+            goto err;
+    }
+
+    /* (Steps 4.2/5.2) - find first auxiliary probable primes */
+    if (!ossl_fsn_rsa_fips186_5_find_aux_prob_prime(Xp1i, p1i, ctx, rounds, cb,
+            libctx)
+        || !ossl_fsn_rsa_fips186_5_find_aux_prob_prime(Xp2i, p2i, ctx, rounds,
+            cb, libctx))
+        goto err;
+    /* (FIPS 186-5 Table A.1) auxiliary prime Max length check */
+    if (OSSL_FSN_num_bits(p1i) + OSSL_FSN_num_bits(p2i)
+        >= (size_t)ossl_fsn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(nlen,
+            c))
+        goto err;
+    /* (Steps 4.3/5.3) - generate prime */
+    if (!ossl_fsn_rsa_fips186_5_derive_prime(p, Xpout, Xp, p1i, p2i, nlen, e,
+            ctx, cb, c, libctx))
+        goto err;
+    ret = 1;
+err:
+    /* Clear any internally generated values that are not returned */
+    if ((clear_mask & 1) != 0)
+        OSSL_FSN_clear(p1i);
+    if ((clear_mask & 2) != 0)
+        OSSL_FSN_clear(p2i);
+    if ((clear_mask & 4) != 0)
+        OSSL_FSN_clear(Xp1i);
+    if ((clear_mask & 8) != 0)
+        OSSL_FSN_clear(Xp2i);
+    if (!OSSL_FSN_CTX_end(ctx, token))
+        ret = 0;
+    return ret;
+}

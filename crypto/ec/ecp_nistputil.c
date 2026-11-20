@@ -38,25 +38,25 @@
 #include <stddef.h>
 #include <string.h>
 #include "ec_local.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h" /* ossl_fsn_get_words(), ossl_fsn_get_dsize() */
 
 /*
- * Serialise a secret OSSL_FN scalar into 'len' little-endian bytes, over the
- * full width of the OSSL_FN (constant-time; no dependence on the value's
+ * Serialise a secret OSSL_FSN scalar into 'len' little-endian bytes, over the
+ * full width of the OSSL_FSN (constant-time; no dependence on the value's
  * magnitude), mirroring BN_bn2lebinpad() as used by the nistp points_mul
  * implementations.  Returns 0 if the value does not fit in 'len' bytes.
  */
-int ossl_ec_GFp_nistp_fn_scalar_bytes(unsigned char *out, size_t len,
-    const OSSL_FN *scalar)
+int ossl_ec_GFp_nistp_fsn_scalar_bytes(unsigned char *out, size_t len,
+    const OSSL_FSN *scalar)
 {
-    const OSSL_FN_ULONG *w = ossl_fn_get_words(scalar);
-    size_t dsize = ossl_fn_get_dsize(scalar);
+    const OSSL_FSN_ULONG *w = ossl_fsn_get_words(scalar);
+    size_t dsize = ossl_fsn_get_dsize(scalar);
     size_t i, j;
 
     memset(out, 0, len);
     for (i = 0; i < dsize; i++) {
-        OSSL_FN_ULONG d = w[i];
+        OSSL_FSN_ULONG d = w[i];
 
         for (j = 0; j < sizeof(d); j++) {
             size_t off = i * sizeof(d) + j;

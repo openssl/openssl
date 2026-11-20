@@ -9,7 +9,7 @@
 # Build-time generator for crypto/ec/ec_curves.inc.
 # Reads crypto/ec/ec_curves.conf (config-target style data file) and
 # configdata.pm (for disabled() / %disabled), emits a C include file with
-# the curve structs, the static OSSL_FN constants and BIGNUM views, and
+# the curve structs, the static OSSL_FSN constants and BIGNUM views, and
 # the curve_list[] tables for the enabled curves.
 
 use strict;
@@ -78,24 +78,24 @@ sub hex_to_limbs {
     $hex = '0' x ((8 - length($hex) % 8) % 8) . $hex;
     # Split into 4-byte words, then reverse to little-endian limb order.
     my @words = reverse unpack '(H8)*', pack 'H*', $hex;
-    # Emit OSSL_FN_ULONG64_C pairs of words; a trailing odd word becomes a
-    # single OSSL_FN_ULONG_C.  This matches OSSL_FN_LIMBS_N() on both 32-
+    # Emit OSSL_FSN_ULONG64_C pairs of words; a trailing odd word becomes a
+    # single OSSL_FSN_ULONG_C.  This matches OSSL_FSN_LIMBS_N() on both 32-
     # and 64-bit platforms.
     my @limbs;
     while (@words) {
         my $lo = shift @words;
         if (@words) {
             my $hi = shift @words;
-            push @limbs, "OSSL_FN_ULONG64_C(0x$hi, 0x$lo)";
+            push @limbs, "OSSL_FSN_ULONG64_C(0x$hi, 0x$lo)";
         } else {
-            push @limbs, "OSSL_FN_ULONG_C(0x$lo)";
+            push @limbs, "OSSL_FSN_ULONG_C(0x$lo)";
         }
     }
     return @limbs;
 }
 
 # Significant bits of a value given as a hex string; the BIGNUM top field
-# (in BN_ULONG units) follows from OSSL_FN_LIMBS_N of this count
+# (in BN_ULONG units) follows from OSSL_FSN_LIMBS_N of this count
 sub sig_bits {
     my ($hex) = @_;
     $hex =~ s/^0+//;   # strip leading zeros
@@ -160,11 +160,11 @@ $output .= <<'HEADER';
 #include <openssl/obj_mac.h>
 #include "internal/nelem.h"
 #include "crypto/bn/bn_local.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fsn_intern.h"
 
 /*
- * The OSSL_FN storage for these constants keeps the full
- * OSSL_FN_LIMBS_N(param_len * 8) limbs for constant-time uniformity, while
+ * The OSSL_FSN storage for these constants keeps the full
+ * OSSL_FSN_LIMBS_N(param_len * 8) limbs for constant-time uniformity, while
  * the BIGNUM view needs the correct top field, expressed as the number of
  * significant limbs (zero top limbs excluded; zero itself has 0 significant
  * bits).  That count is recorded per constant in a companion macro, used
@@ -177,16 +177,16 @@ typedef struct ec_static_bignum_st {
 
 #define make_ec_bn(x)                                                  \
     static const BIGNUM ossl_bignum_##x = {                            \
-        .data = (OSSL_FN *)&ossl_fn_static_##x##_storage.fn,           \
-        .d = (BN_ULONG *)ossl_fn_static_##x##_storage.fixed.d,         \
-        .top = (int)ossl_fn_static_##x##_sig_limbs,                    \
-        .dmax = (int)OSSL_NELEM(ossl_fn_static_##x##_storage.fixed.d), \
+        .data = (OSSL_FSN *)&ossl_fsn_static_##x##_storage.fsn,           \
+        .d = (BN_ULONG *)ossl_fsn_static_##x##_storage.fixed.d,         \
+        .top = (int)ossl_fsn_static_##x##_sig_limbs,                    \
+        .dmax = (int)OSSL_NELEM(ossl_fsn_static_##x##_storage.fixed.d), \
         .flags = BN_FLG_STATIC_DATA,                                   \
     }
 
 HEADER
 
-# ---- Curve structs and OSSL_FN/BIGNUM constants ----
+# ---- Curve structs and OSSL_FSN/BIGNUM constants ----
 for my $name (@canonical) {
     my $c = $curves{$name};
     my $cname = sanitize($name);
@@ -222,29 +222,29 @@ for my $name (@canonical) {
                           . join '', @extra);
     $output .= " }\n};\n\n";
 
-    # OSSL_FN storage and BIGNUM views
+    # OSSL_FSN storage and BIGNUM views
     for my $f (@fields, 'cof') {
-        my $nlimbs = ($f eq 'cof') ? 1 : "OSSL_FN_LIMBS_N($nbits)";
-        $output .= "OSSL_FN_STATIC_DECLARE(${cname}_${f}, $nlimbs);\n";
+        my $nlimbs = ($f eq 'cof') ? 1 : "OSSL_FSN_LIMBS_N($nbits)";
+        $output .= "OSSL_FSN_STATIC_DECLARE(${cname}_${f}, $nlimbs);\n";
     }
     $output .= "\n";
     for my $f (@fields) {
         my $hex = $c->{$f};
         my @limbs = hex_to_limbs($hex);
-        $output .= "OSSL_FN_STATIC_DEFINE(${cname}_${f}, OSSL_FN_LIMBS_N($nbits),\n";
+        $output .= "OSSL_FSN_STATIC_DEFINE(${cname}_${f}, OSSL_FSN_LIMBS_N($nbits),\n";
         for my $i (0 .. $#limbs) {
             my $sep = ($i < $#limbs) ? ',' : ');';
             $output .= "    $limbs[$i]$sep\n";
         }
         $output .= "/* significant limbs for the BIGNUM top field */\n";
-        $output .= "#define ossl_fn_static_${cname}_${f}_sig_limbs "
-            . 'OSSL_FN_LIMBS_N(' . sig_bits($hex) . ")\n\n";
+        $output .= "#define ossl_fsn_static_${cname}_${f}_sig_limbs "
+            . 'OSSL_FSN_LIMBS_N(' . sig_bits($hex) . ")\n\n";
     }
     my $cof = $c->{cofactor};
     $output .= "/* $name cofactor == $cof */\n";
-    $output .= "OSSL_FN_STATIC_DEFINE(${cname}_cof, 1, $cof);\n";
-    $output .= "#define ossl_fn_static_${cname}_cof_sig_limbs "
-        . 'OSSL_FN_LIMBS_N(' . sig_bits(sprintf '%X', $cof) . ")\n\n";
+    $output .= "OSSL_FSN_STATIC_DEFINE(${cname}_cof, 1, $cof);\n";
+    $output .= "#define ossl_fsn_static_${cname}_cof_sig_limbs "
+        . 'OSSL_FSN_LIMBS_N(' . sig_bits(sprintf '%X', $cof) . ")\n\n";
     for my $f (@fields, 'cof') {
         $output .= "make_ec_bn(${cname}_${f});\n";
     }

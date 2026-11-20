@@ -24,7 +24,7 @@
 #include <openssl/core_names.h>
 #include <openssl/fips_names.h>
 #include <openssl/thread.h>
-#include <openssl/bn.h> /* BN_ULONG - the OSSL_FN limb width */
+#include <openssl/bn.h> /* BN_ULONG - the OSSL_FSN limb width */
 #include "internal/numbers.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -5756,7 +5756,7 @@ start:
              * and laid out here the way the consumer reads it back.
              *
              * The SM2 signer - the only consumer of this keyword - draws its
-             * nonce with OSSL_FN, and ossl_fn_rand() draws straight into the
+             * nonce with OSSL_FSN, and ossl_fsn_rand() draws straight into the
              * number's limb array (RAND_bytes_ex() over (unsigned char *)d).
              * The stream is therefore the value's byte image in the host's
              * limb layout, not the big-endian BN_bin2bn() image that
