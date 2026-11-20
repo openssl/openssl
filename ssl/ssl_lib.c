@@ -2390,12 +2390,20 @@ int SSL_get_async_status(SSL *s, int *status)
     return 1;
 }
 
+/* Classify a failure by the library that raised it. */
+static int ssl_error_state_from_error(unsigned long error)
+{
+    if (error == 0 || ERR_GET_LIB(error) == ERR_LIB_SYS)
+        return ERROR_STATE_SYSCALL;
+    return ERROR_STATE_SSL;
+}
+
 /*
  * Reset the statem error_state to ERROR_STATE_NOERROR to avoid the
  * error sticking.
  * Designed to be called at the beginning of any function that
  * is expected to be followed by a call to SSL_get_error().
- * It returns 0 if the state machine is in the MSG_FLOW_ERROR state,
+ * It returns 0 if the connection has a terminal error,
  * in this case the calling function can and should return immediately.
  */
 static int ssl_reset_error_state(SSL_CONNECTION *sc)
@@ -2403,6 +2411,17 @@ static int ssl_reset_error_state(SSL_CONNECTION *sc)
     if (sc == NULL)
         return 1;
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (SSL_CONNECTION_IS_DTLS(sc)) {
+        unsigned long error = ossl_dtls_conn_apply_shared_failure(sc);
+
+        /* Buffered reads and writes must also observe shared transport failure. */
+        if (error != 0) {
+            sc->statem.error_state = ssl_error_state_from_error(error);
+            return 0;
+        }
+    }
+#endif
     if (sc->statem.state == MSG_FLOW_ERROR) {
         sc->statem.error_state = ERROR_STATE_SSL;
         return 0;
@@ -2428,11 +2447,23 @@ static void ssl_update_error_state(SSL_CONNECTION *sc)
 
     if (sc->statem.state == MSG_FLOW_ERROR
         && sc->statem.error_state == ERROR_STATE_NOERROR) {
-        l = ERR_peek_error();
-        if (l == 0 || ERR_GET_LIB(l) == ERR_LIB_SYS)
-            sc->statem.error_state = ERROR_STATE_SYSCALL;
-        else
-            sc->statem.error_state = ERROR_STATE_SSL;
+        /*
+         * A retained transport failure decides the category, so that an
+         * unrelated older entry on the queue cannot. It only counts if it is
+         * also the newest entry: the listener may have failed after this
+         * connection failed for a reason of its own.
+         */
+        l = 0;
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+        if (SSL_CONNECTION_IS_DTLS(sc)) {
+            l = ossl_dtls_conn_shared_error(sc);
+            if (l != ERR_peek_last_error())
+                l = 0;
+        }
+#endif
+        if (l == 0)
+            l = ERR_peek_error();
+        sc->statem.error_state = ssl_error_state_from_error(l);
     }
 }
 
