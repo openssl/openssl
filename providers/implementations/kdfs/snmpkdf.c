@@ -22,6 +22,8 @@
 
 #define KDF_SNMP_PASSWORD_HASH_AMOUNT (1024 * 1024)
 #define KDF_SNMP_MIN_PASSWORD_LEN 8
+#define KDF_SNMP_EID_MAX_LEN 32
+#define KDF_SNMP_EID_MIN_LEN 5
 
 /* See RFC 3414, Appendix A.2.2 */
 /* See NIST SP800-135 Section 6.8 */
@@ -153,9 +155,6 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct snmp_set_ctx_params_st p;
     KDF_SNMPKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx;
-#ifdef FIPS_MODULE
-    const EVP_MD *md = NULL;
-#endif
 
     if (params == NULL)
         return 1;
@@ -163,35 +162,86 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !snmp_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.pw != NULL
-        && (p.pw->data_size < KDF_SNMP_MIN_PASSWORD_LEN
-            || p.pw->data_size > KDF_SNMP_PASSWORD_HASH_AMOUNT)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
-        return 0;
-    }
-
     libctx = PROV_LIBCTX_OF(ctx->provctx);
     if (p.digest != NULL) {
-        if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, libctx))
+        PROV_DIGEST candidate = { NULL, NULL };
+
+        if (!ossl_prov_digest_load(&candidate, p.digest, p.propq, libctx)) {
+            ossl_prov_digest_reset(&candidate);
             return 0;
+        }
+
 #ifdef FIPS_MODULE
-        md = ossl_prov_digest_md(&ctx->digest);
+        const EVP_MD *md = ossl_prov_digest_md(&candidate);
         if (!EVP_MD_is_a(md, SN_sha1)
             && !EVP_MD_is_a(md, SN_sha224)
             && !EVP_MD_is_a(md, SN_sha256)
             && !EVP_MD_is_a(md, SN_sha384)
-            && !EVP_MD_is_a(md, SN_sha512))
+            && !EVP_MD_is_a(md, SN_sha512)) {
+            ossl_prov_digest_reset(&candidate);
+            ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
+        }
 #endif
+        ossl_prov_digest_reset(&ctx->digest);
+        ctx->digest = candidate;
     }
 
     if (p.pw != NULL) {
-        if (!snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p.pw))
+        unsigned char *password = NULL;
+        size_t password_len = 0;
+
+        if (p.pw->data_type != OSSL_PARAM_OCTET_STRING
+            || p.pw->data == NULL
+            || p.pw->data_size < KDF_SNMP_MIN_PASSWORD_LEN
+            || p.pw->data_size > KDF_SNMP_PASSWORD_HASH_AMOUNT) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
             return 0;
+        }
+
+        if (!snmpkdf_set_membuf(&password, &password_len, p.pw)) {
+            OPENSSL_clear_free(password, password_len);
+            return 0;
+        }
+
+        OPENSSL_clear_free(ctx->password, ctx->password_len);
+        ctx->password = password;
+        ctx->password_len = password_len;
     }
 
-    if (p.eid != NULL && !snmpkdf_set_membuf(&ctx->eid, &ctx->eid_len, p.eid))
-        return 0;
+    if (p.eid != NULL) {
+        unsigned char *eid = NULL;
+        size_t eid_len = 0;
+        size_t i;
+        int all_zero = 1;
+        int all_ff = 1;
+        const unsigned char *data = p.eid->data;
+
+        if (p.eid->data_type != OSSL_PARAM_OCTET_STRING
+            || p.eid->data == NULL
+            || p.eid->data_size < KDF_SNMP_EID_MIN_LEN
+            || p.eid->data_size > KDF_SNMP_EID_MAX_LEN)
+            return 0;
+
+        for (i = 0; i < p.eid->data_size; i++) {
+            all_zero &= data[i] == 0;
+            all_ff &= data[i] == 0xff;
+        }
+
+        if (all_zero || all_ff) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DATA,
+                "EID must not be all zero or all 0xff");
+            return 0;
+        }
+        if (!snmpkdf_set_membuf(&eid, &eid_len, p.eid)) {
+            OPENSSL_clear_free(eid, eid_len);
+            return 0;
+        }
+
+        OPENSSL_clear_free(ctx->eid, ctx->eid_len);
+        ctx->eid = eid;
+        ctx->eid_len = eid_len;
+    }
 
     return 1;
 }
@@ -310,7 +360,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
     }
 
     value = EVP_MD_get_size(evp_md);
-    if (value <= 0 || (size_t)value > keylen)
+    if (value <= 0 || (size_t)value > EVP_MAX_MD_SIZE || (size_t)value != keylen)
         goto err;
     mdsize = (size_t)value;
 
@@ -328,10 +378,11 @@ static int SNMPKDF(const EVP_MD *evp_md,
         || !EVP_DigestUpdate(md, digest, mdsize)
         || !EVP_DigestUpdate(md, e_id, e_len)
         || !EVP_DigestUpdate(md, digest, mdsize)
-        || !EVP_DigestFinal_ex(md, digest, &md_len))
+        || !EVP_DigestFinal_ex(md, digest, &md_len)
+        || md_len != mdsize)
         goto err;
 
-    memcpy(okey, digest, (keylen < md_len) ? keylen : md_len);
+    memcpy(okey, digest, mdsize);
 
     ret = 1;
 
