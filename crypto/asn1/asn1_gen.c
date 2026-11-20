@@ -418,7 +418,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
     if (section) {
         if (!cnf)
             goto bad;
-        sect = X509V3_get_section(cnf, (const char *)section);
+        sect = X509V3_get_section(cnf, section);
         if (!sect)
             goto bad;
         for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
