@@ -12,7 +12,7 @@ OSSL_IETF_ATTR_SYNTAX_add1_value
 
 =head1 SYNOPSIS
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  typedef struct OSSL_IETF_ATTR_SYNTAX_st OSSL_IETF_ATTR_SYNTAX;
 
@@ -84,6 +84,11 @@ OSSL_IETF_ATTR_SYNTAX_add1_value() returns 1 on success and 0 on failure.
 OSSL_IETF_ATTR_SYNTAX_get0_policyAuthority(), OSSL_IETF_ATTR_SYNTAX_set0_policyAuthority(),
 OSSL_IETF_ATTR_SYNTAX_get_value_num(), OSSL_IETF_ATTR_SYNTAX_get0_value(), and
 OSSL_IETF_ATTR_SYNTAX_add1_value() were added in OpenSSL 3.4.
+
+All of these functions moved to the new libx509pmi library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

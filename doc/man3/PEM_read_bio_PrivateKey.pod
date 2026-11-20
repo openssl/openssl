@@ -590,6 +590,12 @@ PEM_read_bio_X509_ACERT(), PEM_read_X509_ACERT(),
 PEM_write_bio_X509_ACERT(), PEM_write_X509_ACERT()
 were added in OpenSSL 3.4.
 
+PEM_read_X509_ACERT(), PEM_read_bio_X509_ACERT(), PEM_write_X509_ACERT() and
+PEM_write_bio_X509_ACERT() moved to the new libx509pmi library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.

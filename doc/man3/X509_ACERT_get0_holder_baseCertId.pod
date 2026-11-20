@@ -19,7 +19,7 @@ OSSL_OBJECT_DIGEST_INFO_set1_digest - get and set Attribute Certificate holder f
 
 =head1 SYNOPSIS
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  const GENERAL_NAMES *X509_ACERT_get0_holder_entityName(const X509_ACERT *x);
  OSSL_ISSUER_SERIAL *X509_ACERT_get0_holder_baseCertId(const X509_ACERT *x);
@@ -109,6 +109,11 @@ its use is prohibited for conformant attribute certificates.
 =head1 HISTORY
 
 These functions were added in OpenSSL 3.4.
+
+All of these functions moved to the new libx509pmi library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

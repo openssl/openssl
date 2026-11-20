@@ -6,7 +6,7 @@ OSSL_IETF_ATTR_SYNTAX_print - OSSL_IETF_ATTR_SYNTAX printing
 
 =head1 SYNOPSIS
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  int OSSL_IETF_ATTR_SYNTAX_print(BIO *bp, OSSL_IETF_ATTR_SYNTAX *a,
                                  int indent);
@@ -28,6 +28,11 @@ L<ASN1_STRING_print_ex(3)>
 =head1 HISTORY
 
 OSSL_IETF_ATTR_SYNTAX_print() was added in OpenSSL 3.4.
+
+OSSL_IETF_ATTR_SYNTAX_print() moved to the new libx509pmi library in OpenSSL
+4.2. A deprecated variant remains in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

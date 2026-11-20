@@ -12,7 +12,7 @@ X509_get0_uids, X509_ACERT_get0_issuerUID
  void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
                      const ASN1_BIT_STRING **psuid);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  ASN1_BIT_STRING *X509_ACERT_get0_issuerUID(X509_ACERT *x);
 =head1 DESCRIPTION
@@ -60,6 +60,11 @@ L<X509_verify_cert(3)>
 X509_get0_uids() was added in OpenSSL 1.1.0.
 
 X509_ACERT_get0_issuerUID() was added in OpenSSL 3.4.
+
+X509_ACERT_get0_issuerUID() moved to the new libx509pmi library in OpenSSL
+4.2. A deprecated variant remains in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

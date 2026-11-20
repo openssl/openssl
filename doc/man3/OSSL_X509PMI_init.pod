@@ -20,6 +20,10 @@ once, and from more than one thread.
 
 OSSL_X509PMI_init() returns 1 on success and 0 on failure.
 
+=head1 SEE ALSO
+
+L<libx509pmi(7)>
+
 =head1 HISTORY
 
 OSSL_X509PMI_init() was added in OpenSSL 4.2.
