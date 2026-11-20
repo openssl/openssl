@@ -4,8 +4,8 @@
 
 RAND_set_DRBG_type,
 RAND_set_seed_source_type,
-RAND_set1_default_params,
 RAND_set1_primary_default_params
+RAND_set1_default_params,
 - specify the global random number generator types and default parameters
 
 =head1 SYNOPSIS
@@ -39,7 +39,7 @@ random bit generator.
 RAND_set1_primary_default_params() specifies parameters that will be used to
 instantiate the primary DRBG in the library context I<ctx>. If this function
 is called multiple times with the same I<ctx> the last value of I<params>
-will be used.
+will be used. I<params> is copied, no transfer of ownership takes place.
 If I<params> is NULL, previously set parameters will be deleted.
 
 RAND_set1_default_params() is like RAND_set1_primary_default_params(),
