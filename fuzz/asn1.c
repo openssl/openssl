@@ -83,9 +83,11 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(BIGNUM),
     ASN1_ITEM_ref(CBIGNUM),
     ASN1_ITEM_ref(CERTIFICATEPOLICIES),
-#ifndef OPENSSL_NO_CMS
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DEPRECATED_4_2)
     ASN1_ITEM_ref(CMS_ContentInfo),
     ASN1_ITEM_ref(CMS_ReceiptRequest),
+#endif
+#ifndef OPENSSL_NO_CMS
     ASN1_ITEM_ref(CRL_DIST_POINTS),
 #endif
 #ifndef OPENSSL_NO_DH
@@ -329,14 +331,14 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
     }
 
-#ifndef OPENSSL_NO_TS
+#if !defined(OPENSSL_NO_TS) && !defined(OPENSSL_NO_DEPRECATED_4_2)
     DO_TEST(TS_REQ, d2i_TS_REQ, i2d_TS_REQ, TS_REQ_print_bio);
     DO_TEST(TS_MSG_IMPRINT, d2i_TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, TS_MSG_IMPRINT_print_bio);
     DO_TEST(TS_RESP, d2i_TS_RESP, i2d_TS_RESP, TS_RESP_print_bio);
     DO_TEST(TS_STATUS_INFO, d2i_TS_STATUS_INFO, i2d_TS_STATUS_INFO, TS_STATUS_INFO_print_bio);
     DO_TEST(TS_TST_INFO, d2i_TS_TST_INFO, i2d_TS_TST_INFO, TS_TST_INFO_print_bio);
     DO_TEST_NO_PRINT(TS_ACCURACY, d2i_TS_ACCURACY, i2d_TS_ACCURACY);
-#endif
+#endif /* !defined(OPENSSL_NO_TS) && !defined(OPENSSL_NO_DEPRECATED_4_2) */
     DO_TEST_NO_PRINT(ESS_ISSUER_SERIAL, d2i_ESS_ISSUER_SERIAL, i2d_ESS_ISSUER_SERIAL);
     DO_TEST_NO_PRINT(ESS_CERT_ID, d2i_ESS_CERT_ID, i2d_ESS_CERT_ID);
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT, d2i_ESS_SIGNING_CERT, i2d_ESS_SIGNING_CERT);

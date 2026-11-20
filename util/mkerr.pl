@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 use File::Basename;
-use File::Spec::Functions qw(abs2rel rel2abs);
+use File::Spec::Functions qw(abs2rel rel2abs catfile);
 
 use lib ".";
 
@@ -132,7 +132,7 @@ if ( defined $emit ) {
 } elsif ( $internal ) {
     die "Cannot mix -internal and -static\n" if $static;
     die "Extra parameters given.\n" if @ARGV;
-    @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'),
+    @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'), glob('cms/*.c'),
                 glob('ssl/*.c'), glob('ssl/*/*.c'), glob('ssl/*/*/*.c'),
                 glob('providers/*.c'), glob('providers/*/*.c'),
                 glob('providers/*/*/*.c') );
@@ -660,6 +660,17 @@ sub write_c_source
     my $hprivincf = $hprivinc{$lib};
     my $includes = '';
 
+    # Sources kept in a top-level directory of their own are compiled
+    # both into libcrypto and into a library of their own, the latter
+    # with every external symbol renamed by that library's generated
+    # names header.  Include it ahead of everything else, so that it
+    # covers the declaration as well as the definition.  The generator
+    # is looked up next to this script, since the build runs it from
+    # the build directory.
+    my $cdir = dirname($cfile);
+    my $namesinc = -f catfile(dirname($0), "mklib${cdir}names.pl")
+        ? "#include <lib${cdir}/names.h>\n" : '';
+
     if ($internal) {
         if ($hpubincf ne 'NONE') {
             $hpubincf =~ s|^include/||;
@@ -689,7 +700,7 @@ sub write_c_source
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
+${namesinc}#include <openssl/err.h>
 $includes
 EOF
     my $indent = '';
