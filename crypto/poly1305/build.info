@@ -9,6 +9,7 @@ IF[{- !$disabled{asm} -}]
 
   $POLY1305ASM_sparcv9=poly1305-sparcv9.S
 
+  $POLY1305ASM_mips32=poly1305-mips.S
   $POLY1305ASM_mips64=poly1305-mips.S
 
   $POLY1305ASM_s390x=poly1305-s390x.S
