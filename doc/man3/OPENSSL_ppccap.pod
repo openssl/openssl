@@ -119,6 +119,25 @@ is brd (byte-reverse doubleword).
 
 Effect: Enables use of ISA 3.1 instructions in ChaCha20.
 
+=item 0x100
+
+Name: B<PPC_CRYPTO32>
+
+Meaning: Use instructions added in ISA level 3.2. The associated probe instruction
+is xvadduwm.
+
+Effect: Enables use of ISA 3.2 instructions such as AES encrypt/decrypt, Galois
+Field multiplication, and additional VSX integer arithmetic.
+
+=item 0x200
+
+Name: B<PPC_DMF>
+
+Meaning: Use Dense Math instructions. The associated probe instruction is dmmr
+(dense math move register).
+
+Effect: Enables use of Dense Math instructions in SHA2/SHA3.
+
 =back
 
 =head1 RETURN VALUES
