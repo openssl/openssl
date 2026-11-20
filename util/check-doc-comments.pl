@@ -26,10 +26,10 @@
 #     preceded by a /** ... */ doxygen block containing "@see NAME(3)" for the
 #     function's own name, and that manual page must exist in the doc/ tree.
 #   * other (internal) headers: the prototype must be immediately preceded by a
-#     /** ... */ block with a @param for each named parameter and a @returns
-#     when the return type is not void.  When the parameter list cannot be
-#     parsed with confidence the @param check is skipped; the block is still
-#     required.
+#     /** ... */ block with a @param for each named parameter and a @return /
+#     @returns / @retval when the return type is not void.  When the parameter
+#     list cannot be parsed with confidence the @param check is skipped; the
+#     block is still required.
 #
 # Not checked: static functions, non-function declarations (macros, typedefs,
 # function-pointer typedefs), and declarations carrying a "doc-exempt" marker.
@@ -171,8 +171,8 @@ sub check_file {
             # Report a function's missing tags on one line; they are all fixed
             # in the single doxygen block attached to the declaration.
             my @clauses;
-            push @clauses, "\@returns for the return value"
-                if !$p->{ret_void} && $block !~ /\@returns?\b/;
+            push @clauses, "\@return/\@returns/\@retval for the return value"
+                if !$p->{ret_void} && $block !~ /\@(?:returns?|retval)\b/;
             my @params;
             unless ($p->{params_uncertain}) {        # fail open on parse doubt
                 # Harvest the names doxygen actually documents.  Accept an
