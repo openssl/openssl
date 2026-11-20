@@ -535,6 +535,27 @@ err:
     return 0;
 }
 
+/*
+ * Check if Content-Type header |value| matches |expected| case-insensitively.
+ * Any parameters (starting with ';') are ignored unless |expected| contains ';'.
+ * Whitespace before ';' is allowed (RFC 9110 section 5.6.6).
+ */
+static int content_type_matches(const char *expected, const char *value)
+{
+    const char *end;
+    size_t len;
+
+    if (OPENSSL_strcasecmp(expected, value) == 0)
+        return 1;
+    if (strchr(expected, ';') != NULL || (end = strchr(value, ';')) == NULL)
+        return 0;
+    while (end > value && (end[-1] == ' ' || end[-1] == '\t'))
+        end--;
+    len = end - value;
+    return len == strlen(expected)
+        && OPENSSL_strncasecmp(expected, value, len) == 0;
+}
+
 static int check_max_len(const char *desc, size_t max_len, size_t len)
 {
     if (max_len != 0 && len > max_len) {
@@ -853,16 +874,7 @@ next_io:
                 }
                 if (rctx->state == OHS_HEADERS
                     && rctx->expected_ct != NULL) {
-                    const char *semicolon;
-
-                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0
-                        /* ignore past ';' unless expected_ct contains ';' */
-                        && (strchr(rctx->expected_ct, ';') != NULL
-                            || (semicolon = strchr(value, ';')) == NULL
-                            || (size_t)(semicolon - value) != strlen(rctx->expected_ct)
-                            || OPENSSL_strncasecmp(rctx->expected_ct, value,
-                                   semicolon - value)
-                                != 0)) {
+                    if (!content_type_matches(rctx->expected_ct, value)) {
                         ERR_raise_data(ERR_LIB_HTTP,
                             HTTP_R_UNEXPECTED_CONTENT_TYPE,
                             "expected=%s, actual=%s",

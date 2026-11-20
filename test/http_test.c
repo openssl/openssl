@@ -911,6 +911,20 @@ static const RESP_TEST_FIXTURE split_resp_tests[] = {
         .keep_alive = 1,
         .exp_ret = 1,
         .expect_alive = 0 },
+    /* parameters of Content-Type are ignored, also after whitespace */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: text/plain \t; charset=utf-8\r\n"
+           "\r\n"),
+        .expected_ct = "text/plain",
+        .exp_ret = 1,
+        .expect_alive = 0 },
+    /* Content-Type with parameters must not match a mere prefix */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: text/plainer ; charset=utf-8\r\n"
+           "\r\n"),
+        .expected_ct = "text/plain",
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_UNEXPECTED_CONTENT_TYPE },
     /* empty Content-Length value is rejected */
     { RESP("HTTP/1.0 200 OK\r\n"
            "Content-Length:\r\n"
