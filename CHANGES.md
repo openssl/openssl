@@ -33,11 +33,60 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
+
+   *Filip Skokan*
+
+ * Added `CRYPTO_new_ex_data_ex()`, an `OSSL_LIB_CTX`-aware variant of
+   `CRYPTO_new_ex_data()`.
+
+   *Richard Levitte*
+
+ * Restored `darwin-ppc{,64}{,-cc}` targets.
+   <!-- https://github.com/openssl/openssl/pull/33585 -->
+
+   *Sergey Fedorov*
+
+ * Deprecated `SSL_copy_session_id()` and `BIO_ssl_copy_session_id()`.
+   Use `SSL_set_session()` to resume a session on a new connection, or
+   `SSL_dup()` to copy an SSL object.
+
+   *Matt Caswell*
+
+ * Added optimized ML-KEM NTT and inverse NTT implementations for AArch64.
+
+   *Shane Lontis*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
-   must be configured with `enable-pcap` option.
+   must be configured with `enable-dgram-pair-pcap` option.
    <!-- https://github.com/openssl/openssl/pull/32266 -->
+
+   *Alexandr Nedvedicky*
+
+ * s390x: Disable mod-expo offloading to a crypto card for small exponents.
+   Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
+   environment variable to specify the minimum number of bits that the
+   exponent must have to offload the operation to the crypto card.
+   Operations with smaller exponents fall back to software calculation.
+   Mod-expo operations with small exponents are faster in software than
+   via the crypto card. The default minimum exponent size is 2048 bits,
+   but this can be changed via the `OPENSSL_s390xcap` environment variable.
+
+   *Ingo Franzki*
+
+ * Added the `no-buildinfo-cflags` Configure option.  It stops the compiler
+   command line and flags from being recorded in `libcrypto`, which helps
+   reproducible builds across different build environments.
+   `OpenSSL_version(OPENSSL_CFLAGS)` and `openssl version -f` then report
+   `compiler: information not available`.
+   <!-- https://github.com/openssl/openssl/pull/33280 -->
+
+   *Dmitry Misharov*
+
+ * API calls `RAND_set_default_parameters`, and
+    `RAND_set_default_primary_parameters` have been added to libcrypto.
 
    *Alexandr Nedvedicky*
 
@@ -76,11 +125,25 @@ OpenSSL 4.2
 
    *Viktor Dukhovni*
 
+<<<<<<< HEAD
  * Added `RAND_set_default_parameters()`
    and `RAND_set_default_primary_parameters()` API functions, that provide
    ability to set parameters used to instantiate DRBGs.
 
    *Christian Vögl*
+=======
+ * The EVP layer now enforces the MAC life-cycle described in
+   life_cycle-mac(7).  `EVP_MAC_update()`, `EVP_MAC_final()` and
+   `EVP_MAC_finalXOF()` fail with an error when called on an `EVP_MAC_CTX`
+   that has not been initialised with `EVP_MAC_init()` or
+   `EVP_MAC_init_SKEY()`, including one whose key was only supplied through
+   `EVP_MAC_CTX_set_params()`, or that has already been finalised and not
+   been re-initialised since.  A failed `EVP_MAC_init()` or
+   `EVP_MAC_init_SKEY()` leaves the context uninitialised.
+   <!-- https://github.com/openssl/openssl/pull/33084-->
+
+   *Daniel Kubec*
+>>>>>>> 27423bdcce (fixup! Add functions to set default DRBG parameters)
 
  * `EVP_SKEY_get0_raw_key()` now accepts a NULL key pointer to retrieve only
    the key length.  The length is obtained from the `OSSL_SKEY_PARAM_KEY_LENGTH`
@@ -91,6 +154,21 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/33035 -->
 
    *Iva Marinova*
+
+ * Added support for deriving several symmetric keys and IVs from a single
+   KDF operation. `EVP_KDF_derive_SKEYs()` performs the derivation and
+   `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` collect the
+   individual results by purpose, for example "client_cipher_key" or
+   "server_iv". TLS1-PRF and TLS13-KDF implement it, so a TLS 1.2 key block
+   can be produced in one call. The caller names the cipher and MAC the keys
+   are for and the provider chooses the key type accordingly, which lets a
+   provider holding its keys on a token derive them all in a single
+   operation without ever exposing the raw bytes. Providers implement this
+   through the new `OSSL_FUNC_kdf_derive_multi()` and its companion
+   functions.
+   <!-- https://github.com/openssl/openssl/pull/33082 -->
+
+   *Dmitry Belyavskiy*
 
  * `X509_OBJECT_up_ref_count()` has been deprecated. Despite its name,
    `X509_OBJECT_up_ref_count()` does not reference count the `X509_OBJECT`
@@ -24676,6 +24754,7 @@ ndif
 [RFC 9846]: https://datatracker.ietf.org/doc/html/rfc9846
 [RFC 9846 Section 4.3.10]: https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.10
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
 [SECG SEC 1 Section 2.3.4]: https://www.secg.org/sec1-v2.pdf#subsubsection.2.3.4
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
