@@ -1246,7 +1246,9 @@ int OSSL_CMP_MSG_write(const char *file, const OSSL_CMP_MSG *msg)
     bio = BIO_new_file(file, "wb");
     if (bio == NULL)
         return -2;
-    res = i2d_OSSL_CMP_MSG_bio(bio, msg);
+    res = i2d_OSSL_CMP_MSG(msg, NULL);
+    if (res >= 0 && (!i2d_OSSL_CMP_MSG_bio(bio, msg) || BIO_flush(bio) <= 0))
+        res = -3;
     BIO_free(bio);
     return res;
 }
