@@ -91,7 +91,7 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
  * The servername extension is treated as follows:
  *
  * - Only the hostname type is supported with a maximum length of 255.
- * - The servername is rejected if too long or if it contains zeros,
+ * - The servername is rejected if empty, too long or if it contains zeros,
  *   in which case an fatal alert is generated.
  * - The servername field is maintained together with the session cache.
  * - When a session is resumed, the servername call back invoked in order
@@ -136,7 +136,9 @@ int tls_parse_ctos_server_name(SSL_CONNECTION *s, PACKET *pkt,
      */
     if (!PACKET_get_1(&sni, &servname_type)
         || servname_type != TLSEXT_NAMETYPE_host_name
-        || !PACKET_as_length_prefixed_2(&sni, &hostname)) {
+        || !PACKET_as_length_prefixed_2(&sni, &hostname)
+        /* HostName must be at least 1 byte long. */
+        || PACKET_remaining(&hostname) == 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
