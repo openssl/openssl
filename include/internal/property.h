@@ -70,6 +70,18 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER **prov, void **method);
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER *prov);
+/**
+ * @brief Release a provider's methods and all their cache aliases at teardown.
+ * @param store Method store in a library context being destroyed, or NULL.
+ * @param prov Provider whose methods are to be removed, or NULL.
+ *
+ * The caller must ensure that no concurrent store users remain. This function
+ * takes no store locks: releasing methods may destroy child library contexts.
+ * Provider-agnostic aliases are removed by method identity as well. The store
+ * remains owned by its library context and must subsequently be freed.
+ */
+void ossl_method_store_remove_all_provided_teardown(OSSL_METHOD_STORE *store,
+    const OSSL_PROVIDER *prov);
 
 /* Get the global properties associate with the specified library context */
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,

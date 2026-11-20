@@ -3215,7 +3215,11 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH **out,
     void **provctx)
 {
+#if defined(TLS_PROVIDER_CHILD_LIBCTX)
+    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_child(handle, in);
+#else
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
+#endif /* defined(TLS_PROVIDER_CHILD_LIBCTX) */
     OSSL_FUNC_core_obj_create_fn *c_obj_create = NULL;
     OSSL_FUNC_core_obj_add_sigid_fn *c_obj_add_sigid = NULL;
     PROV_XOR_CTX *xor_prov_ctx = xor_newprovctx(libctx);
