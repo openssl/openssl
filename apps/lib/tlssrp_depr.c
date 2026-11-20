@@ -123,7 +123,7 @@ int set_up_srp_arg(SSL_CTX *ctx, SRP_ARG *srp_arg, int srp_lateuser, int c_msg,
     }
     srp_arg->msg = c_msg;
     srp_arg->debug = c_debug;
-    SSL_CTX_set_srp_cb_arg(ctx, &srp_arg);
+    SSL_CTX_set_srp_cb_arg(ctx, srp_arg);
     SSL_CTX_set_srp_client_pwd_callback(ctx, ssl_give_srp_client_pwd_cb);
     SSL_CTX_set_srp_strength(ctx, srp_arg->strength);
     if (c_msg || c_debug || srp_arg->amp == 0)
@@ -208,7 +208,7 @@ int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
         return 0;
     }
     SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, verify_callback);
-    SSL_CTX_set_srp_cb_arg(ctx, &srp_callback_parm);
+    SSL_CTX_set_srp_cb_arg(ctx, srp_callback_parm);
     SSL_CTX_set_srp_username_callback(ctx, ssl_srp_server_param_cb);
 
     return 1;
