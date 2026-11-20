@@ -232,6 +232,57 @@ end:
     return ret;
 }
 
+/*
+ * Test that loading twice into one CONF succeeds and merges the values,
+ * instead of failing the second load and leaving a freed section node
+ * in the hash table (use-after-free on NCONF_free()).
+ */
+static int test_load_twice(void)
+{
+    const char config1[] = "a = 1\n[s]\nx = 1\nz = old\n";
+    const char config2[] = "b = 2\n[s]\ny = 2\nz = new\n";
+    CONF *test_conf = NULL;
+    BIO *test_bio = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(test_conf = NCONF_new(NULL)))
+        goto end;
+
+    if (!TEST_ptr(test_bio = BIO_new_mem_buf(config1, sizeof(config1) - 1))
+        || !TEST_int_gt(NCONF_load_bio(test_conf, test_bio, NULL), 0))
+        goto end;
+    BIO_free(test_bio);
+    test_bio = NULL;
+
+    /* A second load into the same CONF must succeed and merge */
+    if (!TEST_ptr(test_bio = BIO_new_mem_buf(config2, sizeof(config2) - 1)))
+        goto end;
+    if (NCONF_load_bio(test_conf, test_bio, NULL) <= 0) {
+        /*
+         * The CONF is in a corrupted state here on unfixed code (a freed
+         * section node is left in the hash table), so do not free it.
+         */
+        BIO_free(test_bio);
+        test_bio = NULL;
+        return 0;
+    }
+
+    /* Values from both loads are present, redefined keys replaced */
+    if (!TEST_str_eq(NCONF_get_string(test_conf, "default", "a"), "1")
+        || !TEST_str_eq(NCONF_get_string(test_conf, "default", "b"), "2")
+        || !TEST_str_eq(NCONF_get_string(test_conf, "s", "x"), "1")
+        || !TEST_str_eq(NCONF_get_string(test_conf, "s", "y"), "2")
+        || !TEST_str_eq(NCONF_get_string(test_conf, "s", "z"), "new"))
+        goto end;
+
+    ret = 1;
+end:
+    BIO_free(test_bio);
+    if (ret)
+        NCONF_free(test_conf);
+    return ret;
+}
+
 static int test_available_providers(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -317,6 +368,7 @@ int setup_tests(void)
     ADD_TEST(test_check_null_numbers);
     ADD_TEST(test_check_overflow);
     ADD_MFAIL_TEST(test_load_duplicate_mfail);
+    ADD_TEST(test_load_twice);
     if (test_providers != 0)
         ADD_TEST(test_available_providers);
 
