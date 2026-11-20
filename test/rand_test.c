@@ -1222,8 +1222,8 @@ static int test_rand_set_default_parameters(void)
     test_par[2] = OSSL_PARAM_construct_end();
     if (!TEST_ptr(ctx))
         return 0;
-    if (!TEST_true(RAND_set_default_primary_parameters(ctx, prim_par))
-        || !TEST_true(RAND_set_default_parameters(ctx, sec_par))
+    if (!TEST_true(RAND_set1_primary_default_params(ctx, prim_par))
+        || !TEST_true(RAND_set1_default_params(ctx, sec_par))
         || !TEST_ptr(rctx = RAND_get0_primary(ctx))
         || !TEST_int_eq(EVP_RAND_CTX_get_params(rctx, test_par), 1)
         || !TEST_uint_eq(reseed_request_prim, reseed_request_test)

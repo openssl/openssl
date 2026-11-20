@@ -5753,5 +5753,5 @@ EVP_KDF_CTX_get1_SKEY                   ?	4_2_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_IV                     ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data_ex                   ?	4_2_0	EXIST::FUNCTION:
-RAND_set_default_parameters             ?	4_2_0	EXIST::FUNCTION:
-RAND_set_default_primary_parameters     ?	4_2_0	EXIST::FUNCTION:
+RAND_set1_default_params             ?	4_2_0	EXIST::FUNCTION:
+RAND_set1_primary_default_params     ?	4_2_0	EXIST::FUNCTION:

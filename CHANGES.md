@@ -85,8 +85,8 @@ OpenSSL 4.2
 
    *Dmitry Misharov*
 
- * API calls `RAND_set_default_parameters`, and
-    `RAND_set_default_primary_parameters` have been added to libcrypto.
+ * API calls `RAND_set1_default_params`, and
+    `RAND_set1_primary_default_params` have been added to libcrypto.
 
    *Alexandr Nedvedicky*
 

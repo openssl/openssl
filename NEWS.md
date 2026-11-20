@@ -38,8 +38,8 @@ OpenSSL 4.2
     single KDF operation, as TLS requires. New API `EVP_KDF_derive_SKEYs()`,
     `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` have been added.
 
-   * API calls `RAND_set_default_parameters`, and
-    `RAND_set_default_primary_parameters` have been added
+   * API calls `RAND_set1_default_params`, and
+    `RAND_set1_primary_default_params` have been added
 
 OpenSSL 4.1
 -----------

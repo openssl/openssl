@@ -1206,8 +1206,8 @@ int RAND_set_DRBG_type(OSSL_LIB_CTX *ctx, const char *drbg, const char *propq,
         && random_set_string(&dgbl->rng_digest, digest);
 }
 
-int(RAND_set_default_primary_parameters)(OSSL_LIB_CTX *ctx,
-    const OSSL_PARAM *parameters)
+int(RAND_set1_primary_default_params)(OSSL_LIB_CTX *ctx,
+    const OSSL_PARAM *params)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
 
@@ -1218,11 +1218,11 @@ int(RAND_set_default_primary_parameters)(OSSL_LIB_CTX *ctx,
         return 0;
     }
     OSSL_PARAM_free(dgbl->default_primary_params);
-    if (parameters == NULL) {
+    if (params == NULL) {
         dgbl->default_primary_params = NULL;
         return 1;
     }
-    dgbl->default_primary_params = OSSL_PARAM_dup(parameters);
+    dgbl->default_primary_params = OSSL_PARAM_dup(params);
     if (dgbl->default_primary_params == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1230,7 +1230,7 @@ int(RAND_set_default_primary_parameters)(OSSL_LIB_CTX *ctx,
     return 1;
 }
 
-int RAND_set_default_parameters(OSSL_LIB_CTX *ctx, const OSSL_PARAM *parameters)
+int RAND_set1_default_params(OSSL_LIB_CTX *ctx, const OSSL_PARAM *params)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
 
@@ -1241,11 +1241,11 @@ int RAND_set_default_parameters(OSSL_LIB_CTX *ctx, const OSSL_PARAM *parameters)
         return 0;
     }
     OSSL_PARAM_free(dgbl->default_params);
-    if (parameters == NULL) {
+    if (params == NULL) {
         dgbl->default_params = NULL;
         return 1;
     }
-    dgbl->default_params = OSSL_PARAM_dup(parameters);
+    dgbl->default_params = OSSL_PARAM_dup(params);
     if (dgbl->default_params == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
