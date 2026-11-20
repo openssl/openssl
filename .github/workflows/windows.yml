@@ -59,7 +59,7 @@ jobs:
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
-        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
     - name: Gather openssl version info
       working-directory: _build
       run: |
@@ -130,7 +130,7 @@ jobs:
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
-        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
     - name: get cpu info
       working-directory: _build
       continue-on-error: true
@@ -171,7 +171,7 @@ jobs:
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
-        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip"
+        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
     - name: get cpu info
       working-directory: _build
       continue-on-error: true
