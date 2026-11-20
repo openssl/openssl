@@ -13,7 +13,14 @@
 #include <openssl/evp.h>
 
 /* ssl3_cbc.c */
-__owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
+/**
+ * Check if digest supports constant-time CBC MAC
+ *
+ * @param md the digest to check
+ * @returns 1 if the digest can be used for constant-time MAC calculation
+ *          over CBC-padded records, 0 otherwise
+ */
+__owur int ossl_cbc_digest_supported(const EVP_MD *md);
 __owur int ssl3_cbc_digest_record(const EVP_MD *md,
     unsigned char *md_out,
     size_t *md_out_size,
