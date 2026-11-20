@@ -41,6 +41,8 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         rinf->attributes = sk_X509_ATTRIBUTE_new_null();
         if (!rinf->attributes)
             return 0;
+        if (!ASN1_INTEGER_set(rinf->version, X509_REQ_VERSION_1))
+            return 0;
     }
     return 1;
 }
