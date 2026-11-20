@@ -94,7 +94,9 @@ created plus 1 byte for a NUL terminator (i.e. 25 bytes in total). The length of
 the data generated I<without> the NUL terminator is returned from the function.
 B<t> must not be NULL. B<f> must not be NULL unless B<n> is zero. B<n> must be
 nonnegative and small enough that the length of the encoded data fits in an
-int.
+int. If B<n> is negative or too large, EVP_EncodeBlock() writes only a NUL
+terminator to B<t>, puts `ERR_R_PASSED_INVALID_ARGUMENT` on the error stack,
+and returns 0.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.
 
@@ -168,7 +170,8 @@ B<ctx>.
 EVP_EncodeUpdate() returns 0 on error or 1 on success.
 
 EVP_EncodeBlock() returns the number of bytes encoded excluding the NUL
-terminator.
+terminator, or 0 if B<n> is negative or the encoded length would not fit in
+an int.
 
 EVP_DecodeUpdate() returns -1 on error and 0 or 1 on success. If 0 is returned
 then no more non-padding base64 characters are expected.
