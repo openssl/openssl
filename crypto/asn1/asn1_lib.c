@@ -294,9 +294,10 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
     if (!ossl_asn1_string_set_internal(dst, str->data, str->length,
             /*add_nul_byte=*/1))
         return 0;
-    /* Copy flags but preserve embed value */
-    dst->flags &= ASN1_STRING_FLAG_EMBED;
-    dst->flags |= str->flags & ~ASN1_STRING_FLAG_EMBED;
+    /* Copy flags but preserve embed value and non-ownership bit */
+    dst->flags &= ASN1_STRING_FLAG_EMBED | ASN1_STRING_FLAG_DATA_NOT_OWNED;
+    dst->flags |= str->flags
+        & ~(ASN1_STRING_FLAG_EMBED | ASN1_STRING_FLAG_DATA_NOT_OWNED);
     return 1;
 }
 

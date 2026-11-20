@@ -394,12 +394,28 @@ asn1_string_new_not_owned_test(void)
 {
     int success = 0;
     ASN1_STRING *tmp = NULL;
+    ASN1_STRING *tmp2 = NULL;
     char *tmpstring = NULL;
     static const uint8_t data[] = { 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b };
     static const uint8_t data2[] = { 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b };
 
     if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
         goto err;
+
+    /* Try to copy the string, the copy should not leak */
+    if (!TEST_ptr(tmp2 = ASN1_STRING_new())
+        || !TEST_true(ASN1_STRING_copy(tmp2, tmp)))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp2);
+    tmp2 = NULL;
+
+    /* Try to duplicate the string, the copy should not leak */
+    if (!TEST_ptr(tmp2 = ASN1_STRING_dup(tmp)))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp2);
+    tmp2 = NULL;
 
     ASN1_STRING_clear_free(tmp);
     tmp = NULL;
@@ -469,6 +485,7 @@ asn1_string_new_not_owned_test(void)
     success = 1;
 
 err:
+    ASN1_STRING_clear_free(tmp2);
     ASN1_STRING_clear_free(tmp);
 
     return success;
