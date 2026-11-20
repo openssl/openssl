@@ -925,7 +925,7 @@ static void thread_general_worker(void)
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
             || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                (unsigned char *)message,
+                (const unsigned char *)message,
                 (int)messlen))
             || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
@@ -1154,7 +1154,7 @@ err:
     return testresult;
 }
 
-static char *multi_load_provider = "legacy";
+static const char *multi_load_provider = "legacy";
 /*
  * This test attempts to load several providers at the same time, and if
  * run with a thread sanitizer, should crash if the core provider code
@@ -1360,7 +1360,7 @@ static void test_x509_store_by_subject(void)
     if (!TEST_ptr(name))
         goto err;
     if (!TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-            (unsigned char *)"Root CA",
+            (const unsigned char *)"Root CA",
             -1, -1, 0)))
         goto err;
     obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);

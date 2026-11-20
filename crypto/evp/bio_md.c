@@ -17,7 +17,7 @@
  * BIO_put and BIO_get both add to the digest, BIO_gets returns the digest
  */
 
-static int md_write(BIO *h, char const *buf, int num);
+static int md_write(BIO *h, const char *buf, int num);
 static int md_read(BIO *h, char *buf, int size);
 static int md_gets(BIO *h, char *str, int size);
 static long md_ctrl(BIO *h, int cmd, long arg1, void *arg2);

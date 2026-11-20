@@ -114,7 +114,7 @@ static X509 *generate_unique_self_signed_cert(EVP_PKEY *pkey, int index)
 
     if (!TEST_ptr(name = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC,
-            (unsigned char *)"cmp-dos-test",
+            (const unsigned char *)"cmp-dos-test",
             -1, -1, 0))
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
             (unsigned char *)cn,

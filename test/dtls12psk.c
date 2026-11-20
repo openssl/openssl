@@ -24,7 +24,7 @@ static const unsigned char sid_req[] = {
 };
 
 static const struct ciphersuites {
-    char *name;
+    const char *name;
 } css[] = {
     { "PSK-AES128-CBC-SHA256" },
     { "PSK-AES256-CBC-SHA384" },

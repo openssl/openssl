@@ -19,7 +19,7 @@
 typedef struct {
     size_t idx;
     unsigned int type;
-    char *name;
+    const char *name;
 } EXT_LIST;
 
 /* The order here does matter! */

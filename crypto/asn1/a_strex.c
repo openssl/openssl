@@ -442,7 +442,7 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
     const char *objbuf;
     int outlen, len;
     int err = 0;
-    char *sep_dn, *sep_mv, *sep_eq;
+    const char *sep_dn, *sep_mv, *sep_eq;
     int sep_dn_len, sep_mv_len, sep_eq_len;
     if (indent < 0)
         indent = 0;

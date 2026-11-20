@@ -2923,7 +2923,7 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
         printf("In app_verify_callback, allowing cert. ");
         printf("Arg is: %s\n", cb_arg->string);
         printf("Finished printing do we have a context? 0x%p a cert? 0x%p\n",
-            (void *)ctx, (void *)c);
+            (void *)ctx, (const void *)c);
         if (c)
             s = X509_NAME_oneline(X509_get_subject_name(c), buf, 256);
         if (s != NULL) {

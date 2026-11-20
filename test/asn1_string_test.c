@@ -512,7 +512,7 @@ asn1_string_set_data_test(void)
     if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 7))
         goto err;
 
-    if (!TEST_int_eq(strcmp("hoobla", (char *)data), 0))
+    if (!TEST_int_eq(strcmp("hoobla", (const char *)data), 0))
         goto err;
 
     success = 1;

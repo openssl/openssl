@@ -91,7 +91,7 @@ IMPLEMENT_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 
 #define IA5_OFFSET_LEN(ia5base, offset) \
-    ((ia5base)->length - ((unsigned char *)(offset) - (ia5base)->data))
+    ((ia5base)->length - ((const unsigned char *)(offset) - (ia5base)->data))
 
 /* Like memchr but for ASN1_IA5STRING. Additionally you can specify the
  * starting point to search from

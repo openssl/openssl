@@ -1084,7 +1084,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (rctfile != NULL) {
-        char *rctmode = (rctformat == FORMAT_ASN1) ? "rb" : "r";
+        const char *rctmode = (rctformat == FORMAT_ASN1) ? "rb" : "r";
 
         if ((rctin = BIO_new_file(rctfile, rctmode)) == NULL) {
             BIO_printf(bio_err, "Can't open receipt file %s\n", rctfile);

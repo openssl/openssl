@@ -171,7 +171,7 @@ static void *openc_alloc_space(GEN_CTX *ctx, size_t num_bytes);
 
 DEF_ENCODER(openc_u64, uint64_t)
 DEF_ENCODER(openc_size, size_t)
-DEF_ENCODER(openc_p, void *)
+DEF_ENCODER(openc_p, const void *)
 DEF_ENCODER(openc_fp, helper_func_t)
 #define openc_opcode openc_u64
 
@@ -180,13 +180,13 @@ static void opgen_END(GEN_CTX *ctx)
     openc_opcode(ctx, OPK_END);
 }
 
-static ossl_unused void opgen_PUSH_P(GEN_CTX *ctx, void *p)
+static ossl_unused void opgen_PUSH_P(GEN_CTX *ctx, const void *p)
 {
     openc_opcode(ctx, OPK_PUSH_P);
     openc_p(ctx, p);
 }
 
-static void opgen_PUSH_PZ(GEN_CTX *ctx, void *p)
+static void opgen_PUSH_PZ(GEN_CTX *ctx, const void *p)
 {
     openc_opcode(ctx, OPK_PUSH_PZ);
     openc_p(ctx, p);

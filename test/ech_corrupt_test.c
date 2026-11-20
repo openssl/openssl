@@ -29,7 +29,7 @@ static OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
 static int verbose = 0;
 static int testcase = 0;
 static int testiter = 0;
-static char *certsdir = NULL;
+static const char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 static unsigned char *hpke_info = NULL;
@@ -1291,7 +1291,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
                 return 0;
             if ((ts->borkage & OSSL_ECH_BORK_HRR) != 0) {
-                rv = ech_get_sh_offsets((unsigned char *)msg + 9,
+                rv = ech_get_sh_offsets((const unsigned char *)msg + 9,
                     msglen - 9,
                     &exts, &echoffset,
                     &echtype);
@@ -1309,7 +1309,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
         if ((ts->borkage & OSSL_ECH_BORK_REPLACE) != 0 && (ts->borkage & OSSL_ECH_BORK_HRR) != 0) {
             if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
                 return 0;
-            rv = ech_get_sh_offsets((unsigned char *)msg + 9,
+            rv = ech_get_sh_offsets((const unsigned char *)msg + 9,
                 msglen - 9,
                 &exts, &echoffset, &echtype);
             if (!TEST_int_eq(rv, 1))
@@ -1489,7 +1489,7 @@ static int test_ch_corrupt(int testidx)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
             c_to_s_fbio)))
         goto end;
-    if (!TEST_true(SSL_set1_ech_config_list(client, (unsigned char *)echconfig,
+    if (!TEST_true(SSL_set1_ech_config_list(client, (const unsigned char *)echconfig,
             echconfiglen)))
         goto end;
     if (!TEST_true(SSL_set_tlsext_host_name(client, "foo.example.com")))
@@ -1562,7 +1562,7 @@ static int test_sh_corrupt(int testidx)
             goto end;
     } else {
         if (!TEST_true(SSL_set1_ech_config_list(client,
-                (unsigned char *)echconfig,
+                (const unsigned char *)echconfig,
                 echconfiglen)))
             goto end;
     }
@@ -1647,7 +1647,7 @@ static int test_ech_corrupt(int testidx)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
             c_to_s_fbio)))
         goto end;
-    if (!TEST_true(SSL_set1_ech_config_list(client, (unsigned char *)echconfig,
+    if (!TEST_true(SSL_set1_ech_config_list(client, (const unsigned char *)echconfig,
             echconfiglen)))
         goto end;
     if (!TEST_true(SSL_set_tlsext_host_name(client, "foo.example.com")))
@@ -1735,7 +1735,7 @@ static int ech_retry_config_test(int idx)
     if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "foo.example.com")))
         goto end;
     /* set a real but wrong ECHConfig */
-    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp2,
+    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (const unsigned char *)ec_kp2,
             ec_kp2len)))
         goto end;
     if (idx == 1) /* corrupt as desired */

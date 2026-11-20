@@ -3524,8 +3524,8 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *ocsp_resp;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
-    char *signer_key_files[] = { "subinterCA.key", "interCA.key", "rootCA.key" };
-    char *signer_cert_files[] = { "subinterCA.pem", "interCA.pem", "rootCA.pem" };
+    const char *signer_key_files[] = { "subinterCA.key", "interCA.key", "rootCA.key" };
+    const char *signer_cert_files[] = { "subinterCA.pem", "interCA.pem", "rootCA.pem" };
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
 
     if (*argi != 1 && *argi != 3)
@@ -10559,7 +10559,7 @@ static int test_key_update(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0, i, j;
     char buf[20];
-    static char *mess = "A test message";
+    static const char *mess = "A test message";
     const SSL_METHOD *smeth, *cmeth;
     int vermin, vermax = 0;
     int testdtls = idx >= 1;
@@ -10684,7 +10684,7 @@ static int test_key_update_peer_in_write(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     char buf[20];
-    static char *mess = "A test message";
+    static const char *mess = "A test message";
     BIO *bretry = BIO_new(bio_s_always_retry());
     BIO *tmp = NULL;
     SSL *peerupdate = NULL, *peerwrite = NULL;
@@ -10850,7 +10850,7 @@ static int test_key_update_peer_in_read(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     char prbuf[515], lwbuf[515] = { 0 };
-    static char *mess = "A test message";
+    static const char *mess = "A test message";
     BIO *lbio = NULL, *pbio = NULL;
     SSL *local = NULL, *peer = NULL;
     const SSL_METHOD *smeth, *cmeth;
@@ -11014,7 +11014,7 @@ static int test_key_update_local_in_write(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     char buf[20];
-    static char *mess = "A test message";
+    static const char *mess = "A test message";
     BIO *bretry = BIO_new(bio_s_always_retry());
     BIO *tmp = NULL;
     SSL *local = NULL, *peer = NULL;
@@ -11192,7 +11192,7 @@ static int test_key_update_local_in_read(int tst)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     char lrbuf[515], pwbuf[515] = { 0 }, prbuf[20];
-    static char *mess = "A test message";
+    static const char *mess = "A test message";
     BIO *lbio = NULL, *pbio = NULL;
     SSL *local = NULL, *peer = NULL;
 
@@ -15044,11 +15044,11 @@ static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
         || !TEST_true(X509_set_pubkey(x509, pkey))
         || !TEST_ptr(name = X509_NAME_new())
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC,
-            (unsigned char *)"CH", -1, -1, 0))
+            (const unsigned char *)"CH", -1, -1, 0))
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC,
-            (unsigned char *)"test.org", -1, -1, 0))
+            (const unsigned char *)"test.org", -1, -1, 0))
         || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
-            (unsigned char *)"localhost", -1, -1, 0))
+            (const unsigned char *)"localhost", -1, -1, 0))
         || !TEST_true(X509_set_subject_name(x509, name))
         || !TEST_true(X509_set_issuer_name(x509, name))
         || !TEST_true(X509_sign(x509, pkey, EVP_sha1()))
@@ -15966,7 +15966,7 @@ static int test_session_secret_cb(int idx)
          * Set an explicit session id. Normally we don't support this, but we
          * can get away with it if we reset the session id later
          */
-        if (!TEST_true(SSL_SESSION_set1_id(secret_sess, (unsigned char *)"sessionid", 9)))
+        if (!TEST_true(SSL_SESSION_set1_id(secret_sess, (const unsigned char *)"sessionid", 9)))
             goto end;
     }
 
@@ -17173,7 +17173,7 @@ static int test_read_ahead_key_change(void)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    char *msg = "Hello World";
+    const char *msg = "Hello World";
     size_t written, readbytes;
     char buf[80];
     int i;
@@ -17276,7 +17276,7 @@ static int test_tls13_record_padding(int idx)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    char *msg = "Hello World";
+    const char *msg = "Hello World";
     size_t written, readbytes;
     char buf[80];
     int i;
@@ -18321,12 +18321,12 @@ static int alpn_select_cb2(SSL *ssl, const unsigned char **out,
 
     switch (*idx) {
     case 0:
-        *out = (unsigned char *)(fooprot + 1);
+        *out = (const unsigned char *)(fooprot + 1);
         *outlen = *fooprot;
         return SSL_TLSEXT_ERR_OK;
 
     case 2:
-        *out = (unsigned char *)(barprot + 1);
+        *out = (const unsigned char *)(barprot + 1);
         *outlen = *barprot;
         return SSL_TLSEXT_ERR_OK;
 

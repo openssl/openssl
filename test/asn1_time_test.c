@@ -34,7 +34,7 @@ struct testdata {
 };
 
 struct TESTDATA_asn1_to_utc {
-    char *input;
+    const char *input;
     time_t expected;
 };
 
@@ -973,8 +973,8 @@ static int test_gmtime_diff_limits(void)
     int ret = 0;
     int64_t expected_days = (MAX_POSIX_TIME - MIN_POSIX_TIME) / SECS_PER_DAY;
     int64_t expected_secs = (MAX_POSIX_TIME - MIN_POSIX_TIME) % SECS_PER_DAY;
-    char *min_asn1_time = "00000101000000Z";
-    char *max_asn1_time = "99991231235959Z";
+    const char *min_asn1_time = "00000101000000Z";
+    const char *max_asn1_time = "99991231235959Z";
     struct tm min_tm, max_tm;
     ASN1_TIME *min = NULL, *max = NULL;
     int pday, psec, saved_value;

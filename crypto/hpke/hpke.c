@@ -747,7 +747,7 @@ static int hpke_do_middle(OSSL_HPKE_CTX *ctx,
             NULL, 0, OSSL_HPKE_SEC51LABEL,
             suitebuf, sizeof(suitebuf),
             OSSL_HPKE_INFOHASH_LABEL,
-            (unsigned char *)info, infolen)
+            (const unsigned char *)info, infolen)
         != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;

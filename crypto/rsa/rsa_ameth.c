@@ -300,7 +300,7 @@ err:
 static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 {
     const RSA *x = pkey->pkey.rsa;
-    char *str;
+    const char *str;
     const char *s;
     int ret = 0, mod_len = 0, ex_primes;
 

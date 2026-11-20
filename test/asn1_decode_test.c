@@ -254,7 +254,7 @@ static int test_reuse_asn1_object(void)
     };
     int ret = 0;
     ASN1_OBJECT *obj;
-    unsigned char const *p = oid_der;
+    const unsigned char *p = oid_der;
 
     /* Create an object that owns dynamically allocated 'sn' and 'ln' fields */
 

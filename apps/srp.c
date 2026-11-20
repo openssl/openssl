@@ -60,7 +60,7 @@ static int get_index(CA_DB *db, char *id, char type)
     return -1;
 }
 
-static void print_entry(CA_DB *db, int indx, int verbose, char *s)
+static void print_entry(CA_DB *db, int indx, int verbose, const char *s)
 {
     if (indx >= 0 && verbose) {
         int j;

@@ -232,7 +232,7 @@ static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
     return 1;
 }
 
-static int test_asn1_time_conversion(char *time_string, const char *file,
+static int test_asn1_time_conversion(const char *time_string, const char *file,
     int line)
 {
     int ret = 0;

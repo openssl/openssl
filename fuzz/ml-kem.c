@@ -531,10 +531,10 @@ static void cleanup_mlkem_keys(void *key1, void *key2,
  */
 struct op_table_entry {
     /** Name of the operation. */
-    char *name;
+    const char *name;
 
     /** Description of the operation. */
-    char *desc;
+    const char *desc;
 
     /**
      * @brief Function pointer for setting up the operation.

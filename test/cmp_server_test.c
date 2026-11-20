@@ -89,9 +89,9 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
 
     if (!TEST_ptr(cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(ctx))
         || !OSSL_CMP_CTX_set1_referenceValue(cmp_ctx,
-            (unsigned char *)"server", 6)
+            (const unsigned char *)"server", 6)
         || !OSSL_CMP_CTX_set1_secretValue(cmp_ctx,
-            (unsigned char *)"1234", 4))
+            (const unsigned char *)"1234", 4))
         goto end;
 
     if (!TEST_ptr(rsp = OSSL_CMP_CTX_server_perform(client_ctx, fixture->req))
