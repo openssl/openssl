@@ -1,0 +1,148 @@
+=pod
+
+=head1 NAME
+
+X509V3_EXT_add, X509V3_EXT_add_list, X509V3_EXT_add_alias,
+X509V3_EXT_get, X509V3_EXT_get_nid,
+X509V3_EXT_cleanup, X509V3_add_standard_extensions
+- custom X509 extension registration
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
+ int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
+ int X509V3_EXT_add_alias(int nid_to, int nid_from);
+
+ const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
+ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
+
+ void X509V3_EXT_cleanup(void);
+ int X509V3_add_standard_extensions(void);
+
+=head1 DESCRIPTION
+
+X509V3_EXT_add() adds the custom extension method I<ext> to the internal list
+of extension methods. After calling this function, the extension can be
+used with all the standard extension functions such as
+L<X509V3_EXT_nconf(3)> and L<X509V3_EXT_print(3)>.
+The I<ext> structure should remain valid until X509V3_EXT_cleanup() is called.
+
+X509V3_EXT_add_list() adds an array of extension methods to the internal list.
+The array I<extlist> must be terminated by an entry with B<ext_nid> set to -1.
+
+X509V3_EXT_add_alias() creates a new extension method that is identical in
+ASN.1 structure and handling to the existing extension identified by
+I<nid_from>, but uses the extension OID identified by I<nid_to>. This is
+useful when an extension has the same structure as an existing one but uses
+a different OID.
+
+X509V3_EXT_get() returns the extension method for the extension I<ext>,
+or NULL if the extension is not supported.
+
+X509V3_EXT_get_nid() returns the extension method for the extension
+identified by I<nid>, or NULL if the extension is not supported. This
+function first searches the built-in standard extensions, then searches
+any custom extensions added with X509V3_EXT_add().
+
+X509V3_EXT_cleanup() frees all custom extension methods that were added
+with X509V3_EXT_add(), X509V3_EXT_add_list() or X509V3_EXT_add_alias().
+The standard built-in extensions are not affected. This function should be
+called during application cleanup if any custom extensions were registered.
+
+X509V3_add_standard_extensions() is a legacy function that does nothing
+and always returns 1. It is retained for compatibility only. In older
+versions of OpenSSL, it was necessary to call this function to register
+the standard extensions. This is no longer required.
+
+=head1 THE X509V3_EXT_METHOD STRUCTURE
+
+The B<X509V3_EXT_METHOD> structure contains the following function pointers
+and fields used to handle an extension:
+
+ struct v3_ext_method {
+     int ext_nid;
+     int ext_flags;
+     ASN1_ITEM_EXP *it;
+     X509V3_EXT_NEW ext_new;
+     X509V3_EXT_FREE ext_free;
+     X509V3_EXT_D2I d2i;
+     X509V3_EXT_I2D i2d;
+     /* ... */
+     X509V3_EXT_I2S i2s;
+     X509V3_EXT_S2I s2i;
+     X509V3_EXT_I2V i2v;
+     X509V3_EXT_V2I v2i;
+     X509V3_EXT_I2R i2r;
+     X509V3_EXT_R2I r2i;
+     void *usr_data;
+ };
+
+I<ext_nid> is the NID of the extension's object identifier.
+
+I<ext_flags> may include B<X509V3_EXT_MULTILINE> to indicate that the
+extension should be printed on multiple lines, or B<X509V3_EXT_DYNAMIC>
+which is set internally for dynamically allocated methods.
+
+I<it> is an optional pointer to an ASN.1 item definition. If set, the
+I<d2i>, I<i2d>, I<ext_new> and I<ext_free> fields are ignored and
+the ASN.1 item is used for encoding and decoding instead.
+
+I<usr_data> is an extension-specific pointer that can be used to share
+a single set of functions between extensions with different data.
+
+The I<i2s>/I<s2i>, I<i2v>/I<v2i>, and I<i2r>/I<r2i> pairs handle
+different levels of complexity:
+
+=over 4
+
+=item I<i2s>/I<s2i>
+
+For simple string extensions. I<i2s> converts the internal structure to
+a string, I<s2i> converts a string to the internal structure.
+
+=item I<i2v>/I<v2i>
+
+For multi-valued extensions using B<STACK_OF(CONF_VALUE)>.
+
+=item I<i2r>/I<r2i>
+
+For raw extensions that handle their own I/O. I<i2r> writes directly to
+a B<BIO>, I<r2i> can access the configuration database via the B<X509V3_CTX>.
+
+=back
+
+At most one I<i2X> function and one I<X2i> function should be set; the
+rest should be NULL. The types used for input and output do not need to match.
+
+=head1 RETURN VALUES
+
+X509V3_EXT_add(), X509V3_EXT_add_list() and X509V3_EXT_add_alias() return 1
+on success and 0 on error.
+
+X509V3_EXT_get() and X509V3_EXT_get_nid() return a pointer to the extension
+method or NULL if the extension is not found.
+
+X509V3_add_standard_extensions() always returns 1.
+
+=head1 SEE ALSO
+
+L<X509V3_EXT_nconf(3)>,
+L<X509V3_EXT_print(3)>,
+L<X509V3_get_d2i(3)>
+
+=head1 HISTORY
+
+These functions have been available since OpenSSL 0.9.5.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
