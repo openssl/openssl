@@ -911,6 +911,24 @@ static const RESP_TEST_FIXTURE split_resp_tests[] = {
         .keep_alive = 1,
         .exp_ret = 1,
         .expect_alive = 0 },
+    /* empty Content-Length value is rejected */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Length:\r\n"
+           "\r\n"),
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_ERROR_PARSING_CONTENT_LENGTH },
+    /* Content-Length value consisting of whitespace only is rejected */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Length: \t \r\n"
+           "\r\n"),
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_ERROR_PARSING_CONTENT_LENGTH },
+    /* empty Location value is treated as missing */
+    { RESP("HTTP/1.0 302 Found\r\n"
+           "Location: \t\r\n"
+           "\r\n"),
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_MISSING_REDIRECT_LOCATION },
 };
 
 /**

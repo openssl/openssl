@@ -814,7 +814,8 @@ next_io:
         value = strchr(key, ':');
         if (value != NULL) {
             *(value++) = '\0';
-            while (ossl_isspace(*value))
+            /* skip leading OWS, but not CR or LF, which terminate the line */
+            while (*value == ' ' || *value == '\t')
                 value++;
             line_end = strchr(value, '\r');
             if (line_end == NULL)
@@ -828,7 +829,8 @@ next_io:
         }
         if (value != NULL && line_end != NULL) {
             if (rctx->state == OHS_REDIRECT
-                && OPENSSL_strcasecmp(key, "Location") == 0) {
+                && OPENSSL_strcasecmp(key, "Location") == 0
+                && *value != '\0' /* empty Location is treated as missing */) {
                 rctx->redirection_url = value;
                 if (OSSL_TRACE_ENABLED(HTTP))
                     OSSL_TRACE(HTTP, "]\n");
