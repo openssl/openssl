@@ -217,8 +217,36 @@ static int test_cmp_calc_protection_pbmac_bad_alg_param(void)
 }
 static int execute_MSG_protect_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
-    return TEST_int_eq(fixture->expected,
-        ossl_cmp_msg_protect(fixture->cmp_ctx, fixture->msg));
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    OSSL_CMP_PKIHEADER *hdr = fixture->msg->header;
+    X509_ALGOR **protectionAlg = &ctx->protectionAlg;
+    int ret = TEST_int_eq(fixture->expected, ossl_cmp_msg_protect(ctx, fixture->msg));
+
+    if (!ret || fixture->expected == 0)
+        return ret;
+    if (ctx->unprotectedSend)
+        return TEST_ptr_null(*protectionAlg);
+    if (ctx->pkey != NULL && !TEST_true(OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_DIGEST_ALGNID, NID_sha384)))
+        return 0;
+    return TEST_ptr(*protectionAlg)
+        /* the protection alg in the context is a copy of the alg in the message header: */
+        && TEST_ptr_ne(*protectionAlg, hdr->protectionAlg)
+        && TEST_int_eq(X509_ALGOR_cmp(*protectionAlg, hdr->protectionAlg), 0)
+
+        /* this also holds when re-protecting within the same transaction: */
+        && TEST_true(ossl_cmp_msg_protect(ctx, fixture->msg))
+        && TEST_int_eq(X509_ALGOR_cmp(*protectionAlg, hdr->protectionAlg), 0)
+
+        /* this holds also after context re-initialization and message re-protection: */
+        && TEST_true(OSSL_CMP_CTX_reinit(ctx))
+        && TEST_ptr_null(*protectionAlg)
+        && TEST_true(ossl_cmp_msg_protect(ctx, fixture->msg))
+        && TEST_ptr(*protectionAlg)
+        && TEST_int_eq(X509_ALGOR_cmp(*protectionAlg, hdr->protectionAlg), 0)
+
+        && (ctx->pkey == NULL /* finally, verify signature-based protection */
+            || TEST_true(verify_signature(fixture->msg, fixture->msg->protection,
+                ctx->pkey, ctx->digest)));
 }
 
 #define SET_OPT_UNPROTECTED_SEND(ctx, val) \
