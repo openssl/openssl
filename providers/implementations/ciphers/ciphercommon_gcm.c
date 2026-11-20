@@ -87,6 +87,13 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
         if (!ctx->hw->setkey(ctx, key, ctx->keylen))
             return 0;
         ctx->tls_enc_records = 0;
+        /*
+         * A new key resets the GCM128 context (Yi, EK0, Xi). If an IV was
+         * already applied and no new IV is given, re-apply it under the new
+         * key instead of continuing with an all-zero counter block.
+         */
+        if (iv == NULL && ctx->iv_state == IV_STATE_COPIED)
+            ctx->iv_state = IV_STATE_BUFFERED;
     }
     return ossl_gcm_set_ctx_params(ctx, params);
 }
