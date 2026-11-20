@@ -15,6 +15,8 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
+#include "internal/deprecated.h"
+
 #include "internal/e_os.h"
 #include <assert.h>
 #include <limits.h>

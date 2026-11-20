@@ -8,6 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+
 #include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_ARIA

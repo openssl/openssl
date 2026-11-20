@@ -180,6 +180,9 @@ X509v3_add_extensions() was added in OpenSSL 3.4.
 
 X509v3_delete_extension() was added in OpenSSL 4.0.
 
+X509_REVOKED_get_ext_by_OBJ() and X509_REVOKED_get_ext_by_critical() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.

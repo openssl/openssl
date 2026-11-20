@@ -275,6 +275,17 @@ X509_STORE_set_lookup_crls(), X509_STORE_get_lookup_crls(),
 X509_STORE_set_cleanup() and X509_STORE_get_cleanup()
 were added in OpenSSL 1.1.0.
 
+X509_STORE_get_cleanup(), X509_STORE_set_cleanup(),
+X509_STORE_get_lookup_crls(), X509_STORE_get_lookup_certs(),
+X509_STORE_set_lookup_certs(), X509_STORE_get_check_policy(),
+X509_STORE_set_check_policy(), X509_STORE_get_cert_crl(),
+X509_STORE_set_cert_crl(), X509_STORE_get_check_crl(),
+X509_STORE_set_check_crl(), X509_STORE_get_get_crl(),
+X509_STORE_set_get_crl(), X509_STORE_get_check_revocation(),
+X509_STORE_set_check_revocation(), X509_STORE_get_check_issued(),
+X509_STORE_get_get_issuer() and X509_STORE_set_get_issuer() were deprecated in
+OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2009-2026 The OpenSSL Project Authors. All Rights Reserved.

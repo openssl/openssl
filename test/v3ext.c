@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/x509.h>
@@ -235,6 +237,7 @@ end:
 }
 
 #ifndef OPENSSL_NO_RFC3779
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_asid(void)
 {
     ASN1_INTEGER *val1 = NULL, *val2 = NULL;
@@ -311,6 +314,7 @@ err:
     ASIdentifiers_free(asid4);
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static struct ip_ranges_st {
     const unsigned int afi;
@@ -421,6 +425,7 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_addr_fam_len(void)
 {
     int testresult = 0;
@@ -511,6 +516,7 @@ end:
     ASN1_OCTET_STRING_free(ip2);
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static struct extvalues_st {
     const char *value;
@@ -619,6 +625,7 @@ static int test_ext_syntax(void)
  */
 #define V3EXT_TEST_LARGE_N 8192
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Build an ASIdentifiers extension containing V3EXT_TEST_LARGE_N
  * adjacent single integers (1, 2, 3, ...), exercise canonize, and
@@ -741,6 +748,7 @@ err:
     ASIdentifiers_free(asid);
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Build an IPAddrBlocks with a single IPv4 family carrying
@@ -822,6 +830,7 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Interleaved merge / no-merge pattern, exercising the slide-forward
  * arm of the linear-sweep compaction in ASIdentifierChoice_canonize.
@@ -885,6 +894,7 @@ err:
     ASIdentifiers_free(asid);
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * IP-address counterpart to test_asid_interleaved_canonize: pairs of
@@ -942,6 +952,7 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Trigger an overlap-detection error partway through the linear
  * merge.  The first V3EXT_TEST_LARGE_N / 2 entries are adjacent and
@@ -1012,6 +1023,7 @@ err:
     ASIdentifiers_free(asid);
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Trigger an overlap-detection error partway through the linear merge
@@ -1080,6 +1092,7 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Verify that an ASIdentifiers object remains safe to inspect and to
  * retry after a canonize() call fails.  The input [1, 2, 2] fails
@@ -1132,6 +1145,7 @@ err:
     ASIdentifiers_free(asid);
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Verify that an IPAddrBlocks object remains safe to inspect and to
@@ -1176,6 +1190,7 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Exercise the merge arm where `cur` is itself a range (rather than a
  * single integer), hitting the `case ASIdOrRange_range` detach branch
@@ -1362,6 +1377,7 @@ end:
     }
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Regression test for IPAddrBlocks_new/free and d2i/i2d_IPAddrBlocks (issue #18528).
@@ -1448,22 +1464,34 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_duplicate_field, OSSL_NELEM(duplicate_field_configs));
     ADD_MFAIL_TEST(test_asn1_multi_mfail);
 #ifndef OPENSSL_NO_RFC3779
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_asid);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_addr_ranges);
     ADD_TEST(test_ext_syntax);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_addr_fam_len);
     ADD_TEST(test_addr_subset);
     ADD_TEST(test_asid_large_canonize_merge);
     ADD_TEST(test_asid_large_canonize_no_merge);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_addr_large_canonize_merge);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_asid_interleaved_canonize);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_addr_interleaved_canonize);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_asid_canonize_error_midsweep);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_addr_canonize_error_midsweep);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_asid_canonize_failure_then_inspect);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_addr_canonize_failure_then_inspect);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ADD_TEST(test_asid_range_merge_canonize);
     ADD_TEST(test_asid_canonize_inverted_midsweep);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ADD_TEST(test_ipaddrblocks_api);
 #endif /* OPENSSL_NO_RFC3779 */
     return 1;

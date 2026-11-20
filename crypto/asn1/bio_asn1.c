@@ -13,6 +13,8 @@
  * provided to add prefix and suffix data.
  */
 
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include "internal/bio.h"
 #include <openssl/asn1.h>

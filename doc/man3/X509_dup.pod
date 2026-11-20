@@ -610,6 +610,20 @@ were added in OpenSSL 3.5.
 IPAddrBlocks_free(), IPAddrBlocks_it() and IPAddrBlocks_new()
 were added in OpenSSL 4.2.
 
+ASIdOrRange_free(), ASIdOrRange_new(), ASIdentifierChoice_free(),
+ASIdentifierChoice_new(), ASRange_free(), ASRange_new(),
+DIRECTORYSTRING_free(), DIRECTORYSTRING_new(), ESS_CERT_ID_V2_dup(),
+ESS_SIGNING_CERT_V2_dup(), IPAddressChoice_free(), IPAddressChoice_new(),
+IPAddressFamily_new(), IPAddressOrRange_free(), IPAddressOrRange_new(),
+IPAddressRange_free(), IPAddressRange_new(), NETSCAPE_SPKAC_free(),
+NETSCAPE_SPKAC_new(), NOTICEREF_free(), OCSP_CERTSTATUS_free(),
+OCSP_CERTSTATUS_new(), OCSP_REQINFO_free(), OCSP_REQINFO_new(),
+OCSP_RESPBYTES_free(), OCSP_RESPDATA_free(), OCSP_RESPDATA_new(),
+OCSP_REVOKEDINFO_free(), PKEY_USAGE_PERIOD_free(), PKEY_USAGE_PERIOD_new(),
+TLS_FEATURE_free(), TLS_FEATURE_new(), USERNOTICE_free(),
+X509_REQ_INFO_free(), X509_REQ_INFO_new(), X509_VAL_free() and X509_VAL_new()
+were deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.

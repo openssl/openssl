@@ -61,6 +61,9 @@ L<PKCS8_encrypt_ex(3)>
 
 PKCS12_item_decrypt_d2i_ex() and PKCS12_item_i2d_encrypt_ex() were added in OpenSSL 3.0.
 
+PKCS12_item_decrypt_d2i() and PKCS12_item_i2d_encrypt() were deprecated in
+OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.

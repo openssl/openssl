@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"

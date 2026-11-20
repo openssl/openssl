@@ -449,8 +449,11 @@ int PEM_read(FILE *fp, char **name, char **header,
     unsigned char **data, long *len);
 int PEM_write(FILE *fp, const char *name, const char *hdr,
     const unsigned char *data, long len);
-void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
     pem_password_cb *cb, void *u);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
     const void *x, const EVP_CIPHER *enc,
     const unsigned char *kstr, int klen,
@@ -462,10 +465,15 @@ STACK_OF(X509_INFO)
     void *u, OSSL_LIB_CTX *libctx, const char *propq);
 #endif
 
-int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
-int PEM_SignUpdate(EVP_MD_CTX *ctx, const unsigned char *d, unsigned int cnt);
-int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int PEM_SignUpdate(EVP_MD_CTX *ctx, const unsigned char *d, unsigned int cnt);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     unsigned int *siglen, EVP_PKEY *pkey);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* The default pem_password_cb that's used internally */
 int PEM_def_callback(char *buf, int num, int rwflag, void *userdata);
@@ -520,34 +528,47 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
     pem_password_cb *cb, void *u);
 
 /* Why do these take a signed char *kstr? */
-int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PEM_write_bio_PKCS8PrivateKey_nid(3) */
+OSSL_DEPRECATEDIN_4_2 int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PEM_write_bio_PKCS8PrivateKey(BIO *, const EVP_PKEY *, const EVP_CIPHER *,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
 int i2d_PKCS8PrivateKey_bio(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
-int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, const EVP_PKEY *x, int nid,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see i2d_PKCS8PrivateKey_nid_bio(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     void *u);
 
 #ifndef OPENSSL_NO_STDIO
-int i2d_PKCS8PrivateKey_fp(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see i2d_PKCS8PrivateKey_fp(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_PKCS8PrivateKey_fp(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
-int i2d_PKCS8PrivateKey_nid_fp(FILE *fp, const EVP_PKEY *x, int nid,
+/** @see i2d_PKCS8PrivateKey_nid_fp(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_PKCS8PrivateKey_nid_fp(FILE *fp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PEM_write_PKCS8PrivateKey_nid(FILE *fp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u);
 
-EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see d2i_PKCS8PrivateKey_fp(3) */
+OSSL_DEPRECATEDIN_4_2 EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
     void *u);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PEM_write_PKCS8PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     const char *kstr, int klen,
@@ -559,7 +580,10 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length);
-EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
 EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk);

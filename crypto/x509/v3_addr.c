@@ -11,6 +11,8 @@
  * Implementation of RFC 3779 section 2.2.
  */
 
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

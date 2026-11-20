@@ -182,6 +182,11 @@ OSSL_STORE_SEARCH_get0_bytes(),
 and OSSL_STORE_SEARCH_get0_string()
 were added in OpenSSL 1.1.1.
 
+OSSL_STORE_SEARCH_get_type(), OSSL_STORE_SEARCH_get0_name(),
+OSSL_STORE_SEARCH_get0_serial(), OSSL_STORE_SEARCH_get0_bytes(),
+OSSL_STORE_SEARCH_get0_string() and OSSL_STORE_SEARCH_get0_digest() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.

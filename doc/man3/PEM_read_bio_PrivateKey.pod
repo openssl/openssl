@@ -590,6 +590,8 @@ PEM_read_bio_X509_ACERT(), PEM_read_X509_ACERT(),
 PEM_write_bio_X509_ACERT(), PEM_write_X509_ACERT()
 were added in OpenSSL 3.4.
 
+PEM_write_bio_PKCS8PrivateKey_nid() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.

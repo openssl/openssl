@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -111,6 +113,7 @@ static int waitfd(void *args)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int blockpause(void *args)
 {
     ASYNC_block_pause();
@@ -120,6 +123,7 @@ static int blockpause(void *args)
 
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_ASYNC_init_thread(void)
 {
@@ -315,6 +319,7 @@ static int test_ASYNC_WAIT_CTX_get_all_fds(void)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int test_ASYNC_block_pause(void)
 {
     ASYNC_JOB *job = NULL;
@@ -338,6 +343,7 @@ static int test_ASYNC_block_pause(void)
     ASYNC_cleanup_thread();
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int test_ASYNC_start_job_ex(void)
 {
@@ -471,7 +477,9 @@ int main(int argc, char **argv)
             || !test_ASYNC_start_job()
             || !test_ASYNC_get_current_job()
             || !test_ASYNC_WAIT_CTX_get_all_fds()
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
             || !test_ASYNC_block_pause()
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
             || !test_ASYNC_start_job_ex()
             || !test_ASYNC_set_mem_functions()) {
             return 1;

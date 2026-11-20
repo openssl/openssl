@@ -766,6 +766,32 @@ were added in OpenSSL 3.5.
 
 d2i_IPAddrBlocks() and i2d_IPAddrBlocks() were added in OpenSSL 4.1.
 
+d2i_ASIdOrRange(), d2i_ASIdentifierChoice(), d2i_ASIdentifiers(),
+d2i_ASN1_GENERALSTRING(), d2i_ASN1_PRINTABLE(), d2i_ASN1_T61STRING(),
+d2i_ASN1_UNIVERSALSTRING(), d2i_ASRange(), d2i_DIRECTORYSTRING(),
+d2i_IPAddressChoice(), d2i_IPAddressOrRange(), d2i_IPAddressRange(),
+d2i_ISSUING_DIST_POINT(), d2i_NETSCAPE_SPKAC(), d2i_NOTICEREF(),
+d2i_OCSP_CERTSTATUS(), d2i_OCSP_CRLID(), d2i_OCSP_ONEREQ(),
+d2i_OCSP_REQINFO(), d2i_OCSP_RESPBYTES(), d2i_OCSP_RESPDATA(),
+d2i_OCSP_REVOKEDINFO(), d2i_OCSP_SERVICELOC(), d2i_OCSP_SIGNATURE(),
+d2i_PBE2PARAM(), d2i_PBEPARAM(), d2i_PBKDF2PARAM(), d2i_PKCS12_BAGS(),
+d2i_PKCS12_MAC_DATA(), d2i_PKCS8_PRIV_KEY_INFO_fp(), d2i_PKEY_USAGE_PERIOD(),
+d2i_RSA_OAEP_PARAMS(), d2i_SCRYPT_PARAMS(), d2i_SXNET(), d2i_SXNETID(),
+d2i_USERNOTICE(), d2i_X509_ALGORS(), d2i_X509_CRL_fp(), d2i_X509_REQ_INFO(),
+d2i_X509_VAL(), i2d_ASIdOrRange(), i2d_ASIdentifierChoice(),
+i2d_ASIdentifiers(), i2d_ASN1_GENERALSTRING(), i2d_ASN1_PRINTABLE(),
+i2d_ASN1_T61STRING(), i2d_ASN1_UNIVERSALSTRING(), i2d_ASRange(),
+i2d_DIRECTORYSTRING(), i2d_IPAddressChoice(), i2d_IPAddressOrRange(),
+i2d_IPAddressRange(), i2d_ISSUING_DIST_POINT(), i2d_NETSCAPE_SPKAC(),
+i2d_NOTICEREF(), i2d_OCSP_CERTSTATUS(), i2d_OCSP_CRLID(), i2d_OCSP_ONEREQ(),
+i2d_OCSP_REQINFO(), i2d_OCSP_RESPBYTES(), i2d_OCSP_RESPDATA(),
+i2d_OCSP_REVOKEDINFO(), i2d_OCSP_SERVICELOC(), i2d_OCSP_SIGNATURE(),
+i2d_PBE2PARAM(), i2d_PBEPARAM(), i2d_PBKDF2PARAM(), i2d_PKCS12_BAGS(),
+i2d_PKCS12_MAC_DATA(), i2d_PKCS8PrivateKeyInfo_bio(),
+i2d_PKCS8PrivateKeyInfo_fp(), i2d_PKEY_USAGE_PERIOD(), i2d_RSA_OAEP_PARAMS(),
+i2d_SCRYPT_PARAMS(), i2d_SXNET(), i2d_SXNETID(), i2d_USERNOTICE(),
+i2d_X509_CRL_fp() and i2d_X509_VAL() were deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 1998-2026 The OpenSSL Project Authors. All Rights Reserved.

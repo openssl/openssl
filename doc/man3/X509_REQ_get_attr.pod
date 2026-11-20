@@ -99,6 +99,11 @@ to indicate the ASN.1 encoding has been modified.
 
 L<X509_ATTRIBUTE(3)>
 
+=head1 HISTORY
+
+X509_REQ_get_attr_by_OBJ() and X509_REQ_add1_attr_by_OBJ() were deprecated in
+OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.

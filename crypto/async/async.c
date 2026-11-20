@@ -16,6 +16,8 @@
 #undef _FORTIFY_SOURCE
 
 /* This must be the first #include file */
+#include "internal/deprecated.h"
+
 #include "async_local.h"
 #include "internal/threads_common.h"
 

@@ -79,6 +79,8 @@ L<EVP_sha1(3)>
 
 The X509_digest_sig() function was added in OpenSSL 3.0.
 
+X509_REQ_digest() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.

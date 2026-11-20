@@ -357,7 +357,10 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
         ERR_set_error((lib), (reason), NULL))
 #endif
 
-void ERR_set_error_data(char *data, int flags);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void ERR_set_error_data(char *data, int flags);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 unsigned long ERR_get_error(void);
 unsigned long ERR_get_error_all(const char **file, int *line,
@@ -383,7 +386,10 @@ unsigned long ERR_peek_error_line_data(const char **file, int *line,
     const char **data, int *flags);
 #endif
 unsigned long ERR_peek_last_error(void);
-unsigned long ERR_peek_last_error_line(const char **file, int *line);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see ERR_peek_last_error_line(3) */
+OSSL_DEPRECATEDIN_4_2 unsigned long ERR_peek_last_error_line(const char **file, int *line);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 unsigned long ERR_peek_last_error_func(const char **func);
 unsigned long ERR_peek_last_error_data(const char **data, int *flags);
 unsigned long ERR_peek_last_error_all(const char **file, int *line,
@@ -418,7 +424,10 @@ void ERR_add_error_txt(const char *sepr, const char *txt);
 void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str);
-int ERR_load_strings_const(const ERR_STRING_DATA *str);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int ERR_load_strings_const(const ERR_STRING_DATA *str);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str);
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0

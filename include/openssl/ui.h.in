@@ -107,19 +107,29 @@ int UI_dup_input_string(UI *ui, const char *prompt, int flags,
 int UI_add_verify_string(UI *ui, const char *prompt, int flags,
     char *result_buf, int minsize, int maxsize,
     const char *test_buf);
-int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_dup_verify_string(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
     char *result_buf, int minsize, int maxsize,
     const char *test_buf);
-int UI_add_input_boolean(UI *ui, const char *prompt, const char *action_desc,
+/** @see UI_add_input_boolean(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_add_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     const char *ok_chars, const char *cancel_chars,
     int flags, char *result_buf);
-int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
+/** @see UI_dup_input_boolean(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     const char *ok_chars, const char *cancel_chars,
     int flags, char *result_buf);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int UI_add_info_string(UI *ui, const char *text);
-int UI_dup_info_string(UI *ui, const char *text);
-int UI_add_error_string(UI *ui, const char *text);
-int UI_dup_error_string(UI *ui, const char *text);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_dup_info_string(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_dup_info_string(UI *ui, const char *text);
+/** @see UI_add_error_string(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_add_error_string(UI *ui, const char *text);
+/** @see UI_dup_error_string(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_dup_error_string(UI *ui, const char *text);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* These are the possible flags.  They can be or'ed together. */
 /* Use to have echoing of input */
@@ -184,12 +194,18 @@ void *UI_add_user_data(UI *ui, void *user_data);
  * This uses the duplicator method function.  The destroy function will
  * be used to free the user data in this case.
  */
-int UI_dup_user_data(UI *ui, void *user_data);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_dup_user_data(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_dup_user_data(UI *ui, void *user_data);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 /* We need a user data retrieving function as well.  */
 void *UI_get0_user_data(UI *ui);
 
 /* Return the result associated with a prompt given with the index i. */
-const char *UI_get0_result(UI *ui, int i);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_get0_result(3) */
+OSSL_DEPRECATEDIN_4_2 const char *UI_get0_result(UI *ui, int i);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int UI_get_result_length(UI *ui, int i);
 
 /* When all strings have been added, process the whole thing. */
@@ -322,9 +338,12 @@ int UI_method_set_flusher(UI_METHOD *method, int (*flusher)(UI *ui));
 int UI_method_set_reader(UI_METHOD *method,
     int (*reader)(UI *ui, UI_STRING *uis));
 int UI_method_set_closer(UI_METHOD *method, int (*closer)(UI *ui));
-int UI_method_set_data_duplicator(UI_METHOD *method,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_method_set_data_duplicator(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_method_set_data_duplicator(UI_METHOD *method,
     void *(*duplicator)(UI *ui, void *ui_data),
     void (*destructor)(UI *ui, void *ui_data));
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int UI_method_set_prompt_constructor(UI_METHOD *method,
     char *(*prompt_constructor)(UI *ui,
         const char
@@ -337,9 +356,14 @@ int (*UI_method_get_writer(const UI_METHOD *method))(UI *, UI_STRING *);
 int (*UI_method_get_flusher(const UI_METHOD *method))(UI *);
 int (*UI_method_get_reader(const UI_METHOD *method))(UI *, UI_STRING *);
 int (*UI_method_get_closer(const UI_METHOD *method))(UI *);
-char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))(UI *, const char *, const char *);
-void *(*UI_method_get_data_duplicator(const UI_METHOD *method))(UI *, void *);
-void (*UI_method_get_data_destructor(const UI_METHOD *method))(UI *, void *);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_method_get_prompt_constructor(3) */
+OSSL_DEPRECATEDIN_4_2 char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))(UI *, const char *, const char *);
+/** @see UI_method_get_data_duplicator(3) */
+OSSL_DEPRECATEDIN_4_2 void *(*UI_method_get_data_duplicator(const UI_METHOD *method))(UI *, void *);
+/** @see UI_method_get_data_destructor(3) */
+OSSL_DEPRECATEDIN_4_2 void (*UI_method_get_data_destructor(const UI_METHOD *method))(UI *, void *);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const void *UI_method_get_ex_data(const UI_METHOD *method, int idx);
 
 /*
@@ -366,7 +390,10 @@ int UI_get_result_string_length(UI_STRING *uis);
  */
 const char *UI_get0_test_string(UI_STRING *uis);
 /* Return the required minimum size of the result */
-int UI_get_result_minsize(UI_STRING *uis);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see UI_get_result_minsize(3) */
+OSSL_DEPRECATEDIN_4_2 int UI_get_result_minsize(UI_STRING *uis);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 /* Return the required maximum size of the result */
 int UI_get_result_maxsize(UI_STRING *uis);
 /* Set the result of a UI_STRING. */

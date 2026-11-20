@@ -93,8 +93,12 @@ int ASYNC_pause_job(void);
 
 ASYNC_JOB *ASYNC_get_current_job(void);
 ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job);
-void ASYNC_block_pause(void);
-void ASYNC_unblock_pause(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see ASYNC_block_pause(3) */
+OSSL_DEPRECATEDIN_4_2 void ASYNC_block_pause(void);
+/** @see ASYNC_unblock_pause(3) */
+OSSL_DEPRECATEDIN_4_2 void ASYNC_unblock_pause(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #ifdef __cplusplus
 }

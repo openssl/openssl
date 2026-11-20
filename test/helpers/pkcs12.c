@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -418,9 +420,11 @@ void add_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
         return;
     }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     if (legacy)
         bag = PKCS12_add_key(&pb->bags, pkey, 0 /*keytype*/, enc->iter, enc->nid, enc->pass);
     else
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
         bag = PKCS12_add_key_ex(&pb->bags, pkey, 0 /*keytype*/, enc->iter, enc->nid, enc->pass,
             test_ctx, test_propq);
     if (!TEST_ptr(bag)) {

@@ -114,6 +114,10 @@ parameters or NULL on error.
 BN_BLINDING_thread_id() was first introduced in OpenSSL 1.0.0, and it
 deprecates BN_BLINDING_set_thread_id() and BN_BLINDING_get_thread_id().
 
+BN_BLINDING_convert(), BN_BLINDING_invert(), BN_BLINDING_is_current_thread(),
+BN_BLINDING_lock(), BN_BLINDING_unlock(), BN_BLINDING_get_flags() and
+BN_BLINDING_set_flags() were deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
