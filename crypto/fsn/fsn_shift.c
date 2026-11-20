@@ -8,42 +8,42 @@
  */
 
 #include <openssl/err.h>
-#include "crypto/fnerr.h"
-#include "fn_local.h"
+#include "crypto/fsnerr.h"
+#include "fsn_local.h"
 
 /*
  * In respect to shift factor the execution time is invariant of
- * |n % OSSL_FN_BITS|, but not |n / OSSL_FN_BITS|. Or in other words
- * pre-condition for constant-time-ness is |n < OSSL_FN_BITS| or
- * |n / OSSL_FN_BITS| being non-secret.
+ * |n % OSSL_FSN_BITS|, but not |n / OSSL_FSN_BITS|. Or in other words
+ * pre-condition for constant-time-ness is |n < OSSL_FSN_BITS| or
+ * |n / OSSL_FSN_BITS| being non-secret.
  */
-int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n)
+int OSSL_FSN_lshift(OSSL_FSN *r, const OSSL_FSN *a, int n)
 {
     if (ossl_unlikely(r == NULL || a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     size_t i, nw;
     unsigned int lb, rb;
-    const OSSL_FN_ULONG *ap = a->d;
-    OSSL_FN_ULONG *rp = r->d;
+    const OSSL_FSN_ULONG *ap = a->d;
+    OSSL_FSN_ULONG *rp = r->d;
     size_t rl = (size_t)r->dsize;
     size_t al = (size_t)a->dsize;
 
     if (n < 0) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_SHIFT);
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_INVALID_SHIFT);
         return 0;
     }
 
-    nw = (size_t)n / OSSL_FN_BITS;
+    nw = (size_t)n / OSSL_FSN_BITS;
     if (nw >= rl) {
         memset(rp, 0, sizeof(*rp) * rl);
         return 1;
     }
 
-    lb = (unsigned int)n % OSSL_FN_BITS;
-    rb = OSSL_FN_BITS - lb;
+    lb = (unsigned int)n % OSSL_FSN_BITS;
+    rb = OSSL_FSN_BITS - lb;
 
     /*
      * Work from the high end to support r == a.  Each result limb only
@@ -52,13 +52,13 @@ int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n)
      */
     for (i = rl; i > 0; i--) {
         size_t r_idx = i - 1;
-        OSSL_FN_ULONG limb = 0;
+        OSSL_FSN_ULONG limb = 0;
 
         if (r_idx >= nw) {
             size_t src_idx = r_idx - nw;
 
             if (src_idx < al)
-                limb = (ap[src_idx] << lb) & OSSL_FN_MASK;
+                limb = (ap[src_idx] << lb) & OSSL_FSN_MASK;
             if (lb != 0 && src_idx > 0 && src_idx - 1 < al)
                 limb |= ap[src_idx - 1] >> rb;
         }
@@ -68,16 +68,16 @@ int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n)
     return 1;
 }
 
-int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a)
+int OSSL_FSN_lshift1(OSSL_FSN *r, const OSSL_FSN *a)
 {
     if (ossl_unlikely(r == NULL || a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    OSSL_FN_ULONG *rp = r->d;
-    const OSSL_FN_ULONG *ap = a->d;
-    OSSL_FN_ULONG t, c = 0;
+    OSSL_FSN_ULONG *rp = r->d;
+    const OSSL_FSN_ULONG *ap = a->d;
+    OSSL_FSN_ULONG t, c = 0;
     size_t rl = (size_t)r->dsize;
     size_t al = (size_t)a->dsize;
     size_t l = (rl < al) ? rl : al;
@@ -85,8 +85,8 @@ int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a)
 
     for (i = 0; i < l; i++) {
         t = ap[i];
-        rp[i] = ((t << 1) | c) & OSSL_FN_MASK;
-        c = t >> (OSSL_FN_BITS - 1);
+        rp[i] = ((t << 1) | c) & OSSL_FSN_MASK;
+        c = t >> (OSSL_FSN_BITS - 1);
     }
 
     if (i < rl) {
@@ -100,32 +100,32 @@ int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a)
 
 /*
  * In respect to shift factor the execution time is invariant of
- * |n % OSSL_FN_BITS|, but not |n / OSSL_FN_BITS|. Or in other words
+ * |n % OSSL_FSN_BITS|, but not |n / OSSL_FSN_BITS|. Or in other words
  * pre-condition for constant-time-ness for sufficiently[!] zero-padded
- * inputs is |n < OSSL_FN_BITS| or |n / OSSL_FN_BITS| being non-secret.
+ * inputs is |n < OSSL_FSN_BITS| or |n / OSSL_FSN_BITS| being non-secret.
  */
-int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n)
+int OSSL_FSN_rshift(OSSL_FSN *r, const OSSL_FSN *a, int n)
 {
     if (ossl_unlikely(r == NULL || a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     size_t i, nw;
     unsigned int lb, rb;
-    const OSSL_FN_ULONG *ap = a->d;
-    OSSL_FN_ULONG *rp = r->d;
+    const OSSL_FSN_ULONG *ap = a->d;
+    OSSL_FSN_ULONG *rp = r->d;
     size_t rl = (size_t)r->dsize;
     size_t al = (size_t)a->dsize;
 
     if (n < 0) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_SHIFT);
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_INVALID_SHIFT);
         return 0;
     }
 
-    nw = (size_t)n / OSSL_FN_BITS;
-    rb = (unsigned int)n % OSSL_FN_BITS;
-    lb = OSSL_FN_BITS - rb;
+    nw = (size_t)n / OSSL_FSN_BITS;
+    rb = (unsigned int)n % OSSL_FSN_BITS;
+    lb = OSSL_FSN_BITS - rb;
 
     /*
      * Work from the low end to support r == a.  Each result limb only
@@ -134,12 +134,12 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n)
      */
     for (i = 0; i < rl; i++) {
         size_t src_idx = i + nw;
-        OSSL_FN_ULONG limb = 0;
+        OSSL_FSN_ULONG limb = 0;
 
         if (src_idx < al) {
             limb = ap[src_idx] >> rb;
             if (rb != 0 && src_idx + 1 < al)
-                limb |= (ap[src_idx + 1] << lb) & OSSL_FN_MASK;
+                limb |= (ap[src_idx + 1] << lb) & OSSL_FSN_MASK;
         }
         rp[i] = limb;
     }
@@ -147,15 +147,15 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n)
     return 1;
 }
 
-int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a)
+int OSSL_FSN_rshift1(OSSL_FSN *r, const OSSL_FSN *a)
 {
     if (ossl_unlikely(r == NULL || a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    OSSL_FN_ULONG *rp = r->d;
-    const OSSL_FN_ULONG *ap = a->d;
+    OSSL_FSN_ULONG *rp = r->d;
+    const OSSL_FSN_ULONG *ap = a->d;
     size_t rl = (size_t)r->dsize;
     size_t al = (size_t)a->dsize;
     size_t i;
@@ -166,12 +166,12 @@ int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a)
      * neither of which has been overwritten yet when walking upward.
      */
     for (i = 0; i < rl; i++) {
-        OSSL_FN_ULONG limb = 0;
+        OSSL_FSN_ULONG limb = 0;
 
         if (i < al) {
             limb = ap[i] >> 1;
             if (i + 1 < al)
-                limb |= (ap[i + 1] << (OSSL_FN_BITS - 1)) & OSSL_FN_MASK;
+                limb |= (ap[i + 1] << (OSSL_FSN_BITS - 1)) & OSSL_FSN_MASK;
         }
         rp[i] = limb;
     }

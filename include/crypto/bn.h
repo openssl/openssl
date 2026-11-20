@@ -22,27 +22,27 @@ void bn_correct_top(BIGNUM *a);
 int bn_set_top_fixed(BIGNUM *a, int words);
 
 /*
- * bn_acquire_ossl_fn() and bn_release() work in tandem, and are
+ * bn_acquire_ossl_fsn() and bn_release() work in tandem, and are
  * most useful at call sites that temporarily operate on a BIGNUM's
- * fixed-width OSSL_FN representation.
+ * fixed-width OSSL_FSN representation.
  */
 
 /**
- * Acquire the OSSL_FN from a BIGNUM.  The BIGNUM should no longer be
+ * Acquire the OSSL_FSN from a BIGNUM.  The BIGNUM should no longer be
  * used until bn_release() is called.
  *
- * @param[in]   b       The BIGNUM instance to get an OSSL_FN from
+ * @param[in]   b       The BIGNUM instance to get an OSSL_FSN from
  * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to.
  *                      Note that this doesn't set 'top', that's done by
  *                      bn_release().
- * @returns             the OSSL_FN instance of the BIGNUM, if there is one
+ * @returns             the OSSL_FSN instance of the BIGNUM, if there is one
  * @pre         b must not be NULL
  */
-OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs);
+OSSL_FSN *bn_acquire_ossl_fsn(BIGNUM *b, int limbs);
 
 /**
- * Release the BIGNUM from which the OSSL_FN was acquired.  This will
- * adjust the BIGNUM to what was done with its OSSL_FN, and the BIGNUM
+ * Release the BIGNUM from which the OSSL_FSN was acquired.  This will
+ * adjust the BIGNUM to what was done with its OSSL_FSN, and the BIGNUM
  * can again be used with BN_ functions.
  *
  * @param[in]   b       The BIGNUM instance to release
@@ -53,18 +53,18 @@ OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs);
 void bn_release(BIGNUM *b, int limbs);
 
 /**
- * Get the OSSL_FN from a BIGNUM for read-only access.  Unlike
- * bn_acquire_ossl_fn(), this does not acquire or resize the BIGNUM:
+ * Get the OSSL_FSN from a BIGNUM for read-only access.  Unlike
+ * bn_acquire_ossl_fsn(), this does not acquire or resize the BIGNUM:
  * the BIGNUM remains fully usable with BN_ functions, no bn_release()
- * call is needed, and the returned OSSL_FN keeps the BIGNUM's current
+ * call is needed, and the returned OSSL_FSN keeps the BIGNUM's current
  * allocated width without any expansion.  Use this for read-only
- * operands; use bn_acquire_ossl_fn() for writable results.
+ * operands; use bn_acquire_ossl_fsn() for writable results.
  *
- * @param[in]   bn   The BIGNUM instance to get an OSSL_FN from
- * @returns          the OSSL_FN instance of the BIGNUM, or NULL if it has none
+ * @param[in]   bn   The BIGNUM instance to get an OSSL_FSN from
+ * @returns          the OSSL_FSN instance of the BIGNUM, or NULL if it has none
  * @pre         bn must not be NULL
  */
-const OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn);
+const OSSL_FSN *bn_get_ossl_fsn(const BIGNUM *bn);
 
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.

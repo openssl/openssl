@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include "crypto/fn_constants.h"
+#include "crypto/fsn_constants.h"
 #include "bn_local.h"
 
 /*
@@ -35,14 +35,14 @@ static int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
  * The product of the set of primes ranging from 3 to 751
  * Generated using process in test/bn_internal_test.c test_bn_small_factors().
  * This includes 751 (which is not currently included in SP 800-89).
- * The limb storage lives in crypto/fn/fn_prime_consts.c; this is the
+ * The limb storage lives in crypto/fsn/fsn_prime_consts.c; this is the
  * BIGNUM view over it.
  */
 static const BIGNUM _bignum_small_prime_factors = {
-    .data = (OSSL_FN *)&ossl_fn_static_small_prime_factors_storage.fn,
-    .d = (BN_ULONG *)ossl_fn_static_small_prime_factors_storage.fixed.d,
-    .top = (int)OSSL_NELEM(ossl_fn_static_small_prime_factors_storage.fixed.d),
-    .dmax = (int)OSSL_NELEM(ossl_fn_static_small_prime_factors_storage.fixed.d),
+    .data = (OSSL_FSN *)&ossl_fsn_static_small_prime_factors_storage.fsn,
+    .d = (BN_ULONG *)ossl_fsn_static_small_prime_factors_storage.fixed.d,
+    .top = (int)OSSL_NELEM(ossl_fsn_static_small_prime_factors_storage.fixed.d),
+    .dmax = (int)OSSL_NELEM(ossl_fsn_static_small_prime_factors_storage.fixed.d),
     .flags = BN_FLG_STATIC_DATA,
 };
 

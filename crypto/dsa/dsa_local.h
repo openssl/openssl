@@ -13,7 +13,7 @@
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
 #include "internal/ffc.h"
-#include "crypto/fn.h"
+#include "crypto/fsn.h"
 
 struct dsa_st {
     /*
@@ -28,7 +28,7 @@ struct dsa_st {
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
-    OSSL_FN_MONT_CTX *method_mont_fn_p;
+    OSSL_FSN_MONT_CTX *method_mont_fsn_p;
     CRYPTO_REF_COUNT references;
 #ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
@@ -74,7 +74,7 @@ struct dsa_method {
 
 /**
  * Compute a DSA signature, with the nonce and the private key kept in
- * OSSL_FN.
+ * OSSL_FSN.
  *
  * @param[in]   dgst        The message digest.
  * @param[in]   dlen        The length of |dgst|, in bytes.

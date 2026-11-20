@@ -10,13 +10,13 @@
 #include <openssl/err.h>
 #include "internal/safe_math.h"
 #include "crypto/cryptlib.h"
-#include "crypto/fnerr.h"
+#include "crypto/fsnerr.h"
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
-#include "fn_local.h"
+#include "fsn_local.h"
 
 OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
-size_t OSSL_FN_sqr_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize)
+size_t OSSL_FSN_sqr_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize)
 {
     size_t max, limbs, n_numbers = 1;
     int err = 0;
@@ -26,25 +26,25 @@ size_t OSSL_FN_sqr_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize)
         n_numbers++;
     limbs = safe_mul_size_t(n_numbers, max, &err);
 
-    return err == 0 ? OSSL_FN_CTX_size(1, n_numbers, limbs) : 0;
+    return err == 0 ? OSSL_FSN_CTX_size(1, n_numbers, limbs) : 0;
 }
 
-size_t OSSL_FN_sqr_ctx_size_from_nums(const OSSL_FN *r, const OSSL_FN *a)
+size_t OSSL_FSN_sqr_ctx_size_from_nums(const OSSL_FSN *r, const OSSL_FSN *a)
 {
     if (r == NULL || a == NULL)
         return 0;
 
-    return OSSL_FN_sqr_ctx_size_from_sizes(r->dsize, a->dsize);
+    return OSSL_FSN_sqr_ctx_size_from_sizes(r->dsize, a->dsize);
 }
 
-int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
+int OSSL_FSN_sqr(OSSL_FSN *r, const OSSL_FSN *a, OSSL_FSN_CTX *ctx)
 {
     if (ossl_unlikely(r == NULL || a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    const void *token = OSSL_FN_CTX_start(ctx);
+    const void *token = OSSL_FSN_CTX_start(ctx);
     if (token == NULL)
         return 0;
 
@@ -64,13 +64,13 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 #endif
 
     /* rl < max is always true when r == a, so covers that case too */
-    OSSL_FN *rr = r;
+    OSSL_FSN *rr = r;
     if (rl < max)
-        if ((rr = OSSL_FN_CTX_get_limbs(ctx, token, max)) == NULL)
+        if ((rr = OSSL_FSN_CTX_get_limbs(ctx, token, max)) == NULL)
             goto err;
 
-    OSSL_FN *tmp = NULL;
-    if ((tmp = OSSL_FN_CTX_get_limbs(ctx, token, max)) == NULL)
+    OSSL_FSN *tmp = NULL;
+    if ((tmp = OSSL_FSN_CTX_get_limbs(ctx, token, max)) == NULL)
         goto err;
 
     if (al != 0)
@@ -78,10 +78,10 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 
     if (rr != r) {
         /*
-         * We use OSSL_FN_copy_truncate() here, because OSSL_FN_copy() expects
+         * We use OSSL_FSN_copy_truncate() here, because OSSL_FSN_copy() expects
          * to make a full copy, but r may be smaller than rr
          */
-        OSSL_FN_copy_truncate(r, rr);
+        OSSL_FSN_copy_truncate(r, rr);
     }
 
 #ifdef BN_SQR_COMBA
@@ -92,13 +92,13 @@ end:
 
     /* Zeroise everything above the result, if the r is that large */
     size_t dif = (rl > max) ? rl - max : 0;
-    OSSL_FN_ULONG *rp = &r->d[max];
+    OSSL_FSN_ULONG *rp = &r->d[max];
     while (dif > 0) {
         *rp++ = 0;
         dif--;
     }
 
 err:
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FSN_CTX_end(ctx, token);
     return ret;
 }

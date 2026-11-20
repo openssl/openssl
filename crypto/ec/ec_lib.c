@@ -23,8 +23,8 @@
 #include "crypto/ec.h"
 #include "crypto/ec_params.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h" /* OSSL_FN_CTX / OSSL_FN_MONT_CTX helpers */
-#include "crypto/fn_intern.h" /* ossl_fn_get_dsize() */
+#include "crypto/fsn.h" /* OSSL_FSN_CTX / OSSL_FSN_MONT_CTX helpers */
+#include "crypto/fsn_intern.h" /* ossl_fsn_get_dsize() */
 #include "internal/nelem.h"
 #include "ec_local.h"
 
@@ -137,9 +137,9 @@ void EC_GROUP_free(EC_GROUP *group)
 
     EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
-    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx_ord);
-    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
-    OSSL_FN_free(group->field_fn);
+    OSSL_FSN_MONT_CTX_free(group->fsn_mont_ctx_ord);
+    OSSL_FSN_MONT_CTX_free(group->fsn_mont_ctx);
+    OSSL_FSN_free(group->field_fsn);
     EC_POINT_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
@@ -162,9 +162,9 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
     EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
-    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx_ord);
-    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
-    OSSL_FN_clear_free(group->field_fn);
+    OSSL_FSN_MONT_CTX_free(group->fsn_mont_ctx_ord);
+    OSSL_FSN_MONT_CTX_free(group->fsn_mont_ctx);
+    OSSL_FSN_clear_free(group->field_fsn);
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
     BN_clear_free(group->cofactor);
@@ -248,35 +248,36 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
      * has no path that bypasses this generic entry point.)  A NULL source
      * (curve not set, or a GF(2^m) group) leaves the copy NULL.
      */
-    OSSL_FN_MONT_CTX_free(dest->fn_mont_ctx);
-    dest->fn_mont_ctx = NULL;
-    if (src->fn_mont_ctx != NULL
-        && (dest->fn_mont_ctx = OSSL_FN_MONT_CTX_dup(src->fn_mont_ctx)) == NULL)
+    OSSL_FSN_MONT_CTX_free(dest->fsn_mont_ctx);
+    dest->fsn_mont_ctx = NULL;
+    if (src->fsn_mont_ctx != NULL
+        && (dest->fsn_mont_ctx = OSSL_FSN_MONT_CTX_dup(src->fsn_mont_ctx)) == NULL)
         return 0;
 
     /*
-     * The order Montgomery context (OSSL_FN counterpart of mont_data) is
+     * The order Montgomery context (OSSL_FSN counterpart of mont_data) is
      * likewise self-contained; duplicate it here in the generic copy path.  A
-     * NULL source (order not yet set, or no OSSL_FN view) leaves the copy NULL.
+     * NULL source (order not yet set, or no OSSL_FSN view) leaves the copy
+     * NULL.
      */
-    OSSL_FN_MONT_CTX_free(dest->fn_mont_ctx_ord);
-    dest->fn_mont_ctx_ord = NULL;
-    if (src->fn_mont_ctx_ord != NULL
-        && (dest->fn_mont_ctx_ord = OSSL_FN_MONT_CTX_dup(src->fn_mont_ctx_ord)) == NULL)
+    OSSL_FSN_MONT_CTX_free(dest->fsn_mont_ctx_ord);
+    dest->fsn_mont_ctx_ord = NULL;
+    if (src->fsn_mont_ctx_ord != NULL
+        && (dest->fsn_mont_ctx_ord = OSSL_FSN_MONT_CTX_dup(src->fsn_mont_ctx_ord)) == NULL)
         return 0;
 
     /*
-     * Same treatment as fn_mont_ctx above: field_fn is a self-contained value,
-     * so duplicate it here in the generic copy path, which every EC_GROUP copy
-     * goes through.  A NULL source (curve not set, or a GF(2^m) group) leaves
-     * the copy NULL.
+     * Same treatment as fsn_mont_ctx above: field_fsn is a self-contained
+     * value, so duplicate it here in the generic copy path, which every
+     * EC_GROUP copy goes through.  A NULL source (curve not set, or a GF(2^m)
+     * group) leaves the copy NULL.
      */
-    OSSL_FN_free(dest->field_fn);
-    dest->field_fn = NULL;
-    if (src->field_fn != NULL) {
-        dest->field_fn = OSSL_FN_new_limbs(ossl_fn_get_dsize(src->field_fn));
-        if (dest->field_fn == NULL
-            || OSSL_FN_copy(dest->field_fn, src->field_fn) == NULL)
+    OSSL_FSN_free(dest->field_fsn);
+    dest->field_fsn = NULL;
+    if (src->field_fsn != NULL) {
+        dest->field_fsn = OSSL_FSN_new_limbs(ossl_fsn_get_dsize(src->field_fsn));
+        if (dest->field_fsn == NULL
+            || OSSL_FSN_copy(dest->field_fsn, src->field_fsn) == NULL)
             return 0;
     }
 
@@ -480,7 +481,7 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 
     /*
      * Precompute the (public, immutable) cardinality = order * cofactor, so the
-     * constant-time OSSL_FN scalar-multiplication path can read it off the group
+     * constant-time OSSL_FSN scalar-multiplication path can read it off the group
      * instead of recomputing it (and calling BN_mul()) on every invocation.
      */
     if (group->cardinality != NULL) {
@@ -1277,12 +1278,12 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
     return ret;
 }
 
-int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
-    const EC_POINT *point, OSSL_FN_CTX *ctx)
+int EC_POINT_mul_fsn(const EC_GROUP *group, EC_POINT *r, const OSSL_FSN *scalar,
+    const EC_POINT *point, OSSL_FSN_CTX *ctx)
 {
     int ret = 0;
-    OSSL_FN_CTX *new_ctx = NULL;
-    OSSL_FN *reduced = NULL;
+    OSSL_FSN_CTX *new_ctx = NULL;
+    OSSL_FSN *reduced = NULL;
 
     if (!ec_point_is_compat(r, group)
         || (point != NULL && !ec_point_is_compat(point, group))) {
@@ -1296,27 +1297,27 @@ int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
     }
 
     /*
-     * EC_POINT_mul_fn() serves any group whose method provides a mul_fn, plus
+     * EC_POINT_mul_fsn() serves any group whose method provides a mul_fsn, plus
      * any prime-field (GF(p)) group via the generic constant-time ladder, which
      * handles both the Montgomery and plain coordinate representations.  A
-     * non-prime-field group (e.g. GF(2^m)) with no mul_fn has no OSSL_FN
+     * non-prime-field group (e.g. GF(2^m)) with no mul_fsn has no OSSL_FSN
      * secret-scalar path.
      */
-    if (group->meth->mul_fn == NULL
+    if (group->meth->mul_fsn == NULL
         && group->meth->field_type != NID_X9_62_prime_field) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
-    const OSSL_FN *card_fn = bn_get_ossl_fn(group->cardinality);
-    if (card_fn == NULL) {
+    const OSSL_FSN *card_fsn = bn_get_ossl_fsn(group->cardinality);
+    if (card_fsn == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
     /*
      * Bring the scalar within the cardinality's bit length once, here, so
-     * every mul_fn implementation (and the generic ladder) can assume that
+     * every mul_fsn implementation (and the generic ladder) can assume that
      * width rather than each re-deriving it.  Only a scalar wider than the
      * cardinality (num_bits > bits) is reduced; a scalar merely >= cardinality
      * but of the same bit length needs no reduction -- the blinding and the
@@ -1326,24 +1327,24 @@ int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
      * The reduction modulus is the cardinality (order * cofactor), not the
      * subgroup order, because 'point' may lie outside the prime-order subgroup;
      * it is the precomputed group attribute (EC_GROUP_set_generator()), used
-     * through its OSSL_FN view with no BN_mul() or allocation.
+     * through its OSSL_FSN view with no BN_mul() or allocation.
      *
      * This is a rare path: real secret scalars arrive already reduced, so an
      * in-range scalar passes through untouched with no allocation.  The
      * reduction itself is not constant-time, but never runs for such a secret.
      */
-    if (OSSL_FN_num_bits(scalar) > (size_t)BN_num_bits(group->cardinality)) {
-        OSSL_FN_CTX *modctx;
+    if (OSSL_FSN_num_bits(scalar) > (size_t)BN_num_bits(group->cardinality)) {
+        OSSL_FSN_CTX *modctx;
         int ok;
 
-        if ((reduced = OSSL_FN_new_limbs(ossl_fn_get_dsize(card_fn)))
+        if ((reduced = OSSL_FSN_new_limbs(ossl_fsn_get_dsize(card_fsn)))
             == NULL)
             goto err;
-        modctx = OSSL_FN_CTX_secure_new_size(group->libctx,
-            OSSL_FN_mod_ctx_size_from_nums(reduced, scalar, card_fn));
+        modctx = OSSL_FSN_CTX_secure_new_size(group->libctx,
+            OSSL_FSN_mod_ctx_size_from_nums(reduced, scalar, card_fsn));
         ok = modctx != NULL
-            && OSSL_FN_mod(reduced, scalar, card_fn, modctx);
-        OSSL_FN_CTX_free(modctx);
+            && OSSL_FSN_mod(reduced, scalar, card_fsn, modctx);
+        OSSL_FSN_CTX_free(modctx);
         if (!ok)
             goto err;
         scalar = reduced;
@@ -1353,16 +1354,16 @@ int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
      * A NULL context is a convenience: size and allocate one for the chosen
      * implementation.  Unlike the BN_CTX fallback in EC_POINT_mul() this needs
      * no FIPS guard, since the arena is built against group->libctx.  A size of
-     * OSSL_FN_CTX_SIZE_NONE means the implementation needs no context (leave
+     * OSSL_FSN_CTX_SIZE_NONE means the implementation needs no context (leave
      * it NULL).
      */
     if (ctx == NULL) {
-        size_t size = EC_POINT_mul_fn_ctx_size(group, r, scalar, point);
+        size_t size = EC_POINT_mul_fsn_ctx_size(group, r, scalar, point);
 
         if (size == 0)
             goto err;
-        if (size != OSSL_FN_CTX_SIZE_NONE
-            && (ctx = new_ctx = OSSL_FN_CTX_secure_new_size(group->libctx, size))
+        if (size != OSSL_FSN_CTX_SIZE_NONE
+            && (ctx = new_ctx = OSSL_FSN_CTX_secure_new_size(group->libctx, size))
                 == NULL)
             goto err;
     }
@@ -1371,39 +1372,39 @@ int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
      * Unlike EC_POINT_mul(), there is no wNAF fallback here: the scalar is
      * secret, so the only acceptable default is the constant-time ladder.
      */
-    if (group->meth->mul_fn != NULL)
-        ret = group->meth->mul_fn(group, r, scalar, point, ctx);
+    if (group->meth->mul_fsn != NULL)
+        ret = group->meth->mul_fsn(group, r, scalar, point, ctx);
     else
-        ret = ossl_ec_scalar_mul_ladder_fn(group, r, scalar, point, ctx);
+        ret = ossl_ec_scalar_mul_ladder_fsn(group, r, scalar, point, ctx);
 
 err:
-    OSSL_FN_CTX_free(new_ctx);
+    OSSL_FSN_CTX_free(new_ctx);
     /* 'reduced' held the reduced secret scalar; cleanse before freeing. */
-    OSSL_FN_clear_free(reduced);
+    OSSL_FSN_clear_free(reduced);
     return ret;
 }
 
 /*
- * Arena size EC_POINT_mul_fn() needs for the given group: the method's own
- * 'mul_fn_ctx_size' when it has a 'mul_fn', otherwise the generic ladder's.
- * Follows the OSSL_FN _ctx_size convention (0 on error, OSSL_FN_CTX_SIZE_NONE
+ * Arena size EC_POINT_mul_fsn() needs for the given group: the method's own
+ * 'mul_fsn_ctx_size' when it has a 'mul_fsn', otherwise the generic ladder's.
+ * Follows the OSSL_FSN _ctx_size convention (0 on error, OSSL_FSN_CTX_SIZE_NONE
  * for "no context needed").
  */
-size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point)
+size_t EC_POINT_mul_fsn_ctx_size(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FSN *scalar, const EC_POINT *point)
 {
-    if (group->meth->mul_fn != NULL)
-        return group->meth->mul_fn_ctx_size != NULL
-            ? group->meth->mul_fn_ctx_size(group, r, scalar, point)
+    if (group->meth->mul_fsn != NULL)
+        return group->meth->mul_fsn_ctx_size != NULL
+            ? group->meth->mul_fsn_ctx_size(group, r, scalar, point)
             : 0;
     /*
-     * No mul_fn: the fallback is the generic ladder, which serves any
-     * prime-field (GF(p)) group.  A non-prime-field group has no OSSL_FN
+     * No mul_fsn: the fallback is the generic ladder, which serves any
+     * prime-field (GF(p)) group.  A non-prime-field group has no OSSL_FSN
      * secret-scalar path.
      */
     if (group->meth->field_type != NID_X9_62_prime_field)
         return 0;
-    return ossl_ec_scalar_mul_ladder_fn_ctx_size(group, r, scalar, point);
+    return ossl_ec_scalar_mul_ladder_fsn_ctx_size(group, r, scalar, point);
 }
 
 int EC_POINT_get_affine_coords_bytes(const EC_GROUP *group,
@@ -1454,13 +1455,13 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 static int ec_precompute_mont_data(EC_GROUP *group)
 {
     BN_CTX *ctx = BN_CTX_new_ex(group->libctx);
-    const OSSL_FN *order_fn;
+    const OSSL_FSN *order_fsn;
     int ret = 0;
 
     BN_MONT_CTX_free(group->mont_data);
     group->mont_data = NULL;
-    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx_ord);
-    group->fn_mont_ctx_ord = NULL;
+    OSSL_FSN_MONT_CTX_free(group->fsn_mont_ctx_ord);
+    group->fsn_mont_ctx_ord = NULL;
 
     if (ctx == NULL)
         goto err;
@@ -1476,14 +1477,15 @@ static int ec_precompute_mont_data(EC_GROUP *group)
     }
 
     /*
-     * Cache the order in OSSL_FN Montgomery form as well, for the constant-time
-     * ECDSA nonce inverse.  The order was just validated as an odd modulus by
-     * BN_MONT_CTX_set(), so OSSL_FN_MONT_CTX_new() only fails on allocation; a
-     * missing OSSL_FN view (order_fn == NULL) is left as a no-cache fallback.
+     * Cache the order in OSSL_FSN Montgomery form as well, for the
+     * constant-time ECDSA nonce inverse.  The order was just validated as an
+     * odd modulus by BN_MONT_CTX_set(), so OSSL_FSN_MONT_CTX_new() only fails
+     * on allocation; a missing OSSL_FSN view (order_fsn == NULL) is left as a
+     * no-cache fallback.
      */
-    order_fn = bn_get_ossl_fn(group->order);
-    if (order_fn != NULL
-        && (group->fn_mont_ctx_ord = OSSL_FN_MONT_CTX_new(order_fn)) == NULL) {
+    order_fsn = bn_get_ossl_fsn(group->order);
+    if (order_fsn != NULL
+        && (group->fsn_mont_ctx_ord = OSSL_FSN_MONT_CTX_new(order_fsn)) == NULL) {
         BN_MONT_CTX_free(group->mont_data);
         group->mont_data = NULL;
         goto err;
@@ -1586,36 +1588,36 @@ int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
         return ec_field_inverse_mod_ord(group, res, x, ctx);
 }
 
-int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
-    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+int ossl_ec_group_do_inverse_ord_fsn(const EC_GROUP *group, OSSL_FSN *res,
+    const OSSL_FSN *a, OSSL_FSN_CTX *ctx)
 {
-    const OSSL_FN *order_fn;
+    const OSSL_FSN *order_fsn;
 
-    if (group->meth->field_inverse_mod_ord_fn != NULL)
-        return group->meth->field_inverse_mod_ord_fn(group, res, a, ctx);
+    if (group->meth->field_inverse_mod_ord_fsn != NULL)
+        return group->meth->field_inverse_mod_ord_fsn(group, res, a, ctx);
 
-    if ((order_fn = bn_get_ossl_fn(group->order)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if ((order_fsn = bn_get_ossl_fsn(group->order)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FSN_LIB);
         return 0;
     }
-    return OSSL_FN_mod_inverse_prime(res, a, order_fn, ctx,
-        group->fn_mont_ctx_ord);
+    return OSSL_FSN_mod_inverse_prime(res, a, order_fsn, ctx,
+        group->fsn_mont_ctx_ord);
 }
 
 /*
  * res := a mod order, in constant time and without division, using the
  * group's cached order Montgomery context.  |res| must be as wide as that
- * context's modulus.  |a| is read through its OSSL_FN view; a view wider than
- * OSSL_FN_mont_reduce() accepts is narrowed, which only drops limbs above the
+ * context's modulus.  |a| is read through its OSSL_FSN view; a view wider than
+ * OSSL_FSN_mont_reduce() accepts is narrowed, which only drops limbs above the
  * BIGNUM's top.
  */
-int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
-    const BIGNUM *a, OSSL_FN_CTX *ctx)
+int ossl_ec_group_fsn_reduce_ord(const EC_GROUP *group, OSSL_FSN *res,
+    const BIGNUM *a, OSSL_FSN_CTX *ctx)
 {
-    OSSL_FN_MONT_CTX *mont = group->fn_mont_ctx_ord;
-    const OSSL_FN *src;
+    OSSL_FSN_MONT_CTX *mont = group->fsn_mont_ctx_ord;
+    const OSSL_FSN *src;
     const void *token;
-    OSSL_FN *t;
+    OSSL_FSN *t;
     size_t w;
     int ret = 0;
 
@@ -1623,43 +1625,43 @@ int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
         return 0;
     }
-    if ((src = bn_get_ossl_fn(a)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if ((src = bn_get_ossl_fsn(a)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FSN_LIB);
         return 0;
     }
-    w = ossl_fn_get_dsize(OSSL_FN_MONT_CTX_get0_modulus(mont));
-    if (ossl_fn_get_dsize(src) <= 2 * w)
-        return OSSL_FN_mont_reduce(res, src, mont, ctx);
+    w = ossl_fsn_get_dsize(OSSL_FSN_MONT_CTX_get0_modulus(mont));
+    if (ossl_fsn_get_dsize(src) <= 2 * w)
+        return OSSL_FSN_mont_reduce(res, src, mont, ctx);
 
     if ((size_t)bn_get_top(a) > 2 * w) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
-    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+    if ((token = OSSL_FSN_CTX_start(ctx)) == NULL)
         return 0;
-    ret = (t = OSSL_FN_CTX_get_limbs(ctx, token, 2 * w)) != NULL
-        && OSSL_FN_copy_truncate(t, src) != NULL
-        && OSSL_FN_mont_reduce(res, t, mont, ctx);
-    OSSL_FN_CTX_end(ctx, token);
+    ret = (t = OSSL_FSN_CTX_get_limbs(ctx, token, 2 * w)) != NULL
+        && OSSL_FSN_copy_truncate(t, src) != NULL
+        && OSSL_FSN_mont_reduce(res, t, mont, ctx);
+    OSSL_FSN_CTX_end(ctx, token);
     return ret;
 }
 
-OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group)
+OSSL_FSN_MONT_CTX *ossl_ec_group_get0_fsn_mont_ord(const EC_GROUP *group)
 {
-    return group->fn_mont_ctx_ord;
+    return group->fsn_mont_ctx_ord;
 }
 
-size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group)
+size_t ossl_ec_group_fsn_reduce_ord_ctx_size(const EC_GROUP *group)
 {
-    OSSL_FN_MONT_CTX *mont = group->fn_mont_ctx_ord;
+    OSSL_FSN_MONT_CTX *mont = group->fsn_mont_ctx_ord;
     size_t w;
 
     if (mont == NULL)
         return 0;
-    w = ossl_fn_get_dsize(OSSL_FN_MONT_CTX_get0_modulus(mont));
+    w = ossl_fsn_get_dsize(OSSL_FSN_MONT_CTX_get0_modulus(mont));
     /* The operand reduced is at most 2 * w wide; see the function above. */
-    return ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 1, 2 * w),
-        OSSL_FN_mont_reduce_ctx_size_from_sizes(w, 2 * w, w));
+    return ossl_fsn_ctx_add_size(OSSL_FSN_CTX_size(1, 1, 2 * w),
+        OSSL_FSN_mont_reduce_ctx_size_from_sizes(w, 2 * w, w));
 }
 
 /*-

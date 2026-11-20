@@ -10,13 +10,13 @@ use strict;
 use warnings;
 
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
-setup("test_fn");
+setup("test_fsn");
 
 my @files = qw( bnmul.txt bnshift.txt bnsum.txt bnmod.txt bngcd.txt bnmodinv.txt );
 
 plan tests => scalar(@files);
 
 foreach my $f (@files) {
-    ok(run(test(["fntest", srctop_file("test", "recipes", "10-test_bn_data", $f)])),
-       "running fntest $f");
+    ok(run(test(["fsntest", srctop_file("test", "recipes", "10-test_bn_data", $f)])),
+       "running fsntest $f");
 }

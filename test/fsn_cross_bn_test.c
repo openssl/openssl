@@ -8,11 +8,11 @@
  */
 
 /**
- * @file Cross-checks of OSSL_FN operations against their BN counterparts
+ * @file Cross-checks of OSSL_FSN operations against their BN counterparts
  *
- * This tests that an OSSL_FN operation and its BN counterpart agree on the
+ * This tests that an OSSL_FSN operation and its BN counterpart agree on the
  * result for the same number, for operations where an equivalent BN oracle
- * exists.  fn_api_test.c is kept purely OSSL_FN; anything that needs the
+ * exists.  fsn_api_test.c is kept purely OSSL_FSN; anything that needs the
  * BIGNUM API for comparison lives here.
  */
 
@@ -28,18 +28,18 @@
 #include <openssl/provider.h>
 #include "internal/deterministic_nonce.h"
 #include "crypto/bn.h" /* For the BN counterpart being cross-checked */
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
-#include "crypto/fnerr.h"
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h"
+#include "crypto/fsnerr.h"
 #include "testutil.h"
 
 static int test_check_zero_bn(void)
 {
     BIGNUM *bn = BN_new();
-    const OSSL_FN *fn = bn_get_ossl_fn(bn);
+    const OSSL_FSN *fsn = bn_get_ossl_fsn(bn);
     int ok = 1; /* Hope for the best */
 
-    if (!TEST_true(OSSL_FN_is_zero(fn))
+    if (!TEST_true(OSSL_FSN_is_zero(fsn))
         || !TEST_true(BN_is_zero(bn))
         || !TEST_ptr_null(bn_get_words(bn)))
         ok = 0;
@@ -49,14 +49,14 @@ static int test_check_zero_bn(void)
 }
 
 /*-
- * Cross-check ossl_fn_check_prime() against BN_check_prime() on multi-limb
+ * Cross-check ossl_fsn_check_prime() against BN_check_prime() on multi-limb
  * values: the two must agree on the result for the same number.
  */
 static int test_check_prime_cross_bn(void)
 {
     int ret = 0;
-    OSSL_FN *w = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FSN *w = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     BIGNUM *bw = NULL;
     BN_CTX *bctx = NULL;
     size_t i;
@@ -67,7 +67,7 @@ static int test_check_prime_cross_bn(void)
      */
     const struct {
         size_t n;
-        OSSL_FN_ULONG k;
+        OSSL_FSN_ULONG k;
     } wide_cases[] = {
         { 127, 1 }, /* 2^127 - 1, a Mersenne prime */
         { 127, 3 }, /* 2^127 - 3, a wide odd composite */
@@ -75,36 +75,36 @@ static int test_check_prime_cross_bn(void)
         { 101, 1 }, /* 2^101 - 1, a wide odd composite */
     };
 
-    if (!TEST_ptr(w = OSSL_FN_new_limbs(4))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_check_prime_ctx_size_from_nums(w)))
+    if (!TEST_ptr(w = OSSL_FSN_new_limbs(4))
+        || !TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                         ossl_fsn_check_prime_ctx_size_from_nums(w)))
         || !TEST_ptr(bctx = BN_CTX_new())
         || !TEST_ptr(bw = BN_new()))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(wide_cases); i++) {
-        int fn_result, bn_result;
+        int fsn_result, bn_result;
 
-        /* Build 2^n - k as an OSSL_FN and as a BIGNUM. */
-        OSSL_FN_clear(w);
-        if (!TEST_true(OSSL_FN_set_bit(w, wide_cases[i].n))
-            || !TEST_true(OSSL_FN_sub_word(w, wide_cases[i].k)))
+        /* Build 2^n - k as an OSSL_FSN and as a BIGNUM. */
+        OSSL_FSN_clear(w);
+        if (!TEST_true(OSSL_FSN_set_bit(w, wide_cases[i].n))
+            || !TEST_true(OSSL_FSN_sub_word(w, wide_cases[i].k)))
             goto err;
         if (!TEST_true(BN_set_word(bw, 0))
             || !TEST_true(BN_set_bit(bw, (int)wide_cases[i].n))
             || !TEST_true(BN_sub_word(bw, wide_cases[i].k)))
             goto err;
 
-        fn_result = ossl_fn_check_prime(w, 0, ctx, 1, NULL, NULL);
+        fsn_result = ossl_fsn_check_prime(w, 0, ctx, 1, NULL, NULL);
         bn_result = BN_check_prime(bw, bctx, NULL);
-        if (!TEST_int_eq(fn_result, bn_result))
+        if (!TEST_int_eq(fsn_result, bn_result))
             goto err;
     }
 
     ret = 1;
 err:
-    OSSL_FN_CTX_free(ctx);
-    OSSL_FN_free(w);
+    OSSL_FSN_CTX_free(ctx);
+    OSSL_FSN_free(w);
     BN_free(bw);
     BN_CTX_free(bctx);
     return ret;
@@ -112,7 +112,7 @@ err:
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
- * Cross-check OSSL_FN_X931_derive_prime() against its BN counterpart
+ * Cross-check OSSL_FSN_X931_derive_prime() against its BN counterpart
  * BN_X931_derive_prime_ex(): given identical odd Xp1 / Xp2, an Xp and an
  * odd exponent e, the two must derive the same prime p and the same
  * intermediate primes p1 / p2.
@@ -120,12 +120,12 @@ err:
 static int test_x931_derive_prime_cross_bn(void)
 {
     int ret = 0, nlimbs = 0, p_limbs = 0, p_acq = 0, p1_acq = 0, p2_acq = 0;
-    OSSL_FN *fp = NULL, *fp1 = NULL, *fp2 = NULL;
-    OSSL_FN_CTX *fctx = NULL;
+    OSSL_FSN *fp = NULL, *fp1 = NULL, *fp2 = NULL;
+    OSSL_FSN_CTX *fctx = NULL;
     BN_CTX *bctx = NULL;
     BIGNUM *bXp = NULL, *bXp1 = NULL, *bXp2 = NULL, *be = NULL;
     BIGNUM *bp = NULL, *bp1 = NULL, *bp2 = NULL;
-    BIGNUM *fn_p = NULL, *fn_p1 = NULL, *fn_p2 = NULL;
+    BIGNUM *fsn_p = NULL, *fsn_p1 = NULL, *fsn_p2 = NULL;
     size_t size;
 
     if (!TEST_ptr(bctx = BN_CTX_new())
@@ -136,15 +136,15 @@ static int test_x931_derive_prime_cross_bn(void)
         || !TEST_ptr(bp = BN_new())
         || !TEST_ptr(bp1 = BN_new())
         || !TEST_ptr(bp2 = BN_new())
-        || !TEST_ptr(fn_p = BN_new())
-        || !TEST_ptr(fn_p1 = BN_new())
-        || !TEST_ptr(fn_p2 = BN_new()))
+        || !TEST_ptr(fsn_p = BN_new())
+        || !TEST_ptr(fsn_p1 = BN_new())
+        || !TEST_ptr(fsn_p2 = BN_new()))
         goto err;
 
     /*
      * Small auxiliary parameters keep the derived prime comfortably
      * inside one limb even on 32-bit builds, same as the corresponding
-     * fn_api_test coverage.  Xp is chosen well above p1 * p2 (~2^21 for
+     * fsn_api_test coverage.  Xp is chosen well above p1 * p2 (~2^21 for
      * these auxiliaries), the regime X9.31 is actually used in: the
      * Xp fold then sets the derived prime's magnitude, so dropping it
      * changes the result rather than being absorbed by the search loop.
@@ -161,57 +161,57 @@ static int test_x931_derive_prime_cross_bn(void)
         goto err;
 
     /*
-     * The OSSL_FN side works on bn_get_ossl_fn() views of the same inputs
+     * The OSSL_FSN side works on bn_get_ossl_fsn() views of the same inputs
      * and writes into acquired BIGNUMs.  p is acquired at double Xp's
-     * width, as OSSL_FN_X931_derive_prime() requires; p1 and p2 at the
+     * width, as OSSL_FSN_X931_derive_prime() requires; p1 and p2 at the
      * view width.
      */
-    nlimbs = (int)bn_get_ossl_fn(bXp)->dsize;
+    nlimbs = (int)bn_get_ossl_fsn(bXp)->dsize;
     p_limbs = 2 * nlimbs;
-    if (!TEST_ptr(fp = bn_acquire_ossl_fn(fn_p, p_limbs)))
+    if (!TEST_ptr(fp = bn_acquire_ossl_fsn(fsn_p, p_limbs)))
         goto err;
     p_acq = 1;
-    if (!TEST_ptr(fp1 = bn_acquire_ossl_fn(fn_p1, nlimbs)))
+    if (!TEST_ptr(fp1 = bn_acquire_ossl_fsn(fsn_p1, nlimbs)))
         goto err;
     p1_acq = 1;
-    if (!TEST_ptr(fp2 = bn_acquire_ossl_fn(fn_p2, nlimbs)))
+    if (!TEST_ptr(fp2 = bn_acquire_ossl_fsn(fsn_p2, nlimbs)))
         goto err;
     p2_acq = 1;
 
-    size = OSSL_FN_X931_derive_prime_ctx_size_from_nums(fp, fp1, fp2,
-        bn_get_ossl_fn(bXp), bn_get_ossl_fn(bXp1),
-        bn_get_ossl_fn(bXp2), bn_get_ossl_fn(be));
+    size = OSSL_FSN_X931_derive_prime_ctx_size_from_nums(fp, fp1, fp2,
+        bn_get_ossl_fsn(bXp), bn_get_ossl_fsn(bXp1),
+        bn_get_ossl_fsn(bXp2), bn_get_ossl_fsn(be));
     if (!TEST_size_t_ne(size, 0)
-        || !TEST_ptr(fctx = OSSL_FN_CTX_new_size(NULL, size)))
+        || !TEST_ptr(fctx = OSSL_FSN_CTX_new_size(NULL, size)))
         goto err;
 
-    if (!TEST_true(OSSL_FN_X931_derive_prime(fp, fp1, fp2,
-            bn_get_ossl_fn(bXp), bn_get_ossl_fn(bXp1),
-            bn_get_ossl_fn(bXp2), bn_get_ossl_fn(be),
+    if (!TEST_true(OSSL_FSN_X931_derive_prime(fp, fp1, fp2,
+            bn_get_ossl_fsn(bXp), bn_get_ossl_fsn(bXp1),
+            bn_get_ossl_fsn(bXp2), bn_get_ossl_fsn(be),
             fctx, NULL, NULL)))
         goto err;
 
-    bn_release(fn_p, p_limbs);
+    bn_release(fsn_p, p_limbs);
     p_acq = 0;
-    bn_release(fn_p1, nlimbs);
+    bn_release(fsn_p1, nlimbs);
     p1_acq = 0;
-    bn_release(fn_p2, nlimbs);
+    bn_release(fsn_p2, nlimbs);
     p2_acq = 0;
 
-    if (!TEST_BN_eq(fn_p, bp)
-        || !TEST_BN_eq(fn_p1, bp1)
-        || !TEST_BN_eq(fn_p2, bp2))
+    if (!TEST_BN_eq(fsn_p, bp)
+        || !TEST_BN_eq(fsn_p1, bp1)
+        || !TEST_BN_eq(fsn_p2, bp2))
         goto err;
 
     ret = 1;
 err:
     if (p_acq)
-        bn_release(fn_p, p_limbs);
+        bn_release(fsn_p, p_limbs);
     if (p1_acq)
-        bn_release(fn_p1, nlimbs);
+        bn_release(fsn_p1, nlimbs);
     if (p2_acq)
-        bn_release(fn_p2, nlimbs);
-    OSSL_FN_CTX_free(fctx);
+        bn_release(fsn_p2, nlimbs);
+    OSSL_FSN_CTX_free(fctx);
     BN_free(bXp);
     BN_free(bXp1);
     BN_free(bXp2);
@@ -219,16 +219,16 @@ err:
     BN_free(bp);
     BN_free(bp1);
     BN_free(bp2);
-    BN_free(fn_p);
-    BN_free(fn_p1);
-    BN_free(fn_p2);
+    BN_free(fsn_p);
+    BN_free(fsn_p1);
+    BN_free(fsn_p2);
     BN_CTX_free(bctx);
     return ret;
 }
 #endif
 
 /*
- * Cross-check of the OSSL_FN RSA FIPS 186-5 probable-prime peers against
+ * Cross-check of the OSSL_FSN RSA FIPS 186-5 probable-prime peers against
  * their BN counterparts: with fixed Xp / Xp1 / Xp2 inputs the generation
  * is deterministic, so the two must return the same prime (and the same
  * random draw echo, and the same auxiliary primes when those are
@@ -273,22 +273,22 @@ static const struct rsa_fips186_5_case_st rsa_fips186_5_cases[] = {
 
 static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
 {
-    int ret = 0, bn_ok, fn_ok;
+    int ret = 0, bn_ok, fsn_ok;
     const struct rsa_fips186_5_case_st *t = &rsa_fips186_5_cases[idx];
     int bits = t->nlen >> 1;
-    size_t bits_limbs = (size_t)bits / (OSSL_FN_BYTES * 8)
-        + ((size_t)bits % (OSSL_FN_BYTES * 8) != 0);
+    size_t bits_limbs = (size_t)bits / (OSSL_FSN_BYTES * 8)
+        + ((size_t)bits % (OSSL_FSN_BYTES * 8) != 0);
     /* FIPS 186-5 Table A.1: 141-bit auxiliary primes for a 2048-bit key */
-    size_t aux_limbs = (size_t)141 / (OSSL_FN_BYTES * 8)
-        + ((size_t)141 % (OSSL_FN_BYTES * 8) != 0);
+    size_t aux_limbs = (size_t)141 / (OSSL_FSN_BYTES * 8)
+        + ((size_t)141 % (OSSL_FSN_BYTES * 8) != 0);
     int deterministic = t->xp1 != NULL;
     BIGNUM *b_p = NULL, *b_x = NULL, *b_xp = NULL, *b_xp1 = NULL;
     BIGNUM *b_xp2 = NULL, *b_e = NULL, *b_p1 = NULL, *b_p2 = NULL;
     BN_CTX *bctx = NULL;
-    OSSL_FN *f_p = NULL, *f_x = NULL, *f_p1 = NULL, *f_p2 = NULL;
-    OSSL_FN_CTX *ctx = NULL;
-    const OSSL_FN *v_xp = NULL, *v_xp1 = NULL, *v_xp2 = NULL, *v_e = NULL;
-    size_t fn_ctxsize;
+    OSSL_FSN *f_p = NULL, *f_x = NULL, *f_p1 = NULL, *f_p2 = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
+    const OSSL_FSN *v_xp = NULL, *v_xp1 = NULL, *v_xp2 = NULL, *v_e = NULL;
+    size_t fsn_ctxsize;
 
     if (!TEST_ptr(bctx = BN_CTX_new())
         || !TEST_ptr(b_p = BN_new()) || !TEST_ptr(b_x = BN_new())
@@ -302,8 +302,8 @@ static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
         goto err;
     if (t->out_p1p2
         && (!TEST_ptr(b_p1 = BN_new()) || !TEST_ptr(b_p2 = BN_new())
-            || !TEST_ptr(f_p1 = OSSL_FN_new_limbs(aux_limbs))
-            || !TEST_ptr(f_p2 = OSSL_FN_new_limbs(aux_limbs))))
+            || !TEST_ptr(f_p1 = OSSL_FSN_new_limbs(aux_limbs))
+            || !TEST_ptr(f_p2 = OSSL_FSN_new_limbs(aux_limbs))))
         goto err;
 
     bn_ok = ossl_bn_rsa_fips186_5_gen_prob_primes(b_p, b_x, b_p1, b_p2,
@@ -311,16 +311,16 @@ static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
     if (!TEST_int_eq(bn_ok, t->expect_success))
         goto err;
 
-    if (!TEST_ptr(f_p = OSSL_FN_new_limbs(bits_limbs + 1))
-        || !TEST_ptr(f_x = OSSL_FN_new_limbs(bits_limbs + 1)))
+    if (!TEST_ptr(f_p = OSSL_FSN_new_limbs(bits_limbs + 1))
+        || !TEST_ptr(f_x = OSSL_FSN_new_limbs(bits_limbs + 1)))
         goto err;
-    v_e = bn_get_ossl_fn(b_e);
+    v_e = bn_get_ossl_fsn(b_e);
     if (bn_ok) {
-        v_xp = bn_get_ossl_fn(b_xp);
+        v_xp = bn_get_ossl_fsn(b_xp);
         if (b_xp1 != NULL)
-            v_xp1 = bn_get_ossl_fn(b_xp1);
+            v_xp1 = bn_get_ossl_fsn(b_xp1);
         if (b_xp2 != NULL)
-            v_xp2 = bn_get_ossl_fn(b_xp2);
+            v_xp2 = bn_get_ossl_fsn(b_xp2);
     }
 
     /*
@@ -328,41 +328,41 @@ static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
      * invalid key size it returns 0; a minimal arena suffices then,
      * since the call fails before allocating more than its frame.
      */
-    fn_ctxsize = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size_from_nums(
+    fsn_ctxsize = ossl_fsn_rsa_fips186_5_gen_prob_primes_ctx_size_from_nums(
         f_p, f_x, f_p1, f_p2, v_xp1, v_xp2, t->nlen, v_e);
-    if (fn_ctxsize == 0)
-        fn_ctxsize = OSSL_FN_CTX_size(2, 1, 8);
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, fn_ctxsize)))
+    if (fsn_ctxsize == 0)
+        fsn_ctxsize = OSSL_FSN_CTX_size(2, 1, 8);
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL, fsn_ctxsize)))
         goto err;
-    fn_ok = ossl_fn_rsa_fips186_5_gen_prob_primes(f_p, f_x, f_p1, f_p2,
+    fsn_ok = ossl_fsn_rsa_fips186_5_gen_prob_primes(f_p, f_x, f_p1, f_p2,
         v_xp, v_xp1, v_xp2, t->nlen, v_e, ctx, NULL, t->c, NULL);
-    if (!TEST_int_eq(fn_ok, t->expect_success))
+    if (!TEST_int_eq(fsn_ok, t->expect_success))
         goto err;
-    if (fn_ok) {
-        /* The c mod 8 requirement must hold on the FN result. */
+    if (fsn_ok) {
+        /* The c mod 8 requirement must hold on the FSN result. */
         if (t->c != 0
-            && !TEST_ulong_eq(f_p->d[0] & 7, (OSSL_FN_ULONG)t->c))
+            && !TEST_ulong_eq(f_p->d[0] & 7, (OSSL_FSN_ULONG)t->c))
             goto err;
         if (deterministic
-            && (!TEST_int_eq(OSSL_FN_cmp(f_p, bn_get_ossl_fn(b_p)), 0)
-                || !TEST_int_eq(OSSL_FN_cmp(f_x, bn_get_ossl_fn(b_x)), 0)
-                /* The FN prime must be as wide as the BN oracle says */
-                || !TEST_size_t_eq(OSSL_FN_num_bits(f_p),
+            && (!TEST_int_eq(OSSL_FSN_cmp(f_p, bn_get_ossl_fsn(b_p)), 0)
+                || !TEST_int_eq(OSSL_FSN_cmp(f_x, bn_get_ossl_fsn(b_x)), 0)
+                /* The FSN prime must be as wide as the BN oracle says */
+                || !TEST_size_t_eq(OSSL_FSN_num_bits(f_p),
                     (size_t)BN_num_bits(b_p))))
             goto err;
         if (deterministic && t->out_p1p2
-            && (!TEST_int_eq(OSSL_FN_cmp(f_p1, bn_get_ossl_fn(b_p1)), 0)
-                || !TEST_int_eq(OSSL_FN_cmp(f_p2, bn_get_ossl_fn(b_p2)), 0)))
+            && (!TEST_int_eq(OSSL_FSN_cmp(f_p1, bn_get_ossl_fsn(b_p1)), 0)
+                || !TEST_int_eq(OSSL_FSN_cmp(f_p2, bn_get_ossl_fsn(b_p2)), 0)))
             goto err;
     }
 
     ret = 1;
 err:
-    OSSL_FN_CTX_free(ctx);
-    OSSL_FN_free(f_p);
-    OSSL_FN_free(f_x);
-    OSSL_FN_free(f_p1);
-    OSSL_FN_free(f_p2);
+    OSSL_FSN_CTX_free(ctx);
+    OSSL_FSN_free(f_p);
+    OSSL_FSN_free(f_x);
+    OSSL_FSN_free(f_p1);
+    OSSL_FSN_free(f_p2);
     BN_free(b_p);
     BN_free(b_x);
     BN_free(b_xp);
@@ -387,7 +387,7 @@ static int fixed_rand_cb(unsigned char *out, size_t outlen,
 }
 
 /*
- * Drive ossl_fn_gen_dsa_nonce() and its BIGNUM counterpart
+ * Drive ossl_fsn_gen_dsa_nonce() and its BIGNUM counterpart
  * ossl_bn_gen_dsa_nonce_fixed_top() from the same fixed RNG output and check
  * that they return the identical nonce.  Fed the same random bytes the two
  * hash identical octets, so byte-for-byte agreement is guaranteed; any
@@ -398,24 +398,24 @@ static int gen_dsa_nonce_case(OSSL_LIB_CTX *libctx,
     const unsigned char *priv, size_t privlen,
     const unsigned char *msg, size_t msglen)
 {
-    const size_t nl = (orderlen + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    const size_t nl = (orderlen + OSSL_FSN_BYTES - 1) / OSSL_FSN_BYTES;
     int ret = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *q_bn = NULL, *priv_bn = NULL, *k_bn = NULL;
-    const OSSL_FN *q_fn = NULL, *priv_fn = NULL, *k_bn_fn = NULL;
-    OSSL_FN *k_fn = NULL;
+    const OSSL_FSN *q_fsn = NULL, *priv_fsn = NULL, *k_bn_fsn = NULL;
+    OSSL_FSN *k_fsn = NULL;
 
     /*
-     * The FN inputs are just the read-only OSSL_FN views of the BIGNUMs; only
-     * the output nonce k_fn needs its own storage.
+     * The FSN inputs are just the read-only OSSL_FSN views of the BIGNUMs; only
+     * the output nonce k_fsn needs its own storage.
      */
     if (!TEST_ptr(ctx = BN_CTX_new_ex(libctx))
         || !TEST_ptr(q_bn = BN_bin2bn(order, (int)orderlen, NULL))
         || !TEST_ptr(priv_bn = BN_bin2bn(priv, (int)privlen, NULL))
         || !TEST_ptr(k_bn = BN_new())
-        || !TEST_ptr(k_fn = OSSL_FN_new_limbs(nl))
-        || !TEST_ptr(q_fn = bn_get_ossl_fn(q_bn))
-        || !TEST_ptr(priv_fn = bn_get_ossl_fn(priv_bn)))
+        || !TEST_ptr(k_fsn = OSSL_FSN_new_limbs(nl))
+        || !TEST_ptr(q_fsn = bn_get_ossl_fsn(q_bn))
+        || !TEST_ptr(priv_fsn = bn_get_ossl_fsn(priv_bn)))
         goto err;
 
     /*
@@ -426,19 +426,19 @@ static int gen_dsa_nonce_case(OSSL_LIB_CTX *libctx,
             msg, msglen, ctx)))
         goto err;
 
-    if (!TEST_true(ossl_fn_gen_dsa_nonce(k_fn, q_fn, priv_fn,
+    if (!TEST_true(ossl_fsn_gen_dsa_nonce(k_fsn, q_fsn, priv_fsn,
             msg, msglen, libctx)))
         goto err;
 
     /* The two nonces must be identical, and below the order. */
-    if (!TEST_ptr(k_bn_fn = bn_get_ossl_fn(k_bn))
-        || !TEST_int_eq(OSSL_FN_cmp(k_bn_fn, k_fn), 0)
-        || !TEST_int_lt(OSSL_FN_cmp(k_fn, q_fn), 0))
+    if (!TEST_ptr(k_bn_fsn = bn_get_ossl_fsn(k_bn))
+        || !TEST_int_eq(OSSL_FSN_cmp(k_bn_fsn, k_fsn), 0)
+        || !TEST_int_lt(OSSL_FSN_cmp(k_fsn, q_fsn), 0))
         goto err;
 
     ret = 1;
 err:
-    OSSL_FN_free(k_fn);
+    OSSL_FSN_free(k_fsn);
     BN_free(q_bn);
     BN_free(priv_bn);
     BN_free(k_bn);
@@ -446,7 +446,7 @@ err:
     return ret;
 }
 
-static int test_fn_gen_dsa_nonce(void)
+static int test_fsn_gen_dsa_nonce(void)
 {
     /* A 256-bit order: byte-aligned, so the mask step is skipped. */
     static const unsigned char order_aligned[32] = {
@@ -476,7 +476,7 @@ static int test_fn_gen_dsa_nonce(void)
         0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
         0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01
     };
-    static const unsigned char msg[] = "OSSL_FN DSA nonce equivalence";
+    static const unsigned char msg[] = "OSSL_FSN DSA nonce equivalence";
     OSSL_LIB_CTX *libctx = NULL;
     OSSL_PROVIDER *defp = NULL, *rp = NULL;
     int ret = 0;
@@ -500,30 +500,30 @@ static int test_fn_gen_dsa_nonce(void)
 
     /*
      * A destination too narrow to hold the order is rejected up front, with
-     * OSSL_FN_R_RESULT_ARG_TOO_SMALL -- proving the width check fired before
+     * OSSL_FSN_R_RESULT_ARG_TOO_SMALL -- proving the width check fired before
      * any bytes were drawn, rather than a later incidental failure.
      */
     {
-        const size_t nl = (sizeof(order_aligned) + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+        const size_t nl = (sizeof(order_aligned) + OSSL_FSN_BYTES - 1) / OSSL_FSN_BYTES;
         BIGNUM *q_bn = NULL;
-        const OSSL_FN *q_fn = NULL;
-        OSSL_FN *narrow = NULL;
+        const OSSL_FSN *q_fsn = NULL;
+        OSSL_FSN *narrow = NULL;
         unsigned long e;
         int ok;
 
         ERR_clear_error();
         ok = TEST_ptr(q_bn = BN_bin2bn(order_aligned, sizeof(order_aligned),
                           NULL))
-            && TEST_ptr(q_fn = bn_get_ossl_fn(q_bn))
-            && TEST_ptr(narrow = OSSL_FN_new_limbs(nl - 1))
-            && TEST_false(ossl_fn_gen_dsa_nonce(narrow, q_fn, q_fn,
+            && TEST_ptr(q_fsn = bn_get_ossl_fsn(q_bn))
+            && TEST_ptr(narrow = OSSL_FSN_new_limbs(nl - 1))
+            && TEST_false(ossl_fsn_gen_dsa_nonce(narrow, q_fsn, q_fsn,
                 msg, sizeof(msg) - 1, libctx));
         e = ERR_peek_last_error();
         ok = ok
-            && TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_OSSL_FN)
-            && TEST_int_eq(ERR_GET_REASON(e), OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+            && TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_OSSL_FSN)
+            && TEST_int_eq(ERR_GET_REASON(e), OSSL_FSN_R_RESULT_ARG_TOO_SMALL);
 
-        OSSL_FN_free(narrow);
+        OSSL_FSN_free(narrow);
         BN_free(q_bn);
         if (!ok)
             goto err;
@@ -538,54 +538,54 @@ err:
 }
 
 /*
- * RFC 6979 nonces are deterministic (no RNG), so the OSSL_FN generator and its
+ * RFC 6979 nonces are deterministic (no RNG), so the OSSL_FSN generator and its
  * BIGNUM counterpart, given the same q/priv/message/digest, must return the
  * identical nonce.  Any divergence in the shared entropy/nonce derivation or in
- * the FN bits2int/rejection would break it.
+ * the FSN bits2int/rejection would break it.
  */
 static int deterministic_nonce_case(const unsigned char *order, size_t orderlen,
     const unsigned char *priv, size_t privlen,
     const unsigned char *hm, size_t hmlen,
     const char *digestname)
 {
-    const size_t nl = (orderlen + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES;
+    const size_t nl = (orderlen + OSSL_FSN_BYTES - 1) / OSSL_FSN_BYTES;
     int ret = 0;
     BIGNUM *q_bn = NULL, *priv_bn = NULL, *k_bn = NULL;
-    const OSSL_FN *q_fn = NULL, *priv_fn = NULL, *k_bn_fn = NULL;
-    OSSL_FN *k_fn = NULL;
+    const OSSL_FSN *q_fsn = NULL, *priv_fsn = NULL, *k_bn_fsn = NULL;
+    OSSL_FSN *k_fsn = NULL;
 
     if (!TEST_ptr(q_bn = BN_bin2bn(order, (int)orderlen, NULL))
         || !TEST_ptr(priv_bn = BN_bin2bn(priv, (int)privlen, NULL))
         || !TEST_ptr(k_bn = BN_new())
-        || !TEST_ptr(k_fn = OSSL_FN_new_limbs(nl))
-        || !TEST_ptr(q_fn = bn_get_ossl_fn(q_bn))
-        || !TEST_ptr(priv_fn = bn_get_ossl_fn(priv_bn)))
+        || !TEST_ptr(k_fsn = OSSL_FSN_new_limbs(nl))
+        || !TEST_ptr(q_fsn = bn_get_ossl_fsn(q_bn))
+        || !TEST_ptr(priv_fsn = bn_get_ossl_fsn(priv_bn)))
         goto err;
 
     if (!TEST_true(ossl_gen_deterministic_nonce_rfc6979(k_bn, q_bn, priv_bn,
             hm, hmlen, digestname, NULL, NULL)))
         goto err;
 
-    if (!TEST_true(ossl_fn_gen_deterministic_nonce_rfc6979(k_fn, q_bn, priv_fn,
+    if (!TEST_true(ossl_fsn_gen_deterministic_nonce_rfc6979(k_fsn, q_bn, priv_fsn,
             hm, hmlen, digestname, NULL, NULL)))
         goto err;
 
     /* The two nonces must be identical, and below the order. */
-    if (!TEST_ptr(k_bn_fn = bn_get_ossl_fn(k_bn))
-        || !TEST_int_eq(OSSL_FN_cmp(k_bn_fn, k_fn), 0)
-        || !TEST_int_lt(OSSL_FN_cmp(k_fn, q_fn), 0))
+    if (!TEST_ptr(k_bn_fsn = bn_get_ossl_fsn(k_bn))
+        || !TEST_int_eq(OSSL_FSN_cmp(k_bn_fsn, k_fsn), 0)
+        || !TEST_int_lt(OSSL_FSN_cmp(k_fsn, q_fsn), 0))
         goto err;
 
     ret = 1;
 err:
-    OSSL_FN_free(k_fn);
+    OSSL_FSN_free(k_fsn);
     BN_free(q_bn);
     BN_free(priv_bn);
     BN_free(k_bn);
     return ret;
 }
 
-static int test_fn_deterministic_nonce(void)
+static int test_fsn_deterministic_nonce(void)
 {
     /* A 256-bit order: byte-aligned, so bits2int shifts by zero. */
     static const unsigned char order_aligned[32] = {
@@ -636,8 +636,8 @@ int setup_tests(void)
 {
     ADD_TEST(test_check_zero_bn);
     ADD_TEST(test_check_prime_cross_bn);
-    ADD_TEST(test_fn_gen_dsa_nonce);
-    ADD_TEST(test_fn_deterministic_nonce);
+    ADD_TEST(test_fsn_gen_dsa_nonce);
+    ADD_TEST(test_fsn_deterministic_nonce);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_x931_derive_prime_cross_bn);
 #endif

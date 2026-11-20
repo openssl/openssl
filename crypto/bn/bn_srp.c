@@ -14,22 +14,22 @@
 
 #include <openssl/srp.h>
 #include "crypto/bn_srp.h"
-#include "crypto/fn_constants.h"
+#include "crypto/fsn_constants.h"
 
 /*
- * The OSSL_FN static storage backing these BIGNUM views is defined in
- * crypto/fn/fn_srp_consts.c.
+ * The OSSL_FSN static storage backing these BIGNUM views is defined in
+ * crypto/fsn/fsn_srp_consts.c.
  */
 
-/* Macro to make a BIGNUM view over OSSL_FN static storage */
+/* Macro to make a BIGNUM view over OSSL_FSN static storage */
 
-#define make_srp_bn(bignum, x)                                         \
-    const BIGNUM ossl_##bignum = {                                     \
-        .data = (OSSL_FN *)&ossl_fn_static_##x##_storage.fn,           \
-        .d = (BN_ULONG *)ossl_fn_static_##x##_storage.fixed.d,         \
-        .top = (int)OSSL_NELEM(ossl_fn_static_##x##_storage.fixed.d),  \
-        .dmax = (int)OSSL_NELEM(ossl_fn_static_##x##_storage.fixed.d), \
-        .flags = BN_FLG_STATIC_DATA,                                   \
+#define make_srp_bn(bignum, x)                                          \
+    const BIGNUM ossl_##bignum = {                                      \
+        .data = (OSSL_FSN *)&ossl_fsn_static_##x##_storage.fsn,         \
+        .d = (BN_ULONG *)ossl_fsn_static_##x##_storage.fixed.d,         \
+        .top = (int)OSSL_NELEM(ossl_fsn_static_##x##_storage.fixed.d),  \
+        .dmax = (int)OSSL_NELEM(ossl_fsn_static_##x##_storage.fixed.d), \
+        .flags = BN_FLG_STATIC_DATA,                                    \
     }
 
 make_srp_bn(bn_group_1024, bn_group_1024);

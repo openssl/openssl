@@ -12,16 +12,16 @@
 #include <string.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include "crypto/fn.h"
+#include "crypto/fsn.h"
 #include "crypto/bn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fsn_intern.h"
 #include "internal/nelem.h"
-#include "crypto/fnerr.h"
+#include "crypto/fsnerr.h"
 #include "testutil.h"
 
 /*
- * This is a stanza-driven arithmetic test for OSSL_FN.  Non-stanza API tests
- * belong in fn_api_test.
+ * This is a stanza-driven arithmetic test for OSSL_FSN.  Non-stanza API tests
+ * belong in fsn_api_test.
  */
 
 typedef struct filetest_st {
@@ -102,32 +102,32 @@ static int limbs(const BIGNUM *bn)
     return ret > 0 ? ret : 1;
 }
 
-static int set_result_addsub(OSSL_FN *r, const OSSL_FN *a, int a_neg,
-    const OSSL_FN *b, int b_neg, int *neg)
+static int set_result_addsub(OSSL_FSN *r, const OSSL_FSN *a, int a_neg,
+    const OSSL_FSN *b, int b_neg, int *neg)
 {
     int cmp;
 
     *neg = 0;
     if (a_neg == b_neg) {
         *neg = a_neg;
-        return OSSL_FN_add(r, a, b);
+        return OSSL_FSN_add(r, a, b);
     }
 
-    cmp = OSSL_FN_cmp(a, b);
+    cmp = OSSL_FSN_cmp(a, b);
     if (cmp >= 0) {
         *neg = a_neg;
-        return OSSL_FN_sub(r, a, b);
+        return OSSL_FSN_sub(r, a, b);
     }
 
     *neg = b_neg;
-    return OSSL_FN_sub(r, b, a);
+    return OSSL_FSN_sub(r, b, a);
 }
 
 static int file_sum(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *sum = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *bf = NULL;
-    OSSL_FN *rf = NULL;
+    const OSSL_FSN *af = NULL, *bf = NULL;
+    OSSL_FSN *rf = NULL;
     int a_neg = 0, b_neg = 0, r_neg = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -142,9 +142,9 @@ static int file_sum(STANZA *s)
     b_neg = BN_is_negative(b);
     nlimbs = limbs(sum);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(bf = bn_get_ossl_fn(b))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fsn(b))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
@@ -170,9 +170,9 @@ err:
 static int file_product(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *product = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *bf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL, *bf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     int a_neg = 0, b_neg = 0, r_neg = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -188,16 +188,16 @@ static int file_product(STANZA *s)
     r_neg = a_neg ^ b_neg;
     nlimbs = limbs(product);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(bf = bn_get_ossl_fn(b))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fsn(b))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mul_ctx_size_from_nums(rf, af, bf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mul_ctx_size_from_nums(rf, af, bf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mul(rf, af, bf, ctx)))
+    if (!TEST_true(OSSL_FSN_mul(rf, af, bf, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, r_neg);
@@ -209,7 +209,7 @@ static int file_product(STANZA *s)
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(b);
     BN_free(product);
@@ -220,9 +220,9 @@ err:
 static int file_square(STANZA *s)
 {
     BIGNUM *a = NULL, *square = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     int st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -234,15 +234,15 @@ static int file_square(STANZA *s)
 
     nlimbs = limbs(square);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_sqr_ctx_size_from_nums(rf, af))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_sqr_ctx_size_from_nums(rf, af))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_sqr(rf, af, ctx)))
+    if (!TEST_true(OSSL_FSN_sqr(rf, af, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, 0);
@@ -254,7 +254,7 @@ static int file_square(STANZA *s)
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(square);
     BN_free(ret);
@@ -265,9 +265,9 @@ static int file_quotient(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *quotient = NULL, *remainder = NULL;
     BIGNUM *qret = NULL, *rret = NULL, *mret = NULL;
-    const OSSL_FN *af = NULL, *bf = NULL;
-    OSSL_FN *qf = NULL, *rf = NULL, *mf = NULL;
-    OSSL_FN_CTX *ctx = NULL, *mod_ctx = NULL;
+    const OSSL_FSN *af = NULL, *bf = NULL;
+    OSSL_FSN *qf = NULL, *rf = NULL, *mf = NULL;
+    OSSL_FSN_CTX *ctx = NULL, *mod_ctx = NULL;
     int a_neg = 0, b_neg = 0, q_neg = 0, r_neg = 0, st = 0;
     int q_acq = 0, r_acq = 0, m_acq = 0;
     int q_limbs = 0, r_limbs = 0;
@@ -288,24 +288,24 @@ static int file_quotient(STANZA *s)
     q_limbs = limbs(quotient);
     r_limbs = limbs(remainder);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(bf = bn_get_ossl_fn(b))
-        || !TEST_ptr(qf = bn_acquire_ossl_fn(qret, q_limbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fsn(b))
+        || !TEST_ptr(qf = bn_acquire_ossl_fsn(qret, q_limbs)))
         goto err;
     q_acq = 1;
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(rret, r_limbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(rret, r_limbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(mf = bn_acquire_ossl_fn(mret, r_limbs)))
+    if (!TEST_ptr(mf = bn_acquire_ossl_fsn(mret, r_limbs)))
         goto err;
     m_acq = 1;
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_div_ctx_size_from_nums(qf, rf, af, bf)))
-        || !TEST_ptr(mod_ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_mod_ctx_size_from_nums(mf, af, bf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_div_ctx_size_from_nums(qf, rf, af, bf)))
+        || !TEST_ptr(mod_ctx = OSSL_FSN_CTX_new_size(NULL,
+                         OSSL_FSN_mod_ctx_size_from_nums(mf, af, bf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_div(qf, rf, af, bf, ctx)))
+    if (!TEST_true(OSSL_FSN_div(qf, rf, af, bf, ctx)))
         goto err;
     bn_release(qret, q_limbs);
     if (!BN_is_zero(qret))
@@ -319,7 +319,7 @@ static int file_quotient(STANZA *s)
         || !equalBN("A % B", remainder, rret))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod(mf, af, bf, mod_ctx)))
+    if (!TEST_true(OSSL_FSN_mod(mf, af, bf, mod_ctx)))
         goto err;
     bn_release(mret, r_limbs);
     if (!BN_is_zero(mret))
@@ -336,8 +336,8 @@ err:
         bn_release(rret, r_limbs);
     if (q_acq)
         bn_release(qret, q_limbs);
-    OSSL_FN_CTX_free(mod_ctx);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(mod_ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(b);
     BN_free(quotient);
@@ -351,9 +351,9 @@ err:
 static int file_lshift1(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift1 = NULL, *two = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *lf = NULL, *tf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL, *lf = NULL, *tf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     int a_neg = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -368,18 +368,18 @@ static int file_lshift1(STANZA *s)
     nlimbs = limbs(lshift1);
     BN_set_word(two, 2);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(lf = bn_get_ossl_fn(lshift1))
-        || !TEST_ptr(tf = bn_get_ossl_fn(two))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(lf = bn_get_ossl_fsn(lshift1))
+        || !TEST_ptr(tf = bn_get_ossl_fsn(two))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mul_ctx_size_from_nums(rf, af, tf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mul_ctx_size_from_nums(rf, af, tf))))
         goto err;
 
     /* A + A == LShift1 */
-    if (!TEST_true(OSSL_FN_add(rf, af, af)))
+    if (!TEST_true(OSSL_FSN_add(rf, af, af)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -388,10 +388,10 @@ static int file_lshift1(STANZA *s)
         goto err;
 
     /* A * 2 == LShift1 */
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_true(OSSL_FN_mul(rf, af, tf, ctx)))
+    if (!TEST_true(OSSL_FSN_mul(rf, af, tf, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -403,14 +403,14 @@ static int file_lshift1(STANZA *s)
      * TODO(FIXNUM): bntest.c also checks the division/modulus identities
      *   LShift1 / 2 == A   ("LShift1 / 2")
      *   LShift1 % 2 == 0   ("LShift1 % 2")
-     * using BN_div().  These cannot be ported yet: there is no OSSL_FN_div().
+     * using BN_div().  These cannot be ported yet: there is no OSSL_FSN_div().
      */
 
     /* A << 1 == LShift1 */
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_true(OSSL_FN_lshift1(rf, af)))
+    if (!TEST_true(OSSL_FSN_lshift1(rf, af)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg);
@@ -427,14 +427,14 @@ static int file_lshift1(STANZA *s)
      *   (LShift1 | 1) / 2 == A   ("(LShift1 | 1) / 2")
      *   (LShift | 1) >> 1 == A   ("(LShift | 1) >> 1")
      * to exercise rshift1's flooring of an odd operand.  This cannot be
-     * ported yet: there is no OSSL_FN_set_bit(), and the division variant
-     * also needs OSSL_FN_div().  For now we just repeat the even case to
+     * ported yet: there is no OSSL_FSN_set_bit(), and the division variant
+     * also needs OSSL_FSN_div().  For now we just repeat the even case to
      * preserve the two-iteration shape.
      */
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_true(OSSL_FN_rshift1(rf, lf)))
+    if (!TEST_true(OSSL_FSN_rshift1(rf, lf)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -442,10 +442,10 @@ static int file_lshift1(STANZA *s)
     if (!equalBN("LShift >> 1", a, ret))
         goto err;
 
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_true(OSSL_FN_rshift1(rf, lf)))
+    if (!TEST_true(OSSL_FSN_rshift1(rf, lf)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -457,7 +457,7 @@ static int file_lshift1(STANZA *s)
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(lshift1);
     BN_free(two);
@@ -468,8 +468,8 @@ err:
 static int file_lshift(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *lf = NULL;
-    OSSL_FN *rf = NULL;
+    const OSSL_FSN *af = NULL, *lf = NULL;
+    OSSL_FSN *rf = NULL;
     int a_neg = 0, n = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -483,13 +483,13 @@ static int file_lshift(STANZA *s)
     a_neg = BN_is_negative(a);
     nlimbs = limbs(lshift);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(lf = bn_get_ossl_fn(lshift))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(lf = bn_get_ossl_fsn(lshift))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_true(OSSL_FN_lshift(rf, af, n)))
+    if (!TEST_true(OSSL_FSN_lshift(rf, af, n)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg);
@@ -498,10 +498,10 @@ static int file_lshift(STANZA *s)
         goto err;
 
     /* Round-trip: shift the result back and recover A */
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_true(OSSL_FN_rshift(rf, lf, n)))
+    if (!TEST_true(OSSL_FSN_rshift(rf, lf, n)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -522,8 +522,8 @@ err:
 static int file_rshift(STANZA *s)
 {
     BIGNUM *a = NULL, *rshift = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL;
-    OSSL_FN *rf = NULL;
+    const OSSL_FSN *af = NULL;
+    OSSL_FSN *rf = NULL;
     int a_neg = 0, n = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -537,12 +537,12 @@ static int file_rshift(STANZA *s)
     a_neg = BN_is_negative(a);
     nlimbs = limbs(rshift);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_true(OSSL_FN_rshift(rf, af, n)))
+    if (!TEST_true(OSSL_FSN_rshift(rf, af, n)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -552,10 +552,10 @@ static int file_rshift(STANZA *s)
 
     /* If N == 1, try with rshift1 as well */
     if (n == 1) {
-        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
             goto err;
         r_acq = 1;
-        if (!TEST_true(OSSL_FN_rshift1(rf, af)))
+        if (!TEST_true(OSSL_FSN_rshift1(rf, af)))
             goto err;
         bn_release(ret, nlimbs);
         BN_set_negative(ret, a_neg && !BN_is_zero(ret));
@@ -577,10 +577,10 @@ err:
 static int file_modmul(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *m = NULL, *mod_mul = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *bf = NULL, *mf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN_MONT_CTX *mont = NULL;
+    const OSSL_FSN *af = NULL, *bf = NULL, *mf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
+    OSSL_FSN_MONT_CTX *mont = NULL;
     const void *token = NULL;
     int a_neg = 0, b_neg = 0, st = 0;
     int r_acq = 0;
@@ -597,23 +597,23 @@ static int file_modmul(STANZA *s)
     b_neg = BN_is_negative(b);
     nlimbs = limbs(m);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(bf = bn_get_ossl_fn(b))
-        || !TEST_ptr(mf = bn_get_ossl_fn(m))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fsn(b))
+        || !TEST_ptr(mf = bn_get_ossl_fsn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_mul_ctx_size_from_nums(rf, af, bf, mf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_mul_ctx_size_from_nums(rf, af, bf, mf))))
         goto err;
 
     /*
-     * OSSL_FN is unsigned, so the multiplication is on absolute values.
+     * OSSL_FSN is unsigned, so the multiplication is on absolute values.
      * If the operands have different signs, the non-negative modular
      * residue of A * B is M - ((|A| * |B|) mod M), unless that is zero.
      */
-    if (!TEST_true(OSSL_FN_mod_mul(rf, af, bf, mf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_mul(rf, af, bf, mf, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     r_acq = 0;
@@ -626,48 +626,48 @@ static int file_modmul(STANZA *s)
 
     if (BN_is_odd(m)) {
         /* Test the Montgomery version. */
-        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
             goto err;
         r_acq = 1;
 
-        if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(mf)))
+        if (!TEST_ptr(mont = OSSL_FSN_MONT_CTX_new(mf)))
             goto err;
 
         size_t max = 0, tmp;
-        tmp = OSSL_FN_to_mont_ctx_size_from_nums(NULL, af, mont);
+        tmp = OSSL_FSN_to_mont_ctx_size_from_nums(NULL, af, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_to_mont_ctx_size_from_nums(NULL, bf, mont);
+        tmp = OSSL_FSN_to_mont_ctx_size_from_nums(NULL, bf, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_mul_mont_quick_ctx_size_from_nums(NULL, NULL, NULL, mont);
+        tmp = OSSL_FSN_mul_mont_quick_ctx_size_from_nums(NULL, NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_from_mont_ctx_size_from_nums(NULL, NULL, mont);
+        tmp = OSSL_FSN_from_mont_ctx_size_from_nums(NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
-        OSSL_FN_CTX_free(ctx);
+        OSSL_FSN_CTX_free(ctx);
         ctx = NULL;
-        if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                          max + OSSL_FN_CTX_size(1, 3, 3 * (size_t)nlimbs)))
-            || !TEST_ptr(token = OSSL_FN_CTX_start(ctx)))
+        if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                          max + OSSL_FSN_CTX_size(1, 3, 3 * (size_t)nlimbs)))
+            || !TEST_ptr(token = OSSL_FSN_CTX_start(ctx)))
             goto err;
 
-        OSSL_FN *am, *bm, *rm;
-        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs))
-            || !TEST_ptr(bm = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs))
-            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs)))
+        OSSL_FSN *am, *bm, *rm;
+        if (!TEST_ptr(am = OSSL_FSN_CTX_get_limbs(ctx, token, nlimbs))
+            || !TEST_ptr(bm = OSSL_FSN_CTX_get_limbs(ctx, token, nlimbs))
+            || !TEST_ptr(rm = OSSL_FSN_CTX_get_limbs(ctx, token, nlimbs)))
             goto err;
 
         /*
-         * OSSL_FN is unsigned, so the multiplication is on absolute values.
+         * OSSL_FSN is unsigned, so the multiplication is on absolute values.
          * If the operands have different signs, the non-negative modular
          * residue of A * B is M - ((|A| * |B|) mod M), unless that is zero.
          */
-        if (!TEST_true(OSSL_FN_to_mont(am, af, mont, ctx))
-            || !TEST_true(OSSL_FN_to_mont(bm, bf, mont, ctx))
-            || !TEST_true(OSSL_FN_mul_mont_quick(rm, am, bm, mont, ctx))
-            || !TEST_true(OSSL_FN_from_mont(rf, rm, mont, ctx)))
+        if (!TEST_true(OSSL_FSN_to_mont(am, af, mont, ctx))
+            || !TEST_true(OSSL_FSN_to_mont(bm, bf, mont, ctx))
+            || !TEST_true(OSSL_FSN_mul_mont_quick(rm, am, bm, mont, ctx))
+            || !TEST_true(OSSL_FSN_from_mont(rf, rm, mont, ctx)))
             goto err;
         bn_release(ret, nlimbs);
         r_acq = 0;
@@ -684,9 +684,9 @@ err:
     if (r_acq)
         bn_release(ret, nlimbs);
     if (token != NULL)
-        OSSL_FN_CTX_end(ctx, token);
-    OSSL_FN_CTX_free(ctx);
-    OSSL_FN_MONT_CTX_free(mont);
+        OSSL_FSN_CTX_end(ctx, token);
+    OSSL_FSN_CTX_free(ctx);
+    OSSL_FSN_MONT_CTX_free(mont);
     BN_free(a);
     BN_free(b);
     BN_free(m);
@@ -698,10 +698,10 @@ err:
 static int file_modsqr(STANZA *s)
 {
     BIGNUM *a = NULL, *m = NULL, *mod_sqr = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *mf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN_MONT_CTX *mont = NULL;
+    const OSSL_FSN *af = NULL, *mf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
+    OSSL_FSN_MONT_CTX *mont = NULL;
     const void *token = NULL;
     int st = 0;
     int r_acq = 0;
@@ -715,20 +715,20 @@ static int file_modsqr(STANZA *s)
 
     nlimbs = limbs(m);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(mf = bn_get_ossl_fn(m))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(mf = bn_get_ossl_fsn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_sqr_ctx_size_from_nums(rf, af, mf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_sqr_ctx_size_from_nums(rf, af, mf))))
         goto err;
 
     /*
      * Squaring is always non-negative, so no sign fixup is needed.
      */
-    if (!TEST_true(OSSL_FN_mod_sqr(rf, af, mf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_sqr(rf, af, mf, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     r_acq = 0;
@@ -737,38 +737,38 @@ static int file_modsqr(STANZA *s)
 
     if (BN_is_odd(m)) {
         /* Test the Montgomery version. */
-        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        if (!TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
             goto err;
         r_acq = 1;
 
-        if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(mf)))
+        if (!TEST_ptr(mont = OSSL_FSN_MONT_CTX_new(mf)))
             goto err;
 
         size_t max = 0, tmp;
-        tmp = OSSL_FN_to_mont_ctx_size_from_nums(NULL, af, mont);
+        tmp = OSSL_FSN_to_mont_ctx_size_from_nums(NULL, af, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_mul_mont_quick_ctx_size_from_nums(NULL, NULL, NULL, mont);
+        tmp = OSSL_FSN_mul_mont_quick_ctx_size_from_nums(NULL, NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
-        tmp = OSSL_FN_from_mont_ctx_size_from_nums(NULL, NULL, mont);
+        tmp = OSSL_FSN_from_mont_ctx_size_from_nums(NULL, NULL, mont);
         if (tmp > max)
             max = tmp;
-        OSSL_FN_CTX_free(ctx);
+        OSSL_FSN_CTX_free(ctx);
         ctx = NULL;
-        if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                          max + OSSL_FN_CTX_size(1, 3, 3 * (size_t)nlimbs)))
-            || !TEST_ptr(token = OSSL_FN_CTX_start(ctx)))
+        if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                          max + OSSL_FSN_CTX_size(1, 3, 3 * (size_t)nlimbs)))
+            || !TEST_ptr(token = OSSL_FSN_CTX_start(ctx)))
             goto err;
 
-        OSSL_FN *am, *rm;
-        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs))
-            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, token, nlimbs)))
+        OSSL_FSN *am, *rm;
+        if (!TEST_ptr(am = OSSL_FSN_CTX_get_limbs(ctx, token, nlimbs))
+            || !TEST_ptr(rm = OSSL_FSN_CTX_get_limbs(ctx, token, nlimbs)))
             goto err;
 
-        if (!TEST_true(OSSL_FN_to_mont(am, af, mont, ctx))
-            || !TEST_true(OSSL_FN_mul_mont_quick(rm, am, am, mont, ctx))
-            || !TEST_true(OSSL_FN_from_mont(rf, rm, mont, ctx)))
+        if (!TEST_true(OSSL_FSN_to_mont(am, af, mont, ctx))
+            || !TEST_true(OSSL_FSN_mul_mont_quick(rm, am, am, mont, ctx))
+            || !TEST_true(OSSL_FSN_from_mont(rf, rm, mont, ctx)))
             goto err;
         bn_release(ret, nlimbs);
         r_acq = 0;
@@ -781,9 +781,9 @@ err:
     if (r_acq)
         bn_release(ret, nlimbs);
     if (token != NULL)
-        OSSL_FN_CTX_end(ctx, token);
-    OSSL_FN_CTX_free(ctx);
-    OSSL_FN_MONT_CTX_free(mont);
+        OSSL_FSN_CTX_end(ctx, token);
+    OSSL_FSN_CTX_free(ctx);
+    OSSL_FSN_MONT_CTX_free(mont);
     BN_free(a);
     BN_free(m);
     BN_free(mod_sqr);
@@ -794,9 +794,9 @@ err:
 static int file_gcd(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *gcd = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *bf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL, *bf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     int st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -809,16 +809,16 @@ static int file_gcd(STANZA *s)
 
     nlimbs = limbs(gcd);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(bf = bn_get_ossl_fn(b))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fsn(b))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_gcd_ctx_size_from_nums(af, bf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_gcd_ctx_size_from_nums(af, bf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_gcd(rf, af, bf, ctx)))
+    if (!TEST_true(OSSL_FSN_gcd(rf, af, bf, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     BN_set_negative(ret, 0);
@@ -830,7 +830,7 @@ static int file_gcd(STANZA *s)
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(b);
     BN_free(gcd);
@@ -841,9 +841,9 @@ err:
 static int file_modinv(STANZA *s)
 {
     BIGNUM *a = NULL, *m = NULL, *ainv_check = NULL, *ret = NULL, *prod = NULL;
-    const OSSL_FN *af = NULL, *mf = NULL;
-    OSSL_FN *rf = NULL, *pf = NULL;
-    OSSL_FN_CTX *ctx = NULL, *mul_ctx = NULL;
+    const OSSL_FSN *af = NULL, *mf = NULL;
+    OSSL_FSN *rf = NULL, *pf = NULL;
+    OSSL_FSN_CTX *ctx = NULL, *mul_ctx = NULL;
     int a_neg = 0, st = 0;
     int r_acq = 0, p_acq = 0;
     int nlimbs = 0;
@@ -858,17 +858,17 @@ static int file_modinv(STANZA *s)
     a_neg = BN_is_negative(a);
     nlimbs = limbs(m);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(mf = bn_get_ossl_fn(m))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(mf = bn_get_ossl_fsn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(pf = bn_acquire_ossl_fn(prod, nlimbs)))
+    if (!TEST_ptr(pf = bn_acquire_ossl_fsn(prod, nlimbs)))
         goto err;
     p_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size_from_nums(rf, af, mf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_inverse_ctx_size_from_nums(rf, af, mf))))
         goto err;
 
     if (BN_is_negative(ainv_check)) {
@@ -877,10 +877,10 @@ static int file_modinv(STANZA *s)
          * degenerate moduli M = 0 and M = 1, a == 0, and non-coprime pairs).
          */
         ERR_set_mark();
-        if (!TEST_false(OSSL_FN_mod_inverse(rf, af, mf, ctx))
-            || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_OSSL_FN)
+        if (!TEST_false(OSSL_FSN_mod_inverse(rf, af, mf, ctx))
+            || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_OSSL_FSN)
             || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
-                OSSL_FN_R_NO_INVERSE))
+                OSSL_FSN_R_NO_INVERSE))
             goto err;
         ERR_pop_to_mark();
 
@@ -889,20 +889,20 @@ static int file_modinv(STANZA *s)
     }
 
     /* The inverse is unique in [1, M). */
-    if (!TEST_true(OSSL_FN_mod_inverse(rf, af, mf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_inverse(rf, af, mf, ctx)))
         goto err;
 
     /*
      * Verify the unsigned identity |A| * r == 1 (mod M) natively, before the
-     * sign fixup below consumes r.  OSSL_FN_mod_mul() needs its own sized
+     * sign fixup below consumes r.  OSSL_FSN_mod_mul() needs its own sized
      * arena, so a second context is allocated (the file_quotient idiom); pf
      * is a distinct destination so r survives for the sign fixup and the
      * corpus comparison below.
      */
-    if (!TEST_ptr(mul_ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_mul_ctx_size_from_nums(pf, af, rf, mf)))
-        || !TEST_true(OSSL_FN_mod_mul(pf, af, rf, mf, mul_ctx))
-        || !TEST_true(OSSL_FN_is_one(pf)))
+    if (!TEST_ptr(mul_ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_mul_ctx_size_from_nums(pf, af, rf, mf)))
+        || !TEST_true(OSSL_FSN_mod_mul(pf, af, rf, mf, mul_ctx))
+        || !TEST_true(OSSL_FSN_is_one(pf)))
         goto err;
 
     bn_release(prod, nlimbs);
@@ -911,7 +911,7 @@ static int file_modinv(STANZA *s)
     r_acq = 0;
 
     /*
-     * OSSL_FN is unsigned, so OSSL_FN_mod_inverse() computed the inverse of
+     * OSSL_FSN is unsigned, so OSSL_FSN_mod_inverse() computed the inverse of
      * |A|.  For negative A the inverse of A is M - r (r is never zero for a
      * valid inverse in [1, M)).
      */
@@ -928,8 +928,8 @@ err:
         bn_release(prod, nlimbs);
     if (r_acq)
         bn_release(ret, nlimbs);
-    OSSL_FN_CTX_free(mul_ctx);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(mul_ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(m);
     BN_free(ainv_check);
@@ -941,9 +941,9 @@ err:
 static int file_modexp(STANZA *s)
 {
     BIGNUM *a = NULL, *e = NULL, *m = NULL, *mod_exp = NULL, *ret = NULL;
-    const OSSL_FN *af = NULL, *ef = NULL, *mf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL, *ef = NULL, *mf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     int a_neg = 0, e_odd = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -956,7 +956,7 @@ static int file_modexp(STANZA *s)
         goto err;
 
     /*
-     * OSSL_FN_mod_exp() is unsigned: the base is exponentiated as its
+     * OSSL_FSN_mod_exp() is unsigned: the base is exponentiated as its
      * absolute value, so a negative base with an odd exponent yields
      * M - (|A|^E mod M)  (unless that is zero), as for modular
      * multiplication; an even exponent leaves the residue non-negative.
@@ -967,18 +967,18 @@ static int file_modexp(STANZA *s)
     e_odd = BN_is_odd(e);
     nlimbs = limbs(m);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(ef = bn_get_ossl_fn(e))
-        || !TEST_ptr(mf = bn_get_ossl_fn(m))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(ef = bn_get_ossl_fsn(e))
+        || !TEST_ptr(mf = bn_get_ossl_fsn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_exp_ctx_size_from_nums(rf, af, ef, mf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_exp_ctx_size_from_nums(rf, af, ef, mf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_exp(rf, af, ef, mf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_exp(rf, af, ef, mf, ctx)))
         goto err;
     bn_release(ret, nlimbs);
     r_acq = 0;
@@ -994,7 +994,7 @@ static int file_modexp(STANZA *s)
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(e);
     BN_free(m);
@@ -1006,9 +1006,9 @@ err:
 static int file_modsqrt(STANZA *s)
 {
     BIGNUM *a = NULL, *p = NULL, *mod_sqrt = NULL, *ret = NULL, *ret2 = NULL;
-    const OSSL_FN *af = NULL, *pf = NULL;
-    OSSL_FN *rf = NULL, *r2f = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL, *pf = NULL;
+    OSSL_FSN *rf = NULL, *r2f = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     BN_CTX *bnctx = NULL;
     int r_acq = 0, r2_acq = 0;
     int nlimbs = 0;
@@ -1023,9 +1023,9 @@ static int file_modsqrt(STANZA *s)
         goto err;
 
     /*
-     * BN_mod_sqrt() reduces a into [0, p) up front via BN_nnmod(); OSSL_FN is
+     * BN_mod_sqrt() reduces a into [0, p) up front via BN_nnmod(); OSSL_FSN is
      * unsigned, so that reduction belongs here at the BIGNUM boundary rather
-     * than inside OSSL_FN_mod_sqrt() (which only sees the magnitude).  Passing
+     * than inside OSSL_FSN_mod_sqrt() (which only sees the magnitude).  Passing
      * the raw magnitude for a negative a would feed sqrt() the wrong residue
      * (e.g. a = -5, p = 7 reduces to 2, not 5).
      */
@@ -1034,41 +1034,41 @@ static int file_modsqrt(STANZA *s)
 
     nlimbs = limbs(p);
 
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(pf = bn_get_ossl_fn(p))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(pf = bn_get_ossl_fsn(p))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(ret, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_ptr(r2f = bn_acquire_ossl_fn(ret2, nlimbs)))
+    if (!TEST_ptr(r2f = bn_acquire_ossl_fsn(ret2, nlimbs)))
         goto err;
     r2_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_sqrt_ctx_size_from_nums(rf, af, pf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_sqrt_ctx_size_from_nums(rf, af, pf))))
         goto err;
 
     /*
      * A negative ModSqrt value marks a negative testcase (mirroring bntest's
      * file_modsqrt, which keys on BN_is_negative(mod_sqrt)): the input is not
-     * a square mod p (or p is not prime), and OSSL_FN_mod_sqrt() must fail.
-     * OSSL_FN is unsigned and the operands are taken as magnitudes; the
+     * a square mod p (or p is not prime), and OSSL_FSN_mod_sqrt() must fail.
+     * OSSL_FSN is unsigned and the operands are taken as magnitudes; the
      * negative marker only selects the failure expectation, it carries no
      * sign into the computation.
      */
     if (BN_is_negative(mod_sqrt)) {
-        if (!TEST_false(OSSL_FN_mod_sqrt(rf, af, pf, ctx)))
+        if (!TEST_false(OSSL_FSN_mod_sqrt(rf, af, pf, ctx)))
             goto err;
 
         st = 1;
         goto err;
     }
 
-    if (!TEST_true(OSSL_FN_mod_sqrt(rf, af, pf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_sqrt(rf, af, pf, ctx)))
         goto err;
 
     /* The other root is p - ret; both are valid answers. */
-    if (!TEST_true(OSSL_FN_sub(r2f, pf, rf)))
+    if (!TEST_true(OSSL_FSN_sub(r2f, pf, rf)))
         goto err;
 
     bn_release(ret, nlimbs);
@@ -1092,7 +1092,7 @@ err:
         bn_release(ret, nlimbs);
     if (r2_acq)
         bn_release(ret2, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_CTX_free(bnctx);
     BN_free(a);
     BN_free(p);
@@ -1184,22 +1184,22 @@ static int run_file_tests(int i)
 OPT_TEST_DECLARE_USAGE("file...\n")
 
 /*
- * Standalone modular-inverse test.  Exercises OSSL_FN_mod_inverse() through
- * the BIGNUM/OSSL_FN bridge (bn_acquire_ossl_fn() / bn_release()) with a
+ * Standalone modular-inverse test.  Exercises OSSL_FSN_mod_inverse() through
+ * the BIGNUM/OSSL_FSN bridge (bn_acquire_ossl_fsn() / bn_release()) with a
  * known coprime pair: 5193817943 ^-1 mod 3259122431 == 2609653924.
  *
  * The r == n and r == a aliasing cases are expected to succeed:
- * OSSL_FN_mod_inverse() captures the modulus and the operand into scratch
+ * OSSL_FSN_mod_inverse() captures the modulus and the operand into scratch
  * temporaries before writing the result,
- * and OSSL_FN_div() captures the denominator before writing the remainder,
+ * and OSSL_FSN_div() captures the denominator before writing the remainder,
  * so overwriting either input operand with the result is safe.
  */
 static int test_mod_inverse(void)
 {
     BIGNUM *a = NULL, *n = NULL, *r = NULL, *expected = NULL;
-    const OSSL_FN *af = NULL, *nf = NULL;
-    OSSL_FN *rf = NULL;
-    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FSN *af = NULL, *nf = NULL;
+    OSSL_FSN *rf = NULL;
+    OSSL_FSN_CTX *ctx = NULL;
     int r_acq = 0, n_acq = 0, a_acq = 0;
     int nlimbs = 0;
     int st = 0;
@@ -1213,17 +1213,17 @@ static int test_mod_inverse(void)
     nlimbs = limbs(n);
 
     /* Distinct result: r = a^-1 mod n. */
-    if (!TEST_ptr(af = bn_get_ossl_fn(a))
-        || !TEST_ptr(nf = bn_get_ossl_fn(n))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(r, nlimbs)))
+    if (!TEST_ptr(af = bn_get_ossl_fsn(a))
+        || !TEST_ptr(nf = bn_get_ossl_fsn(n))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(r, nlimbs)))
         goto err;
     r_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size_from_nums(rf, af, nf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_inverse_ctx_size_from_nums(rf, af, nf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse(rf, af, nf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_inverse(rf, af, nf, ctx)))
         goto err;
     bn_release(r, nlimbs);
     r_acq = 0;
@@ -1236,19 +1236,19 @@ static int test_mod_inverse(void)
      * Re-acquire n as the writable result; rf now aliases the modulus, so it
      * is passed as both the result and the modulus.
      */
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     ctx = NULL;
     BN_free(r);
     r = NULL;
-    if (!TEST_ptr(rf = bn_acquire_ossl_fn(n, nlimbs)))
+    if (!TEST_ptr(rf = bn_acquire_ossl_fsn(n, nlimbs)))
         goto err;
     n_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size_from_nums(rf, af, rf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_inverse_ctx_size_from_nums(rf, af, rf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse(rf, af, rf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_inverse(rf, af, rf, ctx)))
         goto err;
     bn_release(n, nlimbs);
     n_acq = 0;
@@ -1262,19 +1262,19 @@ static int test_mod_inverse(void)
      * writable result; rf now aliases the operand, so it is passed as both
      * the result and the operand.
      */
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     ctx = NULL;
     if (!TEST_true(BN_dec2bn(&n, "3259122431"))
-        || !TEST_ptr(nf = bn_get_ossl_fn(n))
-        || !TEST_ptr(rf = bn_acquire_ossl_fn(a, nlimbs)))
+        || !TEST_ptr(nf = bn_get_ossl_fsn(n))
+        || !TEST_ptr(rf = bn_acquire_ossl_fsn(a, nlimbs)))
         goto err;
     a_acq = 1;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                      OSSL_FN_mod_inverse_ctx_size_from_nums(rf, rf, nf))))
+    if (!TEST_ptr(ctx = OSSL_FSN_CTX_new_size(NULL,
+                      OSSL_FSN_mod_inverse_ctx_size_from_nums(rf, rf, nf))))
         goto err;
 
-    if (!TEST_true(OSSL_FN_mod_inverse(rf, rf, nf, ctx)))
+    if (!TEST_true(OSSL_FSN_mod_inverse(rf, rf, nf, ctx)))
         goto err;
     bn_release(a, nlimbs);
     a_acq = 0;
@@ -1290,7 +1290,7 @@ err:
         bn_release(r, nlimbs);
     if (n_acq)
         bn_release(n, nlimbs);
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FSN_CTX_free(ctx);
     BN_free(a);
     BN_free(n);
     BN_free(r);

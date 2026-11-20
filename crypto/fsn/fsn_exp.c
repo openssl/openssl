@@ -10,8 +10,8 @@
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include "internal/constant_time.h"
-#include "crypto/fnerr.h"
-#include "fn_local.h"
+#include "crypto/fsnerr.h"
+#include "fsn_local.h"
 #include "../bn/bn_local.h"
 
 /*
@@ -23,8 +23,8 @@
  * The even-modulus reciprocal remaindering (RECP_MUL_MOD) is a placeholder,
  * left for future implementations.
  *
- * The runtime dispatcher (OSSL_FN_mod_exp) guards against these; the sizing
- * companion (OSSL_FN_mod_exp_ctx_size_from_sizes) budgets the largest
+ * The runtime dispatcher (OSSL_FSN_mod_exp) guards against these; the sizing
+ * companion (OSSL_FSN_mod_exp_ctx_size_from_sizes) budgets the largest
  * implemented path instead, so it stays width-only.
  */
 #define MONT_MUL_MOD
@@ -37,10 +37,10 @@
  * Sliding-window size selection: a function of the exponent bit count (a
  * public magnitude), capped at 6, so TABLE_SIZE == 1 << 5 always suffices.
  */
-#define OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
-    ((b) > 671 ? 6 : (b) > 239 ? 5               \
-            : (b) > 79         ? 4               \
-            : (b) > 23         ? 3               \
+#define OSSL_FSN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
+    ((b) > 671 ? 6 : (b) > 239 ? 5                \
+            : (b) > 79         ? 4                \
+            : (b) > 23         ? 3                \
                                : 1)
 
 /*
@@ -67,17 +67,17 @@
  */
 #if MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH == 64
 
-#define OSSL_FN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(b) \
-    ((b) > 937 ? 6 : (b) > 306 ? 5                     \
-            : (b) > 89         ? 4                     \
-            : (b) > 22         ? 3                     \
+#define OSSL_FSN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(b) \
+    ((b) > 937 ? 6 : (b) > 306 ? 5                      \
+            : (b) > 89         ? 4                      \
+            : (b) > 22         ? 3                      \
                                : 1)
 
 #elif MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH == 32
 
-#define OSSL_FN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(b) \
-    ((b) > 306 ? 5 : (b) > 89 ? 4                      \
-            : (b) > 22        ? 3                      \
+#define OSSL_FSN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(b) \
+    ((b) > 306 ? 5 : (b) > 89 ? 4                       \
+            : (b) > 22        ? 3                       \
                               : 1)
 
 #endif
@@ -87,14 +87,14 @@
  * |numpowers| powers of |ml| limbs each, plus |extra_limbs| of tail space
  * (the accelerated gather path keeps a cache-local copy of the modulus
  * right after the table), plus slack to align the buffer to the minimum
- * cache line width within the containing OSSL_FN's limb array.  Returns 0
- * on overflow (the buffer must fit in one OSSL_FN, whose limb count is an
+ * cache line width within the containing OSSL_FSN's limb array.  Returns 0
+ * on overflow (the buffer must fit in one OSSL_FSN, whose limb count is an
  * int).
  */
 static int mod_exp_mont_power_limbs(size_t *power_limbs, size_t numpowers,
     size_t ml, size_t extra_limbs)
 {
-    size_t slack = MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH / OSSL_FN_BYTES;
+    size_t slack = MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH / OSSL_FSN_BYTES;
 
     if (ml == 0 || extra_limbs > (size_t)INT_MAX - slack
         || numpowers > ((size_t)INT_MAX - slack - extra_limbs) / ml)
@@ -110,7 +110,7 @@ static int mod_exp_mont_power_limbs(size_t *power_limbs, size_t numpowers,
  */
 static size_t mod_exp_mont_ctime_window(size_t bits, size_t ml)
 {
-    size_t window = OSSL_FN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(bits);
+    size_t window = OSSL_FSN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(bits);
 
 #if defined(OPENSSL_BN_ASM_MONT5)
     /* The accelerated gather path is fixed at window 5. */
@@ -136,18 +136,18 @@ static int mod_exp_mont_asm5(size_t window, size_t ml)
  * fixed offsets derived from the (public) bit position only; the bounds
  * checks are width-based, not value-based.
  */
-static OSSL_FN_ULONG fn_get_bits(const OSSL_FN *a, size_t bitpos)
+static OSSL_FSN_ULONG fsn_get_bits(const OSSL_FSN *a, size_t bitpos)
 {
-    OSSL_FN_ULONG ret = 0;
-    size_t wordpos = bitpos / OSSL_FN_BITS;
+    OSSL_FSN_ULONG ret = 0;
+    size_t wordpos = bitpos / OSSL_FSN_BITS;
 
-    bitpos %= OSSL_FN_BITS;
+    bitpos %= OSSL_FSN_BITS;
     if (wordpos < (size_t)a->dsize) {
         ret = a->d[wordpos];
         if (bitpos != 0) {
             ret >>= bitpos;
             if (++wordpos < (size_t)a->dsize)
-                ret |= a->d[wordpos] << (OSSL_FN_BITS - bitpos);
+                ret |= a->d[wordpos] << (OSSL_FSN_BITS - bitpos);
         }
     }
     return ret;
@@ -157,11 +157,11 @@ static OSSL_FN_ULONG fn_get_bits(const OSSL_FN *a, size_t bitpos)
  * The fixed-window Montgomery path stores the precomputed powers in a
  * strided layout -- limb i of power j lives at table[j + i * width] -- so
  * that gathering any power shows the same cache-line access pattern
- * regardless of the exponent's value.  These helpers transfer an OSSL_FN
+ * regardless of the exponent's value.  These helpers transfer an OSSL_FSN
  * to and from that table.
  */
-static void mod_exp_ctime_copy_to_prebuf(const OSSL_FN *b,
-    OSSL_FN_ULONG *table, size_t idx, size_t width)
+static void mod_exp_ctime_copy_to_prebuf(const OSSL_FSN *b,
+    OSSL_FSN_ULONG *table, size_t idx, size_t width)
 {
     size_t i, j;
     size_t top = (size_t)b->dsize;
@@ -170,8 +170,8 @@ static void mod_exp_ctime_copy_to_prebuf(const OSSL_FN *b,
         table[j] = b->d[i];
 }
 
-static void mod_exp_ctime_copy_from_prebuf(OSSL_FN *b,
-    const OSSL_FN_ULONG *buf, size_t idx, size_t window, size_t top)
+static void mod_exp_ctime_copy_from_prebuf(OSSL_FSN *b,
+    const OSSL_FSN_ULONG *buf, size_t idx, size_t window, size_t top)
 {
     size_t i, j;
     size_t width = (size_t)1 << window;
@@ -181,40 +181,40 @@ static void mod_exp_ctime_copy_from_prebuf(OSSL_FN *b,
      * in a specific manner, loads might give away the information we are
      * trying to conceal.
      */
-    volatile const OSSL_FN_ULONG *table = buf;
+    volatile const OSSL_FSN_ULONG *table = buf;
 
     if (window <= 3) {
         for (i = 0; i < top; i++, table += width) {
-            OSSL_FN_ULONG acc = 0;
+            OSSL_FSN_ULONG acc = 0;
 
             for (j = 0; j < width; j++) {
                 acc |= table[j]
-                    & value_barrier_bn((OSSL_FN_ULONG)0
+                    & value_barrier_bn((OSSL_FSN_ULONG)0
                         - (constant_time_eq_int((int)j, (int)idx) & 1));
             }
             b->d[i] = acc;
         }
     } else {
         size_t xstride = (size_t)1 << (window - 2);
-        OSSL_FN_ULONG y0, y1, y2, y3;
+        OSSL_FSN_ULONG y0, y1, y2, y3;
 
         i = idx >> (window - 2); /* equivalent of idx / xstride */
         idx &= xstride - 1; /* equivalent of idx % xstride */
 
-        y0 = (OSSL_FN_ULONG)0 - (constant_time_eq_int((int)i, 0) & 1);
-        y1 = (OSSL_FN_ULONG)0 - (constant_time_eq_int((int)i, 1) & 1);
-        y2 = (OSSL_FN_ULONG)0 - (constant_time_eq_int((int)i, 2) & 1);
-        y3 = (OSSL_FN_ULONG)0 - (constant_time_eq_int((int)i, 3) & 1);
+        y0 = (OSSL_FSN_ULONG)0 - (constant_time_eq_int((int)i, 0) & 1);
+        y1 = (OSSL_FSN_ULONG)0 - (constant_time_eq_int((int)i, 1) & 1);
+        y2 = (OSSL_FSN_ULONG)0 - (constant_time_eq_int((int)i, 2) & 1);
+        y3 = (OSSL_FSN_ULONG)0 - (constant_time_eq_int((int)i, 3) & 1);
 
         for (i = 0; i < top; i++, table += width) {
-            OSSL_FN_ULONG acc = 0;
+            OSSL_FSN_ULONG acc = 0;
 
             for (j = 0; j < xstride; j++) {
                 acc |= ((table[j + 0 * xstride] & value_barrier_bn(y0))
                            | (table[j + 1 * xstride] & value_barrier_bn(y1))
                            | (table[j + 2 * xstride] & value_barrier_bn(y2))
                            | (table[j + 3 * xstride] & value_barrier_bn(y3)))
-                    & value_barrier_bn((OSSL_FN_ULONG)0
+                    & value_barrier_bn((OSSL_FSN_ULONG)0
                         - (constant_time_eq_int((int)j, (int)idx) & 1));
             }
             b->d[i] = acc;
@@ -223,15 +223,15 @@ static void mod_exp_ctime_copy_from_prebuf(OSSL_FN *b,
 }
 
 /**
- * Calculate the nested arena payload size of OSSL_FN_mod_exp_mont()'s
+ * Calculate the nested arena payload size of OSSL_FSN_mod_exp_mont()'s
  * Montgomery path.  The function's own frame is added by the callers.
  * Nested frames are sequential, so the size is their max.
  *
- * The size is the same whether OSSL_FN_mod_exp_mont() builds its own
+ * The size is the same whether OSSL_FSN_mod_exp_mont() builds its own
  * Montgomery context or reuses one: the mont sizing helpers depend on
  * the context through its modulus width only, and its modulus is |m|
  * either way (a reused context holds a copy made by
- * OSSL_FN_MONT_CTX_new()).  The loop and from_mont operate on reduced
+ * OSSL_FSN_MONT_CTX_new()).  The loop and from_mont operate on reduced
  * ml-wide Montgomery-domain values, whose widths the mont sizing helpers
  * do not need.
  *
@@ -246,38 +246,38 @@ static size_t mod_exp_mont_nested(size_t a_dsize, size_t m_dsize)
 
     /*
      * Base conversion / loop mul_mont_quick / from_mont, via their ctx_size
-     * companions in fn_mont.c; only one is live at a time, so take the max.
-     * A base no wider than m is reduced with OSSL_FN_mont_reduce(), a wider
-     * one by to_mont() (via the reducing OSSL_FN_mul_mont), so no separate
-     * OSSL_FN_mod() frame is sized.  The fixed-window loop multiplies only
+     * companions in fsn_mont.c; only one is live at a time, so take the max.
+     * A base no wider than m is reduced with OSSL_FSN_mont_reduce(), a wider
+     * one by to_mont() (via the reducing OSSL_FSN_mul_mont), so no separate
+     * OSSL_FSN_mod() frame is sized.  The fixed-window loop multiplies only
      * already-reduced Montgomery-domain values, so it uses the non-reducing
-     * OSSL_FN_mul_mont_quick() and its smaller ctx_size.
+     * OSSL_FSN_mul_mont_quick() and its smaller ctx_size.
      */
     mont_size = a_dsize <= m_dsize
-        ? OSSL_FN_mont_reduce_ctx_size_from_sizes(0, a_dsize, m_dsize)
-        : OSSL_FN_to_mont_ctx_size_from_sizes(0, a_dsize, m_dsize);
-    mont_size = ossl_fn_ctx_max_size(mont_size,
-        ossl_fn_ctx_max_size(
-            OSSL_FN_mul_mont_quick_ctx_size_from_sizes(0, 0, 0, m_dsize),
-            OSSL_FN_from_mont_ctx_size_from_sizes(0, 0, m_dsize)));
+        ? OSSL_FSN_mont_reduce_ctx_size_from_sizes(0, a_dsize, m_dsize)
+        : OSSL_FSN_to_mont_ctx_size_from_sizes(0, a_dsize, m_dsize);
+    mont_size = ossl_fsn_ctx_max_size(mont_size,
+        ossl_fsn_ctx_max_size(
+            OSSL_FSN_mul_mont_quick_ctx_size_from_sizes(0, 0, 0, m_dsize),
+            OSSL_FSN_from_mont_ctx_size_from_sizes(0, 0, m_dsize)));
 
     return mont_size;
 }
 
 /*-
- * OSSL_FN_mod_exp_mont_ctx_size_from_sizes() -- arena sizing for
- * OSSL_FN_mod_exp_mont().  Sizes only the Montgomery path; see
+ * OSSL_FSN_mod_exp_mont_ctx_size_from_sizes() -- arena sizing for
+ * OSSL_FSN_mod_exp_mont().  Sizes only the Montgomery path; see
  * mod_exp_mont_nested() for why a reused Montgomery context currently makes
  * no difference.
  */
-size_t OSSL_FN_mod_exp_mont_ctx_size_from_sizes(size_t r_dsize,
+size_t OSSL_FSN_mod_exp_mont_ctx_size_from_sizes(size_t r_dsize,
     size_t a_dsize, size_t p_dsize, size_t m_dsize, size_t in_mont_dsize)
 {
     size_t ml = m_dsize;
-    /* A zero-limb modulus is invalid; OSSL_FN_mod_exp_mont() rejects it. */
-    if (ml == 0 || ossl_fn_totalsize(ml) == 0)
+    /* A zero-limb modulus is invalid; OSSL_FSN_mod_exp_mont() rejects it. */
+    if (ml == 0 || ossl_fsn_totalsize(ml) == 0)
         return 0;
-    /* OSSL_FN_mod_exp_mont() rejects a context whose modulus is not |m| */
+    /* OSSL_FSN_mod_exp_mont() rejects a context whose modulus is not |m| */
     if (in_mont_dsize != 0 && in_mont_dsize != ml)
         return 0;
 
@@ -285,10 +285,10 @@ size_t OSSL_FN_mod_exp_mont_ctx_size_from_sizes(size_t r_dsize,
      * The window size derives from the exponent's and modulus' widths only,
      * so the sizing matches the runtime choice exactly.
      */
-    if (p_dsize > SIZE_MAX / OSSL_FN_BITS)
+    if (p_dsize > SIZE_MAX / OSSL_FSN_BITS)
         return 0;
 
-    size_t bits = p_dsize * OSSL_FN_BITS;
+    size_t bits = p_dsize * OSSL_FSN_BITS;
     size_t window = mod_exp_mont_ctime_window(bits, ml);
     size_t power_limbs;
     /* The accelerated gather path parks a copy of N's limbs after the table. */
@@ -300,67 +300,67 @@ size_t OSSL_FN_mod_exp_mont_ctx_size_from_sizes(size_t r_dsize,
 
     /* power table, accumulator (tmp), gathered power (am) */
     size_t n_numbers = 3;
-    size_t own_size = OSSL_FN_CTX_size(1, n_numbers, power_limbs + 2 * ml);
+    size_t own_size = OSSL_FSN_CTX_size(1, n_numbers, power_limbs + 2 * ml);
 
     size_t nested_size = mod_exp_mont_nested(a_dsize, ml);
-    return ossl_fn_ctx_add_size(own_size, nested_size);
+    return ossl_fsn_ctx_add_size(own_size, nested_size);
 }
 
-size_t OSSL_FN_mod_exp_mont_ctx_size_from_nums(const OSSL_FN *r,
-    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m,
-    OSSL_FN_MONT_CTX *in_mont)
+size_t OSSL_FSN_mod_exp_mont_ctx_size_from_nums(const OSSL_FSN *r,
+    const OSSL_FSN *a, const OSSL_FSN *p, const OSSL_FSN *m,
+    OSSL_FSN_MONT_CTX *in_mont)
 {
     if (a == NULL || p == NULL || m == NULL)
         return 0;
 
-    return OSSL_FN_mod_exp_mont_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+    return OSSL_FSN_mod_exp_mont_ctx_size_from_sizes(OSSL_FSN_size_limbs(r),
         a->dsize, p->dsize, m->dsize,
-        in_mont == NULL ? 0 : OSSL_FN_size_limbs(in_mont->N));
+        in_mont == NULL ? 0 : OSSL_FSN_size_limbs(in_mont->N));
 }
 
 /*
- * OSSL_FN_mod_exp_simple_ctx_size_from_sizes() -- arena sizing for
- * OSSL_FN_mod_exp_simple().
+ * OSSL_FSN_mod_exp_simple_ctx_size_from_sizes() -- arena sizing for
+ * OSSL_FSN_mod_exp_simple().
  */
-size_t OSSL_FN_mod_exp_simple_ctx_size_from_sizes(size_t r_dsize,
+size_t OSSL_FSN_mod_exp_simple_ctx_size_from_sizes(size_t r_dsize,
     size_t a_dsize, size_t p_dsize, size_t m_dsize)
 {
     size_t ml = m_dsize;
-    /* A zero-limb modulus is invalid; OSSL_FN_mod_exp_simple() rejects it. */
-    if (ml == 0 || ossl_fn_totalsize(ml) == 0)
+    /* A zero-limb modulus is invalid; OSSL_FSN_mod_exp_simple() rejects it. */
+    if (ml == 0 || ossl_fsn_totalsize(ml) == 0)
         return 0;
 
     size_t n_numbers = 1 + 1 + TABLE_SIZE;
-    size_t own_size = OSSL_FN_CTX_size(1, n_numbers, n_numbers * ml);
+    size_t own_size = OSSL_FSN_CTX_size(1, n_numbers, n_numbers * ml);
 
-    /* Initial reduction OSSL_FN_mod(val[0], a, m); |a| may be wider than |m|. */
-    size_t mod_size = OSSL_FN_mod_ctx_size_from_sizes(0, a_dsize, ml);
+    /* Initial reduction OSSL_FSN_mod(val[0], a, m); |a| may be wider than |m|. */
+    size_t mod_size = OSSL_FSN_mod_ctx_size_from_sizes(0, a_dsize, ml);
 
     /*
-     * Loop multiply OSSL_FN_mod_mul(rr, rr, rr|val, m): all operands are
+     * Loop multiply OSSL_FSN_mod_mul(rr, rr, rr|val, m): all operands are
      * ml-wide.  With equal operand widths the sizing covers both the
      * squaring (a == b) and the multiplication step, so one call covers
      * both loop steps.
      */
-    size_t mul_size = OSSL_FN_mod_mul_ctx_size_from_sizes(ml, ml, ml, ml);
+    size_t mul_size = OSSL_FSN_mod_mul_ctx_size_from_sizes(ml, ml, ml, ml);
 
-    size_t nested_size = ossl_fn_ctx_max_size(mod_size, mul_size);
-    return ossl_fn_ctx_add_size(own_size, nested_size);
+    size_t nested_size = ossl_fsn_ctx_max_size(mod_size, mul_size);
+    return ossl_fsn_ctx_add_size(own_size, nested_size);
 }
 
-size_t OSSL_FN_mod_exp_simple_ctx_size_from_nums(const OSSL_FN *r,
-    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
+size_t OSSL_FSN_mod_exp_simple_ctx_size_from_nums(const OSSL_FSN *r,
+    const OSSL_FSN *a, const OSSL_FSN *p, const OSSL_FSN *m)
 {
     if (a == NULL || m == NULL)
         return 0;
 
-    return OSSL_FN_mod_exp_simple_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
-        a->dsize, OSSL_FN_size_limbs(p), m->dsize);
+    return OSSL_FSN_mod_exp_simple_ctx_size_from_sizes(OSSL_FSN_size_limbs(r),
+        a->dsize, OSSL_FSN_size_limbs(p), m->dsize);
 }
 
 #ifdef RECP_MUL_MOD
 /**
- * Calculate the arena payload size that ossl_fn_mod_exp_recp() needs, from
+ * Calculate the arena payload size that ossl_fsn_mod_exp_recp() needs, from
  * the operand widths alone.  Not implemented, like the operator itself.
  *
  * @param[in]   r_dsize  The width of the result, in limbs
@@ -370,15 +370,15 @@ size_t OSSL_FN_mod_exp_simple_ctx_size_from_nums(const OSSL_FN *r,
  * @returns              The arena payload size, in bytes.
  * @retval      0        always, for now.
  */
-static size_t ossl_fn_mod_exp_recp_ctx_size_from_sizes(size_t r_dsize,
+static size_t ossl_fsn_mod_exp_recp_ctx_size_from_sizes(size_t r_dsize,
     size_t a_dsize, size_t p_dsize, size_t m_dsize)
 {
-    /* Not implemented; see ossl_fn_mod_exp_recp(). */
+    /* Not implemented; see ossl_fsn_mod_exp_recp(). */
     return 0;
 }
 
 /**
- * Calculate the arena payload size that ossl_fn_mod_exp_recp() needs.
+ * Calculate the arena payload size that ossl_fsn_mod_exp_recp() needs.
  *
  * @param[in]   r       The result
  * @param[in]   a       The base
@@ -386,25 +386,25 @@ static size_t ossl_fn_mod_exp_recp_ctx_size_from_sizes(size_t r_dsize,
  * @param[in]   m       The modulus
  * @returns             The arena payload size, in bytes.
  * @retval      0       always, for now; see
- *                      ossl_fn_mod_exp_recp_ctx_size_from_sizes().
+ *                      ossl_fsn_mod_exp_recp_ctx_size_from_sizes().
  */
-static size_t ossl_fn_mod_exp_recp_ctx_size_from_nums(const OSSL_FN *r,
-    const OSSL_FN *a, const OSSL_FN *p, const OSSL_FN *m)
+static size_t ossl_fsn_mod_exp_recp_ctx_size_from_nums(const OSSL_FSN *r,
+    const OSSL_FSN *a, const OSSL_FSN *p, const OSSL_FSN *m)
 {
     if (a == NULL || p == NULL || m == NULL)
         return 0;
 
-    return ossl_fn_mod_exp_recp_ctx_size_from_sizes(OSSL_FN_size_limbs(r),
+    return ossl_fsn_mod_exp_recp_ctx_size_from_sizes(OSSL_FSN_size_limbs(r),
         a->dsize, p->dsize, m->dsize);
 }
 #endif
 
 /*-
- * OSSL_FN_mod_exp_ctx_size_from_sizes() -- arena sizing for OSSL_FN_mod_exp().
- * Budgets the largest implemented path rather than reading the modulus'
- * parity, keeping this companion width-only (see include/crypto/fn.h);
- * the runtime dispatcher still picks the path.  When another path is
- * wired in, add its ctx_size to the max() below.
+ * OSSL_FSN_mod_exp_ctx_size_from_sizes() -- arena sizing for
+ * OSSL_FSN_mod_exp().  Budgets the largest implemented path rather than
+ * reading the modulus' parity, keeping this companion width-only (see
+ * include/crypto/fsn.h); the runtime dispatcher still picks the path.  When
+ * another path is wired in, add its ctx_size to the max() below.
  *
  * The over-budget is modest; limbs budgeted per path, 2048-bit modulus
  * and exponent, 64-bit limbs (ml = 32):
@@ -413,52 +413,52 @@ static size_t ossl_fn_mod_exp_recp_ctx_size_from_nums(const OSSL_FN *r,
  *      mont, non-asm (window 6)   ~2120
  *      simple                     ~1088
  */
-size_t OSSL_FN_mod_exp_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
+size_t OSSL_FSN_mod_exp_ctx_size_from_sizes(size_t r_dsize, size_t a_dsize,
     size_t p_dsize, size_t m_dsize)
 {
 #ifdef MONT_MUL_MOD
-    return ossl_fn_ctx_max_size(
-        /* OSSL_FN_mod_exp() calls OSSL_FN_mod_exp_mont() with no context */
-        OSSL_FN_mod_exp_mont_ctx_size_from_sizes(r_dsize, a_dsize, p_dsize,
+    return ossl_fsn_ctx_max_size(
+        /* OSSL_FSN_mod_exp() calls OSSL_FSN_mod_exp_mont() with no context */
+        OSSL_FSN_mod_exp_mont_ctx_size_from_sizes(r_dsize, a_dsize, p_dsize,
             m_dsize, 0),
-        OSSL_FN_mod_exp_simple_ctx_size_from_sizes(r_dsize, a_dsize, p_dsize,
+        OSSL_FSN_mod_exp_simple_ctx_size_from_sizes(r_dsize, a_dsize, p_dsize,
             m_dsize));
 #else
-    return OSSL_FN_mod_exp_simple_ctx_size_from_sizes(r_dsize, a_dsize,
+    return OSSL_FSN_mod_exp_simple_ctx_size_from_sizes(r_dsize, a_dsize,
         p_dsize, m_dsize);
 #endif
 }
 
-size_t OSSL_FN_mod_exp_ctx_size_from_nums(const OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m)
+size_t OSSL_FSN_mod_exp_ctx_size_from_nums(const OSSL_FSN *r, const OSSL_FSN *a,
+    const OSSL_FSN *p, const OSSL_FSN *m)
 {
     if (a == NULL || p == NULL || m == NULL)
         return 0;
 
-    return OSSL_FN_mod_exp_ctx_size_from_sizes(OSSL_FN_size_limbs(r), a->dsize,
+    return OSSL_FSN_mod_exp_ctx_size_from_sizes(OSSL_FSN_size_limbs(r), a->dsize,
         p->dsize, m->dsize);
 }
 
 /*-
- * OSSL_FN_mod_exp_simple() -- sliding-window modular exponentiation (even
+ * OSSL_FSN_mod_exp_simple() -- sliding-window modular exponentiation (even
  * moduli and the non-Montgomery fallback).  Public: this is the entry point
- * OSSL_FN_mod_exp() dispatches to for even moduli.
+ * OSSL_FSN_mod_exp() dispatches to for even moduli.
  *
  * Not constant-time: branches on the exponent's bits; do not use for secret
- * exponents (see the leak note in OSSL_FN_mod_exp()).  Fixed-width:
+ * exponents (see the leak note in OSSL_FSN_mod_exp()).  Fixed-width:
  * runs in an ml-limb accumulator |rr|, copy-truncated to |r| at the end, so
  * |r == p| is safe and |r == m| is rejected; |a| is reduced into [0, m) first.
- * OSSL_FN is unsigned.
+ * OSSL_FSN is unsigned.
  */
-int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_CTX *ctx)
+int OSSL_FSN_mod_exp_simple(OSSL_FSN *r, const OSSL_FSN *a,
+    const OSSL_FSN *p, const OSSL_FSN *m, OSSL_FSN_CTX *ctx)
 {
     if (ossl_unlikely(r == NULL || a == NULL || p == NULL || m == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    const void *token = OSSL_FN_CTX_start(ctx);
+    const void *token = OSSL_FSN_CTX_start(ctx);
     int i, j;
     int ret = 0;
 
@@ -466,28 +466,28 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
         return 0;
 
     if (r == m) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
-    if (OSSL_FN_is_zero(m)) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_DIV_BY_ZERO);
+    if (OSSL_FSN_is_zero(m)) {
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_DIV_BY_ZERO);
         goto err;
     }
 
-    int bits = (int)OSSL_FN_num_bits(p);
+    int bits = (int)OSSL_FSN_num_bits(p);
     if (bits == 0) {
         /*
          * TODO(FIXNUM): BN parity returns 1 for 0**0; mathematically
          * undefined, so consider erroring out instead.  Kept as-is until
          * existing call sites are analysed.
          */
-        OSSL_FN_clear(r);
-        if (!OSSL_FN_is_one(m)) {
-            /* Set r = 1 directly; OSSL_FN_one() would raise
-             * OSSL_FN_R_RESULT_ARG_TOO_SMALL on a zero-limb r. */
+        OSSL_FSN_clear(r);
+        if (!OSSL_FSN_is_one(m)) {
+            /* Set r = 1 directly; OSSL_FSN_one() would raise
+             * OSSL_FSN_R_RESULT_ARG_TOO_SMALL on a zero-limb r. */
             if (r->dsize > 0)
-                r->d[0] = OSSL_FN_ULONG_C(1);
+                r->d[0] = OSSL_FSN_ULONG_C(1);
         }
         ret = 1;
         goto err;
@@ -495,36 +495,36 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
 
     size_t ml = (size_t)m->dsize;
 
-    OSSL_FN *rr = OSSL_FN_CTX_get_limbs(ctx, token, ml);
-    OSSL_FN *d = OSSL_FN_CTX_get_limbs(ctx, token, ml);
+    OSSL_FSN *rr = OSSL_FSN_CTX_get_limbs(ctx, token, ml);
+    OSSL_FSN *d = OSSL_FSN_CTX_get_limbs(ctx, token, ml);
     if (rr == NULL || d == NULL)
         goto err;
 
-    OSSL_FN *val[TABLE_SIZE];
+    OSSL_FSN *val[TABLE_SIZE];
 
-    /* Clear the val[] table so OSSL_FN_CTX_end() never sees stale pointers. */
+    /* Clear the val[] table so OSSL_FSN_CTX_end() never sees stale pointers. */
     for (i = 0; i < TABLE_SIZE; i++)
         val[i] = NULL;
 
-    if ((val[0] = OSSL_FN_CTX_get_limbs(ctx, token, ml)) == NULL)
+    if ((val[0] = OSSL_FSN_CTX_get_limbs(ctx, token, ml)) == NULL)
         goto err;
-    if (!OSSL_FN_mod(val[0], a, m, ctx))
+    if (!OSSL_FSN_mod(val[0], a, m, ctx))
         goto err;
-    if (OSSL_FN_is_zero(val[0])) {
-        OSSL_FN_clear(r);
+    if (OSSL_FSN_is_zero(val[0])) {
+        OSSL_FSN_clear(r);
         ret = 1;
         goto err;
     }
 
-    int window = OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(bits);
+    int window = OSSL_FSN_WINDOW_BITS_FOR_EXPONENT_SIZE(bits);
     if (window > 1) {
-        if (!OSSL_FN_mod_mul(d, val[0], val[0], m, ctx))
+        if (!OSSL_FSN_mod_mul(d, val[0], val[0], m, ctx))
             goto err;
         j = 1 << (window - 1);
         for (i = 1; i < j; i++) {
-            if ((val[i] = OSSL_FN_CTX_get_limbs(ctx, token, ml)) == NULL)
+            if ((val[i] = OSSL_FSN_CTX_get_limbs(ctx, token, ml)) == NULL)
                 goto err;
-            if (!OSSL_FN_mod_mul(val[i], val[i - 1], d, m, ctx))
+            if (!OSSL_FSN_mod_mul(val[i], val[i - 1], d, m, ctx))
                 goto err;
         }
     }
@@ -533,15 +533,15 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
     int wstart = bits - 1;
     int wend = 0;
 
-    /* ml > 0 is guaranteed (m is non-zero), so OSSL_FN_one() cannot fail. */
-    OSSL_FN_one(rr);
+    /* ml > 0 is guaranteed (m is non-zero), so OSSL_FSN_one() cannot fail. */
+    OSSL_FSN_one(rr);
 
     for (;;) {
         int wvalue;
 
-        if (OSSL_FN_is_bit_set(p, wstart) == 0) {
+        if (OSSL_FSN_is_bit_set(p, wstart) == 0) {
             if (!start)
-                if (!OSSL_FN_mod_mul(rr, rr, rr, m, ctx))
+                if (!OSSL_FSN_mod_mul(rr, rr, rr, m, ctx))
                     goto err;
             if (wstart == 0)
                 break;
@@ -554,7 +554,7 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
         for (i = 1; i < window; i++) {
             if (wstart < i)
                 break;
-            if (OSSL_FN_is_bit_set(p, wstart - i)) {
+            if (OSSL_FSN_is_bit_set(p, wstart - i)) {
                 wvalue <<= (i - wend);
                 wvalue |= 1;
                 wend = i;
@@ -564,12 +564,12 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
         j = wend + 1;
         if (!start)
             for (i = 0; i < j; i++) {
-                if (!OSSL_FN_mod_mul(rr, rr, rr, m, ctx))
+                if (!OSSL_FSN_mod_mul(rr, rr, rr, m, ctx))
                     goto err;
             }
 
         /* wvalue will be an odd number < 2^window */
-        if (!OSSL_FN_mod_mul(rr, rr, val[wvalue >> 1], m, ctx))
+        if (!OSSL_FSN_mod_mul(rr, rr, val[wvalue >> 1], m, ctx))
             goto err;
 
         wstart -= wend + 1;
@@ -578,17 +578,17 @@ int OSSL_FN_mod_exp_simple(OSSL_FN *r, const OSSL_FN *a,
             break;
     }
 
-    if (OSSL_FN_copy_truncate(r, rr) == NULL)
+    if (OSSL_FSN_copy_truncate(r, rr) == NULL)
         goto err;
     ret = 1;
 
 err:
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FSN_CTX_end(ctx, token);
     return ret;
 }
 
 /*-
- * OSSL_FN_mod_exp_mont() -- Montgomery fixed-window modular exponentiation
+ * OSSL_FSN_mod_exp_mont() -- Montgomery fixed-window modular exponentiation
  * (odd moduli).  Public: callers reusing a Montgomery context across
  * exponentiations with the same modulus may call directly and pass |in_mont|
  * (mirroring BN_mod_exp_mont()); NULL => build and free a temporary one.  A
@@ -610,23 +610,23 @@ err:
  *     dispatch, and the mont(1) init branch on m's top bit all branch on
  *     the modulus, which is public.
  *
- * Fixed-width: OSSL_FN_mul_mont_quick requires ml-limb, <N operands,
+ * Fixed-width: OSSL_FSN_mul_mont_quick requires ml-limb, <N operands,
  * so the algorithm runs in ml-limb accumulators, copy-truncated
  * to |r| at the end (|r == p| / |r == a| safe, |r == m| rejected); |a| is
- * reduced by to_mont() itself.  OSSL_FN is unsigned; |m| is odd by dispatch.
+ * reduced by to_mont() itself.  OSSL_FSN is unsigned; |m| is odd by dispatch.
  */
-int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
-    const OSSL_FN *m, OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont)
+int OSSL_FSN_mod_exp_mont(OSSL_FSN *r, const OSSL_FSN *a, const OSSL_FSN *p,
+    const OSSL_FSN *m, OSSL_FSN_CTX *ctx, OSSL_FSN_MONT_CTX *in_mont)
 {
     if (ossl_unlikely(r == NULL || a == NULL || p == NULL || m == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    const void *token = OSSL_FN_CTX_start(ctx);
-    OSSL_FN_MONT_CTX *mont = NULL;
-    OSSL_FN *powerfn = NULL;
-    OSSL_FN_ULONG *powerbuf = NULL;
+    const void *token = OSSL_FSN_CTX_start(ctx);
+    OSSL_FSN_MONT_CTX *mont = NULL;
+    OSSL_FSN *powerfsn = NULL;
+    OSSL_FSN_ULONG *powerbuf = NULL;
     size_t table_limbs = 0;
     size_t i;
     int ret = 0;
@@ -635,16 +635,16 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         return 0;
 
     if (r == m) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
     /*
-     * Defensive: dispatcher routes only odd moduli and OSSL_FN_MONT_CTX_new()
+     * Defensive: dispatcher routes only odd moduli and OSSL_FSN_MONT_CTX_new()
      * rejects even ones, but diagnose explicitly.
      */
-    if (m->dsize <= 0 || (m->d[0] & OSSL_FN_ULONG_C(1)) == 0) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+    if (m->dsize <= 0 || (m->d[0] & OSSL_FSN_ULONG_C(1)) == 0) {
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
@@ -654,8 +654,8 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
      * mont(1) accumulator init below assumes N > 1; with N == 1, to_mont(1)
      * would force a reduction that the sizing model does not budget.
      */
-    if (OSSL_FN_is_one(m)) {
-        OSSL_FN_clear(r);
+    if (OSSL_FSN_is_one(m)) {
+        OSSL_FSN_clear(r);
         ret = 1;
         goto err;
     }
@@ -669,16 +669,16 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
      * therefore flows through the loop and yields 1 naturally (table entry
      * 0 holds mont(1), and multiplying by it is the identity).
      */
-    size_t bits = (size_t)p->dsize * OSSL_FN_BITS;
+    size_t bits = (size_t)p->dsize * OSSL_FSN_BITS;
     if (bits == 0) {
         /*
          * TODO(FIXNUM): BN parity returns 1 for 0**0; mathematically
          * undefined, so consider erroring out instead.  Kept as-is until
          * existing call sites are analysed.
          */
-        OSSL_FN_clear(r);
+        OSSL_FSN_clear(r);
         if (r->dsize > 0)
-            r->d[0] = OSSL_FN_ULONG_C(1);
+            r->d[0] = OSSL_FSN_ULONG_C(1);
         ret = 1;
         goto err;
     }
@@ -689,18 +689,18 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
     size_t power_limbs;
 
     if (!mod_exp_mont_power_limbs(&power_limbs, numpowers, ml, np_limbs)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     table_limbs = numpowers * ml + np_limbs;
 
-    OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, token, ml);
-    OSSL_FN *am = OSSL_FN_CTX_get_limbs(ctx, token, ml);
+    OSSL_FSN *tmp = OSSL_FSN_CTX_get_limbs(ctx, token, ml);
+    OSSL_FSN *am = OSSL_FSN_CTX_get_limbs(ctx, token, ml);
 
-    powerfn = OSSL_FN_CTX_get_limbs(ctx, token, power_limbs);
-    if (tmp == NULL || am == NULL || powerfn == NULL)
+    powerfsn = OSSL_FSN_CTX_get_limbs(ctx, token, power_limbs);
+    if (tmp == NULL || am == NULL || powerfsn == NULL)
         goto err;
-    powerbuf = (OSSL_FN_ULONG *)MOD_EXP_CTIME_ALIGN(powerfn->d);
+    powerbuf = (OSSL_FSN_ULONG *)MOD_EXP_CTIME_ALIGN(powerfsn->d);
     /*
      * No memset of the table: every slot of every power is written below
      * (by bn_scatter5() on the accelerated path, by
@@ -715,13 +715,13 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
          * difference should generally not matter.  Reconsider if the mont
          * functions are ever made width-agnostic.
          */
-        if (m->dsize != in_mont->N->dsize || OSSL_FN_cmp(m, in_mont->N) != 0) {
-            ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
+        if (m->dsize != in_mont->N->dsize || OSSL_FSN_cmp(m, in_mont->N) != 0) {
+            ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_INVALID_ARGUMENT);
             goto err;
         }
         mont = in_mont;
     } else {
-        mont = OSSL_FN_MONT_CTX_new(m);
+        mont = OSSL_FSN_MONT_CTX_new(m);
         if (mont == NULL)
             goto err;
     }
@@ -731,30 +731,30 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
      * (the two's complement of N); otherwise convert 1 to Montgomery form.
      * Branches on the modulus, which is public.
      */
-    if (m->d[ml - 1] & OSSL_FN_HIGH_BIT_MASK) {
-        tmp->d[0] = OSSL_FN_ULONG_C(0) - m->d[0];
+    if (m->d[ml - 1] & OSSL_FSN_HIGH_BIT_MASK) {
+        tmp->d[0] = OSSL_FSN_ULONG_C(0) - m->d[0];
         for (i = 1; i < ml; i++)
             tmp->d[i] = ~m->d[i];
     } else {
-        /* ml > 0 is guaranteed, so OSSL_FN_one() cannot fail. */
-        if (!ossl_assert(OSSL_FN_one(am)))
+        /* ml > 0 is guaranteed, so OSSL_FSN_one() cannot fail. */
+        if (!ossl_assert(OSSL_FSN_one(am)))
             goto err;
-        if (!OSSL_FN_to_mont_quick(tmp, am, mont, ctx))
+        if (!OSSL_FSN_to_mont_quick(tmp, am, mont, ctx))
             goto err;
     }
 
     /*
      * a^1 in Montgomery domain.  A base no wider than m is below R, so
-     * OSSL_FN_mont_reduce() reduces it without testing its value; a wider
+     * OSSL_FSN_mont_reduce() reduces it without testing its value; a wider
      * one is left to to_mont(), which reduces it by division.  The choice
      * depends on the widths alone.  When a == 0 (mod m), mont(a) == 0 and
      * the fixed-window loop yields 0 for any non-zero exponent.
      */
     if (a->dsize <= m->dsize) {
-        if (!OSSL_FN_mont_reduce(am, a, mont, ctx)
-            || !OSSL_FN_to_mont_quick(am, am, mont, ctx))
+        if (!OSSL_FSN_mont_reduce(am, a, mont, ctx)
+            || !OSSL_FSN_to_mont_quick(am, am, mont, ctx))
             goto err;
-    } else if (!OSSL_FN_to_mont(am, a, mont, ctx)) {
+    } else if (!OSSL_FSN_to_mont(am, a, mont, ctx)) {
         goto err;
     }
 
@@ -789,7 +789,7 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
             const BN_ULONG *n0, int num, int power);
         int bn_get_bits5(const BN_ULONG *ap, int off);
 
-        OSSL_FN_ULONG *np = powerbuf + numpowers * ml;
+        OSSL_FSN_ULONG *np = powerbuf + numpowers * ml;
         int j;
 
         /* copy N's limbs right after the table to improve cache locality */
@@ -837,7 +837,7 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         window0 = (bits - 1) % 5 + 1;
         wmask = ((size_t)1 << window0) - 1;
         bits -= window0;
-        wvalue = fn_get_bits(p, bits) & wmask;
+        wvalue = fsn_get_bits(p, bits) & wmask;
         bn_gather5(tmp->d, ml, powerbuf, wvalue);
 
         /*
@@ -868,11 +868,11 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
 
         /* a^i = a^(i-1) * a for i = 2..numpowers-1 */
         if (window > 1) {
-            if (!OSSL_FN_mul_mont_quick(tmp, am, am, mont, ctx))
+            if (!OSSL_FSN_mul_mont_quick(tmp, am, am, mont, ctx))
                 goto err;
             mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, 2, numpowers);
             for (i = 3; i < numpowers; i++) {
-                if (!OSSL_FN_mul_mont_quick(tmp, am, tmp, mont, ctx))
+                if (!OSSL_FSN_mul_mont_quick(tmp, am, tmp, mont, ctx))
                     goto err;
                 mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, i, numpowers);
             }
@@ -888,7 +888,7 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         wmask = ((size_t)1 << window0) - 1;
 
         bits -= window0;
-        wvalue = fn_get_bits(p, bits) & wmask;
+        wvalue = fsn_get_bits(p, bits) & wmask;
 
         mod_exp_ctime_copy_from_prebuf(tmp, powerbuf, wvalue, window, ml);
 
@@ -900,7 +900,7 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         while (bits > 0) {
             /* Square the result window-size times */
             for (i = 0; i < window; i++) {
-                if (!OSSL_FN_mul_mont_quick(tmp, tmp, tmp, mont, ctx))
+                if (!OSSL_FSN_mul_mont_quick(tmp, tmp, tmp, mont, ctx))
                     goto err;
             }
 
@@ -911,70 +911,70 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
              * side-channel attacks).
              */
             bits -= window;
-            wvalue = fn_get_bits(p, bits) & wmask;
+            wvalue = fsn_get_bits(p, bits) & wmask;
 
             /* Fetch the appropriate pre-computed power from the table */
             mod_exp_ctime_copy_from_prebuf(am, powerbuf, wvalue, window, ml);
 
             /* Multiply the result into the intermediate result */
-            if (!OSSL_FN_mul_mont_quick(tmp, tmp, am, mont, ctx))
+            if (!OSSL_FSN_mul_mont_quick(tmp, tmp, am, mont, ctx))
                 goto err;
         }
     }
 
     /* from_mont needs an ml-limb destination; reuse |am| and copy-truncate to |r|. */
-    if (!OSSL_FN_from_mont(am, tmp, mont, ctx))
+    if (!OSSL_FSN_from_mont(am, tmp, mont, ctx))
         goto err;
-    if (OSSL_FN_copy_truncate(r, am) == NULL)
+    if (OSSL_FSN_copy_truncate(r, am) == NULL)
         goto err;
     ret = 1;
 
 err:
     /* The table holds powers of a possibly secret base; cleanse it. */
     if (powerbuf != NULL)
-        OPENSSL_cleanse(powerbuf, table_limbs * OSSL_FN_BYTES);
+        OPENSSL_cleanse(powerbuf, table_limbs * OSSL_FSN_BYTES);
     if (in_mont == NULL)
-        OSSL_FN_MONT_CTX_free(mont);
-    OSSL_FN_CTX_end(ctx, token);
+        OSSL_FSN_MONT_CTX_free(mont);
+    OSSL_FSN_CTX_end(ctx, token);
     return ret;
 }
 
 /*-
- * OSSL_FN_mod_exp() -- dispatcher.
+ * OSSL_FSN_mod_exp() -- dispatcher.
  *
  * Pick among Montgomery (odd modulus), reciprocal-based (even modulus),
  * and a simple fallback, gated by the MONT_MUL_MOD / RECP_MUL_MOD
  * preprocessor symbols.
  */
 #ifdef RECP_MUL_MOD
-static int ossl_fn_mod_exp_recp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
-    const OSSL_FN *m, OSSL_FN_CTX *ctx)
+static int ossl_fsn_mod_exp_recp(OSSL_FSN *r, const OSSL_FSN *a, const OSSL_FSN *p,
+    const OSSL_FSN *m, OSSL_FSN_CTX *ctx)
 {
-    ERR_raise(ERR_LIB_OSSL_FN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return 0;
 }
 #endif
 
-int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
-    const OSSL_FN *m, OSSL_FN_CTX *ctx)
+int OSSL_FSN_mod_exp(OSSL_FSN *r, const OSSL_FSN *a, const OSSL_FSN *p,
+    const OSSL_FSN *m, OSSL_FSN_CTX *ctx)
 {
     if (ossl_unlikely(r == NULL || a == NULL || p == NULL || m == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
 #ifdef MONT_MUL_MOD
-    if (m->dsize > 0 && (m->d[0] & OSSL_FN_ULONG_C(1))) {
-        return OSSL_FN_mod_exp_mont(r, a, p, m, ctx, NULL);
+    if (m->dsize > 0 && (m->d[0] & OSSL_FSN_ULONG_C(1))) {
+        return OSSL_FSN_mod_exp_mont(r, a, p, m, ctx, NULL);
     } else
 #endif
 #ifdef RECP_MUL_MOD
     {
-        return ossl_fn_mod_exp_recp(r, a, p, m, ctx);
+        return ossl_fsn_mod_exp_recp(r, a, p, m, ctx);
     }
 #else
     {
-        return OSSL_FN_mod_exp_simple(r, a, p, m, ctx);
+        return OSSL_FSN_mod_exp_simple(r, a, p, m, ctx);
     }
 #endif
 }

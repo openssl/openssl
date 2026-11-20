@@ -26,9 +26,9 @@
 #include <openssl/self_test.h>
 #include "prov/providercommon.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
-#include "crypto/fnerr.h"
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h"
+#include "crypto/fsnerr.h"
 #include "rsa_local.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
@@ -92,74 +92,74 @@ DEFINE_STACK_OF(BIGNUM)
  */
 #ifndef FIPS_MODULE
 /*
- * Compute r = a mod m into a freshly allocated BIGNUM on OSSL_FN views,
- * in an explicitly sized OSSL_FN_CTX arena.  Returns the result BIGNUM,
+ * Compute r = a mod m into a freshly allocated BIGNUM on OSSL_FSN views,
+ * in an explicitly sized OSSL_FSN_CTX arena.  Returns the result BIGNUM,
  * or NULL on error.
  */
-static BIGNUM *rsa_fn_mod_new(const BIGNUM *a, const BIGNUM *m,
+static BIGNUM *rsa_fsn_mod_new(const BIGNUM *a, const BIGNUM *m,
     OSSL_LIB_CTX *libctx)
 {
     BIGNUM *r = NULL;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_m = NULL;
-    size_t fn_size, ml;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_r = NULL;
+    const OSSL_FSN *fsn_a = NULL, *fsn_m = NULL;
+    size_t fsn_size, ml;
 
-    fn_a = bn_get_ossl_fn(a);
-    fn_m = bn_get_ossl_fn(m);
-    if (fn_a == NULL || fn_m == NULL)
+    fsn_a = bn_get_ossl_fsn(a);
+    fsn_m = bn_get_ossl_fsn(m);
+    if (fsn_a == NULL || fsn_m == NULL)
         return NULL;
-    ml = ossl_fn_get_dsize((OSSL_FN *)fn_m);
+    ml = ossl_fsn_get_dsize((OSSL_FSN *)fsn_m);
 
     r = BN_secure_new();
     if (r == NULL)
         return NULL;
-    if ((fn_r = bn_acquire_ossl_fn(r, (int)ml)) == NULL)
+    if ((fsn_r = bn_acquire_ossl_fsn(r, (int)ml)) == NULL)
         goto err;
-    fn_size = OSSL_FN_mod_ctx_size_from_nums(fn_r, fn_a, fn_m);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_mod_ctx_size_from_nums(fsn_r, fsn_a, fsn_m);
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_mod(fn_r, fn_a, fn_m, fn_ctx))
+    if (!OSSL_FSN_mod(fsn_r, fsn_a, fsn_m, fsn_ctx))
         goto err;
 
     /* r = a mod m is less than m, which fits in ml limbs */
     bn_release(r, (int)ml);
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     return r;
 err:
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     BN_clear_free(r);
     return NULL;
 }
 
 /*
- * Compute a - 1 into a freshly allocated BIGNUM on an OSSL_FN view.
+ * Compute a - 1 into a freshly allocated BIGNUM on an OSSL_FSN view.
  * Returns the result BIGNUM, or NULL on error.
  */
-static BIGNUM *rsa_fn_sub_one_new(const BIGNUM *a, OSSL_LIB_CTX *libctx)
+static BIGNUM *rsa_fsn_sub_one_new(const BIGNUM *a, OSSL_LIB_CTX *libctx)
 {
     BIGNUM *r = NULL;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL;
+    OSSL_FSN *fsn_r = NULL;
+    const OSSL_FSN *fsn_a = NULL;
     size_t al;
 
-    fn_a = bn_get_ossl_fn(a);
-    if (fn_a == NULL)
+    fsn_a = bn_get_ossl_fsn(a);
+    if (fsn_a == NULL)
         return NULL;
-    al = ossl_fn_get_dsize((OSSL_FN *)fn_a);
+    al = ossl_fsn_get_dsize((OSSL_FSN *)fsn_a);
 
     r = BN_secure_new();
     if (r == NULL)
         return NULL;
-    if ((fn_r = bn_acquire_ossl_fn(r, (int)al)) == NULL)
+    if ((fsn_r = bn_acquire_ossl_fsn(r, (int)al)) == NULL)
         goto err;
-    if (!OSSL_FN_copy_truncate(fn_r, fn_a)
-        || !OSSL_FN_sub_word(fn_r, 1))
+    if (!OSSL_FSN_copy_truncate(fsn_r, fsn_a)
+        || !OSSL_FSN_sub_word(fsn_r, 1))
         goto err;
     /* r = a - 1 is at most a, which fits in al limbs */
     bn_release(r, (int)al);
@@ -170,93 +170,93 @@ err:
 }
 
 /*
- * Multiply two BIGNUMs into a freshly allocated BIGNUM on OSSL_FN views,
- * in an explicitly sized OSSL_FN_CTX arena.  Returns the result BIGNUM,
+ * Multiply two BIGNUMs into a freshly allocated BIGNUM on OSSL_FSN views,
+ * in an explicitly sized OSSL_FSN_CTX arena.  Returns the result BIGNUM,
  * or NULL on error.
  */
-static BIGNUM *rsa_fn_mul_new(const BIGNUM *a, const BIGNUM *b,
+static BIGNUM *rsa_fsn_mul_new(const BIGNUM *a, const BIGNUM *b,
     OSSL_LIB_CTX *libctx)
 {
     BIGNUM *r = NULL;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_b = NULL;
-    size_t fn_size, al, bl;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_r = NULL;
+    const OSSL_FSN *fsn_a = NULL, *fsn_b = NULL;
+    size_t fsn_size, al, bl;
 
-    fn_a = bn_get_ossl_fn(a);
-    fn_b = bn_get_ossl_fn(b);
-    if (fn_a == NULL || fn_b == NULL)
+    fsn_a = bn_get_ossl_fsn(a);
+    fsn_b = bn_get_ossl_fsn(b);
+    if (fsn_a == NULL || fsn_b == NULL)
         return NULL;
-    al = ossl_fn_get_dsize((OSSL_FN *)fn_a);
-    bl = ossl_fn_get_dsize((OSSL_FN *)fn_b);
+    al = ossl_fsn_get_dsize((OSSL_FSN *)fsn_a);
+    bl = ossl_fsn_get_dsize((OSSL_FSN *)fsn_b);
 
     r = BN_secure_new();
     if (r == NULL)
         return NULL;
-    if ((fn_r = bn_acquire_ossl_fn(r, (int)(al + bl))) == NULL)
+    if ((fsn_r = bn_acquire_ossl_fsn(r, (int)(al + bl))) == NULL)
         goto err;
-    fn_size = OSSL_FN_mul_ctx_size_from_nums(fn_r, fn_a, fn_b);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_mul_ctx_size_from_nums(fsn_r, fsn_a, fsn_b);
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_mul(fn_r, fn_a, fn_b, fn_ctx))
+    if (!OSSL_FSN_mul(fsn_r, fsn_a, fsn_b, fsn_ctx))
         goto err;
     /* The product of an al-limb and a bl-limb value fits in al + bl limbs */
     bn_release(r, (int)(al + bl));
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     return r;
 err:
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     BN_clear_free(r);
     return NULL;
 }
 
 /*
- * Compute r = a^-1 mod m into a freshly allocated BIGNUM on OSSL_FN
- * views, in an explicitly sized OSSL_FN_CTX arena.  Returns the result
+ * Compute r = a^-1 mod m into a freshly allocated BIGNUM on OSSL_FSN
+ * views, in an explicitly sized OSSL_FSN_CTX arena.  Returns the result
  * BIGNUM, or NULL on error (including when no inverse exists).
  */
-static BIGNUM *rsa_fn_mod_inverse_new(const BIGNUM *a, const BIGNUM *m,
+static BIGNUM *rsa_fsn_mod_inverse_new(const BIGNUM *a, const BIGNUM *m,
     OSSL_LIB_CTX *libctx)
 {
     BIGNUM *r = NULL;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_m = NULL;
-    size_t fn_size, ml;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_r = NULL;
+    const OSSL_FSN *fsn_a = NULL, *fsn_m = NULL;
+    size_t fsn_size, ml;
 
-    fn_a = bn_get_ossl_fn(a);
-    fn_m = bn_get_ossl_fn(m);
-    if (fn_a == NULL || fn_m == NULL)
+    fsn_a = bn_get_ossl_fsn(a);
+    fsn_m = bn_get_ossl_fsn(m);
+    if (fsn_a == NULL || fsn_m == NULL)
         return NULL;
-    ml = ossl_fn_get_dsize((OSSL_FN *)fn_m);
+    ml = ossl_fsn_get_dsize((OSSL_FSN *)fsn_m);
 
     r = BN_secure_new();
     if (r == NULL)
         return NULL;
-    if ((fn_r = bn_acquire_ossl_fn(r, (int)ml)) == NULL)
+    if ((fsn_r = bn_acquire_ossl_fsn(r, (int)ml)) == NULL)
         goto err;
-    fn_size = OSSL_FN_mod_inverse_ctx_size_from_nums(fn_r, fn_a, fn_m);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_mod_inverse_ctx_size_from_nums(fsn_r, fsn_a, fsn_m);
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_mod_inverse(fn_r, fn_a, fn_m, fn_ctx))
+    if (!OSSL_FSN_mod_inverse(fsn_r, fsn_a, fsn_m, fsn_ctx))
         goto err;
 
     /* r = a^-1 mod m is less than m, which fits in ml limbs */
     bn_release(r, (int)ml);
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     return r;
 err:
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     BN_clear_free(r);
     return NULL;
 }
@@ -295,10 +295,10 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
              * our first prime, p: verify gcd(p-1, e) == 1 (the inverse
              * exists).  The result is not kept; r1 is reused below.
              */
-            tmp = rsa_fn_sub_one_new(p, rsa->libctx);
+            tmp = rsa_fsn_sub_one_new(p, rsa->libctx);
             if (tmp == NULL)
                 goto err;
-            r1 = rsa_fn_mod_inverse_new(rsa->e, tmp, rsa->libctx);
+            r1 = rsa_fsn_mod_inverse_new(rsa->e, tmp, rsa->libctx);
             BN_clear_free(tmp);
             tmp = NULL;
             if (r1 == NULL)
@@ -307,7 +307,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
         case 1:
             /* second prime q: partial product p * q */
             BN_clear_free(r1);
-            r1 = rsa_fn_mul_new(p, q, rsa->libctx);
+            r1 = rsa_fsn_mul_new(p, q, rsa->libctx);
             if (r1 == NULL)
                 goto err;
             tmp = BN_dup(r1);
@@ -320,7 +320,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
         default:
             factor = sk_BIGNUM_value(factors, i);
             /* all other primes: extend the partial product */
-            tmp = rsa_fn_mul_new(r1, factor, rsa->libctx);
+            tmp = rsa_fsn_mul_new(r1, factor, rsa->libctx);
             if (tmp == NULL)
                 goto err;
             BN_clear_free(r1);
@@ -338,24 +338,24 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
     /* build list of relative d values */
     /* r1 = p - 1, r2 = q - 1, r0 = (p-1)(q-1) */
     BN_clear_free(r1);
-    r1 = rsa_fn_sub_one_new(p, rsa->libctx);
+    r1 = rsa_fsn_sub_one_new(p, rsa->libctx);
     if (r1 == NULL)
         goto err;
     BN_clear_free(r2);
-    r2 = rsa_fn_sub_one_new(q, rsa->libctx);
+    r2 = rsa_fsn_sub_one_new(q, rsa->libctx);
     if (r2 == NULL)
         goto err;
     BN_clear_free(r0);
-    r0 = rsa_fn_mul_new(r1, r2, rsa->libctx);
+    r0 = rsa_fsn_mul_new(r1, r2, rsa->libctx);
     if (r0 == NULL)
         goto err;
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         factor = sk_BIGNUM_value(factors, i);
-        dval = rsa_fn_sub_one_new(factor, rsa->libctx);
+        dval = rsa_fsn_sub_one_new(factor, rsa->libctx);
         if (dval == NULL)
             goto err;
         /* r0 *= (factor - 1) */
-        tmp = rsa_fn_mul_new(r0, dval, rsa->libctx);
+        tmp = rsa_fsn_mul_new(r0, dval, rsa->libctx);
         if (tmp == NULL)
             goto err;
         BN_clear_free(r0);
@@ -367,14 +367,14 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
     }
 
     /* Calculate dmp1, dmq1 and additional exponents */
-    dmp1 = rsa_fn_mod_new(rsa->d, r1, rsa->libctx);
+    dmp1 = rsa_fsn_mod_new(rsa->d, r1, rsa->libctx);
     if (dmp1 == NULL)
         goto err;
     if (!sk_BIGNUM_insert(exps, dmp1, sk_BIGNUM_num(exps)))
         goto err;
     dmp1 = NULL;
 
-    dmq1 = rsa_fn_mod_new(rsa->d, r2, rsa->libctx);
+    dmq1 = rsa_fsn_mod_new(rsa->d, r2, rsa->libctx);
     if (dmq1 == NULL)
         goto err;
     if (!sk_BIGNUM_insert(exps, dmq1, sk_BIGNUM_num(exps)))
@@ -383,7 +383,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
 
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         newpd = sk_BIGNUM_value(pdlist, i - 2);
-        newexp = rsa_fn_mod_new(rsa->d, newpd, rsa->libctx);
+        newexp = rsa_fsn_mod_new(rsa->d, newpd, rsa->libctx);
         if (newexp == NULL)
             goto err;
         if (!sk_BIGNUM_insert(exps, newexp, sk_BIGNUM_num(exps)))
@@ -392,7 +392,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
     }
 
     /* Calculate iqmp and additional coefficients */
-    iqmp = rsa_fn_mod_inverse_new(sk_BIGNUM_value(factors, 1),
+    iqmp = rsa_fsn_mod_inverse_new(sk_BIGNUM_value(factors, 1),
         sk_BIGNUM_value(factors, 0), rsa->libctx);
     if (iqmp == NULL)
         goto err;
@@ -402,7 +402,7 @@ int ossl_rsa_multiprime_derive(RSA *rsa,
 
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         newpp = sk_BIGNUM_value(pplist, i - 2);
-        newcoeff = rsa_fn_mod_inverse_new(newpp,
+        newcoeff = rsa_fsn_mod_inverse_new(newpp,
             sk_BIGNUM_value(factors, i), rsa->libctx);
         if (newcoeff == NULL)
             goto err;
@@ -429,9 +429,9 @@ err:
 }
 
 /**
- * Generate one probable prime of |bits| bits into |prime| on an OSSL_FN
- * view, converting at the BIGNUM boundary.  The OSSL_FN generation runs
- * in an explicitly sized OSSL_FN_CTX arena; |prime| is acquired writable
+ * Generate one probable prime of |bits| bits into |prime| on an OSSL_FSN
+ * view, converting at the BIGNUM boundary.  The OSSL_FSN generation runs
+ * in an explicitly sized OSSL_FSN_CTX arena; |prime| is acquired writable
  * before sizing.
  *
  * @param[out]  prime   The generated prime.
@@ -440,90 +440,90 @@ err:
  * @param[in]   libctx  The library context for the random numbers.
  * @returns             1 on success, 0 on error.
  */
-static int rsa_fn_generate_prime(BIGNUM *prime, int bits, BN_GENCB *cb,
+static int rsa_fsn_generate_prime(BIGNUM *prime, int bits, BN_GENCB *cb,
     OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_p = NULL;
-    size_t fn_size, pl;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_p = NULL;
+    size_t fsn_size, pl;
     int ret = 0;
 
     pl = (size_t)(bits + BN_BITS2 - 1) / BN_BITS2;
-    if ((fn_p = bn_acquire_ossl_fn(prime, (int)pl)) == NULL)
+    if ((fsn_p = bn_acquire_ossl_fsn(prime, (int)pl)) == NULL)
         return 0;
 
-    fn_size = OSSL_FN_generate_prime_ctx_size_from_nums(
-        fn_p, (size_t)bits, 0, NULL, NULL);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_generate_prime_ctx_size_from_nums(
+        fsn_p, (size_t)bits, 0, NULL, NULL);
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_generate_prime(fn_p, (size_t)bits, 0, NULL, NULL, cb,
-            fn_ctx, libctx))
+    if (!OSSL_FSN_generate_prime(fsn_p, (size_t)bits, 0, NULL, NULL, cb,
+            fsn_ctx, libctx))
         goto err;
 
     /* The generated prime has exactly |bits| bits, which fits in pl limbs */
     bn_release(prime, (int)pl);
     ret = 1;
 err:
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     return ret;
 }
 
 /*
  * Check that gcd(prime - 1, e) == 1 (i.e. e has an inverse mod prime-1),
- * on OSSL_FN views.  Returns 1 if coprime, 0 if not, -1 on error.
+ * on OSSL_FSN views.  Returns 1 if coprime, 0 if not, -1 on error.
  */
-static int rsa_fn_coprime_with_e(const BIGNUM *prime, const BIGNUM *e,
+static int rsa_fsn_coprime_with_e(const BIGNUM *prime, const BIGNUM *e,
     OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *pm1 = NULL, *inv = NULL;
-    const OSSL_FN *fn_p = NULL, *fn_e = NULL;
-    size_t fn_size, pl;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *pm1 = NULL, *inv = NULL;
+    const OSSL_FSN *fsn_p = NULL, *fsn_e = NULL;
+    size_t fsn_size, pl;
     int ret = -1;
 
-    fn_p = bn_get_ossl_fn(prime);
-    fn_e = bn_get_ossl_fn(e);
-    if (fn_p == NULL || fn_e == NULL)
+    fsn_p = bn_get_ossl_fsn(prime);
+    fsn_e = bn_get_ossl_fsn(e);
+    if (fsn_p == NULL || fsn_e == NULL)
         return -1;
-    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+    pl = ossl_fsn_get_dsize((OSSL_FSN *)fsn_p);
 
     /* pm1 and the inverse candidate both fit in the prime width. */
-    pm1 = OSSL_FN_secure_new_limbs(pl);
-    inv = OSSL_FN_secure_new_limbs(pl);
+    pm1 = OSSL_FSN_secure_new_limbs(pl);
+    inv = OSSL_FSN_secure_new_limbs(pl);
     if (pm1 == NULL || inv == NULL)
         goto err;
 
-    fn_size = OSSL_FN_mod_inverse_ctx_size_from_nums(inv, fn_e, pm1);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_mod_inverse_ctx_size_from_nums(inv, fsn_e, pm1);
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_copy_truncate(pm1, fn_p)
-        || !OSSL_FN_sub_word(pm1, 1))
+    if (!OSSL_FSN_copy_truncate(pm1, fsn_p)
+        || !OSSL_FSN_sub_word(pm1, 1))
         goto err;
     /*
-     * OSSL_FN_mod_inverse fails with OSSL_FN_R_NO_INVERSE when there is
+     * OSSL_FSN_mod_inverse fails with OSSL_FSN_R_NO_INVERSE when there is
      * no inverse, i.e. when gcd(prime - 1, e) != 1; that is a property
      * of the candidate, not an error.  Any other failure is a genuine
      * error and is left on the error stack.
      */
     ERR_set_mark();
-    if (OSSL_FN_mod_inverse(inv, fn_e, pm1, fn_ctx)) {
+    if (OSSL_FSN_mod_inverse(inv, fsn_e, pm1, fsn_ctx)) {
         ERR_pop_to_mark();
         ret = 1;
     } else {
         unsigned long error = ERR_peek_last_error();
 
-        if (ERR_GET_LIB(error) == ERR_LIB_OSSL_FN
-            && ERR_GET_REASON(error) == OSSL_FN_R_NO_INVERSE) {
+        if (ERR_GET_LIB(error) == ERR_LIB_OSSL_FSN
+            && ERR_GET_REASON(error) == OSSL_FSN_R_NO_INVERSE) {
             ERR_pop_to_mark();
             ret = 0;
         } else {
@@ -531,85 +531,85 @@ static int rsa_fn_coprime_with_e(const BIGNUM *prime, const BIGNUM *e,
         }
     }
 err:
-    OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_clear_free(pm1);
-    OSSL_FN_clear_free(inv);
+    OSSL_FSN_CTX_free(fsn_ctx);
+    OSSL_FSN_clear_free(pm1);
+    OSSL_FSN_clear_free(inv);
     return ret;
 }
 
 /*
- * Multiply two BIGNUMs into a writable result on OSSL_FN views, in an
- * explicitly sized OSSL_FN_CTX arena.  The result is acquired writable
+ * Multiply two BIGNUMs into a writable result on OSSL_FSN views, in an
+ * explicitly sized OSSL_FSN_CTX arena.  The result is acquired writable
  * (sized to the sum of the operand widths) before sizing.
  */
-static int rsa_fn_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+static int rsa_fsn_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_b = NULL;
-    size_t fn_size, al, bl;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_r = NULL;
+    const OSSL_FSN *fsn_a = NULL, *fsn_b = NULL;
+    size_t fsn_size, al, bl;
     int ret = 0;
 
-    fn_a = bn_get_ossl_fn(a);
-    fn_b = bn_get_ossl_fn(b);
-    if (fn_a == NULL || fn_b == NULL)
+    fsn_a = bn_get_ossl_fsn(a);
+    fsn_b = bn_get_ossl_fsn(b);
+    if (fsn_a == NULL || fsn_b == NULL)
         return 0;
-    al = ossl_fn_get_dsize((OSSL_FN *)fn_a);
-    bl = ossl_fn_get_dsize((OSSL_FN *)fn_b);
+    al = ossl_fsn_get_dsize((OSSL_FSN *)fsn_a);
+    bl = ossl_fsn_get_dsize((OSSL_FSN *)fsn_b);
 
-    if ((fn_r = bn_acquire_ossl_fn(r, (int)(al + bl))) == NULL)
+    if ((fsn_r = bn_acquire_ossl_fsn(r, (int)(al + bl))) == NULL)
         return 0;
-    fn_size = OSSL_FN_mul_ctx_size_from_nums(fn_r, fn_a, fn_b);
-    if (fn_size == 0)
+    fsn_size = OSSL_FSN_mul_ctx_size_from_nums(fsn_r, fsn_a, fsn_b);
+    if (fsn_size == 0)
         goto err;
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_mul(fn_r, fn_a, fn_b, fn_ctx))
+    if (!OSSL_FSN_mul(fsn_r, fsn_a, fsn_b, fsn_ctx))
         goto err;
 
     /* The product of an al-limb and a bl-limb value fits in al + bl limbs */
     bn_release(r, (int)(al + bl));
     ret = 1;
 err:
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FSN_CTX_free(fsn_ctx);
     return ret;
 }
 
 /*
- * Compute (a >> n) and return its low word, on an OSSL_FN view.  Used for
+ * Compute (a >> n) and return its low word, on an OSSL_FSN view.  Used for
  * the keygen bit-length check, which only needs the top few bits of the
  * product.  Returns 1 on success, 0 on error.
  */
-static int rsa_fn_rshift_word(BN_ULONG *out, const BIGNUM *a, int n,
+static int rsa_fsn_rshift_word(BN_ULONG *out, const BIGNUM *a, int n,
     OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN *fn_tmp = NULL;
-    const OSSL_FN *fn_a = NULL;
+    OSSL_FSN *fsn_tmp = NULL;
+    const OSSL_FSN *fsn_a = NULL;
     size_t al;
     int ret = 0;
 
-    fn_a = bn_get_ossl_fn(a);
-    if (fn_a == NULL)
+    fsn_a = bn_get_ossl_fsn(a);
+    if (fsn_a == NULL)
         return 0;
-    al = ossl_fn_get_dsize((OSSL_FN *)fn_a);
+    al = ossl_fsn_get_dsize((OSSL_FSN *)fsn_a);
 
-    fn_tmp = OSSL_FN_new_limbs(al);
-    if (fn_tmp == NULL)
+    fsn_tmp = OSSL_FSN_new_limbs(al);
+    if (fsn_tmp == NULL)
         goto err;
-    if (!OSSL_FN_rshift(fn_tmp, fn_a, n))
+    if (!OSSL_FSN_rshift(fsn_tmp, fsn_a, n))
         goto err;
-    *out = OSSL_FN_get_word(fn_tmp);
+    *out = OSSL_FSN_get_word(fsn_tmp);
     ret = 1;
 err:
-    OSSL_FN_free(fn_tmp);
+    OSSL_FSN_free(fsn_tmp);
     return ret;
 }
 
 /**
- * Calculate d = e^-1 mod L, where L = (p-1)(q-1)...(r_i-1), on OSSL_FN
+ * Calculate d = e^-1 mod L, where L = (p-1)(q-1)...(r_i-1), on OSSL_FSN
  * views.  The partial products of the (prime-1) values are accumulated in
  * the caller's |r0| (which receives L).  The result is stored in rsa->d.
  * Multi-prime r_i - 1 values are also stashed in pinfo->d for later use.
@@ -620,20 +620,20 @@ err:
  * @param[out]     r0           Receives L.
  * @returns                     1 on success, 0 on error.
  */
-static int rsa_fn_calculate_d(RSA *rsa, int primes,
+static int rsa_fsn_calculate_d(RSA *rsa, int primes,
     STACK_OF(RSA_PRIME_INFO) *prime_infos,
     BIGNUM *r0)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_L = NULL, *fn_d = NULL, *fn_pd = NULL, *acc = NULL;
-    OSSL_FN *pm1 = NULL;
-    const OSSL_FN *fn_e = NULL;
-    size_t fn_size, Ll;
+    OSSL_FSN_CTX *fsn_ctx = NULL;
+    OSSL_FSN *fsn_L = NULL, *fsn_d = NULL, *fsn_pd = NULL, *acc = NULL;
+    OSSL_FSN *pm1 = NULL;
+    const OSSL_FSN *fsn_e = NULL;
+    size_t fsn_size, Ll;
     int i, ret = 0;
     RSA_PRIME_INFO *pinfo;
 
-    fn_e = bn_get_ossl_fn(rsa->e);
-    if (fn_e == NULL)
+    fsn_e = bn_get_ossl_fsn(rsa->e);
+    if (fsn_e == NULL)
         return 0;
 
     /*
@@ -643,12 +643,12 @@ static int rsa_fn_calculate_d(RSA *rsa, int primes,
      */
     Ll = (size_t)(BN_num_bits(rsa->n) + BN_BITS2 - 1) / BN_BITS2;
 
-    fn_L = bn_acquire_ossl_fn(r0, (int)Ll);
-    fn_d = bn_acquire_ossl_fn(rsa->d, (int)Ll);
-    if (fn_L == NULL || fn_d == NULL)
+    fsn_L = bn_acquire_ossl_fsn(r0, (int)Ll);
+    fsn_d = bn_acquire_ossl_fsn(rsa->d, (int)Ll);
+    if (fsn_L == NULL || fsn_d == NULL)
         goto err;
-    acc = OSSL_FN_secure_new_limbs(Ll);
-    pm1 = OSSL_FN_secure_new_limbs(Ll);
+    acc = OSSL_FSN_secure_new_limbs(Ll);
+    pm1 = OSSL_FSN_secure_new_limbs(Ll);
     if (acc == NULL || pm1 == NULL)
         goto err;
 
@@ -656,47 +656,47 @@ static int rsa_fn_calculate_d(RSA *rsa, int primes,
      * The arena serves the multiplications and the inverse sequentially,
      * so it is sized for the largest single operation.
      */
-    fn_size = ossl_fn_ctx_max_size(
-        OSSL_FN_mul_ctx_size_from_nums(fn_L, acc, pm1),
-        OSSL_FN_mod_inverse_ctx_size_from_nums(fn_d, fn_e, fn_L));
-    if (fn_size == 0)
+    fsn_size = ossl_fsn_ctx_max_size(
+        OSSL_FSN_mul_ctx_size_from_nums(fsn_L, acc, pm1),
+        OSSL_FSN_mod_inverse_ctx_size_from_nums(fsn_d, fsn_e, fsn_L));
+    if (fsn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
-    if (fn_ctx == NULL)
+    fsn_ctx = OSSL_FSN_CTX_new_size(rsa->libctx, fsn_size);
+    if (fsn_ctx == NULL)
         goto err;
 
     /* acc = p - 1 */
-    if (!OSSL_FN_copy_truncate(acc, bn_get_ossl_fn(rsa->p))
-        || !OSSL_FN_sub_word(acc, 1)
+    if (!OSSL_FSN_copy_truncate(acc, bn_get_ossl_fsn(rsa->p))
+        || !OSSL_FSN_sub_word(acc, 1)
         /* pm1 = q - 1 */
-        || !OSSL_FN_copy_truncate(pm1, bn_get_ossl_fn(rsa->q))
-        || !OSSL_FN_sub_word(pm1, 1)
-        /* fn_L = (p-1)(q-1) */
-        || !OSSL_FN_mul(fn_L, acc, pm1, fn_ctx))
+        || !OSSL_FSN_copy_truncate(pm1, bn_get_ossl_fsn(rsa->q))
+        || !OSSL_FSN_sub_word(pm1, 1)
+        /* fsn_L = (p-1)(q-1) */
+        || !OSSL_FSN_mul(fsn_L, acc, pm1, fsn_ctx))
         goto err;
 
-    /* multi-prime: fn_L *= (r_i - 1), stashing r_i - 1 in pinfo->d */
+    /* multi-prime: fsn_L *= (r_i - 1), stashing r_i - 1 in pinfo->d */
     for (i = 2; i < primes; i++) {
-        const OSSL_FN *fn_ri;
+        const OSSL_FSN *fsn_ri;
 
         pinfo = sk_RSA_PRIME_INFO_value(prime_infos, i - 2);
-        fn_ri = bn_get_ossl_fn(pinfo->r);
-        if (fn_ri == NULL)
+        fsn_ri = bn_get_ossl_fsn(pinfo->r);
+        if (fsn_ri == NULL)
             goto err;
         /*
          * Stash r_i - 1 in pinfo->d (as a BIGNUM) for later use,
          * computing it directly in the BIGNUM-backed view, which then
          * serves as the mul operand.
          */
-        fn_pd = bn_acquire_ossl_fn(pinfo->d, (int)Ll);
-        if (fn_pd == NULL)
+        fsn_pd = bn_acquire_ossl_fsn(pinfo->d, (int)Ll);
+        if (fsn_pd == NULL)
             goto err;
-        if (!OSSL_FN_copy_truncate(fn_pd, fn_ri)
-            || !OSSL_FN_sub_word(fn_pd, 1)
-            /* acc = fn_L; fn_L = acc * (r_i - 1) */
-            || !OSSL_FN_copy_truncate(acc, fn_L)
-            || !OSSL_FN_mul(fn_L, acc, fn_pd, fn_ctx)) {
+        if (!OSSL_FSN_copy_truncate(fsn_pd, fsn_ri)
+            || !OSSL_FSN_sub_word(fsn_pd, 1)
+            /* acc = fsn_L; fsn_L = acc * (r_i - 1) */
+            || !OSSL_FSN_copy_truncate(acc, fsn_L)
+            || !OSSL_FSN_mul(fsn_L, acc, fsn_pd, fsn_ctx)) {
             bn_release(pinfo->d, (int)Ll);
             goto err;
         }
@@ -705,7 +705,7 @@ static int rsa_fn_calculate_d(RSA *rsa, int primes,
     }
 
     /* d = e^-1 mod L */
-    if (!OSSL_FN_mod_inverse(fn_d, fn_e, fn_L, fn_ctx))
+    if (!OSSL_FSN_mod_inverse(fsn_d, fsn_e, fsn_L, fsn_ctx))
         goto err;
 
     ret = 1;
@@ -716,9 +716,9 @@ err:
      */
     bn_release(r0, (int)Ll);
     bn_release(rsa->d, (int)Ll);
-    OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_clear_free(acc);
-    OSSL_FN_clear_free(pm1);
+    OSSL_FSN_CTX_free(fsn_ctx);
+    OSSL_FSN_clear_free(acc);
+    OSSL_FSN_clear_free(pm1);
     return ret;
 }
 
@@ -843,7 +843,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
         for (;;) {
         redo:
-            if (!rsa_fn_generate_prime(prime, bitsr[i] + adj, cb, rsa->libctx))
+            if (!rsa_fsn_generate_prime(prime, bitsr[i] + adj, cb, rsa->libctx))
                 goto err;
             /*
              * prime should not be equal to p, q, r_3...
@@ -871,7 +871,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
             }
             /* GCD(prime - 1, e) == 1 ? */
             {
-                int coprime = rsa_fn_coprime_with_e(prime, rsa->e,
+                int coprime = rsa_fsn_coprime_with_e(prime, rsa->e,
                     rsa->libctx);
 
                 if (coprime < 0)
@@ -888,11 +888,11 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         /* calculate n immediately to see if it's sufficient */
         if (i == 1) {
             /* we get at least 2 primes */
-            if (!rsa_fn_mul(r1, rsa->p, rsa->q, rsa->libctx))
+            if (!rsa_fsn_mul(r1, rsa->p, rsa->q, rsa->libctx))
                 goto err;
         } else if (i != 0) {
             /* modulus n = p * q * r_3 * r_4 ... */
-            if (!rsa_fn_mul(r1, rsa->n, prime, rsa->libctx))
+            if (!rsa_fsn_mul(r1, rsa->n, prime, rsa->libctx))
                 goto err;
         } else {
             /* i == 0, do nothing */
@@ -922,7 +922,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
          * key by using the modulus in a certificate. This is also covered
          * by checking the length should not be less than 0x9.
          */
-        if (!rsa_fn_rshift_word(&bitst, r1, bitse - 4, rsa->libctx))
+        if (!rsa_fsn_rshift_word(&bitst, r1, bitse - 4, rsa->libctx))
             goto err;
 
         if (bitst < 0x9 || bitst > 0xF) {
@@ -992,7 +992,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     }
 
     /* calculate d = e^-1 mod ((p-1)(q-1)...(r_i-1)) */
-    if (!rsa_fn_calculate_d(rsa, primes, prime_infos, r0))
+    if (!rsa_fsn_calculate_d(rsa, primes, prime_infos, r0))
         goto err;
 
     /* derive any missing exponents and coefficients */

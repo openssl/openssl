@@ -100,46 +100,46 @@ __owur int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
     const BIGNUM *x, BN_CTX *ctx);
 
 /**
- * The OSSL_FN counterpart of ossl_ec_group_do_inverse_ord(): computes
- * res := a^-1 mod order, entirely in OSSL_FN form so a secret operand (the
+ * The OSSL_FSN counterpart of ossl_ec_group_do_inverse_ord(): computes
+ * res := a^-1 mod order, entirely in OSSL_FSN form so a secret operand (the
  * ECDSA nonce) never becomes a BIGNUM.  Dispatches to the method's
- * field_inverse_mod_ord_fn when set (a dedicated constant-time inverse such as
- * nistz256's assembly addition chain), otherwise uses OSSL_FN_mod_inverse_prime()
+ * field_inverse_mod_ord_fsn when set (a dedicated constant-time inverse such as
+ * nistz256's assembly addition chain), otherwise uses OSSL_FSN_mod_inverse_prime()
  * with the group's cached order Montgomery context.
  *
  * @param[in]   group   the group whose order is the modulus.
  * @param[out]  res     the result.
  * @param[in]   a       the operand to invert.
- * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
+ * @param[in]   ctx     the OSSL_FSN_CTX arena for scratch.
  * @returns             1 on success, 0 on error.
  */
-__owur int ossl_ec_group_do_inverse_ord_fn(const EC_GROUP *group, OSSL_FN *res,
-    const OSSL_FN *a, OSSL_FN_CTX *ctx);
+__owur int ossl_ec_group_do_inverse_ord_fsn(const EC_GROUP *group, OSSL_FSN *res,
+    const OSSL_FSN *a, OSSL_FSN_CTX *ctx);
 
 /**
  * Computes res := a mod order in constant time, with Montgomery reductions
  * rather than division, so that secret operands can be brought into the
  * group's order Montgomery domain.  |res| must be as wide as the modulus of
- * that context (group->fn_mont_ctx_ord, see OSSL_FN_MONT_CTX_get0_modulus()).
- * ossl_ec_group_fn_reduce_ord_ctx_size() gives the arena it needs.
+ * that context (group->fsn_mont_ctx_ord, see OSSL_FSN_MONT_CTX_get0_modulus()).
+ * ossl_ec_group_fsn_reduce_ord_ctx_size() gives the arena it needs.
  *
  * @param[in]   group   the group whose order is the modulus.
  * @param[out]  res     the result.
  * @param[in]   a       the operand to reduce.
- * @param[in]   ctx     the OSSL_FN_CTX arena for scratch.
+ * @param[in]   ctx     the OSSL_FSN_CTX arena for scratch.
  * @returns             1 on success, 0 on error.
  */
-__owur int ossl_ec_group_fn_reduce_ord(const EC_GROUP *group, OSSL_FN *res,
-    const BIGNUM *a, OSSL_FN_CTX *ctx);
+__owur int ossl_ec_group_fsn_reduce_ord(const EC_GROUP *group, OSSL_FSN *res,
+    const BIGNUM *a, OSSL_FSN_CTX *ctx);
 /**
- * Calculate the OSSL_FN_CTX arena size that ossl_ec_group_fn_reduce_ord()
+ * Calculate the OSSL_FSN_CTX arena size that ossl_ec_group_fsn_reduce_ord()
  * needs for a group.
  *
  * @param[in]   group   the group whose order is the modulus.
  * @returns             the arena size in bytes, 0 on error, or
- *                      OSSL_FN_CTX_SIZE_NONE if no context is needed.
+ *                      OSSL_FSN_CTX_SIZE_NONE if no context is needed.
  */
-size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group);
+size_t ossl_ec_group_fsn_reduce_ord_ctx_size(const EC_GROUP *group);
 
 /**
  * The group's cached order Montgomery context, or NULL if it has none.
@@ -147,14 +147,14 @@ size_t ossl_ec_group_fn_reduce_ord_ctx_size(const EC_GROUP *group);
  * @param[in]   group   the group to query.
  * @returns             the cached context, borrowed (not to be freed).
  */
-OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group);
+OSSL_FSN_MONT_CTX *ossl_ec_group_get0_fsn_mont_ord(const EC_GROUP *group);
 
 /**
  * Computes  r := scalar * point,  or  r := scalar * generator  when @p point
  * is NULL, with a secret scalar.
  *
- * This is the OSSL_FN counterpart of EC_POINT_mul().  The scalar is an
- * OSSL_FN and is never materialised as a BIGNUM anywhere along the way,
+ * This is the OSSL_FSN counterpart of EC_POINT_mul().  The scalar is an
+ * OSSL_FSN and is never materialised as a BIGNUM anywhere along the way,
  * which is the whole point of the function: callers holding a private key
  * or an ephemeral nonce can multiply by it without the value ever taking
  * BIGNUM form.  The point coordinates stay BIGNUMs, which costs nothing -
@@ -174,29 +174,29 @@ OSSL_FN_MONT_CTX *ossl_ec_group_get0_fn_mont_ord(const EC_GROUP *group);
  * including one numerically >= n but of the same bit length - is used as is
  * and still yields scalar * point, since n * point is the identity.
  *
- * @p ctx is a caller-owned OSSL_FN_CTX (not a BN_CTX): all the scratch this
- * path needs is OSSL_FN scratch.  It may be NULL, in which case a suitably
+ * @p ctx is a caller-owned OSSL_FSN_CTX (not a BN_CTX): all the scratch this
+ * path needs is OSSL_FSN scratch.  It may be NULL, in which case a suitably
  * sized context is allocated internally; callers doing several multiplications
- * on one group can amortise by sizing one with EC_POINT_mul_fn_ctx_size() and
+ * on one group can amortise by sizing one with EC_POINT_mul_fsn_ctx_size() and
  * passing it in.
  *
  * @param[in]   group   the group to compute in.
  * @param[out]  r       the result point.
  * @param[in]   scalar  the scalar to multiply by.
  * @param[in]   point   the point to multiply, or NULL for the generator.
- * @param[in]   ctx     a caller-owned OSSL_FN_CTX, or NULL.
+ * @param[in]   ctx     a caller-owned OSSL_FSN_CTX, or NULL.
  * @returns             1 on success, 0 on error.
  */
-__owur int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point,
-    OSSL_FN_CTX *ctx);
+__owur int EC_POINT_mul_fsn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FSN *scalar, const EC_POINT *point,
+    OSSL_FSN_CTX *ctx);
 
 /**
- * Size of the OSSL_FN_CTX that EC_POINT_mul_fn() needs for @p group, for
- * callers that pre-allocate one to reuse.  Follows the OSSL_FN _ctx_size
- * convention: 0 on error, OSSL_FN_CTX_SIZE_NONE if no context is needed.
- * A group that EC_POINT_mul_fn() cannot serve - one over a non-prime field
- * (GF(2^m)) - has no OSSL_FN path and likewise yields 0.
+ * Size of the OSSL_FSN_CTX that EC_POINT_mul_fsn() needs for @p group, for
+ * callers that pre-allocate one to reuse.  Follows the OSSL_FSN _ctx_size
+ * convention: 0 on error, OSSL_FSN_CTX_SIZE_NONE if no context is needed.
+ * A group that EC_POINT_mul_fsn() cannot serve - one over a non-prime field
+ * (GF(2^m)) - has no OSSL_FSN path and likewise yields 0.
  *
  * @param[in]   group   the group to size for.
  * @param[in]   r       a model for the result point (widths only).
@@ -204,8 +204,8 @@ __owur int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r,
  * @param[in]   point   a model for the point, or NULL.
  * @returns             the arena size in bytes.
  */
-__owur size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point);
+__owur size_t EC_POINT_mul_fsn_ctx_size(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FSN *scalar, const EC_POINT *point);
 
 /**
  * Write the affine coordinates of @p point as fixed-width big-endian byte

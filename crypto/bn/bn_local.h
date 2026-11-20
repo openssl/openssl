@@ -18,7 +18,7 @@
 #include "internal/numbers.h"
 #include "crypto/bn.h"
 
-#include "../fn/fn_local.h"
+#include "../fsn/fsn_local.h"
 
 /*
  * BN_RAND_DEBUG was historically used to poison unused words in bignum data,
@@ -185,9 +185,9 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 
 struct bignum_st {
     /* The number itself is a FIXNUM */
-    OSSL_FN *data;
+    OSSL_FSN *data;
 
-    /* Some of these flags are replicated in OSSL_FN, some are not */
+    /* Some of these flags are replicated in OSSL_FSN, some are not */
     int flags;
 
     BN_ULONG *d; /* Pointer to |data->d| */
@@ -203,7 +203,7 @@ struct bignum_st {
  * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
  * bignum data after direct manipulations on the data. There is also an
  * "internal" macro, bn_check_top(), for verifying that there are no leading
- * zeroes, and in case the BIGNUM has an integrated OSSL_FN, check the
+ * zeroes, and in case the BIGNUM has an integrated OSSL_FSN, check the
  * consistency of the integration, including that the unused part of the
  * data is all zeros.
  *
@@ -260,7 +260,7 @@ static ossl_inline bool bn_check_zero(BN_ULONG *words, int num_words)
 static ossl_inline void bn_check_top(const BIGNUM *bn)
 {
     if (bn != NULL) {
-        /* BIGNUM <-> OSSL_FN compat checks */
+        /* BIGNUM <-> OSSL_FSN compat checks */
         if (bn->data != NULL) {
             /* TODO(FIXNUM): Assertion for the future */
             /* assert(_bnum2->d == NULL); */
@@ -824,7 +824,7 @@ int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb);
 
 /**
- * Set top on a given BIGNUM.  If it has an associated OSSL_FN (the 'data'
+ * Set top on a given BIGNUM.  If it has an associated OSSL_FSN (the 'data'
  * field is non-NULL), and the new 'top' is less than the existing 'top',
  * zeroise the space between them.
  *

@@ -228,7 +228,7 @@ int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words)
         return 0;
     }
 
-    /* TODO(FIXNUM): In the future, we'll use an OSSL_FN function on a->data */
+    /* TODO(FIXNUM): In the future, we'll use an OSSL_FSN function on a->data */
     memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
 
     bn_set_top(a, num_words);

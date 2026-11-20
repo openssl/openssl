@@ -42,8 +42,8 @@
 #include <string.h>
 #include <openssl/err.h>
 #include "ec_local.h"
-#include "crypto/bn.h" /* bn_get_ossl_fn() */
-#include "crypto/fn.h" /* OSSL_FN_CTX_SIZE_NONE, OSSL_FN_to_bytes_be() */
+#include "crypto/bn.h" /* bn_get_ossl_fsn() */
+#include "crypto/fsn.h" /* OSSL_FSN_CTX_SIZE_NONE, OSSL_FSN_to_bytes_be() */
 
 #include "internal/numbers.h"
 
@@ -239,11 +239,11 @@ struct nistp224_pre_comp_st {
     CRYPTO_REF_COUNT references;
 };
 
-static int ossl_ec_GFp_nistp224_points_mul_fn(const EC_GROUP *group,
-    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point,
-    OSSL_FN_CTX *fnctx);
-static size_t ossl_ec_GFp_nistp224_points_mul_fn_ctx_size(const EC_GROUP *group,
-    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point);
+static int ossl_ec_GFp_nistp224_points_mul_fsn(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FSN *scalar, const EC_POINT *point,
+    OSSL_FSN_CTX *fsnctx);
+static size_t ossl_ec_GFp_nistp224_points_mul_fsn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FSN *scalar, const EC_POINT *point);
 static int ecp_nistp224_point_get_affine_coords_bytes(const EC_GROUP *group,
     const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len);
 
@@ -307,8 +307,8 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
         0, /* ladder_step */
         0, /* ladder_post */
         0, /* group_full_init */
-        ossl_ec_GFp_nistp224_points_mul_fn, /* mul_fn */
-        ossl_ec_GFp_nistp224_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ossl_ec_GFp_nistp224_points_mul_fsn, /* mul_fsn */
+        ossl_ec_GFp_nistp224_points_mul_fsn_ctx_size, /* mul_fsn_ctx_size */
         ecp_nistp224_point_get_affine_coords_bytes
     };
 
@@ -1367,20 +1367,20 @@ int ossl_ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
 
 /*
  * Read a (possibly secret) coordinate BIGNUM into a felem at fixed width, in
- * constant time.  OSSL_FN_to_bytes_be() serialises the coordinate's fixed-width
- * OSSL_FN view (unlike BN_to_felem()'s BN_bn2lebinpad(), which leaks the
- * coordinate's magnitude); the bytes are reversed to little-endian for
- * bin28_to_felem().  Returns 0 if the BIGNUM has no OSSL_FN view or is wider
- * than the field.
+ * constant time.  OSSL_FSN_to_bytes_be() serialises the coordinate's
+ * fixed-width OSSL_FSN view (unlike BN_to_felem()'s BN_bn2lebinpad(), which
+ * leaks the coordinate's magnitude); the bytes are reversed to little-endian
+ * for bin28_to_felem().  Returns 0 if the BIGNUM has no OSSL_FSN view or is
+ * wider than the field.
  */
 static int coord_to_felem(felem out, const BIGNUM *in)
 {
-    const OSSL_FN *fn = bn_get_ossl_fn(in);
+    const OSSL_FSN *fsn = bn_get_ossl_fsn(in);
     uint8_t be[28], le[28];
     unsigned i;
     int ok = 0;
 
-    if (fn == NULL || !OSSL_FN_to_bytes_be(fn, be, sizeof(be)))
+    if (fsn == NULL || !OSSL_FSN_to_bytes_be(fsn, be, sizeof(be)))
         goto end;
     for (i = 0; i < sizeof(be); i++)
         le[i] = be[sizeof(be) - 1 - i];
@@ -1407,7 +1407,7 @@ static void felem_to_be28(uint8_t out[28], const felem in)
 /*
  * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
  * method's point_get_affine_coords_bytes slot.  'point' may be secret (an ECDH
- * shared point), so its coordinates are read through their fixed-width OSSL_FN
+ * shared point), so its coordinates are read through their fixed-width OSSL_FSN
  * views - never a BIGNUM - and the field inverse is nistp224's constant-time
  * felem_inv().
  * Same math as ossl_ec_GFp_nistp224_point_get_affine_coordinates().
@@ -1742,20 +1742,20 @@ err:
 }
 
 /*
- * OSSL_FN counterpart of ossl_ec_GFp_nistp224_points_mul() and this method's
- * 'mul_fn' slot: r = scalar*point, or scalar*generator when point is NULL, for
- * a single secret scalar serialised straight from the OSSL_FN (never a BIGNUM)
+ * OSSL_FSN counterpart of ossl_ec_GFp_nistp224_points_mul() and this method's
+ * 'mul_fsn' slot: r = scalar*point, or scalar*generator when point is NULL, for
+ * a single secret scalar serialised straight from the OSSL_FSN (never a BIGNUM)
  * and fed to the same constant-time batch_mul() as the BIGNUM path.
  */
-static int ossl_ec_GFp_nistp224_points_mul_fn(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point, OSSL_FN_CTX *fnctx)
+static int ossl_ec_GFp_nistp224_points_mul_fsn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FSN *scalar, const EC_POINT *point, OSSL_FSN_CTX *fsnctx)
 {
     int ret = 0;
     felem_bytearray b;
     felem_bytearray *pb = &b;
     BN_CTX *ctx = NULL;
 
-    (void)fnctx; /* this method needs no OSSL_FN scratch context */
+    (void)fsnctx; /* this method needs no OSSL_FSN scratch context */
 
     if (scalar == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -1765,7 +1765,7 @@ static int ossl_ec_GFp_nistp224_points_mul_fn(const EC_GROUP *group, EC_POINT *r
         return EC_POINT_set_to_infinity(group, r);
 
     /* Fixed-width serialisation of the secret scalar; reject over-wide inputs. */
-    if (!ossl_ec_GFp_nistp_fn_scalar_bytes(b, sizeof(b), scalar)) {
+    if (!ossl_ec_GFp_nistp_fsn_scalar_bytes(b, sizeof(b), scalar)) {
         ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         goto err;
     }
@@ -1785,11 +1785,11 @@ err:
     return ret;
 }
 
-/* This method needs no scratch context; see the _points_mul_fn above. */
-static size_t ossl_ec_GFp_nistp224_points_mul_fn_ctx_size(const EC_GROUP *group,
-    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+/* This method needs no scratch context; see the _points_mul_fsn above. */
+static size_t ossl_ec_GFp_nistp224_points_mul_fsn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FSN *scalar, const EC_POINT *point)
 {
-    return OSSL_FN_CTX_SIZE_NONE;
+    return OSSL_FSN_CTX_SIZE_NONE;
 }
 
 int ossl_ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)

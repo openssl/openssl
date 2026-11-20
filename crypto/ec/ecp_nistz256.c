@@ -29,8 +29,8 @@
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
 #include "internal/constant_time.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
+#include "crypto/fsn.h"
+#include "crypto/fsn_intern.h" /* ossl_fsn_get_words(), ossl_fsn_get_dsize() */
 #include "ec_local.h"
 #include "internal/refcount.h"
 
@@ -605,7 +605,7 @@ __owur static int ecp_nistz256_bignum_to_field_elem(BN_ULONG out[P256_LIMBS],
  * r = sum(p_str[i]*point[i]), where each scalar is pre-encoded as a fixed
  * 33-byte little-endian string.  This is the constant-time variable-point core
  * used by ecp_nistz256_points_mul_str(), which both the BIGNUM
- * (ecp_nistz256_points_mul) and OSSL_FN (ecp_nistz256_points_mul_fn) entry
+ * (ecp_nistz256_points_mul) and OSSL_FSN (ecp_nistz256_points_mul_fsn) entry
  * points wrap.
  */
 __owur static int ecp_nistz256_windowed_mul_str(const EC_GROUP *group,
@@ -938,7 +938,7 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
 /*
  * Return the precomputed multiples-of-generator table to use for a fixed-point
  * multiplication, or NULL if none applies (the caller then treats the
- * generator as an ordinary point).  Shared by the BIGNUM and OSSL_FN paths.
+ * generator as an ordinary point).  Shared by the BIGNUM and OSSL_FSN paths.
  */
 static const PRECOMP256_ROW *ecp_nistz256_generator_precomp_table(
     const EC_GROUP *group, BN_CTX *ctx)
@@ -986,7 +986,7 @@ static const PRECOMP256_ROW *ecp_nistz256_generator_precomp_table(
 /*
  * Fixed-point multiplication r = scalar*G using the precomputed table, with the
  * scalar supplied as a fixed 33-byte little-endian string.  Constant-time;
- * shared by the BIGNUM and OSSL_FN paths.
+ * shared by the BIGNUM and OSSL_FSN paths.
  */
 static void ecp_nistz256_fixed_mul_str(P256_POINT *out,
     const PRECOMP256_ROW *preComputedTable, const unsigned char p_str[33])
@@ -1056,29 +1056,29 @@ static void ecp_nistz256_fixed_mul_str(P256_POINT *out,
 }
 
 /*
- * Extract a secret OSSL_FN scalar into a fixed 33-byte little-endian string,
+ * Extract a secret OSSL_FSN scalar into a fixed 33-byte little-endian string,
  * over the full field width (constant-time; no dependence on the value's
  * magnitude).  Fails if the scalar does not fit in 256 bits.
  */
-static int ecp_nistz256_fn_scalar_str(unsigned char p_str[33],
-    const OSSL_FN *scalar)
+static int ecp_nistz256_fsn_scalar_str(unsigned char p_str[33],
+    const OSSL_FSN *scalar)
 {
-    const OSSL_FN_ULONG *w = ossl_fn_get_words(scalar);
-    size_t dsize = ossl_fn_get_dsize(scalar);
+    const OSSL_FSN_ULONG *w = ossl_fsn_get_words(scalar);
+    size_t dsize = ossl_fsn_get_dsize(scalar);
     size_t i, j;
 
     for (i = P256_LIMBS; i < dsize; i++)
         if (w[i] != 0)
             return 0;
 
-    for (j = 0; j < 32; j += OSSL_FN_BYTES) {
-        OSSL_FN_ULONG d = j / OSSL_FN_BYTES < dsize ? w[j / OSSL_FN_BYTES] : 0;
+    for (j = 0; j < 32; j += OSSL_FSN_BYTES) {
+        OSSL_FSN_ULONG d = j / OSSL_FSN_BYTES < dsize ? w[j / OSSL_FSN_BYTES] : 0;
 
         p_str[j + 0] = (unsigned char)d;
         p_str[j + 1] = (unsigned char)(d >> 8);
         p_str[j + 2] = (unsigned char)(d >> 16);
         p_str[j + 3] = (unsigned char)(d >>= 24);
-        if (OSSL_FN_BYTES == 8) {
+        if (OSSL_FSN_BYTES == 8) {
             d >>= 8;
             p_str[j + 4] = (unsigned char)d;
             p_str[j + 5] = (unsigned char)(d >> 8);
@@ -1092,7 +1092,7 @@ static int ecp_nistz256_fn_scalar_str(unsigned char p_str[33],
 }
 
 /*
- * Core shared by the BIGNUM and OSSL_FN entry points:
+ * Core shared by the BIGNUM and OSSL_FSN entry points:
  * r = scalar*generator + sum(scalars[i]*points[i]).  Each scalar is already in
  * the 33-byte little-endian p_str form; scalar == NULL means no generator
  * term.  Uses the same constant-time fixed_mul_str()/windowed_mul_str() cores,
@@ -1172,20 +1172,20 @@ __owur static int ecp_nistz256_points_mul_str(const EC_GROUP *group,
 
     /*
      * The result may be secret (e.g. an ECDH shared point), so write the
-     * coordinates in constant time through the fixed-width OSSL_FN
+     * coordinates in constant time through the fixed-width OSSL_FSN
      * representation: bn_release() normalises 'top' without leaking, via
      * timing, the number of leading zero limbs (unlike bn_set_words()).
      */
     {
-        OSSL_FN *rx = NULL, *ry = NULL, *rz = NULL;
+        OSSL_FSN *rx = NULL, *ry = NULL, *rz = NULL;
         int ok;
 
-        ok = (rx = bn_acquire_ossl_fn(r->X, P256_LIMBS)) != NULL
-            && (ry = bn_acquire_ossl_fn(r->Y, P256_LIMBS)) != NULL
-            && (rz = bn_acquire_ossl_fn(r->Z, P256_LIMBS)) != NULL
-            && ossl_fn_set_words(rx, p.p.X, P256_LIMBS)
-            && ossl_fn_set_words(ry, p.p.Y, P256_LIMBS)
-            && ossl_fn_set_words(rz, p.p.Z, P256_LIMBS);
+        ok = (rx = bn_acquire_ossl_fsn(r->X, P256_LIMBS)) != NULL
+            && (ry = bn_acquire_ossl_fsn(r->Y, P256_LIMBS)) != NULL
+            && (rz = bn_acquire_ossl_fsn(r->Z, P256_LIMBS)) != NULL
+            && ossl_fsn_set_words(rx, p.p.X, P256_LIMBS)
+            && ossl_fsn_set_words(ry, p.p.Y, P256_LIMBS)
+            && ossl_fsn_set_words(rz, p.p.Z, P256_LIMBS);
         if (rx != NULL)
             bn_release(r->X, P256_LIMBS);
         if (ry != NULL)
@@ -1247,24 +1247,24 @@ err:
 }
 
 /*
- * OSSL_FN counterpart of ecp_nistz256_points_mul() and the 'mul_fn' slot of
- * this method, reached from EC_POINT_mul_fn() when the scalar is secret.  The
+ * OSSL_FSN counterpart of ecp_nistz256_points_mul() and the 'mul_fsn' slot of
+ * this method, reached from EC_POINT_mul_fsn() when the scalar is secret.  The
  * scalar is extracted into a fixed-width byte string and never materialised as
  * a BIGNUM; the constant-time cores (fixed_mul_str for the generator, or
  * windowed_mul_str for a variable point) are shared with the BIGNUM path.
  */
-__owur static int ecp_nistz256_points_mul_fn(const EC_GROUP *group,
+__owur static int ecp_nistz256_points_mul_fsn(const EC_GROUP *group,
     EC_POINT *r,
-    const OSSL_FN *scalar,
+    const OSSL_FSN *scalar,
     const EC_POINT *point,
-    OSSL_FN_CTX *fnctx)
+    OSSL_FSN_CTX *fsnctx)
 {
     int ret = 0;
     unsigned char s_str[33] = { 0 };
     unsigned char (*ps_str)[33] = &s_str;
     BN_CTX *ctx = NULL;
 
-    (void)fnctx; /* this method needs no OSSL_FN scratch context */
+    (void)fsnctx; /* this method needs no OSSL_FSN scratch context */
 
     if (scalar == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
@@ -1274,7 +1274,7 @@ __owur static int ecp_nistz256_points_mul_fn(const EC_GROUP *group,
         return EC_POINT_set_to_infinity(group, r);
 
     /* Fixed-width extraction of the secret scalar; reject over-wide inputs. */
-    if (!ecp_nistz256_fn_scalar_str(s_str, scalar)) {
+    if (!ecp_nistz256_fsn_scalar_str(s_str, scalar)) {
         ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         goto err;
     }
@@ -1295,11 +1295,11 @@ err:
     return ret;
 }
 
-/* This method needs no scratch context; see ecp_nistz256_points_mul_fn(). */
-static size_t ecp_nistz256_points_mul_fn_ctx_size(const EC_GROUP *group,
-    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+/* This method needs no scratch context; see ecp_nistz256_points_mul_fsn(). */
+static size_t ecp_nistz256_points_mul_fsn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FSN *scalar, const EC_POINT *point)
 {
-    return OSSL_FN_CTX_SIZE_NONE;
+    return OSSL_FSN_CTX_SIZE_NONE;
 }
 
 __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
@@ -1348,22 +1348,22 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
  * Read a coordinate BIGNUM into P256 limbs at fixed width, in constant time.
  * Unlike ecp_nistz256_bignum_to_field_elem() (bn_copy_words(), which copies only
  * the significant limbs and so leaks the coordinate's magnitude) this reads the
- * full width through the BIGNUM's OSSL_FN view - needed because the point read
- * here is secret.  Returns 0 if the BIGNUM has no OSSL_FN view or holds a value
- * wider than P256 (checked by folding the excess limbs in constant time).
+ * full width through the BIGNUM's OSSL_FSN view - needed because the point read
+ * here is secret.  Returns 0 if the BIGNUM has no OSSL_FSN view or holds a
+ * value wider than P256 (checked by folding the excess limbs in constant time).
  */
 static int ecp_nistz256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
 {
-    const OSSL_FN *fn = bn_get_ossl_fn(in);
-    const OSSL_FN_ULONG *w;
+    const OSSL_FSN *fsn = bn_get_ossl_fsn(in);
+    const OSSL_FSN_ULONG *w;
     size_t dsize, i;
-    OSSL_FN_ULONG hi = 0;
+    OSSL_FSN_ULONG hi = 0;
     int fits;
 
-    if (fn == NULL)
+    if (fsn == NULL)
         return 0;
-    w = ossl_fn_get_words(fn);
-    dsize = ossl_fn_get_dsize(fn);
+    w = ossl_fsn_get_words(fsn);
+    dsize = ossl_fsn_get_dsize(fsn);
     for (i = 0; i < P256_LIMBS; i++)
         out[i] = i < dsize ? w[i] : 0;
     for (; i < dsize; i++)
@@ -1392,7 +1392,7 @@ static ossl_inline void ecp_nistz256_felem_to_be(unsigned char *out, size_t len,
 /*
  * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
  * method's point_get_affine_coords_bytes slot.  'point' may be secret (an ECDH
- * shared point), so its coordinates are read through their fixed-width OSSL_FN
+ * shared point), so its coordinates are read through their fixed-width OSSL_FSN
  * views (never a variable-width BIGNUM) and the field inverse is nistz256's
  * constant-time assembly FLT inverse - the same math as
  * ecp_nistz256_get_affine().  See EC_POINT_get_affine_coords_bytes().
@@ -1533,7 +1533,7 @@ void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
     BN_ULONG rep);
 
 /*
- * Core constant-time order inverse shared by the BIGNUM and OSSL_FN entry
+ * Core constant-time order inverse shared by the BIGNUM and OSSL_FSN entry
  * points: out = in^-1 mod ord(p256), with in and out plain
  * BN_ULONG[P256_LIMBS] field elements and in reduced (< ord).  It is Fermat's
  * little theorem, in^(ord-2), via an addition chain in the order's Montgomery
@@ -1725,20 +1725,20 @@ err:
 }
 
 /*
- * OSSL_FN entry point for the order inverse (the field_inverse_mod_ord_fn
+ * OSSL_FSN entry point for the order inverse (the field_inverse_mod_ord_fsn
  * method slot): r = a^-1 mod ord(p256), reading the secret operand a through
- * its fixed-width OSSL_FN view, never as a BIGNUM.  a is the ECDSA nonce,
+ * its fixed-width OSSL_FSN view, never as a BIGNUM.  a is the ECDSA nonce,
  * already reduced mod the order (< 2^256).  See
- * ossl_ec_group_do_inverse_ord_fn().
+ * ossl_ec_group_do_inverse_ord_fsn().
  */
-static int ecp_nistz256_inv_mod_ord_fn(const EC_GROUP *group, OSSL_FN *r,
-    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+static int ecp_nistz256_inv_mod_ord_fsn(const EC_GROUP *group, OSSL_FSN *r,
+    const OSSL_FSN *a, OSSL_FSN_CTX *ctx)
 {
     BN_ULONG in[P256_LIMBS], out[P256_LIMBS];
     unsigned char buf[P256_LIMBS * sizeof(BN_ULONG)];
-    const OSSL_FN_ULONG *w = ossl_fn_get_words(a);
-    size_t dsize = ossl_fn_get_dsize(a), i;
-    OSSL_FN_ULONG hi = 0;
+    const OSSL_FSN_ULONG *w = ossl_fsn_get_words(a);
+    size_t dsize = ossl_fsn_get_dsize(a), i;
+    OSSL_FSN_ULONG hi = 0;
     int ret = 0;
 
     /* Read a at fixed P256 width; it is already reduced mod the order. */
@@ -1755,7 +1755,7 @@ static int ecp_nistz256_inv_mod_ord_fn(const EC_GROUP *group, OSSL_FN *r,
 
     /* out is a plain reduced field element; write it into r big-endian. */
     ecp_nistz256_felem_to_be(buf, sizeof(buf), out);
-    if (!OSSL_FN_from_bytes_be(r, buf, sizeof(buf)))
+    if (!OSSL_FSN_from_bytes_be(r, buf, sizeof(buf)))
         goto err;
 
     ret = 1;
@@ -1767,7 +1767,7 @@ err:
 }
 #else
 #define ecp_nistz256_inv_mod_ord NULL
-#define ecp_nistz256_inv_mod_ord_fn NULL
+#define ecp_nistz256_inv_mod_ord_fsn NULL
 #endif
 
 static int ecp_nistz256group_full_init(EC_GROUP *group,
@@ -1879,15 +1879,15 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
     ordmont = NULL;
 
     /*
-     * Cache the order in OSSL_FN Montgomery form too (this fast initialiser
+     * Cache the order in OSSL_FSN Montgomery form too (this fast initialiser
      * bypasses ec_precompute_mont_data()), so the constant-time ECDSA nonce
      * inverse reuses it instead of rebuilding one per signature.
      */
     {
-        const OSSL_FN *order_fn = bn_get_ossl_fn(group->order);
+        const OSSL_FSN *order_fsn = bn_get_ossl_fsn(group->order);
 
-        if (order_fn != NULL
-            && (group->fn_mont_ctx_ord = OSSL_FN_MONT_CTX_new(order_fn)) == NULL)
+        if (order_fsn != NULL
+            && (group->fsn_mont_ctx_ord = OSSL_FSN_MONT_CTX_new(order_fsn)) == NULL)
             goto err;
     }
 
@@ -1967,10 +1967,10 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* ladder_step */
         0, /* ladder_post */
         ecp_nistz256group_full_init,
-        ecp_nistz256_points_mul_fn, /* mul_fn */
-        ecp_nistz256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ecp_nistz256_points_mul_fsn, /* mul_fsn */
+        ecp_nistz256_points_mul_fsn_ctx_size, /* mul_fsn_ctx_size */
         ecp_nistz256_point_get_affine_coords_bytes,
-        ecp_nistz256_inv_mod_ord_fn /* field_inverse_mod_ord_fn, may be NULL */
+        ecp_nistz256_inv_mod_ord_fsn /* field_inverse_mod_ord_fsn, may be NULL */
     };
 
     return &ret;

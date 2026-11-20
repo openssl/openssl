@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/fn_constants.h"
+#include "crypto/fsn_constants.h"
 
 /* 1 / sqrt(2) * 2^256, rounded up */
-OSSL_FN_STATIC_DEFINE(inv_sqrt_2, OSSL_FN_LIMBS_N(256),
-    OSSL_FN_ULONG64_C(0xED17AC85, 0x83339916),
-    OSSL_FN_ULONG64_C(0x1D6F60BA, 0x893BA84C),
-    OSSL_FN_ULONG64_C(0x597D89B3, 0x754ABE9F),
-    OSSL_FN_ULONG64_C(0xB504F333, 0xF9DE6484));
+OSSL_FSN_STATIC_DEFINE(inv_sqrt_2, OSSL_FSN_LIMBS_N(256),
+    OSSL_FSN_ULONG64_C(0xED17AC85, 0x83339916),
+    OSSL_FSN_ULONG64_C(0x1D6F60BA, 0x893BA84C),
+    OSSL_FSN_ULONG64_C(0x597D89B3, 0x754ABE9F),
+    OSSL_FSN_ULONG64_C(0xB504F333, 0xF9DE6484));

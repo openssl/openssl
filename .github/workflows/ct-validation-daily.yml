@@ -142,7 +142,7 @@ jobs:
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
         # - SM2/EC: test_ec
-        # - OSSL_FN quick modular helpers and mod_exp_mont: test_fn_ct
+        # - OSSL_FSN quick modular helpers and mod_exp_mont: test_fsn_ct
         # - ECDSA and SM2 signing, EC point to bytes: test_ec_ct
         #
         # Also covered:
@@ -152,6 +152,6 @@ jobs:
         # - test_asn1_string_poison: memcheck reports C-string use of
         #   ASN1_STRING data, whose NUL terminator libcrypto marks inaccessible
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_ct_validation_helpers test_asn1_string_poison test_fn_ct test_ec_ct test_pkey_ct" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_ct_validation_helpers test_asn1_string_poison test_fsn_ct test_ec_ct test_pkey_ct" \
                OSSL_VALGRIND_CT=yes \
                test

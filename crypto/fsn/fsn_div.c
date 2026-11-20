@@ -11,9 +11,9 @@
 #include <openssl/err.h>
 #include "internal/safe_math.h"
 #include "crypto/cryptlib.h"
-#include "crypto/fnerr.h"
+#include "crypto/fsnerr.h"
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
-#include "fn_local.h"
+#include "fsn_local.h"
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
@@ -61,30 +61,30 @@ OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
 /*
  * Copy src to dst and align it to the left using lshift.
- * lshift is assumed to be less than OSSL_FN_BITS.
+ * lshift is assumed to be less than OSSL_FSN_BITS.
  */
-static inline void copy_align_left(OSSL_FN *dst, const OSSL_FN *src, OSSL_FN_ULONG lshift)
+static inline void copy_align_left(OSSL_FSN *dst, const OSSL_FSN *src, OSSL_FSN_ULONG lshift)
 {
-    OSSL_FN_ULONG rshift = OSSL_FN_BITS - lshift;
-    OSSL_FN_ULONG rmask;
-    OSSL_FN_ULONG m;
-    const OSSL_FN_ULONG *s = src->d;
+    OSSL_FSN_ULONG rshift = OSSL_FSN_BITS - lshift;
+    OSSL_FSN_ULONG rmask;
+    OSSL_FSN_ULONG m;
+    const OSSL_FSN_ULONG *s = src->d;
     size_t sl = src->dsize;
-    OSSL_FN_ULONG *d = dst->d;
+    OSSL_FSN_ULONG *d = dst->d;
     size_t dl = dst->dsize;
     size_t l = (dl < sl) ? dl : sl;
     size_t i;
 
-    rshift %= OSSL_FN_BITS;
+    rshift %= OSSL_FSN_BITS;
 
     /* rmask = 0 - (rshift != 0) */
-    rmask = (OSSL_FN_ULONG)0 - rshift;
+    rmask = (OSSL_FSN_ULONG)0 - rshift;
     rmask |= rmask >> 8;
 
     /* src and dst may be the same, that's why this loop is made this way */
     for (i = 0, m = 0; i < l; i++) {
-        OSSL_FN_ULONG tmp = s[i];
-        d[i] = ((tmp << lshift) | m) & OSSL_FN_MASK;
+        OSSL_FSN_ULONG tmp = s[i];
+        d[i] = ((tmp << lshift) | m) & OSSL_FSN_MASK;
         m = (tmp >> rshift) & rmask;
     }
 
@@ -96,23 +96,23 @@ static inline void copy_align_left(OSSL_FN *dst, const OSSL_FN *src, OSSL_FN_ULO
 
 /*
  * Copy src to dst and align it to the right using rshift.
- * rshift is assumed to be less than OSSL_FN_BITS.
+ * rshift is assumed to be less than OSSL_FSN_BITS.
  */
-static inline void copy_align_right(OSSL_FN *dst, const OSSL_FN *src, OSSL_FN_ULONG rshift)
+static inline void copy_align_right(OSSL_FSN *dst, const OSSL_FSN *src, OSSL_FSN_ULONG rshift)
 {
-    OSSL_FN_ULONG lshift = OSSL_FN_BITS - rshift;
-    OSSL_FN_ULONG lmask;
-    const OSSL_FN_ULONG *s = src->d;
+    OSSL_FSN_ULONG lshift = OSSL_FSN_BITS - rshift;
+    OSSL_FSN_ULONG lmask;
+    const OSSL_FSN_ULONG *s = src->d;
     size_t sl = src->dsize;
-    OSSL_FN_ULONG *d = dst->d;
+    OSSL_FSN_ULONG *d = dst->d;
     size_t dl = dst->dsize;
     size_t i;
     size_t l = (dl < sl) ? dl : sl;
 
-    lshift %= OSSL_FN_BITS;
+    lshift %= OSSL_FSN_BITS;
 
     /* lmask = 0 - (lshift != 0) */
-    lmask = (OSSL_FN_ULONG)0 - lshift;
+    lmask = (OSSL_FSN_ULONG)0 - lshift;
     lmask |= lmask >> 8;
 
     /* Just to be safe */
@@ -125,33 +125,33 @@ static inline void copy_align_right(OSSL_FN *dst, const OSSL_FN *src, OSSL_FN_UL
      * destination, we must consider one source limb beyond the destination
      * size.  If not, m is simply starts with zero.
      */
-    OSSL_FN_ULONG m = (dl < sl) ? (s[dl] << lshift) & lmask : 0;
+    OSSL_FSN_ULONG m = (dl < sl) ? (s[dl] << lshift) & lmask : 0;
 
     /* src and dst may be the same, that's why this loop is made this way */
     for (i = l; i-- > 0;) {
-        OSSL_FN_ULONG tmp = s[i];
-        d[i] = m | ((tmp >> rshift) & OSSL_FN_MASK);
+        OSSL_FSN_ULONG tmp = s[i];
+        d[i] = m | ((tmp >> rshift) & OSSL_FSN_MASK);
         m = (tmp << lshift) & lmask;
     }
 }
 
-static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnum,
-    OSSL_FN_ULONG d1, OSSL_FN_ULONG d0)
+static inline OSSL_FSN_ULONG div_words(OSSL_FSN_ULONG *wnumtop, OSSL_FSN_ULONG *wnum,
+    OSSL_FSN_ULONG d1, OSSL_FSN_ULONG d0)
 {
 #if defined(BN_DIV3W)
     return bn_div_3_words(wnumtop, d1, d0);
 #else
-    OSSL_FN_ULONG n0 = wnumtop[0], n1 = wnumtop[-1], quo = 0, rem = 0;
+    OSSL_FSN_ULONG n0 = wnumtop[0], n1 = wnumtop[-1], quo = 0, rem = 0;
 
     if (n0 == d0)
-        quo = OSSL_FN_MASK;
+        quo = OSSL_FSN_MASK;
     else { /* n0 < d0 */
-        OSSL_FN_ULONG n2 = (wnumtop == wnum) ? 0 : wnumtop[-2];
+        OSSL_FSN_ULONG n2 = (wnumtop == wnum) ? 0 : wnumtop[-2];
 #ifdef BN_LLONG
         BN_ULLONG t2;
 
 #if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
-        quo = (OSSL_FN_ULONG)(((((BN_ULLONG)n0) << OSSL_FN_BITS) | n1) / d0);
+        quo = (OSSL_FSN_ULONG)(((((BN_ULLONG)n0) << OSSL_FSN_BITS) | n1) / d0);
 #else
         quo = bn_div_words(n0, n1, d0);
 #endif
@@ -166,7 +166,7 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
         t2 = (BN_ULLONG)d1 * quo;
 
         for (;;) {
-            if (t2 <= ((((BN_ULLONG)rem) << OSSL_FN_BITS) | n2))
+            if (t2 <= ((((BN_ULLONG)rem) << OSSL_FSN_BITS) | n2))
                 break;
             quo--;
             rem += d0;
@@ -175,11 +175,11 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
             t2 -= d1;
         }
 #else /* !BN_LLONG */
-        OSSL_FN_ULONG t2l, t2h;
+        OSSL_FSN_ULONG t2l, t2h;
 
         quo = bn_div_words(n0, n1, d0);
 #ifndef REMAINDER_IS_ALREADY_CALCULATED
-        rem = (n1 - quo * d0) & OSSL_FN_MASK;
+        rem = (n1 - quo * d0) & OSSL_FSN_MASK;
 #endif
 
 #if defined(BN_UMULT_LOHI)
@@ -189,7 +189,7 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
         t2h = BN_UMULT_HIGH(d1, quo);
 #else
         {
-            OSSL_FN_ULONG ql, qh;
+            OSSL_FSN_ULONG ql, qh;
             t2l = LBITS(d1);
             t2h = HBITS(d1);
             ql = LBITS(quo);
@@ -216,7 +216,7 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
 #endif /* !BN_DIV3W */
 }
 
-size_t OSSL_FN_div_ctx_size_from_sizes(size_t q_dsize, size_t r_dsize,
+size_t OSSL_FSN_div_ctx_size_from_sizes(size_t q_dsize, size_t r_dsize,
     size_t n_dsize, size_t d_dsize)
 {
     size_t nl = n_dsize;
@@ -237,28 +237,28 @@ size_t OSSL_FN_div_ctx_size_from_sizes(size_t q_dsize, size_t r_dsize,
     max_n_limbs = safe_add_size_t(max_n_limbs, tmp, &err);
     max_n_limbs = safe_add_size_t(max_n_limbs, ql, &err);
 
-    return err == 0 ? OSSL_FN_CTX_size(1, max_n_numbers, max_n_limbs) : 0;
+    return err == 0 ? OSSL_FSN_CTX_size(1, max_n_numbers, max_n_limbs) : 0;
 }
 
-size_t OSSL_FN_div_ctx_size_from_nums(const OSSL_FN *q, const OSSL_FN *r,
-    const OSSL_FN *n, const OSSL_FN *d)
+size_t OSSL_FSN_div_ctx_size_from_nums(const OSSL_FSN *q, const OSSL_FSN *r,
+    const OSSL_FSN *n, const OSSL_FSN *d)
 {
     if (n == NULL || d == NULL)
         return 0;
 
-    return OSSL_FN_div_ctx_size_from_sizes(OSSL_FN_size_limbs(q),
-        OSSL_FN_size_limbs(r), n->dsize, d->dsize);
+    return OSSL_FSN_div_ctx_size_from_sizes(OSSL_FSN_size_limbs(q),
+        OSSL_FSN_size_limbs(r), n->dsize, d->dsize);
 }
 
 /* Trivia: this function implements Knuth's algorithm D */
-int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL_FN_CTX *ctx)
+int OSSL_FSN_div(OSSL_FSN *q, OSSL_FSN *r, const OSSL_FSN *n, const OSSL_FSN *d, OSSL_FSN_CTX *ctx)
 {
     if (ossl_unlikely(n == NULL || d == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FSN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    const void *token = OSSL_FN_CTX_start(ctx);
+    const void *token = OSSL_FSN_CTX_start(ctx);
     if (token == NULL)
         return 0;
 
@@ -280,7 +280,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
         dl--;
 
     if (dl == 0) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_DIV_BY_ZERO);
+        ERR_raise(ERR_LIB_OSSL_FSN, OSSL_FSN_R_DIV_BY_ZERO);
         goto err;
     }
 
@@ -292,7 +292,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * correct, but the remainder will have to be shifted "right" before the
      * end of this function.
      */
-    OSSL_FN_ULONG norm_shift = OSSL_FN_BITS - BN_num_bits_word(d->d[dl - 1]);
+    OSSL_FSN_ULONG norm_shift = OSSL_FSN_BITS - BN_num_bits_word(d->d[dl - 1]);
 
     /*
      * Store a copy the numerator in snum, padded with extra zeros if nl <= dl
@@ -301,7 +301,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * need to be allocated.
      */
     size_t snuml = ((nl <= dl) ? dl : nl) + 1;
-    OSSL_FN *snum = OSSL_FN_CTX_get_limbs(ctx, token, snuml);
+    OSSL_FSN *snum = OSSL_FSN_CTX_get_limbs(ctx, token, snuml);
     if (!ossl_assert(snuml <= INT_MAX && snum != NULL))
         goto err;
     copy_align_left(snum, n, norm_shift);
@@ -312,7 +312,7 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * the denominator's highest limb is a very small number.
      */
     size_t sdivl = dl;
-    OSSL_FN *sdiv = OSSL_FN_CTX_get_limbs(ctx, token, sdivl);
+    OSSL_FSN *sdiv = OSSL_FSN_CTX_get_limbs(ctx, token, sdivl);
     if (!ossl_assert(sdivl <= INT_MAX && sdiv != NULL))
         goto err;
     copy_align_left(sdiv, d, norm_shift);
@@ -334,25 +334,25 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
      * Set up the quotient.  It will be stored directly in |q| if it has
      * enough space, otherwise temporary storage is allocated.
      */
-    OSSL_FN *res = (ql < loop) ? OSSL_FN_CTX_get_limbs(ctx, token, loop) : q;
+    OSSL_FSN *res = (ql < loop) ? OSSL_FSN_CTX_get_limbs(ctx, token, loop) : q;
     if (!ossl_assert(res != NULL))
         goto err;
 
     /* Position of the next quotient limb to be calculated, plus one */
-    OSSL_FN_ULONG *resp = &(res->d[loop]);
+    OSSL_FSN_ULONG *resp = &(res->d[loop]);
 
     /* Intermediary storage */
-    OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, token, sdivl + 1);
+    OSSL_FSN *tmp = OSSL_FSN_CTX_get_limbs(ctx, token, sdivl + 1);
     if (!ossl_assert(tmp != NULL))
         goto err;
 
     /* Set up the "window" position in snum. */
-    OSSL_FN_ULONG *wnum = &(snum->d[loop]);
-    OSSL_FN_ULONG *wnumtop = &(snum->d[snuml - 1]);
+    OSSL_FSN_ULONG *wnum = &(snum->d[loop]);
+    OSSL_FSN_ULONG *wnumtop = &(snum->d[snuml - 1]);
 
     /* Get the top 2 words of the denominator */
-    OSSL_FN_ULONG d0 = sdiv->d[sdivl - 1];
-    OSSL_FN_ULONG d1 = (sdivl == 1) ? 0 : sdiv->d[sdivl - 2];
+    OSSL_FSN_ULONG d0 = sdiv->d[sdivl - 1];
+    OSSL_FSN_ULONG d1 = (sdivl == 1) ? 0 : sdiv->d[sdivl - 2];
 
     size_t i;
 
@@ -360,10 +360,10 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
     for (i = res->dsize; i > loop;)
         res->d[--i] = 0;
     for (i = 0; i < loop; i++, wnumtop--) {
-        OSSL_FN_ULONG quo, l0;
+        OSSL_FSN_ULONG quo, l0;
         /*
          * the first part of the loop uses the top two words of snum and sdiv
-         * to calculate a OSSL_FN_ULONG quo such that | wnum - d * q | < d
+         * to calculate a OSSL_FSN_ULONG quo such that | wnum - d * q | < d
          */
         quo = div_words(wnumtop, wnum, d1, d0);
 
@@ -372,14 +372,14 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
         wnum--;
 
         /*
-         * ignore top values of the bignums just sub the two OSSL_FN_ULONG
+         * ignore top values of the bignums just sub the two OSSL_FSN_ULONG
          * arrays with bn_sub_words
          */
         l0 = bn_sub_words(wnum, wnum, tmp->d, (int)sdivl + 1);
         quo -= l0;
 
         /*
-         * Note: As we have considered only the leading two OSSL_FN_ULONGs
+         * Note: As we have considered only the leading two OSSL_FSN_ULONGs
          * in the calculation of q, d * q might be greater than wnum
          * (but then (q-1) * d is less than or equal to wnum)
          */
@@ -397,12 +397,12 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d, OSSL
     if (r != NULL)
         copy_align_right(r, snum, norm_shift);
     /* res holds the quotient for a total of loop limbs, and is separate from q if ql < loop */
-    if (q != NULL && q != res && OSSL_FN_copy_truncate(q, res) == 0)
+    if (q != NULL && q != res && OSSL_FSN_copy_truncate(q, res) == 0)
         goto err;
 
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FSN_CTX_end(ctx, token);
     return 1;
 err:
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FSN_CTX_end(ctx, token);
     return 0;
 }
