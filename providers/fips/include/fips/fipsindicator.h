@@ -15,6 +15,7 @@
 #include <openssl/core.h> /* OSSL_CALLBACK, OSSL_LIB_CTX */
 #include <openssl/indicator.h>
 #include "crypto/types.h"
+#include "internal/params.h"
 #include <openssl/ec.h>
 #include "fipscommon.h"
 

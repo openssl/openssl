@@ -12,7 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/param_build.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include <openssl/self_test.h>

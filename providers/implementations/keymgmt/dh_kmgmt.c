@@ -12,6 +12,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 #include "internal/common.h"
 
 #include <string.h> /* strcmp */

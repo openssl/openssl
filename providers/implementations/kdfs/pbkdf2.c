@@ -12,6 +12,7 @@
  * use.
  */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 
 #include <stdlib.h>
 #include <stdarg.h>

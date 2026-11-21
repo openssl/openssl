@@ -10,7 +10,7 @@
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/hpke.h>

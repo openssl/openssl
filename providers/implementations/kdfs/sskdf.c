@@ -41,7 +41,7 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
@@ -52,7 +52,6 @@
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
-#include "internal/params.h"
 
 #define SSKDF_MAX_INLEN (1 << 30)
 #define SSKDF_MAX_INFOS 5

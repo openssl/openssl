@@ -11,7 +11,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/cryptoerr.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/types.h>
 #include <openssl/safestack.h>
 #include "internal/param_build_set.h"

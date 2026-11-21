@@ -11,7 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "prov/endecoder_local.h"
 #include "crypto/lms.h"
 #include "prov/bio.h"

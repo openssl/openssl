@@ -20,7 +20,7 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/dsa.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
 #include "internal/fips.h"

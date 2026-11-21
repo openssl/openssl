@@ -12,6 +12,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"

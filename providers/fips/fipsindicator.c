@@ -8,7 +8,7 @@
  */
 
 #include <openssl/indicator.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include "internal/common.h" /* for ossl_assert() */
 #include "fips/fipsindicator.h"

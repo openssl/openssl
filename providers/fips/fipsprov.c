@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/fips_names.h>
 #include <openssl/fipskey.h>
 #include <openssl/rand.h> /* RAND_get0_public() */

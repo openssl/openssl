@@ -32,7 +32,7 @@
 #include <openssl/asn1err.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "internal/asn1.h"
 #include "internal/sizes.h"
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */

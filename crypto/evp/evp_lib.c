@@ -19,7 +19,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/objects.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include <openssl/rsa.h>
 #include <openssl/dh.h>

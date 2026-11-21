@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include "internal/params.h"
 #include <stdarg.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>

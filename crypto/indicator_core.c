@@ -9,7 +9,7 @@
 
 #include <openssl/indicator.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
 

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include "../../ssl_local.h"
 #include "../record_local.h"

@@ -15,7 +15,7 @@
 
 #include <openssl/core_names.h>
 #include <openssl/objects.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/err.h>
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>

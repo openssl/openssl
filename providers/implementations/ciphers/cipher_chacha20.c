@@ -10,7 +10,7 @@
 /* Dispatch functions for chacha20 cipher */
 
 #include <openssl/proverr.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"

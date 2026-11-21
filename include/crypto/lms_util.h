@@ -13,7 +13,7 @@
 #define OSSL_CRYPTO_LMS_UTIL_H
 
 #include "internal/packet.h"
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 

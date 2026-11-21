@@ -13,7 +13,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include "internal/common.h"
 #include "internal/packet.h"

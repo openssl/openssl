@@ -19,7 +19,7 @@
 #include <openssl/core_object.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/pem.h> /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>

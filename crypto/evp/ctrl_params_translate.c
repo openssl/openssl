@@ -30,7 +30,7 @@
 
 #include <openssl/err.h>
 #include <openssl/evperr.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "internal/nelem.h"
 #include "internal/cryptlib.h"
 #include "internal/ffc.h"

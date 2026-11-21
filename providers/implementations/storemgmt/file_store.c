@@ -18,7 +18,7 @@
 
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include <openssl/store.h> /* The OSSL_STORE_INFO type numbers */
 #include "internal/cryptlib.h"

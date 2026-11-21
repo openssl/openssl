@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core_names.h>
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"

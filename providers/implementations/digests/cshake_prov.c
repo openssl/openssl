@@ -9,6 +9,7 @@
 
 /* including crypto/sha.h requires this for SHA256_CTX */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 /*
  * NOTE: By default CSHAKE sets secure xof lengths (OSSL_DIGEST_PARAM_XOFLEN)
  * that are used by EVP_DigestFinal_ex(). This differs from SHAKE where the
