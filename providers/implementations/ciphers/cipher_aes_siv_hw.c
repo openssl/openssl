@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_siv.h"
 
 static void aes_siv_cleanup(void *vctx);
@@ -126,9 +127,13 @@ static int aes_siv_cipher(void *vctx, unsigned char *out,
         return ossl_siv128_finish(sctx) == 0;
     }
 
-    /* Deal with associated data */
-    if (out == NULL)
-        return (ossl_siv128_aad(sctx, in, len) == 1);
+    if (out == NULL) {
+        if (sctx->final_ret == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+            return 0;
+        }
+        return ossl_siv128_aad(sctx, in, len) == 1;
+    }
 
     if (ctx->enc)
         return ossl_siv128_encrypt(sctx, in, out, len) > 0;
