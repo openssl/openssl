@@ -71,7 +71,17 @@ The certificate is self issued (that is subject and issuer names match).
 =item B<EXFLAG_SS>
 
 The subject and issuer names match and extension values imply it is self
-signed.
+signed, or the certificate is unsigned (see B<EXFLAG_US>).
+
+=item B<EXFLAG_US>
+
+The certificate is unsigned according to RFC 9925, that is,
+both its signature algorithm fields are B<id-alg-unsigned>
+and its signature value is empty.
+If only some of these conditions hold, B<EXFLAG_INVALID> is set instead.
+An unsigned certificate is not self signed, yet since it is handled like
+an apparently self-signed one, B<EXFLAG_SS> is set as well,
+even if its subject and issuer names differ.
 
 =item B<EXFLAG_FRESHEST>
 
@@ -83,7 +93,9 @@ The certificate contains an unhandled critical extension.
 
 =item B<EXFLAG_INVALID>
 
-Some certificate extension values are invalid or inconsistent.
+Some certificate extension values are invalid or inconsistent,
+e.g., the certificate has invalid extension values,
+or the certificate is only partly unsigned (see B<EXFLAG_US>).
 The certificate should be rejected.
 This bit may also be raised after an out-of-memory error while
 processing the X509 object, so it may not be related to the processed
@@ -208,6 +220,9 @@ L<X509_check_purpose(3)>
 
 X509_get_pathlen(), X509_set_proxy_flag(), X509_set_proxy_pathlen() and
 X509_get_proxy_pathlen() were added in OpenSSL 1.1.0.
+
+The B<EXFLAG_US> flag was added in OpenSSL 4.2.
+Since then, B<EXFLAG_SS> is set also for unsigned certificates.
 
 =head1 COPYRIGHT
 

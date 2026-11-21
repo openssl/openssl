@@ -116,6 +116,8 @@ int X509_self_signed(const X509 *cert, int verify_signature)
         return 0;
     if (!verify_signature)
         return 1;
+    if ((cert->ex_flags & EXFLAG_US) != 0) /* there is no signature to verify */
+        return 0;
     return X509_verify(cert, pkey);
 }
 
@@ -1104,14 +1106,17 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
         return X509_TRUST_UNTRUSTED;
     }
 
+    /*
+     * Last-resort call with no new trusted certificates,
+     * check the leaf for a direct trust store match
+     * if the leaf is unsigned or partial chains are allowed.
+     * An unsigned leaf is not necessarily self-issued, so it may not
+     * have been found as its own issuer while building the chain.
+     */
+    x = sk_X509_value(ctx->chain, 0);
     if (num_untrusted == num
-        && (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0) {
-        /*
-         * Last-resort call with no new trusted certificates, check the leaf
-         * for a direct trust store match.
-         */
-        i = 0;
-        x = sk_X509_value(ctx->chain, i);
+        && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0
+            || (X509_get_extension_flags(x) & EXFLAG_US) != 0)) {
         res = lookup_cert_match(&mx, ctx, x);
         if (res < 0)
             return res;
@@ -1197,7 +1202,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
             ctx->error_depth = i;
             ctx->current_cert = sk_X509_value(ctx->chain, i);
 
-            /* skip if cert is apparently self-signed */
+            /* skip if cert is deemed a trust anchor, being unsigned or apparently self-signed */
             if (ctx->current_cert->ex_flags & EXFLAG_SS)
                 continue;
 
@@ -1402,7 +1407,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     ctx->current_crl_score = 0;
     ctx->current_reasons = 0;
 
-    /* skip if cert is apparently self-signed */
+    /* skip if cert is deemed a trust anchor, being unsigned or apparently self-signed */
     if (ctx->current_cert->ex_flags & EXFLAG_SS)
         return 1;
     if ((x->ex_flags & EXFLAG_PROXY) != 0)
@@ -2445,8 +2450,12 @@ static int internal_verify(X509_STORE_CTX *ctx)
          */
         xi = NULL;
     } else if (ossl_x509_likely_issued(xi, xi) != X509_V_OK
-        /* exceptional case: last cert in the chain is not self-issued */
-        && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0)) {
+        /*
+         * Exceptional case: last cert in the chain is not self-issued.
+         * This is allowed if partial chains are permitted or the cert is RFC 9925 unsigned.
+         */
+        && (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0
+        && (xi->ex_flags & EXFLAG_US) == 0) {
         if (n > 0) {
             n--;
             ctx->error_depth = n;
@@ -2481,7 +2490,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (xi != NULL
             && (xs != xi
                 || ((ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE) != 0
-                    && (xi->ex_flags & EXFLAG_SS) != 0))) {
+                    && (xi->ex_flags & EXFLAG_SS) != 0
+                    /* an unsigned cert does not have a signature to check */
+                    && (xi->ex_flags & EXFLAG_US) == 0))) {
             EVP_PKEY *pkey;
             /*
              * If the issuer's public key is not available or its key usage

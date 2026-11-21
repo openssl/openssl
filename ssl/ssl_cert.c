@@ -1158,7 +1158,10 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
     X509_free(x);
     if (flags & SSL_BUILD_CHAIN_FLAG_NO_ROOT) {
         if (sk_X509_num(chain) > 0) {
-            /* See if last cert is self signed */
+            /*
+             * Exclude last cert if it is unsigned or apparently self-signed,
+             * which indicates that it is a trust anchor certificate.
+             */
             x = sk_X509_value(chain, sk_X509_num(chain) - 1);
             if (X509_get_extension_flags(x) & EXFLAG_SS) {
                 x = sk_X509_pop(chain);

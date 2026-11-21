@@ -73,7 +73,8 @@ The most crucial input to certificate validation is a I<trust store>,
 which includes a collection of certificates and validation options.
 This is akin to what is used in the trust stores of Mozilla Firefox,
 or Apple's and Microsoft's certificate stores, ...
-By default all apparently self-signed certificates in the trust store
+By default all apparently self-signed certificates and all unsigned
+certificates (as described below) in the trust store
 are considered to be trust anchors, for all or for specified purposes.
 
 For efficiency reasons, apparently self-signed certificates (based on certificate metadata)
@@ -107,6 +108,16 @@ and its C<GeneralNames> include at least one C<directoryName>,
 the first such name equals the C<issuer> field of the certificate.
 
 =back
+
+An I<unsigned> certificate according to RFC 9925 is one where both
+signature algorithm fields are B<id-alg-unsigned> and the signature is empty.
+Its issuer is typically equal to its subject
+or is the B<id-rdna-unsigned> placeholder name.
+Such a certificate is not self-signed, but it is handled in the same way
+as an apparently self-signed one, even if its issuer differs from its subject.
+Since it has no signature that could be checked, it is
+useful only as a trust anchor; elsewhere in a chain verification fails.
+A certificate that is only partly unsigned is considered invalid.
 
 Independent of any extended key usage (EKU) X.509v3 extension included,
 from the OpenSSL perspective a trust anchor certificate should be augmented
@@ -146,7 +157,8 @@ It has a positive trust attribute accepting
 the EKU associated with the intended purpose
 or it does not have any positive trust attribute
 and one of the following compatibility conditions apply:
-It is apparently self-signed or the B<-partial_chain> option is given
+It is apparently self-signed, it is unsigned,
+or the B<-partial_chain> option is given
 (which corresponds to the B<X509_V_FLAG_PARTIAL_CHAIN> flag being set).
 
 =back
@@ -242,7 +254,7 @@ in the L</Certificate Extensions> section below.
 The third step is to check the trust settings on the last certificate or
 trust anchor, which typically is given as a self-signed root CA certificate.
 If specified, it must be trusted for the given use.
-For compatibility, an apparently self-signed certificate
+For compatibility, an apparently self-signed or unsigned certificate
 with no trust attributes is considered to be valid for all uses.
 
 The fourth, and final, step is to check the validity of the certificate chain.
@@ -450,7 +462,8 @@ keys shorter than 1024 bits.
 
 Allow verification to succeed if an incomplete chain can be built.
 That is, a chain ending in a certificate that normally would not be trusted
-(because it is not self-signed and has no matching positive trust attributes)
+(because it is neither self-signed nor unsigned
+and has no matching positive trust attributes)
 but is an element of the trust store.
 This certificate may be self-issued or belong to an intermediate CA.
 
@@ -461,6 +474,7 @@ the last certificate in a chain if the certificate is apparently self-signed.
 This is prohibited and will result in an error if it is a non-conforming CA
 certificate with key usage restrictions not including the keyCertSign bit.
 This verification is disabled by default because it doesn't add any security.
+It has no effect on unsigned certificates, which do not have a signature.
 
 =item B<-allow_proxy_certs>
 
@@ -482,7 +496,8 @@ Since B<-trusted_first> is always on, this option has no effect.
 
 Parse I<file> as a set of one or more certificates in PEM format.
 Each of them qualifies as trusted if has a suitable positive trust attribute
-or it is apparently self-signed or the B<-partial_chain> option is specified.
+or it is apparently self-signed or unsigned
+or the B<-partial_chain> option is specified.
 This option implies the B<-no-CAfile>, B<-no-CApath>, and B<-no-CAstore> options
 and it cannot be used with the B<-CAfile>, B<-CApath> or B<-CAstore> options, so
 only certificates specified using the B<-trusted> option are trust anchors.
@@ -816,6 +831,9 @@ Since OpenSSL 1.1.0, the B<-trusted_first> option is always enabled.
 
 The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0,
 which has been partially reverted in OpenSSL 4.0.
+
+Since OpenSSL 4.2, RFC 9925 unsigned certificates in the trust store
+are accepted as trust anchors also without the B<-partial_chain> option.
 
 =head1 COPYRIGHT
 

@@ -557,6 +557,24 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
     OPENSSL_free(arr);
 }
 
+/*
+ * Return EXFLAG_US if |x| is unsigned according to RFC 9925, i.e., both of its
+ * signature algorithm fields are id-alg-unsigned and its signature is empty,
+ * EXFLAG_INVALID if only some of these three conditions hold, else 0.
+ * An empty signature alone does not count, as this is also the case
+ * for any certificate still under construction.
+ */
+static uint32_t unsigned_flags(const X509 *x)
+{
+    int n = (OBJ_obj2nid(x->cert_info.signature.algorithm) == NID_id_alg_unsigned)
+        + (OBJ_obj2nid(x->sig_alg.algorithm) == NID_id_alg_unsigned);
+
+    if (n == 0)
+        return 0;
+    n += ASN1_STRING_get_length(&x->signature) == 0;
+    return n == 3 ? EXFLAG_US : EXFLAG_INVALID;
+}
+
 #define V1_ROOT (EXFLAG_V1 | EXFLAG_SS)
 #define ku_reject(x, usage) \
     (((x)->ex_flags & EXFLAG_KUSAGE) != 0 && ((x)->ex_kusage & (usage)) == 0)
@@ -776,7 +794,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     if (tmp_akid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    /* Setting EXFLAG_SS is equivalent to ossl_x509_likely_issued(const_x, const_x) == X509_V_OK */
     if (X509_NAME_cmp(X509_get_subject_name(const_x), X509_get_issuer_name(const_x)) == 0) {
         tmp_ex_flags |= EXFLAG_SI; /* Certificate is self-issued: subject == issuer */
         /*
@@ -802,6 +819,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             tmp_ex_flags |= EXFLAG_SS;
         }
     }
+    tmp_ex_flags |= unsigned_flags(const_x);
+    /* Treat RFC 9925 unsigned certs like apparently self-signed ones */
+    if ((tmp_ex_flags & EXFLAG_US) != 0)
+        tmp_ex_flags |= EXFLAG_SS;
+    /* EXFLAG_SS is equivalent to ossl_x509_likely_issued(const_x, const_x) == X509_V_OK */
 
     /* Handle subject alternative names and various other extensions */
     tmp_altname = X509_get_ext_d2i(const_x, NID_subject_alt_name, &i, NULL);

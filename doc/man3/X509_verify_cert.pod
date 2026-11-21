@@ -94,7 +94,8 @@ B<Signature and validity period checks> on every certificate in the chain,
 walking from the trust anchor down to the target. The signature on the
 chain's terminating certificate is not verified: trust is taken from its
 presence in the trust store rather than from its signature. This applies
-both to a conventional self-signed trust anchor and, when
+both to a conventional self-signed trust anchor, to an RFC 9925 unsigned
+trust anchor (see B<EXFLAG_US> in L<X509_get_extension_flags(3)>), and, when
 B<X509_V_FLAG_PARTIAL_CHAIN> is in effect, to a non-self-signed
 intermediate promoted to anchor status. B<X509_V_FLAG_CHECK_SS_SIGNATURE>
 requests that the self-signature on a self-signed terminator be verified;
@@ -444,7 +445,10 @@ issuer is not built.
 B<X509_V_FLAG_PARTIAL_CHAIN> relaxes the trust-anchor requirement from
 the one defined by RFC 5280 section 6.1.1(d). With the flag set, any
 certificate in the trust store is acceptable as the terminator of the
-chain, even if it is not a self-signed root. This is an intentional and
+chain, even if it is not a self-signed root.
+Without the flag, an RFC 9925 unsigned certificate in the trust store is
+accepted as terminator as well, since it is handled like a self-signed
+certificate and can serve only as a trust anchor. This is an intentional and
 now-common deviation that supports modern practices such as pinning trust
 to a specific intermediate, or shortening chains by treating a
 sufficiently-trusted intermediate as the trust point and eliding the root
@@ -477,6 +481,9 @@ L<X509_VERIFY_PARAM_set_flags(3)>
 =head1 HISTORY
 
 X509_build_chain() and X509_STORE_CTX_verify() were added in OpenSSL 3.0.
+
+Since OpenSSL 4.2, RFC 9925 unsigned certificates in the trust store
+are accepted as trust anchors also without the B<-partial_chain> option.
 
 =head1 COPYRIGHT
 

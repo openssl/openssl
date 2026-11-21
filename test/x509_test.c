@@ -153,6 +153,7 @@ static int test_x509_make_unsigned(void)
 {
     const unsigned char *p = certdata;
     X509 *x = NULL, *decoded = NULL;
+    STACK_OF(X509) *sk = NULL;
     X509_NAME *issuer = NULL, *empty_issuer = NULL;
     int derlen, ret = 0;
 
@@ -161,6 +162,7 @@ static int test_x509_make_unsigned(void)
     if (!TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
         || !TEST_ptr(issuer = X509_NAME_dup(X509_get_issuer_name(x)))
         || !TEST_ptr(X509_NAME_get_entry(issuer, 0))
+        || !TEST_false(X509_get_extension_flags(x) & EXFLAG_US)
         || !TEST_true(X509_set_unsigned(x))
         || !TEST_int_eq(X509_NAME_cmp(X509_get_issuer_name(x), issuer), 0)
         || !TEST_true(test_x509_is_unsigned(x)))
@@ -174,7 +176,17 @@ static int test_x509_make_unsigned(void)
     if (!TEST_ptr(decoded = d2i_X509(NULL, &p, derlen))
         || !TEST_ptr_eq(p, der + derlen)
         || !TEST_int_eq(X509_NAME_cmp(X509_get_issuer_name(decoded), issuer), 0)
-        || !TEST_true(test_x509_is_unsigned(decoded)))
+        || !TEST_true(test_x509_is_unsigned(decoded))
+        || !TEST_true(X509_get_extension_flags(decoded) & EXFLAG_US)
+        || !TEST_true(X509_get_extension_flags(decoded) & EXFLAG_SS))
+        goto end;
+
+    /* X509_ADD_FLAG_NO_SS excludes unsigned certs, like self-signed ones */
+    if (!TEST_ptr(sk = sk_X509_new_null())
+        || !TEST_int_eq(X509_add_cert(sk, decoded, X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_SS), 1)
+        || !TEST_int_eq(sk_X509_num(sk), 0)
+        || !TEST_int_eq(X509_add_cert(sk, decoded, X509_ADD_FLAG_UP_REF), 1)
+        || !TEST_int_eq(sk_X509_num(sk), 1))
         goto end;
 
     if (!TEST_ptr(X509_NAME_get_entry(X509_get_subject_name(decoded), 0))
@@ -186,6 +198,7 @@ static int test_x509_make_unsigned(void)
     ret = 1;
 
 end:
+    OSSL_STACK_OF_X509_free(sk);
     OPENSSL_free(der);
     X509_NAME_free(empty_issuer);
     X509_NAME_free(issuer);

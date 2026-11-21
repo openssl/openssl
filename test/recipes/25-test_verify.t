@@ -84,7 +84,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 240;
+plan tests => 246;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -854,28 +854,50 @@ ok(vfy_root("-CAstore", "file:".$abs_cert), "CAstore file:/path"); # we allow dr
 ok(vfy_root("-CAstore", "file://localhost".$abs_cert), "CAstore file://localhost/path");
 ok(!vfy_root("-CAstore", "file://otherhost".$abs_cert), "CAstore file://otherhost/path");
 
-# Trusted unsigned certs (RFC 9925), which are never self-signed,
-# are accepted so far only when -partial_chain is given
+# Trusted RFC 9925 unsigned certs, which are never self-signed,
+# are accepted also without -partial_chain
+# unsigned root CA cert
 ok(run(app(["openssl", "x509", "-in", $rootcert, "-unsigned", "-out", "u-root.pem"])),
    "create unsigned root CA cert");
+ok(verify("ee-cert", "", ["u-root"], ["ca-cert"]),
+   "accept chain to trusted unsigned root CA cert, regardless of -partial_chain");
+ok(verify("u-root", "", ["u-root"], []),
+   "accept directly trusted unsigned root CA cert, regardless of -partial_chain");
+ok(run(app(["openssl", "x509", "-in", "u-root.pem",
+            "-addtrust", "anyExtendedKeyUsage", "-out", "u-root-trusted.pem"]))
+   && verify("ee-cert", "", ["u-root-trusted"], ["ca-cert"]),
+   "accept chain to unsigned root CA cert with explicit trust settings");
+ok(!verify("ee-cert", "", [], [qw(u-root ca-cert)]),
+   "reject chain to untrusted unsigned root CA cert");
+ok(run(app(["openssl", "x509", "-in", $rootcert, "-unsigned",
+            "-set_issuer", "/","-out", "u-rdna-root.pem"])),
+   "create unsigned root CA cert with id-rdna-unsigned");
+ok(verify("ee-cert", "", ["u-rdna-root"], ["ca-cert"]),
+   "accept chain to trusted unsigned root CA cert with id-rdna-unsigned");
+ok(make_empty_crl("u-root-ca", $ca_cert, $ca_key, "u-root-ca.crl")
+   && make_empty_crl("u-root-root", $rootcert,
+                     srctop_file(@certspath, "root-key.pem"), "u-root-root.crl")
+   && verify("ee-cert", "", ["u-rdna-root"], ["ca-cert"], "-crl_check_all",
+             "-CRLfile", "u-root-ca.crl", "-CRLfile", "u-root-root.crl"),
+   "accept chain to trusted unsigned root CA cert with id-rdna-unsigned with CRL_CHECK_ALL");
+# unsigned 'intermediate CA' cert
+ok(run(app(["openssl", "x509", "-in", srctop_file(@certspath, "ca-cert.pem"),
+            "-unsigned", "-set_issuer", "/CN=Root CA", "-out", "u-ca-cert.pem"])),
+   "create unsigned intermediate CA cert");
+ok(verify("u-ca-cert", "", ["u-ca-cert"], []),
+   "accept directly trusted unsigned intermediate CA cert, regardless of -partial_chain");
+ok(!verify("ee-cert", "", ["root-cert"], ["u-ca-cert"], "-partial_chain"),
+   "reject chain with unsigned intermediate CA cert, even with -partial_chain");
+# unsigned end-entity cert
 ok(run(app(["openssl", "x509", "-in", srctop_file(@certspath, "ee-cert.pem"),
             "-unsigned", "-out", "u-ee.pem"])),
    "create unsigned end-entity cert");
-ok(verify("ee-cert", "", [qw(u-root)], [qw(ca-cert)], "-partial_chain"),
-   "accept chain to trusted unsigned root CA cert with -partial_chain");
-ok(verify("u-root", "", [qw(u-root)], [], "-partial_chain"),
-   "accept trusted unsigned root CA cert itself with -partial_chain");
-ok(!verify("ee-cert", "", [qw(u-root)], [qw(ca-cert)]),
-   "reject chain to trusted unsigned root CA cert without -partial_chain");
-ok(run(app(["openssl", "x509", "-in", "u-root.pem",
-            "-addtrust", "anyExtendedKeyUsage", "-out", "u-root-trusted.pem"]))
-   && verify("ee-cert", "", [qw(u-root-trusted)], [qw(ca-cert)]),
-   "accept chain to unsigned root CA cert with explicit trust settings");
-ok(!verify("ee-cert", "", [], [qw(u-root ca-cert)], "-partial_chain"),
-   "reject chain to untrusted unsigned root CA cert");
-ok(verify("u-ee", "", [qw(u-ee)], [], "-partial_chain"),
-   "accept trusted unsigned end-entity cert with -partial_chain");
-ok(!verify("u-ee", "", [qw(u-ee)], []),
-   "reject trusted unsigned end-entity cert without -partial_chain");
-ok(!verify("u-ee", "", [qw(root-cert)], [qw(ca-cert)], "-partial_chain"),
-   "reject unsigned end-entity cert as issued by a CA");
+ok(verify("u-ee", "", ["u-ee"], []),
+   "accept directly trusted unsigned end-entity cert regardless of -partial_chain");
+ok(!verify("u-ee", "", ["root-cert"], ["ca-cert"], "-partial_chain"),
+   "reject unsigned end-entity cert as issued by a CA, even with -partial_chain");
+ok(run(app(["openssl", "x509", "-in", srctop_file(@certspath, "ee-cert.pem"),
+            "-unsigned", "-set_issuer", "/", "-out", "u-rdna-ee.pem"])),
+   "create unsigned end-entity cert with id-rdna-unsigned");
+ok(verify("u-rdna-ee", "", ["u-rdna-ee"], []),
+   "accept directly trusted unsigned end-entity cert with id-rdna-unsigned");
