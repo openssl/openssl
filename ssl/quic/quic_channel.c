@@ -2404,6 +2404,9 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         if (ch->qrx_pkt->hdr->version != 0)
             return;
 
+        if (!ossl_quic_conn_id_eq(&ch->qrx_pkt->hdr->src_conn_id, &ch->init_dcid))
+            return;
+
         /*
          * RFC 9000 s. 6.2: If a client receives a version negotiation
          * packet, we need to do the following:
@@ -4125,4 +4128,9 @@ uint64_t ossl_quic_channel_get_path_challenge_count(const QUIC_CHANNEL *ch)
 uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch)
 {
     return ch->path_response_tx;
+}
+
+const QUIC_CONN_ID *ossl_quic_channel_get_init_dcid(const QUIC_CHANNEL *ch)
+{
+    return &ch->init_dcid;
 }
