@@ -123,6 +123,9 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
      */
     if (*pos == NULL || cms->contentIncomplete)
         return BIO_new(BIO_s_mem());
+    /* Empty content may have no data, which BIO_new_mem_buf() rejects */
+    if ((*pos)->data == NULL)
+        return BIO_new_mem_buf("", 0);
     /* Else content was read in: return read only BIO for it */
     return BIO_new_mem_buf((*pos)->data, (*pos)->length);
 }
