@@ -207,6 +207,19 @@ static int dtls1_write_hm_header(unsigned char *msgheaderstart,
 }
 
 /*
+ * Take back the room dtls1_do_write() made for a fragment's header, if any, so
+ * that the message is described again as it was when the fragment was started.
+ * Used whenever the fragment is not accepted, so that the next call makes the
+ * room once rather than adding to it.
+ */
+static void dtls1_undo_fragment_header_room(SSL_CONNECTION *s, size_t *room)
+{
+    s->init_off += *room;
+    s->init_num -= *room;
+    *room = 0;
+}
+
+/*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE,
  * SSL3_RT_CHANGE_CIPHER_SPEC or SSL3_RT_ACK)
  *
@@ -231,6 +244,8 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
     uint8_t saved_payload[DTLS1_HM_HEADER_LENGTH];
+    /* Room made in front of the current fragment for its header, if any */
+    size_t header_room = 0;
     /* msg_len, msg_seq, msg_type are only used for recordtype == SSL3_RT_HANDSHAKE */
     const size_t msg_len = s->d1->w_msg.msg_body_len;
     const unsigned short msg_seq = s->d1->w_msg.msg_seq;
@@ -281,6 +296,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              */
             s->init_off -= DTLS1_HM_HEADER_LENGTH;
             s->init_num += DTLS1_HM_HEADER_LENGTH;
+            header_room = DTLS1_HM_HEADER_LENGTH;
         }
 
         used_len = BIO_wpending(s->wbio) + overhead;
@@ -296,13 +312,14 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
             ret = BIO_flush(s->wbio);
             if (ret <= 0) {
                 s->rwstate = SSL_WRITING;
-                return ret;
+                goto err;
             }
             if (s->d1->mtu >= overhead + min_len) {
                 curr_mtu = s->d1->mtu - overhead;
             } else {
                 /* Shouldn't happen */
-                return -1;
+                ret = -1;
+                goto err;
             }
         }
 
@@ -348,12 +365,14 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
 
             if (len < DTLS1_HM_HEADER_LENGTH
                 || !dtls1_write_hm_header(msgstart, msg_type, msg_len,
-                    msg_seq, fragoff, fraglen))
+                    msg_seq, fragoff, fraglen)) {
                 /*
                  * len is so small that we really can't do anything sensible
                  * so fail
                  */
-                return -1;
+                ret = -1;
+                goto err;
+            }
 
             /*
              * Recorded so do_dtls1_write() (rec_layer_d1.c) can tag this
@@ -376,19 +395,24 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              * retransmit anything.  continue as if everything is fine and
              * wait for an alert to handle the retransmit
              */
+            ret = -1;
             if (retry && BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0
                 && !(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)) {
                 size_t old_mtu = s->d1->mtu;
 
                 if (!dtls1_query_mtu(s))
-                    return -1;
+                    goto err;
                 /* If MTU didn't change, retry is meaningless */
                 if (s->d1->mtu == old_mtu)
-                    return -1;
-                /* Have one more go */
+                    goto err;
+                /*
+                 * Have one more go. The fragment was not written, so take back
+                 * the room for its header. Going round again makes it once more.
+                 */
+                dtls1_undo_fragment_header_room(s, &header_room);
                 retry = 0;
             } else {
-                return -1;
+                goto err;
             }
         } else {
 
@@ -396,8 +420,13 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              * bad if this assert fails, only part of the handshake message
              * got sent.  but why would this happen?
              */
-            if (!ossl_assert(len == written))
-                return -1;
+            if (!ossl_assert(len == written)) {
+                ret = -1;
+                goto err;
+            }
+
+            /* The fragment, header included, has been accepted */
+            header_room = 0;
 
             /*
              * We should not exceed the MTU size. If compression is in use
@@ -472,6 +501,11 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
         }
     }
     return 0;
+
+err:
+    /* The fragment was not written, so don't leave the room for its header made */
+    dtls1_undo_fragment_header_room(s, &header_room);
+    return ret;
 }
 
 int dtls_get_message(SSL_CONNECTION *s, int *mt)
