@@ -849,7 +849,8 @@ int SSL_get_conn_close_info(SSL *ssl,
 If a connection is still healthy, returns 0. Otherwise, fills `*info` with
 information about the error causing connection termination and returns 1.
 `info_len` must be set to `sizeof(*info)`. Returns -1 if called on a non-QUIC
-SSL object or if the connection status cannot be determined.
+SSL object, a QUIC object that is not a connection (such as a stream, listener,
+or domain), or if the connection status cannot be determined.
 
 `info->reason` is set to point to a buffer containing a reason string. The
 buffer is valid for the lifetime of the SSL object. The reason string will
