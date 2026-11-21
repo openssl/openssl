@@ -226,6 +226,11 @@ connection I<s>, using a specific B<OSSL_HPKE_SUITE> as the value for I<suite>
 client to add a GREASE'd ECH for the B<SSL> connection I<s>, using the
 specified ClientHello extension number I<type>.
 
+If no suite has been set with SSL_ech_set1_grease_suite(), GREASE ECH uses
+HKDF-SHA256, AES-128-GCM and X25519, or P-256 if X25519 cannot be fetched with
+the library context and property query of the B<SSL_CTX>, for example with a
+FIPS provider from OpenSSL 3.4 or later and the property query "fips=yes".
+
 Clients and servers can query the status of ECH for a B<SSL> connection I<s>,
 using the SSL_ech_get1_status() function. As SNI handling is core to ECH this
 will also return the I<inner_sni> and I<outer_sni> values to be used or that

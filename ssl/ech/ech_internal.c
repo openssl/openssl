@@ -278,10 +278,33 @@ err:
 #define OSSL_ECH_MAX_GREASE_PUB 0x100 /* buffer size for 'enc' values */
 #define OSSL_ECH_MAX_GREASE_CT 0x200 /* max GREASEy ciphertext we'll emit */
 
+/**
+ * @brief Replace an X25519 KEM in a GREASE suite with P-256 when X25519 key
+ * management cannot be fetched, e.g. with a FIPS provider from OpenSSL 3.4 or
+ * later and "fips=yes".
+ * @param sctx the SSL_CTX whose library context and property query are used
+ * @param suite the HPKE suite to check, may be updated in place
+ */
+static void ech_grease_fixup_kem(const SSL_CTX *sctx, OSSL_HPKE_SUITE *suite)
+{
+    EVP_KEYMGMT *keymgmt = NULL;
+
+    if (suite->kem_id != OSSL_HPKE_KEM_ID_X25519)
+        return;
+    ERR_set_mark();
+    keymgmt = EVP_KEYMGMT_fetch(sctx->libctx, OSSL_HPKE_KEMSTR_X25519,
+        sctx->propq);
+    ERR_pop_to_mark();
+    if (keymgmt == NULL)
+        suite->kem_id = OSSL_HPKE_KEM_ID_P256;
+    EVP_KEYMGMT_free(keymgmt);
+}
+
 /*
  * Send a random value that looks like a real ECH.
  *
  * We do GREASEing as follows:
+ *   - by default X25519, or P-256 if X25519 cannot be fetched
  *   - always HKDF-SHA256
  *   - always AES-128-GCM
  *   - random config ID, even for requests to same server in same session
@@ -325,6 +348,8 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
             return 0;
         }
         hpke_suite_in_p = &hpke_suite_in;
+    } else {
+        ech_grease_fixup_kem(sctx, &hpke_suite);
     }
     if (OSSL_HPKE_get_grease_value(hpke_suite_in_p, &hpke_suite,
             senderpub, &senderpub_len,

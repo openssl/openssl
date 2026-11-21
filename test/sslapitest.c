@@ -19518,6 +19518,64 @@ end:
 }
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 
+#if !defined(OPENSSL_NO_ECH) && !defined(OSSL_NO_USABLE_TLS1_3) \
+    && !defined(OPENSSL_NO_EC)
+/**
+ * @brief Check that ECH GREASE works when X25519 cannot be fetched, as with
+ * a FIPS provider from OpenSSL 3.4 or later and "fips=yes"
+ * (https://github.com/openssl/openssl/issues/33724).
+ * @returns 1 if the test passes, 0 if it fails, or the TEST_skip() result
+ * when not run with the FIPS provider or when X25519 can be fetched
+ */
+static int test_ech_grease_fips(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    EVP_KEYMGMT *x25519 = NULL;
+    char *inner = NULL, *outer = NULL;
+    int testresult = 0;
+
+    if (!is_fips)
+        return TEST_skip("Only relevant with the FIPS provider");
+
+    ERR_set_mark();
+    x25519 = EVP_KEYMGMT_fetch(libctx, "X25519", "fips=yes");
+    ERR_pop_to_mark();
+    if (x25519 != NULL) {
+        EVP_KEYMGMT_free(x25519);
+        return TEST_skip("X25519 is approved by this FIPS provider");
+    }
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, "fips=yes",
+                      TLS_client_method()))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set1_groups_list(cctx, "P-256"))
+        || !TEST_true(SSL_CTX_set_options(cctx, SSL_OP_ECH_GREASE))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_ech_get1_status(clientssl, &inner, &outer),
+            SSL_ECH_STATUS_GREASE))
+        goto end;
+
+    testresult = 1;
+
+end:
+    OPENSSL_free(inner);
+    OPENSSL_free(outer);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
 static int test_ssl_conf_flags(void)
 {
     SSL_CONF_CTX *cctx = NULL;
@@ -20140,6 +20198,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_http_verbs, 3);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_grease);
+#endif
+#if !defined(OPENSSL_NO_ECH) && !defined(OSSL_NO_USABLE_TLS1_3) \
+    && !defined(OPENSSL_NO_EC)
+    ADD_TEST(test_ech_grease_fips);
 #endif
     return 1;
 
