@@ -307,7 +307,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
     int i;
     BIO_ADDRINFO *res = NULL;
     const BIO_ADDRINFO *next;
-    int sock_family, sock_type, sock_protocol, sock_port;
+    int sock_family, sock_type, sock_protocol;
+    int report_port = 0;
     const BIO_ADDR *sock_address;
     int sock_family_fallback = AF_UNSPEC;
     const BIO_ADDR *sock_address_fallback = NULL;
@@ -391,12 +392,25 @@ int do_server(int *accept_sock, const char *host, const char *port,
     }
 #endif
 
-    sock_port = BIO_ADDR_rawport(sock_address);
+    /*
+     * Only Internet sockets can be bound to an automatically assigned port.
+     * Use the address that was actually bound, including after a fallback.
+     */
+    switch (BIO_ADDR_family(sock_address)) {
+    case AF_INET:
+#ifdef AF_INET6
+    case AF_INET6:
+#endif
+        report_port = BIO_ADDR_rawport(sock_address) == 0;
+        break;
+    default:
+        break;
+    }
 
     BIO_ADDRINFO_free(res);
     res = NULL;
 
-    if (!report_server_accept(bio_s_out, asock, sock_port == 0, 0)) {
+    if (!report_server_accept(bio_s_out, asock, report_port, 0)) {
         BIO_closesocket(asock);
         ERR_print_errors(bio_err);
         goto end;
