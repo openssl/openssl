@@ -1071,6 +1071,15 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
     OSSL_LIB_CTX *libctx);
 
 PBKDF2PARAM *PBMAC1_get1_pbkdf2_param(const X509_ALGOR *macalg);
+
+/**
+ * @brief Get PBMAC1 parameters from X509_ALGOR struct.
+ * Retrieve PBMAC1 parameters using the MAC Algorithm ID from the ASN1 sequence.
+ * @param macalg pointer to the X509_ALGOR struct
+ * @returns pointer to a PBMAC1PARAM struct or NULL when passed incorrect parameters
+ * @see PBMAC1_get1_param(3)
+ */
+PBMAC1PARAM *PBMAC1_get1_param(const X509_ALGOR *macalg);
 /* PKCS#8 utilities */
 
 DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)

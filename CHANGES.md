@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added PBMAC1 Message Authentication Scheme in PKCS #12 info, and
+   `PBMAC1_get1_param()` as a supporting function.
+
+   *Lumi Yamori*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
