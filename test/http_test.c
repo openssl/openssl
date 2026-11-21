@@ -13,6 +13,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
+#include <limits.h>
 #include <string.h>
 
 #include "testutil.h"
@@ -717,6 +718,299 @@ static int test_hdr_resp_hdr_limit_256(void)
     return test_http_resp_hdr_limit(256);
 }
 
+/**
+ * @struct resp_test_fixture_st
+ * @brief An HTTP response to be received via OSSL_HTTP_REQ_CTX_nbio(),
+ * with the request settings and the outcome expected for it.
+ */
+typedef struct resp_test_fixture_st {
+    const char *resp; /**< Response bytes */
+    size_t resp_len; /**< Length of resp */
+    size_t max_hdr_lines; /**< Max. number of response header lines, or 0 */
+    const char *expected_ct; /**< Expected Content-Type, or NULL */
+    int expect_asn1; /**< Response content must be ASN.1-encoded */
+    int keep_alive; /**< Persistent conn. 0=no, 1=prefer, 2=require */
+    int exp_ret; /**< Expected final result of OSSL_HTTP_REQ_CTX_nbio() */
+    int exp_reason; /**< Expected HTTP error reason code if exp_ret == 0 */
+    size_t expected_body_len; /**< Expected ASN.1 body length on success */
+    int expect_alive; /**< Expected connection persistence on success */
+} RESP_TEST_FIXTURE;
+
+/**
+ * @def RESP(s)
+ * Expands to the resp and resp_len initialisers of RESP_TEST_FIXTURE.
+ * @param s string literal holding the response
+ */
+#define RESP(s) s, sizeof(s) - 1
+
+/**
+ * @def KEEP_ALIVE_HDR
+ * Request header including the preceding and terminating CRLF.
+ */
+#define KEEP_ALIVE_HDR "\r\nConnection: keep-alive\r\n"
+
+/**
+ * @brief Send a GET request on |rctx| and receive |fixture->resp|.
+ * Checks that the request carries "Connection: keep-alive" exactly when
+ * keep-alive is requested, and that the outcome is the expected one.
+ * @param rctx context created by new_nbio_ctx()
+ * @param wbio request BIO of |rctx|
+ * @param rbio response BIO chain of |rctx|
+ * @param fixture response to receive and expected outcome
+ * @param piecemeal if nonzero, provide the response one byte per call
+ * of OSSL_HTTP_REQ_CTX_nbio(), else all at once
+ * @returns 1 if all checks pass, else 0
+ */
+static int exchange(OSSL_HTTP_REQ_CTX *rctx, BIO *wbio, BIO *rbio,
+    const RESP_TEST_FIXTURE *fixture, int piecemeal)
+{
+    size_t i;
+    unsigned long err;
+    char *sent;
+    long sent_len;
+    int ret = -1, found_ka = 0, chunk;
+
+    (void)BIO_reset(wbio);
+    if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            NULL, NULL, RPATH))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, fixture->expected_ct,
+            fixture->expect_asn1, 0, fixture->keep_alive))
+        /* adds the Connection header if keep-alive is requested */
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set1_req(rctx, NULL, NULL, NULL)))
+        return 0;
+    OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(rctx, fixture->max_hdr_lines);
+
+    /* send GET request; no response available yet, so result should request retry */
+    if (!TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(rctx), -1))
+        return 0;
+
+    sent_len = BIO_get_mem_data(wbio, &sent);
+    for (i = 0; sent_len > 0 && i + strlen(KEEP_ALIVE_HDR) <= (size_t)sent_len; i++)
+        if (strncmp(sent + i, RESP(KEEP_ALIVE_HDR)) == 0)
+            found_ka = 1;
+    if (!TEST_int_eq(found_ka, fixture->keep_alive != 0))
+        return 0;
+
+    ERR_clear_error();
+    /* core of the test: simulate full or piecemeal response transfer */
+    if (!TEST_size_t_le(fixture->resp_len, INT_MAX))
+        return 0;
+    chunk = piecemeal ? 1 : (int)fixture->resp_len;
+    for (i = 0; i < fixture->resp_len && ret == -1; i += (size_t)chunk) {
+        /* provide to the buffer part/all of the response */
+        if (!TEST_int_eq(BIO_write(BIO_next(rbio), fixture->resp + i, chunk), chunk))
+            return 0;
+        ret = OSSL_HTTP_REQ_CTX_nbio(rctx);
+    }
+
+    if (!TEST_int_eq(ret, fixture->exp_ret))
+        return 0;
+    if (fixture->exp_ret == 0) {
+        err = ERR_peek_last_error();
+        if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_HTTP)
+            || !TEST_int_eq(ERR_GET_REASON(err), fixture->exp_reason))
+            return 0;
+    } else if (!TEST_int_eq(OSSL_HTTP_is_alive(rctx), fixture->expect_alive)
+        || (fixture->expect_asn1
+            && !TEST_size_t_eq(OSSL_HTTP_REQ_CTX_get_resp_len(rctx),
+                fixture->expected_body_len))) {
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief Create an OSSL_HTTP_REQ_CTX on mem BIOs for non-blocking I/O.
+ * Reading from the response BIO signals retry while no data is available.
+ * BIO_gets() on a mem BIO does not signal retry, hence the buffer BIO on
+ * top of it. Response data is written to BIO_next(*rbio).
+ * @param wbio set to the BIO receiving the request, freed by the caller
+ * @param rbio set to the BIO chain providing the response, freed by the
+ * caller with BIO_free_all()
+ * @returns the new context, or NULL on error
+ */
+static OSSL_HTTP_REQ_CTX *new_nbio_ctx(BIO **wbio, BIO **rbio)
+{
+    BIO *in = NULL;
+
+    *rbio = NULL;
+    if (!TEST_ptr(*wbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(*rbio = BIO_new(BIO_f_buffer()))
+        || !TEST_ptr(in = BIO_new(BIO_s_mem())))
+        return NULL;
+    BIO_set_mem_eof_return(in, -1);
+    *rbio = BIO_push(*rbio, in);
+    return OSSL_HTTP_REQ_CTX_new(*wbio, *rbio, 1024);
+}
+
+/**
+ * Responses whose outcome must not depend on how they are split across
+ * calls to OSSL_HTTP_REQ_CTX_nbio() that return -1.
+ */
+static const RESP_TEST_FIXTURE split_resp_tests[] = {
+    /* 4 response header lines (including the empty one) exceed limit 2 */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "X-Test-A: 1\r\n"
+           "X-Test-B: 2\r\n"
+           "\r\n"),
+        .max_hdr_lines = 2,
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_RESPONSE_TOO_MANY_HDRLINES },
+    /*-
+     * Text Content-Type on status 200 while ASN.1 is expected.
+     * The piecemeal case checks preservation of the status code across calls.
+     * If it were reset to 0, the expected Content-Type mismatch would not
+     * be reported and the test would fail.
+     */
+    { RESP("HTTP/1.1 200 OK\r\n"
+           "Content-Type: text/plain\r\n"
+           "\r\n"),
+        .expect_asn1 = 1,
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_CONTENT_TYPE_MISMATCH },
+    /* expected Content-Type was given before end of headers */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: text/plain\r\n"
+           "X-Test: 1\r\n"
+           "\r\n"),
+        .expected_ct = "text/plain",
+        .exp_ret = 1,
+        .expect_alive = 0 },
+    /* HTTP/1.1 implies keep-alive, as required by the client */
+    { RESP("HTTP/1.1 200 OK\r\n"
+           "Content-Type: text/plain\r\n"
+           "\r\n"),
+        .keep_alive = 2,
+        .exp_ret = 1,
+        .expect_alive = 1 },
+    /* ASN.1 response body is read after the headers */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: application/octet-stream\r\n"
+           "Content-Length: 2\r\n"
+           "\r\n"
+           "\x30\x00"),
+        .expect_asn1 = 1,
+        .exp_ret = 1,
+        .expected_body_len = 2,
+        .expect_alive = 0 },
+    /* server persistence does not enable keep-alive without a request */
+    { RESP("HTTP/1.1 200 OK\r\n"
+           "Content-Length: 0\r\n"
+           "\r\n"),
+        .keep_alive = 0,
+        .exp_ret = 1,
+        .expect_alive = 0 },
+    /* the server may decline keep-alive when it is only preferred */
+    { RESP("HTTP/1.1 200 OK\r\n"
+           "Connection: close\r\n"
+           "Content-Length: 0\r\n"
+           "\r\n"),
+        .keep_alive = 1,
+        .exp_ret = 1,
+        .expect_alive = 0 },
+};
+
+/**
+ * @brief Receive split_resp_tests[idx / 2], all at once if idx is even,
+ * else one byte at a time.
+ * @param idx test iteration index
+ * @returns 1 on success, else 0
+ */
+static int test_http_split_resp(int idx)
+{
+    int piecemeal = idx % 2;
+    BIO *wbio = NULL, *rbio = NULL;
+    OSSL_HTTP_REQ_CTX *rctx = new_nbio_ctx(&wbio, &rbio);
+    int res;
+
+    TEST_info("response #%d, %s", idx / 2,
+        piecemeal ? "piecemeal" : "at once");
+    res = rctx != NULL
+        && exchange(rctx, wbio, rbio, &split_resp_tests[idx / 2], piecemeal);
+
+    ERR_clear_error();
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free_all(rbio);
+    return res;
+}
+
+/**
+ * Pairs of responses received in order on the same OSSL_HTTP_REQ_CTX over
+ * a persistent connection, the first response being complete before the
+ * second request is sent. The outcome for each response must not depend
+ * on the one before it.
+ */
+static const RESP_TEST_FIXTURE reuse_resp_tests[][2] = {
+    /* 4 response header lines each, 8 in total, limit 4 */
+    {
+        { RESP("HTTP/1.1 200 OK\r\n"
+               "Content-Type: text/plain\r\n"
+               "Content-Length: 0\r\n"
+               "\r\n"),
+            .max_hdr_lines = 4,
+            .keep_alive = 2,
+            .exp_ret = 1,
+            .expect_alive = 1 },
+        { RESP("HTTP/1.1 200 OK\r\n"
+               "Content-Type: text/plain\r\n"
+               "Content-Length: 0\r\n"
+               "\r\n"),
+            .max_hdr_lines = 4,
+            .keep_alive = 2,
+            .exp_ret = 1,
+            .expect_alive = 1 },
+    },
+    /*-
+     * Both requests expect text/plain, but only the first response provides it.
+     * The second must fail if its own Content-Type header is missing.
+     */
+    {
+        { RESP("HTTP/1.1 200 OK\r\n"
+               "Content-Type: text/plain\r\n"
+               "Content-Length: 0\r\n"
+               "\r\n"),
+            .expected_ct = "text/plain",
+            .keep_alive = 2,
+            .exp_ret = 1,
+            .expect_alive = 1 },
+        { RESP("HTTP/1.1 200 OK\r\n"
+               "Content-Length: 0\r\n"
+               "\r\n"),
+            .expected_ct = "text/plain",
+            .keep_alive = 2,
+            .exp_ret = 0,
+            .exp_reason = HTTP_R_MISSING_CONTENT_TYPE },
+    },
+};
+
+/**
+ * @brief Receive the pair reuse_resp_tests[idx / 2] on one context, each
+ * response all at once if idx is even, else one byte at a time.
+ * @param idx test iteration index
+ * @returns 1 on success, else 0
+ */
+static int test_http_reuse_resp(int idx)
+{
+    int piecemeal = idx % 2;
+    BIO *wbio = NULL, *rbio = NULL;
+    OSSL_HTTP_REQ_CTX *rctx = new_nbio_ctx(&wbio, &rbio);
+    int res;
+
+    TEST_info("response pair #%d, %s", idx / 2,
+        piecemeal ? "piecemeal" : "at once");
+    res = rctx != NULL
+        && exchange(rctx, wbio, rbio, &reuse_resp_tests[idx / 2][0], piecemeal)
+        && TEST_int_eq(BIO_pending(rbio), 0)
+        && exchange(rctx, wbio, rbio, &reuse_resp_tests[idx / 2][1], piecemeal);
+
+    ERR_clear_error();
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free_all(rbio);
+    return res;
+}
+
 static int test_http_adapt_proxy_empty_server(void)
 {
     const char *proxy = "http://proxy.local:8080";
@@ -778,6 +1072,8 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
+    ADD_ALL_TESTS(test_http_split_resp, 2 * OSSL_NELEM(split_resp_tests));
+    ADD_ALL_TESTS(test_http_reuse_resp, 2 * OSSL_NELEM(reuse_resp_tests));
     ADD_TEST(test_http_adapt_proxy_empty_server);
     return 1;
 }
