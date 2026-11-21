@@ -5543,17 +5543,26 @@ static int test_EVP_rsa_pss_set_saltlen(void)
     EVP_PKEY_CTX *pkey_ctx = NULL;
     EVP_MD *sha256 = NULL;
     EVP_MD_CTX *sha256_ctx = NULL;
-    int saltlen = 9999; /* buggy EVP_PKEY_CTX_get_rsa_pss_saltlen() didn't update this */
-    const int test_value = 32;
+    const int test_values[] = {
+        0, 32, RSA_PSS_SALTLEN_DIGEST,
+        RSA_PSS_SALTLEN_MAX, RSA_PSS_SALTLEN_AUTO,
+        RSA_PSS_SALTLEN_AUTO_DIGEST_MAX
+    };
+    int saltlen;
+    size_t i;
 
     ret = TEST_ptr(pkey = load_example_rsa_key())
         && TEST_ptr(sha256 = EVP_MD_fetch(testctx, "sha256", NULL))
         && TEST_ptr(sha256_ctx = EVP_MD_CTX_new())
         && TEST_true(EVP_DigestSignInit(sha256_ctx, &pkey_ctx, sha256, NULL, pkey))
-        && TEST_true(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING))
-        && TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, test_value), 0)
-        && TEST_int_gt(EVP_PKEY_CTX_get_rsa_pss_saltlen(pkey_ctx, &saltlen), 0)
-        && TEST_int_eq(saltlen, test_value);
+        && TEST_true(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING));
+
+    for (i = 0; ret && i < OSSL_NELEM(test_values); i++) {
+        saltlen = 9999; /* buggy getter didn't update this */
+        ret = TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, test_values[i]), 0)
+            && TEST_int_gt(EVP_PKEY_CTX_get_rsa_pss_saltlen(pkey_ctx, &saltlen), 0)
+            && TEST_int_eq(saltlen, test_values[i]);
+    }
 
     EVP_MD_CTX_free(sha256_ctx);
     EVP_PKEY_free(pkey);

@@ -1395,7 +1395,8 @@ static int fix_rsa_pss_saltlen(enum state state,
     static const OSSL_ITEM str_value_map[] = {
         { (unsigned int)RSA_PSS_SALTLEN_DIGEST, "digest" },
         { (unsigned int)RSA_PSS_SALTLEN_MAX, "max" },
-        { (unsigned int)RSA_PSS_SALTLEN_AUTO, "auto" }
+        { (unsigned int)RSA_PSS_SALTLEN_AUTO, "auto" },
+        { (unsigned int)RSA_PSS_SALTLEN_AUTO_DIGEST_MAX, "auto-digestmax" }
     };
     int ret;
 
