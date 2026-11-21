@@ -26,6 +26,7 @@
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
+#include "internal/property.h"
 #include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
@@ -152,6 +153,15 @@ struct ossl_provider_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *activatecnt_lock; /* For the activatecnt counter */
     int activatecnt;
+    /*
+     * References and activations taken through the
+     * OSSL_FUNC_PROVIDER_UP_REF / OSSL_FUNC_PROVIDER_FREE upcalls, i.e.
+     * by mirror providers in child library contexts.  While this is
+     * nonzero, another provider's child context may hold objects served
+     * by this provider's mirrors, so this provider must be torn down
+     * after that child owner.  Guarded by activatecnt_lock.
+     */
+    int mirror_ref;
     char *name;
     char *path;
     DSO *module;
@@ -241,10 +251,107 @@ static void provider_deactivate_free(OSSL_PROVIDER *prov)
     ossl_provider_free(prov);
 }
 
+/*
+ * Deinitialise a provider: run its teardown callback and release the
+ * resources tied to being initialised.  This is normally done late, when
+ * the last provider reference is dropped (see ossl_provider_free), but is
+ * forced early when the provider store itself is destroyed.
+ */
+static void provider_deinit(OSSL_PROVIDER *prov)
+{
+    if (prov->flag_initialized) {
+        ossl_provider_teardown(prov);
+#ifndef OPENSSL_NO_ERR
+#ifndef FIPS_MODULE
+        if (prov->error_strings != NULL) {
+            ERR_unload_strings(prov->error_lib, prov->error_strings);
+            OPENSSL_free(prov->error_strings);
+            prov->error_strings = NULL;
+        }
+#endif
+#endif
+        OPENSSL_free(prov->operation_bits);
+        prov->operation_bits = NULL;
+        prov->operation_bits_sz = 0;
+        prov->flag_initialized = 0;
+    }
+}
+
 #ifndef FIPS_MODULE
 static void ossl_provider_child_cb_free(OSSL_PROVIDER_CHILD_CB *cb)
 {
     OPENSSL_free(cb);
+}
+
+void ossl_provider_store_free_child_owners(void *vstore)
+{
+    struct provider_store_st *store = vstore;
+    OSSL_PROVIDER_CHILD_CB *child_cb;
+    OSSL_PROVIDER *prov;
+    int i, max;
+
+    if (store == NULL)
+        return;
+
+    /*
+     * Child contexts may hold methods borrowed from this parent context,
+     * and objects in them (e.g. thread state DRBGs) may still reference
+     * those methods, so child-owning providers are torn down here, before
+     * this context's method stores are freed.  No methods are freed in
+     * this pass: a child owner's teardown may still use its own methods,
+     * as well as methods of other providers, fetched from this context.
+     *
+     * Mirror providers in a child context run with the parent provider's
+     * provctx and dispatch table, so tearing down a child owner may run
+     * another provider's code.  The child owners are therefore torn down
+     * in mirror reference order: a provider that is still referenced
+     * through the OSSL_FUNC_PROVIDER_UP_REF / OSSL_FUNC_PROVIDER_FREE
+     * upcalls (prov->mirror_ref) has mirrors activated in other child
+     * contexts and is torn down after the owners of those contexts.
+     */
+    while (sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs) > 0) {
+        prov = NULL;
+        max = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs);
+        for (i = 0; i < max; i++) {
+            OSSL_PROVIDER *p
+                = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i)->prov;
+
+            if (p->mirror_ref != 0)
+                continue;
+            prov = p;
+            break;
+        }
+        if (prov == NULL)
+            /*
+             * Circular mirror references: no child owner is unreferenced,
+             * so there is no safe order.  Until a policy for that case is
+             * settled, fall back to registration order.
+             */
+            prov = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, 0)
+                       ->prov;
+
+        for (i = sk_OSSL_PROVIDER_CHILD_CB_num(store->child_cbs) - 1;
+            i >= 0; i--) {
+            child_cb = sk_OSSL_PROVIDER_CHILD_CB_value(store->child_cbs, i);
+            if (child_cb->prov == prov) {
+                sk_OSSL_PROVIDER_CHILD_CB_delete(store->child_cbs, i);
+                ossl_provider_child_cb_free(child_cb);
+            }
+        }
+
+        if (sk_OSSL_PROVIDER_delete_ptr(store->providers, prov) == NULL)
+            continue;
+
+        /*
+         * Force the provider's teardown now, while this context's method
+         * stores are still intact, rather than late, when its last
+         * reference is dropped.  The teardown releases the provider's
+         * child library contexts, which drops the mirror references taken
+         * from them and may unblock other child owners.
+         */
+        provider_deinit(prov);
+        provider_deactivate_free(prov);
+    }
 }
 #endif
 
@@ -505,18 +612,33 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 #ifndef FIPS_MODULE
 static int provider_up_ref_intern(OSSL_PROVIDER *prov, int activate)
 {
-    if (activate)
-        return ossl_provider_activate(prov, 1, 0);
+    int ref = 0;
+    int ok;
 
-    return ossl_provider_up_ref(prov);
+    if (!CRYPTO_atomic_add(&prov->mirror_ref, 1, &ref, prov->activatecnt_lock))
+        return 0;
+    if (activate)
+        ok = ossl_provider_activate(prov, 1, 0);
+    else
+        ok = ossl_provider_up_ref(prov) > 0;
+    if (!ok) {
+        CRYPTO_atomic_add(&prov->mirror_ref, -1, &ref, prov->activatecnt_lock);
+        return 0;
+    }
+    return 1;
 }
 
 static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
 {
-    if (deactivate)
-        return ossl_provider_deactivate(prov, 1);
+    int ref = 0;
 
-    ossl_provider_free(prov);
+    if (deactivate) {
+        if (!ossl_provider_deactivate(prov, 1))
+            return 0;
+    } else {
+        ossl_provider_free(prov);
+    }
+    CRYPTO_atomic_add(&prov->mirror_ref, -1, &ref, prov->activatecnt_lock);
     return 1;
 }
 #endif
@@ -619,7 +741,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         return NULL;
     }
 
-    prov->libctx = libctx;
+    /* Keep the concrete owner selected when the provider store was resolved. */
+    prov->libctx = store->libctx;
 #ifndef FIPS_MODULE
     prov->error_lib = ERR_get_next_error_library();
 #endif
@@ -752,22 +875,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * provider's services.  Therefore, we deinit late.
          */
         if (ref == 0) {
-            if (prov->flag_initialized) {
-                ossl_provider_teardown(prov);
-#ifndef OPENSSL_NO_ERR
-#ifndef FIPS_MODULE
-                if (prov->error_strings != NULL) {
-                    ERR_unload_strings(prov->error_lib, prov->error_strings);
-                    OPENSSL_free(prov->error_strings);
-                    prov->error_strings = NULL;
-                }
-#endif
-#endif
-                OPENSSL_free(prov->operation_bits);
-                prov->operation_bits = NULL;
-                prov->operation_bits_sz = 0;
-                prov->flag_initialized = 0;
-            }
+            provider_deinit(prov);
 
 #ifndef FIPS_MODULE
             /*
