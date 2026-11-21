@@ -53,6 +53,11 @@ int CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_KEY_ID id,
 
 void CRYPTO_THREAD_clean_local(void);
 
+/**
+ * doc-exempt: internal function
+ */
+void CRYPTO_THREAD_remove_master_key(void);
+
 /* Do atomics work? */
 
 #if defined(__apple_build_version__) && __apple_build_version__ < 6000000
