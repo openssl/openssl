@@ -95,7 +95,7 @@ the data generated I<without> the NUL terminator is returned from the function.
 B<t> must not be NULL. B<f> must not be NULL unless B<n> is zero. B<n> must be
 nonnegative and small enough that the length of the encoded data fits in an
 int. If B<n> is negative or too large, EVP_EncodeBlock() writes only a NUL
-terminator to B<t>, puts `ERR_R_PASSED_INVALID_ARGUMENT` on the error stack,
+terminator to B<t>, puts B<ERR_R_PASSED_INVALID_ARGUMENT> on the error stack,
 and returns 0.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.

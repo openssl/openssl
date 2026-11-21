@@ -481,6 +481,9 @@ static int test_block_zero_and_negative_length(void)
     /* A non-NUL value to confirm that a NUL is written. */
     unsigned char out[1] = { 0xff };
     unsigned char decoded[1] = { 0xff };
+    /* Four valid base64 characters. */
+    unsigned char valid[4] = { 'A', 'A', 'A', 'A' };
+    unsigned char valid_decoded[4] = { 0 };
 
     if (!TEST_int_eq(EVP_EncodeBlock(out, NULL, 0), 0)
         || !TEST_uchar_eq(out[0], 0))
@@ -512,7 +515,7 @@ static int test_block_zero_and_negative_length(void)
         || !TEST_int_eq(EVP_DecodeBlock(decoded, NULL, 0), 0)
         || !TEST_int_eq(EVP_DecodeBlock(NULL, in, 0), 0)
         || !TEST_uchar_eq(decoded[0], 0xff)
-        || !TEST_int_eq(EVP_DecodeBlock(decoded, in, -1), -1))
+        || !TEST_int_eq(EVP_DecodeBlock(valid_decoded, valid, -4), -1))
         return 0;
 
     return 1;
