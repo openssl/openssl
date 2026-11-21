@@ -20,6 +20,8 @@
 
 #include <openssl/core.h>
 
+#include "internal/bytestring.h"
+
 #define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
 /*
  * This indicates that the ASN1_STRING is not a real value but just a place
@@ -209,6 +211,19 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     OSSL_LIB_CTX *libctx, const char *propq);
 
 ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
+
+/**
+ * @brief Returns whether cbs is a valid DER-encoded, ASN.1 Time body within
+ * the limitations imposed by RFC 5280.  The time is expected to parse as a
+ * GeneralizedTime if is_gentime is true, and as a UTCTime otherwise.  If
+ * out_tm is not NULL, *out_tm is zeroed and then set to the corresponding
+ * time in UTC; tm_wday and tm_yday are not computed.  cbs is not consumed.
+ * @param cbs the content octets of the time
+ * @param is_gentime 1 for a GeneralizedTime, 0 for a UTCTime
+ * @param out_tm the time to set, or NULL
+ * @returns 1 if cbs is valid, 0 otherwise
+ */
+int ossl_asn1_time_parse_cbs(const CBS *cbs, int is_gentime, struct tm *out_tm);
 
 int ossl_utf8_getc_internal(const unsigned char *str, int len, uint32_t *val);
 int ossl_utf8_putc_internal(unsigned char *str, int len, uint32_t value);
