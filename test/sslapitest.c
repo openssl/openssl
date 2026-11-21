@@ -3931,12 +3931,6 @@ static int ocsp_server_cb_no_scts(SSL *s, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int ct_accept_all_cb(const CT_POLICY_EVAL_CTX *ctx,
-    const STACK_OF(SCT) *scts, void *arg)
-{
-    return 1;
-}
-
 /*
  * A stapled OCSP response without the SCT extension, the usual kind, or with
  * one that does not decode, must not make SSL_get0_peer_scts() fail and
@@ -3976,11 +3970,10 @@ static int test_peer_scts_with_stapled_ocsp(int idx)
     SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_no_scts);
     sct_ocsp_bad_ext = idx >= 2;
 
-    /* The CT validation callback also requests a stapled OCSP response. */
+    /* Enabling CT also requests a stapled OCSP response. */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL))
-        || !TEST_true(SSL_set_ct_validation_callback(clientssl,
-            ct_accept_all_cb, NULL))
+        || !TEST_true(SSL_enable_ct(clientssl, SSL_CT_VALIDATION_PERMISSIVE))
         || !TEST_int_eq(SSL_get_tlsext_status_type(clientssl),
             TLSEXT_STATUSTYPE_ocsp))
         goto end;
@@ -4014,7 +4007,7 @@ end:
     OPENSSL_free(issuerfile);
     return testresult;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_CT) */
 
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
     || !defined(OSSL_NO_USABLE_DTLS1_3)
