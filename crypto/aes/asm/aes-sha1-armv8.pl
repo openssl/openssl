@@ -1244,9 +1244,8 @@ $code.=<<___;
 	add		x11,x11,x8
 	/* Add one SHA-1 block since hash is calculated including i_key_pad */
 	add		x11,x11, #64
-	lsr		x12,x11,32			/* len_hi */
+	lsr		x12,x11,29		/* len_hi in bits: (x11<<3)>>32 */
 	and		x13,x11,0xffffffff		/* len_lo */
-	lsl		x12,x12,3			/* len_hi in bits */
 	lsl		x13,x13,3			/* len_lo in bits */
 
 	mov		v29.s[3],w13			/* len_lo */
@@ -2051,9 +2050,8 @@ $code.=<<___;
 	add		x11,x11,x8
 	/* Add one SHA-1 block since hash is calculated including i_key_pad */
 	add		x11,x11, #64
-	lsr		x12,x11,32			/* len_hi */
+	lsr		x12,x11,29		/* len_hi in bits: (x11<<3)>>32 */
 	and		x13,x11,0xffffffff		/* len_lo */
-	lsl		x12,x12,3			/* len_hi in bits */
 	lsl		x13,x13,3			/* len_lo in bits */
 
 	mov		v29.s[3],w13			/* len_lo */
@@ -3395,9 +3393,8 @@ $code.=<<___;
 	add		x11,x11,x8
 	/* Add one SHA-1 block since hash is calculated including i_key_pad */
 	add		x11,x11,#64
-	lsr		x12,x11,32		/* len_hi */
+	lsr		x12,x11,29		/* len_hi in bits: (x11<<3)>>32 */
 	and		x14,x11,0xffffffff	/* len_lo */
-	lsl		x12,x12,3		/* len_hi in bits */
 	lsl		x14,x14,3		/* len_lo in bits */
 
 	rev32		v26.16b,v26.16b		/* fix endian w0 */
