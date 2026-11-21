@@ -253,7 +253,12 @@ Behavior is controlled with the following environment variables:
     OPENSSL_TEST_MFAIL_START=N      Start iteration from point N, skipping
                                     earlier points that are already fixed.
 
-    OPENSSL_TEST_MFAIL_BACKTRACE=1  Print a backtrace at each injection point.
+    OPENSSL_TEST_MFAIL_BACKTRACE=1  Print a backtrace at each injection point
+                                    and at each free of a watched secret.
+
+    OPENSSL_TEST_MFAIL_WATCH_ALLOC=N
+                                    Print a backtrace at allocation N of
+                                    a secret watch, as numbered in its report.
 
 For example, to debug a failure at allocation point 42:
 
@@ -262,6 +267,15 @@ For example, to debug a failure at allocation point 42:
 Or to skip already-fixed points and collect remaining failures:
 
     $ OPENSSL_TEST_MFAIL_START=13 make TESTS=test_crl test
+
+The mfail allocator can also check that a secret is cleared before its memory
+is freed. After `MFAIL_watch_secret(secret, len)`, every block allocated from
+then on is searched for an exact copy of the secret when it is freed. The
+watch ends with `MFAIL_watch_end()`, or when the test function returns, and
+the test fails if the secret was found. It can be called repeatedly to watch
+for more secrets and in an mfail test it is checked after each iteration. The
+watch is not thread safe and does nothing if mfail is not installed or under
+valgrind.
 
 Running Tests under Valgrind
 ----------------------------

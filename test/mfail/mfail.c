@@ -24,6 +24,13 @@
 #define MFAIL_HAVE_ASAN 1
 #endif
 
+#if defined(__has_feature)
+#if __has_feature(memory_sanitizer)
+#include <sanitizer/msan_interface.h>
+#define MFAIL_HAVE_MSAN 1
+#endif
+#endif
+
 #ifdef MFAIL_HAVE_ASAN
 extern void __sanitizer_print_stack_trace(void);
 #elif defined(__GLIBC__) || defined(__APPLE__)
@@ -44,6 +51,8 @@ static struct {
     int sample_count;
     int slow_threshold;
     int print_bt;
+    int no_watch;
+    int watch_alloc;
     int mode;
     int phase;
     int seq;
@@ -60,6 +69,33 @@ static struct {
     int slow_skipped;
     int no_check;
 } mf;
+
+struct mfw_block {
+    void *ptr;
+    size_t size;
+    int num;
+    const char *file;
+    int line;
+};
+
+static struct {
+    int active;
+    int failed;
+    int triggered;
+    int leaks;
+    int checked;
+    int allocs;
+    int frees;
+    int nsecrets;
+    struct {
+        unsigned char *data;
+        size_t len;
+    } secrets[MFAIL_WATCH_MAX_SECRETS];
+    struct mfw_block *blocks;
+    size_t nblocks;
+    size_t blocks_cap;
+    MFAIL_LEAK leak[MFAIL_WATCH_MAX_LEAKS];
+} mfw;
 
 static int env_is_true(const char *name)
 {
@@ -78,10 +114,10 @@ static int env_int(const char *name, int dflt)
     return dflt;
 }
 
-static void mfail_print_bt(void)
+static void mfail_print_bt(const char *what)
 {
 #ifdef MFAIL_HAVE_ASAN
-    fprintf(stderr, "# MFAIL_BT (failure injection point)\n");
+    fprintf(stderr, "# MFAIL_BT (%s)\n", what);
     __sanitizer_print_stack_trace();
 #elif defined(MFAIL_HAVE_BACKTRACE)
     void *buf[MFAIL_BT_MAX];
@@ -93,7 +129,7 @@ static void mfail_print_bt(void)
     if (syms == NULL)
         return;
 
-    fprintf(stderr, "# MFAIL_BT (failure injection point)\n");
+    fprintf(stderr, "# MFAIL_BT (%s)\n", what);
     /* Skip frame 0 (this function) */
     for (i = 1; i < n; i++)
         fprintf(stderr, "#   %s\n", syms[i]);
@@ -118,38 +154,171 @@ static int should_fail(const char *file)
         return 0;
     if (idx == mf.fail_after) {
         mf.triggered = 1;
+        if (mfw.active)
+            mfw.triggered = 1;
         if (mf.print_bt)
-            mfail_print_bt();
+            mfail_print_bt("failure injection point");
         return 1;
     }
     return 0;
 }
 
+static void mfw_track(void *ptr, size_t size, const char *file, int line)
+{
+    struct mfw_block *b;
+
+    if (mfw.nblocks == mfw.blocks_cap) {
+        size_t cap = mfw.blocks_cap == 0 ? 256 : mfw.blocks_cap * 2;
+
+        b = realloc(mfw.blocks, cap * sizeof(*b));
+        if (b == NULL) {
+            mfw.failed = 1;
+            return;
+        }
+        mfw.blocks = b;
+        mfw.blocks_cap = cap;
+    }
+    b = &mfw.blocks[mfw.nblocks++];
+    b->ptr = ptr;
+    b->size = size;
+    b->num = mfw.allocs++;
+    if (b->num == mf.watch_alloc) {
+        char what[64];
+
+        snprintf(what, sizeof(what), "watched allocation %d", b->num);
+        mfail_print_bt(what);
+    }
+    b->file = file;
+    b->line = line;
+}
+
+static int mfw_find_secret(const unsigned char *p, size_t size, size_t *offset)
+{
+    int i;
+
+    for (i = 0; i < mfw.nsecrets; i++) {
+        const unsigned char *s = mfw.secrets[i].data, *q = p;
+        size_t len = mfw.secrets[i].len, left = size;
+
+        while (left >= len
+            && (q = memchr(q, s[0], left - len + 1)) != NULL) {
+            if (memcmp(q, s, len) == 0) {
+                *offset = q - p;
+                return i;
+            }
+            q++;
+            left = size - (q - p);
+        }
+    }
+    return -1;
+}
+
+/* Search the block if it is tracked and stop tracking it */
+static void mfw_release(void *ptr, const char *file, int line)
+{
+    size_t i, offset = 0;
+    int secret;
+    struct mfw_block *b = NULL;
+
+    int free_num = mfw.frees++;
+
+    /* most blocks are freed soon after they are allocated */
+    for (i = mfw.nblocks; i > 0; i--) {
+        if (mfw.blocks[i - 1].ptr == ptr) {
+            b = &mfw.blocks[i - 1];
+            break;
+        }
+    }
+    if (b == NULL)
+        return;
+
+    mfw.checked++;
+#ifdef MFAIL_HAVE_MSAN
+    /* the block is searched as a whole and freed right after it */
+    __msan_unpoison(ptr, b->size);
+#endif
+    secret = mfw_find_secret(ptr, b->size, &offset);
+    if (secret >= 0) {
+        if (mfw.leaks < MFAIL_WATCH_MAX_LEAKS) {
+            MFAIL_LEAK *l = &mfw.leak[mfw.leaks];
+
+            l->secret = secret;
+            l->offset = offset;
+            l->size = b->size;
+            l->alloc_num = b->num;
+            l->free_num = free_num;
+            l->alloc_file = b->file;
+            l->alloc_line = b->line;
+            l->free_file = file;
+            l->free_line = line;
+            l->point = mf.triggered ? mf.fail_after : -1;
+        }
+        mfw.leaks++;
+        if (mf.print_bt) {
+            char what[80];
+
+            snprintf(what, sizeof(what),
+                "secret left by allocation %d in free %d", b->num, free_num);
+            mfail_print_bt(what);
+        }
+    }
+    *b = mfw.blocks[--mfw.nblocks];
+}
+
+static size_t mfw_block_size(void *ptr)
+{
+    size_t i;
+
+    for (i = mfw.nblocks; i > 0; i--)
+        if (mfw.blocks[i - 1].ptr == ptr)
+            return mfw.blocks[i - 1].size;
+    return 0;
+}
+
 static void *mf_malloc(size_t num, const char *file, int line)
 {
+    void *ret;
+
     if (num == 0)
         return NULL;
     if (should_fail(file))
         return NULL;
-    return malloc(num);
-}
-
-static void *mf_realloc(void *addr, size_t num, const char *file, int line)
-{
-    if (addr == NULL)
-        return mf_malloc(num, file, line);
-    if (num == 0) {
-        free(addr);
-        return NULL;
-    }
-    if (should_fail(file))
-        return NULL;
-    return realloc(addr, num);
+    ret = malloc(num);
+    if (mfw.active && ret != NULL)
+        mfw_track(ret, num, file, line);
+    return ret;
 }
 
 static void mf_free(void *addr, const char *file, int line)
 {
+    if (mfw.active && addr != NULL)
+        mfw_release(addr, file, line);
     free(addr);
+}
+
+static void *mf_realloc(void *addr, size_t num, const char *file, int line)
+{
+    void *ret;
+    size_t old;
+
+    if (addr == NULL)
+        return mf_malloc(num, file, line);
+    if (num == 0) {
+        mf_free(addr, file, line);
+        return NULL;
+    }
+    if (should_fail(file))
+        return NULL;
+    if (!mfw.active || (old = mfw_block_size(addr)) == 0)
+        return realloc(addr, num);
+    /* realloc() may free the old block, so move it here and search it */
+    if ((ret = malloc(num)) == NULL)
+        return NULL;
+    memcpy(ret, addr, old < num ? old : num);
+    mfw_release(addr, file, line);
+    free(addr);
+    mfw_track(ret, num, file, line);
+    return ret;
 }
 
 int mfail_install(int optional)
@@ -167,6 +336,9 @@ int mfail_install(int optional)
     mf.count_only_env = env_is_true("OPENSSL_TEST_MFAIL_COUNT_ONLY");
     mf.slow_threshold = env_int("OPENSSL_TEST_MFAIL_SLOW", 1000);
     mf.print_bt = env_is_true("OPENSSL_TEST_MFAIL_BACKTRACE");
+    /* searching of freed blocks reads uninitialised memory */
+    mf.no_watch = env_is_true("OSSL_USE_VALGRIND");
+    mf.watch_alloc = env_int("OPENSSL_TEST_MFAIL_WATCH_ALLOC", -1);
 
     /* if optional and nothing configured, then no point installing hooks */
     if (optional && mf.env_count <= 0 && mf.single_point < 0
@@ -216,6 +388,83 @@ static int compute_point(int i, int total, int n, int seq, int start)
     if (p < 0)
         p = 0;
     return start + p;
+}
+
+static void mfw_reset(void)
+{
+    mfw.failed = 0;
+    mfw.triggered = 0;
+    mfw.leaks = 0;
+    mfw.checked = 0;
+    mfw.allocs = 0;
+    mfw.frees = 0;
+    mfw.nblocks = 0;
+}
+
+int mfail_watch_secret(const void *secret, size_t len)
+{
+    unsigned char *copy;
+
+    if (secret == NULL || len < MFAIL_WATCH_MIN_LEN)
+        return 0;
+    if (!mf.installed || mf.no_watch)
+        return 1;
+    if (mfw.active && mfw.nsecrets == MFAIL_WATCH_MAX_SECRETS)
+        return 0;
+    if ((copy = malloc(len)) == NULL)
+        return 0;
+    memcpy(copy, secret, len);
+    if (!mfw.active) {
+        mfw_reset();
+        mfw.nsecrets = 0;
+    }
+    mfw.secrets[mfw.nsecrets].data = copy;
+    mfw.secrets[mfw.nsecrets].len = len;
+    mfw.nsecrets++;
+    mfw.active = 1;
+    return 1;
+}
+
+void mfail_watch_end(void)
+{
+    int i;
+
+    if (!mfw.active)
+        return;
+    mfw.active = 0;
+    for (i = 0; i < mfw.nsecrets; i++) {
+        memset(mfw.secrets[i].data, 0, mfw.secrets[i].len);
+        free(mfw.secrets[i].data);
+    }
+    mfw.nsecrets = 0;
+    mfw.nblocks = 0;
+}
+
+int mfail_is_watching(void)
+{
+    return mfw.active;
+}
+
+int mfail_watch_get_leaks(void)
+{
+    return mfw.failed ? -1 : mfw.leaks;
+}
+
+int mfail_watch_get_checked(void)
+{
+    return mfw.checked;
+}
+
+int mfail_watch_was_triggered(void)
+{
+    return mfw.triggered;
+}
+
+const MFAIL_LEAK *mfail_watch_get_leak(int i)
+{
+    if (i < 0 || i >= mfw.leaks || i >= MFAIL_WATCH_MAX_LEAKS)
+        return NULL;
+    return &mfw.leak[i];
 }
 
 void mfail_init(int seq, int flags)
@@ -323,6 +572,9 @@ int mfail_has_next(void)
     mf.counting = 0;
     mf.triggered = 0;
     mf.fail_after = (mf.phase == MFAIL_PHASE_INJECTING) ? mf.next_point : -1;
+    /* do not carry the watch results over from the previous iteration */
+    if (!mfw.active)
+        mfw_reset();
     return 1;
 }
 
