@@ -29,7 +29,7 @@ static int test_lcidm(void)
     uint64_t seq_num = UINT64_MAX;
     int did_retire = 0;
 
-    if (!TEST_ptr(lcidm = ossl_quic_lcidm_new(NULL, lcid_len)))
+    if (!TEST_ptr(lcidm = ossl_quic_lcidm_new(NULL, lcid_len, NULL, 0)))
         goto err;
 
     if (!TEST_size_t_eq(ossl_quic_lcidm_get_lcid_len(lcidm), lcid_len))
