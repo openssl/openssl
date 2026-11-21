@@ -27,6 +27,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -465,6 +466,59 @@ end:
     OPENSSL_free(input);
     OPENSSL_free(decoded);
     return ret;
+}
+
+/*
+ * An empty input is valid and must not touch the input pointer.
+ * EVP_EncodeBlock() writes only the NUL terminator and returns 0 for empty
+ * or invalid lengths, and raises `ERR_R_PASSED_INVALID_ARGUMENT` for
+ * invalid lengths. EVP_DecodeBlock() writes nothing. EVP_DecodeBlock()
+ * rejects a negative length.
+ */
+static int test_block_zero_and_negative_length(void)
+{
+    unsigned char in[1] = { 0 };
+    /* A non-NUL value to confirm that a NUL is written. */
+    unsigned char out[1] = { 0xff };
+    unsigned char decoded[1] = { 0xff };
+    /* Four valid base64 characters. */
+    unsigned char valid[4] = { 'A', 'A', 'A', 'A' };
+    unsigned char valid_decoded[4] = { 0 };
+
+    if (!TEST_int_eq(EVP_EncodeBlock(out, NULL, 0), 0)
+        || !TEST_uchar_eq(out[0], 0))
+        return 0;
+
+    out[0] = 0xff; /* Reset to a non-NUL value. */
+    if (!TEST_int_eq(EVP_EncodeBlock(out, in, 0), 0)
+        || !TEST_uchar_eq(out[0], 0))
+        return 0;
+
+    ERR_clear_error();
+    out[0] = 0xff;
+    if (!TEST_int_eq(EVP_EncodeBlock(out, in, -1), 0)
+        || !TEST_uchar_eq(out[0], 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT))
+        return 0;
+
+    ERR_clear_error();
+    out[0] = 0xff;
+    if (!TEST_int_eq(EVP_EncodeBlock(out, in, INT_MAX), 0)
+        || !TEST_uchar_eq(out[0], 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT))
+        return 0;
+    ERR_clear_error();
+
+    if (!TEST_int_eq(EVP_DecodeBlock(NULL, NULL, 0), 0)
+        || !TEST_int_eq(EVP_DecodeBlock(decoded, NULL, 0), 0)
+        || !TEST_int_eq(EVP_DecodeBlock(NULL, in, 0), 0)
+        || !TEST_uchar_eq(decoded[0], 0xff)
+        || !TEST_int_eq(EVP_DecodeBlock(valid_decoded, valid, -4), -1))
+        return 0;
+
+    return 1;
 }
 
 static int test_decode_avx2_vs_scalar(int idx)
@@ -1213,6 +1267,9 @@ int setup_tests(void)
 {
     /* states up front whether the AVX2 path is reached at all */
     ADD_TEST(test_avx2_dispatch);
+
+    /* EVP_EncodeBlock()/EVP_DecodeBlock() zero and negative length */
+    ADD_TEST(test_block_zero_and_negative_length);
 
     /* Standard alphabet: test_sizes x WS patterns */
     ADD_ALL_TESTS(test_decode_avx2_vs_scalar, NUM_SIZES * WS_COUNT);
