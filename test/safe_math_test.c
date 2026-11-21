@@ -51,6 +51,15 @@ static const struct {
     { INT_MAX, INT_MIN, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1 },
     { INT_MIN, INT_MAX, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0 },
     { 3, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0 },
+    /* a * b == INT_MIN, neither factor being 1 */
+    { INT_MIN / 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 2, INT_MIN / 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -2, INT_MAX / 2 + 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MAX / 2 + 1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    /* a * b just outside the range */
+    { INT_MAX / 2 + 1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MIN / 2, -2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MIN / 2 - 1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
 };
 
 static int test_int_ops(int n)
@@ -310,6 +319,14 @@ static const struct {
     { 8, INT_MIN, 4, 1 },
     { INT_MIN, 8, 4, 1 },
     { 3, 4, 0, 1 },
+    /* a * b == INT_MIN */
+    { INT_MIN / 2, 2, 4, 0 },
+    { 2, INT_MIN / 2, 4, 0 },
+    { -2, INT_MAX / 2 + 1, 3, 0 },
+    { INT_MIN / 2, 2, INT_MIN, 0 },
+    { INT_MIN / 2, 2, -1, 1 },
+    /* a * b overflows; a partial product is INT_MIN */
+    { INT_MIN / 2, -4, -2, 0 },
 };
 
 static int test_int_muldiv(int n)

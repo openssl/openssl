@@ -175,6 +175,8 @@
                                                                      \
             if (x <= max / y)                                        \
                 return a * b;                                        \
+            if ((a < 0) ^ (b < 0) && -x >= min / y)                  \
+                return min;                                          \
         }                                                            \
         *err |= 1;                                                   \
         return (a < 0) ^ (b < 0) ? min : max;                        \
