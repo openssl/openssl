@@ -10,8 +10,19 @@
 #ifndef OSSL_CRYPTO_CMS_LOCAL_H
 #define OSSL_CRYPTO_CMS_LOCAL_H
 
+#include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/x509.h>
+
+static ossl_inline int cms_assert(int expr)
+{
+    assert(expr);
+    return expr;
+}
+
+/* Local copies of the libcrypto-internal buffer-size limits (internal/sizes.h) */
+#define CMS_MAX_NAME_SIZE 50 /* Algorithm name */
+#define CMS_MAX_ALGORITHM_ID_SIZE 256 /* AlgorithmIdentifier DER */
 
 /*
  * Cryptographic message syntax (CMS) structures: taken from RFC3852
@@ -150,7 +161,8 @@ struct CMS_EncryptedContentInfo_st {
     const EVP_CIPHER *cipher;
     unsigned char *key;
     size_t keylen;
-    unsigned char *tag;
+    /* Borrowed from the AuthEnvelopedData mac, not owned here */
+    const unsigned char *tag;
     size_t taglen;
     /* Set to 1 if we are debugging decrypt and don't fake keys for MMA */
     int debug;
@@ -439,13 +451,55 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_IssuerAndSerialNumber)
 #define CMS_OIK_KEYIDENTIFIER 1
 #define CMS_OIK_PUBKEY 2
 
+/**
+ * @brief Create the BIO for the encapsulated content of cms.
+ * A null BIO for detached content, a memory BIO for content being created,
+ * and a read-only memory BIO over content that was decoded.
+ * @param cms the CMS structure
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_content_bio(CMS_ContentInfo *cms);
+/**
+ * @brief Get the CMS context of a CMS structure.
+ * @param cms the CMS structure, may be NULL
+ * @returns the context, owned by cms, or NULL if cms is NULL
+ */
 const CMS_CTX *ossl_cms_get0_cmsctx(const CMS_ContentInfo *cms);
+/**
+ * @brief Get the library context of a CMS context.
+ * @param ctx the CMS context, may be NULL
+ * @returns the library context, or NULL
+ */
 OSSL_LIB_CTX *ossl_cms_ctx_get0_libctx(const CMS_CTX *ctx);
+/**
+ * @brief Get the property query of a CMS context.
+ * @param ctx the CMS context, may be NULL
+ * @returns the property query, or NULL
+ */
 const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx);
+/**
+ * @brief Point every SignerInfo and RecipientInfo of ci at its CMS context.
+ * @param ci the CMS structure
+ */
 void ossl_cms_infos_set_cmsctx(CMS_ContentInfo *ci);
 
-CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
+/**
+ * @brief Create a CMS structure of type data with embedded content.
+ * @param libctx the library context, NULL for the default
+ * @param propq the property query, may be NULL
+ * @returns the structure, or NULL on error
+ */
+CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Finalize cms after its content has been written through cmsbio.
+ * Stores content being created and completes the type-specific processing.
+ * @param cms the CMS structure
+ * @param cmsbio the BIO chain returned by CMS_dataInit()
+ * @param data the content, for signers that sign it directly, may be NULL
+ * @param precomp_md a precomputed message digest, may be NULL
+ * @param precomp_mdlen the length of precomp_md
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     const unsigned char *precomp_md,
     unsigned int precomp_mdlen);
@@ -458,109 +512,449 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
  */
 int ossl_cms_stream(CMS_ContentInfo *cms);
 
+/**
+ * @brief Create a CMS structure of type digestedData.
+ * @param md the digest algorithm
+ * @param libctx the library context, NULL for the default
+ * @param propq the property query, may be NULL
+ * @returns the structure, or NULL on error
+ */
 CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
     OSSL_LIB_CTX *libctx,
     const char *propq);
+/**
+ * @brief Create the digest BIO for a digestedData structure.
+ * @param cms the CMS structure
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_DigestedData_init_bio(const CMS_ContentInfo *cms);
+/**
+ * @brief Store or verify the digest of a digestedData structure.
+ * @param cms the CMS structure
+ * @param chain the BIO chain holding the digest BIO
+ * @param verify 1 to verify the stored digest, 0 to store it
+ * @returns 1 on success, 0 on error or verification failure
+ */
 int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms,
     BIO *chain, int verify);
 
+/**
+ * @brief Create a chain of digest BIOs for the digest algorithms of signedData.
+ * @param cms the CMS structure
+ * @returns the BIO chain, or NULL on error
+ */
 BIO *ossl_cms_SignedData_init_bio(CMS_ContentInfo *cms);
+/**
+ * @brief Sign the content with each SignerInfo of a signedData structure.
+ * @param cms the CMS structure
+ * @param chain the BIO chain holding the digest BIOs
+ * @param data the content, for signers that sign it directly, may be NULL
+ * @param precomp_md a precomputed message digest, may be NULL
+ * @param precomp_mdlen the length of precomp_md
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain, BIO *data,
     const unsigned char *precomp_md,
     unsigned int precomp_mdlen);
+/**
+ * @brief Set a SignerIdentifier to identify a certificate.
+ * @param sid the SignerIdentifier
+ * @param cert the certificate
+ * @param type CMS_SIGNERINFO_ISSUER_SERIAL or CMS_SIGNERINFO_KEYIDENTIFIER
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
-    int type, const CMS_CTX *ctx);
+    int type);
+/**
+ * @brief Get the identifying fields of a SignerIdentifier.
+ * Only the outputs for the identifier type are set.
+ * @param sid the SignerIdentifier
+ * @param keyid receives the subject key identifier, may be NULL
+ * @param issuer receives the issuer name, may be NULL
+ * @param sno receives the serial number, may be NULL
+ * @returns 1 on success, 0 for an unknown identifier type
+ */
 int ossl_cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
     ASN1_OCTET_STRING **keyid,
     X509_NAME **issuer,
     ASN1_INTEGER **sno);
+/**
+ * @brief Compare a SignerIdentifier with a certificate.
+ * @param sid the SignerIdentifier
+ * @param cert the certificate
+ * @returns 0 if they match, nonzero if not, -1 for an unknown identifier type
+ */
 int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
 
+/**
+ * @brief Create a CMS structure of type compressedData.
+ * @param comp_nid the compression algorithm, only NID_zlib_compression
+ * @param libctx the library context, NULL for the default
+ * @param propq the property query, may be NULL
+ * @returns the structure, or NULL on error
+ */
 CMS_ContentInfo *ossl_cms_CompressedData_create(int comp_nid,
     OSSL_LIB_CTX *libctx,
     const char *propq);
+/**
+ * @brief Create the zlib BIO for a compressedData structure.
+ * @param cms the CMS structure
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_CompressedData_init_bio(const CMS_ContentInfo *cms);
 
+/**
+ * @brief Create a digest BIO for a digest algorithm.
+ * @param digestAlgorithm the digest algorithm
+ * @param ctx the CMS context to fetch the digest with
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     const CMS_CTX *ctx);
+/**
+ * @brief Copy the digest context for an algorithm from a BIO chain.
+ * @param mctx receives a copy of the matching digest context
+ * @param chain the BIO chain to search
+ * @param mdalg the digest algorithm to find
+ * @returns 1 on success, 0 if none matches or on error
+ */
 int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
     X509_ALGOR *mdalg);
 
+/**
+ * @brief Compare an IssuerAndSerialNumber with a certificate.
+ * @param ias the IssuerAndSerialNumber
+ * @param cert the certificate
+ * @returns 0 if they match, else nonzero
+ */
 int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert);
+/**
+ * @brief Compare a key identifier with the subject key identifier of a
+ * certificate.
+ * @param keyid the key identifier
+ * @param cert the certificate
+ * @returns 0 if they match, nonzero if not, -1 if cert has no key identifier
+ */
 int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert);
+/**
+ * @brief Replace *pias with the issuer and serial number of a certificate.
+ * @param pias the IssuerAndSerialNumber to replace
+ * @param cert the certificate
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert);
+/**
+ * @brief Replace *pkeyid with the subject key identifier of a certificate.
+ * @param pkeyid the key identifier to replace
+ * @param cert the certificate
+ * @returns 1 on success, 0 on error or if cert has no key identifier
+ */
 int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert);
 
+/**
+ * @brief Decode the RFC 5084 GCMParameters of an AEAD content cipher.
+ * @param param the content-encryption algorithm parameter
+ * @param iv buffer receiving the nonce
+ * @param iv_max the size of iv in bytes
+ * @param iv_len receives the length of the nonce
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_get_aead_params(const ASN1_TYPE *param, unsigned char *iv,
+    size_t iv_max, int *iv_len);
+/**
+ * @brief Create the cipher BIO for an EncryptedContentInfo.
+ * @param ec the EncryptedContentInfo
+ * @param cms_ctx the CMS context to fetch the cipher with
+ * @param auth 1 for authEnvelopedData, 0 otherwise
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-    const CMS_CTX *ctx, int auth);
+    const CMS_CTX *cms_ctx, int auth);
+/**
+ * @brief Create the cipher BIO for an encryptedData structure.
+ * @param cms the CMS structure
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
+/**
+ * @brief Set the cipher and key of an EncryptedContentInfo.
+ * @param ec the EncryptedContentInfo
+ * @param cipher the content cipher, may be NULL
+ * @param key the content key, copied, may be NULL
+ * @param keylen the length of key
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     const EVP_CIPHER *cipher,
-    const unsigned char *key, size_t keylen,
-    const CMS_CTX *ctx);
+    const unsigned char *key, size_t keylen);
 
+/**
+ * @brief Verify a signed receipt against the signed request it answers.
+ * cms must already have passed CMS_verify().
+ * @param cms the signed receipt
+ * @param req_cms the signedData that requested it
+ * @returns 1 on success, 0 on error or verification failure
+ */
 int ossl_cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
+/**
+ * @brief Add a msgSigDigest attribute for src to the signed attributes of dest.
+ * @param dest the SignerInfo to add the attribute to
+ * @param src the SignerInfo whose signed attributes are digested
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
+/**
+ * @brief Encode the Receipt for the receipt request in a SignerInfo.
+ * @param si the SignerInfo carrying the receipt request
+ * @returns the DER encoding, owned by the caller, or NULL on error
+ */
 ASN1_OCTET_STRING *ossl_cms_encode_Receipt(CMS_SignerInfo *si);
 
+/**
+ * @brief Create the cipher BIO for an envelopedData structure.
+ * Sets up encryption if a content cipher is set, else decryption.
+ * @param cms the CMS structure
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
+/**
+ * @brief Finalize an envelopedData structure after its content is processed.
+ * @param cms the CMS structure
+ * @param chain the BIO chain holding the cipher BIO
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain);
+/**
+ * @brief Create the cipher BIO for an authEnvelopedData structure.
+ * @param cms the CMS structure
+ * @returns the BIO, or NULL on error
+ */
 BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms);
+/**
+ * @brief Store the authentication tag of an authEnvelopedData being encrypted.
+ * @param cms the CMS structure
+ * @param cmsbio the cipher BIO
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_AuthEnvelopedData_final(CMS_ContentInfo *cms, BIO *cmsbio);
+/**
+ * @brief Get the envelopedData of a CMS structure.
+ * @param cms the CMS structure
+ * @returns the envelopedData, owned by cms, or NULL if cms is of another type
+ */
 CMS_EnvelopedData *ossl_cms_get0_enveloped(CMS_ContentInfo *cms);
+/**
+ * @brief Get the authEnvelopedData of a CMS structure.
+ * @param cms the CMS structure
+ * @returns the authEnvelopedData, owned by cms, or NULL if cms is of another
+ *          type
+ */
 CMS_AuthEnvelopedData *ossl_cms_get0_auth_enveloped(CMS_ContentInfo *cms);
+/**
+ * @brief Get the EncryptedContentInfo of an (auth)envelopedData structure.
+ * @param cms the CMS structure
+ * @returns the EncryptedContentInfo, owned by cms, or NULL
+ */
 CMS_EncryptedContentInfo *ossl_cms_get0_env_enc_content(const CMS_ContentInfo *cms);
 
 /* RecipientInfo routines */
+/**
+ * @brief Run the key-type specific processing of a RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param cmd 0 for encryption, 1 for decryption
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd);
+/**
+ * @brief Get the RecipientInfo type a key supports.
+ * @param pk the key
+ * @returns a CMS_RECIPINFO_* type; CMS_RECIPINFO_TRANS if it cannot be
+ *          determined
+ */
 int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk);
+/**
+ * @brief Check whether a key supports a RecipientInfo type.
+ * @param pk the key
+ * @param ri_type the CMS_RECIPINFO_* type
+ * @returns 1 if it does, else 0
+ */
 int ossl_cms_pkey_is_ri_type_supported(EVP_PKEY *pk, int ri_type);
 
+/**
+ * @brief Point every RecipientInfo of cms at its CMS context.
+ * @param cms the CMS structure
+ */
 void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms);
+/**
+ * @brief Set the key wrap cipher of a kari or kemri RecipientInfo.
+ * A wrap cipher already set is kept.
+ * @param ri the RecipientInfo
+ * @param cipher the content cipher the wrap cipher is chosen for
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_wrap_init(CMS_RecipientInfo *ri, const EVP_CIPHER *cipher);
 
 /* KARI routines */
+/**
+ * @brief Initialize a key agreement RecipientInfo.
+ * An ephemeral originator key is generated when originator and
+ * originatorPrivKey are both NULL.
+ * @param ri the RecipientInfo
+ * @param recip the recipient certificate
+ * @param recipPubKey the recipient public key
+ * @param originator the originator certificate, may be NULL
+ * @param originatorPrivKey the originator private key, may be NULL
+ * @param flags CMS_USE_KEYID and CMS_USE_ORIGINATOR_KEYID select key
+ *        identifiers over issuer and serial number
+ * @param ctx the CMS context
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
     EVP_PKEY *recipPubKey, X509 *originator,
     EVP_PKEY *originatorPrivKey,
     unsigned int flags,
     const CMS_CTX *ctx);
+/**
+ * @brief Encrypt the content key for each recipient of a kari RecipientInfo.
+ * @param cms the CMS structure
+ * @param ri the RecipientInfo
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
     CMS_RecipientInfo *ri);
 
 /* KEMRI routines */
+/**
+ * @brief Get the KEK length and wrap algorithm of a kemri RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param pkekLength receives a pointer to the KEK length, may be NULL
+ * @param pwrap receives the wrap algorithm, may be NULL
+ * @returns 1 on success, 0 if ri is not a kemri
+ */
 int ossl_cms_RecipientInfo_kemri_get0_alg(CMS_RecipientInfo *ri,
     uint32_t **pkekLength,
     X509_ALGOR **pwrap);
+/**
+ * @brief Initialize a KEM RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param recip the recipient certificate
+ * @param recipPubKey the recipient public key
+ * @param flags CMS_USE_KEYID selects a key identifier over issuer and serial
+ * @param ctx the CMS context
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_kemri_init(CMS_RecipientInfo *ri, X509 *recip,
     EVP_PKEY *recipPubKey, unsigned int flags,
     const CMS_CTX *ctx);
+/**
+ * @brief Encapsulate and wrap the content key for a kemri RecipientInfo.
+ * @param cms the CMS structure
+ * @param ri the RecipientInfo
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_kemri_encrypt(const CMS_ContentInfo *cms,
     CMS_RecipientInfo *ri);
+/**
+ * @brief Decapsulate and unwrap the content key of a kemri RecipientInfo.
+ * @param cms the CMS structure
+ * @param ri the RecipientInfo
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
     CMS_RecipientInfo *ri);
+/**
+ * @brief DER-encode a CMSORIforKEMOtherInfo.
+ * @param pder receives the encoding as for i2d functions
+ * @param wrap the wrap algorithm
+ * @param ukm the user keying material, may be NULL
+ * @param keylen the KEK length
+ * @returns the length of the encoding, or a value <= 0 on error
+ */
 int CMS_CMSORIforKEMOtherInfo_encode(unsigned char **pder, X509_ALGOR *wrap,
     ASN1_OCTET_STRING *ukm, int keylen);
 
 /* PWRI routines */
+/**
+ * @brief Wrap or unwrap the content key of a password RecipientInfo.
+ * @param cms the CMS structure
+ * @param ri the RecipientInfo
+ * @param en_de 1 to wrap, 0 to unwrap
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     CMS_RecipientInfo *ri, int en_de);
 /* SignerInfo routines */
+/**
+ * @brief Check that the attributes of a SignerInfo obey the CMS rules.
+ * @param si the SignerInfo
+ * @returns 1 if they do, else 0
+ */
 int ossl_cms_si_check_attributes(const CMS_SignerInfo *si);
+/**
+ * @brief Point every SignerInfo of cms at its CMS context.
+ * @param cms the CMS structure
+ */
 void ossl_cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms);
 
 /* ESS routines */
+/**
+ * @brief Check the ESS signing certificate attributes of a SignerInfo.
+ * @param si the SignerInfo
+ * @param chain the signer certificate chain
+ * @returns 1 if they match the chain, else 0
+ */
 int ossl_cms_check_signing_certs(const CMS_SignerInfo *si,
     const STACK_OF(X509) *chain);
 
+/**
+ * @brief Run the DH key agreement processing of a RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param decrypt 1 for decryption, 0 for encryption
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt);
+/**
+ * @brief Run the ECDH key agreement processing of a RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param decrypt 1 for decryption, 0 for encryption
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt);
+/**
+ * @brief Run the RSA key transport processing of a RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param decrypt 1 for decryption, 0 for encryption
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt);
+/**
+ * @brief Run the RSA signature processing of a SignerInfo.
+ * @param si the SignerInfo
+ * @param verify 1 for verification, 0 for signing
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_rsa_sign(CMS_SignerInfo *si, int verify);
+/**
+ * @brief Run the KEM processing of a RecipientInfo.
+ * @param ri the RecipientInfo
+ * @param decrypt 1 for decryption, 0 for encryption
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_kem_envelope(CMS_RecipientInfo *ri, int decrypt);
 
+/**
+ * @brief Get the certificates of a CMS structure.
+ * @param cms the CMS structure
+ * @param certs receives the certificates, owned by the caller; NULL on error
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_get1_certs_ex(CMS_ContentInfo *cms, STACK_OF(X509) **certs);
+/**
+ * @brief Get the CRLs of a CMS structure.
+ * @param cms the CMS structure
+ * @param crls receives the CRLs, owned by the caller; NULL on error
+ * @returns 1 on success, 0 on error
+ */
 int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls);
 
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)

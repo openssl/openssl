@@ -7,14 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <assert.h>
 #include <limits.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
-#include "internal/sizes.h"
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
@@ -26,8 +25,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
-        const unsigned char *pm = pstr->data;
-        size_t pmlen = (size_t)pstr->length;
+        const unsigned char *pm = ASN1_STRING_get0_data(pstr);
+        size_t pmlen = ASN1_STRING_get_length(pstr);
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
         ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",
@@ -43,7 +42,7 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         return pkey;
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
-        char groupname[OSSL_MAX_NAME_SIZE];
+        char groupname[CMS_MAX_NAME_SIZE];
 
         /* type == V_ASN1_OBJECT => the parameters are given by an asn1 OID */
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
@@ -173,7 +172,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     int ptype = 0;
     const void *parameter = NULL;
 
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         return 0;
@@ -199,7 +198,8 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (kekctx == NULL)
         goto err;
     OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
-    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
+    kekcipher = EVP_CIPHER_fetch(EVP_PKEY_CTX_get0_libctx(pctx), name,
+        EVP_PKEY_CTX_get0_propq(pctx));
     if (kekcipher == NULL || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
@@ -292,9 +292,9 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         enckeylen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
         if (enckeylen > INT_MAX || enckeylen == 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, (int)enckeylen);
-        ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
-
+        if (!ASN1_BIT_STRING_set1(pubkey, penc, enckeylen, 0))
+            goto err;
+        OPENSSL_free(penc);
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
             V_ASN1_UNDEF, NULL); /* cannot fail */
