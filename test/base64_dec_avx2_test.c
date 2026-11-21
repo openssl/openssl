@@ -436,6 +436,8 @@ static int run_decode_test(int rawlen, int ws_type, int use_srp,
             goto end;
     } else {
         b64len = EVP_EncodeBlock(b64, raw, rawlen);
+        if (!TEST_int_ge(b64len, 0))
+            goto end;
     }
 
     inputlen = apply_ws_pattern(b64, b64len, input, ws_type, &seed);
@@ -543,6 +545,8 @@ static int test_decode_chunked(int idx)
         raw[i] = (unsigned char)(next_u32(&seed) & 0xFF);
 
     b64len = EVP_EncodeBlock(b64, raw, rawlen);
+    if (!TEST_int_ge(b64len, 0))
+        goto end;
     pemlen = insert_newlines(b64, b64len, pem, 64, 0);
 
     remaining = pemlen;
@@ -615,6 +619,8 @@ static int test_decode_partial_ctx(int split)
         raw[i] = (unsigned char)(next_u32(&seed) & 0xFF);
 
     b64len = EVP_EncodeBlock(b64, raw, PARTIAL_RAW_LEN);
+    if (!TEST_int_ge(b64len, 0))
+        goto end;
     pemlen = insert_newlines(b64, b64len, pem, 64, 0);
 
     if (!TEST_int_eq(pemlen, PARTIAL_PEM_LEN))
@@ -749,6 +755,8 @@ static int test_decode_block(int idx)
         raw[i] = (unsigned char)(next_u32(&seed) & 0xFF);
 
     b64len = EVP_EncodeBlock(b64, raw, rawlen);
+    if (!TEST_int_ge(b64len, 0))
+        goto end;
 
     snprintf(desc, sizeof(desc), "round-trip size=%d", rawlen);
     if (!compare_block_paths(desc, b64, b64len, outsz, &rv, decoded))
@@ -798,6 +806,8 @@ static int test_decode_block_overflow(int idx)
         raw[i] = (unsigned char)(next_u32(&seed) & 0xFF);
 
     b64len = EVP_EncodeBlock(b64, raw, rawlen);
+    if (!TEST_int_ge(b64len, 0))
+        goto end;
     bad[0] = '=';
     memcpy(bad + 1, b64, b64len);
 
@@ -1014,6 +1024,8 @@ static int test_decode_error_after_ws(int idx)
         raw[i] = (unsigned char)(next_u32(&seed) & 0xFF);
 
     b64len = EVP_EncodeBlock(b64, raw, rawlen);
+    if (!TEST_int_ge(b64len, 0))
+        goto end;
     inputlen = insert_newlines(b64, b64len, input, linelen, 0);
 
     /* far enough in that output has already been produced */
@@ -1071,6 +1083,8 @@ static int test_decode_replayed_output(int idx)
     raw[0] = '-';
 
     b64len = EVP_EncodeBlock(b64, raw, rawlen);
+    if (!TEST_int_ge(b64len, 0))
+        goto end;
     inputlen = insert_newlines(b64, b64len, input, linelen, 0);
 
     /* late enough that the compress buffer has not drained since the start */
@@ -1108,6 +1122,10 @@ static int pem_build(unsigned char *out, const unsigned char *raw, int rawlen,
         return -1;
 
     b64len = EVP_EncodeBlock(b64, raw, rawlen);
+    if (b64len < 0) {
+        OPENSSL_free(b64);
+        return -1;
+    }
     n += snprintf((char *)out + n, 64, "-----BEGIN TESTDATA-----\n");
     n += insert_newlines(b64, b64len, out + n, linelen, 0);
     if (corrupt_at >= 0)
