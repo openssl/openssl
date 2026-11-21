@@ -10,6 +10,8 @@
 #ifndef OSSL_TEST_MFAIL_H
 #define OSSL_TEST_MFAIL_H
 
+#include <stddef.h>
+
 /* Flags for mfail_init(). */
 #define MFAIL_FLAG_COUNT (1 << 0)
 #define MFAIL_FLAG_NO_CHECK (1 << 1)
@@ -25,6 +27,31 @@
 #define MFAIL_PHASE_DONE 0
 #define MFAIL_PHASE_COUNTING 1
 #define MFAIL_PHASE_INJECTING 2
+
+/* Shortest secret that can be watched, shorter ones match by chance */
+#define MFAIL_WATCH_MIN_LEN 8
+/* Maximum number of secrets in a single watch */
+#define MFAIL_WATCH_MAX_SECRETS 8
+/* Maximum number of leaks with recorded details */
+#define MFAIL_WATCH_MAX_LEAKS 8
+
+/* Freed block that still held a watched secret */
+typedef struct mfail_leak_st {
+    /* Index of the secret in the order it was added */
+    int secret;
+    size_t offset;
+    size_t size;
+    /* Allocation and free numbers since the watch started (0-indexed) */
+    int alloc_num;
+    int free_num;
+    /* Places of the allocation and the free, the file can be NULL */
+    const char *alloc_file;
+    int alloc_line;
+    const char *free_file;
+    int free_line;
+    /* Triggered failure point or -1 */
+    int point;
+} MFAIL_LEAK;
 
 /* Install mem hooks */
 int mfail_install(int optional);
@@ -65,6 +92,30 @@ int mfail_get_slow_threshold(void);
 void mfail_arm_once(int point);
 /* Low level disarming (similar to end) */
 void mfail_disarm(void);
+
+/**
+ * Start watching for the secret or add it to the running watch
+ * @param secret bytes to search for in the freed blocks (copied)
+ * @param len length of the secret
+ * @returns 1 on success or if mfail is not installed, 0 otherwise
+ */
+int mfail_watch_secret(const void *secret, size_t len);
+/** End the watch, results stay available until the next watch or iteration */
+void mfail_watch_end(void);
+/** @returns 1 if the watch is running */
+int mfail_is_watching(void);
+/** @returns number of freed blocks holding a secret or -1 on error */
+int mfail_watch_get_leaks(void);
+/** @returns number of freed blocks that were searched */
+int mfail_watch_get_checked(void);
+/** @returns 1 if a failure was triggered during the watch */
+int mfail_watch_was_triggered(void);
+/**
+ * Get a recorded leak
+ * @param i index of the leak
+ * @returns the leak or NULL if there is no such leak
+ */
+const MFAIL_LEAK *mfail_watch_get_leak(int i);
 
 /* Check whether to skip all tests */
 int mfail_env_skip_all(void);
