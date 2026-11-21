@@ -18,26 +18,6 @@ default provider, and is identified with the names "SHA1" and "SHA-1".
 This implementation supports the common gettable parameters described
 in L<EVP_MD-common(7)>.
 
-=head2 Settable Context Parameters
-
-This implementation supports the following L<OSSL_PARAM(3)> entries,
-settable for an B<EVP_MD_CTX> with L<EVP_MD_CTX_set_params(3)>:
-
-=over 4
-
-=item "ssl3-ms" (B<OSSL_DIGEST_PARAM_SSL3_MS>) <octet string>
-
-This parameter is set by libssl in order to calculate a signature hash for an
-SSLv3 CertificateVerify message as per RFC6101.
-It is only set after all handshake messages have already been digested via
-OP_digest_update() calls.
-The parameter provides the master secret value to be added to the digest.
-The digest implementation should calculate the complete digest as per RFC6101
-section 5.6.8.
-The next call after setting this parameter should be OP_digest_final().
-
-=back
-
 =head1 SEE ALSO
 
 L<EVP_MD_CTX_set_params(3)>, L<provider-digest(7)>,
