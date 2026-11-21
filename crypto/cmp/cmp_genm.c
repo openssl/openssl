@@ -363,6 +363,14 @@ free:
     X509_free(*newWithNew);
 
 end:
+    if (!res) {
+        /* do not leave the caller with pointers into the freed itav */
+        *newWithNew = NULL;
+        if (newWithOld != NULL)
+            *newWithOld = NULL;
+        if (oldWithNew != NULL)
+            *oldWithNew = NULL;
+    }
     OSSL_CMP_ITAV_free(itav);
     X509_free(oldWithOld_copy);
     return res;
