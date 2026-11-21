@@ -1251,7 +1251,7 @@ OSSL_DEPRECATEDIN_3_0 EC_KEY *o2i_ECPublicKey(EC_KEY **key,
  *  \param  key  the EC_KEY object with the public key
  *  \param  out  the buffer for the result (if NULL the function returns number
  *               of bytes needed).
- *  \return 1 on success and 0 if an error occurred
+ *  \return the length of the encoded octet string or 0 if an error occurred
  */
 OSSL_DEPRECATEDIN_3_0 int i2o_ECPublicKey(const EC_KEY *key, unsigned char **out);
 
