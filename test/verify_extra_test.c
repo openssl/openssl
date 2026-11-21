@@ -715,6 +715,55 @@ err:
     return ret;
 }
 
+/*
+ * Test that inheriting parameters from themselves is a harmless no-op.
+ * X509_VERIFY_PARAM_inherit() used to release dest's storage before reading
+ * the corresponding field from src, so a self-inherit (e.g. via
+ * SSL_CTX_set1_param(ctx, SSL_CTX_get0_param(ctx))) used the policies stack
+ * after freeing it and silently emptied the host/IP/email stacks.
+ */
+static int test_vpm_self_inherit(void)
+{
+    X509_VERIFY_PARAM *vpm = NULL;
+    ASN1_OBJECT *policy = NULL;
+    const char *test_host = "test.example.com";
+    const char *test_email = "user@example.com";
+    const char *ret_host, *ret_email;
+    int ret = 0;
+
+    if (!TEST_ptr(vpm = X509_VERIFY_PARAM_new()))
+        goto err;
+
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, test_host, 0))
+        || !TEST_true(X509_VERIFY_PARAM_set1_email(vpm, test_email, 0)))
+        goto err;
+    if (!TEST_ptr(policy = OBJ_txt2obj("1.2.3.4.5.6", 1))
+        || !TEST_true(X509_VERIFY_PARAM_add0_policy(vpm, policy)))
+        goto err;
+    policy = NULL; /* ownership taken by vpm */
+
+    /* self-inherit directly and via set1(): must succeed and change nothing */
+    if (!TEST_true(X509_VERIFY_PARAM_inherit(vpm, vpm)))
+        goto err;
+    if (!TEST_true(X509_VERIFY_PARAM_set1(vpm, vpm)))
+        goto err;
+
+    if (!TEST_ptr(ret_host = X509_VERIFY_PARAM_get0_host(vpm, 0))
+        || !TEST_str_eq(ret_host, test_host))
+        goto err;
+
+    if (!TEST_ptr(ret_email = X509_VERIFY_PARAM_get0_email(vpm))
+        || !TEST_str_eq(ret_email, test_email))
+        goto err;
+
+    ret = 1;
+
+err:
+    ASN1_OBJECT_free(policy);
+    X509_VERIFY_PARAM_free(vpm);
+    return ret;
+}
+
 static int test_self_signed_good(void)
 {
     return test_self_signed(root_f, 1, 1);
@@ -1114,6 +1163,7 @@ int setup_tests(void)
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
     ADD_TEST(test_vpm_copy_string_nul_term);
+    ADD_TEST(test_vpm_self_inherit);
     ADD_ALL_TESTS(test_pathlen_chain, OSSL_NELEM(pathlen_chains));
     return 1;
 err:
