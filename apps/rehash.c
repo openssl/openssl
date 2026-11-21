@@ -181,6 +181,12 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     if (old_id < ep->old_id)
         ep->old_id = old_id;
     if (need_symlink && !ep->need_symlink) {
+        if (bp->num_needed >= MAX_COLLISIONS) {
+            BIO_printf(bio_err,
+                       "%s: error: hash table overflow for %s\n",
+                       opt_getprog(), filename);
+            return 1;
+        }
         ep->need_symlink = 1;
         bp->num_needed++;
         memcpy(ep->digest, digest, (size_t)evpmdsize);
@@ -423,7 +429,7 @@ static int do_dir(const char *dirname, enum Hash h)
         for (bp = hash_table[i]; bp; bp = nextbp) {
             nextbp = bp->next;
             nextid = 0;
-            memset(idmask, 0, (bp->num_needed + 7) / 8);
+            memset(idmask, 0, sizeof(idmask));
             for (ep = bp->first_entry; ep; ep = ep->next)
                 if (ep->old_id < bp->num_needed)
                     bit_set(idmask, ep->old_id);
@@ -439,29 +445,35 @@ static int do_dir(const char *dirname, enum Hash h)
                             ep->filename, buf);
                 } else if (ep->need_symlink) {
                     /* New link needed (it may replace something) */
-                    while (bit_isset(idmask, nextid))
+                    while (nextid < MAX_COLLISIONS && bit_isset(idmask, nextid))
                         nextid++;
-
-                    snprintf(buf, buflen, "%s%s%08x.%s%d",
-                        dirname, pathsep, bp->hash,
-                        suffixes[bp->type], nextid);
-                    if (verbose)
-                        BIO_printf(bio_out, "link %s -> %s\n",
-                            ep->filename, &buf[dirlen]);
-                    if (unlink(buf) < 0 && errno != ENOENT) {
+                    if (nextid >= MAX_COLLISIONS) {
                         BIO_printf(bio_err,
-                            "%s: Can't unlink %s, %s\n",
-                            opt_getprog(), buf, strerror(errno));
+                                   "%s: error: hash table overflow for %s\n",
+                                   opt_getprog(), ep->filename);
                         errs++;
+                    } else {
+                        snprintf(buf, buflen, "%s%s%08x.%s%d",
+                            dirname, pathsep, bp->hash,
+                            suffixes[bp->type], nextid);
+                        if (verbose)
+                            BIO_printf(bio_out, "link %s -> %s\n",
+                                ep->filename, &buf[dirlen]);
+                        if (unlink(buf) < 0 && errno != ENOENT) {
+                            BIO_printf(bio_err,
+                                "%s: Can't unlink %s, %s\n",
+                                opt_getprog(), buf, strerror(errno));
+                            errs++;
+                        }
+                        if (symlink(ep->filename, buf) < 0) {
+                            BIO_printf(bio_err,
+                                "%s: Can't symlink %s, %s\n",
+                                opt_getprog(), ep->filename,
+                                strerror(errno));
+                            errs++;
+                        }
+                        bit_set(idmask, nextid);
                     }
-                    if (symlink(ep->filename, buf) < 0) {
-                        BIO_printf(bio_err,
-                            "%s: Can't symlink %s, %s\n",
-                            opt_getprog(), ep->filename,
-                            strerror(errno));
-                        errs++;
-                    }
-                    bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
                     snprintf(buf, buflen, "%s%s%08x.%s%d",
