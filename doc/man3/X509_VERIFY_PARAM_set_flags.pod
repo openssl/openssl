@@ -257,10 +257,16 @@ a not self-signed "intermediate" or self-issued certificate. Thus, when
 an intermediate certificate is found in the trust store, the verified
 chain passed to callbacks may be shorter than it otherwise would be
 without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
+RFC 9925 unsigned certificates (see B<EXFLAG_US> in
+L<X509_get_extension_flags(3)>) are handled like self-signed certificates,
+so when contained in the trust store they are treated as trust anchors
+also without this flag.
 
 B<X509_V_FLAG_CHECK_SS_SIGNATURE> requests checking the signature of
 the last certificate in a chain if the certificate is supposedly
-self-signed. This is prohibited and will result in an error if it is a
+self-signed. This is not done for unsigned certificates,
+which do not have a signature.
+This is prohibited and will result in an error if it is a
 non-conforming CA certificate with key usage restrictions not including
 the I<keyCertSign> bit. By default this check is disabled because it
 does not add any additional security, but in some cases applications
@@ -422,6 +428,9 @@ enabling policy checking however the implementation has never done this.
 The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
+
+Since OpenSSL 4.2, RFC 9925 unsigned certificates in the trust store
+are accepted as trust anchors also without the B<-partial_chain> option.
 
 =head1 COPYRIGHT
 

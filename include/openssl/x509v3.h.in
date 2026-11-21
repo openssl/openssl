@@ -458,6 +458,8 @@ struct ISSUING_DIST_POINT_st {
 /* A certificate MUST NOT include more than one instance of an extension. */
 #define EXFLAG_DUPLICATE 0x200000
 
+#define EXFLAG_US 0x400000 /* cert is unsigned according to RFC 9925 */
+
 /* https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3 */
 #define KU_DIGITAL_SIGNATURE X509v3_KU_DIGITAL_SIGNATURE
 #define KU_NON_REPUDIATION X509v3_KU_NON_REPUDIATION

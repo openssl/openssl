@@ -11,13 +11,17 @@ ossl_cmp_X509_STORE_get1_certs
   #include <openssl/cmp_util.h>
 
   int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-                                     int only_self_signed);
+                                     int only_trust_anchors);
   STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
 
 =head1 DESCRIPTION
 
-ossl_cmp_X509_STORE_add1_certs() adds all or only self-signed certificates from
-the given stack to given store. The I<certs> parameter may be NULL.
+ossl_cmp_X509_STORE_add1_certs() adds certificates from the given stack
+to the given store. The I<certs> parameter may be NULL.
+If I<only_trust_anchors> is nonzero, only those certificates are added that
+can serve as trust anchors only, namely apparently self-signed certificates
+(see L<X509_self_signed(3)>) and RFC 9925 unsigned certificates
+(see B<EXFLAG_US> in L<X509_get_extension_flags(3)>), else all of them.
 
 ossl_cmp_X509_STORE_get1_certs() retrieves a copy of all certificates in the
 given store.
@@ -31,6 +35,9 @@ ossl_cmp_X509_STORE_get1_certs() returns a list of certificates, NULL on error.
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
+
+Since OpenSSL 4.2, with I<only_trust_anchors> set,
+ossl_cmp_X509_STORE_add1_certs() also adds RFC 9925 unsigned certificates.
 
 =head1 COPYRIGHT
 

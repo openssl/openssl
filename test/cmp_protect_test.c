@@ -528,21 +528,28 @@ static int test_X509_STORE(void)
     return result;
 }
 
-static int test_X509_STORE_only_self_issued(void)
+static int test_X509_STORE_only_trust_anchors(void)
 {
+    X509 *unsigned_ee = X509_dup(endentity1);
+
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
     fixture->certs = sk_X509_new_null();
     fixture->chain = sk_X509_new_null();
-    fixture->callback_arg = 1; /* only self-issued */
-    if (!TEST_true(sk_X509_push(fixture->certs, endentity1))
+    fixture->callback_arg = 1; /* only apparently self-signed and unsigned */
+    if (!TEST_ptr(unsigned_ee)
+        || !TEST_true(X509_set_unsigned(unsigned_ee))
+        || !TEST_true(sk_X509_push(fixture->certs, endentity1))
         || !TEST_true(sk_X509_push(fixture->certs, endentity2))
+        || !TEST_true(sk_X509_push(fixture->certs, unsigned_ee))
         || !TEST_true(sk_X509_push(fixture->certs, root))
         || !TEST_true(sk_X509_push(fixture->certs, intermediate))
+        || !TEST_true(sk_X509_push(fixture->chain, unsigned_ee))
         || !TEST_true(sk_X509_push(fixture->chain, root))) {
         tear_down(fixture);
         fixture = NULL;
     }
     EXECUTE_TEST(execute_X509_STORE_test, tear_down);
+    X509_free(unsigned_ee);
     return result;
 }
 
@@ -659,7 +666,7 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_X509_STORE);
-    ADD_TEST(test_X509_STORE_only_self_issued);
+    ADD_TEST(test_X509_STORE_only_trust_anchors);
 
     return 1;
 }

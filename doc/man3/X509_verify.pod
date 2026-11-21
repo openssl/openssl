@@ -33,6 +33,10 @@ For success the issuer and subject names must match, the components of the
 authority key identifier (if present) must match the subject key identifier etc.
 The signature itself is actually verified only if B<verify_signature> is 1, as
 for explicitly trusted certificates this verification is not worth the effort.
+For an RFC 9925 unsigned certificate (see B<EXFLAG_US> in
+L<X509_get_extension_flags(3)>), which is not self-signed but handled alike,
+X509_self_signed() returns 1 if B<verify_signature> is 0,
+else 0, since there is no signature to verify.
 
 X509_REQ_verify_ex(), X509_REQ_verify(), X509_CRL_verify() and X509_ACERT_verify()
 verify the signatures of certificate requests, CRLs and attribute certificates
@@ -78,6 +82,9 @@ X509_REQ_verify_ex(), and X509_self_signed() were added in OpenSSL 3.0.
 X509_ACERT_verify() was added in OpenSSL 3.4.
 
 X509_self_signed() had its cert parameter modified to be I<const> in OpenSSL 4.0.
+
+Since OpenSSL 4.2, X509_self_signed() returns 1 also for RFC 9925 unsigned
+certificates if I<verify_signature> is 0.
 
 =head1 COPYRIGHT
 

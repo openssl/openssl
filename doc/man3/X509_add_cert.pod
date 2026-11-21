@@ -41,6 +41,8 @@ which is determined using L<X509_cmp(3)>, are ignored.
 
 If B<X509_ADD_FLAG_NO_SS> is set then certificates that are marked self-signed,
 which is determined using L<X509_self_signed(3)>, are ignored.
+The same holds for RFC 9925 unsigned certificates
+(see B<EXFLAG_US> in L<X509_get_extension_flags(3)>).
 
 =head1 RETURN VALUES
 
@@ -66,6 +68,9 @@ The functions X509_add_cert() and X509_add_certs()
 were added in OpenSSL 3.0.
 
 X509_add_cert() had its cert parameter converted to be I<const> in OpenSSL 4.0.
+
+Since OpenSSL 4.2, B<X509_ADD_FLAG_NO_SS> also excludes RFC 9925 unsigned
+certificates.
 
 =head1 COPYRIGHT
 

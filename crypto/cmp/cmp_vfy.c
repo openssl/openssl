@@ -354,7 +354,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     extraCerts = ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn;
     if ((store = X509_STORE_new()) == NULL
         || !ossl_cmp_X509_STORE_add1_certs(store, extraCerts,
-            1 /* self-issued only */))
+            1 /* just apparently self-signed and unsigned certs */))
         goto err;
 
     /* store does not include CRLs */

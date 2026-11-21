@@ -351,7 +351,8 @@ Else, 'digitalSignature' must be allowed by CMP signer certificates.
 
 This is a quirk option added to support 3GPP TS 33.310.
 It leads to behavior violating RFCs 4210 and 9810.
-It allows using self-issued certificates from the extraCerts in an IP message
+It allows using apparently self-signed certificates
+and RFC 9925 unsigned certificates from the extraCerts in an IP message
 as trust anchors when validating the CMP message protection certificate
 in this and any subsequent responses from the server in the same transaction,
 but only if these extraCerts can also be used as trust anchors for validating
@@ -901,6 +902,9 @@ Support for central key generation, requested via B<OSSL_CRMF_POPO_NONE>,
 was added in OpenSSL 3.5.
 
 The B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES> option was added in OpenSSL 4.1.
+
+Since OpenSSL 4.2, the B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR> option
+also allows using RFC 9925 unsigned certificates as trust anchors.
 
 =head1 COPYRIGHT
 

@@ -815,8 +815,9 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
 #define ossl_cmp_add_error_data(txt) ERR_add_error_txt(" : ", txt)
 #define ossl_cmp_add_error_line(txt) ERR_add_error_txt("\n", txt)
 /* The two functions manipulating X509_STORE could be generally useful */
+/* doc-exempt: this declaration is part of an internal header file */
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-    int only_self_issued);
+    int only_trust_anchors);
 STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
     const char *text, size_t len);

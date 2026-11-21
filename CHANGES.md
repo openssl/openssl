@@ -145,6 +145,18 @@ OpenSSL 4.2
 
    *Daniel Kubec*
 
+ * Added support for unsigned X.509 certificates according to [RFC 9925]:
+   `X509_set_unsigned()` and the `openssl x509 -unsigned` option for
+   generating them, and the `EXFLAG_US` extension flag for recognizing them.
+   Unsigned X.509 certificates in the trust store are now accepted
+   as trust anchors also without `X509_V_FLAG_PARTIAL_CHAIN`.
+   Since unsigned certificates are handled like apparently self-signed ones,
+   the `EXFLAG_SS` flag is now set also for them (along with `EXFLAG_US`),
+   and `X509_self_signed()`
+   now returns 1 also for them if its `verify_signature` argument is 0.
+
+   *David von Oheimb*
+
  * Added optimized ML-KEM implementation for x86 platforms that support the
    AVX2 vector instruction set.
 
@@ -24722,6 +24734,7 @@ ndif
 [RFC 9846 Section 4.3.10]: https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.10
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
+[RFC 9925]: https://datatracker.ietf.org/doc/html/rfc9925
 [SECG SEC 1 Section 2.3.4]: https://www.secg.org/sec1-v2.pdf#subsubsection.2.3.4
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
