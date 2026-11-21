@@ -225,9 +225,9 @@ slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
 
         p = params;
         /* The underlying digest to be used */
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)nm, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest, (char *)nm, 0);
         if (key->propq != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_properties,
                 (char *)key->propq, 0);
         *p = OSSL_PARAM_construct_end();
         p = params;

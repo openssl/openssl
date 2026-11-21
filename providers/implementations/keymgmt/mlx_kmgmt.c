@@ -307,12 +307,12 @@ static int mlx_kem_export(void *vkey, int selection, OSSL_CALLBACK *param_cb,
 
     if (sub_arg.pubenc != NULL && sub_arg.pubcount == 2
         && !ossl_param_build_set_octet_string(
-            tmpl, NULL, OSSL_PKEY_PARAM_PUB_KEY, sub_arg.pubenc, publen))
+            tmpl, NULL, OSSL_PKEY_PARAM_pub_key, sub_arg.pubenc, publen))
         goto err;
 
     if (sub_arg.prvenc != NULL && sub_arg.prvcount == 2
         && !ossl_param_build_set_octet_string(
-            tmpl, NULL, OSSL_PKEY_PARAM_PRIV_KEY, sub_arg.prvenc, prvlen))
+            tmpl, NULL, OSSL_PKEY_PARAM_priv_key, sub_arg.prvenc, prvlen))
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
@@ -370,7 +370,7 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
         goto err;
     parr[0] = OSSL_PARAM_construct_octet_string(pname, val, len);
     if (group != NULL)
-        parr[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+        parr[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_group_name,
             group, 0);
     if (EVP_PKEY_fromdata(ctx, ppkey, selection, parr) > 0)
         ret = 1;
@@ -390,14 +390,14 @@ load_keys(MLX_KEY *key,
     for (slot = 0; slot < 2; ++slot) {
         if (prvlen) {
             /* Ignore public keys when private provided */
-            if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PRIV_KEY,
+            if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_priv_key,
                     minimal_selection, key, slot, prvenc,
                     (int)key->minfo->prvkey_bytes,
                     (int)key->xinfo->prvkey_bytes))
                 goto err;
         } else if (publen) {
             /* Absent private key data, import public keys */
-            if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PUB_KEY,
+            if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_pub_key,
                     OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
                         | OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
                     key, slot, pubenc,

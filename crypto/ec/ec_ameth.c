@@ -508,7 +508,7 @@ static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                  &pub_key_buf, bnctx))
                 == 0
             || !OSSL_PARAM_BLD_push_octet_string(tmpl,
-                OSSL_PKEY_PARAM_PUB_KEY,
+                OSSL_PKEY_PARAM_pub_key,
                 pub_key_buf,
                 pub_key_buflen))
             goto err;
@@ -559,7 +559,7 @@ static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
         sz = (ecbits + 7) / 8;
         if (!OSSL_PARAM_BLD_push_BN_pad(tmpl,
-                OSSL_PKEY_PARAM_PRIV_KEY,
+                OSSL_PKEY_PARAM_priv_key,
                 priv_key, sz))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
@@ -573,7 +573,7 @@ static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
         /* Export the ECDH_COFACTOR_MODE parameter */
         if (!OSSL_PARAM_BLD_push_int(tmpl,
-                OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+                OSSL_PKEY_PARAM_use_cofactor_ecdh,
                 ecdh_cofactor_mode))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;

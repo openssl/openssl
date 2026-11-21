@@ -371,7 +371,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
      * older providers can use the supplied value. Ideally we should have just
      * used the size passed into ctx->digest->dfinal().
      */
-    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &size);
+    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen, &size);
     params[i++] = OSSL_PARAM_construct_end();
 
     if (ossl_likely(EVP_MD_CTX_set_params(ctx, params) >= 0))
@@ -730,15 +730,15 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     switch (cmd) {
     case EVP_MD_CTRL_XOF_LEN:
         sz = (size_t)p1;
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen, &sz);
         break;
     case EVP_MD_CTRL_MICALG:
         set_params = 0;
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_micalg,
             p2, p1 ? p1 : 9999);
         break;
     case EVP_CTRL_SSL3_MASTER_SECRET:
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_ssl3_ms,
             p2, p1);
         break;
     default:
@@ -810,10 +810,10 @@ static int evp_md_cache_constants(EVP_MD *md)
      * during the EVP_MD_fetch(). For this reason the XOF functions set the
      * md_size to 0, since the output size is unknown.
      */
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
-    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &mdsize);
-    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
-    params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_ALGID_ABSENT,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_block_size, &blksz);
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_size, &mdsize);
+    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_xof, &xof);
+    params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_algid_absent,
         &algid_absent);
     params[4] = OSSL_PARAM_construct_end();
     ok = evp_do_md_getparams(md, params) > 0;

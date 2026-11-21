@@ -192,7 +192,7 @@ int ec_main(int argc, char **argv)
 
     if (point_format
         && !EVP_PKEY_set_utf8_string_param(
-            eckey, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            eckey, OSSL_PKEY_PARAM_ec_point_conversion_format,
             point_format)) {
         BIO_puts(bio_err, "unable to set point conversion format\n");
         goto end;
@@ -200,18 +200,18 @@ int ec_main(int argc, char **argv)
 
     if (asn1_encoding != NULL
         && !EVP_PKEY_set_utf8_string_param(
-            eckey, OSSL_PKEY_PARAM_EC_ENCODING, asn1_encoding)) {
+            eckey, OSSL_PKEY_PARAM_ec_encoding, asn1_encoding)) {
         BIO_puts(bio_err, "unable to set asn1 encoding format\n");
         goto end;
     }
 
     if (no_public) {
-        if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0)) {
+        if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_ec_include_public, 0)) {
             BIO_puts(bio_err, "unable to disable public key encoding\n");
             goto end;
         }
     } else {
-        if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 1)) {
+        if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_ec_include_public, 1)) {
             BIO_puts(bio_err, "unable to enable public key encoding\n");
             goto end;
         }

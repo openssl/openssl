@@ -463,7 +463,7 @@ static int dsa_verify_set_sig(void *vpdsactx,
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     OSSL_PARAM params[2];
 
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_SIGNATURE,
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_signature,
         (unsigned char *)sig, siglen);
     params[1] = OSSL_PARAM_construct_end();
     return dsa_sigalg_set_ctx_params(pdsactx, params);

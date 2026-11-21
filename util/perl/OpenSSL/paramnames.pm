@@ -14,6 +14,8 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
+                    generate_param_name_array
+                    generate_param_name_imports
                     produce_param_decoder
                     produce_param_decoder_with_count);
 
@@ -702,25 +704,124 @@ sub output_endifdef {
     }
 }
 
-# Generate string based macros for public consumption
-sub generate_public_macros {
-    my @macros = ();
+# Run through the list of parameters and figure out where each name lies in
+# memory and what the total size of all the names (with nul terminators) is.
+sub calculate_name_offsets {
+    my %offsets = ();
+    my %name_positions = ();
+    my %resolved_names = ();
+    my $character_count = 0;
 
-    foreach my $name (keys %params) {
-        my $val = $params{$name};
-        my $def = '# define ' . $name . ' ';
+    foreach my $name (sort keys %params) {
+        my $param_text = $params{$name};
 
-        if (substr($val, 0, 1) eq '*') {
-            $def .= substr($val, 1);
-        } else {
-            $def .= '"' . $val . '"';
+        # Dereference any chains
+        while (substr($param_text, 0, 1) eq '*') {
+            $param_text = $params{substr($param_text, 1)};
         }
-        push(@macros, $def)
+
+        $resolved_names{$name} = $param_text;
     }
-    return join("\n", sort @macros);
+
+    # Store longer names first so shorter names can share their suffixes.
+    foreach my $name (sort {
+        length($resolved_names{$b}) <=> length($resolved_names{$a})
+            || $a cmp $b
+    } keys %params) {
+        my $param_text = $resolved_names{$name};
+
+        # Assume we're creating a new record
+        my %offset = (
+            name => $name,
+            text => $param_text,
+            position => $character_count,
+            dup => 0
+        );
+        if (defined $name_positions{$param_text}) {
+            $offset{"position"} = $name_positions{$param_text};
+            $offset{"dup"} = 1;
+        } else {
+            # Check if the string exists as a suffix of another existing string.
+            # This is a brute force implementation, if it becomes an issue
+            # something more elegant should be implemented.
+            for my $i (0 .. length($param_text)) {
+                $name_positions{substr($param_text, $i)} //= $character_count + $i;
+            }
+            $character_count += length($param_text) + 1;
+        }
+        $offsets{$name} = \%offset;
+    }
+    return $character_count, %offsets;
+}
+
+# Keep the namespace uppercase and use lowercase for the parameter identifier.
+sub parameter_name_symbol {
+    my $name = shift;
+
+    $name =~ s/^(.+_PARAM_|OSSL_KDF_PURPOSE_|OSSL_CAPABILITY_TLS_(?:GROUP|SIGALG)_|OSSL_LIBSSL_RECORD_LAYER_)(.+)$/$1 . lc($2)/e
+        or die "Unknown parameter name namespace: $name";
+    return $name;
+}
+
+# Generate literal names and pointers into private storage. Only pointer-sized
+# objects are exported, so the backing array can grow without copy truncation.
+sub generate_public_macros {
+    my @macros;
+    my @declarations = ('/* Parameter names in shared private storage. */');
+
+    foreach my $name (sort keys %params) {
+        my $val = $params{$name};
+        my $symbol = parameter_name_symbol($name);
+        my $literal = substr($val, 0, 1) eq '*' ? substr($val, 1) : '"' . $val . '"';
+
+        push @macros, "# define $name $literal";
+        push @declarations, "OSSL_PARAM_NAME_EXTERN const char *const $symbol;";
+    }
+    return join("\n", @macros, '', @declarations);
+}
+
+# Generate the array declaration and initializer.
+sub generate_param_name_array {
+    my @name_text = ();
+    my ($total, %position_info) = calculate_name_offsets();
+
+    foreach my $name (sort {
+        $position_info{$a}{'position'} <=> $position_info{$b}{'position'}
+            || $a cmp $b
+    } keys %params) {
+        my $val = $position_info{$name}{'text'};
+        my $text = '';
+
+        if ($position_info{$name}{'dup'} == 0) {
+            $text = sprintf "    /* %4d */ ", $position_info{$name}{'position'};
+            foreach my $ch (split('', $val)) {
+                $text .= "'" . $ch . "', ";
+            }
+            push(@name_text, $text . "'\\0',");
+        }
+    }
+    return join("\n",
+                "static const char ossl_parameter_names_storage[$total] = {",
+                @name_text,
+                '};',
+                '',
+                map {
+                    sprintf 'const char *const %s = ossl_parameter_names_storage + %d;',
+                        parameter_name_symbol($_), $position_info{$_}{position}
+                } sort keys %params);
+}
+
+# A Windows static library supplies the import-address slots used by clients
+# compiled with the same declarations as DLL clients.
+sub generate_param_name_imports {
+    return join("\n", map {
+        "extern const char *const *const OSSL_PARAM_NAME_IMPORT($_);\n"
+        . "const char *const *const OSSL_PARAM_NAME_IMPORT($_) = &$_;"
+    } (map { parameter_name_symbol($_) } sort keys %params));
 }
 
 sub trie_matched {
+  my $macro = shift;
   my $with_count = shift;
   my $field = shift;
   my $num = shift;
@@ -728,6 +829,8 @@ sub trie_matched {
   my $indent1 = shift;
   my $indent2 = shift;
 
+  printf "%s/* %s */\n", $indent1, $macro;
+  printf "%s:\n", lc($macro);
   if ($field eq $invalid_param) {
     printf "%sERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,\n", $indent1;
     printf "%s               \"param %%s is unsupported\", s);\n", $indent1;
@@ -746,7 +849,7 @@ sub trie_matched {
   } else {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
     if (defined $dup && $dup eq 'first') {
-      printf "%sbreak;\n", $indent2;
+      printf "%scontinue;\n", $indent2;
     } else {
       printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
       printf "%s               \"param %%s is repeated\", s);\n", $indent2;
@@ -787,8 +890,7 @@ sub generate_decoder_from_trie {
                 if ($suf ne $trieref->{'suffix'});
         }
         print ")) {\n";
-        printf "%s/* %s */\n", $indent1, $trieref->{'name'};
-        trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
+        trie_matched($trieref->{'name'}, $with_count, $field, $num, $dup, $indent1, $indent2);
         printf "%s}\n", $indent0;
 
         # If this is at the top level and it's conditional, we have to
@@ -811,7 +913,7 @@ sub generate_decoder_from_trie {
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
             output_ifdef($ifdefs->{$field});
-            trie_matched($with_count, $field, $num, $dup, $indent1, $indent2);
+            trie_matched($trieref->{'val'}, $with_count, $field, $num, $dup, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
         } else {
             printf "%sbreak;\n", $indent1;
@@ -835,7 +937,6 @@ sub generate_trie {
     my @keys = @_;
     my %trie;
     my $nodes = 0;
-    my $chars = 0;
 
     foreach my $name (sort @keys) {
         my $val = $params{$name};
@@ -847,7 +948,6 @@ sub generate_trie {
         }
         my $cursor = \%trie;
 
-        $chars += length($val);
         for my $i (0 .. length($val) - 1) {
             my $c = substr($val, $i, 1);
 
@@ -894,8 +994,8 @@ sub locate_long_endings {
 }
 
 sub output_param_decoder {
-    my ($with_count, $decoder_name_base, @params) = @_;
-    my @keys = ();
+    my ($with_count, $decoder_name_base, @param_list) = @_;
+    my (undef, %position_info) = calculate_name_offsets();
     my %prms = ();
     my %concat_num = ();
     my %process_dup = ();
@@ -906,21 +1006,21 @@ sub output_param_decoder {
         print "/* Machine generated by util/perl/OpenSSL/paramnames.pm */\n";
         # IWYU
         print "#include <string.h>\n";
+        print "#include <openssl/core_names.h>\n";
         print "#include <openssl/params.h>\n";
         print "#include <openssl/e_os2.h>\n";
         print "#include \"internal/common.h\"\n";
         print "#include \"prov/proverr.h\"\n";
         print "\n";
     }
-    print "/* Machine generated */\n";
     # Output gettable param array
     printf "#ifndef %s_list\n", $decoder_name_base;
     printf "static ossl_unused const OSSL_PARAM %s_list[] = {\n", $decoder_name_base;
-    for (my $i = 0; $i <= $#params; $i++) {
-        my $pname = $params[$i][0];
-        my $pident = $params[$i][1];
-        my $ptype = $params[$i][2];
-        my $pnum = $params[$i][3];
+    for (my $i = 0; $i <= $#param_list; $i++) {
+        my $pname = $param_list[$i][0];
+        my $pident = $param_list[$i][1];
+        my $ptype = $param_list[$i][2];
+        my $pnum = $param_list[$i][3];
 
         $prms{$pname} = $pident;
 
@@ -1004,11 +1104,34 @@ sub output_param_decoder {
     print "    *count = 0;\n" if $with_count;
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
-    print "        for (; (s = p->key) != NULL; p++)\n";
+    print "        for (; (s = p->key) != NULL; p++) {\n";
+    print "            if (OSSL_PARAM_is_internal_name(s))\n";
+    print "                switch (\n";
+    foreach my $macro (sort keys %prms) {
+        my $field = $prms{$macro};
+
+        output_ifdef($ifdefs{$field});
+        printf "                    s == %s ? %d :\n", parameter_name_symbol($macro), $position_info{$macro}{position};
+        output_endifdef($ifdefs{$field});
+    }
+    print "                    -1) {\n";
+    print "                default:\n";
+    print "                    break;\n";
+    foreach my $macro (sort keys %prms) {
+        my $field = $prms{$macro};
+
+        output_ifdef($ifdefs{$field});
+        printf "                case %d:\n", $position_info{$macro}{'position'};
+        printf "                    goto %s;\n", lc($macro);
+        output_endifdef($ifdefs{$field});
+    }
+    print "                }\n";
+
     generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%process_dup, \%ifdefs);
+    print "        }\n";
     print "    return 1;\n";
-    print "}\n#endif\n";
-    print "/* End of machine generated */";
+    print "}\n";
+    print "#endif\n";
 }
 
 sub produce_param_decoder {

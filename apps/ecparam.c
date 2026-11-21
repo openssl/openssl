@@ -217,14 +217,14 @@ int ecparam_main(int argc, char **argv)
                 "using curve name prime256v1 instead of secp256r1\n");
             curve_name = SN_X9_62_prime256v1;
         }
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_group_name,
             curve_name, 0);
         if (asn1_encoding != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ec_encoding,
                 asn1_encoding, 0);
         if (point_format != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(
-                OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                OSSL_PKEY_PARAM_ec_point_conversion_format,
                 point_format, 0);
         *p = OSSL_PARAM_construct_end();
 
@@ -255,7 +255,7 @@ int ecparam_main(int argc, char **argv)
 
         if (point_format
             && !EVP_PKEY_set_utf8_string_param(
-                params_key, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                params_key, OSSL_PKEY_PARAM_ec_point_conversion_format,
                 point_format)) {
             BIO_puts(bio_err, "unable to set point conversion format\n");
             goto end;
@@ -263,14 +263,14 @@ int ecparam_main(int argc, char **argv)
 
         if (asn1_encoding != NULL
             && !EVP_PKEY_set_utf8_string_param(
-                params_key, OSSL_PKEY_PARAM_EC_ENCODING, asn1_encoding)) {
+                params_key, OSSL_PKEY_PARAM_ec_encoding, asn1_encoding)) {
             BIO_puts(bio_err, "unable to set asn1 encoding format\n");
             goto end;
         }
     }
 
     if (no_seed
-        && !EVP_PKEY_set_octet_string_param(params_key, OSSL_PKEY_PARAM_EC_SEED,
+        && !EVP_PKEY_set_octet_string_param(params_key, OSSL_PKEY_PARAM_ec_seed,
             NULL, 0)) {
         BIO_puts(bio_err, "unable to clear seed\n");
         goto end;
@@ -291,7 +291,7 @@ int ecparam_main(int argc, char **argv)
 
         if (check_named
             && !EVP_PKEY_set_utf8_string_param(params_key,
-                OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE,
+                OSSL_PKEY_PARAM_ec_group_check_type,
                 OSSL_PKEY_EC_GROUP_CHECK_NAMED)) {
             BIO_puts(bio_err, "unable to set check_type\n");
             goto end;

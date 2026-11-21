@@ -384,19 +384,19 @@ static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh)
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
 
-    if (!EVP_PKEY_get_bn_param(dh, OSSL_PKEY_PARAM_FFC_P, &bn_p)
-        || !EVP_PKEY_get_bn_param(dh, OSSL_PKEY_PARAM_FFC_Q, &bn_q)
-        || !EVP_PKEY_get_bn_param(dh, OSSL_PKEY_PARAM_FFC_G, &bn_g)) {
+    if (!EVP_PKEY_get_bn_param(dh, OSSL_PKEY_PARAM_ffc_p, &bn_p)
+        || !EVP_PKEY_get_bn_param(dh, OSSL_PKEY_PARAM_ffc_q, &bn_q)
+        || !EVP_PKEY_get_bn_param(dh, OSSL_PKEY_PARAM_ffc_g, &bn_g)) {
         BIO_puts(bio_err, "Error, failed to set DH parameters\n");
         goto err;
     }
 
     if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
-        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P,
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_ffc_p,
             bn_p)
-        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_Q,
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_ffc_q,
             bn_q)
-        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G,
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_ffc_g,
             bn_g)
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
         BIO_puts(bio_err, "Error, failed to set DH parameters\n");

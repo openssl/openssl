@@ -92,7 +92,7 @@ static int get_parent_strength(PROV_DRBG *drbg, unsigned int *str)
         return 0;
     }
 
-    *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, str);
+    *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_strength, str);
     if (!ossl_drbg_lock_parent(drbg)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         return 0;
@@ -112,7 +112,7 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
     void *parent = drbg->parent;
     unsigned int r = 0;
 
-    *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &r);
+    *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_reseed_counter, &r);
     if (!ossl_drbg_lock_parent(drbg)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         goto err;

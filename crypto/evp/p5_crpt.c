@@ -87,12 +87,12 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         goto err;
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_password,
         (char *)pass, (size_t)passlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_salt,
         salt, saltlen);
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_iter, &iter);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         (char *)mdname, 0);
     *p = OSSL_PARAM_construct_end();
     if (EVP_KDF_derive(kctx, md_tmp, mdsize, params) != 1)

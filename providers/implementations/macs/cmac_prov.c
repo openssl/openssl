@@ -142,7 +142,7 @@ static int tdes_check_param(struct cmac_data_st *macctx, OSSL_PARAM *p,
                 FIPS_CONFIG_TDES_ENCRYPT_DISABLED))
             return 0;
         OSSL_FIPS_IND_GET_PARAM(macctx, p, state, OSSL_FIPS_IND_SETTABLE0,
-            OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK)
+            OSSL_CIPHER_PARAM_fips_encrypt_check)
     }
     return 1;
 }

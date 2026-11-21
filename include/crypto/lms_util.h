@@ -49,7 +49,7 @@ static ossl_unused ossl_inline int lms_evp_md_ctx_init(EVP_MD_CTX *ctx, const EV
 
     /* The OpenSSL SHAKE implementation requires the xoflen to be set */
     if (strncmp(lms_params->digestname, "SHAKE", 5) == 0) {
-        params[0] = OSSL_PARAM_construct_uint32(OSSL_DIGEST_PARAM_XOFLEN,
+        params[0] = OSSL_PARAM_construct_uint32(OSSL_DIGEST_PARAM_xoflen,
             (uint32_t *)&lms_params->n);
         p = params;
     }

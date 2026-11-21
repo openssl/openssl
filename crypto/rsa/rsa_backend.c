@@ -282,16 +282,16 @@ int ossl_rsa_todata_parsed(RSA *rsa, OSSL_PARAM_BLD *bld,
     ossl_rsa_get0_all_params(rsa, factors, exps, coeffs);
 
     if (!ossl_param_build_set_bn(bld, p == NULL ? NULL : p->n,
-            OSSL_PKEY_PARAM_RSA_N, rsa_n)
+            OSSL_PKEY_PARAM_rsa_n, rsa_n)
         || !ossl_param_build_set_bn(bld, p == NULL ? NULL : p->e,
-            OSSL_PKEY_PARAM_RSA_E, rsa_e))
+            OSSL_PKEY_PARAM_rsa_e, rsa_e))
         goto err;
 
     /* Check private key data integrity */
     if (include_private && rsa_d != NULL) {
 
         if (!ossl_param_build_set_bn(bld, p == NULL ? NULL : p->d,
-                OSSL_PKEY_PARAM_RSA_D,
+                OSSL_PKEY_PARAM_rsa_d,
                 rsa_d)
             || !rsa_set_multi_key_bn(bld,
                 p == NULL ? NULL : p->mp.factors,
@@ -355,10 +355,10 @@ int ossl_rsa_pss_params_30_todata_parsed(const RSA_PSS_PARAMS_30 *pss,
         const char *mgf1mdname = (maskgenhashalg_nid == default_maskgenhashalg_nid
                 ? NULL
                 : ossl_rsa_oaeppss_nid2name(maskgenhashalg_nid));
-        const char *key_md = OSSL_PKEY_PARAM_RSA_DIGEST;
-        const char *key_mgf = OSSL_PKEY_PARAM_RSA_MASKGENFUNC;
-        const char *key_mgf1_md = OSSL_PKEY_PARAM_RSA_MGF1_DIGEST;
-        const char *key_saltlen = OSSL_PKEY_PARAM_RSA_PSS_SALTLEN;
+        const char *key_md = OSSL_PKEY_PARAM_rsa_digest;
+        const char *key_mgf = OSSL_PKEY_PARAM_rsa_maskgenfunc;
+        const char *key_mgf1_md = OSSL_PKEY_PARAM_rsa_mgf1_digest;
+        const char *key_saltlen = OSSL_PKEY_PARAM_rsa_pss_saltlen;
 
         /*
          * To ensure that the key isn't seen as unrestricted by the recipient,

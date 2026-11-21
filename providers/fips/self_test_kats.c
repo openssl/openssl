@@ -325,7 +325,7 @@ static int self_test_drbg(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     if (test == NULL)
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
+    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_strength,
         &strength);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
@@ -346,10 +346,10 @@ static int self_test_drbg(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     if (!EVP_RAND_CTX_set_params(drbg, drbg_params))
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_test_entropy,
         (void *)t->u.drbg.entropyin.buf,
         t->u.drbg.entropyin.len);
-    drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+    drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_test_nonce,
         (void *)t->u.drbg.nonce.buf,
         t->u.drbg.nonce.len);
     if (!EVP_RAND_instantiate(test, strength, 0, NULL, 0, drbg_params))
@@ -358,7 +358,7 @@ static int self_test_drbg(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
             t->u.drbg.persstr.len, NULL))
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_test_entropy,
         (void *)t->u.drbg.entropyinpr1.buf,
         t->u.drbg.entropyinpr1.len);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
@@ -370,7 +370,7 @@ static int self_test_drbg(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
             t->u.drbg.entropyaddin1.len))
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_test_entropy,
         (void *)t->u.drbg.entropyinpr2.buf,
         t->u.drbg.entropyinpr2.len);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
@@ -689,7 +689,7 @@ static int self_test_kem_encapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     if (ctx == NULL)
         goto err;
 
-    *params = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
+    *params = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_ikme,
         (unsigned char *)t->entropy.buf,
         t->entropy.len);
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0)
@@ -1009,7 +1009,7 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     if (parent_rand == NULL)
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
+    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_strength,
         &strength);
     if (!EVP_RAND_CTX_set_params(parent_rand, drbg_params))
         goto err;
@@ -1023,14 +1023,14 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     if (kat_rand == NULL)
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_utf8_string("digest", "SHA256", 0);
+    drbg_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_digest, "SHA256", 0);
     if (!EVP_RAND_CTX_set_params(kat_rand, drbg_params))
         goto err;
 
     /* Instantiate the RNGs */
-    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+    drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_test_entropy,
         (void *)entropy, entropy_len);
-    drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+    drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_test_nonce,
         (void *)nonce, nonce_len);
     if (!EVP_RAND_instantiate(parent_rand, strength, 0, NULL, 0, drbg_params))
         goto err;
@@ -1039,9 +1039,9 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     parent_rand = NULL;
 
     /* Disable time/request based reseeding to make selftests deterministic */
-    drbg_params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+    drbg_params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_reseed_time_interval,
         &reseed_time_interval);
-    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_reseed_requests,
         &reseed_requests);
     if (!EVP_RAND_instantiate(kat_rand, strength, 0, persstr, persstr_len, drbg_params))
         goto err;
@@ -1098,9 +1098,9 @@ static int setup_main_random(OSSL_LIB_CTX *libctx)
     if (main_rand == NULL)
         goto err;
 
-    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_GENERATE,
+    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_generate,
         &generate);
-    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
+    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_strength,
         &strength);
 
     if (!EVP_RAND_instantiate(main_rand, strength, 0, NULL, 0, drbg_params))

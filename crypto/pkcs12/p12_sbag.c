@@ -211,7 +211,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
     if (bld == NULL)
         return NULL;
 
-    if (!OSSL_PARAM_BLD_push_octet_string(bld, OSSL_SKEY_PARAM_RAW_BYTES,
+    if (!OSSL_PARAM_BLD_push_octet_string(bld, OSSL_SKEY_PARAM_raw_bytes,
             raw_key, (size_t)raw_key_len))
         goto err;
 
@@ -219,7 +219,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
         oid_der_len = i2d_ASN1_OBJECT(algoid, &oid_der);
         if (oid_der_len > 0
             && !OSSL_PARAM_BLD_push_octet_string(bld,
-                OSSL_SKEY_PARAM_ALGORITHM_OID,
+                OSSL_SKEY_PARAM_algorithm_oid,
                 oid_der, (size_t)oid_der_len))
             goto err;
     }
@@ -229,7 +229,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
         params_der_len = i2d_ASN1_TYPE(algor->parameter, &params_der);
         if (params_der_len > 0
             && !OSSL_PARAM_BLD_push_octet_string(bld,
-                OSSL_SKEY_PARAM_ALGORITHM_PARAMS,
+                OSSL_SKEY_PARAM_algorithm_params,
                 params_der, (size_t)params_der_len))
             goto err;
     }

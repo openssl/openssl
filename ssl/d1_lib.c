@@ -1850,7 +1850,7 @@ int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
     if (mctx == NULL)
         goto err;
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest,
         "SHA2-256", 0);
     params[1] = OSSL_PARAM_construct_end();
 

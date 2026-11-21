@@ -1662,7 +1662,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
     EVP_PKEY_CTX *kctx = NULL;
     EVP_PKEY *key = NULL;
     OSSL_PARAM param[] = {
-        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_group_name, NULL, 0),
         OSSL_PARAM_END,
     };
 
@@ -2625,9 +2625,9 @@ int speed_main(int argc, char **argv)
         snprintf(evp_hmac_name, hmac_name_len, "hmac(%s)", evp_mac_mdname);
         names[D_HMAC] = evp_hmac_name;
 
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_digest,
             evp_mac_mdname, 0);
-        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_key,
             (char *)hmac_key, len);
         params[2] = OSSL_PARAM_construct_end();
 
@@ -2769,12 +2769,12 @@ int speed_main(int argc, char **argv)
         static const char gmac_iv[] = "0123456789ab";
         OSSL_PARAM params[4];
 
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_cipher,
             "aes-128-gcm", 0);
-        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_iv,
             (char *)gmac_iv,
             sizeof(gmac_iv) - 1);
-        params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_key,
             (void *)key32, 16);
         params[3] = OSSL_PARAM_construct_end();
 
@@ -3033,9 +3033,9 @@ int speed_main(int argc, char **argv)
         snprintf(evp_cmac_name, len, "cmac(%s)", evp_mac_ciphername);
         names[D_EVP_CMAC] = evp_cmac_name;
 
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_cipher,
             evp_mac_ciphername, 0);
-        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_key,
             (char *)key32, keylen);
         params[2] = OSSL_PARAM_construct_end();
 
@@ -3056,7 +3056,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_KMAC128]) {
         OSSL_PARAM params[2];
 
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_key,
             (void *)key32, 16);
         params[1] = OSSL_PARAM_construct_end();
 
@@ -3077,7 +3077,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_KMAC256]) {
         OSSL_PARAM params[2];
 
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_key,
             (void *)key32, 32);
         params[1] = OSSL_PARAM_construct_end();
 
@@ -3360,7 +3360,7 @@ int speed_main(int argc, char **argv)
                     st = 0;
             } else {
                 OSSL_PARAM params[2] = {
-                    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_TLS_VERSION, NULL),
+                    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_tls_version, NULL),
                     OSSL_PARAM_END,
                 };
                 EVP_MD_CTX *mctx = EVP_MD_CTX_new();
@@ -3408,7 +3408,7 @@ int speed_main(int argc, char **argv)
                     st = 0;
             } else {
                 OSSL_PARAM params[2] = {
-                    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_TLS_VERSION, NULL),
+                    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_tls_version, NULL),
                     OSSL_PARAM_END,
                 };
                 EVP_MD_CTX *mctx = EVP_MD_CTX_new();
@@ -3758,12 +3758,12 @@ int speed_main(int argc, char **argv)
             }
 
             if (kem_type == KEM_RSA) {
-                params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS,
+                params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_rsa_bits,
                     &bits);
                 use_params = 1;
             } else if (kem_type == KEM_EC) {
                 name = (char *)(kem_name + 2);
-                params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_group_name,
                     name, 0);
                 use_params = 1;
             }
@@ -3940,7 +3940,7 @@ int speed_main(int argc, char **argv)
             /* no string after rsa<bitcnt> permitted: */
             if (strlen(sig_name) < MAX_ALGNAME_SUFFIX + 4 /* rsa+digit */
                 && sscanf(sig_name, "rsa%u%s", &bits, sfx) == 1) {
-                params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_RSA_BITS,
+                params[0] = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_rsa_bits,
                     &bits);
                 use_params = 1;
             }

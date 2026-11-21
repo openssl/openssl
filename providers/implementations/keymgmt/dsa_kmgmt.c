@@ -111,10 +111,10 @@ static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM *pubkey,
     DSA_get0_key(dsa, &pub, &priv);
     if (include_private
         && priv != NULL
-        && !ossl_param_build_set_bn(bld, privkey, OSSL_PKEY_PARAM_PRIV_KEY, priv))
+        && !ossl_param_build_set_bn(bld, privkey, OSSL_PKEY_PARAM_priv_key, priv))
         return 0;
     if (pub != NULL
-        && !ossl_param_build_set_bn(bld, pubkey, OSSL_PKEY_PARAM_PUB_KEY, pub))
+        && !ossl_param_build_set_bn(bld, pubkey, OSSL_PKEY_PARAM_pub_key, pub))
         return 0;
 
     return 1;
@@ -602,8 +602,8 @@ static int dsa_gencb(int p, int n, BN_GENCB *cb)
     struct dsa_gen_ctx *gctx = BN_GENCB_get_arg(cb);
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_POTENTIAL, &p);
-    params[1] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_ITERATION, &n);
+    params[0] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_potential, &p);
+    params[1] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_iteration, &n);
 
     return gctx->cb(params, gctx->cbarg);
 }

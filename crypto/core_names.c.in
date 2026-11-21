@@ -1,0 +1,43 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/* clang-format off */
+{-
+use OpenSSL::paramnames qw(generate_param_name_array generate_param_name_imports);
+-}
+
+#define OSSL_CORE_NAMES_C
+#include <openssl/core_names.h>
+#include <openssl/params.h>
+#undef OSSL_CORE_NAMES_C
+
+{-
+generate_param_name_array();
+-}
+
+int OSSL_PARAM_is_internal_name(const void *ptr)
+{
+    return (uintptr_t)ptr - (uintptr_t)ossl_parameter_names_storage
+        < sizeof(ossl_parameter_names_storage);
+}
+
+#if defined(OPENSSL_SYS_WINDOWS) && !defined(FIPS_MODULE)
+/* Let the same Windows declarations also link with the static library. */
+# if defined(_M_IX86) || defined(__i386__)
+#  define OSSL_PARAM_NAME_IMPORT(name) _imp__##name
+# else
+#  define OSSL_PARAM_NAME_IMPORT(name) __imp_##name
+# endif
+
+{- generate_param_name_imports(); -}
+
+# undef OSSL_PARAM_NAME_IMPORT
+#endif
+
+/* clang-format on */

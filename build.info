@@ -47,7 +47,8 @@ DEPEND[libssl]=libcrypto
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
-DEPEND[]=include/openssl/asn1.h \
+DEPEND[]=crypto/core_names.c \
+         include/openssl/asn1.h \
          include/openssl/asn1t.h \
          include/openssl/bio.h \
          include/openssl/cmp.h \
@@ -225,7 +226,8 @@ GENERATE[include/openssl/x509_acert.h]=include/openssl/x509_acert.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
-DEPEND[ssl/t1_lib.inc \
+DEPEND[crypto/core_names.c \
+       ssl/t1_lib.inc \
        ssl/record/methods/tls_common.inc \
        providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/asymciphers/sm2_enc.inc \
@@ -548,6 +550,7 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+GENERATE[crypto/core_names.c]=crypto/core_names.c.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld

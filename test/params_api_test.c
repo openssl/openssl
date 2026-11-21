@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,6 +14,7 @@
 #include "internal/endian.h"
 #include <openssl/params.h>
 #include <openssl/bn.h>
+#include <openssl/core_names.h>
 
 /* The maximum size of the static buffers used to test most things */
 #define MAX_LEN 20
@@ -919,6 +920,26 @@ err:
     return ret;
 }
 
+static int test_param_name_pointers(void)
+{
+    const char *const *padding = &OSSL_CIPHER_PARAM_padding;
+    const char *const *keylen = &OSSL_CIPHER_PARAM_keylen;
+    char padding_copy[] = OSSL_CIPHER_PARAM_PADDING;
+
+    return TEST_size_t_eq(sizeof(OSSL_CIPHER_PARAM_padding), sizeof(char *))
+        && TEST_str_eq(*padding, OSSL_CIPHER_PARAM_PADDING)
+        && TEST_str_eq(*keylen, OSSL_CIPHER_PARAM_KEYLEN)
+        && TEST_true(OSSL_PARAM_is_internal_name(*padding))
+        && TEST_true(OSSL_PARAM_is_internal_name(*keylen))
+        && TEST_true(OSSL_PARAM_is_internal_name(*padding + 1))
+        && TEST_true(OSSL_PARAM_is_internal_name(*padding + strlen(*padding)))
+        && TEST_false(OSSL_PARAM_is_internal_name(NULL))
+        && TEST_false(OSSL_PARAM_is_internal_name(padding_copy))
+        && TEST_false(OSSL_PARAM_is_internal_name(OSSL_CIPHER_PARAM_PADDING))
+        && TEST_ptr_eq(OSSL_ASYM_CIPHER_PARAM_digest,
+            OSSL_PKEY_PARAM_digest);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_param_int, OSSL_NELEM(raw_values));
@@ -939,5 +960,6 @@ int setup_tests(void)
     ADD_TEST(test_param_copy_null);
     ADD_TEST(test_param_merge);
     ADD_TEST(test_param_clear_free);
+    ADD_TEST(test_param_name_pointers);
     return 1;
 }

@@ -70,15 +70,15 @@ int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
     if (kctx == NULL)
         return 0;
 
-    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_password,
         (unsigned char *)pass,
         passlen);
-    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_salt,
         (unsigned char *)salt, saltlen);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_N, &N);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_R, &r);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_P, &p);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_scrypt_n, &N);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_scrypt_r, &r);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_scrypt_p, &p);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_scrypt_maxmem, &maxmem);
     *z = OSSL_PARAM_construct_end();
     if (EVP_KDF_derive(kctx, key, keylen, params) != 1)
         rv = 0;

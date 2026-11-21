@@ -12,6 +12,7 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
+#include <openssl/core_names.h>
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 #include <openssl/err.h>
@@ -1151,14 +1152,14 @@ cert_loop:
                 BIGNUM *n = NULL;
 
                 /* Every RSA key has an 'n' */
-                EVP_PKEY_get_bn_param(pkey, "n", &n);
+                EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_rsa_n, &n);
                 BN_print(out, n);
                 BN_free(n);
             } else if (EVP_PKEY_is_a(pkey, "DSA")) {
                 BIGNUM *dsapub = NULL;
 
                 /* Every DSA key has a 'pub' */
-                EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);
+                EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_pub_key, &dsapub);
                 BN_print(out, dsapub);
                 BN_free(dsapub);
             } else {

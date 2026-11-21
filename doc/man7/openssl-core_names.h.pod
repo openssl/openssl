@@ -18,6 +18,8 @@ Existing names are further described in the manuals for OpenSSL's
 providers (see L</SEE ALSO>) and the manuals for each algorithm they
 provide (listed in those provider manuals).
 
+For shared parameter name pointers, see L<OSSL_PARAM_names(3)>.
+
 =head1 SEE ALSO
 
 L<OSSL_PROVIDER-default(7)>, L<OSSL_PROVIDER-FIPS(7)>,
@@ -39,7 +41,7 @@ to the names provided in this header to work in a compatible manner.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

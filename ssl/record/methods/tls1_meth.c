@@ -82,7 +82,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
          * its internal digest as well
          */
         if (rl->propq != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_properties,
                 (char *)rl->propq, 0);
 
         *p = OSSL_PARAM_construct_end();
@@ -411,7 +411,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             OSSL_PARAM params[2], *p = params;
 
             /* Get the MAC */
-            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
+            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_tls_mac,
                 (void **)mac, macsize);
             *p = OSSL_PARAM_construct_end();
 
@@ -470,7 +470,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
         && ssl3_cbc_record_digest_supported(mac_ctx)) {
         OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
 
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_tls_data_size,
             &rec->orig_len);
         *p++ = OSSL_PARAM_construct_end();
 

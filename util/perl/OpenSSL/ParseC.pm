@@ -643,7 +643,7 @@ EOF
 
     # OpenSSL's declaration of externs with possible export linkage
     # (really only relevant on Windows)
-    { regexp   => qr/OPENSSL_(?:EXPORT|EXTERN)/,
+    { regexp   => qr/(?:OPENSSL_(?:EXPORT|EXTERN)|OSSL_PARAM_NAME_EXTERN)/,
       massager => sub { return ("extern"); }
     },
 
@@ -666,6 +666,11 @@ my @chandlers = (
     # We simply ignore it.
     { regexp   => qr/^extern "C" (.*(?:;|>>>))/,
       massager => sub { return ($1); },
+    },
+    # External arrays and constant string pointers declare exported variables.
+    # Let the variable declaration handler process their types and conditions.
+    { regexp   => qr/^extern ((?:const char\*const [[:alpha:]_]\w*|.*<<<\[[^\]]*\]>>>));/,
+      massager => sub { return ("$1;"); },
     },
     # any other extern is just ignored
     { regexp   => qr/^\s*                       # Any spaces before

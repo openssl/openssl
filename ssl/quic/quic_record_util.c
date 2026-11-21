@@ -47,13 +47,13 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
      * Therefore, we need to set `key-check` to zero to allow using destination
      * connection ID as IKM.
      */
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_FIPS_KEY_CHECK, &key_check);
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_fips_key_check, &key_check);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_mode, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_digest,
         (char *)md_name, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_salt,
         (unsigned char *)salt, salt_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_key,
         (unsigned char *)ikm, ikm_len);
     *p++ = OSSL_PARAM_construct_end();
 
