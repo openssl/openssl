@@ -535,6 +535,27 @@ err:
     return 0;
 }
 
+/*
+ * Check if Content-Type header |value| matches |expected| case-insensitively.
+ * Any parameters (starting with ';') are ignored unless |expected| contains ';'.
+ * Whitespace before ';' is allowed (RFC 9110 section 5.6.6).
+ */
+static int content_type_matches(const char *expected, const char *value)
+{
+    const char *end;
+    size_t len;
+
+    if (OPENSSL_strcasecmp(expected, value) == 0)
+        return 1;
+    if (strchr(expected, ';') != NULL || (end = strchr(value, ';')) == NULL)
+        return 0;
+    while (end > value && (end[-1] == ' ' || end[-1] == '\t'))
+        end--;
+    len = end - value;
+    return len == strlen(expected)
+        && OPENSSL_strncasecmp(expected, value, len) == 0;
+}
+
 static int check_max_len(const char *desc, size_t max_len, size_t len)
 {
     if (max_len != 0 && len > max_len) {
@@ -814,17 +835,23 @@ next_io:
         value = strchr(key, ':');
         if (value != NULL) {
             *(value++) = '\0';
-            while (ossl_isspace(*value))
+            /* skip leading OWS, but not CR or LF, which terminate the line */
+            while (*value == ' ' || *value == '\t')
                 value++;
             line_end = strchr(value, '\r');
             if (line_end == NULL)
                 line_end = strchr(value, '\n');
-            if (line_end != NULL)
+            if (line_end != NULL) {
                 *line_end = '\0';
+                while (line_end > value
+                    && (line_end[-1] == ' ' || line_end[-1] == '\t'))
+                    *--line_end = '\0';
+            }
         }
         if (value != NULL && line_end != NULL) {
             if (rctx->state == OHS_REDIRECT
-                && OPENSSL_strcasecmp(key, "Location") == 0) {
+                && OPENSSL_strcasecmp(key, "Location") == 0
+                && *value != '\0' /* empty Location is treated as missing */) {
                 rctx->redirection_url = value;
                 if (OSSL_TRACE_ENABLED(HTTP))
                     OSSL_TRACE(HTTP, "]\n");
@@ -847,16 +874,7 @@ next_io:
                 }
                 if (rctx->state == OHS_HEADERS
                     && rctx->expected_ct != NULL) {
-                    const char *semicolon;
-
-                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0
-                        /* ignore past ';' unless expected_ct contains ';' */
-                        && (strchr(rctx->expected_ct, ';') != NULL
-                            || (semicolon = strchr(value, ';')) == NULL
-                            || (size_t)(semicolon - value) != strlen(rctx->expected_ct)
-                            || OPENSSL_strncasecmp(rctx->expected_ct, value,
-                                   semicolon - value)
-                                != 0)) {
+                    if (!content_type_matches(rctx->expected_ct, value)) {
                         ERR_raise_data(ERR_LIB_HTTP,
                             HTTP_R_UNEXPECTED_CONTENT_TYPE,
                             "expected=%s, actual=%s",
@@ -867,7 +885,7 @@ next_io:
                 }
             }
 
-            /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
+            /* https://www.rfc-editor.org/rfc/rfc9112#section-9.3 Persistence */
             if (OPENSSL_strcasecmp(key, "Connection") == 0) {
                 if (OPENSSL_strcasecmp(value, "keep-alive") == 0)
                     rctx->found_keep_alive = 1;
@@ -1558,7 +1576,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
         /*-
          * The first line is the HTTP response.
-         * According to RFC 7230, it is formatted exactly like this:
+         * According to RFC 9112 section 4, it is formatted like this:
          * HTTP/d.d ddd reason text\r\n
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
@@ -1584,7 +1602,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         }
         mbufp += HTTP_VERSION_STR_LEN;
 
-        /* RFC 7231 4.3.6: any 2xx status code is valid */
+        /* RFC 9110 section 9.3.6: any 2xx status code is valid */
         if (!HAS_PREFIX(mbufp, " 2")) {
             if (ossl_isspace(*mbufp))
                 mbufp++;

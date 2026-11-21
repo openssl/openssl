@@ -92,7 +92,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
         if (!is_get)
             return 0;
         return BIO_printf(out, "HTTP/1.%c 301 Moved Permanently\r\n"
-                               "Location: %s\r\n\r\n",
+                               "Location: %s\t \r\n\r\n",
                    version, RPATH)
             > 0; /* same server */
     }
@@ -103,7 +103,7 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
         <= 0)
         return 0;
     if ((version == '0') == keep_alive) /* otherwise, default */
-        if (BIO_printf(out, "Connection: %s\r\n",
+        if (BIO_printf(out, "Connection: %s\t \r\n",
                 version == '0' ? "keep-alive" : "close")
             <= 0)
             return 0;
@@ -116,8 +116,8 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
             len = (int)strlen(txt);
         else if ((len = ASN1_item_i2d(rsp, NULL, it)) <= 0)
             return 0;
-        if (BIO_printf(out, "Content-Type: %s\r\n"
-                            "Content-Length: %d\r\n\r\n",
+        if (BIO_printf(out, "Content-Type: %s\t \r\n"
+                            "Content-Length: %d\t \r\n\r\n",
                 content_type, len)
             <= 0)
             return 0;
@@ -271,11 +271,11 @@ static long http_redirect_cb(BIO *bio, int oper, const char *argp, size_t len,
         return 0;
     if (*redirect != NULL) {
         BIO_set_callback_arg(bio, (char *)(redirect + 1));
-        return BIO_printf(bio, "HTTP/1.0 302 Found\r\nLocation: %s\r\n\r\n",
+        return BIO_printf(bio, "HTTP/1.0 302 Found\r\nLocation: %s\t \r\n\r\n",
                    *redirect)
             > 0;
     }
-    return BIO_puts(bio, "HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\n" text1) > 0;
+    return BIO_puts(bio, "HTTP/1.0 200 OK\r\nContent-Length: 5\t \r\n\r\n" text1) > 0;
 }
 
 /* The redirect policy uses the requested protocol; no actual TLS is needed. */
@@ -911,6 +911,38 @@ static const RESP_TEST_FIXTURE split_resp_tests[] = {
         .keep_alive = 1,
         .exp_ret = 1,
         .expect_alive = 0 },
+    /* parameters of Content-Type are ignored, also after whitespace */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: text/plain \t; charset=utf-8\r\n"
+           "\r\n"),
+        .expected_ct = "text/plain",
+        .exp_ret = 1,
+        .expect_alive = 0 },
+    /* Content-Type with parameters must not match a mere prefix */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Type: text/plainer ; charset=utf-8\r\n"
+           "\r\n"),
+        .expected_ct = "text/plain",
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_UNEXPECTED_CONTENT_TYPE },
+    /* empty Content-Length value is rejected */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Length:\r\n"
+           "\r\n"),
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_ERROR_PARSING_CONTENT_LENGTH },
+    /* Content-Length value consisting of whitespace only is rejected */
+    { RESP("HTTP/1.0 200 OK\r\n"
+           "Content-Length: \t \r\n"
+           "\r\n"),
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_ERROR_PARSING_CONTENT_LENGTH },
+    /* empty Location value is treated as missing */
+    { RESP("HTTP/1.0 302 Found\r\n"
+           "Location: \t\r\n"
+           "\r\n"),
+        .exp_ret = 0,
+        .exp_reason = HTTP_R_MISSING_REDIRECT_LOCATION },
 };
 
 /**
