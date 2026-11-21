@@ -450,7 +450,13 @@ Cannot be used together with the options B<-days>, B<-not_before> and B<-not_aft
 
 =item B<-set_issuer> I<arg>
 
-When a certificate is created set its issuer name to the given value.
+When a certificate is created set its issuer distinguished name (DN) to the given value.
+
+When used with B<-unsigned>, a nonempty issuer DN is set as given,
+while C</> leads to setting the C<id-rdna-unsigned> placeholder defined in RFC 9925,
+rather than the NULL-DN, which avoids an empty issuer DN.
+For instance, C<-unsigned -set_issuer /> produces an unsigned certificate
+with the placeholder issuer, which renders the certificate not self-issued.
 
 See B<-set_subject> on how the arg must be formatted.
 
@@ -548,7 +554,8 @@ extension section format.
 =item B<-unsigned>
 
 When creating a certificate, do this unsigned according to RFC 9925.
-The issuer is set to the subject if it is not the NULL-DN,
+Unless B<-set_issuer> is given and interferes as described there,
+the issuer is set to the subject if it is not the NULL-DN,
 otherwise the `id-rdna-unsigned` placeholder is set.
 Any authority key identifier and issuer alternative name extensions are removed.
 
@@ -918,6 +925,8 @@ See B<-extfile> above for details.
 As of OpenSSL 4.0, the B<x509> utility no longer has specialised built-in logic
 to add the SKID or AKID extensions, they are handled through configuration
 files and command-line options just like any other extension.
+
+The B<-unsigned> option was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
