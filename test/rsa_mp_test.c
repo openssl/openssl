@@ -22,6 +22,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/pem.h>
 #include <openssl/bn.h>
 
 #include "testutil.h"
@@ -341,9 +342,87 @@ err:
     return ret;
 }
 
+static size_t put_tlv(unsigned char *out, int tag, const unsigned char *v,
+    size_t nbytes)
+{
+    size_t h = nbytes < 0x80 ? 2 : (nbytes < 0x100 ? 3 : 4);
+
+    out[0] = (unsigned char)tag;
+    if (nbytes < 0x80) {
+        out[1] = (unsigned char)nbytes;
+    } else if (nbytes < 0x100) {
+        out[1] = 0x81;
+        out[2] = (unsigned char)nbytes;
+    } else {
+        out[1] = 0x82;
+        out[2] = (unsigned char)(nbytes >> 8);
+        out[3] = (unsigned char)nbytes;
+    }
+    if (nbytes > 0)
+        memcpy(out + h, v, nbytes);
+    return h + nbytes;
+}
+
+static size_t put_int(unsigned char *out, unsigned int v)
+{
+    unsigned char b[5] = { 0, (unsigned char)(v >> 24),
+        (unsigned char)(v >> 16), (unsigned char)(v >> 8), (unsigned char)v };
+    size_t i = 1;
+
+    while (i < 4 && b[i] == 0)
+        i++;
+    if (b[i] & 0x80)
+        i--;
+    return put_tlv(out, 0x02, b + i, 5 - i);
+}
+
+static int test_rsa_mp_version0_rejected(void)
+{
+    unsigned char body[2048], infos[1600], info[16], der[2048];
+    size_t bl = 0, il = 0, dl;
+    BIO *bio = NULL;
+    EVP_PKEY *pkey = NULL;
+    int i, testresult = 0;
+
+    bl += put_int(body + bl, 0); /* version */
+    bl += put_int(body + bl, 0x7f); /* n */
+    bl += put_int(body + bl, 3); /* e */
+    bl += put_int(body + bl, 0x80); /* d */
+    bl += put_int(body + bl, 11); /* p */
+    bl += put_int(body + bl, 13); /* q */
+    bl += put_int(body + bl, 2); /* dmp1 */
+    bl += put_int(body + bl, 3); /* dmq1 */
+    bl += put_int(body + bl, 4); /* iqmp */
+    for (i = 0; i < 11; i++) {
+        size_t el = 0;
+
+        el += put_int(info + el, 17);
+        el += put_int(info + el, 5);
+        el += put_int(info + el, 7);
+        il += put_tlv(infos + il, 0x30, info, el);
+    }
+    bl += put_tlv(body + bl, 0x30, infos, il);
+    dl = put_tlv(der, 0x30, body, bl);
+
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_true(PEM_write_bio(bio, "RSA PRIVATE KEY", "", der,
+            (long)dl)))
+        goto err;
+    pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+    if (!TEST_ptr_null(pkey))
+        goto err;
+    ERR_clear_error();
+    testresult = 1;
+err:
+    EVP_PKEY_free(pkey);
+    BIO_free(bio);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_rsa_mp_gen_bad_input);
+    ADD_TEST(test_rsa_mp_version0_rejected);
     ADD_ALL_TESTS(test_rsa_mp, 2);
     ADD_MFAIL_SAMPLED_TEST(test_rsa_mp_gen_mfail, 64);
     return 1;

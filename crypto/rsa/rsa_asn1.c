@@ -39,7 +39,11 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
         if (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
-            /* not a multi-prime key, skip */
+            /* otherPrimeInfos is only valid for multi-prime keys */
+            if (sk_RSA_PRIME_INFO_num(((RSA *)*pval)->prime_infos) > 0) {
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MULTI_PRIME_KEY);
+                return 0;
+            }
             return 1;
         }
         /*
