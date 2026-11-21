@@ -920,6 +920,43 @@ err:
     return ok;
 }
 
+/*
+ * Test that freeing a library context before freeing a key that was used
+ * through that context does not leave a dangling key manager in the key's
+ * operation cache (openssl/openssl#33666). The key is made in mainctx;
+ * using it through a second context exports it into that context's key
+ * manager and caches the export on the key. The cached key manager must
+ * survive OSSL_LIB_CTX_free() until the key itself is freed.
+ */
+static int test_pkey_free_after_libctx_free(void)
+{
+    EVP_PKEY *key = NULL;
+    OSSL_LIB_CTX *libctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "RSA", 2048))
+        || !TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL))
+        || !TEST_int_eq(EVP_PKEY_encrypt_init(ctx), 1))
+        goto err;
+
+    EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
+    /* Free the library context first, then the key. */
+    OSSL_LIB_CTX_free(libctx);
+    libctx = NULL;
+    EVP_PKEY_free(key);
+    key = NULL;
+
+    ok = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_LIB_CTX_free(libctx);
+    EVP_PKEY_free(key);
+    return ok;
+}
+
 static int test_provider_unload_effective(int testid)
 {
     EVP_MD *sha256 = NULL;
@@ -1839,6 +1876,7 @@ int setup_tests(void)
 
     ADD_TEST(evp_test_name_parsing);
     ADD_TEST(test_alternative_default);
+    ADD_TEST(test_pkey_free_after_libctx_free);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
     ADD_TEST(test_new_keytype);
 #ifndef OPENSSL_NO_EC

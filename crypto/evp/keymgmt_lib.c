@@ -215,7 +215,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 static void op_cache_free(OP_CACHE_ELEM *e)
 {
     evp_keymgmt_freedata(e->keymgmt, e->keydata);
-    EVP_KEYMGMT_free(e->keymgmt);
+    evp_keymgmt_free_counted(e->keymgmt);
     OPENSSL_free(e);
 }
 
@@ -271,13 +271,13 @@ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         p->keymgmt = keymgmt;
         p->selection = selection;
 
-        if (!EVP_KEYMGMT_up_ref(keymgmt)) {
+        if (!evp_keymgmt_up_ref_counted(keymgmt)) {
             OPENSSL_free(p);
             return 0;
         }
 
         if (!sk_OP_CACHE_ELEM_push(pk->operation_cache, p)) {
-            EVP_KEYMGMT_free(keymgmt);
+            evp_keymgmt_free_counted(keymgmt);
             OPENSSL_free(p);
             return 0;
         }
