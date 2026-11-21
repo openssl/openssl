@@ -57,7 +57,7 @@ struct sparse_array_st {
 
 OPENSSL_SA *ossl_sa_new(void)
 {
-    OPENSSL_SA *res = OPENSSL_zalloc(sizeof(*res));
+    OPENSSL_SA *res = CRYPTO_zalloc(sizeof(*res), NULL, 0);
 
     return res;
 }
@@ -173,7 +173,7 @@ void *ossl_sa_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
 
 static ossl_inline void **alloc_node(void)
 {
-    return OPENSSL_calloc(SA_BLOCK_MAX, sizeof(void *));
+    return CRYPTO_calloc(SA_BLOCK_MAX, sizeof(void *), NULL, 0);
 }
 
 int ossl_sa_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)
