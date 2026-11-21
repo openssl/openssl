@@ -2193,6 +2193,7 @@ int speed_main(int argc, char **argv)
             && strcmp(sig_name, "SIPHASH")
             && strcmp(sig_name, "POLY1305")
             && strcmp(sig_name, "CMAC")
+            && strcmp(sig_name, "LMS") /* verification only */
             && strcmp(sig_name, "SM2")) { /* skip alg */
             if (sigs_algs_len + 1 >= MAX_SIG_NUM) {
                 BIO_puts(bio_err,
@@ -2283,14 +2284,6 @@ int speed_main(int argc, char **argv)
         if (strcmp(algo, "ecdh") == 0) {
             memset(ecdh_doit, 1, sizeof(ecdh_doit));
             algo_found = 1;
-        }
-        for (i = 0; i < EC_NUM; i++) {
-            /* Negative values are ECDH-only curves */
-            if (ec_curves[i].mdsig < 0)
-                ecdsa_doit[i] = 0;
-            /* Positive values are signature-only curves */
-            if (ec_curves[i].mdsig > 0)
-                ecdh_doit[i] = 0;
         }
         if (opt_found(algo, ecdsa_choices, &i)) {
             ecdsa_doit[i] = 2;
@@ -2394,8 +2387,9 @@ int speed_main(int argc, char **argv)
     memset(loopargs, 0, loopargs_len * sizeof(loopargs_t));
 
     buflen = lengths[size_num - 1];
-    if (buflen < 36) /* size of random vector in RSA benchmark */
-        buflen = 36;
+    /* The shared buffers also hold RSA ciphertext and public-key signatures. */
+    if (buflen < (int)rsa_keys[R_RSA_15360].bits / 8)
+        buflen = (int)rsa_keys[R_RSA_15360].bits / 8;
     if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen) {
         BIO_puts(bio_err, "Error: buffer size too large\n");
         goto end;
@@ -2424,25 +2418,6 @@ int speed_main(int argc, char **argv)
         loopargs[i].secret_ff_a = app_malloc(MAX_FFDH_SIZE, "FFDH secret a");
         loopargs[i].secret_ff_b = app_malloc(MAX_FFDH_SIZE, "FFDH secret b");
 #endif
-    }
-
-#ifndef NO_FORK
-    if (multi && do_multi(multi, size_num))
-        goto show_res;
-#endif
-
-    for (i = 0; i < loopargs_len; ++i) {
-        if (domlock) {
-#if defined(_WIN32)
-            (void)VirtualLock(loopargs[i].buf_malloc, buflen);
-            (void)VirtualLock(loopargs[i].buf2_malloc, buflen);
-#elif defined(OPENSSL_SYS_LINUX)
-            (void)mlock(loopargs[i].buf_malloc, buflen);
-            (void)mlock(loopargs[i].buf_malloc, buflen);
-#endif
-        }
-        memset(loopargs[i].buf_malloc, 0, buflen);
-        memset(loopargs[i].buf2_malloc, 0, buflen);
     }
 
     /* No parameters; turn on everything. */
@@ -2492,6 +2467,34 @@ int speed_main(int argc, char **argv)
         memset(sigs_doit, 1, sizeof(sigs_doit));
         do_sigs = 1;
     }
+    for (i = 0; i < EC_NUM; i++) {
+        /* Negative values are ECDH-only curves */
+        if (ec_curves[i].mdsig < 0)
+            ecdsa_doit[i] = 0;
+        /* Positive values are signature-only curves */
+        if (ec_curves[i].mdsig > 0)
+            ecdh_doit[i] = 0;
+    }
+
+#ifndef NO_FORK
+    if (multi && do_multi(multi, size_num))
+        goto show_res;
+#endif
+
+    for (i = 0; i < loopargs_len; ++i) {
+        if (domlock) {
+#if defined(_WIN32)
+            (void)VirtualLock(loopargs[i].buf_malloc, buflen);
+            (void)VirtualLock(loopargs[i].buf2_malloc, buflen);
+#elif defined(OPENSSL_SYS_LINUX)
+            (void)mlock(loopargs[i].buf_malloc, buflen);
+            (void)mlock(loopargs[i].buf_malloc, buflen);
+#endif
+        }
+        memset(loopargs[i].buf_malloc, 0, buflen);
+        memset(loopargs[i].buf2_malloc, 0, buflen);
+    }
+
     for (i = 0; i < ALGOR_NUM; i++)
         if (doit[i])
             pr_header++;
@@ -3251,7 +3254,7 @@ int speed_main(int argc, char **argv)
             op_count = count;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(rsa_doit, testnum);
         }
@@ -3328,7 +3331,7 @@ int speed_main(int argc, char **argv)
             dsa_results[testnum][1] = (double)count / d;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(dsa_doit, testnum);
         }
@@ -3443,7 +3446,7 @@ int speed_main(int argc, char **argv)
             ecdsa_results[testnum][1] = (double)count / d;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ecdsa_doit, testnum);
         }
@@ -3530,7 +3533,7 @@ int speed_main(int argc, char **argv)
             op_count = count;
         }
 
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ecdh_doit, testnum);
         }
@@ -3706,7 +3709,7 @@ int speed_main(int argc, char **argv)
             ffdh_results[testnum][0] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ffdh_doit, testnum);
         }
@@ -3898,7 +3901,7 @@ int speed_main(int argc, char **argv)
             kems_results[testnum][2] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1) {
+        if (!testmode && op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(kems_doit, testnum);
         }
@@ -4070,6 +4073,8 @@ int speed_main(int argc, char **argv)
             loopargs[i].sig_max_sig_len[testnum] = max_sig_len;
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
+            EVP_PKEY_CTX_free(ctx_params);
+            EVP_PKEY_free(pkey_params);
             EVP_PKEY_free(pkey);
             EVP_SIGNATURE_free(alg);
             pkey = NULL;
@@ -4077,6 +4082,8 @@ int speed_main(int argc, char **argv)
 
         sig_err_break:
             dofail();
+            EVP_PKEY_CTX_free(ctx_params);
+            EVP_PKEY_free(pkey_params);
             EVP_PKEY_free(pkey);
             EVP_SIGNATURE_free(alg);
             op_count = 1;
@@ -4114,7 +4121,7 @@ int speed_main(int argc, char **argv)
             sigs_results[testnum][2] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1)
+        if (!testmode && op_count <= 1)
             stop_it(sigs_doit, testnum);
     }
 
@@ -4339,6 +4346,8 @@ end:
         for (k = 0; k < EC_NUM; k++) {
             EVP_PKEY_CTX_free(loopargs[i].pk_sign_ctx[k]);
             EVP_PKEY_CTX_free(loopargs[i].pk_verify_ctx[k]);
+            EVP_MD_CTX_free(loopargs[i].md_sign_ctx[k]);
+            EVP_MD_CTX_free(loopargs[i].md_verify_ctx[k]);
         }
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
