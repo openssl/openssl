@@ -44,6 +44,7 @@ static int evp_asym_cipher_up_ref(void *data)
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     const OSSL_PARAM params[])
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
     void *provkey = NULL;
     EVP_ASYM_CIPHER *cipher = NULL;
@@ -61,13 +62,13 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (evp_pkey_ctx_is_legacy(ctx))
         goto err;
 
     if (ctx->pkey == NULL) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         goto err;
     }
@@ -77,7 +78,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
      */
     if (!ossl_assert(ctx->pkey->keymgmt == NULL
             || ctx->pkey->keymgmt == ctx->keymgmt)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -85,7 +86,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
             OSSL_OP_ASYM_CIPHER);
     if (supported_ciph == NULL) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -163,7 +164,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
         goto err;
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* No more legacy from here down to legacy: */
 
@@ -228,6 +229,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_ASYM_CIPHER *cipher;
     const char *desc;
     int ret;
@@ -248,12 +250,12 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     }
     cipher = ctx->op.ciph.cipher;
     desc = cipher->description != NULL ? cipher->description : "";
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = cipher->encrypt(ctx->op.ciph.algctx, out, outlen, (out == NULL ? 0 : *outlen), in, inlen);
-    if (ret <= 0 && ERR_count_to_mark() == 0)
+    if (ret <= 0 && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_FAILURE,
             "%s encrypt:%s", cipher->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return ret;
 }
 
@@ -271,6 +273,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_ASYM_CIPHER *cipher;
     const char *desc;
     int ret;
@@ -292,12 +295,12 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 
     cipher = ctx->op.ciph.cipher;
     desc = cipher->description != NULL ? cipher->description : "";
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = cipher->decrypt(ctx->op.ciph.algctx, out, outlen, (out == NULL ? 0 : *outlen), in, inlen);
-    if (ret <= 0 && ERR_count_to_mark() == 0)
+    if (ret <= 0 && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_ASYM_CIPHER_FAILURE,
             "%s decrypt:%s", cipher->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
 
     return ret;
 }

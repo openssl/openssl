@@ -65,6 +65,7 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     size_t length;
     int ok = 0, inlen, readlen;
     BIO *in;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     if (in == NULL)
@@ -73,9 +74,9 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     ctx->selection = selection;
 
     /* Read the header to determine the size */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     readlen = BIO_read(in, buf, 4);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (readlen != 4)
         goto next;
 
@@ -84,9 +85,9 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto next;
     inlen = (int)length - 4;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     readlen = BIO_read(in, buf + 4, inlen);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (readlen != inlen)
         goto next;
 

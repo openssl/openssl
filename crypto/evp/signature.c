@@ -598,6 +598,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     const OSSL_PROVIDER *tmp_prov = NULL;
     const char *supported_sig = NULL;
     int iter;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -694,13 +695,13 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
             goto err;
     } else {
         /* Without a pre-fetched signature, it must be figured out somehow */
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
 
         if (evp_pkey_ctx_is_legacy(ctx))
             goto notsupported;
 
         if (ctx->pkey == NULL) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
             goto err;
         }
@@ -710,7 +711,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
          */
         if (!ossl_assert(ctx->pkey->keymgmt == NULL
                 || ctx->pkey->keymgmt == ctx->keymgmt)) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -718,7 +719,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
             = evp_keymgmt_util_query_operation_name(ctx->keymgmt,
                 OSSL_OP_SIGNATURE);
         if (supported_sig == NULL) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
@@ -795,7 +796,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
             goto notsupported;
         }
 
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
 
     /* No more legacy from here down to legacy: */
@@ -873,7 +874,7 @@ notsupported:
      * If we don't have the full support we need with provided methods,
      * let's go see if legacy does.
      */
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     EVP_KEYMGMT_free(tmp_keymgmt);
     tmp_keymgmt = NULL;
 

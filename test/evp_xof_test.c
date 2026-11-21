@@ -349,6 +349,7 @@ static int xof_kat_digestfinal_test(int tstid)
     unsigned int digest_length = 0;
     EVP_MD_CTX *ctx = NULL;
     uint8_t out[2048];
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!TEST_size_t_le(td->outlen, sizeof(out)))
         return 0;
@@ -362,12 +363,12 @@ static int xof_kat_digestfinal_test(int tstid)
          * (The original code for SHAKE set the wrong default value which is
          * why the XOF needs to be set for this).
          */
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if (!TEST_false(EVP_DigestFinal(ctx, out, &digest_length))) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto err;
         }
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     } else {
         /*
          * Test that EVP_DigestFinal without setting XOFLEN passes for CSHAKE
@@ -1712,6 +1713,7 @@ static int xof_customization_boundary_test(int tstid)
     unsigned char out[32];
     size_t len = customization_boundary_test_data[tstid].len;
     OSSL_PARAM params[2];
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!TEST_ptr(md = EVP_MD_fetch(NULL, "CSHAKE128", NULL))
         || !TEST_ptr(ctx = EVP_MD_CTX_new()))
@@ -1728,12 +1730,12 @@ static int xof_customization_boundary_test(int tstid)
             || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out))))
             goto err;
     } else {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if (!TEST_false(EVP_DigestInit_ex2(ctx, md, params))) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto err;
         }
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     ret = 1;
 err:

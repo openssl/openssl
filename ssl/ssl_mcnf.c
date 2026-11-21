@@ -35,6 +35,7 @@ static CONF_IMODULE *ssl_do_lookup_module(OSSL_LIB_CTX *libctx)
 
 static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     SSL_CONF_CTX *cctx = NULL;
     size_t i, idx, cmd_count;
     int err = 1;
@@ -45,7 +46,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     OSSL_LIB_CTX *libctx = NULL, *prev_libctx = NULL;
     CONF_IMODULE *imod = NULL;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (s == NULL && ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
@@ -116,7 +117,7 @@ err:
     OSSL_LIB_CTX_set0_default(prev_libctx);
     SSL_CONF_CTX_free(cctx);
     if (err == 0) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         return 1;
     }
     if (system && !conf_diagnostics) {
@@ -124,10 +125,10 @@ err:
          * Discard errors so that SSL_CTX_new does not return
          * success with stale errors on the error stack.
          */
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         return 1;
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return 0;
 }
 

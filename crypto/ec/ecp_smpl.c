@@ -1430,6 +1430,7 @@ int ossl_ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
     int ret = 0;
     BIGNUM *lambda = NULL;
     BIGNUM *temp = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     BN_CTX_start(ctx);
     lambda = BN_CTX_get(ctx);
@@ -1445,9 +1446,9 @@ int ossl_ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
      * code to continue smoothly and not clobber the error stack.
      */
     do {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ret = BN_priv_rand_range_ex(lambda, group->field, 0, ctx);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         if (ret == 0) {
             ret = 1;
             goto end;

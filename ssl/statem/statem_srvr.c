@@ -548,6 +548,7 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
     unsigned char md[EVP_MAX_MD_SIZE];
     const ASN1_INTEGER *certSerial;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     /*
      * In TLSv1.3 the caller gives the index of the certificate for which the
@@ -588,7 +589,7 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
              * Set a mark for the error queue here to be able to ignore errors
              * happening because of test cases.
              */
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             bs = OCSP_response_get1_basic(resp);
             if (bs != NULL && (sr = OCSP_resp_get0(bs, 0)) != NULL) {
                 /* use the first single response to get the algorithm used */
@@ -605,7 +606,7 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 
                 if (cert_id_md == NULL) {
                     OCSP_BASICRESP_free(bs);
-                    ERR_clear_last_mark();
+                    ERR_HANDLE_clear_last_mark(&hdl);
                     return NULL;
                 }
 
@@ -617,7 +618,7 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                     ASN1_OCTET_STRING_free(certIssuerNameHash);
                     OCSP_BASICRESP_free(bs);
                     EVP_MD_free(cert_id_md);
-                    ERR_clear_last_mark();
+                    ERR_HANDLE_clear_last_mark(&hdl);
                     return NULL;
                 }
 
@@ -654,7 +655,7 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
              * in a test case a response without a basic response is used the error set
              * could be ignored here
              */
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
         }
     }
 #endif
@@ -1358,6 +1359,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     s->init_num = 0;
 
@@ -1579,7 +1581,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
             return WORK_MORE_A;
         }
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         break;
 
     case TLS_ST_SW_ACK:

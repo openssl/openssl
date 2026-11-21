@@ -79,6 +79,7 @@ const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx,
     OSSL_NAMEMAP *namemap;
     int id;
     int do_retry = 1;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL))
         return NULL;
@@ -104,10 +105,10 @@ retry:
         if (!do_retry)
             return NULL;
         do_retry = 0;
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         fetched_cipher = EVP_CIPHER_fetch(libctx, name, NULL);
         EVP_CIPHER_free(fetched_cipher);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         goto retry;
     }
 
@@ -138,6 +139,7 @@ const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx, const char *name)
     OSSL_NAMEMAP *namemap;
     int id;
     int do_retry = 1;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL))
         return NULL;
@@ -163,10 +165,10 @@ retry:
         if (!do_retry)
             return NULL;
         do_retry = 0;
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         fetched_md = EVP_MD_fetch(libctx, name, NULL);
         EVP_MD_free(fetched_md);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         goto retry;
     }
 

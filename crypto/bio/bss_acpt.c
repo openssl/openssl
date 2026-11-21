@@ -122,6 +122,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
 {
     BIO *bio = NULL, *dbio;
     int s = -1, ret = -1;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     for (;;) {
         switch (c->state) {
@@ -190,7 +191,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             break;
 
         case BIO_ACPT_S_CREATE_SOCKET:
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             s = BIO_socket(BIO_ADDRINFO_family(c->addr_iter),
                 BIO_ADDRINFO_socktype(c->addr_iter),
                 BIO_ADDRINFO_protocol(c->addr_iter), 0);
@@ -199,10 +200,10 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                     /*
                      * if there are more addresses to try, do that first
                      */
-                    ERR_pop_to_mark();
+                    ERR_HANDLE_pop_to_mark(&hdl);
                     break;
                 }
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                     "calling socket(%s, %s)",
                     c->param_addr, c->param_serv);

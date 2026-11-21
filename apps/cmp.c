@@ -1060,6 +1060,7 @@ static int set_name(const char *str,
 static int set_gennames(OSSL_CMP_CTX *ctx, char *names, const char *desc)
 {
     char *next;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     for (; names != NULL; names = next) {
         GENERAL_NAME *n;
@@ -1073,14 +1074,14 @@ static int set_gennames(OSSL_CMP_CTX *ctx, char *names, const char *desc)
         }
 
         /* try IP address first, then email/URI/domain name */
-        (void)ERR_set_mark();
+        (void)ERR_HANDLE_set_mark(&hdl);
         n = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_IPADD, names, 0);
         if (n == NULL)
             n = a2i_GENERAL_NAME(NULL, NULL, NULL,
                 strchr(names, '@') != NULL ? GEN_EMAIL : strchr(names, ':') != NULL ? GEN_URI
                                                                                     : GEN_DNS,
                 names, 0);
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
 
         if (n == NULL) {
             CMP_err2("Bad syntax of %s '%s'", desc, names);

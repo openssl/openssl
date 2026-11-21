@@ -563,6 +563,7 @@ static int test_ext_syntax(void)
 {
     size_t i;
     int testresult = 1;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     for (i = 0; i < OSSL_NELEM(extvalues); i++) {
         X509V3_CTX ctx;
@@ -592,14 +593,14 @@ static int test_ext_syntax(void)
                     testresult = 0;
                 }
             } else {
-                ERR_set_mark();
+                ERR_HANDLE_set_mark(&hdl);
                 if (!TEST_false(X509V3_EXT_add_nconf(conf, &ctx, "default",
                         NULL))) {
                     testresult = 0;
                     TEST_info("Value: %s", extvalues[i].value);
-                    ERR_clear_last_mark();
+                    ERR_HANDLE_clear_last_mark(&hdl);
                 } else {
-                    ERR_pop_to_mark();
+                    ERR_HANDLE_pop_to_mark(&hdl);
                 }
             }
         }

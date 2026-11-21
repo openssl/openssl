@@ -481,6 +481,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     const ASN1_OCTET_STRING *skid = msg->header->senderKID;
     OSSL_CMP_log_cb_t backup_log_cb = ctx->log_cb;
     int res = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (sender == NULL || msg->body == NULL)
         return 0; /* other NULL cases already have been checked */
@@ -494,7 +495,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     OSSL_CMP_CTX_print_errors(ctx);
 
     /* enable clearing irrelevant errors in attempts to validate sender certs */
-    (void)ERR_set_mark();
+    (void)ERR_HANDLE_set_mark(&hdl);
     ctx->log_cb = NULL; /* temporarily disable logging */
 
     if (scrt != NULL) {
@@ -506,7 +507,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
          */
         if (check_msg_given_cert(ctx, scrt, msg)) {
             ctx->log_cb = backup_log_cb;
-            (void)ERR_pop_to_mark();
+            (void)ERR_HANDLE_pop_to_mark(&hdl);
             return 1;
         }
         /* cached sender cert has shown to be no more successfully usable */
@@ -524,7 +525,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 
     ctx->log_cb = backup_log_cb; /* re-enable logging */
     /* discard any previous diagnostic information on trying to use certs */
-    (void)ERR_pop_to_mark();
+    (void)ERR_HANDLE_pop_to_mark(&hdl);
 
     if (res)
         goto end;

@@ -238,6 +238,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_CALLBACK *data_cb, void *data_cbarg,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct der2key_ctx_st *ctx = vctx;
     unsigned char *der = NULL;
     const unsigned char *derp;
@@ -267,20 +268,20 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     ok = 0; /* Assume that we fail */
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         derp = der;
         if (ctx->desc->d2i_PKCS8 != NULL) {
             key = ctx->desc->d2i_PKCS8(&derp, der_len, ctx);
             if (ctx->flag_fatal) {
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 goto end;
             }
         } else if (ctx->desc->d2i_private_key != NULL) {
             key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
         }
         if (key == NULL && ctx->selection != 0) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto next;
         }
     }
@@ -291,7 +292,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         else if (ctx->desc->d2i_public_key != NULL)
             key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
         if (key == NULL && ctx->selection != 0) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto next;
         }
     }
@@ -300,14 +301,14 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         if (ctx->desc->d2i_key_params != NULL)
             key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
         if (key == NULL && ctx->selection != 0) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto next;
         }
     }
     if (key == NULL)
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     else
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
 
     /*
      * Last minute check to see if this was the correct type of key.  This

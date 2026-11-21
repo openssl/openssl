@@ -336,19 +336,50 @@ typedef struct ERR_string_data_st {
 /* 12 lines and some on an 80 column terminal */
 #define ERR_MAX_DATA_SIZE 1024
 
+typedef void ERR_HANDLE;
+#define ERR_HANDLE_INITIALIZER NULL
+
 /* Building blocks */
 void ERR_new(void);
 void ERR_set_debug(const char *file, int line, const char *func);
 void ERR_set_error(int lib, int reason, const char *fmt, ...);
 void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
 
-/* Main error raising functions */
-#define ERR_raise(lib, reason) ERR_raise_data((lib), (reason), NULL)
-#define ERR_raise_data                                           \
-    (ERR_new(),                                                  \
-        ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC), \
-        ERR_set_error)
+/**
+ * @see ERR_HANDLE_new(3)
+ */
+void ERR_HANDLE_new(ERR_HANDLE **hdl);
 
+/**
+ * @see ERR_HANDLE_set_debug(3)
+ */
+void ERR_HANDLE_set_debug(ERR_HANDLE **hdl, const char *file, int line, const char *func);
+
+/**
+ * @see ERR_HANDLE_set_error(3)
+ */
+void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, ...);
+
+/**
+ * @see ERR_HANDLE_vset_error(3)
+ */
+void ERR_HANDLE_vset_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, va_list args);
+
+/* Main error raising functions */
+static ossl_inline void ERR_raise_data_int(const char *file, const int line, const char *func, int lib, int reason, const char *fmt, ...)
+{
+    va_list args;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
+    ERR_HANDLE_new(&hdl);
+    ERR_HANDLE_set_debug(&hdl, file, line, func);
+    va_start(args, fmt);
+    ERR_HANDLE_vset_error(&hdl, lib, reason, fmt, args);
+    va_end(args);
+}
+#define ERR_raise_data(...) ERR_raise_data_int(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC, __VA_ARGS__)
+
+#define ERR_raise(lib, reason) ERR_raise_data((lib), (reason), NULL)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Backward compatibility */
 #define ERR_put_error(lib, func, reason, file, line) \
@@ -436,6 +467,31 @@ int ERR_pop_to_mark(void);
 int ERR_clear_last_mark(void);
 int ERR_count_to_mark(void);
 int ERR_pop(void);
+
+/**
+ * @see ERR_HANDLE_set_mark(3)
+ */
+int ERR_HANDLE_set_mark(ERR_HANDLE **hdl);
+
+/**
+ * @see ERR_HANDLE_pop_to_mark(3);
+ */
+int ERR_HANDLE_pop_to_mark(ERR_HANDLE **hdl);
+
+/**
+ * @see ERR_HANDLE_clear_last_mark(3)
+ */
+int ERR_HANDLE_clear_last_mark(ERR_HANDLE **hdl);
+
+/**
+ * @see ERR_HANDLE_count_to_mark(3)
+ */
+int ERR_HANDLE_count_to_mark(ERR_HANDLE **hdl);
+
+/**
+ * @see ERR_HANDLE_pop(3)
+ */
+int ERR_HANDLE_pop(ERR_HANDLE **hdl);
 
 ERR_STATE *OSSL_ERR_STATE_new(void);
 void OSSL_ERR_STATE_save(ERR_STATE *es);

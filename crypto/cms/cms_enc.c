@@ -41,6 +41,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     int enc, keep_key = 0;
     OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(cms_ctx);
     const char *propq = ossl_cms_ctx_get0_propq(cms_ctx);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     enc = ec->cipher ? 1 : 0;
 
@@ -52,7 +53,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
 
     BIO_get_cipher_ctx(b, &ctx);
 
-    (void)ERR_set_mark();
+    (void)ERR_HANDLE_set_mark(&hdl);
     if (enc) {
         cipher = ec->cipher;
         /*
@@ -74,11 +75,11 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     if (fetched_ciph != NULL)
         cipher = fetched_ciph;
     if (cipher == NULL) {
-        (void)ERR_clear_last_mark();
+        (void)ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
         goto err;
     }
-    (void)ERR_pop_to_mark();
+    (void)ERR_HANDLE_pop_to_mark(&hdl);
 
     if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc) <= 0) {
         ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_INITIALISATION_ERROR);
@@ -86,9 +87,9 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
 
     if (enc) {
-        (void)ERR_set_mark();
+        (void)ERR_HANDLE_set_mark(&hdl);
         calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_get_type(ctx));
-        (void)ERR_pop_to_mark();
+        (void)ERR_HANDLE_pop_to_mark(&hdl);
 
         if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef)
             calg->algorithm = OBJ_txt2obj(EVP_CIPHER_get0_name(cipher), 0);

@@ -1073,6 +1073,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
     int cmd, int p1, void *p2)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
 
     if (ctx == NULL) {
@@ -1080,13 +1081,13 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return -2;
     }
     /* If unsupported, we don't want that reported here */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = evp_pkey_ctx_store_cached_data(ctx, keytype, optype,
         cmd, NULL, p2, p1);
     if (ret == -2) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     } else {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         /*
          * If there was an error, there was an error.
          * If the operation isn't initialized yet, we also return, as
@@ -1129,16 +1130,17 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
     const char *name, const char *value)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
 
     /* If unsupported, we don't want that reported here */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = evp_pkey_ctx_store_cached_data(ctx, -1, -1, -1,
         name, value, strlen(value) + 1);
     if (ret == -2) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     } else {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         /*
          * If there was an error, there was an error.
          * If the operation isn't initialized yet, we also return, as

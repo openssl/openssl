@@ -128,13 +128,14 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     const X509_ALGOR *alg = NULL;
     int ok = 1; /* Assume good */
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if ((p8 = d2i_X509_SIG(NULL, &pder, der_len)) != NULL) {
         char pbuf[1024];
         size_t plen = 0;
 
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
@@ -157,13 +158,13 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
         }
         X509_SIG_free(p8);
     } else {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     pder = der;
     p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &pder, der_len);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (p8inf != NULL && PKCS8_pkey_get0(NULL, NULL, NULL, &alg, p8inf)) {
         /*

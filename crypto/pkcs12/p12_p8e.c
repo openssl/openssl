@@ -21,6 +21,7 @@ X509_SIG *PKCS8_encrypt_ex(int pbe_nid, const EVP_CIPHER *cipher,
 {
     X509_SIG *p8 = NULL;
     X509_ALGOR *pbe;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (pbe_nid == -1) {
         if (cipher == NULL) {
@@ -30,9 +31,9 @@ X509_SIG *PKCS8_encrypt_ex(int pbe_nid, const EVP_CIPHER *cipher,
         pbe = PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, NULL, -1,
             libctx);
     } else {
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if (EVP_PBE_find(EVP_PBE_TYPE_PRF, pbe_nid, NULL, NULL, 0)) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             if (cipher == NULL) {
                 ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
                 return NULL;
@@ -40,7 +41,7 @@ X509_SIG *PKCS8_encrypt_ex(int pbe_nid, const EVP_CIPHER *cipher,
             pbe = PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, NULL,
                 pbe_nid, libctx);
         } else {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             pbe = PKCS5_pbe_set_ex(pbe_nid, iter, salt, saltlen, libctx);
         }
     }

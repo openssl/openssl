@@ -211,9 +211,10 @@ static int test_invalid_utf8(void)
 
 static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int nid;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     nid = OBJ_create(oid, sn, ln);
 
@@ -224,11 +225,11 @@ static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
 
         /* If it exists, that's fine, otherwise not */
         if (l != ERR_LIB_OBJ || r != OBJ_R_OID_EXISTS) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             return 0;
         }
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return 1;
 }
 

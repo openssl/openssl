@@ -142,6 +142,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned char *macbuf = NULL;
     int ret = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     rr = &rl->rrec[0];
 
@@ -213,7 +214,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
      * bad packets are just ignored, and we don't want to leave stray
      * errors in the queue from processing bogus junk that we ignored.
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     enc_err = rl->funcs->cipher(rl, rr, 1, 0, &macbuf, mac_size);
 
     /*-
@@ -223,7 +224,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
      *    1: Success or MTE decryption failed (MAC will be randomised)
      */
     if (enc_err == 0) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         if (rl->alert != SSL_AD_NO_ALERT) {
             /* RLAYERfatal() already called */
             goto end;
@@ -233,7 +234,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         rl->packet_length = 0;
         goto end;
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     OSSL_TRACE_BEGIN(TLS)
     {
         BIO_printf(trc_out, "dec %zd\n", rr->length);
