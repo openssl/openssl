@@ -624,6 +624,16 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->ext.early_data_session = NULL;
     sc->ext.tick_age_checked = 0;
     sc->ext.tick_age_ms = 0;
+    sc->ext.cookieok = 0;
+    sc->verify_result = X509_V_OK;
+    if (sc->server) {
+        /* Values received from the previous client */
+        OPENSSL_free(sc->ext.hostname);
+        sc->ext.hostname = NULL;
+        OPENSSL_free(sc->ext.peer_supportedgroups);
+        sc->ext.peer_supportedgroups = NULL;
+        sc->ext.peer_supportedgroups_len = 0;
+    }
 
     if (sc->renegotiate) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
