@@ -138,7 +138,8 @@ and RSA_get_method() return pointers to the respective RSA_METHODs.
 
 RSA_set_default_method() returns no value.
 
-RSA_set_method() returns 1 for success. It always succeeds.
+RSA_set_method() returns 1 for success and 0 on a memory allocation failure,
+in which case the key keeps its current method.
 
 RSA_new_method() returns NULL and sets an error code that can be obtained
 by L<ERR_get_error(3)> if the allocation fails. Otherwise
@@ -163,6 +164,9 @@ L<RSA_new(3)>
 =head1 HISTORY
 
 All of these functions were deprecated in OpenSSL 3.0.
+
+RSA_set_method() can fail since OpenSSL 4.2; before then it always
+succeeded.
 
 The RSA_null_method(), which was a partial attempt to avoid patent issues,
 was replaced to always return NULL in OpenSSL 1.1.1.
