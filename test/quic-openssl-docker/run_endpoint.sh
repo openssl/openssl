@@ -75,6 +75,17 @@ if [ "$ROLE" == "client" ]; then
         done
         exit 0
         ;;
+    "multiconnect")
+        for req in $REQUESTS
+        do
+            OUTFILE=$(basename $req)
+            echo -n "$OUTFILE " > ./reqfile.txt
+            HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+            HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+            SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+        done
+        exit 0
+        ;;
     "chacha20")
         for req in $REQUESTS
         do
