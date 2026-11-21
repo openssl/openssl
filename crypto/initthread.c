@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include "prov/providercommon.h"
 #include "internal/thread_once.h"
 #include "internal/threads_common.h"
+#include "crypto/err.h"
 #include "crypto/context.h"
 
 #ifdef FIPS_MODULE
@@ -58,9 +59,14 @@ static CRYPTO_ONCE tevent_register_runonce = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(create_global_tevent_register)
 {
+    void *err_state;
+    int ret = 0;
+
+    if (!err_shelve_state(&err_state))
+        return 0;
     glob_tevent_reg = OPENSSL_zalloc(sizeof(*glob_tevent_reg));
     if (glob_tevent_reg == NULL)
-        return 0;
+        goto end;
 
     glob_tevent_reg->skhands = sk_THREAD_EVENT_HANDLER_PTR_new_null();
     glob_tevent_reg->lock = CRYPTO_THREAD_lock_new();
@@ -69,10 +75,13 @@ DEFINE_RUN_ONCE_STATIC(create_global_tevent_register)
         CRYPTO_THREAD_lock_free(glob_tevent_reg->lock);
         OPENSSL_free(glob_tevent_reg);
         glob_tevent_reg = NULL;
-        return 0;
+        goto end;
     }
 
-    return 1;
+    ret = 1;
+end:
+    err_unshelve_state(err_state);
+    return ret;
 }
 
 static GLOBAL_TEVENT_REGISTER *get_global_tevent_register(void)
@@ -191,16 +200,21 @@ static ossl_inline THREAD_EVENT_HANDLER **alloc_thread_local(OSSL_LIB_CTX *ctx)
 static int init_thread_push_handlers(THREAD_EVENT_HANDLER **hands)
 {
     int ret;
+    void *err_state;
     GLOBAL_TEVENT_REGISTER *gtr;
 
     gtr = get_global_tevent_register();
     if (gtr == NULL)
         return 0;
 
-    if (!CRYPTO_THREAD_write_lock(gtr->lock))
+    if (!err_shelve_state(&err_state))
         return 0;
-    ret = (sk_THREAD_EVENT_HANDLER_PTR_push(gtr->skhands, hands) != 0);
-    CRYPTO_THREAD_unlock(gtr->lock);
+    ret = 0;
+    if (CRYPTO_THREAD_write_lock(gtr->lock)) {
+        ret = (sk_THREAD_EVENT_HANDLER_PTR_push(gtr->skhands, hands) != 0);
+        CRYPTO_THREAD_unlock(gtr->lock);
+    }
+    err_unshelve_state(err_state);
 
     return ret;
 }
@@ -441,7 +455,7 @@ static int init_thread_deregister(void *index, int all)
     GLOBAL_TEVENT_REGISTER *gtr;
     int i;
 
-    gtr = get_global_tevent_register();
+    gtr = all ? glob_tevent_reg : get_global_tevent_register();
     if (gtr == NULL)
         return 0;
     if (!all) {
