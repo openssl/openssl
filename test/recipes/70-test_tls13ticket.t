@@ -15,9 +15,11 @@ setup("test_tls13ticket");
 plan skip_all => "needs TLSv1.3 enabled"
     if disabled("tls1_3");
 
+plan skip_all => "needs TLSv1.2 enabled"
+    if disabled("tls1_2");
+
 plan skip_all => "needs ECX enabled"
     if disabled("ecx");
-
 
 plan tests => 1;
 
