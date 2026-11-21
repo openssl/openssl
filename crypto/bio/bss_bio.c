@@ -525,7 +525,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
             b->len = 0;
             b->offset = 0;
         }
-        ret = 0;
+        ret = 1;
         break;
 
     case BIO_CTRL_GET_CLOSE:
