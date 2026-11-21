@@ -119,6 +119,8 @@ int OCSP_response_status(OCSP_RESPONSE *resp)
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
 {
     OCSP_RESPBYTES *rb = resp->responseBytes;
+    OCSP_BASICRESP *bs;
+    const unsigned char *p;
 
     if (rb == NULL) {
         ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_RESPONSE_DATA);
@@ -129,7 +131,15 @@ OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
         return NULL;
     }
 
-    return ASN1_item_unpack(rb->response, ASN1_ITEM_rptr(OCSP_BASICRESP));
+    /* RFC 6960, section 4.2.1 requires exactly one BasicOCSPResponse. */
+    p = rb->response->data;
+    bs = d2i_OCSP_BASICRESP(NULL, &p, rb->response->length);
+    if (bs == NULL || p != rb->response->data + rb->response->length) {
+        OCSP_BASICRESP_free(bs);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
+        return NULL;
+    }
+    return bs;
 }
 
 const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs)
