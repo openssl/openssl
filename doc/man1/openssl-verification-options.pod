@@ -36,7 +36,7 @@ such as C<sslserver> for (D)TLS servers, or (by default) for any purpose.
 All certificates in the chain except the target ceritificate must be CA
 certificates.
 An X.509v3 certificate is considered a CA certificate
-if it has a basicConstraints extension with the `CA` flag set.
+if it has a basicConstraints extension with the CA flag set.
 If a pathLenConstraint is included then the chain is checked to satisfy it.
 If a CA certificate has a keyUsage extension
 then the latter must include the keyCertSign bit, and for proxy certificates
