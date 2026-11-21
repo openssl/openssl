@@ -128,7 +128,7 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s)
 
     while ((item = pqueue_pop(rcvd_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
-        dtls1_hm_fragment_free(frag);
+        dtls1_hm_fragment_free(s, frag);
         pitem_free(item);
     }
     s->d1->has_change_cipher_spec = 0;
