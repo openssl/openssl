@@ -371,156 +371,16 @@ end:
 }
 
 /*-
- * Pre-population
- * ==============
- */
-
-#ifndef FIPS_MODULE
-#include <openssl/evp.h>
-
-/* Creates an initial namemap with names found in the legacy method db */
-static void get_legacy_evp_names(int base_nid, int nid, const char *pem_name,
-    void *arg)
-{
-    int num = 0;
-    ASN1_OBJECT *obj;
-
-    if (base_nid != NID_undef) {
-        num = ossl_namemap_add_name(arg, num, OBJ_nid2sn(base_nid));
-        num = ossl_namemap_add_name(arg, num, OBJ_nid2ln(base_nid));
-    }
-
-    if (nid != NID_undef) {
-        num = ossl_namemap_add_name(arg, num, OBJ_nid2sn(nid));
-        num = ossl_namemap_add_name(arg, num, OBJ_nid2ln(nid));
-        if ((obj = OBJ_nid2obj(nid)) != NULL) {
-            char txtoid[OSSL_MAX_NAME_SIZE];
-
-            if (OBJ_obj2txt(txtoid, sizeof(txtoid), obj, 1) > 0)
-                num = ossl_namemap_add_name(arg, num, txtoid);
-        }
-    }
-    if (pem_name != NULL)
-        num = ossl_namemap_add_name(arg, num, pem_name);
-}
-
-static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
-{
-    const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
-
-    if (cipher != NULL)
-        get_legacy_evp_names(NID_undef, EVP_CIPHER_get_type(cipher), NULL, arg);
-}
-
-static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
-{
-    const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
-
-    if (md != NULL)
-        get_legacy_evp_names(NID_undef, EVP_MD_get_type(md), NULL, arg);
-}
-
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
-    void *arg)
-{
-    int nid = 0, base_nid = 0, flags = 0;
-    const char *pem_name = NULL;
-
-    evp_pkey_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
-    if (nid != NID_undef) {
-        if ((flags & ASN1_PKEY_ALIAS) == 0) {
-            switch (nid) {
-            case EVP_PKEY_DHX:
-                /* We know that the name "DHX" is used too */
-                get_legacy_evp_names(0, nid, "DHX", arg);
-                /* FALLTHRU */
-            default:
-                get_legacy_evp_names(0, nid, pem_name, arg);
-            }
-        } else {
-            /*
-             * Treat aliases carefully, some of them are undesirable, or
-             * should not be treated as such for providers.
-             */
-
-            switch (nid) {
-            case EVP_PKEY_SM2:
-                /*
-                 * SM2 is a separate keytype with providers, not an alias for
-                 * EC.
-                 */
-                get_legacy_evp_names(0, nid, pem_name, arg);
-                break;
-            default:
-                /* Use the short name of the base nid as the common reference */
-                get_legacy_evp_names(base_nid, nid, pem_name, arg);
-            }
-        }
-    }
-}
-#endif /* OPENSSL_NO_DEPRECATED_3_6 */
-#endif
-
-/*-
  * Constructors / destructors
  * ==========================
  */
 
 OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 {
-#ifndef FIPS_MODULE
-    int nms;
-#endif
     OSSL_NAMEMAP *namemap = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX);
 
     if (namemap == NULL)
         return NULL;
-
-#ifndef FIPS_MODULE
-    nms = ossl_namemap_empty(namemap);
-    if (nms < 0) {
-        /*
-         * Could not get lock to make the count, so maybe internal objects
-         * weren't added. This seems safest.
-         */
-        return NULL;
-    }
-    if (nms == 1) {
-        int num;
-
-        /* Before pilfering, we make sure the legacy database is populated */
-        OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
-                | OPENSSL_INIT_ADD_ALL_DIGESTS,
-            NULL);
-
-        OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
-            get_legacy_cipher_names, namemap);
-        OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
-            get_legacy_md_names, namemap);
-
-        /*
-         * Some old providers (<= 3.5) may not have the rsassaPSS alias which
-         * may cause problems in some cases. We add it manually here
-         */
-        num = ossl_namemap_add_name(namemap, 0, "RSA-PSS");
-        if (num != 0) {
-            ossl_namemap_add_name(namemap, num, "rsassaPss");
-            /* Add other RSA-PSS aliases as well */
-            ossl_namemap_add_name(namemap, num, "RSASSA-PSS");
-            ossl_namemap_add_name(namemap, num, "1.2.840.113549.1.1.10");
-        }
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-        {
-            int i, end;
-
-            /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
-            for (i = 0, end = evp_pkey_asn1_get_count(); i < end; i++)
-                get_legacy_pkey_meth_names(evp_pkey_asn1_get0(i), namemap);
-        }
-#endif
-    }
-#endif
 
     return namemap;
 }
