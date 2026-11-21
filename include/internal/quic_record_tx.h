@@ -242,6 +242,18 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt);
  */
 void ossl_qtx_finish_dgram(OSSL_QTX *qtx);
 
+/**
+ * @brief Pads the datagram being built with zero bytes after its packets.
+ *
+ * A receiver discards the padding as an invalid packet. Does nothing if the
+ * datagram holds no packet, is already at least min_len bytes long, or cannot
+ * hold min_len bytes.
+ *
+ * @param qtx      QTX instance.
+ * @param min_len  Length to pad the datagram to.
+ */
+void ossl_qtx_pad_dgram(OSSL_QTX *qtx, size_t min_len);
+
 /*
  * (Attempt to) flush any datagrams which are queued for transmission. Note that
  * this does not cancel coalescing; call ossl_qtx_finish_dgram() first if that

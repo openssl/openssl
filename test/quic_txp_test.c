@@ -2280,6 +2280,231 @@ static int test_pto_script(int idx)
 }
 
 /*
+ * While congestion limited, an Initial ACK is sent at once in a datagram
+ * padded outside its packet, so the packet itself stays ACK-only.
+ */
+static OSSL_CC_METHOD cc_blocked_method;
+
+static uint64_t cc_blocked_get_tx_allowance(OSSL_CC_DATA *cc)
+{
+    return 0;
+}
+
+/*
+ * Recreate the TXP with a congestion controller that allows nothing. Must run
+ * before any packet is sent, as the ACKM keeps callbacks into the TXP.
+ */
+static int recreate_txp_cc_blocked(struct helper *h, int validated)
+{
+    cc_blocked_method = ossl_cc_dummy_method;
+    cc_blocked_method.get_tx_allowance = cc_blocked_get_tx_allowance;
+    h->args.cc_method = &cc_blocked_method;
+
+    ossl_quic_tx_packetiser_free(h->txp);
+    if (!TEST_ptr(h->txp = ossl_quic_tx_packetiser_new(&h->args)))
+        return 0;
+
+    if (validated)
+        ossl_quic_tx_packetiser_set_validated(h->txp);
+    return 1;
+}
+
+static int cc_block(struct helper *h)
+{
+    return recreate_txp_cc_blocked(h, 1);
+}
+
+#ifdef OPK_NO_VALIDATION
+static int cc_block_unvalidated(struct helper *h)
+{
+    return recreate_txp_cc_blocked(h, 0);
+}
+#endif
+
+static int set_server(struct helper *h)
+{
+    h->args.is_server = 1;
+    return 1;
+}
+
+/* Recreate the TXP as a server. Must run before any packet is sent. */
+static int recreate_txp_as_server(struct helper *h)
+{
+    set_server(h);
+    ossl_quic_tx_packetiser_free(h->txp);
+    if (!TEST_ptr(h->txp = ossl_quic_tx_packetiser_new(&h->args)))
+        return 0;
+
+    ossl_quic_tx_packetiser_set_validated(h->txp);
+    return 1;
+}
+
+static int rx_ack_eliciting(struct helper *h, uint32_t pn_space, QUIC_PN pn)
+{
+    OSSL_ACKM_RX_PKT pkt = { 0 };
+
+    pkt.pkt_num = pn;
+    pkt.time = fake_now(NULL);
+    pkt.pkt_space = pn_space;
+    pkt.is_ack_eliciting = 1;
+    return TEST_true(ossl_ackm_on_rx_packet(h->args.ackm, &pkt));
+}
+
+static int rx_initial_ack_eliciting(struct helper *h)
+{
+    return rx_ack_eliciting(h, QUIC_PN_SPACE_INITIAL, 0);
+}
+
+static int rx_handshake_ack_eliciting(struct helper *h)
+{
+    return rx_ack_eliciting(h, QUIC_PN_SPACE_HANDSHAKE, 0);
+}
+
+static int rx_app_ack_eliciting(struct helper *h)
+{
+    return rx_ack_eliciting(h, QUIC_PN_SPACE_APP, 0);
+}
+
+static int check_1rtt_pkt(struct helper *h)
+{
+    return TEST_int_eq(h->qrx_pkt->hdr->type, QUIC_PKT_TYPE_1RTT);
+}
+
+/* The packet holds only its ACK frame, without PADDING frames */
+static int check_unpadded_initial(struct helper *h)
+{
+    return TEST_int_eq(h->qrx_pkt->hdr->type, QUIC_PKT_TYPE_INITIAL)
+        && TEST_size_t_lt(h->qrx_pkt->hdr->len, 100);
+}
+
+static int check_handshake_pkt(struct helper *h)
+{
+    return TEST_int_eq(h->qrx_pkt->hdr->type, QUIC_PKT_TYPE_HANDSHAKE);
+}
+
+static const struct script_op cc_ack_script_1[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CHECK, 0, 0, NULL, 0, cc_block },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_ack_eliciting },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_EXPECT_DGRAM_LEN, 1200, 1200 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_unpadded_initial },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT_NONE },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_END }
+};
+
+/* A Handshake ACK due with the Initial ACK goes in the same datagram */
+static const struct script_op cc_ack_script_2[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CHECK, 0, 0, NULL, 0, cc_block },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_ack_eliciting },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_handshake_ack_eliciting },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_EXPECT_DGRAM_LEN, 1200, 1200 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_unpadded_initial },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, check_handshake_pkt },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT_NONE },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_END }
+};
+
+/* A 1-RTT ACK, which must end a datagram, goes in the next datagram */
+static const struct script_op cc_ack_script_3[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CHECK, 0, 0, NULL, 0, cc_block },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_ack_eliciting },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_app_ack_eliciting },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_EXPECT_DGRAM_LEN, 1200, 1200 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_unpadded_initial },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT_NONE },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, check_1rtt_pkt },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT_NONE },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_END }
+};
+
+#ifdef OPK_NO_VALIDATION
+/* A server sends an ACK-only Initial packet without padding */
+static const struct script_op cc_ack_script_4[] = {
+    { OPK_NO_VALIDATION },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CHECK, 0, 0, NULL, 0, set_server },
+    { OPK_CHECK, 0, 0, NULL, 0, cc_block_unvalidated },
+    /* 3 * 100 = 300 covers the ACK but not a padded datagram */
+    { OPK_ADD_CREDIT, 100 },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_ack_eliciting },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_EXPECT_DGRAM_LEN, 1, 299 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_unpadded_initial },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+#endif
+
+/* A server still pads an ack-eliciting Initial packet */
+static const struct script_op cc_ack_script_5[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CHECK, 0, 0, NULL, 0, recreate_txp_as_server },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_EXPECT_DGRAM_LEN, 1200, 1200 },
+    { OPK_END }
+};
+
+static const struct script_op *const cc_ack_scripts[] = {
+    cc_ack_script_1,
+    cc_ack_script_2,
+    cc_ack_script_3,
+#ifdef OPK_NO_VALIDATION
+    cc_ack_script_4,
+#endif
+    cc_ack_script_5,
+};
+
+static int test_cc_ack_script(int idx)
+{
+    return run_script(idx, cc_ack_scripts[idx]);
+}
+
+/*
  * Dynamic Script 1.
  *
  * This script exists to test the interactions between multiple packets (ELs) in
@@ -2368,6 +2593,7 @@ int setup_tests(void)
     fill_pto_crypto(pto_crypto_4, sizeof(pto_crypto_4));
     fill_pto_crypto(pto_crypto_5, sizeof(pto_crypto_5));
     ADD_ALL_TESTS(test_pto_script, OSSL_NELEM(pto_scripts));
+    ADD_ALL_TESTS(test_cc_ack_script, OSSL_NELEM(cc_ack_scripts));
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,
         (int)(OSSL_NELEM(dyn_script_1_crypto_1a)

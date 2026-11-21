@@ -887,7 +887,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     struct txp_pkt pkt[QUIC_ENC_LEVEL_NUM];
     size_t pkts_done = 0;
     uint64_t cc_limit = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
-    int need_padding = 0, txpim_pkt_reffed;
+    int need_padding = 0, pad_dgram = 0, txpim_pkt_reffed;
 
     memset(status, 0, sizeof(*status));
 
@@ -946,10 +946,13 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
 
     /* 3. Packet Adjustment */
     if (pkt[QUIC_ENC_LEVEL_INITIAL].h_valid
-        && pkt[QUIC_ENC_LEVEL_INITIAL].h.bytes_appended > 0)
+        && pkt[QUIC_ENC_LEVEL_INITIAL].h.bytes_appended > 0
+        && (!txp->args.is_server
+            || pkt[QUIC_ENC_LEVEL_INITIAL].tpkt->ackm_pkt.is_ack_eliciting))
         /*
          * We have an Initial packet in this datagram, so we need to make sure
-         * the total size of the datagram is adequate.
+         * the total size of the datagram is adequate. A server needs this only
+         * for an ack-eliciting Initial packet (RFC 9000 s. 14.1).
          */
         need_padding = 1;
 
@@ -992,15 +995,32 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
         }
 
         /*
-         * If we have failed to make a datagram of adequate size, for example
-         * because we have a padding requirement but are using the ACK_ONLY
-         * archetype (because we are CC limited), which precludes us from
-         * sending padding, give up on generating the datagram - there is
-         * nothing we can do.
+         * If we have failed to make a datagram of adequate size, give up on
+         * generating it, unless we are congestion limited and use the ACK_ONLY
+         * archetype. That archetype cannot add PADDING frames, which would put
+         * the packets in flight, so pad the datagram outside any packet
+         * instead (RFC 9000 s. 14.1). Only a client needs this, and the
+         * anti-amplification limit does not apply to a client.
          */
         if (total_dgram_size < min_dpl) {
-            res = 1;
-            goto out;
+            if (archetype != TX_PACKETISER_ARCHETYPE_ACK_ONLY) {
+                res = 1;
+                goto out;
+            }
+
+            /*
+             * A 1-RTT packet has no length field, so it must end the datagram
+             * and cannot come before the padding. Send its ACK in a later
+             * datagram.
+             */
+            if (pkt[QUIC_ENC_LEVEL_1RTT].h_valid
+                && pkt[QUIC_ENC_LEVEL_1RTT].h.bytes_appended > 0) {
+                if (pkt[QUIC_ENC_LEVEL_1RTT].tpkt->had_ack_frame)
+                    txp->want_ack |= 1UL << QUIC_PN_SPACE_APP;
+                txp_pkt_cleanup(&pkt[QUIC_ENC_LEVEL_1RTT], txp);
+            }
+
+            pad_dgram = 1;
         }
     }
 
@@ -1058,6 +1078,9 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     /* Flush & Cleanup */
     res = 1;
 out:
+    if (pad_dgram)
+        ossl_qtx_pad_dgram(txp->args.qtx, QUIC_MIN_INITIAL_DGRAM_LEN);
+
     ossl_qtx_finish_dgram(txp->args.qtx);
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
