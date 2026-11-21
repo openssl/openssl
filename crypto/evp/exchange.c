@@ -545,12 +545,12 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
 
         if (!ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, &tmplen,
                 tmplen)) {
-            OPENSSL_free(key);
+            OPENSSL_clear_free(key, keylen);
             goto cleanup;
         }
 
         if (keylen != tmplen) {
-            OPENSSL_free(key);
+            OPENSSL_clear_free(key, keylen);
             ERR_raise(ERR_R_EVP_LIB, ERR_R_INTERNAL_ERROR);
             goto cleanup;
         }
