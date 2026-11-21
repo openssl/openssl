@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 44;
+plan tests => 45;
 
 subtest "CMS operation option validation" => sub {
     plan tests => 5;
@@ -1083,6 +1083,33 @@ subtest "CMS decrypt authEnvelopedData with authenticated attributes\n" => sub {
        "reject authEnvelopedData with tampered authAttrs");
     ok(!-s "bad_authattrs.txt",
        "tampered authEnvelopedData leaks no plaintext to -out");
+};
+
+subtest "CMS decrypt authEnvelopedData with non-default GCM nonce lengths\n" => sub {
+    plan tests => 4;
+
+    # AuthEnvelopedData (KEK, AES-128-GCM) messages whose aes-nonce is 8, 12
+    # or 16 octets, each encrypted under an IV equal to that nonce. RFC 5084
+    # permits any nonce length, so all must decrypt.
+    my %good = ( "8"  => "cms_authenv_gcm_n8.pem",
+                 "12" => "cms_authenv_gcm_n12.pem",
+                 "16" => "cms_authenv_gcm_n16.pem" );
+    foreach my $n (sort keys %good) {
+        ok(run(app(["openssl", "cms", @defaultprov, "-decrypt", "-inform", "PEM",
+                    "-secretkey", "101112131415161718191A1B1C1D1E1F",
+                    "-secretkeyid", "6B656B31",
+                    "-in", catfile($datadir, $good{$n}) ])),
+           "decrypt authEnvelopedData with a $n-octet GCM nonce");
+    }
+
+    # cms_authenv_gcm_n12.pem with 4 octets appended to its aes-nonce field
+    # (ciphertext unchanged). The appended octets must not be ignored: the
+    # message must fail to authenticate.
+    ok(!run(app(["openssl", "cms", @defaultprov, "-decrypt", "-inform", "PEM",
+                 "-secretkey", "101112131415161718191A1B1C1D1E1F",
+                 "-secretkeyid", "6B656B31",
+                 "-in", catfile($datadir, "cms_authenv_gcm_n_malleable.pem") ])),
+       "reject authEnvelopedData whose aes-nonce was extended after encryption");
 };
 
 subtest "CMS parse authenticatedData authAttrs and unauthAttrs\n" => sub {
