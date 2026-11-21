@@ -4867,14 +4867,17 @@ err:
  * remote 'q' does not match the local domain parameters but is still
  * consistent with the remote key share.
  * (CVE-2026-42770)
+ * The same goes for a remote key without 'q' whose key share is not in
+ * the subgroup defined by the local 'q'.
  */
-static int test_dhx_derive_rejects_bad_peer_q(void)
+static int test_dhx_derive_rejects_bad_peer_q(int omit_q)
 {
     int ret = 0;
     EVP_PKEY *local_key = NULL, *remote_key = NULL;
     EVP_PKEY_CTX *pctx = NULL, *derive_ctx = NULL;
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL;
+    BN_CTX *bnctx = NULL;
 
     BIGNUM *p = NULL, *g = NULL;
     BIGNUM *q_valid = NULL, *pub_local = NULL, *priv_local = NULL;
@@ -4927,6 +4930,16 @@ static int test_dhx_derive_rejects_bad_peer_q(void)
         || !TEST_true(BN_hex2bn(&priv_local, hex_local_priv)))
         goto err;
 
+    /*
+     * A missing 'q' is filled in if 'p' and 'g' are those of a named group,
+     * so switch to another generator of the same subgroup.
+     */
+    if (omit_q
+        && (!TEST_ptr(bnctx = BN_CTX_new_ex(testctx))
+            || !TEST_true(BN_mod_sqr(g, g, p, bnctx))
+            || !TEST_true(BN_mod_sqr(pub_local, pub_local, p, bnctx))))
+        goto err;
+
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q_valid))
@@ -4954,7 +4967,8 @@ static int test_dhx_derive_rejects_bad_peer_q(void)
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q_bad))
+        || (!omit_q
+            && !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q_bad)))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub_bad))
         || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
@@ -4972,7 +4986,8 @@ static int test_dhx_derive_rejects_bad_peer_q(void)
     /* reject the remote key share, even if it is self-consistent, correct
      * code needs to use local q, not remote-provided q. */
     if (!TEST_int_le(EVP_PKEY_derive_set_peer(derive_ctx, remote_key), 0)) {
-        TEST_error("EVP_PKEY_derive_set_peer incorrectly accepted a peer with malicious 'q'");
+        TEST_error("EVP_PKEY_derive_set_peer incorrectly accepted a peer %s 'q'",
+            omit_q ? "without" : "with malicious");
         goto err;
     }
 
@@ -4986,6 +5001,7 @@ err:
     BN_free(priv_local);
     BN_free(q_bad);
     BN_free(pub_bad);
+    BN_CTX_free(bnctx);
     OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_CTX_free(pctx);
@@ -9588,7 +9604,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
-    ADD_TEST(test_dhx_derive_rejects_bad_peer_q);
+    ADD_ALL_TESTS(test_dhx_derive_rejects_bad_peer_q, 2);
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EC_priv_pub);
