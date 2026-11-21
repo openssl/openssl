@@ -1,0 +1,414 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/*
+ * The VMClock generation signal.
+ *
+ * A guest restored from a snapshot continues with the memory it had when the
+ * snapshot was taken, the DRBG states included, and its clocks resume from
+ * the snapshot too, so neither the pid check nor the time-based reseed sees
+ * the restore. Linux exposes a shared page from the hypervisor, the VMClock
+ * device (/dev/vmclock0, include/uapi/linux/vmclock-abi.h), whose
+ * vm_generation_counter changes every time the guest is loaded from saved
+ * state (flagged by VMCLOCK_FLAG_VM_GEN_COUNTER_PRESENT) and whose
+ * disruption_marker changes on a restore or a live migration. Firecracker
+ * attaches the device to every guest; QEMU does with -device vmclock.
+ *
+ * ossl_prov_vmclock_changed() compares the current value of the two fields
+ * with the one a DRBG last saw, so that the DRBG can treat a change like a
+ * change of pid. A page that stays in mid-update for a whole read counts as
+ * a change once, and once more when it can be read again; in between the
+ * DRBG is left alone. After a change the DRBG reseeds twice more, each time
+ * on its first call after a wait, because the reseed draws on the kernel's
+ * generator and the kernel may not have reseeded its own yet when the page
+ * has already changed. Each library context maps the page once, when its first
+ * DRBG is created, and unmaps it when the context is freed; the mapping is
+ * kept with the context rather than in a static, as the FIPS provider
+ * requires. A read is a few loads under the page's sequence count, with no
+ * system call.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/crypto.h>
+#include <openssl/opensslconf.h>
+#include "internal/cryptlib.h"
+#include "internal/endian.h"
+#include "crypto/context.h"
+#include "prov/drbg.h"
+
+/* The page is read under a seqcount, with the compiler's fences. */
+#if defined(__linux__) && defined(__GNUC__)
+#define OSSL_VMCLOCK_SUPPORTED
+#include <fcntl.h>
+#include <stdint.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+/* As in rand_unix.c: clock_gettime() needs -lrt with glibc before 2.17. */
+#if defined(_POSIX_TIMERS) && _POSIX_TIMERS - 0 > 0
+#if !defined(__GLIBC__)
+#define OSSL_VMCLOCK_MONOTONIC
+#elif defined(__GLIBC_PREREQ)
+#if __GLIBC_PREREQ(2, 17)
+#define OSSL_VMCLOCK_MONOTONIC
+#endif
+#endif
+#endif
+#endif
+
+/* The library context's mapping, made by its first DRBG. */
+typedef struct prov_vmclock_global_st {
+    CRYPTO_RWLOCK *lock;
+    int mapped; /* set once a mapping has been tried */
+    void *page; /* NULL if there is no page we can read */
+    size_t len;
+} PROV_VMCLOCK_GLOBAL;
+
+void *ossl_prov_vmclock_ctx_new(ossl_unused OSSL_LIB_CTX *libctx)
+{
+    PROV_VMCLOCK_GLOBAL *vgbl = OPENSSL_zalloc(sizeof(*vgbl));
+
+    if (vgbl == NULL)
+        return NULL;
+
+    vgbl->lock = CRYPTO_THREAD_lock_new();
+    if (vgbl->lock == NULL) {
+        OPENSSL_free(vgbl);
+        return NULL;
+    }
+
+    return vgbl;
+}
+
+void ossl_prov_vmclock_ctx_free(void *vvgbl)
+{
+    PROV_VMCLOCK_GLOBAL *vgbl = vvgbl;
+
+    if (vgbl == NULL)
+        return;
+
+#ifdef OSSL_VMCLOCK_SUPPORTED
+    if (vgbl->page != NULL)
+        munmap(vgbl->page, vgbl->len);
+#endif
+    CRYPTO_THREAD_lock_free(vgbl->lock);
+
+    OPENSSL_free(vgbl);
+}
+
+#ifdef OSSL_VMCLOCK_SUPPORTED
+
+/*
+ * The fields read here, at the offsets of vmclock-abi.h version 1. Every
+ * field of the page is little-endian.
+ */
+struct ossl_vmclock_page {
+    uint32_t magic;
+    uint32_t size;
+    uint16_t version;
+    uint8_t counter_id, time_type;
+    uint32_t seq_count;
+    uint64_t disruption_marker;
+    uint64_t flags;
+    uint8_t rest[72];
+    uint64_t vm_generation_counter;
+};
+#define OSSL_VMCLOCK_MAGIC 0x4b4c4356u
+#define OSSL_VMCLOCK_FLAG_VM_GEN_COUNTER_PRESENT (1u << 8)
+#define OSSL_VMCLOCK_SIZE_WITH_GENERATION 112u
+#define OSSL_VMCLOCK_DEVICE "/dev/vmclock0"
+
+/*
+ * The number of times a reader looks at the sequence count before it gives
+ * up. The hypervisor holds the count odd only while it rewrites the page,
+ * which takes a few stores; the bound keeps a reader from spinning with a
+ * DRBG lock held if the count stays odd. The first read that gives up is
+ * reported as a change, and so is the first that succeeds after it, so a
+ * bound that is too short costs two reseeds.
+ */
+#define OSSL_VMCLOCK_MAX_TRIES 1000
+
+static uint16_t vmclock_le16(uint16_t v)
+{
+    DECLARE_IS_ENDIAN;
+
+    return IS_LITTLE_ENDIAN ? v : __builtin_bswap16(v);
+}
+
+static uint32_t vmclock_le32(uint32_t v)
+{
+    DECLARE_IS_ENDIAN;
+
+    return IS_LITTLE_ENDIAN ? v : __builtin_bswap32(v);
+}
+
+static uint64_t vmclock_le64(uint64_t v)
+{
+    DECLARE_IS_ENDIAN;
+
+    return IS_LITTLE_ENDIAN ? v : __builtin_bswap64(v);
+}
+
+/*
+ * OPENSSL_VMCLOCK names another device or file, for tests. Only a debug
+ * build reads it, and there a set-user-ID or set-group-ID process ignores
+ * it.
+ */
+static const char *vmclock_path(void)
+{
+#ifndef NDEBUG
+    const char *path = ossl_safe_getenv("OPENSSL_VMCLOCK");
+
+    if (path != NULL && *path != '\0')
+        return path;
+#endif
+    return OSSL_VMCLOCK_DEVICE;
+}
+
+/*
+ * The device or, in a debug build, where a test may name one, a regular
+ * file that holds the whole structure: reading past the end of a shorter
+ * file would fault.
+ */
+static int vmclock_file_ok(const struct stat *st)
+{
+    if (S_ISCHR(st->st_mode))
+        return 1;
+#ifndef NDEBUG
+    if (S_ISREG(st->st_mode)
+        && st->st_size >= (off_t)sizeof(struct ossl_vmclock_page))
+        return 1;
+#endif
+    return 0;
+}
+
+/* Maps the page, setting |*len|; returns NULL if there is none we can read. */
+static void *vmclock_map(size_t *len)
+{
+    const char *path = vmclock_path();
+    long page_size = sysconf(_SC_PAGESIZE);
+    volatile struct ossl_vmclock_page *page;
+    struct stat st;
+    void *p;
+    int fd;
+
+    if (page_size <= 0 || (size_t)page_size < sizeof(struct ossl_vmclock_page))
+        return NULL;
+    /* O_NONBLOCK, so that a FIFO or another special file cannot block us. */
+    fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
+    if (fd < 0)
+        return NULL;
+    if (fstat(fd, &st) != 0 || !vmclock_file_ok(&st)) {
+        close(fd);
+        return NULL;
+    }
+    p = mmap(NULL, (size_t)page_size, PROT_READ, MAP_SHARED, fd, 0);
+    close(fd);
+    if (p == MAP_FAILED)
+        return NULL;
+    page = p;
+    /* The checks the kernel makes before it creates the device. */
+    if (vmclock_le32(page->magic) != OSSL_VMCLOCK_MAGIC
+        || vmclock_le16(page->version) != 1) {
+        munmap(p, (size_t)page_size);
+        return NULL;
+    }
+    *len = (size_t)page_size;
+    return p;
+}
+
+const volatile void *ossl_prov_vmclock_page(OSSL_LIB_CTX *libctx)
+{
+    PROV_VMCLOCK_GLOBAL *vgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_VMCLOCK_INDEX);
+    void *page;
+
+    if (vgbl == NULL || !CRYPTO_THREAD_write_lock(vgbl->lock))
+        return NULL;
+    if (!vgbl->mapped) {
+        vgbl->page = vmclock_map(&vgbl->len);
+        vgbl->mapped = 1;
+    }
+    page = vgbl->page;
+    CRYPTO_THREAD_unlock(vgbl->lock);
+    return page;
+}
+
+/*
+ * A reseed draws on the kernel's generator, and the kernel of a restored
+ * guest reseeds its own in its own time: when the VMGenID notification
+ * reaches it, shortly after the guest resumes, or else on its periodic
+ * reseed, which Linux schedules at most 60 seconds apart. A DRBG that was
+ * called sooner took seed that every copy of the snapshot may hold, and
+ * would keep it until its next reseed. So after a change it reseeds again on
+ * its first call after each of these waits; the second allows for the
+ * timer's slack. The waits are counted on the monotonic clock, which a step
+ * of the wall clock does not move, and on the wall clock only where
+ * clock_gettime() cannot be used.
+ */
+static const uint64_t vmclock_followup_ns[] = {
+    UINT64_C(1000000000),
+    UINT64_C(64000000000)
+};
+
+static int vmclock_now(uint64_t *ns)
+{
+#ifdef OSSL_VMCLOCK_MONOTONIC
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+        return 0;
+    *ns = (uint64_t)ts.tv_sec * UINT64_C(1000000000) + (uint64_t)ts.tv_nsec;
+#else
+    struct timeval tv;
+
+    if (gettimeofday(&tv, NULL) != 0)
+        return 0;
+    *ns = (uint64_t)tv.tv_sec * UINT64_C(1000000000)
+        + (uint64_t)tv.tv_usec * UINT64_C(1000);
+#endif
+    return 1;
+}
+
+/* A change was seen: the reseeds that follow it start over. */
+static void vmclock_followups_start(PROV_VMCLOCK_STATE *state)
+{
+    state->followups = (int)OSSL_NELEM(vmclock_followup_ns);
+    state->followup_armed = 0;
+}
+
+/* Returns 1, once, when the wait for the next of those reseeds is over. */
+static int vmclock_followup_due(PROV_VMCLOCK_STATE *state)
+{
+    size_t i = OSSL_NELEM(vmclock_followup_ns) - (size_t)state->followups;
+    uint64_t now;
+
+    if (!state->followup_armed)
+        return 0;
+    if (!vmclock_now(&now)) {
+        state->followups = 0;
+        return 0;
+    }
+    if (now - state->followup_base < vmclock_followup_ns[i])
+        return 0;
+    state->followups--;
+    return 1;
+}
+
+/*
+ * The waits count from the completion of the reseed that the change caused.
+ * A DRBG that takes seed from a parent completes its reseed after the parent
+ * has completed its own, so when a wait is over for the DRBG it is over for
+ * the parent too, and the seed the DRBG then takes comes from a parent that
+ * has itself reseeded after the wait.
+ */
+void ossl_prov_vmclock_reseeded(PROV_VMCLOCK_STATE *state)
+{
+    if (state->followups == 0 || state->followup_armed)
+        return;
+    if (vmclock_now(&state->followup_base))
+        state->followup_armed = 1;
+    else
+        state->followups = 0;
+}
+
+/*
+ * Reads the two fields under the page's sequence count and folds them into
+ * |*epoch|. Returns 0 if the page was being rewritten on every one of
+ * |max_tries| looks.
+ */
+static int vmclock_read(const volatile struct ossl_vmclock_page *page,
+    uint64_t *epoch, int max_tries)
+{
+    uint64_t generation, marker, flags;
+    uint32_t seq;
+    int tries;
+
+    for (tries = 0; tries < max_tries; tries++) {
+        seq = vmclock_le32(page->seq_count);
+        if ((seq & 1) != 0)
+            continue;
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        flags = vmclock_le64(page->flags);
+        marker = vmclock_le64(page->disruption_marker);
+        generation = 0;
+        if (vmclock_le32(page->size) >= OSSL_VMCLOCK_SIZE_WITH_GENERATION
+            && (flags & OSSL_VMCLOCK_FLAG_VM_GEN_COUNTER_PRESENT) != 0)
+            generation = vmclock_le64(page->vm_generation_counter);
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+        if (seq == vmclock_le32(page->seq_count)) {
+            /* A change in either field changes the result. */
+            *epoch = generation ^ (marker * 0x9e3779b97f4a7c15ull);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int ossl_prov_vmclock_changed(const volatile void *page,
+    PROV_VMCLOCK_STATE *state)
+{
+    uint64_t now;
+
+    if (page == NULL)
+        return 0;
+    /*
+     * A page that has stayed in mid-update for a whole read is one we cannot
+     * tell anything from: reseed once, then leave the DRBG alone until the
+     * page settles. Meanwhile one look per call shows whether it has.
+     */
+    if (!vmclock_read(page, &now,
+            state->unreadable ? 1 : OSSL_VMCLOCK_MAX_TRIES)) {
+        if (state->unreadable)
+            return 0;
+        state->unreadable = 1;
+        return 1;
+    }
+    if (state->unreadable) {
+        /* Whatever the page went through, the DRBG has not seen it. */
+        state->unreadable = 0;
+        state->seen = 1;
+        state->epoch = now;
+        vmclock_followups_start(state);
+        return 1;
+    }
+    if (!state->seen) {
+        /* The look a DRBG takes when it is created: nothing to compare. */
+        state->seen = 1;
+        state->epoch = now;
+        return 0;
+    }
+    if (now != state->epoch) {
+        state->epoch = now;
+        vmclock_followups_start(state);
+        return 1;
+    }
+    return state->followups > 0 && vmclock_followup_due(state);
+}
+
+#else
+
+const volatile void *ossl_prov_vmclock_page(ossl_unused OSSL_LIB_CTX *libctx)
+{
+    return NULL;
+}
+
+int ossl_prov_vmclock_changed(ossl_unused const volatile void *page,
+    ossl_unused PROV_VMCLOCK_STATE *state)
+{
+    return 0;
+}
+
+void ossl_prov_vmclock_reseeded(ossl_unused PROV_VMCLOCK_STATE *state)
+{
+}
+
+#endif
