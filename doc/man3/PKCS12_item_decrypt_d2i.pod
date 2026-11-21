@@ -33,13 +33,13 @@ encrypt/decrypt functions
 
 PKCS12_item_decrypt_d2i() and PKCS12_item_decrypt_d2i_ex() decrypt an octet
 string containing an ASN.1 encoded object using the algorithm I<algor> and
-password I<pass> of length I<passlen>. If I<zbuf> is nonzero then the output
-buffer will zeroed after the decrypt.
+password I<pass> of length I<passlen>. The output buffer is zeroed after the
+decrypt whether or not I<zbuf> is nonzero.
 
 PKCS12_item_i2d_encrypt() and PKCS12_item_i2d_encrypt_ex() encrypt an ASN.1
 object I<it> using the algorithm I<algor> and password I<pass> of length
-I<passlen>, returning an encoded object in I<obj>. If I<zbuf> is nonzero then
-the buffer containing the input encoding will be zeroed after the encrypt.
+I<passlen>, returning an encoded object in I<obj>. The buffer containing the
+input encoding is zeroed after the encrypt whether or not I<zbuf> is nonzero.
 
 Functions ending in _ex() allow for a library context I<ctx> and property query
 I<propq> to be used to select algorithm implementations.
@@ -60,6 +60,9 @@ L<PKCS8_encrypt_ex(3)>
 =head1 HISTORY
 
 PKCS12_item_decrypt_d2i_ex() and PKCS12_item_i2d_encrypt_ex() were added in OpenSSL 3.0.
+
+Before OpenSSL 4.2 the buffers were zeroed only when I<zbuf> was nonzero, and
+not on all error paths.
 
 =head1 COPYRIGHT
 
