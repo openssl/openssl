@@ -9,7 +9,7 @@ digraph mac {
     end [label=freed, color="#deeaee", style="filled"];
 
     begin -> newed [label="EVP_MAC_CTX_new"];
-    newed -> initialised [label="EVP_MAC_init"];
+    newed -> initialised [label="EVP_MAC_init\nEVP_MAC_CTX_set_params (key)"];
     initialised -> updated [label="EVP_MAC_update"];
     updated -> updated [label="EVP_MAC_update"];
     updated -> finaled [label="EVP_MAC_final"];
@@ -20,9 +20,9 @@ digraph mac {
                         fontcolor="#808080", color="#808080"];
     */
     finaled -> end [label="EVP_MAC_CTX_free"];
-    updated -> initialised [label="EVP_MAC_init", style=dashed,
-                            color="#034f84", fontcolor="#034f84"];
-    finaled -> initialised [label="EVP_MAC_init", style=dashed,
-                            color="#034f84", fontcolor="#034f84"];
+    updated -> initialised [label="EVP_MAC_init\nEVP_MAC_CTX_set_params (key)",
+                            style=dashed, color="#034f84", fontcolor="#034f84"];
+    finaled -> initialised [label="EVP_MAC_init\nEVP_MAC_CTX_set_params (key)",
+                            style=dashed, color="#034f84", fontcolor="#034f84"];
 }
 

@@ -47,39 +47,40 @@ The usual life-cycle of a MAC is illustrated:
 
 =begin man
 
-                 +-------------------+
-                 |       start       |
-                 +-------------------+
-                   |
-                   | EVP_MAC_CTX_new
-                   v
-                 +-------------------+
-                 |       newed       |
-                 +-------------------+
-                   |
-                   | EVP_MAC_init
-                   v
-                 +-------------------+
-              +> |    initialised    | <+
-              |  +-------------------+  |
-              |    |                    |
-              |    | EVP_MAC_update     | EVP_MAC_init
-              |    v                    |
- EVP_MAC_init |  +-------------------+  |
-              |  |      updated      | -+
-              |  +-------------------+
-              |    |               |
-              |    | EVP_MAC_final | EVP_MAC_finalXOF
-              |    v               v
-              |  +-------------------+
-              +- |      finaled      |
-                 +-------------------+
-                   |
-                   | EVP_MAC_CTX_free
-                   v
-                 +-------------------+
-                 |       freed       |
-                 +-------------------+
+                                 +-------------------+
+                                 |       start       |
+                                 +-------------------+
+                                   |
+                                   | EVP_MAC_CTX_new
+                                   v
+                                 +-------------------+
+                                 |       newed       |
+                                 +-------------------+
+                                   |
+                                   | EVP_MAC_init
+                                   | EVP_MAC_CTX_set_params (key)
+                                   v
+                                 +-------------------+
+                              +> |    initialised    | <+
+                              |  +-------------------+  |
+                              |    |                    |
+                              |    | EVP_MAC_update     | EVP_MAC_init
+                              |    v                    | EVP_MAC_CTX_set_params (key)
+ EVP_MAC_init                 |  +-------------------+  |
+ EVP_MAC_CTX_set_params (key) |  |      updated      | -+
+                              |  +-------------------+
+                              |    |               |
+                              |    | EVP_MAC_final | EVP_MAC_finalXOF
+                              |    v               v
+                              |  +-------------------+
+                              +- |      finaled      |
+                                 +-------------------+
+                                   |
+                                   | EVP_MAC_CTX_free
+                                   v
+                                 +-------------------+
+                                 |       freed       |
+                                 +-------------------+
 
 =end man
 
@@ -104,6 +105,7 @@ This is the canonical list.
  EVP_MAC_CTX_free                freed   freed       freed         freed       freed
  EVP_MAC_CTX_get_params                  newed       initialised   updated     finaled
  EVP_MAC_CTX_set_params                  newed       initialised   updated     finaled
+ EVP_MAC_CTX_set_params (key)            initialised initialised   initialised initialised
  EVP_MAC_CTX_gettable_params             newed       initialised   updated     finaled
  EVP_MAC_CTX_settable_params             newed       initialised   updated     finaled
 
@@ -191,6 +193,13 @@ This is the canonical list.
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MAC_CTX_set_params (key)</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_gettable_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
@@ -216,6 +225,11 @@ EVP_MAC_update(), EVP_MAC_final() and EVP_MAC_finalXOF() fail in the
 B<newed> and B<finaled> states, see L<EVP_MAC(3)>.  Querying the output
 length by calling EVP_MAC_final() with a NULL output buffer is permitted in
 every state and does not change it.
+
+EVP_MAC_CTX_set_params() does not change the state, except when it is given
+the MAC key (B<OSSL_MAC_PARAM_KEY>).  It is then equivalent to EVP_MAC_init()
+with a NULL key and the same parameters, which is the "(key)" row of the
+table above.
 
 =head1 SEE ALSO
 
