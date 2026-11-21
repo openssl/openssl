@@ -50,7 +50,22 @@ typedef struct {
     ASN1_OCTET_STRING *peer_rpk;
 } SSL_SESSION_ASN1;
 
-ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
+/* Minor tweak to operation: zero master key data */
+static int ssl_session_asn1_cb(int operation, ASN1_VALUE **pval,
+    const ASN1_ITEM *it, void *exarg)
+{
+    SSL_SESSION_ASN1 *key;
+
+    if (operation == ASN1_OP_FREE_PRE) {
+        /* The structure is still valid during ASN1_OP_FREE_PRE */
+        key = (SSL_SESSION_ASN1 *)*pval;
+        if (key->master_key != NULL)
+            OPENSSL_cleanse(key->master_key->data, key->master_key->length);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(SSL_SESSION_ASN1, ssl_session_asn1_cb) = {
     ASN1_EMBED(SSL_SESSION_ASN1, version, UINT32),
     ASN1_EMBED(SSL_SESSION_ASN1, ssl_version, INT32),
     ASN1_SIMPLE(SSL_SESSION_ASN1, cipher, ASN1_OCTET_STRING),
@@ -81,7 +96,7 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, kex_group, UINT32, 19),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, peer_rpk, ASN1_OCTET_STRING, 20)
-} static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
+} static_ASN1_SEQUENCE_END_cb(SSL_SESSION_ASN1, SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
 
