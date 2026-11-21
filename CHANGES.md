@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `SSL_clear()` not resetting the verify result, the stateless cookie
+   status and the SNI and supported groups received from the previous client.
+
+   *Pu Cheng and Kirthik Aditya*
+
  * Added parameter name pointers for faster `OSSL_PARAM` decoding.
 
    *Dr Paul Dale*
