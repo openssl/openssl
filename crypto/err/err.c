@@ -206,21 +206,35 @@ void OSSL_ERR_STATE_free(ERR_STATE *state)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
+    int ret = 0;
+#ifndef OPENSSL_NO_ERR
+    void *err;
+#endif
+
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
+#ifndef OPENSSL_NO_ERR
+    if (!err_shelve_state(&err))
+        return 0;
+#endif
     err_string_lock = CRYPTO_THREAD_lock_new();
     if (err_string_lock == NULL)
-        return 0;
+        goto end;
 #ifndef OPENSSL_NO_ERR
     int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
         err_string_data_cmp);
     if (int_error_hash == NULL) {
         CRYPTO_THREAD_lock_free(err_string_lock);
         err_string_lock = NULL;
-        return 0;
+        goto end;
     }
 #endif
-    return 1;
+    ret = 1;
+end:
+#ifndef OPENSSL_NO_ERR
+    err_unshelve_state(err);
+#endif
+    return ret;
 }
 
 void err_cleanup(void)
@@ -250,13 +264,21 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
-    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+    void *err;
+    int ret = 0;
+
+    if (!err_shelve_state(&err))
         return 0;
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        goto end;
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
             (ERR_STRING_DATA *)str);
     CRYPTO_THREAD_unlock(err_string_lock);
-    return 1;
+    ret = 1;
+end:
+    err_unshelve_state(err);
+    return ret;
 }
 #endif
 
@@ -703,18 +725,7 @@ int err_shelve_state(void **state)
 {
     int saveerrno = get_last_sys_error();
 
-    /*
-     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
-     * via ossl_init_load_crypto_nodelete(), by which point the requested
-     * "base" initialization has already been performed, so the below call is a
-     * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
-     *
-     * If are no other valid callers of this function, the call below can be
-     * removed, avoiding the re-entry into OPENSSL_init_crypto().  If there are
-     * potential uses that are not from inside OPENSSL_init_crypto(), then this
-     * call is needed, but some care is required to make sure that the re-entry
-     * remains a NOOP.
-     */
+    /* The error state TLS key requires base initialization. */
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
