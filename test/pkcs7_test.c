@@ -69,6 +69,8 @@ static long hard_error_ctrl(BIO *bio, int cmd, long num, void *ptr)
         *offset = 0;
         return 1;
     }
+    if (cmd == BIO_CTRL_EOF)
+        return -1;
     return 0;
 }
 
@@ -77,6 +79,7 @@ static int smime_crlf_copy_read_error_test(void)
     BIO_METHOD *method = NULL;
     BIO *in = NULL, *out = NULL, *eof_in = NULL, *eof_out = NULL;
     BIO *mem_in = NULL, *mem_out = NULL;
+    BIO *b64_in = NULL, *b64_out = NULL, *buffered_b64_in = NULL;
     int ret = 0;
 
     if (!TEST_ptr(method = BIO_meth_new(BIO_TYPE_SOURCE_SINK,
@@ -109,6 +112,19 @@ static int smime_crlf_copy_read_error_test(void)
         || !TEST_int_eq(BIO_write(mem_in, "complete", 8), 8)
         || !TEST_true(SMIME_crlf_copy(mem_in, mem_out, SMIME_BINARY)))
         goto end;
+    if (!TEST_ptr(b64_in = BIO_new_mem_buf("YWJj\n!!!!\n", -1))
+        || !TEST_ptr(b64_in = BIO_push(BIO_new(BIO_f_base64()), b64_in))
+        || !TEST_ptr(b64_out = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(SMIME_crlf_copy(b64_in, b64_out, SMIME_BINARY), 0))
+        goto end;
+    buffered_b64_in = BIO_new(BIO_f_buffer());
+    if (!TEST_ptr(buffered_b64_in)
+        || !TEST_ptr(BIO_push(buffered_b64_in,
+                     BIO_new(BIO_f_base64())))
+        || !TEST_ptr(BIO_push(buffered_b64_in, BIO_new_mem_buf(
+                     "YWJj\n!!!!\n", -1)))
+        || !TEST_int_eq(SMIME_crlf_copy(buffered_b64_in, b64_out, 0), 0))
+        goto end;
 
     ret = 1;
 end:
@@ -118,6 +134,9 @@ end:
     BIO_free(eof_out);
     BIO_free(mem_in);
     BIO_free(mem_out);
+    BIO_free(b64_in);
+    BIO_free(b64_out);
+    BIO_free(buffered_b64_in);
     BIO_meth_free(method);
     return ret;
 }

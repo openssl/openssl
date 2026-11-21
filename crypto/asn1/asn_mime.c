@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <openssl/bio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
@@ -58,6 +59,23 @@ static int multi_split(BIO *bio, int flags, const char *bound, STACK_OF(BIO) **r
 static int strip_eol(char *linebuf, int *plen, int flags);
 static MIME_HEADER *mime_hdr_find(STACK_OF(MIME_HEADER) *hdrs, const char *name);
 static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, const char *name);
+
+static int smime_read_error(BIO *in, int len)
+{
+    long eof;
+
+    if (len >= 0)
+        return 0;
+
+    /* BIO_s_mem() historically returns -1 at EOF for writable BIOs. */
+    if (BIO_method_type(in) == BIO_TYPE_MEM) {
+        eof = BIO_ctrl(in, BIO_CTRL_EOF, 0, NULL);
+        if (eof == 1 && BIO_get_mem_data(in, NULL) == 0)
+            return 0;
+    }
+    return 1;
+}
+
 static void mime_hdr_free(MIME_HEADER *hdr);
 
 #define MAX_SMLEN 1024
@@ -554,7 +572,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
             if (BIO_write(out, linebuf, len) != len)
                 goto err;
         }
-        if (len < 0 && !BIO_eof(in))
+        if (smime_read_error(in, len))
             goto err;
     } else {
         int eolcnt = 0;
@@ -584,7 +602,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
                     goto err;
             }
         }
-        if (len < 0 && !BIO_eof(in))
+        if (smime_read_error(in, len))
             goto err;
     }
     ret = 1;
