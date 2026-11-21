@@ -215,6 +215,25 @@ void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, siz
 #endif
 #define VAES_CBC_ELIGIBLE VAES512_ELIGIBLE
 
+/*
+ * 256-bit VAES needs AVX2 and VAES, not AVX-512. The same compilers that can
+ * build the 512-bit kernels can build this path.
+ *
+ * CTR and CFB stay off for MSVC. Both use the one-register aesenc loop that
+ * MSVC 14.51 miscompiles for AES-192 and AES-256 (issue 32873). The 256-bit
+ * CTR step is that loop at YMM width, and CFB encryption is only that loop.
+ * CBC decryption uses aesdec and passed on the same compiler, so it stays on.
+ */
+#define VAES256_ELIGIBLE VAES512_ELIGIBLE
+#if defined(_MSC_VER) && !defined(__clang__)
+#define VAES256_CTR_ELIGIBLE 0
+#define VAES256_CFB_ELIGIBLE 0
+#else
+#define VAES256_CTR_ELIGIBLE VAES256_ELIGIBLE
+#define VAES256_CFB_ELIGIBLE VAES256_ELIGIBLE
+#endif
+#define VAES256_CBC_ELIGIBLE VAES256_ELIGIBLE
+
 #if VAES_CTR_ELIGIBLE
 void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key,
@@ -227,6 +246,103 @@ int ossl_aes_ctr_vaes_eligible(void);
 void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key, unsigned char ivec[16], int enc);
 int ossl_aes_cbc_vaes_eligible(void);
+#endif
+
+#if VAES256_CTR_ELIGIBLE
+/**
+ * @brief AES-CTR for CPUs that have AVX2 and VAES but not AVX-512.
+ *
+ * Each YMM register holds two counter blocks. Inputs shorter than 64 bytes
+ * stay on AES-NI. A 64-bit counter carry is finished with the generic CTR
+ * driver, then the wide kernel resumes.
+ *
+ * @param in input buffer
+ * @param out output buffer, which may alias @p in
+ * @param length number of bytes to process
+ * @param key expanded AES key
+ * @param counter 16-byte counter block, updated in place
+ * @param ecount_buf partial-block keystream
+ * @param num offset into @p ecount_buf, updated in place
+ */
+void ossl_aes_ctr_vaes256(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key,
+    unsigned char *counter,
+    unsigned char *ecount_buf, unsigned int *num);
+
+/**
+ * @brief Report whether ossl_aes_ctr_vaes256() may be called.
+ *
+ * @returns 1 when AVX2 and VAES are both present, otherwise 0
+ */
+int ossl_aes_ctr_vaes256_eligible(void);
+#endif
+
+#if VAES256_CBC_ELIGIBLE
+/**
+ * @brief AES-CBC decryption for CPUs that have AVX2 and VAES but not AVX-512.
+ *
+ * Decryption of at least 256 bytes uses two-block YMM steps. Encryption and
+ * shorter inputs use aesni_cbc_encrypt().
+ *
+ * @param in input buffer
+ * @param out output buffer, which may alias @p in
+ * @param len number of bytes to process
+ * @param key expanded AES key
+ * @param ivec 16-byte chaining value, updated in place
+ * @param enc non-zero to encrypt, zero to decrypt
+ */
+void ossl_aes_cbc_vaes256_decrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16], int enc);
+
+/**
+ * @brief Report whether ossl_aes_cbc_vaes256_decrypt() may be called.
+ *
+ * @returns 1 when AVX2 and VAES are both present, otherwise 0
+ */
+int ossl_aes_cbc_vaes256_eligible(void);
+#endif
+
+#if VAES256_CFB_ELIGIBLE
+/**
+ * @brief AES-CFB128 encryption for AVX2 and VAES without AVX-512.
+ *
+ * Encryption is serial. @p num is the unused-keystream offset and is
+ * updated in place, matching CRYPTO_cfb128_encrypt().
+ *
+ * @param in input buffer
+ * @param out output buffer, which may alias @p in
+ * @param len number of bytes to process
+ * @param key expanded AES key
+ * @param ivec 16-byte feedback block, updated in place
+ * @param num unused-keystream offset, updated in place
+ */
+void ossl_aes_cfb128_vaes256_enc(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key,
+    unsigned char ivec[16], ossl_ssize_t *num);
+
+/**
+ * @brief AES-CFB128 decryption for AVX2 and VAES without AVX-512.
+ *
+ * Decryption encrypts ciphertext that is already available, two blocks
+ * at a time. @p num matches CRYPTO_cfb128_encrypt().
+ *
+ * @param in input buffer
+ * @param out output buffer, which may alias @p in
+ * @param len number of bytes to process
+ * @param key expanded AES key
+ * @param ivec 16-byte feedback block, updated in place
+ * @param num unused-keystream offset, updated in place
+ */
+void ossl_aes_cfb128_vaes256_dec(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key,
+    unsigned char ivec[16], ossl_ssize_t *num);
+
+/**
+ * @brief Report whether the VAES-256 CFB128 kernels may be called.
+ *
+ * @returns 1 when AVX2 and VAES are both present, otherwise 0
+ */
+int ossl_aes_cfb128_vaes256_eligible(void);
 #endif
 
 #if defined(AES_ASM) && !defined(I386_ONLY) && (((defined(__i386) || defined(__i386__) || defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2)) || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
