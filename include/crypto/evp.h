@@ -16,6 +16,17 @@
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
+/**
+ * Calculate the cipher output buffer size.
+ *
+ * @param ctx Cipher context.
+ * @param inlen Input length in bytes.
+ * @param blocksize Cipher block size in bytes; must be nonzero.
+ * @returns Output buffer size in bytes.
+ */
+size_t ossl_cipher_output_size(const EVP_CIPHER_CTX *ctx,
+    size_t inlen, size_t blocksize);
+
 /*
  * Default PKCS5 PBE KDF salt lengths
  * In RFC 8018, PBE1 uses 8 bytes (64 bits) for its salt length.

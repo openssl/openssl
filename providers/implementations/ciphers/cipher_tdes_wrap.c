@@ -130,13 +130,17 @@ static int tdes_wrap_cipher(void *vctx,
     const unsigned char *in, size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-    int ret;
+    int ret, required;
 
     *outl = 0;
     if (!ossl_prov_is_running())
         return 0;
 
-    if (outsize < inl) {
+    required = tdes_wrap_cipher_internal(ctx, NULL, in, inl);
+    if (required <= 0)
+        return 0;
+    /* Preserve the existing unwrap bound, including in-place moves. */
+    if (out != NULL && outsize < (ctx->enc ? (size_t)required : inl)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
