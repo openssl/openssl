@@ -134,7 +134,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[hashtable]=hashtable.c driver.c
   INCLUDE[hashtable]=../include {- $ex_inc -}
-  DEPEND[hashtable]=../libcrypto {- $ex_lib -}
+  DEPEND[hashtable]=../libcrypto.a {- $ex_lib -}
 
   SOURCE[acert]=acert.c driver.c
   INCLUDE[acert]=../include {- $ex_inc -}
@@ -340,7 +340,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[decoder-test]=../include ../test/mfail
   DEPEND[decoder-test]=../libcrypto.a
 
-  SOURCE[hashtable-test]=hashtable.c $FUZZTESTSRC fuzz_rand.c
+  SOURCE[hashtable-test]=hashtable.c $FUZZTESTSRC
   INCLUDE[hashtable-test]=../include ../test/mfail
   DEPEND[hashtable-test]=../libcrypto.a
 
