@@ -31,7 +31,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     EVP_CIPHER *fetched_ciph = NULL;
     const EVP_CIPHER *cipher = NULL;
     X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
-    evp_cipher_aead_asn1_params aparams;
+    evp_cipher_aead_asn1_params aparams = { { 0 } };
     unsigned char iv[EVP_MAX_IV_LENGTH], *piv = NULL;
     unsigned char *tkey = NULL;
     int len;
@@ -113,6 +113,17 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
             if (!auth) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA);
+                goto err;
+            }
+            /*
+             * RFC 5084 allows any aes-nonce length; make the cipher use exactly
+             * the nonce that was parsed instead of its default 12-byte IV length.
+             */
+            if (aparams.iv_len == 0 || aparams.iv_len > sizeof(aparams.iv)
+                || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                       (int)aparams.iv_len, NULL)
+                    <= 0) {
+                ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
                 goto err;
             }
             piv = aparams.iv;
