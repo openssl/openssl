@@ -46,11 +46,15 @@ using L<SSL_write_ex(3)>, L<SSL_write(3)>, L<SSL_read_ex(3)>, or L<SSL_read(3)>,
 the handshake routines must be explicitly set in advance using either
 SSL_set_connect_state() or SSL_set_accept_state().
 
-If SSL_is_server() is called before SSL_set_connect_state() or
+For TLS objects, if SSL_is_server() is called before SSL_set_connect_state() or
 SSL_set_accept_state() is called (either automatically or explicitly),
 the result depends on what method was used when SSL_CTX was created with
 L<SSL_CTX_new(3)>. If a generic method or a dedicated server method was
 passed to L<SSL_CTX_new(3)>, SSL_is_server() returns 1; otherwise, it returns 0.
+
+For QUIC connection objects, SSL_is_server() reports the configured endpoint
+role. A QUIC listener reports server mode. For QUIC stream objects,
+SSL_is_server() reports the role of the associated connection.
 
 =head1 RETURN VALUES
 
