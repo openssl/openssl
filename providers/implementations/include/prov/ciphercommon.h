@@ -127,6 +127,22 @@ OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_aead_settable_ctx_params;
 OSSL_FUNC_cipher_encrypt_skey_init_fn ossl_cipher_generic_skey_einit;
 OSSL_FUNC_cipher_decrypt_skey_init_fn ossl_cipher_generic_skey_dinit;
 
+/**
+ * @brief Process input for a generic block-cipher update operation
+ *
+ * @param vctx pointer to provider cipher context
+ * @param out pointer to the output buffer
+ * @param outl number of bytes written to out
+ * @param outsize size of out in bytes
+ * @param in pointer to the input buffer
+ * @param inl input length in bytes
+ * @param buf pointer to partial blocks buffer processed via update calls
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cipher_generic_block_update_common(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl,
+    unsigned char *buf);
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
     uint64_t flags,
     size_t kbits, size_t blkbits, size_t ivbits);
