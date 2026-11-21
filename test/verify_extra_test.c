@@ -801,6 +801,215 @@ static int test_purpose_any(void)
     return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
+#ifndef OPENSSL_NO_ECX
+/*
+ * The CRL scope check compares the names of each distribution point of a
+ * certificate with those of the IDP of each candidate CRL.  The number of
+ * comparisons per certificate is bounded; a check that would exceed the bound
+ * fails with X509_V_ERR_UNSPECIFIED.
+ */
+static const struct {
+    int dp_names; /* names in the certificate's only distribution point */
+    int idp_names; /* names in the CRL's IDP */
+    int match; /* whether the last IDP name is the last DP name */
+    int expected_err;
+} crl_scope_tests[] = {
+    { 10, 10, 0, X509_V_ERR_DIFFERENT_CRL_SCOPE },
+    { 200, 200, 1, X509_V_OK },
+    { 300, 300, 0, X509_V_ERR_UNSPECIFIED },
+    { 300, 300, 1, X509_V_ERR_UNSPECIFIED },
+};
+
+/*
+ * Return |n| names: dNSNames "n<i>.example", or URIs for them if |uri| is set.
+ * If |last_dns| is set the last name is a dNSName even when |uri| is set.
+ */
+static GENERAL_NAMES *make_names(int n, int uri, int last_dns)
+{
+    GENERAL_NAMES *gens = sk_GENERAL_NAME_new_null();
+    GENERAL_NAME *gen;
+    char buf[64];
+    int i;
+
+    if (gens == NULL)
+        return NULL;
+    for (i = 0; i < n; i++) {
+        int dns = !uri || (last_dns && i == n - 1);
+
+        BIO_snprintf(buf, sizeof(buf), dns ? "n%d.example" : "http://n%d.example/", i);
+        if ((gen = a2i_GENERAL_NAME(NULL, NULL, NULL, dns ? GEN_DNS : GEN_URI,
+                 buf, 0))
+                == NULL
+            || !sk_GENERAL_NAME_push(gens, gen)) {
+            GENERAL_NAME_free(gen);
+            GENERAL_NAMES_free(gens);
+            return NULL;
+        }
+    }
+    return gens;
+}
+
+static DIST_POINT_NAME *make_dpname(GENERAL_NAMES *gens)
+{
+    DIST_POINT_NAME *dpn = DIST_POINT_NAME_new();
+
+    if (dpn == NULL) {
+        GENERAL_NAMES_free(gens);
+        return NULL;
+    }
+    dpn->type = 0;
+    dpn->name.fullname = gens;
+    return dpn;
+}
+
+static X509 *make_crl_scope_cert(EVP_PKEY *key, const X509_NAME *issuer,
+    const X509_NAME *subject, int ca, int dp_names)
+{
+    X509 *x = X509_new();
+    X509V3_CTX v3ctx;
+    X509_EXTENSION *ext = NULL;
+    CRL_DIST_POINTS *crldp = NULL;
+    DIST_POINT *dp = NULL;
+    int ok = 0;
+
+    if (x == NULL
+        || !X509_set_version(x, X509_VERSION_3)
+        || !ASN1_INTEGER_set(X509_get_serialNumber(x), ca ? 1 : 2)
+        || !X509_set_issuer_name(x, issuer)
+        || !X509_set_subject_name(x, subject)
+        || X509_gmtime_adj(X509_getm_notBefore(x), -86400) == NULL
+        || X509_gmtime_adj(X509_getm_notAfter(x), 86400) == NULL
+        || !X509_set_pubkey(x, key))
+        goto end;
+    X509V3_set_ctx(&v3ctx, NULL, x, NULL, NULL, 0);
+    if (ca) {
+        if ((ext = X509V3_EXT_conf_nid(NULL, &v3ctx, NID_basic_constraints,
+                 "critical,CA:TRUE"))
+                == NULL
+            || !X509_add_ext(x, ext, -1))
+            goto end;
+        X509_EXTENSION_free(ext);
+        if ((ext = X509V3_EXT_conf_nid(NULL, &v3ctx, NID_key_usage,
+                 "critical,keyCertSign,cRLSign"))
+                == NULL
+            || !X509_add_ext(x, ext, -1))
+            goto end;
+    }
+    if (dp_names > 0) {
+        if ((crldp = sk_DIST_POINT_new_null()) == NULL
+            || (dp = DIST_POINT_new()) == NULL
+            || (dp->distpoint = make_dpname(make_names(dp_names, 0, 0))) == NULL
+            || !sk_DIST_POINT_push(crldp, dp))
+            goto end;
+        dp = NULL;
+        if (X509_add1_ext_i2d(x, NID_crl_distribution_points, crldp, 0, 0) != 1)
+            goto end;
+    }
+    if (X509_sign(x, key, NULL) <= 0)
+        goto end;
+    ok = 1;
+end:
+    X509_EXTENSION_free(ext);
+    DIST_POINT_free(dp);
+    CRL_DIST_POINTS_free(crldp);
+    if (!ok) {
+        X509_free(x);
+        return NULL;
+    }
+    return x;
+}
+
+static X509_CRL *make_crl_scope_crl(EVP_PKEY *key, const X509_NAME *issuer,
+    int idp_names, int match)
+{
+    X509_CRL *crl = X509_CRL_new(), *ret = NULL;
+    ISSUING_DIST_POINT *idp = ISSUING_DIST_POINT_new();
+    ASN1_TIME *tm = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len;
+
+    if (crl == NULL || idp == NULL
+        || !X509_CRL_set_version(crl, X509_CRL_VERSION_2)
+        || !X509_CRL_set_issuer_name(crl, issuer)
+        || (tm = X509_gmtime_adj(NULL, -3600)) == NULL
+        || !X509_CRL_set1_lastUpdate(crl, tm)
+        || X509_gmtime_adj(tm, 86400) == NULL
+        || !X509_CRL_set1_nextUpdate(crl, tm)
+        || (idp->distpoint = make_dpname(make_names(idp_names, 1, match))) == NULL
+        || X509_CRL_add1_ext_i2d(crl, NID_issuing_distribution_point, idp, 1, 0) != 1
+        || X509_CRL_sign(crl, key, NULL) <= 0
+        || (len = i2d_X509_CRL(crl, &der)) <= 0)
+        goto end;
+    /* The IDP is only cached on decoding */
+    p = der;
+    ret = d2i_X509_CRL(NULL, &p, len);
+end:
+    OPENSSL_free(der);
+    ASN1_TIME_free(tm);
+    ISSUING_DIST_POINT_free(idp);
+    X509_CRL_free(crl);
+    return ret;
+}
+
+static int test_crl_scope_names(int idx)
+{
+    EVP_PKEY *key = NULL;
+    X509_NAME *root_name = NULL, *leaf_name = NULL;
+    X509 *root = NULL, *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509_CRL) *crls = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "ED25519"))
+        || !TEST_ptr(root_name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(root_name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"Scope Root", -1, -1, 0))
+        || !TEST_ptr(leaf_name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(leaf_name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"Scope Leaf", -1, -1, 0))
+        || !TEST_ptr(root = make_crl_scope_cert(key, root_name, root_name, 1, 0))
+        || !TEST_ptr(leaf = make_crl_scope_cert(key, root_name, leaf_name, 0,
+                         crl_scope_tests[idx].dp_names))
+        || !TEST_ptr(crl = make_crl_scope_crl(key, root_name,
+                         crl_scope_tests[idx].idp_names,
+                         crl_scope_tests[idx].match))
+        || !TEST_ptr(crls = sk_X509_CRL_new_null())
+        || !TEST_true(sk_X509_CRL_push(crls, crl)))
+        goto err;
+    crl = NULL;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, root))
+        || !TEST_true(X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
+        goto err;
+    X509_STORE_CTX_set0_crls(ctx, crls);
+
+    if (!TEST_int_eq(X509_verify_cert(ctx),
+            crl_scope_tests[idx].expected_err == X509_V_OK)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            crl_scope_tests[idx].expected_err))
+        goto err;
+
+    ret = 1;
+err:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    X509_CRL_free(crl);
+    X509_free(leaf);
+    X509_free(root);
+    X509_NAME_free(leaf_name);
+    X509_NAME_free(root_name);
+    EVP_PKEY_free(key);
+    return ret;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -830,6 +1039,9 @@ int setup_tests(void)
     ADD_TEST(test_self_signed_good);
     ADD_TEST(test_self_signed_bad);
     ADD_TEST(test_self_signed_error);
+#ifndef OPENSSL_NO_ECX
+    ADD_ALL_TESTS(test_crl_scope_names, OSSL_NELEM(crl_scope_tests));
+#endif
     ADD_TEST(test_purpose_ssl_client);
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
