@@ -29,6 +29,10 @@
 static int err_load_strings(const ERR_STRING_DATA *str);
 #endif
 
+static uint8_t errstack_key_init;
+static CRYPTO_ONCE errstack_once = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_THREAD_LOCAL errstack_key;
+
 #ifndef OPENSSL_NO_ERR
 static const ERR_STRING_DATA ERR_str_libraries[] = {
     { ERR_PACK(ERR_LIB_NONE, 0, 0), "unknown library" },
@@ -636,22 +640,38 @@ const char *ERR_reason_error_string(unsigned long e)
 #endif
 }
 
-static void err_delete_thread_state(void *unused)
+static void clean_errstack_key(void *data)
 {
-    ERR_STATE *state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-        CRYPTO_THREAD_NO_CONTEXT);
+    ERR_STATE *es = data;
 
-    if (state == NULL)
+    OSSL_ERR_STATE_free(es);;
+}
+
+static void init_errstack_key(void)
+{
+    /*
+     * Note: We assign a cleanup function here, which is atypical for
+     * uses of CRYPTO_THREAD_init_local.  This is because, nominally
+     * we expect that the use of ossl_init_thread_start will be used
+     * to notify openssl of exiting threads.  However, in this case
+     * we want the metadata for this interface (the sparse arrays) to
+     * stay valid until the thread actually exits, which is what the
+     * clean_master_key function does.  Data held in the sparse arrays
+     * (that is assigned via CRYPTO_THREAD_set_local_ex), are still expected
+     * to be cleaned via the ossl_init_thread_start/stop api.
+     */
+    if (!CRYPTO_THREAD_init_local(&errstack_key, clean_errstack_key))
         return;
 
-    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-        CRYPTO_THREAD_NO_CONTEXT, NULL);
-    OSSL_ERR_STATE_free(state);
+    /*
+     * Indicate that the key has been set up.
+     */
+    errstack_key_init = 1;
 }
 
 ERR_STATE *ossl_err_get_state_int(int save_sys_error)
 {
-    ERR_STATE *state;
+    ERR_STATE *es;
     int saveerrno = 0;
 
     if (save_sys_error)
@@ -660,39 +680,27 @@ ERR_STATE *ossl_err_get_state_int(int save_sys_error)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return NULL;
 
-    state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-        CRYPTO_THREAD_NO_CONTEXT);
-    if (state == (ERR_STATE *)-1)
+    if (!CRYPTO_THREAD_run_once(&errstack_once, init_errstack_key))
         return NULL;
 
-    if (state == NULL) {
-        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-                CRYPTO_THREAD_NO_CONTEXT, (ERR_STATE *)-1))
-            return NULL;
+    es = CRYPTO_THREAD_get_local(&errstack_key);
+    if (es != NULL) {
+        return es;
+    }
 
-        state = OSSL_ERR_STATE_new();
-        if (state == NULL) {
-            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-                CRYPTO_THREAD_NO_CONTEXT, NULL);
+    if (es == NULL) {
+        es = OSSL_ERR_STATE_new();
+        if (es == NULL)
             return NULL;
-        }
-
-        if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
-            || !CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-                CRYPTO_THREAD_NO_CONTEXT, state)) {
-            OSSL_ERR_STATE_free(state);
-            CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-                CRYPTO_THREAD_NO_CONTEXT, NULL);
-            return NULL;
-        }
-
-        /* Ignore failures from these */
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     }
 
+    CRYPTO_THREAD_set_local(&errstack_key, es);
+
     if (save_sys_error)
         set_sys_error(saveerrno);
-    return state;
+
+    return es;
 }
 
 /*
@@ -718,11 +726,7 @@ int err_shelve_state(void **state)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
-    *state = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-        CRYPTO_THREAD_NO_CONTEXT);
-    if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-            CRYPTO_THREAD_NO_CONTEXT, (ERR_STATE *)-1))
-        return 0;
+    *state = CRYPTO_THREAD_get_local(&errstack_key);
 
     set_sys_error(saveerrno);
     return 1;
@@ -734,9 +738,7 @@ int err_shelve_state(void **state)
  */
 void err_unshelve_state(void *state)
 {
-    if (state != (void *)-1)
-        CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_ERR_KEY,
-            CRYPTO_THREAD_NO_CONTEXT, (ERR_STATE *)state);
+    CRYPTO_THREAD_set_local(&errstack_key, state);
 }
 
 int ERR_get_next_error_library(void)
