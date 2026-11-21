@@ -176,7 +176,7 @@ static int dh_set_peer(void *vpdhctx, void *vdh)
     if (!ossl_prov_is_running()
         || pdhctx == NULL
         || vdh == NULL
-        || !dh_match_params(vdh, pdhctx->dh)
+        || !dh_match_params(pdhctx->dh, vdh)
         || !DH_up_ref(vdh))
         return 0;
     DH_free(pdhctx->dhpeer);
