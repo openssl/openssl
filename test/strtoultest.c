@@ -16,7 +16,7 @@
 #include "testutil.h"
 
 struct strtoul_test_entry {
-    char *input; /* the input string */
+    const char *input; /* the input string */
     int base; /* the base we are converting in */
     unsigned long expect_val; /* the expected value we should get */
     int expect_err; /* the expected error we expect to receive */
@@ -92,7 +92,7 @@ static int test_strtoul(int idx)
 }
 
 struct strtol_test_entry {
-    char *input; /* the input string */
+    const char *input; /* the input string */
     int base; /* the base we are converting in */
     long expect_val; /* the expected value we should get */
     int expect_err; /* the expected error we expect to receive */
@@ -314,7 +314,7 @@ static int test_strtoint_overflow(void)
 }
 
 struct strtoint_util_entry {
-    char *input; /* the input string */
+    const char *input; /* the input string */
     int expect_val; /* the expected value we should get */
     int expect_err; /* the expected error we expect to receive */
 };

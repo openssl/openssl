@@ -36,27 +36,27 @@ static int test_kdf_tls1_prf(int index)
         goto err;
     }
     if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx,
-            (unsigned char *)"secret", 6)
+            (const unsigned char *)"secret", 6)
         <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_tls1_prf_secret");
         goto err;
     }
     if (index == 0) {
         if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
-                (unsigned char *)"seed", 4)
+                (const unsigned char *)"seed", 4)
             <= 0) {
             TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
             goto err;
         }
     } else {
         if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
-                (unsigned char *)"se", 2)
+                (const unsigned char *)"se", 2)
             <= 0) {
             TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
             goto err;
         }
         if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
-                (unsigned char *)"ed", 2)
+                (const unsigned char *)"ed", 2)
             <= 0) {
             TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
             goto err;
@@ -168,7 +168,7 @@ static int test_kdf_scrypt(int index)
         TEST_error("EVP_PKEY_CTX_set1_pbe_pass");
         goto err;
     }
-    if (EVP_PKEY_CTX_set1_scrypt_salt(pctx, (unsigned char *)"NaCl", 4) <= 0) {
+    if (EVP_PKEY_CTX_set1_scrypt_salt(pctx, (const unsigned char *)"NaCl", 4) <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_scrypt_salt");
         goto err;
     }

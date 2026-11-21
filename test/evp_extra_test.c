@@ -1109,7 +1109,7 @@ err:
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
-static EVP_PKEY *make_key_fromdata(char *keytype, OSSL_PARAM *params)
+static EVP_PKEY *make_key_fromdata(const char *keytype, OSSL_PARAM *params)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *tmp_pkey = NULL, *pkey = NULL;
@@ -1175,7 +1175,7 @@ err:
  * params to ensure they are all accepted
  */
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA)
-static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
+static int test_EVP_PKEY_ffc_priv_pub(const char *keytype)
 {
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL;
@@ -3571,7 +3571,7 @@ static struct keys_st {
     const uint8_t *priv;
     const uint8_t *pub;
     /* If "name" is non-NULL, create via non-legacy _ex() API */
-    char *name;
+    const char *name;
     int privlen;
     int publen;
 } keys[] = {
@@ -5577,10 +5577,10 @@ static int test_EVP_rsa_invalid_key(void)
 
 static int test_EVP_rsa_pss_utf8_ptr_params(void)
 {
-    char *digest = "SHA256";
-    char *maskgenfunc = "MGF1";
-    char *mgf1_digest = "SHA384";
-    char *missing_provider = "provider=missing";
+    const char *digest = "SHA256";
+    const char *maskgenfunc = "MGF1";
+    const char *mgf1_digest = "SHA384";
+    const char *missing_provider = "provider=missing";
     OSSL_PARAM ptr_params[] = {
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MASKGENFUNC,
@@ -6089,7 +6089,7 @@ static int test_evp_diff_order_init(int idx)
     unsigned char tag_onestep[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int blocksz = 0, tmplen = 0, testresult = 1, i = 0;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     ivparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IVLEN, &ivlen);
     ivparams[1] = OSSL_PARAM_construct_end();
@@ -6362,7 +6362,7 @@ static int test_evp_aead_tag_direction(int idx)
     unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int i = 0, testresult = 0, expected = 0;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
     unsigned long err_code = 0;
 
     /* filter out various modes */
@@ -6503,7 +6503,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int blocksz = 0, tmplen = 0, testresult = 1, i = 0;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
@@ -6687,7 +6687,7 @@ static int test_evp_init_seq(int idx)
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *type = NULL;
     size_t taglen = sizeof(tag);
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL) {
@@ -6831,7 +6831,7 @@ static int test_evp_reset(int idx)
     unsigned char outbuf[1024];
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *type = NULL;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC";
@@ -7018,7 +7018,7 @@ static int test_evp_updated_iv(int idx)
     EVP_CIPHER *type = NULL;
     unsigned char updated_iv[EVP_MAX_IV_LENGTH];
     int iv_len;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC";
@@ -8278,7 +8278,7 @@ static int test_aes_siv_ctx_reuse(void)
     e = EVP_CIPHER_CTX_new();
     if (!TEST_ptr(e)
         || !TEST_true(EVP_EncryptInit_ex2(e, c, key, NULL, NULL))
-        || !TEST_true(EVP_EncryptUpdate(e, NULL, &outl, (unsigned char *)"hdr1", 4))
+        || !TEST_true(EVP_EncryptUpdate(e, NULL, &outl, (const unsigned char *)"hdr1", 4))
         || !TEST_true(EVP_EncryptUpdate(e, ct, &outl, pt, sizeof(pt)))
         || !TEST_true(EVP_EncryptFinal_ex(e, out, &outl))
         || !TEST_true(EVP_CIPHER_CTX_ctrl(e, EVP_CTRL_AEAD_GET_TAG, 16, tagbuf))) {
@@ -8292,7 +8292,7 @@ static int test_aes_siv_ctx_reuse(void)
     if (!TEST_ptr(d)
         || !TEST_true(EVP_DecryptInit_ex2(d, c, key, NULL, NULL))
         || !TEST_true(EVP_CIPHER_CTX_ctrl(d, EVP_CTRL_AEAD_SET_TAG, 16, tagbuf))
-        || !TEST_true(EVP_DecryptUpdate(d, NULL, &outl, (unsigned char *)"hdr1", 4))
+        || !TEST_true(EVP_DecryptUpdate(d, NULL, &outl, (const unsigned char *)"hdr1", 4))
         || !TEST_true(EVP_DecryptUpdate(d, out, &outl, ct, sizeof(ct)))
         || !TEST_true(EVP_DecryptFinal_ex(d, out, &outl)))
         goto err;
@@ -8352,7 +8352,7 @@ static int test_evp_cipher_negative_length(void)
         goto end;
 
     /* Test EVP_EncryptUpdate with negative length - should fail */
-    if (!TEST_int_eq(EVP_EncryptUpdate(ctx, buffer, &outl, (unsigned char *)"test", -1), 0))
+    if (!TEST_int_eq(EVP_EncryptUpdate(ctx, buffer, &outl, (const unsigned char *)"test", -1), 0))
         goto end;
 
     /* Reinitialize for decryption */
@@ -8360,7 +8360,7 @@ static int test_evp_cipher_negative_length(void)
         goto end;
 
     /* Test EVP_DecryptUpdate with negative length - should fail */
-    if (!TEST_int_eq(EVP_DecryptUpdate(ctx, buffer, &outl, (unsigned char *)"test", -1), 0))
+    if (!TEST_int_eq(EVP_DecryptUpdate(ctx, buffer, &outl, (const unsigned char *)"test", -1), 0))
         goto end;
 
     ret = 1;

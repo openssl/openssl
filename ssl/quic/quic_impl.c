@@ -2754,7 +2754,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
              */
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_BAD_WRITE_RETRY, NULL);
 
-        actual_buf = (unsigned char *)buf + xso->aon_buf_pos;
+        actual_buf = (const unsigned char *)buf + xso->aon_buf_pos;
         actual_len = len - xso->aon_buf_pos;
         assert(actual_len > 0);
     } else {

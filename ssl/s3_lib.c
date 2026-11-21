@@ -4824,13 +4824,13 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
             sk_SSL_CIPHER_num(srvr), (void *)srvr);
         for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
             c = sk_SSL_CIPHER_value(srvr, i);
-            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+            BIO_printf(trc_out, "%p:%s\n", (const void *)c, c->name);
         }
         BIO_printf(trc_out, "Client sent %d from %p:\n",
             sk_SSL_CIPHER_num(clnt), (void *)clnt);
         for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
             c = sk_SSL_CIPHER_value(clnt, i);
-            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+            BIO_printf(trc_out, "%p:%s\n", (const void *)c, c->name);
         }
     }
     OSSL_TRACE_END(TLS_CIPHER);

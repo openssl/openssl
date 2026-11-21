@@ -38,7 +38,7 @@ void ossl_ech_pbuf(const char *msg, const unsigned char *buf, const size_t blen)
         if (msg == NULL) {
             BIO_printf(trc_out, "msg is NULL\n");
         } else if (buf == NULL || blen == 0) {
-            BIO_printf(trc_out, "%s: buf is %p\n", msg, (void *)buf);
+            BIO_printf(trc_out, "%s: buf is %p\n", msg, (const void *)buf);
             BIO_printf(trc_out, "%s: blen is %zu\n", msg, blen);
         } else {
             BIO_printf(trc_out, "%s (%zu)\n", msg, blen);
@@ -595,7 +595,7 @@ int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
     s->s3.handshake_dgst = NULL;
     /* providing nothing at all is a real use (mid-HRR) */
     if (buf != NULL && blen > 0)
-        BIO_write(s->s3.handshake_buffer, (void *)buf, (int)blen);
+        BIO_write(s->s3.handshake_buffer, (const void *)buf, (int)blen);
     return 1;
 }
 
@@ -947,7 +947,7 @@ static int ech_hkdf_extract_wrap(SSL_CONNECTION *s, EVP_MD *md, int for_hrr,
         labellen = sizeof(OSSL_ECH_ACCEPT_CONFIRM_STRING) - 1;
     }
 #ifdef OSSL_ECH_SUPERVERBOSE
-    ossl_ech_pbuf("cc: label", (unsigned char *)label, labellen);
+    ossl_ech_pbuf("cc: label", (const unsigned char *)label, labellen);
 #endif
     memset(zeros, 0, EVP_MAX_MD_SIZE);
     /* We don't seem to have an hkdf-extract that's exposed by libcrypto */
@@ -1174,10 +1174,10 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
         BIO_printf(trc_out, "orig CH/ECH type: %4x\n", *echtype);
     }
     OSSL_TRACE_END(TLS);
-    ossl_ech_pbuf("orig CH", (unsigned char *)ch, ch_len);
-    ossl_ech_pbuf("orig CH exts", (unsigned char *)ch + *exts_off, exts_len);
-    ossl_ech_pbuf("orig CH/ECH", (unsigned char *)ch + *ech_off, ech_len);
-    ossl_ech_pbuf("orig CH SNI", (unsigned char *)ch + *sni_off, sni_len);
+    ossl_ech_pbuf("orig CH", (const unsigned char *)ch, ch_len);
+    ossl_ech_pbuf("orig CH exts", (const unsigned char *)ch + *exts_off, exts_len);
+    ossl_ech_pbuf("orig CH/ECH", (const unsigned char *)ch + *ech_off, ech_len);
+    ossl_ech_pbuf("orig CH SNI", (const unsigned char *)ch + *sni_off, sni_len);
 #endif
     s->ext.ech.sessid_off = *sessid_off;
     s->ext.ech.exts_off = *exts_off;

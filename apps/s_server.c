@@ -159,7 +159,7 @@ static int stateless = 0;
 static int early_data = 0;
 static SSL_SESSION *psksess = NULL;
 
-static char *psk_identity = "Client_identity";
+static const char *psk_identity = "Client_identity";
 char *psk_key = NULL; /* by default PSK is not used */
 
 static char http_server_binmode = 0; /* for now: 0/1 = default/binary */

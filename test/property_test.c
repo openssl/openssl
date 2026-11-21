@@ -482,7 +482,7 @@ static int test_property(void)
         const OSSL_PROVIDER **prov;
         int nid;
         const char *prop;
-        char *expected;
+        const char *expected;
     } queries[] = {
         { &fake_prov1, 1, "fast", "b" },
         { &fake_prov1, 1, "fast=yes", "b" },

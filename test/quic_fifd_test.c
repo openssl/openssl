@@ -135,7 +135,7 @@ static int test_generic(INFO *info, int kind)
     for (i = 0; i < 2; ++i) {
         num_iov = OSSL_NELEM(iov);
         if (!TEST_true(ossl_quic_sstream_append(info->sstream[i],
-                (unsigned char *)"Test message",
+                (const unsigned char *)"Test message",
                 12, &consumed))
             || !TEST_size_t_eq(consumed, 12))
             goto err;

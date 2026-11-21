@@ -184,7 +184,7 @@ static int test_quic_write_read(int idx)
 
         /* Test that exporters work. */
         if (!TEST_true(SSL_export_keying_material(clientquic, scratch,
-                sizeof(scratch), "test", 4, (unsigned char *)"ctx", 3,
+                sizeof(scratch), "test", 4, (const unsigned char *)"ctx", 3,
                 1)))
             goto end;
 
@@ -352,7 +352,7 @@ static int test_fin_only_blocking(void)
 
     if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid))
         || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
-            (unsigned char *)msg,
+            (const unsigned char *)msg,
             strlen(msg), &numbytes))
         || !TEST_size_t_eq(strlen(msg), numbytes))
         goto end;
@@ -1090,7 +1090,7 @@ static int test_bio_ssl(void)
             || !TEST_mem_eq(msg, msglen, buf, readbytes))
             goto err;
 
-        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
+        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (const unsigned char *)msg,
                 msglen, &written)))
             goto err;
         ossl_quic_tserver_tick(qtserv);
@@ -2488,7 +2488,7 @@ static int generate_session_id_user_ssl(SSL *ssl, unsigned char *id,
     gen_sid_called++;
     if (ssl != gen_sid_expected_ssl
         || !SSL_is_quic(ssl)
-        || SSL_get_ex_data(ssl, gen_sid_idx) != (void *)gen_sid_marker) {
+        || SSL_get_ex_data(ssl, gen_sid_idx) != (const void *)gen_sid_marker) {
         gen_sid_arg_error = 1;
         return 0;
     }
@@ -5589,7 +5589,7 @@ static int test_ech(int idx)
 
     /* set echconfig for client */
     if (!TEST_true(SSL_set1_ech_config_list(clientquic,
-            (unsigned char *)ec_pub, ec_publen))
+            (const unsigned char *)ec_pub, ec_publen))
         || !TEST_true(SSL_set_tlsext_host_name(clientquic, inner)))
         goto err;
     /* we expect the connection to succeed */

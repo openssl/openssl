@@ -429,7 +429,7 @@ static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
         goto err;
 
     if (!X509_NAME_add_entry_by_txt(issuer, "CN", MBSTRING_ASC,
-            (unsigned char *)"The Issuer", -1, -1, 0)
+            (const unsigned char *)"The Issuer", -1, -1, 0)
         || !ASN1_INTEGER_set(serial, 99)
         || (cid = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL
         || (rpmsg = ossl_cmp_rp_new(fixture->cmp_ctx, si, cid, 1)) == NULL)

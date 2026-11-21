@@ -23,7 +23,7 @@ static void swap_copy(unsigned char *out, const void *in, size_t len)
     size_t j;
 
     for (j = 0; j < len; j++)
-        out[j] = ((unsigned char *)in)[len - j - 1];
+        out[j] = ((const unsigned char *)in)[len - j - 1];
 }
 
 /*

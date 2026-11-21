@@ -23,7 +23,7 @@
 #include "fake_cipherprov.h"
 
 static char *config_file = NULL;
-static char *alg = "digest";
+static const char *alg = "digest";
 static int use_default_ctx = 0;
 static char *fetch_property = NULL;
 static int expected_fetch_result = 1;

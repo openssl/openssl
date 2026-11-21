@@ -1335,7 +1335,7 @@ int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
 #endif /* !FIPS_MODULE */
         return EVP_PKEY_set_octet_string_param(pkey,
             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-            (unsigned char *)pub, publen);
+            pub, publen);
 
 #ifndef FIPS_MODULE
     if (publen > INT_MAX)

@@ -59,7 +59,7 @@ static X509_BUFFER *buffer_from_string(const uint8_t *bytes, size_t length)
     if ((buf = OPENSSL_zalloc(sizeof(*buf))) == NULL)
         goto err;
 
-    if ((data = (uint8_t *)OPENSSL_strndup((char *)bytes, length)) == NULL)
+    if ((data = (uint8_t *)OPENSSL_strndup((const char *)bytes, length)) == NULL)
         goto err;
 
     if (strlen((char *)data) != length)
@@ -861,7 +861,7 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
 
 static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *param, size_t *plen, size_t idx)
 {
-    X509_BUFFER *buf;
+    const X509_BUFFER *buf;
 
     if (idx > INT_MAX)
         return NULL;
@@ -876,7 +876,7 @@ static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *par
     if (buf != NULL) {
         if (plen != NULL)
             *plen = buf->len;
-        return (unsigned char *)buf->data;
+        return buf->data;
     }
     return NULL;
 }

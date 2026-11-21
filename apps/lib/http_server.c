@@ -129,7 +129,7 @@ void spawn_loop(const char *prog)
                             "child process: %ld, exit status: %d",
                             (long)fpid, WEXITSTATUS(status));
                     } else if (WIFSIGNALED(status)) {
-                        char *dumped = "";
+                        const char *dumped = "";
 
 #ifdef WCOREDUMP
                         if (WCOREDUMP(status))

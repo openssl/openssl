@@ -57,7 +57,7 @@ static void cmp_client_process_response(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     ctx->disableConfirm = 1; /* check just one response message */
     ctx->popoMethod = OSSL_CRMF_POPO_NONE; /* satisfy ossl_cmp_certReq_new() */
     ctx->oldCert = X509_new(); /* satisfy crm_new() and ossl_cmp_rr_new() */
-    if (!OSSL_CMP_CTX_set1_secretValue(ctx, (unsigned char *)"",
+    if (!OSSL_CMP_CTX_set1_secretValue(ctx, (const unsigned char *)"",
             0) /* prevent too unspecific error */
         || ctx->oldCert == NULL
         || name == NULL || !X509_set_issuer_name(ctx->oldCert, name)

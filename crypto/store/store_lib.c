@@ -390,7 +390,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
             break;
         case OSSL_STORE_SEARCH_BY_ALIAS:
             if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_ALIAS,
-                    (char *)search->string,
+                    (const char *)search->string,
                     search->stringlength))
                 ret = 1;
             break;

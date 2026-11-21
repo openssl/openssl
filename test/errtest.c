@@ -26,7 +26,7 @@
 static int test_print_error_format(void)
 {
     /* Variables used to construct an error line */
-    char *lib;
+    const char *lib;
     const char *func = OPENSSL_FUNC;
     char *reason;
 #ifdef OPENSSL_NO_ERR
