@@ -7,12 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <openssl/bio.h>
+#include <openssl/buffer.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "internal/ssl_unwrap.h"
+#include "../ssl/ssl_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 
@@ -1139,6 +1143,247 @@ end:
     return testresult;
 }
 
+/*
+ * Handshake message reassembly. These tests inject hand-built handshake
+ * fragments into a server and check how they are held.
+ */
+
+#ifndef OPENSSL_NO_DTLS1_2
+
+/* Largest fragment body a test record carries */
+#define REASM_MAX_BODY 1024
+
+typedef struct {
+    SSL_CTX *sctx;
+    SSL *ssl;
+    BIO *rbio; /* owned by ssl; fragments are written to it */
+    uint64_t recseq;
+    int err; /* SSL error after the last record was read */
+} REASM_TEST_FIXTURE;
+
+static void reasm_fx_free(REASM_TEST_FIXTURE *fx)
+{
+    SSL_free(fx->ssl);
+    SSL_CTX_free(fx->sctx);
+    fx->ssl = NULL;
+    fx->sctx = NULL;
+    fx->rbio = NULL;
+}
+
+/* A DTLS 1.2 server with nothing yet received, reading from a memory BIO */
+static int reasm_fx_new(REASM_TEST_FIXTURE *fx)
+{
+    BIO *rbio = NULL, *wbio = NULL;
+
+    memset(fx, 0, sizeof(*fx));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(), NULL,
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &fx->sctx, NULL, cert, privkey))
+        || !TEST_ptr(fx->ssl = SSL_new(fx->sctx))
+        || !TEST_ptr(rbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(wbio = BIO_new(BIO_s_mem()))) {
+        BIO_free(rbio);
+        BIO_free(wbio);
+        reasm_fx_free(fx);
+        return 0;
+    }
+
+    fx->rbio = rbio;
+    SSL_set0_rbio(fx->ssl, rbio);
+    SSL_set0_wbio(fx->ssl, wbio);
+    DTLS_set_timer_cb(fx->ssl, timer_cb);
+
+    /* Run the server to its first read. */
+    if (!TEST_int_eq(SSL_get_error(fx->ssl, SSL_accept(fx->ssl)),
+            SSL_ERROR_WANT_READ)) {
+        reasm_fx_free(fx);
+        return 0;
+    }
+    fx->err = SSL_ERROR_WANT_READ;
+    return 1;
+}
+
+/* The message the server holds for a sequence number, if any */
+static pitem *reasm_find(SSL_CONNECTION *sc, unsigned int seq)
+{
+    unsigned char seq64be[8] = { 0 };
+
+    seq64be[6] = (unsigned char)(seq >> 8);
+    seq64be[7] = (unsigned char)seq;
+    return pqueue_find(sc->d1->buffered_messages, seq64be);
+}
+
+/*
+ * Write one epoch 0 handshake record carrying a fragment of frag_len bytes of
+ * fill to the server. The message length and the offsets are claims, not
+ * checked.
+ */
+static int reasm_inject(REASM_TEST_FIXTURE *fx, unsigned char type,
+    size_t msg_len, unsigned int msg_seq, size_t frag_off, size_t frag_len,
+    unsigned char fill)
+{
+    unsigned char buf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH
+        + REASM_MAX_BODY];
+    const size_t reclen = DTLS1_HM_HEADER_LENGTH + frag_len;
+    unsigned char *p = buf;
+    uint64_t seq = fx->recseq++;
+    int i;
+
+    if (!TEST_size_t_le(frag_len, REASM_MAX_BODY))
+        return 0;
+
+    *p++ = SSL3_RT_HANDSHAKE;
+    *p++ = (DTLS1_2_VERSION >> 8) & 0xff;
+    *p++ = DTLS1_2_VERSION & 0xff;
+    *p++ = 0; /* epoch */
+    *p++ = 0;
+    for (i = 5; i >= 0; i--)
+        *p++ = (unsigned char)(seq >> (8 * i));
+    *p++ = (unsigned char)(reclen >> 8);
+    *p++ = (unsigned char)reclen;
+
+    *p++ = type;
+    *p++ = (unsigned char)(msg_len >> 16);
+    *p++ = (unsigned char)(msg_len >> 8);
+    *p++ = (unsigned char)msg_len;
+    *p++ = (unsigned char)(msg_seq >> 8);
+    *p++ = (unsigned char)msg_seq;
+    *p++ = (unsigned char)(frag_off >> 16);
+    *p++ = (unsigned char)(frag_off >> 8);
+    *p++ = (unsigned char)frag_off;
+    *p++ = (unsigned char)(frag_len >> 16);
+    *p++ = (unsigned char)(frag_len >> 8);
+    *p++ = (unsigned char)frag_len;
+    memset(p, fill, frag_len);
+    p += frag_len;
+
+    if (!TEST_int_eq(BIO_write(fx->rbio, buf, (int)(p - buf)),
+            (int)(p - buf)))
+        return 0;
+
+    /*
+     * The memory BIO is a byte stream: a read can end part way through a record
+     * if several are queued, and DTLS discards the partial record. Let the
+     * server read each record as it is written, so every one arrives whole.
+     * Once it has failed it is not driven again; the error is kept for
+     * reasm_step().
+     */
+    if (fx->err == SSL_ERROR_WANT_READ) {
+        fx->err = SSL_get_error(fx->ssl, SSL_accept(fx->ssl));
+        ERR_clear_error();
+    }
+    return 1;
+}
+
+/* Let the server read what has been written, and return its SSL error */
+static int reasm_step(REASM_TEST_FIXTURE *fx)
+{
+    if (fx->err == SSL_ERROR_WANT_READ) {
+        fx->err = SSL_get_error(fx->ssl, SSL_accept(fx->ssl));
+        ERR_clear_error();
+    }
+    return fx->err;
+}
+
+/*
+ * However little a message claims, what is received of it is saved, and not held
+ * in a buffer of the length it claims, until what is saved with the next
+ * fragment could be all of it. A fragment of one byte is saved with its 6 byte
+ * offset and length, so 7 bytes.
+ *
+ *   0: 1024 bytes claimed, 1 byte received: saved
+ *   1: 7 bytes claimed, 1 byte received: held in a buffer
+ */
+static int test_dtls_reassembly_small_message_saved(int idx)
+{
+    REASM_TEST_FIXTURE fx;
+    SSL_CONNECTION *sc;
+    pitem *item;
+    hm_fragment *frag;
+    int testresult = 0;
+
+    if (!reasm_fx_new(&fx))
+        return 0;
+
+    if (!reasm_inject(&fx, SSL3_MT_CERTIFICATE, idx == 0 ? 1024 : 7, 1, 0, 1,
+            'a'))
+        goto end;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(fx.ssl);
+    if (!TEST_int_eq(reasm_step(&fx), SSL_ERROR_WANT_READ)
+        || !TEST_ptr(item = reasm_find(sc, 1)))
+        goto end;
+
+    frag = (hm_fragment *)item->data;
+    if (!TEST_true(frag->incomplete))
+        goto end;
+    if (idx == 0) {
+        if (!TEST_ptr_null(frag->buf) || !TEST_size_t_eq(frag->saved_len, 7))
+            goto end;
+    } else if (!TEST_ptr(frag->buf) || !TEST_size_t_eq(frag->saved_len, 0)) {
+        goto end;
+    }
+
+    testresult = 1;
+end:
+    reasm_fx_free(&fx);
+    return testresult;
+}
+
+/*
+ * A real handshake whose server flight is fragmented by a small MTU still
+ * completes when the flight arrives with the last packet first.
+ */
+static int test_dtls_reassembly_handshake(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *wbio;
+    int i, ret, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    SSL_set_options(serverssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_true(SSL_set_mtu(serverssl, 256)))
+        goto end;
+
+    wbio = SSL_get_wbio(serverssl);
+
+    /* The server's flight is queued for the client, undelivered */
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+    ret = SSL_accept(serverssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
+        goto end;
+
+    for (i = 1; mempacket_move_packet(wbio, 0, i); i++)
+        continue;
+    if (!TEST_int_gt(i, 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_2 */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -1165,6 +1410,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_client_retransmit);
     ADD_TEST(test_dtls_server_retransmit);
+    ADD_ALL_TESTS(test_dtls_reassembly_small_message_saved, 2);
+    ADD_TEST(test_dtls_reassembly_handshake);
 #endif
     return 1;
 }
