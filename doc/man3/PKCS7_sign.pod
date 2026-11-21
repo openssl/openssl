@@ -58,6 +58,9 @@ including the signing time, the PKCS#7 content type and the supported list of
 ciphers in an SMIMECapabilities attribute. If B<PKCS7_NOATTR> is set then no
 authenticatedAttributes will be used. If B<PKCS7_NOSMIMECAP> is set then just
 the SMIMECapabilities are omitted.
+To omit only the automatically generated signing time, use B<PKCS7_PARTIAL>
+(or B<PKCS7_STREAM>), call L<PKCS7_set_no_signing_time(3)>, then finalise
+the signature.
 
 If present the SMIMECapabilities attribute indicates support for the following
 algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40 bit RC2. If any of

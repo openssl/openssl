@@ -68,6 +68,211 @@ end:
     return ret;
 }
 
+/**
+ * @brief Check signing-time attributes and signatures across finalisation paths.
+ * @param idx selects one of four paths and five attribute modes: default,
+ * omitted, restored, explicitly supplied, or no signed attributes
+ * @returns 1 on success, 0 on failure
+ */
+static int test_pkcs7_signing_time(int idx)
+{
+    static const char data[] = "PKCS7 signing time test\n";
+    static const char signing_time[] = "190501000000Z";
+    int method = idx / 5, mode = idx % 5;
+    int flags = PKCS7_BINARY | PKCS7_NOSMIMECAP;
+    int i, ret = 0;
+    PKCS7 *p7 = NULL;
+    PKCS7_SIGNER_INFO *si;
+    STACK_OF(PKCS7_SIGNER_INFO) *signers;
+    ASN1_TIME *signing_time_attr = NULL;
+    ASN1_TYPE *attr;
+    BIO *in = NULL, *out = NULL, *p7bio = NULL;
+
+    if (method == 3)
+        flags |= PKCS7_DETACHED;
+    if (mode == 4)
+        flags |= PKCS7_NOATTR;
+    if (!TEST_ptr(in = BIO_new_mem_buf(data, sizeof(data) - 1))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(p7 = PKCS7_sign(smimecap_cert, smimecap_privkey,
+                         NULL, NULL, flags | PKCS7_PARTIAL))
+        || !TEST_ptr(PKCS7_sign_add_signer(p7, smimecap_cert,
+            smimecap_privkey, NULL, flags | PKCS7_NOCERTS)))
+        goto end;
+
+    if (mode != 0 && !TEST_true(PKCS7_set_no_signing_time(p7, 1)))
+        goto end;
+    if (mode == 2 && !TEST_true(PKCS7_set_no_signing_time(p7, 0)))
+        goto end;
+    if (mode == 3) {
+        signers = PKCS7_get_signer_info(p7);
+        for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(signers); i++) {
+            si = sk_PKCS7_SIGNER_INFO_value(signers, i);
+            if (!TEST_ptr(signing_time_attr = ASN1_TIME_set(NULL, 1556668800))
+                || !TEST_true(PKCS7_add0_attrib_signing_time(si, signing_time_attr)))
+                goto end;
+            signing_time_attr = NULL;
+        }
+    }
+
+    if (method == 2) {
+        /* Setting up streaming must not clear the omission control. */
+        if (!TEST_true(i2d_PKCS7_bio_stream(out, p7, in,
+                flags | PKCS7_STREAM)))
+            goto end;
+    } else {
+        if (method == 0) {
+            if (!TEST_ptr(p7bio = PKCS7_dataInit(p7, NULL))
+                || !TEST_int_eq(BIO_write(p7bio, data, sizeof(data) - 1),
+                    sizeof(data) - 1)
+                || !TEST_int_gt(BIO_flush(p7bio), 0)
+                || !TEST_true(PKCS7_dataFinal(p7, p7bio)))
+                goto end;
+            BIO_free_all(p7bio);
+            p7bio = NULL;
+        } else if (!TEST_true(PKCS7_final(p7, in, flags))) {
+            goto end;
+        }
+        if (!TEST_true(i2d_PKCS7_bio(out, p7)))
+            goto end;
+    }
+
+    PKCS7_free(p7);
+    p7 = d2i_PKCS7_bio(out, NULL);
+    if (!TEST_ptr(p7)
+        || !TEST_ptr(signers = PKCS7_get_signer_info(p7))
+        || !TEST_int_eq(sk_PKCS7_SIGNER_INFO_num(signers), 2))
+        goto end;
+    for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(signers); i++) {
+        si = sk_PKCS7_SIGNER_INFO_value(signers, i);
+        attr = PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime);
+        if (mode == 1 || mode == 4) {
+            if (!TEST_ptr_null(attr))
+                goto end;
+        } else {
+            if (!TEST_ptr(attr)
+                || !TEST_int_eq(ASN1_TYPE_get(attr), V_ASN1_UTCTIME))
+                goto end;
+            if (mode == 3
+                && !TEST_mem_eq(ASN1_STRING_get0_data(attr->value.utctime),
+                    ASN1_STRING_length(attr->value.utctime),
+                    signing_time, sizeof(signing_time) - 1))
+                goto end;
+        }
+        if (mode != 4
+            && (!TEST_ptr(PKCS7_get_signed_attribute(si, NID_pkcs9_contentType))
+                || !TEST_ptr(PKCS7_get_signed_attribute(si, NID_pkcs9_messageDigest))))
+            goto end;
+    }
+    if (!TEST_int_gt(BIO_reset(in), 0)
+        || !TEST_true(PKCS7_verify(p7, NULL, NULL,
+            method == 3 ? in : NULL, NULL, PKCS7_NOVERIFY | PKCS7_BINARY)))
+        goto end;
+    ret = 1;
+end:
+    ASN1_TIME_free(signing_time_attr);
+    BIO_free_all(p7bio);
+    BIO_free(in);
+    BIO_free(out);
+    PKCS7_free(p7);
+    return ret;
+}
+
+/**
+ * @brief Check signing-time control and signatures for signed-and-enveloped data.
+ * @param omit nonzero to suppress automatic signing-time insertion
+ * @returns 1 on success, 0 on failure
+ */
+static int test_pkcs7_signing_time_enveloped(int omit)
+{
+    PKCS7 *p7 = NULL;
+    PKCS7_SIGNER_INFO *si;
+    BIO *in = NULL, *decoded = NULL;
+    ASN1_TYPE *attr;
+    char buf[16];
+    int ret = 0;
+
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signedAndEnveloped))
+        || !TEST_true(PKCS7_set_cipher(p7, EVP_aes_128_cbc()))
+        || !TEST_ptr(PKCS7_add_recipient(p7, smimecap_cert))
+        || !TEST_ptr(si = PKCS7_sign_add_signer(p7, smimecap_cert,
+                         smimecap_privkey, NULL, PKCS7_NOSMIMECAP))
+        || !TEST_true(PKCS7_set_no_signing_time(p7, omit))
+        || !TEST_ptr(in = BIO_new_mem_buf("test", 4))
+        || !TEST_true(PKCS7_final(p7, in, PKCS7_BINARY)))
+        goto end;
+    attr = PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime);
+    if (omit ? !TEST_ptr_null(attr) : !TEST_ptr(attr))
+        goto end;
+    if (!TEST_ptr(decoded = PKCS7_dataDecode(p7, smimecap_privkey,
+                      NULL, smimecap_cert))
+        || !TEST_int_eq(BIO_read(decoded, buf, sizeof(buf)), 4)
+        || !TEST_mem_eq(buf, 4, "test", 4)
+        || !TEST_int_eq(PKCS7_signatureVerify(decoded, p7, si, smimecap_cert), 1))
+        goto end;
+    ret = 1;
+end:
+    BIO_free_all(decoded);
+    BIO_free(in);
+    PKCS7_free(p7);
+    return ret;
+}
+
+/**
+ * @brief Check that ASN.1 duplication resets the signing-time processing setting.
+ * @returns 1 on success, 0 on failure
+ */
+static int test_pkcs7_signing_time_dup(void)
+{
+    PKCS7 *p7 = NULL, *copy = NULL;
+    PKCS7_SIGNER_INFO *si;
+    BIO *in = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(p7 = PKCS7_sign(NULL, NULL, NULL, NULL, PKCS7_PARTIAL))
+        || !TEST_true(PKCS7_set_no_signing_time(p7, 1))
+        || !TEST_ptr(copy = PKCS7_dup(p7))
+        || !TEST_ptr(si = PKCS7_sign_add_signer(copy, smimecap_cert,
+                         smimecap_privkey, NULL, PKCS7_NOSMIMECAP))
+        || !TEST_ptr(in = BIO_new_mem_buf("test", 4))
+        || !TEST_true(PKCS7_final(copy, in, PKCS7_BINARY))
+        || !TEST_ptr(PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime))
+        || !TEST_true(PKCS7_verify(copy, NULL, NULL, NULL, NULL,
+            PKCS7_NOVERIFY | PKCS7_BINARY)))
+        goto end;
+    ret = 1;
+end:
+    BIO_free(in);
+    PKCS7_free(copy);
+    PKCS7_free(p7);
+    return ret;
+}
+
+/**
+ * @brief Check signing-time control results for supported and unsupported types.
+ * @returns 1 on success, 0 on failure
+ */
+static int test_pkcs7_signing_time_ctrl(void)
+{
+    PKCS7 *p7 = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_data))
+        || !TEST_false(PKCS7_set_no_signing_time(p7, 1))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE)
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signedAndEnveloped))
+        || !TEST_true(PKCS7_set_no_signing_time(p7, 1))
+        || !TEST_true(PKCS7_set_no_signing_time(p7, 0)))
+        goto end;
+    ret = 1;
+end:
+    PKCS7_free(p7);
+    return ret;
+}
+
 static int pkcs7_issuer_and_serial_negative_idx_test(void)
 {
     PKCS7 *p7 = NULL;
@@ -633,8 +838,13 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_EC */
     ADD_TEST(pkcs7_stream_enveloped_no_content_test);
     ADD_TEST(pkcs7_stream_enveloped_signed_no_content_test);
-    if (smimecap_cert != NULL && smimecap_privkey != NULL)
+    if (smimecap_cert != NULL && smimecap_privkey != NULL) {
         ADD_TEST(test_pkcs7_smimecap);
+        ADD_ALL_TESTS(test_pkcs7_signing_time, 20);
+        ADD_TEST(test_pkcs7_signing_time_dup);
+        ADD_ALL_TESTS(test_pkcs7_signing_time_enveloped, 2);
+    }
+    ADD_TEST(test_pkcs7_signing_time_ctrl);
     ADD_TEST(pkcs7_stream_non_data_test);
     ADD_TEST(pkcs7_null_contents_test);
     return 1;
