@@ -45,26 +45,47 @@ my $proxy = TLSProxy::Proxy->new(
 #ServerHello but then omitting the CertificateStatus message is valid
 $proxy->clientflags("-status -no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 1;
+plan tests => 2;
 ok(TLSProxy::Message->success, "Missing CertificateStatus message");
+
+#Test 2: In TLS 1.3 a status_request extension in the server CertificateEntry
+#whose CertificateStatus body has only the status_type byte and is missing the
+#mandatory OCSPResponse must abort the handshake with a decode_error
+$proxy->clear();
+$proxy->clientflags("-status");
+$proxy->start();
+ok(is_alert_message(TLSProxy::Message::AL_DESC_DECODE_ERROR),
+   "Incomplete CertificateStatus body");
 
 sub certstatus_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ServerHello
-    if ($proxy->flight != 1) {
-        return;
-    }
-
     foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            #Add the status_request to the ServerHello even though we are not
-            #going to send a CertificateStatus message
+        if (TLSProxy::Proxy->is_tls13()) {
+            #Test 2: Send a status_request extension in the server first
+            #CertificateEntry whose body is only the status_type byte
+            next unless $message->server()
+                && $message->mt == TLSProxy::Message::MT_CERTIFICATE;
+            $message->set_extension(TLSProxy::Message::EXT_STATUS_REQUEST,
+                                    "\x01");
+        } elsif ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
+            #Test 1: Add the status_request to the ServerHello even though we
+            #are not going to send a CertificateStatus message
             $message->set_extension(TLSProxy::Message::EXT_STATUS_REQUEST,
                                     "");
-
-            $message->repack();
+        } else {
+            next;
         }
+        $message->repack();
     }
+}
+
+# Test if the last message was a failure and matches the expected alert type.
+sub is_alert_message
+{
+    my $alert_type = shift;
+    return 0 unless TLSProxy::Message->fail();
+    return 1 if TLSProxy::Message->alert->description() == $alert_type;
+    return 0;
 }
