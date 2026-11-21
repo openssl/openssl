@@ -1882,6 +1882,119 @@ err:
     return ret;
 }
 
+/*
+ * Re-initializing with a new key and no IV after an operation has started
+ * must keep using the IV that was set before, as a fresh context with that
+ * key and IV does.
+ */
+/* Encrypt in[0..inlen) in a fresh context initialised with key and iv. */
+static int aead_reinit_ref(const EVP_CIPHER *ciph, const unsigned char *key,
+    const unsigned char *iv, const unsigned char *in, int inlen,
+    unsigned char *out, int *outlen, unsigned char *tag)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    int len, fin, ok = 0;
+
+    if (TEST_ptr(ctx)
+        && TEST_true(EVP_EncryptInit_ex2(ctx, ciph, key, iv, NULL))
+        && TEST_true(EVP_EncryptUpdate(ctx, out, &len, in, inlen))
+        && TEST_true(EVP_EncryptFinal_ex(ctx, out + len, &fin))
+        && TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag),
+            0)) {
+        *outlen = len + fin;
+        ok = 1;
+    }
+    EVP_CIPHER_CTX_free(ctx);
+    return ok;
+}
+
+/* Finish the operation in ctx and compare the result with a reference. */
+static int aead_reinit_check(EVP_CIPHER_CTX *ctx, unsigned char *ct, int len,
+    const unsigned char *ct_ref, int ct_ref_len, const unsigned char *tag_ref)
+{
+    unsigned char tag[16];
+    int fin;
+
+    return TEST_true(EVP_EncryptFinal_ex(ctx, ct + len, &fin))
+        && TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                           sizeof(tag), tag),
+            0)
+        && TEST_mem_eq(ct, len + fin, ct_ref, ct_ref_len)
+        && TEST_mem_eq(tag, sizeof(tag), tag_ref, sizeof(tag));
+}
+
+static int test_evp_aead_key_only_reinit(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[EVP_MAX_KEY_LENGTH], key2[EVP_MAX_KEY_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char pt[64], ct[96], ct_ref[96], tag_ref[16];
+    int len, len2, ref_len, i, testresult = 0;
+
+    if (info->mode != EVP_CIPH_GCM_MODE && info->mode != EVP_CIPH_OCB_MODE)
+        return TEST_skip("%s: not GCM or OCB", info->name);
+
+    for (i = 0; i < (int)sizeof(key); i++) {
+        key[i] = (unsigned char)(0xA0 + i);
+        key2[i] = (unsigned char)(0xF0 + i);
+    }
+    for (i = 0; i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+    memset(pt, 0xA7, sizeof(pt));
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    /*
+     * A new key without an IV after the operation has started: the IV set
+     * earlier still applies, as with a fresh context using key2 and the IV.
+     */
+    if (!aead_reinit_ref(info->ciph, key2, iv, pt, 32, ct_ref, &ref_len,
+            tag_ref)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &len, pt, 32))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, key2, NULL, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &len, pt, 32))
+        || !aead_reinit_check(ctx, ct, len, ct_ref, ref_len, tag_ref))
+        goto err;
+
+    /*
+     * Split initialisation: the IV first, then the key in a later call with
+     * no cipher, matches a single call with the key and the IV.
+     */
+    if (!aead_reinit_ref(info->ciph, key, iv, pt, 32, ct_ref, &ref_len,
+            tag_ref)
+        || !TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, NULL, iv, NULL))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, key, NULL, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &len, pt, 32))
+        || !aead_reinit_check(ctx, ct, len, ct_ref, ref_len, tag_ref))
+        goto err;
+
+    /*
+     * A re-init with no cipher, key or IV during an operation changes
+     * nothing: the message continues and matches one uninterrupted
+     * encryption (restarting from the IV under the same key would reuse it).
+     */
+    if (!aead_reinit_ref(info->ciph, key, iv, pt, 64, ct_ref, &ref_len,
+            tag_ref)
+        || !TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &len, pt, 32))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct + len, &len2, pt + 32, 32))
+        || !aead_reinit_check(ctx, ct, len + len2, ct_ref, ref_len, tag_ref))
+        goto err;
+
+    testresult = 1;
+err:
+    if (!testresult)
+        TEST_info("%s", info->name);
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 static int test_aes_gcm_ivlen_change_cve_2023_5363(void)
 {
     /* AES-GCM test data obtained from NIST public test vectors */
@@ -2035,6 +2148,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_aead_update_null_input, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_stale_key_reinit, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_aead_key_only_reinit, OSSL_NELEM(aead_list));
     ADD_TEST(test_aes_gcm_ivlen_change_cve_2023_5363);
     ADD_ALL_TESTS(test_evp_aead_tag_reject, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
