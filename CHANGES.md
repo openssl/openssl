@@ -33,7 +33,172 @@ OpenSSL 4.1
 
 ### Changes between 4.1.0 and 4.1.1 [xx XXX xxxx]
 
- * none yet
+ * Fixed out-of-bounds read in TLS 1.3 key-share processing with Suite B flag.
+
+   Severity: Low
+
+   Issue summary: A server configured with the Suite B certificate flag through
+   `SSL_CTX_set_cert_flags()` and with TLS 1.3 enabled may read past the end of
+   a fixed group list when it processes a ClientHello whose supported_groups and
+   key_share contain no Suite B group.
+
+   Impact summary: A remote client can send a ClientHello that makes the server
+   read past the end of a static array. The values read are never returned to
+   the client, so no memory is disclosed; on builds with sanitizers or hardened
+   allocators the read may crash the process, causing Denial of Service.
+
+   Reported by: Laurent Gaffie (secorizon.com).
+
+   ([CVE-2026-35190])
+   <!-- https://github.com/openssl/openssl/pull/33617 -->
+   <!-- https://github.com/openssl/openssl/pull/33720 -->
+   <!-- https://github.com/openssl/openssl/pull/33721 -->
+
+   *Daniel Kubec*
+
+ * Fixed use-after-free in PEM_X509_INFO_read_bio_ex() on stack append failure.
+
+   Severity: Low
+
+   Issue summary: When an application passes a stack to
+   `PEM_X509_INFO_read_bio_ex()` to add entries to, and reading fails, OpenSSL
+   frees every entry in the stack, both the old ones and any new ones, but
+   leaves them in the stack.
+
+   Impact summary: An application that passes an existing stack to
+   `PEM_X509_INFO_read_bio_ex()` and keeps using it after a failed read may use
+   memory that was already freed. This can cause a crash or, in principle,
+   memory corruption. Malformed PEM data can make the read fail, but only
+   applications that pass an existing stack are affected, and OpenSSL itself
+   does not do this.
+
+   Reported by: Filipe Casal (Trail of Bits).
+
+   ([CVE-2026-107493])
+   <!-- https://github.com/openssl/openssl/pull/33662 -->
+
+   *Viktor Dukhovni*
+
+ * Fixed unbounded memory retention in QUIC server for rejected streams.
+
+   Severity: Low
+
+   Issue summary: `BIO_dgram_detect_peer_addr()` returns uninitialised stack
+   data as part of an address for non-IPv4 sockets, that is then used in QUIC
+   automatic peer detection code as the destination for outgoing packets.
+
+   Impact summary: A remote client that completes a QUIC handshake can
+   repeatedly open and reset streams, causing server memory to grow without
+   bound until the process runs out of memory and every connection on it is
+   lost. This is a Denial of Service.
+
+   Reported by: Bhabani Sankar Das.
+
+   ([CVE-2026-124709])
+   <!-- https://github.com/openssl/openssl/pull/33718 -->
+
+   *Bhabani Sankar Das*
+
+ * Fixed use of uninitialized stack data in QUIC automated peer detection.
+
+   Severity: Low
+
+   Issue summary: QUIC, when performing automated peer detection, may allow
+   uninitialized stack data to leak into the received address which is then
+   used as the destination for outgoing packets.
+
+   Impact summary: Applications using QUIC's automated peer detection mechanism
+   may receive an invalid address, leading to connection loss and disclosure of
+   uninitialized stack data to an attacker observing the outgoing network
+   traffic.
+
+   Reported by: Jaehun Lee.
+
+   ([CVE-2026-88822])
+   <!-- https://github.com/openssl/openssl/pull/33566 -->
+
+   *Neil Horman*
+
+ * Fixed AES-GCM-SIV AAD forgery after a zero-length incremental AAD update.
+
+   Severity: Low
+
+   Issue summary: The AES-GCM-SIV implementation treats a zero-length
+   Additional Authenticated Data (AAD) update as a reset of all the AAD
+   supplied so far, instead of leaving the AAD unchanged. An application that
+   supplies its AAD in several fragments, one of which is empty, therefore
+   produces or verifies messages whose authentication tag does not cover
+   the AAD supplied before the empty fragment.
+
+   Impact summary: Data an application intended to authenticate alongside
+   a message is silently left unauthenticated. An attacker can forge the AAD
+   of such a message.
+
+   Reported by: Jérémy Jean (ANSSI), Bhargava Shastry and Jonathan Bateman
+   (Rochester Institute of Technology).
+
+   ([CVE-2026-88823])
+   <!-- https://github.com/openssl/openssl/pull/33456 -->
+
+   *Daniel Kubec*
+
+ * Fixed use-after-free on retransmitted QUIC CRYPTO frames.
+
+   Severity: Low
+
+   Issue summary: A retransmitted QUIC CRYPTO frame can release packet storage
+   while the TLS record layer retains a direct pointer into that storage
+   causing use after free.
+
+   Impact summary: A malicious QUIC server can cause a heap-use-after-free read
+   in the OpenSSL QUIC client. The server can also identify one
+   allocator-adjacent byte through the client's protected Handshake response.
+
+   Reported by: Filipe Casal (Trail of Bits).
+
+   ([CVE-2026-95691])
+   <!-- https://github.com/openssl/openssl/pull/33543 -->
+
+   *Filipe Casal*
+
+ * Fixed out-of-bounds read and incorrect IV length handling in AES-GCM-SIV.
+
+   Severity: Low
+
+   Issue summary: Setting an AES-GCM-SIV IV shorter than the expected nonce
+   length via EVP_CipherInit_ex() may trigger a heap out-of-bounds read.
+   Supplying a longer IV is silently truncated instead of rejected.
+
+   Impact summary: An application passing a caller-supplied IV of the wrong
+   length may crash or read beyond its buffer. Because trailing IV bytes are
+   ignored, an attacker who knows one message and tag may forge messages under
+   a different IV.
+
+   Reported by: Billy Brumley (Rochester Institute of Technology).
+
+   ([CVE-2026-95692])
+   <!-- https://github.com/openssl/openssl/pull/33512 -->
+
+   *Billy Brumley*
+
+ * Fixed infinite loop in CMS_encrypt() with an EC group order of 1.
+
+   Severity: Low
+
+   Issue summary: Encrypting a CMS message to an EC certificate whose group
+   order is 1 may cause CMS_encrypt() or CMS_encrypt_ex() to loop
+   indefinitely.
+
+   Impact summary: An attacker able to supply the recipient certificate to an
+   application performing CMS encryption can cause that application to loop
+   indefinitely, consuming CPU and resulting in Denial of Service.
+
+   Reported by: Yinxi Liu.
+
+   ([CVE-2026-107496])
+   <!-- https://github.com/openssl/openssl/pull/33554 -->
+
+   *Jakub Zelenka*
 
 ### Changes between 4.0 and 4.1.0 [23 Oct 2026]
 
@@ -24521,6 +24686,14 @@ ndif
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-88822]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88822
+[CVE-2026-88823]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88823
+[CVE-2026-95691]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95691
+[CVE-2026-95692]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95692
+[CVE-2026-107496]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107496
+[CVE-2026-35190]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35190
+[CVE-2026-107493]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107493
+[CVE-2026-124709]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-124709
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
