@@ -37,7 +37,8 @@ static int test_hash_prefix(int idx)
         goto end;
     n = key.params->n;
     is_shake = key.params->is_shake;
-    prefix = is_shake ? n : n == 16 ? 64 : 128;
+    prefix = is_shake ? n : n == 16 ? 64
+                                    : 128;
     adrs_len = is_shake ? SLH_ADRS_SIZE : SLH_ADRSC_SIZE;
     key.pub = key.priv + 2 * n;
     key.hash_func = ossl_slh_get_hash_fn(is_shake, key.params->security_category);
@@ -54,7 +55,9 @@ static int test_hash_prefix(int idx)
         ossl_slh_dsa_hash_ctx_free(ctx);
         ctx = NULL;
         for (rep = 0; rep < 4; rep++) {
-            len = rep == 0 ? 0 : rep == 1 ? n : rep == 2 ? 2 * n : SLH_WOTS_LEN(n) * n;
+            len = rep == 0 ? 0 : rep == 1 ? n
+                : rep == 2                ? 2 * n
+                                          : SLH_WOTS_LEN(n) * n;
             input[prefix] ^= (unsigned char)(rep + 1);
             if (is_shake) {
                 if (!TEST_true(EVP_DigestInit_ex(mdctx, EVP_shake256(), NULL))
