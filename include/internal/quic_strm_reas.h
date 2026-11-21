@@ -17,6 +17,15 @@
 #ifndef OPENSSL_NO_QUIC
 #include "internal/ossl_rbtree.h"
 
+/*
+ * Maximum number of disjoint ranges buffered per stream. Flow control
+ * bounds only the highest offset a peer may send, so without this
+ * limit tiny fragments separated by gaps could make the receiver keep
+ * one range per fragment. A legitimate sender retransmits lost data
+ * and stays well below this limit.
+ */
+#define QUIC_SFRAME_SET_MAX_RANGES 1024
+
 typedef struct sframe_set_t {
     OSSL_RBT_HEAD(srange, sframe_set_t)
     ranges;
