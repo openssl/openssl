@@ -944,7 +944,7 @@ my %globals;
                     push(@segment_stack, $current_segment);
 		    if (!$elf && $current_segment eq ".rodata") {
 			if	($flavour eq "macosx") { $self->{value} = ".section\t__DATA,__const"; }
-			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.rodata"; }
+			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.rdata,\"dr\""; }
 		    }
 		    if (!$elf && $current_segment eq ".init") {
 			if	($flavour eq "macosx")	{ $self->{value} = ".mod_init_func"; }

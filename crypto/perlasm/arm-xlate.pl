@@ -33,7 +33,7 @@ my $rodata = sub {
     SWITCH: for ($flavour) {
 	/linux/		&& return ".section\t.rodata";
 	/ios/		&& return ".section\t__TEXT,__const";
-	/win64/		&& return ".section\t.rodata";
+	/win64/		&& return ".section\t.rdata,\"dr\"";
 	last;
     }
 };
