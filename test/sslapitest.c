@@ -9645,6 +9645,17 @@ static int test_stateless(void)
             SSL_ERROR_NONE)))
         goto end;
 
+    SSL_free(clientssl);
+    clientssl = NULL;
+
+    /* The next client must be asked for a cookie again */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_WANT_READ))
+        || !TEST_int_eq(SSL_stateless(serverssl), 0))
+        goto end;
+
     shutdown_ssl_connection(serverssl, clientssl);
     serverssl = clientssl = NULL;
     testresult = 1;
@@ -9714,6 +9725,92 @@ end:
 }
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
+
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_EC)
+/* SSL_clear() must drop the SNI and groups sent by the previous client */
+static int test_ssl_clear_server(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION,
+            TLS1_2_VERSION, &sctx, &cctx, cert,
+            privkey))
+        || !TEST_true(SSL_CTX_set_cipher_list(sctx,
+            "ECDHE-RSA-AES256-GCM-SHA384:AES256-GCM-SHA384"))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "localhost"))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_gt(SSL_get1_groups(serverssl, NULL), 0))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(clientssl);
+    clientssl = NULL;
+
+    if (!TEST_true(SSL_clear(serverssl))
+        || !TEST_ptr_null(SSL_get_servername(serverssl,
+            TLSEXT_NAMETYPE_host_name)))
+        goto end;
+
+    /* No ECC ciphersuites, so no supported_groups extension */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_cipher_list(clientssl, "AES256-GCM-SHA384"))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_get1_groups(serverssl, NULL), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
+/* SSL_clear() must reset the verify result */
+static int test_ssl_clear_verify_result(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* The client cert is not trusted by the server, so the handshake fails */
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_CTX_use_certificate_file(cctx, cert, SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(cctx, privkey,
+            SSL_FILETYPE_PEM))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_long_ne(SSL_get_verify_result(serverssl), X509_V_OK)
+        || !TEST_true(SSL_clear(serverssl))
+        || !TEST_long_eq(SSL_get_verify_result(serverssl), X509_V_OK))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 
 /*
  * Test that the group accessors report "no group" rather than crashing when
@@ -20568,6 +20665,10 @@ int setup_tests(void)
     ADD_TEST(test_stateless);
     ADD_TEST(test_stateless_psk);
 #endif
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_EC)
+    ADD_TEST(test_ssl_clear_server);
+#endif
+    ADD_TEST(test_ssl_clear_verify_result);
     ADD_ALL_TESTS(test_export_key_mat, 6);
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
     ADD_ALL_TESTS(test_export_key_mat_early, 6);
