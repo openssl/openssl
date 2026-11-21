@@ -22,6 +22,8 @@
 #include <openssl/modes.h>
 #include "testutil.h"
 #include "crypto/modes.h"
+#include "crypto/aes_platform.h"
+#include "internal/cryptlib.h"
 #include "internal/nelem.h"
 
 typedef struct {
@@ -896,10 +898,92 @@ static int test_gcm128(int idx)
     return 1;
 }
 
+#if defined(AESNI_CAPABLE) && defined(AES_GCM_ASM)
+static int test_aesni_gcm_bulk(int idx)
+{
+    static const size_t lengths[] = {
+        0, 1, 15, 16, 17, 95, 96, 97, 287, 288, 289,
+        511, 512, 513, 639, 640, 641, 767, 768, 769,
+        1023, 1024, 1025, 2047, 2048, 2049, 4095, 4096, 4097,
+        4223, 4224, 4225, 4351, 4352, 4353, 8191, 8192, 8193
+    };
+    unsigned char rawkey[32], input[8195], actual[8195], expected[8195];
+    unsigned char counter[16];
+    GCM128_CONTEXT ctx, reference;
+    AES_KEY key, refkey;
+    size_t i, j, bulk, n;
+    unsigned int value;
+    int encrypt, inplace, wrap;
+
+    if (!AESNI_CAPABLE)
+        return 1;
+    for (i = 0; i < sizeof(rawkey); ++i)
+        rawkey[i] = (unsigned char)(i * 17 + idx);
+    for (i = 0; i < sizeof(input); ++i)
+        input[i] = (unsigned char)(i * 29 + idx);
+    if (!TEST_int_eq(aesni_set_encrypt_key(rawkey, 128 + 64 * idx, &key), 0)
+        || !TEST_int_eq(AES_set_encrypt_key(rawkey, 128 + 64 * idx, &refkey), 0))
+        return 0;
+    CRYPTO_gcm128_init(&ctx, &key, (block128_f)aesni_encrypt);
+    if (ctx.funcs.ghash != gcm_ghash_avx)
+        return 1;
+    CRYPTO_gcm128_init(&reference, &refkey, (block128_f)AES_encrypt);
+    ossl_gcm_init_4bit(reference.Htable, reference.H.u);
+
+    for (j = 0; j < OSSL_NELEM(lengths); ++j) {
+        n = lengths[j];
+        for (encrypt = 0; encrypt <= 1; ++encrypt) {
+            for (inplace = 0; inplace <= 1; ++inplace) {
+                for (wrap = 0; wrap <= 1; ++wrap) {
+                    value = wrap ? 0xfffffffcU : 2;
+                    memset(ctx.Yi.c, 0x5a, sizeof(ctx.Yi.c));
+                    for (i = 0; i < 4; ++i)
+                        ctx.Yi.c[12 + i] = (unsigned char)(value >> (24 - 8 * i));
+                    memcpy(counter, ctx.Yi.c, sizeof(counter));
+                    memset(ctx.Xi.c, 0x37, sizeof(ctx.Xi.c));
+                    memcpy(reference.Xi.c, ctx.Xi.c, sizeof(reference.Xi.c));
+                    if (inplace)
+                        memcpy(actual, input, sizeof(actual));
+                    else
+                        memset(actual, 0xa5, sizeof(actual));
+                    memcpy(expected, actual, sizeof(expected));
+                    bulk = encrypt
+                        ? aesni_gcm_encrypt(inplace ? actual + 1 : input + 1,
+                              actual + 1, n, &key, ctx.Yi.c, ctx.Xi.u)
+                        : aesni_gcm_decrypt(inplace ? actual + 1 : input + 1,
+                              actual + 1, n, &key, ctx.Yi.c, ctx.Xi.u);
+                    if (!TEST_size_t_le(bulk, n)
+                        || !TEST_size_t_eq(bulk % 16, 0))
+                        return 0;
+                    if (bulk != 0) {
+                        aesni_ctr32_encrypt_blocks(input + 1, expected + 1,
+                            bulk / 16, &key, counter);
+                        ossl_gcm_ghash_4bit(reference.Xi.u, reference.Htable,
+                            encrypt ? expected + 1 : input + 1, bulk);
+                    }
+                    value += (unsigned int)(bulk / 16);
+                    for (i = 0; i < 4; ++i)
+                        counter[12 + i] = (unsigned char)(value >> (24 - 8 * i));
+                    if (!TEST_mem_eq(actual, sizeof(actual), expected, sizeof(expected))
+                        || !TEST_mem_eq(ctx.Yi.c, sizeof(ctx.Yi.c), counter, sizeof(counter))
+                        || !TEST_mem_eq(ctx.Xi.c, sizeof(ctx.Xi.c),
+                            reference.Xi.c, sizeof(reference.Xi.c)))
+                        return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_aes_cts128, OSSL_NELEM(aes_cts128_vectors));
     ADD_ALL_TESTS(test_aes_cts128_nist, OSSL_NELEM(aes_cts128_vectors));
     ADD_ALL_TESTS(test_gcm128, OSSL_NELEM(gcm128_vectors));
+#if defined(AESNI_CAPABLE) && defined(AES_GCM_ASM)
+    ADD_ALL_TESTS(test_aesni_gcm_bulk, 3);
+#endif
     return 1;
 }
