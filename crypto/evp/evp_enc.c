@@ -1207,7 +1207,8 @@ const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
 {
     void *alg;
 
-    if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
+    if (cctx != NULL && cctx->cipher != NULL
+        && cctx->cipher->settable_ctx_params != NULL) {
         alg = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->settable_ctx_params(cctx->algctx, alg);
     }
@@ -1218,7 +1219,8 @@ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
 {
     void *provctx;
 
-    if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
+    if (cctx != NULL && cctx->cipher != NULL
+        && cctx->cipher->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_CIPHER_get0_provider(cctx->cipher));
         return cctx->cipher->gettable_ctx_params(cctx->algctx, provctx);
     }
