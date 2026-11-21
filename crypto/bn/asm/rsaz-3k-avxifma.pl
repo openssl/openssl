@@ -108,6 +108,7 @@ my ($R0_0,$R0_0h,$R1_0,$R1_0h,$R2_0,$R2_0h,$R3_0,$R3_0h) = map("%ymm$_",(3..10))
 # Registers mapping for normalization
 my ($T0,$T0h,$T1,$T1h,$T2,$T2h,$T3,$T3h) = ("$zero", "$Bi", "$Yi", map("%ymm$_", (11..15)));
 my $T0_xmm = "%xmm0";
+my $T2_xmm = "%xmm12";
 
 sub amm52x30_x1() {
 # _data_offset - offset in the |a| or |m| arrays pointing to the beginning
@@ -358,62 +359,47 @@ $code.=<<___;
     xor      %dl,%r12b
     xor      %cl,%r11b
 
-    lea .Lkmasklut(%rip), %rdx
-
-    mov %r14b, %r10b
-    and \$0xf, %r14
+    # vblendvpd reads only the sign bit of each lane: shift bit i (i+4) of
+    # the mask byte into lane i of the low (high) half, so no load address
+    # depends on the mask.
+    vmovq   %r14, $T2_xmm
+    vpbroadcastq $T2_xmm, $T2
     vpsubq  .Lmask52x4(%rip), $_R0,  $T0
-    shl \$5, %r14
-    vmovapd (%rdx,%r14), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R0, $_R0
 
-    shr \$4, %r10b
-    and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R0h,  $T0
-    shl \$5, %r10
-    vmovapd (%rdx,%r10), $T1
+    vpsllvq .Lkmask_shl_hi(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R0h, $_R0h
 
-    mov %r13b, %r10b
-    and \$0xf, %r13
+    vmovq   %r13, $T2_xmm
+    vpbroadcastq $T2_xmm, $T2
     vpsubq  .Lmask52x4(%rip), $_R1,  $T0
-    shl \$5, %r13
-    vmovapd (%rdx,%r13), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R1, $_R1
 
-    shr \$4, %r10b
-    and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R1h,  $T0
-    shl \$5, %r10
-    vmovapd (%rdx,%r10), $T1
+    vpsllvq .Lkmask_shl_hi(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R1h, $_R1h
 
-    mov %r12b, %r10b
-    and \$0xf, %r12
+    vmovq   %r12, $T2_xmm
+    vpbroadcastq $T2_xmm, $T2
     vpsubq  .Lmask52x4(%rip), $_R2,  $T0
-    shl \$5, %r12
-    vmovapd (%rdx,%r12), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R2, $_R2
 
-    shr \$4, %r10b
-    and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R2h,  $T0
-    shl \$5, %r10
-    vmovapd (%rdx,%r10), $T1
+    vpsllvq .Lkmask_shl_hi(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R2h, $_R2h
 
-    mov %r11b, %r10b
-    and \$0xf, %r11
+    vmovq   %r11, $T2_xmm
+    vpbroadcastq $T2_xmm, $T2
     vpsubq  .Lmask52x4(%rip), $_R3,  $T0
-    shl \$5, %r11
-    vmovapd (%rdx,%r11), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R3, $_R3
 
-    shr \$4, %r10b
-    and \$0xf, %r10
     vpsubq  .Lmask52x4(%rip), $_R3h,  $T0
-    shl \$5, %r10
-    vmovapd (%rdx,%r10), $T1
+    vpsllvq .Lkmask_shl_hi(%rip), $T2, $T1
     vblendvpd $T1, $T0, $_R3h, $_R3h
 
     vpand  .Lmask52x4(%rip), $_R0,  $_R0
@@ -426,6 +412,17 @@ $code.=<<___;
 
     vpand  .Lmask52x4(%rip), $_R3h, $_R3h
 ___
+}
+
+# Zero the |$_bytes| below %rsp, where the macros above leave accumulator
+# digits. Clobbers $zero.
+sub clear_stack {
+my $_bytes = shift;
+$code.="    vpxor   $zero, $zero, $zero\n    lea     -$_bytes(%rsp), %rsp\n";
+for (my $off = 0; $off < $_bytes; $off += 32) {
+    $code.=sprintf("    vmovdqu $zero, %d(%%rsp)\n", $off + 32 > $_bytes ? $_bytes - 32 : $off);
+}
+$code.="    lea     $_bytes(%rsp), %rsp\n";
 }
 
 $code.=<<___;
@@ -509,6 +506,9 @@ $code.=<<___;
     vmovdqu   $R2_0h, `5*32`($res)
     vmovdqu   $R3_0,  `6*32`($res)
     vmovdqu   $R3_0h, `7*32`($res)
+___
+    &clear_stack(264);
+$code.=<<___;
 
     vzeroupper
     lea     (%rsp),%rax
@@ -561,87 +561,16 @@ $code.=<<___;
     .quad   0xffffffffffffffff
     .quad   0xffffffffffffffff
     .quad   0xffffffffffffffff
-.Lkmasklut:
-    #0000
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    #0001
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    #0010
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    #0011
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    #0100
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0101
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0110
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0111
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #1000
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1001
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1010
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1011
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1100
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1101
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1110
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1111
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
+.Lkmask_shl_lo:
+    .quad   63
+    .quad   62
+    .quad   61
+    .quad   60
+.Lkmask_shl_hi:
+    .quad   59
+    .quad   58
+    .quad   57
+    .quad   56
 ___
 
 ###############################################################################
@@ -783,6 +712,10 @@ $code.=<<___;
     vmovdqu   $R2_0h, `13*32`($res)
     vmovdqu   $R3_0,  `14*32`($res)
     vmovdqu   $R3_0h, `15*32`($res)
+___
+    # 264 covers the norm spill too, which sits 32 bytes lower after the pushes
+    &clear_stack(264);
+$code.=<<___;
 
     vzeroupper
     lea     (%rsp),%rax

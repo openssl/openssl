@@ -125,6 +125,7 @@ my ($R0_1,$R0_1h,$R1_1,$R1_1h,$R2_1) = ("%ymm4",map("%ymm$_",(9..12)));
 # Registers mapping for normalization.
 my ($T0,$T0h,$T1,$T1h,$T2,$tmp) = ("$zero", "$Bi", "$Yi", map("%ymm$_", (13..15)));
 my $T0_xmm   = "%xmm0";
+my $tmp_xmm  = "%xmm15";
 
 sub amm52x20_x1() {
 # _data_offset - offset in the |a| or |m| arrays pointing to the beginning
@@ -303,40 +304,33 @@ $code.=<<___;
     xor   %bl, %r12b
     xor   %dl, %r10b
 
-    lea .Lkmasklut(%rip), %rdx
-
-    mov %r14b, %r13b
-    and \$0xf, %r14
+    # vblendvpd reads only the sign bit of each lane: shift bit i (i+4) of
+    # the mask byte into lane i of the low (high) half, so no load address
+    # depends on the mask.
+    vmovq   %r14, $tmp_xmm
+    vpbroadcastq $tmp_xmm, $tmp
     vpsubq  .Lmask52x4(%rip), $_R0,  $T0
-    shl \$5, %r14
-    vmovapd (%rdx,%r14), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $tmp, $T1
     vblendvpd $T1, $T0, $_R0, $_R0
 
-    shr \$4, %r13b
-    and \$0xf, %r13
     vpsubq  .Lmask52x4(%rip), $_R0h,  $T0
-    shl \$5, %r13
-    vmovapd (%rdx,%r13), $T1
+    vpsllvq .Lkmask_shl_hi(%rip), $tmp, $T1
     vblendvpd $T1, $T0, $_R0h, $_R0h
 
-    mov %r12b, %r11b
-    and \$0xf, %r12
+    vmovq   %r12, $tmp_xmm
+    vpbroadcastq $tmp_xmm, $tmp
     vpsubq  .Lmask52x4(%rip), $_R1,  $T0
-    shl \$5, %r12
-    vmovapd (%rdx,%r12), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $tmp, $T1
     vblendvpd $T1, $T0, $_R1, $_R1
 
-    shr \$4, %r11b
-    and \$0xf, %r11
     vpsubq  .Lmask52x4(%rip), $_R1h,  $T0
-    shl \$5, %r11
-    vmovapd (%rdx,%r11), $T1
+    vpsllvq .Lkmask_shl_hi(%rip), $tmp, $T1
     vblendvpd $T1, $T0, $_R1h, $_R1h
 
-    and \$0xf, %r10
+    vmovq   %r10, $tmp_xmm
+    vpbroadcastq $tmp_xmm, $tmp
     vpsubq  .Lmask52x4(%rip), $_R2,  $T0
-    shl \$5, %r10
-    vmovapd (%rdx,%r10), $T1
+    vpsllvq .Lkmask_shl_lo(%rip), $tmp, $T1
     vblendvpd $T1, $T0, $_R2, $_R2
 
     # Add carries according to the obtained mask
@@ -346,6 +340,17 @@ $code.=<<___;
     vpand   .Lmask52x4(%rip), $_R1h, $_R1h
     vpand   .Lmask52x4(%rip), $_R2,  $_R2
 ___
+}
+
+# Zero the |$_bytes| below %rsp, where the macros above leave accumulator
+# digits. Clobbers $zero.
+sub clear_stack {
+my $_bytes = shift;
+$code.="    vpxor   $zero, $zero, $zero\n    lea     -$_bytes(%rsp), %rsp\n";
+for (my $off = 0; $off < $_bytes; $off += 32) {
+    $code.=sprintf("    vmovdqu $zero, %d(%%rsp)\n", $off + 32 > $_bytes ? $_bytes - 32 : $off);
+}
+$code.="    lea     $_bytes(%rsp), %rsp\n";
 }
 
 $code.=<<___;
@@ -423,6 +428,9 @@ $code.=<<___;
     vmovdqu   $R1_0,  `2*32`($res)
     vmovdqu   $R1_0h, `3*32`($res)
     vmovdqu   $R2_0,  `4*32`($res)
+___
+    &clear_stack(168);
+$code.=<<___;
 
     vzeroupper
 ___
@@ -475,87 +483,16 @@ $code.=<<___;
     .quad   0xffffffffffffffff
     .quad   0xffffffffffffffff
     .quad   0xffffffffffffffff
-.Lkmasklut:
-    #0000
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    #0001
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    #0010
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    #0011
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    #0100
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0101
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0110
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #0111
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    #1000
-    .quad   0x0
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1001
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1010
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1011
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    #1100
-    .quad   0x0
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1101
-    .quad   0xffffffffffffffff
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1110
-    .quad   0x0
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    #1111
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
-    .quad   0xffffffffffffffff
+.Lkmask_shl_lo:
+    .quad   63
+    .quad   62
+    .quad   61
+    .quad   60
+.Lkmask_shl_hi:
+    .quad   59
+    .quad   58
+    .quad   57
+    .quad   56
 ___
 
 ###############################################################################
@@ -660,6 +597,9 @@ $code.=<<___;
     vmovdqu   $R1_1,  `7*32`($res)
     vmovdqu   $R1_1h, `8*32`($res)
     vmovdqu   $R2_1,  `9*32`($res)
+___
+    &clear_stack(168);
+$code.=<<___;
 
     vzeroupper
 ___
