@@ -13,6 +13,4 @@
 
 #define ERR_NUM_ERRORS 16
 
-void err_free_strings_int(void);
-
 #endif

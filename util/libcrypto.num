@@ -14,7 +14,7 @@ DSO_METHOD_openssl                      13	4_0_0	EXIST::FUNCTION:
 DSO_pathbyaddr                          14	4_0_0	EXIST::FUNCTION:
 DSO_dsobyaddr                           15	4_0_0	EXIST::FUNCTION:
 DSO_global_lookup                       16	4_0_0	EXIST::FUNCTION:
-err_free_strings_int                    17	4_0_0	EXIST::FUNCTION:
+err_free_strings_int                    17	4_0_0	NOEXIST::FUNCTION:
 OPENSSL_DIR_read                        18	4_0_0	EXIST::FUNCTION:
 OPENSSL_DIR_end                         19	4_0_0	EXIST::FUNCTION:
 conf_ssl_get                            20	4_0_0	EXIST::FUNCTION:
