@@ -349,6 +349,43 @@ err:
     return ret;
 }
 
+static int read_to_eof(BIO *b, unsigned char *out)
+{
+    int len, n;
+
+    for (len = 0; (n = BIO_read(b, out + len, BUF_SIZE - len)) > 0;)
+        len += n;
+    return len;
+}
+
+static int test_bio_enc_reset(void)
+{
+    static const unsigned char inp[DATA_SIZE];
+    unsigned char ref[BUF_SIZE], out[BUF_SIZE];
+    BIO *b = NULL, *mem = NULL;
+    int reflen, ret = 0;
+
+    if (!TEST_ptr(b = BIO_new(BIO_f_cipher()))
+        || !TEST_true(BIO_set_cipher(b, EVP_aes_128_cbc(), KEY, IV, ENCRYPT))
+        || !TEST_ptr(mem = BIO_new_mem_buf(inp, sizeof(inp))))
+        goto err;
+    BIO_push(b, mem);
+
+    if (!TEST_int_gt((reflen = read_to_eof(b, ref)), 0)
+        || !TEST_int_eq(BIO_reset(b), 1)
+        || !TEST_mem_eq(out, read_to_eof(b, out), ref, reflen)
+        || !TEST_int_eq(BIO_reset(b), 1)
+        || !TEST_int_eq(BIO_read(b, out, 1), 1)
+        || !TEST_int_eq(BIO_reset(b), 1)
+        || !TEST_mem_eq(out, read_to_eof(b, out), ref, reflen))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free_all(b);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_bio_enc_aes_128_cbc, 2);
@@ -363,5 +400,6 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
     ADD_TEST(test_bio_enc_dup);
+    ADD_TEST(test_bio_enc_reset);
     return 1;
 }
