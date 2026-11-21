@@ -10,4 +10,7 @@
 
 use OpenSSL::Test::Simple;
 
+# test_kdf_pbkdf1_skey watches freed memory for the derived key
+$ENV{OPENSSL_TEST_WATCH_FREED} = "1";
+
 simple_test("test_evp_kdf", "evp_kdf_test");
