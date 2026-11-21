@@ -722,13 +722,25 @@ static void replace_chunks_in_range(SFRAME_SET *fs, struct stream_range_t *sr,
     sr->sr_range.end = sc->sc_range.end;
 }
 
+/*
+ * Returns the leftmost range which overlaps or is adjacent to key. Several
+ * ranges may match, and when the head range is one of them it must be the
+ * one the new chunk gets added to. The chunks of any other range may get
+ * replaced or destroyed while ranges are merged, but the head chunk may be
+ * referenced by a record returned from ossl_quic_rstream_get_record()
+ * which is not released yet.
+ */
 static struct stream_range_t *find_range(SFRAME_SET *fs,
     struct stream_range_t *key)
 {
-    struct stream_range_t *sr = NULL;
+    struct stream_range_t *sr = NULL, *prev;
 
     if (!OSSL_RBT_EMPTY(srange, &fs->ranges))
         sr = OSSL_RBT_FIND(srange, &fs->ranges, key);
+
+    while (sr != NULL && (prev = OSSL_RBT_PREV(srange, sr)) != NULL
+        && srange_cmp(key, prev) == 0)
+        sr = prev;
 
     return sr;
 }
