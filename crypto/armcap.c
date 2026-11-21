@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
+#include <crypto/aarch64_dit.h>
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #else
@@ -150,6 +151,8 @@ static unsigned long getauxval(unsigned long key)
 #define OSSL_HWCAP_CE_SM4 (1 << 19)
 #define OSSL_HWCAP_CE_SHA512 (1 << 21)
 #define OSSL_HWCAP_SVE (1 << 22)
+#define OSSL_HWCAP_DIT (1 << 24)
+#define OSSL_HWCAP_SB (1 << 29)
 /* AT_HWCAP2 */
 #define OSSL_HWCAP2 26
 #define OSSL_HWCAP2_SVE2 (1 << 1)
@@ -225,6 +228,8 @@ void _armv8_eor3_probe(void);
 void _armv8_sve_probe(void);
 void _armv8_sve2_probe(void);
 void _armv8_rng_probe(void);
+void _armv8_dit_probe(void);
+void _armv8_sb_probe(void);
 #endif
 #endif /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
 
@@ -321,6 +326,8 @@ void OPENSSL_cpuid_setup(void)
         /* More recent extensions are indicated by sysctls */
         OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha512", ARMV8_SHA512);
         OPENSSL_armcap_P |= sysctl_query("hw.optional.armv8_2_sha3", ARMV8_SHA3);
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_DIT", ARMV8_DIT);
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_SB", ARMV8_SB);
 
         if (OPENSSL_armcap_P & ARMV8_SHA3) {
             char uarch[64];
@@ -373,6 +380,12 @@ void OPENSSL_cpuid_setup(void)
     if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
         OPENSSL_armcap_P |= ARMV8_SVE;
 
+    if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_DIT)
+        OPENSSL_armcap_P |= ARMV8_DIT;
+
+    if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SB)
+        OPENSSL_armcap_P |= ARMV8_SB;
+
     if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
         OPENSSL_armcap_P |= ARMV9_SVE2;
 
@@ -421,6 +434,8 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV9_SVE2);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_dit_probe, ARMV8_DIT);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_sb_probe, ARMV8_SB);
 #endif
 
     /*
@@ -499,3 +514,174 @@ void OPENSSL_cpuid_setup(void)
 #endif
 }
 #endif /* _WIN32, __ARM_MAX_ARCH__ >= 7 */
+
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+
+/* For PSTATE.DIT */
+
+/**
+ * @brief                   Gets the current value of the DIT flag.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_DIT set.
+ *
+ * @return                  Current value of DIT flag: 0 for off, 1 for on.
+ */
+static ossl_inline uint64_t ossl_get_dit_internal(void)
+{
+    uint64_t val = 0;
+
+    /* In case we're used with an older assembler that doesn't understand DIT */
+    __asm__ volatile("mrs %0, s3_3_c4_c2_5" : "=r"(val));
+
+    return (val >> 24) & 1;
+}
+
+/**
+ * @brief                   Get the current DIT state. We allow the caller to supply the "on" value
+ *                          returned so that bit flags can be supported more easily.
+ *
+ * @param value_for_on      Value to be returned if DIT is on.
+ *
+ * @return                  DIT state: 0 for off, value given for on.
+ */
+int ossl_get_dit(int value_for_on)
+{
+    if ((OPENSSL_armcap_P & ARMV8_DIT)) {
+        if (ossl_get_dit_internal()) {
+            return value_for_on;
+        }
+    }
+
+    return 0;
+}
+
+#if defined(__APPLE__)
+/**
+ * @brief                   Inserts a speculation barrier into the code.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_SB set.
+ */
+static ossl_inline void ossl_speculation_barrier(void)
+{
+    __asm__ volatile(".inst 0xd50330ff" ::: "memory"); /* sb */
+}
+
+/**
+ * @brief                   Function to use in the case where OPENSSL_armcap_P does not have the
+ *                          ARMV8_SB bit set - i.e. speculation barriers are not enabled.
+ */
+static ossl_inline void ossl_speculation_barrier_unsupported(void)
+{
+    __asm__ __volatile__("dsb nsh" ::: "memory");
+    __asm__ __volatile__("isb sy" ::: "memory");
+}
+#endif
+
+/**
+ * @brief                   Sets DIT on.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_DIT set.
+ */
+static ossl_inline void ossl_set_dit_on(void)
+{
+#if defined(__APPLE__)
+    void (*sb_func)(void) = NULL;
+
+    if (OPENSSL_armcap_P & ARMV8_SB) {
+        sb_func = ossl_speculation_barrier;
+    } else {
+        sb_func = ossl_speculation_barrier_unsupported;
+    }
+#endif
+
+    __asm__ volatile(".inst 0xD503415F"); /* msr dit, #1 */
+
+#if defined(__APPLE__)
+    /* Apple documentation recommends a speculation barrier after enabling DIT. See
+     * https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
+     * specifically the section on enabling DIT for constant-time cryptographic operations. */
+    sb_func();
+#endif
+}
+
+/**
+ * @brief                   Sets DIT off.
+ *
+ * @note                    MUST NOT be called unless OPENSSL_armcap_P has ARMV8_DIT set.
+ */
+static ossl_inline void ossl_set_dit_off(void)
+{
+    __asm__ volatile(".inst 0xD503405F"); /* msr dit, #0 */
+}
+
+/**
+ * @brief                   Sets DIT on and returns original value. We allow the caller to supply
+ *                          the "on" value returned so that bit flags can be supported more easily.
+ *
+ * @param value_for_on      Value to be returned if DIT was on prior to calling this function.
+ *
+ * @return                  Original DIT state: 0 for off, value given for on.
+ */
+int ossl_ensure_dit_on(int value_for_on)
+{
+    if ((OPENSSL_armcap_P & ARMV8_DIT)) {
+        if (ossl_get_dit_internal()) {
+            return value_for_on; /* If its already enabled, tell caller to leave it on. */
+        }
+        ossl_set_dit_on();
+    }
+
+    return 0;
+}
+
+/**
+ * @brief                   Ensure DIT is on (if dit_val is non-zero) or off, and return the
+ *                          previous DIT state so that we can restore it later. We allow the caller
+ *                          to supply the "on" value returned so that bit flags can be supported
+ *                          more easily.
+ *
+ * @param dit_val           Value to set for DIT: zero for off, non-zero for on.
+ *
+ * @param value_for_on      Value to be returned if DIT was on prior to calling this function.
+ *
+ * @return                  Previous DIT state: 0 for off, value given for on.
+ */
+int ossl_set_dit(const int dit_val, const int value_for_on)
+{
+    if ((OPENSSL_armcap_P & ARMV8_DIT)) {
+        uint64_t dit_prev = ossl_get_dit_internal();
+
+        if (dit_val) {
+            if (!dit_prev) {
+                ossl_set_dit_on();
+            }
+        } else if (dit_prev) {
+            ossl_set_dit_off();
+        }
+
+        if (dit_prev) {
+            return value_for_on;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * @brief                   Sets the DIT flag to its previous value. This function is intended to be
+ *                          called when DIT is already on.
+ *
+ * @param dit_prev          Previous DIT state: 0 for off, non-zero for on.
+ */
+void ossl_restore_original_dit(volatile int *dit_prev)
+{
+    if (!(OPENSSL_armcap_P & ARMV8_DIT)) /* Nothing to do */
+        return;
+
+    if (*dit_prev) /* Was previously set, so leave */
+        return;
+
+    ossl_set_dit_off();
+}
+
+#endif

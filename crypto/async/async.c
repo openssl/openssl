@@ -199,6 +199,9 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
             if (ctx->currjob->status == ASYNC_JOB_STOPPING) {
                 *ret = ctx->currjob->ret;
                 ctx->currjob->waitctx = NULL;
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+                ossl_set_dit(ctx->currjob->dit_prev, 1);
+#endif /* __aarch64__ && !OSSL_NO_DIT */
                 async_release_job(ctx->currjob);
                 ctx->currjob = NULL;
                 *job = NULL;
@@ -227,10 +230,19 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                     ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+                /* Restore previous DIT setting for this job. */
+                ctx->currjob->dit_prev = ossl_set_dit(ctx->currjob->dit_prev, 1);
+#endif /* __aarch64__ && !OSSL_NO_DIT */
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
                     ctx->currjob->libctx = OSSL_LIB_CTX_set0_default(libctx);
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+                    /* Failure, so set DIT back again. */
+                    ctx->currjob->dit_prev = ossl_set_dit(ctx->currjob->dit_prev, 1);
+#endif /* __aarch64__ && !OSSL_NO_DIT */
+
                     ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
                 }
@@ -271,6 +283,10 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
         ctx->currjob->func = func;
         ctx->currjob->waitctx = wctx;
         libctx = ossl_lib_ctx_get_concrete(NULL);
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+        /* Job starts with the same DIT settings as dispatcher. */
+        ctx->currjob->dit_prev = ossl_get_dit(1);
+#endif /* __aarch64__ && !OSSL_NO_DIT */
         if (!async_fibre_swapcontext(&ctx->dispatcher,
                 &ctx->currjob->fibrectx, 1)) {
             ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
@@ -308,8 +324,18 @@ int ASYNC_pause_job(void)
     job = ctx->currjob;
     job->status = ASYNC_JOB_PAUSING;
 
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+    /* Restore previous DIT setting for the dispatcher. */
+    job->dit_prev = ossl_set_dit(job->dit_prev, 1);
+#endif /* __aarch64__ && !OSSL_NO_DIT */
+
     if (!async_fibre_swapcontext(&job->fibrectx,
             &ctx->dispatcher, 1)) {
+#if defined(__aarch64__) && !defined(OSSL_NO_DIT)
+        /* Failure, so set DIT back again. */
+        job->dit_prev = ossl_set_dit(job->dit_prev, 1);
+#endif /* __aarch64__ && !OSSL_NO_DIT */
+
         ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         return 0;
     }

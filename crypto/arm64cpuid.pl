@@ -218,6 +218,22 @@ _armv8_rng_probe:
 	mrs	x0, s3_3_c2_c4_1	// rndrrs
 	ret
 .size	_armv8_rng_probe,.-_armv8_rng_probe
+
+.globl	_armv8_dit_probe
+.type	_armv8_dit_probe,%function
+_armv8_dit_probe:
+	AARCH64_VALID_CALL_TARGET
+	mrs	x0, s3_3_c4_c2_5	// dit
+	ret
+.size	_armv8_dit_probe,.-_armv8_dit_probe
+
+.globl	_armv8_sb_probe
+.type	_armv8_sb_probe,%function
+_armv8_sb_probe:
+	AARCH64_VALID_CALL_TARGET
+	.inst	0xd50330ff		// sb
+	ret
+.size	_armv8_sb_probe,.-_armv8_sb_probe
 ___
 
 sub gen_random {
