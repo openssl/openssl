@@ -377,6 +377,121 @@ err:
     return testresult;
 }
 
+static const unsigned char data_2[] = "abcdefghijklmnopqrstuvwxy";
+
+/* A length of 0 expects no frame at idx */
+static int check_stream_frame(QUIC_SSTREAM *sstream, size_t idx,
+    uint64_t offset, uint64_t len)
+{
+    OSSL_QUIC_FRAME_STREAM hdr;
+    OSSL_QTX_IOVEC iov[2];
+    size_t i, num_iov = OSSL_NELEM(iov), total = 0;
+
+    if (!ossl_quic_sstream_get_stream_frame(sstream, idx, &hdr, iov, &num_iov))
+        return TEST_uint64_t_eq(len, 0);
+
+    if (!TEST_uint64_t_eq(hdr.offset, offset)
+        || !TEST_uint64_t_eq(hdr.len, len))
+        return 0;
+
+    for (i = 0; i < num_iov; ++i) {
+        if (!TEST_mem_eq(iov[i].buf, iov[i].buf_len,
+                data_2 + offset + total, iov[i].buf_len))
+            return 0;
+
+        total += iov[i].buf_len;
+    }
+
+    return TEST_uint64_t_eq(total, len);
+}
+
+/*
+ * One copy of the data is ACKed and another is declared lost, in either order,
+ * as when a PTO probe resends data that is still in flight.
+ */
+static int test_sstream_two_copies(int idx)
+{
+    int testresult = 0, ack_first = idx & 1, partial = idx & 2;
+    QUIC_SSTREAM *sstream = NULL;
+    size_t consumed = 0;
+
+    if (!TEST_ptr(sstream = ossl_quic_sstream_new(32))
+        || !TEST_true(ossl_quic_sstream_append(sstream, data_2, 24, &consumed))
+        || !TEST_size_t_eq(consumed, 24)
+        || !TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 0, 23))
+        || !TEST_true(ossl_quic_sstream_mark_lost(sstream, 0, 23))
+        || !TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 0, 23)))
+        goto err;
+
+    if (!ack_first && !TEST_true(ossl_quic_sstream_mark_lost(sstream, 0, 23)))
+        goto err;
+
+    if (partial) {
+        if (!TEST_true(ossl_quic_sstream_mark_acked(sstream, 0, 5))
+            || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 12, 15)))
+            goto err;
+    } else if (!TEST_true(ossl_quic_sstream_mark_acked(sstream, 0, 23))) {
+        goto err;
+    }
+
+    if (ack_first && !TEST_true(ossl_quic_sstream_mark_lost(sstream, 0, 23)))
+        goto err;
+
+    /* Only bytes not ACKed are sent again, and the ACKed prefix is culled */
+    if (partial) {
+        if (!check_stream_frame(sstream, 0, 6, 6)
+            || !check_stream_frame(sstream, 1, 16, 8)
+            || !check_stream_frame(sstream, 2, 0, 0)
+            || !TEST_false(ossl_quic_sstream_is_totally_acked(sstream))
+            || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 18))
+            goto err;
+    } else {
+        if (!check_stream_frame(sstream, 0, 0, 0)
+            || !TEST_true(ossl_quic_sstream_is_totally_acked(sstream))
+            || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 0))
+            goto err;
+
+        /* New data is sent next, so no culled range is left pending */
+        if (!TEST_true(ossl_quic_sstream_append(sstream, data_2 + 24, 1,
+                &consumed))
+            || !check_stream_frame(sstream, 0, 24, 1)
+            || !check_stream_frame(sstream, 1, 0, 0))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    ossl_quic_sstream_free(sstream);
+    return testresult;
+}
+
+/*
+ * An ACK that overlaps one ACKed range and touches the next merges all of
+ * them, so the stream is totally acknowledged and its buffer culled.
+ */
+static int test_sstream_ack_merge(void)
+{
+    int testresult = 0;
+    QUIC_SSTREAM *sstream = NULL;
+    size_t consumed = 0;
+
+    if (!TEST_ptr(sstream = ossl_quic_sstream_new(32))
+        || !TEST_true(ossl_quic_sstream_append(sstream, data_2, 24, &consumed))
+        || !TEST_size_t_eq(consumed, 24)
+        || !TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 0, 23))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 0, 5))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 12, 23))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 3, 11))
+        || !TEST_true(ossl_quic_sstream_is_totally_acked(sstream))
+        || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    ossl_quic_sstream_free(sstream);
+    return testresult;
+}
+
 static int test_single_copy_read(QUIC_RSTREAM *qrs,
     unsigned char *buf, size_t size,
     size_t *readbytes, int *fin)
@@ -3489,6 +3604,8 @@ int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
+    ADD_ALL_TESTS(test_sstream_two_copies, 4);
+    ADD_TEST(test_sstream_ack_merge);
     ADD_ALL_TESTS(test_rstream_simple, 2);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_pkt);
