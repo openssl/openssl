@@ -1106,7 +1106,7 @@ initiate a clean disconnect. For SMTP, you can send a QUIT command:
  printf 'QUIT\r\n' | openssl s_client -connect <server address>:25
                                       -starttls smtp -brief -ign_eof
 
-Similarly, for HTTP/1.1 connections, including a `Connection: close` header
+Similarly, for HTTP/1.1 connections, including a C<Connection: close> header
 ensures the server closes the connection after responding:
 
  printf 'GET / HTTP/1.1\r\nHost: <server address>\r\nConnection: close\r\n\r\n'
