@@ -645,6 +645,12 @@ install_dev : check_INSTALLTOP install_runtime_libs
         COPY/PROT=W:R ossl_sourceroot:[include.openssl]*.h -
                 ossl_installroot:[include.openssl]
         COPY/PROT=W:R [.include.openssl]*.h ossl_installroot:[include.openssl]
+        @ ! {- output_off() if $disabled{cmp}; "" -}
+        - CREATE/DIR ossl_installroot:[include.libcmp]
+        COPY/PROT=W:R ossl_sourceroot:[include.libcmp]*.h -
+                ossl_installroot:[include.libcmp]
+        COPY/PROT=W:R [.include.libcmp]*.h ossl_installroot:[include.libcmp]
+        @ ! {- output_on() if $disabled{cmp}; "" -}
         @ ! Install static (development) libraries
         - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",

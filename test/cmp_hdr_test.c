@@ -10,6 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
+#include "crypto/asn1.h"
 
 static unsigned char rand_data[OSSL_CMP_TRANSACTIONID_LENGTH];
 
