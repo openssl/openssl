@@ -25,7 +25,35 @@ OpenSSL 3.5
 
 ### Major changes between OpenSSL 3.5.9 and OpenSSL 3.5.10 [under development]
 
-  * none
+OpenSSL 3.5.10 is a security patch release.  The most severe CVE fixed
+in this release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed out-of-bounds read in TLS 1.3 key-share processing with Suite B flag.
+    ([CVE-2026-35190])
+
+  * Fixed use-after-free in `PEM_X509_INFO_read_bio_ex()` on stack append
+    failure.
+    ([CVE-2026-107493])
+
+  * Fixed unbounded memory retention in QUIC server for rejected streams.
+    ([CVE-2026-124709])
+
+  * Fixed use of uninitialized stack data in QUIC automated peer detection.
+    ([CVE-2026-88822])
+
+  * Fixed AES-GCM-SIV AAD forgery after a zero-length incremental AAD update.
+    ([CVE-2026-88823])
+
+  * Fixed use-after-free on retransmitted QUIC CRYPTO frames.
+    ([CVE-2026-95691])
+
+  * Fixed out-of-bounds read and incorrect IV length handling in AES-GCM-SIV.
+    ([CVE-2026-95692])
+
+  * Fixed infinite loop in `CMS_encrypt()` with an EC group order of 1.
+    ([CVE-2026-107496])
 
 ### Major changes between OpenSSL 3.5.8 and OpenSSL 3.5.9 [29 Sep 2026]
 
@@ -2422,6 +2450,14 @@ OpenSSL 0.9.x
 [CVE-2026-77696]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-77696
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-88822]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88822
+[CVE-2026-88823]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-88823
+[CVE-2026-95691]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95691
+[CVE-2026-95692]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-95692
+[CVE-2026-107496]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107496
+[CVE-2026-35190]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35190
+[CVE-2026-107493]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107493
+[CVE-2026-124709]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-124709
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
 [README-QUIC.md]: ./README-QUIC.md
