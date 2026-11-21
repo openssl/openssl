@@ -343,24 +343,24 @@ err:
 }
 
 static size_t put_tlv(unsigned char *out, int tag, const unsigned char *v,
-    size_t n)
+    size_t nbytes)
 {
-    size_t h = n < 0x80 ? 2 : (n < 0x100 ? 3 : 4);
+    size_t h = nbytes < 0x80 ? 2 : (nbytes < 0x100 ? 3 : 4);
 
     out[0] = (unsigned char)tag;
-    if (n < 0x80) {
-        out[1] = (unsigned char)n;
-    } else if (n < 0x100) {
+    if (nbytes < 0x80) {
+        out[1] = (unsigned char)nbytes;
+    } else if (nbytes < 0x100) {
         out[1] = 0x81;
-        out[2] = (unsigned char)n;
+        out[2] = (unsigned char)nbytes;
     } else {
         out[1] = 0x82;
-        out[2] = (unsigned char)(n >> 8);
-        out[3] = (unsigned char)n;
+        out[2] = (unsigned char)(nbytes >> 8);
+        out[3] = (unsigned char)nbytes;
     }
-    if (n > 0)
-        memcpy(out + h, v, n);
-    return h + n;
+    if (nbytes > 0)
+        memcpy(out + h, v, nbytes);
+    return h + nbytes;
 }
 
 static size_t put_int(unsigned char *out, unsigned int v)
@@ -384,15 +384,15 @@ static int test_rsa_mp_version0_rejected(void)
     EVP_PKEY *pkey = NULL;
     int i, testresult = 0;
 
-    bl += put_int(body + bl, 0);       /* version */
-    bl += put_int(body + bl, 0x7f);    /* n */
-    bl += put_int(body + bl, 3);       /* e */
-    bl += put_int(body + bl, 0x80);    /* d */
-    bl += put_int(body + bl, 11);      /* p */
-    bl += put_int(body + bl, 13);      /* q */
-    bl += put_int(body + bl, 2);       /* dmp1 */
-    bl += put_int(body + bl, 3);       /* dmq1 */
-    bl += put_int(body + bl, 4);       /* iqmp */
+    bl += put_int(body + bl, 0); /* version */
+    bl += put_int(body + bl, 0x7f); /* n */
+    bl += put_int(body + bl, 3); /* e */
+    bl += put_int(body + bl, 0x80); /* d */
+    bl += put_int(body + bl, 11); /* p */
+    bl += put_int(body + bl, 13); /* q */
+    bl += put_int(body + bl, 2); /* dmp1 */
+    bl += put_int(body + bl, 3); /* dmq1 */
+    bl += put_int(body + bl, 4); /* iqmp */
     for (i = 0; i < 11; i++) {
         size_t el = 0;
 
