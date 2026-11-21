@@ -167,6 +167,13 @@ structure and must not be freed.
 L<X509_dup(3)>,
 L<d2i_X509(3)>,
 
+=head1 HISTORY
+
+All of these functions moved to the new libx509pmi library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509v3.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.

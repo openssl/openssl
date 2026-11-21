@@ -7,7 +7,7 @@ X509_ACERT_print_ex, X509_ACERT_print
 
 =head1 SYNOPSIS
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  int X509_ACERT_print(BIO *bp, X509_ACERT *acert);
  int X509_ACERT_print_ex(BIO *bp, X509_ACERT *acert, unsigned long nmflags,
@@ -99,6 +99,11 @@ L<X509_NAME_print_ex(3)>
 =head1 HISTORY
 
 X509_ACERT_print() and X509_ACERT_print_ex() were added in OpenSSL 3.4.
+
+All of these functions moved to the new libx509pmi library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include "x509_local.h"
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 #include <crypto/asn1.h>
 
@@ -88,7 +89,7 @@ static OSSL_BASIC_ATTR_CONSTRAINTS *v2i_OSSL_BASIC_ATTR_CONSTRAINTS(
                 goto err;
         } else {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NAME);
-            X509V3_conf_add_error_name_value(val);
+            ERR_add_error_data(4, "name=", val->name, ", value=", val->value);
             goto err;
         }
     }

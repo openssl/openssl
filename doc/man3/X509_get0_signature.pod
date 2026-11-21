@@ -43,7 +43,7 @@ X509_ACERT_get_signature_nid - signature information
  void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
                         int secbits, uint32_t flags);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  void X509_ACERT_get0_signature(const X509_ACERT *x,
                                 const ASN1_BIT_STRING **psig,
@@ -150,6 +150,12 @@ The X509_ACERT_get0_signature(), X509_ACERT_get0_info_sigalg() and
 X509_ACERT_get_signature_nid() functions were added in OpenSSL 3.4.
 
 The X509_CRL_get0_tbs_sigalg() function was added in OpenSSL 3.6.
+
+X509_ACERT_get0_info_sigalg(), X509_ACERT_get0_signature() and
+X509_ACERT_get_signature_nid() moved to the new libx509pmi library in OpenSSL
+4.2. Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

@@ -645,6 +645,10 @@ install_dev : check_INSTALLTOP install_runtime_libs
         COPY/PROT=W:R ossl_sourceroot:[include.openssl]*.h -
                 ossl_installroot:[include.openssl]
         COPY/PROT=W:R [.include.openssl]*.h ossl_installroot:[include.openssl]
+        - CREATE/DIR ossl_installroot:[include.libx509pmi]
+        COPY/PROT=W:R ossl_sourceroot:[include.libx509pmi]*.h -
+                ossl_installroot:[include.libx509pmi]
+        COPY/PROT=W:R [.include.libx509pmi]*.h ossl_installroot:[include.libx509pmi]
         @ ! Install static (development) libraries
         - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",

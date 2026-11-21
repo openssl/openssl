@@ -19,7 +19,7 @@ verify certificate, certificate request, or CRL signature
  int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
  int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
  int X509_ACERT_verify(X509_CRL *a, EVP_PKEY *r);
 
 =head1 DESCRIPTION
@@ -78,6 +78,11 @@ X509_REQ_verify_ex(), and X509_self_signed() were added in OpenSSL 3.0.
 X509_ACERT_verify() was added in OpenSSL 3.4.
 
 X509_self_signed() had its cert parameter modified to be I<const> in OpenSSL 4.0.
+
+X509_ACERT_verify() moved to the new libx509pmi library in OpenSSL 4.2. A
+deprecated variant remains in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

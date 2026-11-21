@@ -6,6 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
@@ -18,7 +20,7 @@
 #include <openssl/safestack.h>
 
 #include "v3_admis.h"
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 ASN1_SEQUENCE(NAMING_AUTHORITY) = {
     ASN1_OPT(NAMING_AUTHORITY, namingAuthorityId, ASN1_OBJECT),

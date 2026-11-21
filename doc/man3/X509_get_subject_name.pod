@@ -31,7 +31,7 @@ get X509_NAME hashes or get and set issuer or subject names
  const X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
  int X509_CRL_set_issuer_name(X509_CRL *x, const X509_NAME *name);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  X509_NAME *X509_ACERT_get0_issuerName(const X509_ACERT *x);
  int X509_ACERT_set1_issuerName(X509_ACERT *x, const X509_NAME *name);
@@ -129,6 +129,11 @@ X509_NAME_hash() was turned into a macro and deprecated in OpenSSL 3.0.
 
 X509_ACERT_get0_issuerName(), X509_ACERT_set1_issuerName()
 were added in OpenSSL 3.4.
+
+X509_ACERT_get0_issuerName() and X509_ACERT_set1_issuerName() moved to the new
+libx509pmi library in OpenSSL 4.2. Deprecated variants remain in libcrypto,
+declared in F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

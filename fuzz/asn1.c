@@ -175,7 +175,9 @@ static ASN1_ITEM_EXP *item_type[] = {
 #endif
     ASN1_ITEM_ref(SXNET),
     ASN1_ITEM_ref(SXNETID),
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
     ASN1_ITEM_ref(OSSL_TARGETING_INFORMATION),
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
     ASN1_ITEM_ref(USERNOTICE),
     ASN1_ITEM_ref(X509),
     ASN1_ITEM_ref(X509_ALGOR),
