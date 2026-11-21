@@ -14646,6 +14646,87 @@ end:
 }
 #endif
 
+#if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_SM2) \
+    && !defined(OPENSSL_NO_SM3)
+static const struct {
+    int sm2_cert;
+    unsigned char ext[6];
+    size_t extlen;
+    int success;
+} sm2_cert_sigalg_tests[] = {
+    /* No signature_algorithms_cert extension. */
+    { 1, { 0 }, 0, 1 },
+    /* sm2sig_sm3, also after an unrecognized scheme. */
+    { 1, { 0x00, 0x02, 0x07, 0x08 }, 4, 1 },
+    { 1, { 0x00, 0x04, 0xfe, 0x18, 0x07, 0x08 }, 6, 1 },
+    /* rsa_pkcs1_sha256 must not authorize an SM2-signed certificate. */
+    { 1, { 0x00, 0x02, 0x04, 0x01 }, 4, 0 },
+    /* Nor may sm2sig_sm3 authorize an RSA-signed certificate. */
+    { 0, { 0x00, 0x02, 0x07, 0x08 }, 4, 0 },
+    { 0, { 0x00, 0x02, 0x04, 0x01 }, 4, 1 },
+    { 0, { 0x00, 0x04, 0x07, 0x08, 0x04, 0x01 }, 6, 1 },
+};
+
+static int sm2_cert_sigalg_add_cb(SSL *s, unsigned int ext_type,
+    unsigned int context, const unsigned char **out, size_t *outlen,
+    X509 *x, size_t chainidx, int *al, void *add_arg)
+{
+    int idx = *(int *)add_arg;
+
+    *out = sm2_cert_sigalg_tests[idx].ext;
+    *outlen = sm2_cert_sigalg_tests[idx].extlen;
+    return *outlen != 0;
+}
+
+/* Exercise certificate selection with the extension actually on the wire. */
+static int test_sm2_cert_sigalg(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    char *sm2cert = NULL, *sm2key = NULL;
+    int testresult = 0;
+    int success = sm2_cert_sigalg_tests[idx].success;
+    int use_sm2 = sm2_cert_sigalg_tests[idx].sm2_cert;
+
+    if (is_fips)
+        return TEST_skip("SM2 is not supported by the FIPS provider");
+
+    if (!TEST_ptr(sm2cert = test_mk_file_path(certsdir, "sm2.pem"))
+        || !TEST_ptr(sm2key = test_mk_file_path(certsdir, "sm2.key"))
+        || !TEST_true(create_ssl_ctx_pair(libctx,
+            TLS_server_method(), TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION, &sctx, &cctx,
+            use_sm2 ? sm2cert : cert, use_sm2 ? sm2key : privkey))
+        || !TEST_true(SSL_CTX_set1_sigalgs_list(cctx,
+            "sm2sig_sm3:rsa_pss_rsae_sha256"))
+        || !TEST_true(SSL_CTX_add_custom_ext(cctx,
+            TLSEXT_TYPE_signature_algorithms_cert, SSL_EXT_CLIENT_HELLO,
+            sm2_cert_sigalg_add_cb, NULL, &idx, NULL, NULL))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_int_eq(create_ssl_connection(serverssl, clientssl,
+                         success ? SSL_ERROR_NONE : SSL_ERROR_SSL),
+            success))
+        goto end;
+    if (!success
+        && !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(sm2cert);
+    OPENSSL_free(sm2key);
+    return testresult;
+}
+#endif
+
 #if !defined(OPENSSL_NO_EC)                                            \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
         || !defined(OSSL_NO_USABLE_DTLS1_3) || !defined(OPENSSL_NO_DTLS1_2))
@@ -20052,6 +20133,10 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_3) \
     && !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
     ADD_ALL_TESTS(test_null_cipher_availability, 2);
+#endif
+#if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_SM2) \
+    && !defined(OPENSSL_NO_SM3)
+    ADD_ALL_TESTS(test_sm2_cert_sigalg, OSSL_NELEM(sm2_cert_sigalg_tests));
 #endif
 #if !defined(OPENSSL_NO_EC)                                            \
     && (!defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) \
