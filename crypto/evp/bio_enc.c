@@ -322,6 +322,10 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_RESET:
         ctx->ok = 1;
         ctx->finished = 0;
+        ctx->cont = 1;
+        ctx->buf_len = 0;
+        ctx->buf_off = 0;
+        ctx->read_end = ctx->read_start = &(ctx->buf[BUF_OFFSET]);
         if (!EVP_CipherInit_ex(ctx->cipher, NULL, NULL, NULL, NULL,
                 EVP_CIPHER_CTX_is_encrypting(ctx->cipher)))
             return 0;
