@@ -97,13 +97,17 @@
  * lack one.
  */
 
-/*
- * Creates a new LCIDM. lcid_len is the length to use for LCIDs in bytes, which
- * may be zero.  If cid_prefix is non-NULL and cid_prefix_len > 0, the first
- * cid_prefix_len bytes of every generated CID are set to cid_prefix (remaining
- * bytes stay random).  cid_prefix_len must be strictly less than lcid_len.
+/**
+ * Creates a new LCIDM.
  *
- * Returns NULL on failure.
+ * @param libctx        the library context.
+ * @param lcid_len      length to use for LCIDs in bytes; may be zero.
+ * @param cid_prefix    if non-NULL and cid_prefix_len > 0, the first
+ *                      cid_prefix_len bytes of every generated CID are set
+ *                      to this value (remaining bytes stay random).
+ * @param cid_prefix_len number of prefix bytes; must be strictly less than
+ *                      lcid_len.
+ * @returns a new LCIDM, or NULL on failure.
  */
 QUIC_LCIDM *ossl_quic_lcidm_new(OSSL_LIB_CTX *libctx, size_t lcid_len,
     const unsigned char *cid_prefix, size_t cid_prefix_len);
