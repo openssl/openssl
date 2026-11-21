@@ -31,7 +31,7 @@ OpenSSL 4.2
 
   * Added SSL_CTX_set_quic_cid_prefix() for prefix-based QUIC CID routing
     in multi-process servers.
-    
+
   * TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
   * Added support for Java keytool PKCS#12 files with symmetric keys.

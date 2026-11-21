@@ -40,7 +40,7 @@ OpenSSL 4.2
    worker process instead of one per connection.
 
    *Jean-Frederic Clere*
-   
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
