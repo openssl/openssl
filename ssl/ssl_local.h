@@ -1894,6 +1894,14 @@ struct ssl_connection_st {
         bool early_data_suppressed;
 
         /*
+         * Did the server fail to find any of the client's offered PSK
+         * identities?  Server side, TLS 1.3 only.  If the server ends up with
+         * no certificate to authenticate with, the handshake fails as if a
+         * binder had failed to verify.
+         */
+        bool psk_unknown_identity;
+
+        /*
          * Cached result of the resumption ticket age/lifetime check for the
          * ClientHello under construction. Time-dependent, double-checked
          * within the same flight (see tls13_check_tick_lifetime_hint()).
@@ -2959,6 +2967,18 @@ static ossl_inline int ssl_has_cert(const SSL_CONNECTION *s, int idx)
 
     return s->cert->pkeys[idx].x509 != NULL
         && s->cert->pkeys[idx].privatekey != NULL;
+}
+
+/* Returns true if a certificate and private key of any type are present */
+static ossl_inline int ssl_has_any_cert(const SSL_CONNECTION *s)
+{
+    size_t i;
+
+    for (i = 0; i < s->ssl_pkey_num; i++) {
+        if (ssl_has_cert(s, (int)i))
+            return 1;
+    }
+    return 0;
 }
 
 static ossl_inline void tls1_get_peer_groups(SSL_CONNECTION *s,

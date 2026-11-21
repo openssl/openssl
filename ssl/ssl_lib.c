@@ -619,6 +619,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->hit = 0;
     sc->shutdown = 0;
     sc->ext.early_data_suppressed = 0;
+    sc->ext.psk_unknown_identity = 0;
     sc->ext.early_exporter_ready = 0;
     SSL_SESSION_free(sc->ext.early_data_session);
     sc->ext.early_data_session = NULL;
@@ -3036,14 +3037,17 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
             /*
              * 0-RTT was suppressed. Complete the handshake behind the scenes
              * and report success so the application's early data write loop
-             * finishes. Run the internal SSL_connect() in the CONNECTING state,
-             * as the non-suppressed path does, so ossl_statem_check_finish_init()
-             * does not mistake it for the application leaving the early data
-             * write sequence.
+             * finishes.
+             *
+             * The state must stay NONE: in CONNECTING the client state machine
+             * would try to send early data after a ClientHello that was held
+             * up by a full write buffer.  ossl_statem_check_finish_init() clears
+             * the suppressed flag on every ordinary handshake call, so restore
+             * it afterwards, as this internal call is not the application
+             * leaving the early data write sequence.
              */
-            sc->early_data_state = SSL_EARLY_DATA_CONNECTING;
             ret = SSL_connect(s);
-            sc->early_data_state = SSL_EARLY_DATA_NONE;
+            sc->ext.early_data_suppressed = 1;
             if (ret <= 0)
                 return 0;
             *written = num;
