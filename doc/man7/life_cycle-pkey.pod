@@ -1,5 +1,7 @@
 =pod
 
+=for comment Look in life-cycles before updating this file.
+
 =head1 NAME
 
 life_cycle-pkey - The PKEY algorithm life-cycle
