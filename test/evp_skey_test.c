@@ -16,7 +16,7 @@
 #include "fake_cipherprov.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
-static OSSL_PROVIDER *deflprov = NULL;
+static OSSL_PROVIDER *nullprov = NULL;
 
 #define KEY_SIZE 16
 
@@ -109,10 +109,6 @@ static int test_skey_skeymgmt(void)
     const void *export_key = NULL;
     size_t export_len;
 
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
-
     /* Fetch our SKEYMGMT for Generic Secrets */
     if (!TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(libctx, OSSL_SKEY_TYPE_GENERIC,
                       NULL)))
@@ -178,17 +174,13 @@ static int test_aes_raw_skey(void)
     OSSL_PARAM *params = NULL;
     int ret = 0;
 
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
-
     memset(encrypted_skey, 0, sizeof(encrypted_skey));
     memset(encrypted_raw, 0, sizeof(encrypted_raw));
     memset(aes_key, 1, KEY_SIZE);
     memset(aes_iv, 2, IV_SIZE);
 
-    /* Do a direct fetch to see it works */
-    aes_cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", "provider=default");
+    /* Fetch AES-128-CBC from whatever provider is configured */
+    aes_cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
     if (!TEST_ptr(aes_cbc))
         goto end;
 
@@ -227,16 +219,18 @@ end:
     EVP_SKEY_free(skey);
     EVP_CIPHER_free(aes_cbc);
     EVP_CIPHER_CTX_free(ctx);
-    OSSL_PROVIDER_unload(deflprov);
     return ret;
 }
 
 #ifndef OPENSSL_NO_DES
-/* DES is used to test a "skey-unware" cipher provider */
+/* DES is used to test a "skey-unaware" cipher provider */
 #define DES_KEY_SIZE 24
 #define DES_IV_SIZE 8
 static int test_des_raw_skey(void)
 {
+    /* DES is not available in FIPS mode */
+    if (OSSL_PROVIDER_available(libctx, "fips"))
+        return TEST_skip("DES not available in FIPS mode");
     const unsigned char data[DATA_SIZE] = {
         0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
         0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
@@ -254,17 +248,13 @@ static int test_des_raw_skey(void)
     EVP_SKEY *skey = NULL;
     int ret = 0;
 
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
-
     memset(encrypted_skey, 0, sizeof(encrypted_skey));
     memset(encrypted_raw, 0, sizeof(encrypted_raw));
     memset(des_key, 1, DES_KEY_SIZE);
     memset(des_iv, 2, DES_IV_SIZE);
 
-    /* Do a direct fetch to see it works */
-    des_cbc = EVP_CIPHER_fetch(libctx, "DES-EDE3-CBC", "provider=default");
+    /* Fetch DES-EDE3-CBC from whatever provider is configured */
+    des_cbc = EVP_CIPHER_fetch(libctx, "DES-EDE3-CBC", NULL);
     if (!TEST_ptr(des_cbc))
         goto end;
 
@@ -303,7 +293,6 @@ end:
     EVP_SKEY_free(skey);
     EVP_CIPHER_free(des_cbc);
     EVP_CIPHER_CTX_free(ctx);
-    OSSL_PROVIDER_unload(deflprov);
     return ret;
 }
 #endif
@@ -329,10 +318,6 @@ static int test_skey_metadata_import(int tst)
     size_t out_len = 0;
     const unsigned char *out_oid = NULL, *out_params = NULL;
     size_t out_oid_len = 0, out_params_len = 0;
-
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
         goto end;
@@ -433,7 +418,6 @@ end:
     OSSL_PARAM_free(exp_params);
     OSSL_PARAM_BLD_free(bld);
     EVP_SKEY_free(key);
-    OSSL_PROVIDER_unload(deflprov);
     return ret;
 }
 
@@ -452,10 +436,6 @@ static int test_skey_metadata_export(int tst)
     const char *alias = "export test alias";
     const unsigned char local_keyid[] = { 0xAA, 0xBB, 0xCC };
     int export_ret;
-
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
         goto end;
@@ -533,7 +513,6 @@ end:
     OSSL_PARAM_free(exp_params);
     OSSL_PARAM_BLD_free(bld);
     EVP_SKEY_free(key);
-    OSSL_PROVIDER_unload(deflprov);
     return ret;
 }
 
@@ -590,10 +569,6 @@ static int test_skey_to_diff_provider(void)
     };
     int ret = 0;
 
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
-
     if (!TEST_ptr(fake_prov = fake_cipher_start(libctx)))
         goto end;
 
@@ -618,7 +593,6 @@ end:
     EVP_SKEY_free(key2);
     EVP_SKEY_free(key);
     fake_cipher_finish(fake_prov);
-    OSSL_PROVIDER_unload(deflprov);
     return ret;
 }
 
@@ -636,10 +610,6 @@ static int test_skey_get0_raw_key_len(int tst)
     const unsigned char *export_key = NULL;
     size_t len = 0;
     int ret = 0;
-
-    deflprov = OSSL_PROVIDER_load(libctx, "default");
-    if (!TEST_ptr(deflprov))
-        return 0;
 
     switch (tst) {
     case 0:
@@ -689,14 +659,115 @@ static int test_skey_get0_raw_key_len(int tst)
 end:
     EVP_SKEY_free(key);
     fake_cipher_finish(fake_prov);
-    OSSL_PROVIDER_unload(deflprov);
     return ret;
+}
+
+static int test_hmac_skey(void)
+{
+    int ret = 0;
+    EVP_MAC *hmac = NULL;
+    EVP_MAC_CTX *ctx_skey = NULL, *ctx_raw = NULL;
+    EVP_SKEY *skey = NULL;
+    unsigned char key[KEY_SIZE] = {
+        0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B, 0x45, 0x59, 0x53, 0x4B,
+        0x45, 0x59, 0x53, 0x4B, 0x45, 0x59
+    };
+    const unsigned char data[] = "Test data for HMAC";
+    unsigned char mac_skey[64], mac_raw[64];
+    size_t mac_skey_len = sizeof(mac_skey);
+    size_t mac_raw_len = sizeof(mac_raw);
+    OSSL_PARAM params[2];
+
+    /* Create EVP_SKEY from raw key */
+    if (!TEST_ptr(skey = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_GENERIC,
+                      key, sizeof(key), NULL)))
+        goto end;
+
+    /* Fetch HMAC */
+    if (!TEST_ptr(hmac = EVP_MAC_fetch(libctx, "HMAC", NULL)))
+        goto end;
+
+    /* Set digest parameter */
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    /* Compute HMAC using SKEY */
+    if (!TEST_ptr(ctx_skey = EVP_MAC_CTX_new(hmac))
+        || !TEST_true(EVP_MAC_init_SKEY(ctx_skey, skey, params))
+        || !TEST_true(EVP_MAC_update(ctx_skey, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(ctx_skey, mac_skey, &mac_skey_len,
+            sizeof(mac_skey))))
+        goto end;
+
+    /* Compute HMAC using raw key for comparison */
+    if (!TEST_ptr(ctx_raw = EVP_MAC_CTX_new(hmac))
+        || !TEST_true(EVP_MAC_init(ctx_raw, key, sizeof(key), params))
+        || !TEST_true(EVP_MAC_update(ctx_raw, data, sizeof(data)))
+        || !TEST_true(EVP_MAC_final(ctx_raw, mac_raw, &mac_raw_len,
+            sizeof(mac_raw))))
+        goto end;
+
+    /* Compare the results */
+    if (!TEST_mem_eq(mac_skey, mac_skey_len, mac_raw, mac_raw_len))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_MAC_CTX_free(ctx_skey);
+    EVP_MAC_CTX_free(ctx_raw);
+    EVP_MAC_free(hmac);
+    EVP_SKEY_free(skey);
+    return ret;
+}
+
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_CONFIG_FILE,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "config", OPT_CONFIG_FILE, '<',
+            "The configuration file to use for the libctx" },
+        { NULL }
+    };
+    return options;
 }
 
 int setup_tests(void)
 {
-    libctx = OSSL_LIB_CTX_new();
-    if (libctx == NULL)
+    char *config_file = NULL;
+    OPTION_CHOICE o;
+
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            break;
+        case OPT_TEST_CASES:
+        default:
+        case OPT_ERR:
+            return 0;
+        }
+    }
+
+    /*
+     * This test must be run with a config file to ensure providers are
+     * properly configured. This allows the test to work in both default
+     * and FIPS modes without hardcoding provider loading.
+     */
+    if (config_file == NULL) {
+        TEST_error("No config file specified. Use -config <file>");
+        return 0;
+    }
+
+    /* Load the configuration - this sets up the appropriate providers */
+    if (!test_get_libctx(&libctx, &nullprov, config_file, NULL, NULL))
         return 0;
 
     ADD_TEST(test_skey_cipher);
@@ -711,11 +782,13 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DES
     ADD_TEST(test_des_raw_skey);
 #endif
+    ADD_TEST(test_hmac_skey);
 
     return 1;
 }
 
 void cleanup_tests(void)
 {
+    OSSL_PROVIDER_unload(nullprov);
     OSSL_LIB_CTX_free(libctx);
 }
