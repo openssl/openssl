@@ -3337,8 +3337,8 @@ re_start:
                     /*
                      * -no-interactive never reads stdin, so its progress must
                      * not depend on stdin being readable: fall through on a
-                     * timeout and let the dispatch below take the
-                     * nointeractive exit.
+                     * timeout and let the dispatch below decide whether to
+                     * take the nointeractive exit.
                      */
                     if (!i && !nointeractive && !has_stdin_waiting())
                         continue;
@@ -3514,10 +3514,15 @@ re_start:
             }
         }
 
-        /* don't wait for client input in the non-interactive mode */
+        /*
+         * Don't wait for client input in the non-interactive mode, but do
+         * wait for the handshake: a timeout can get here before it is done.
+         */
         else if (nointeractive) {
-            ret = 0;
-            goto shut;
+            if (SSL_is_init_finished(con)) {
+                ret = 0;
+                goto shut;
+            }
         }
 
 /* OPENSSL_SYS_MSDOS includes OPENSSL_SYS_WINDOWS */
