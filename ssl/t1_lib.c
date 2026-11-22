@@ -4152,6 +4152,13 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
             return 1;
         if (sigalg->sig != EVP_PKEY_RSA_PSS)
             continue;
+        /* Match an RSA-PSS signature by the digest in its parameters. */
+        if (sig_nid == NID_rsassaPss) {
+            if (X509_get_signature_info(x, &mdnid, NULL, NULL, NULL)
+                && mdnid == sigalg->hash)
+                return 1;
+            continue;
+        }
         /*
          * Accept RSA PKCS#1 signatures in certificates when the signature
          * algorithms include RSA-PSS with a matching digest algorithm.

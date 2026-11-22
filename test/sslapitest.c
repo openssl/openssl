@@ -13695,6 +13695,85 @@ end:
 
     return testresult;
 }
+
+/* The value SSL_check_chain() returned in check_chain_pss_cb(). */
+static int check_chain_pss_flags;
+
+/*
+ * Server certificate callback: records SSL_check_chain() for a chain whose
+ * leaf and intermediate are RSASSA-PSS signed, then serves that chain.
+ */
+static int check_chain_pss_cb(SSL *s, void *arg)
+{
+    EVP_PKEY *pkey = NULL;
+    X509 *x509 = NULL;
+    STACK_OF(X509) *chain = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(chain = sk_X509_new_null())
+        || !TEST_true(load_chain("ca-pss-cert.pem", NULL, NULL, chain))
+        || !TEST_true(load_chain("ee-pss-cert.pem", NULL, &x509, NULL))
+        || !TEST_true(load_chain("ee-key.pem", &pkey, NULL, NULL)))
+        goto out;
+
+    check_chain_pss_flags = SSL_check_chain(s, x509, pkey, chain);
+    if (!TEST_true(SSL_use_cert_and_key(s, x509, pkey, chain, 1)))
+        goto out;
+
+    ret = 1;
+out:
+    EVP_PKEY_free(pkey);
+    X509_free(x509);
+    OSSL_STACK_OF_X509_free(chain);
+    return ret;
+}
+
+/*
+ * SSL_check_chain() on a chain whose leaf and intermediate are RSASSA-PSS
+ * signed, with the client offering RSA-PSS and RSA PKCS#1 signature schemes.
+ * Test 0: TLS 1.2
+ * Test 1: TLS 1.3
+ */
+static int test_check_chain_pss(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int prot = tst == 0 ? TLS1_2_VERSION : TLS1_3_VERSION;
+    int testresult = 0;
+
+#if defined(OPENSSL_NO_TLS1_2)
+    if (tst == 0)
+        return TEST_skip("TLS 1.2 is disabled");
+#endif /* defined(OPENSSL_NO_TLS1_2) */
+#if defined(OSSL_NO_USABLE_TLS1_3)
+    if (tst == 1)
+        return TEST_skip("TLS 1.3 is disabled");
+#endif /* defined(OSSL_NO_USABLE_TLS1_3) */
+
+    check_chain_pss_flags = 0;
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), prot, prot, &sctx, &cctx, NULL, NULL)))
+        goto end;
+    SSL_CTX_set_cert_cb(sctx, check_chain_pss_cb, NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set1_sigalgs_list(clientssl,
+            "rsa_pss_pss_sha256:rsa_pss_rsae_sha256:rsa_pkcs1_sha256"))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = TEST_true((check_chain_pss_flags & CERT_PKEY_VALID) != 0);
+    testresult &= TEST_true((check_chain_pss_flags & CERT_PKEY_EE_SIGNATURE) != 0);
+    testresult &= TEST_true((check_chain_pss_flags & CERT_PKEY_CA_SIGNATURE) != 0);
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif
 
 static int test_cert_cb(int tst)
@@ -20057,6 +20136,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_bio_eof, 2);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_ALL_TESTS(test_check_chain_pss, 2);
+#endif /* !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3) */
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
 #ifndef OPENSSL_NO_TLS1_2
