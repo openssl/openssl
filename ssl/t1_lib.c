@@ -4622,6 +4622,36 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
 }
 
 /*
+ * Whether a certificate signed with digest mdnid and key type pknid satisfies
+ * the signature_algorithms_cert restrictions sent by the peer.  True when the
+ * peer sent none.
+ */
+static int peer_cert_sigalgs_allow(SSL_CONNECTION *s, int mdnid, int pknid)
+{
+    const SIGALG_LOOKUP *lu;
+    size_t i;
+
+    if (s->s3.tmp.peer_cert_sigalgs == NULL)
+        return 1;
+    for (i = 0; i < s->s3.tmp.peer_cert_sigalgslen; i++) {
+        lu = tls1_lookup_sigalg(SSL_CONNECTION_GET_CTX(s),
+            s->s3.tmp.peer_cert_sigalgs[i]);
+        if (lu == NULL)
+            continue;
+
+        /*
+         * This does not differentiate between the
+         * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
+         * have a chain here that lets us look at the key OID in the
+         * signing certificate.
+         */
+        if (mdnid == lu->hash && pknid == lu->sig)
+            return 1;
+    }
+    return 0;
+}
+
+/*
  * Checks the given cert against signature_algorithm_cert restrictions sent by
  * the peer (if any) as well as whether the hash from the sigalg is usable with
  * the key.
@@ -4630,9 +4660,7 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
 static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
     X509 *x, EVP_PKEY *pkey)
 {
-    const SIGALG_LOOKUP *lu;
     int mdnid, pknid, supported;
-    size_t i;
     const char *mdname = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -4669,22 +4697,7 @@ static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
     if (s->s3.tmp.peer_cert_sigalgs != NULL) {
         if (!X509_get_signature_info(x, &mdnid, &pknid, NULL, NULL))
             return 0;
-        for (i = 0; i < s->s3.tmp.peer_cert_sigalgslen; i++) {
-            lu = tls1_lookup_sigalg(SSL_CONNECTION_GET_CTX(s),
-                s->s3.tmp.peer_cert_sigalgs[i]);
-            if (lu == NULL)
-                continue;
-
-            /*
-             * This does not differentiate between the
-             * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
-             * have a chain here that lets us look at the key OID in the
-             * signing certificate.
-             */
-            if (mdnid == lu->hash && pknid == lu->sig)
-                return 1;
-        }
-        return 0;
+        return peer_cert_sigalgs_allow(s, mdnid, pknid);
     }
 
     /*
@@ -4804,7 +4817,9 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
  * does not require an X509 certificate.  Returns the chosen algorithm, or
  * NULL if none of the shared algorithms is usable with the key.  None is in
  * strict mode or Suite B mode, which check the chain in the legacy slots, so
- * a credential is never used in those modes.
+ * a credential is never used in those modes.  None is when the leaf
+ * certificate's signature does not satisfy the peer's
+ * signature_algorithms_cert.
  */
 static const SIGALG_LOOKUP *find_sig_alg_for_credential(SSL_CONNECTION *s,
     const SSL_CREDENTIAL *cred)
@@ -4819,6 +4834,9 @@ static const SIGALG_LOOKUP *find_sig_alg_for_credential(SSL_CONNECTION *s,
         return NULL;
     if (pkey == NULL
         || ssl_cert_lookup_by_pkey(pkey, &idx, sctx) == NULL)
+        return NULL;
+    if (!peer_cert_sigalgs_allow(s, cred->leaf_sig_mdnid,
+            cred->leaf_sig_pknid))
         return NULL;
 
     for (i = 0; i < s->shared_sigalgslen; i++) {

@@ -2683,6 +2683,13 @@ struct ssl_credential_st {
      */
     SSL_TRUST_ANCHOR_PATTERN *groups;
     size_t group_count;
+    /*
+     * Digest and key type NIDs of the leaf certificate's signature, from
+     * X509_get_signature_info().  Both are NID_undef when there is no leaf,
+     * the leaf does not parse, or its signature algorithm is not known.
+     */
+    int leaf_sig_mdnid;
+    int leaf_sig_pknid;
     CRYPTO_REF_COUNT references;
 };
 /* STACK_OF(SSL_CREDENTIAL) is declared publicly in <openssl/ssl.h.in>. */
