@@ -206,7 +206,8 @@ err:
  * - OSSL_CIPHER_PARAM_AEAD_TAGLEN on a fresh ctx is non-zero and matches
  *   EVP_CIPHER_CTX_get_tag_length()
  * - OSSL_CIPHER_PARAM_AEAD_TAG after an encryption returns the tag with
- *   return_size set, and a size query (data NULL) reports the tag length
+ *   return_size set, a size query (data NULL) reports the tag length, and
+ *   an oversized buffer returns the full tag for OCB and SIV ciphers
  * - all fit the fixed-size buffers used by the other tests
  *
  * Resolved values are written back into aead_list[idx].
@@ -309,6 +310,20 @@ static int test_evp_aead_params(int idx)
         || !TEST_mem_eq(tag, taglen, tag_ctrl, taglen)) {
         TEST_info("%s: tag param query", info->name);
         goto err;
+    }
+
+    if (strstr(info->name, "OCB") != NULL
+        || strstr(info->name, "SIV") != NULL) {
+        memset(tag, 0, sizeof(tag));
+        params[0] = OSSL_PARAM_construct_octet_string(
+            OSSL_CIPHER_PARAM_AEAD_TAG, tag, EVPTEST_TAG_LEN_MAX);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+            || !TEST_size_t_eq(params[0].return_size, taglen)
+            || !TEST_mem_eq(tag, taglen, tag_ctrl, taglen)) {
+            TEST_info("%s: tag oversized buffer", info->name);
+            goto err;
+        }
     }
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
