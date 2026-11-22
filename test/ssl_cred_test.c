@@ -881,6 +881,142 @@ err:
     return ret;
 }
 
+/* A signature_algorithms_cert list for set_peer_cert_sigalgs_cb(). */
+struct cert_sigalgs {
+    const uint16_t *sigalgs;
+    size_t sigalgs_len;
+};
+
+/*
+ * A server ClientHello callback that records the cert_sigalgs list in arg as
+ * the client's signature_algorithms_cert.  libssl's client does not send that
+ * extension.
+ */
+static int set_peer_cert_sigalgs_cb(SSL *s, ossl_unused int *al, void *arg)
+{
+    const struct cert_sigalgs *cs = arg;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    uint16_t *copy;
+
+    if (sc == NULL
+        || (copy = OPENSSL_memdup(cs->sigalgs,
+                cs->sigalgs_len * sizeof(*copy)))
+            == NULL)
+        return SSL_CLIENT_HELLO_ERROR;
+    OPENSSL_free(sc->s3.tmp.peer_cert_sigalgs);
+    sc->s3.tmp.peer_cert_sigalgs = copy;
+    sc->s3.tmp.peer_cert_sigalgslen = cs->sigalgs_len;
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/*
+ * The client's signature_algorithms_cert for test_credential_cert_sigalgs(),
+ * and whether the credential is served.  The credential's leaf is self-signed
+ * with ECDSA and SHA-384, or with RSA-PSS and SHA-256 when pss is set.  Every
+ * list names ECDSA with SHA-256, the signature of the default certificate.
+ */
+static const struct {
+    int pss;
+    uint16_t sigalgs[2];
+    size_t sigalgs_len;
+    int served;
+} cert_sigalgs_tests[] = {
+    { 0, { TLSEXT_SIGALG_ecdsa_secp256r1_sha256 }, 1, 0 },
+    { 0,
+        { TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+            TLSEXT_SIGALG_ecdsa_secp384r1_sha384 },
+        2, 1 },
+    { 1, { TLSEXT_SIGALG_ecdsa_secp256r1_sha256 }, 1, 0 },
+    { 1,
+        { TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+            TLSEXT_SIGALG_rsa_pss_pss_sha256 },
+        2, 1 }
+};
+
+/*
+ * A credential is served, and its trust anchor listed, only when the client's
+ * signature_algorithms_cert names its leaf's signature; otherwise the default
+ * certificate is served and no trust anchor is listed.
+ */
+static int test_credential_cert_sigalgs(int idx)
+{
+    static const uint8_t requested[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    struct cert_sigalgs cs = { cert_sigalgs_tests[idx].sigalgs,
+        cert_sigalgs_tests[idx].sigalgs_len };
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_CREDENTIAL *cred = NULL;
+    X509 *x = NULL, *cred_cert = NULL, *peer = NULL;
+    EVP_PKEY *key = NULL, *cred_key = NULL;
+    const uint8_t *ids = NULL;
+    size_t ids_len = 0;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    if (!TEST_true(make_cert_and_key(&x, &key))
+        || !TEST_true(make_cert_and_key(&cred_cert, &cred_key)))
+        goto err;
+    if (cert_sigalgs_tests[idx].pss) {
+        EVP_PKEY_free(cred_key);
+        if (!TEST_ptr(cred_key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA-PSS",
+                          (size_t)2048))
+            || !TEST_true(X509_set_pubkey(cred_cert, cred_key))
+            || !TEST_int_gt(X509_sign(cred_cert, cred_key, EVP_sha256()), 0))
+            goto err;
+    } else if (!TEST_int_gt(X509_sign(cred_cert, cred_key, EVP_sha384()), 0)) {
+        goto err;
+    }
+    if (!TEST_ptr(cred = make_served_credential(cred_cert, cred_key, tai_id,
+                      sizeof(tai_id))))
+        goto err;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
+        || !TEST_ptr(cctx = SSL_CTX_new_ex(NULL, NULL, TLS_client_method()))
+        || !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_use_certificate(sctx, x))
+        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key))
+        || !TEST_true(SSL_CTX_add1_credential(sctx, cred)))
+        goto err;
+    SSL_CTX_set_client_hello_cb(sctx, set_peer_cert_sigalgs_cb, &cs);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL))
+        || !TEST_true(SSL_set1_requested_trust_anchors(clientssl, requested,
+            sizeof(requested)))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(peer = SSL_get1_peer_certificate(clientssl)))
+        goto err;
+
+    SSL_get0_peer_available_trust_anchors(clientssl, &ids, &ids_len);
+    if (!cert_sigalgs_tests[idx].served) {
+        if (!TEST_size_t_eq(ids_len, 0)
+            || !TEST_int_eq(X509_cmp(peer, x), 0))
+            goto err;
+    } else if (!TEST_mem_eq(ids, ids_len, requested, sizeof(requested))
+        || !TEST_int_eq(X509_cmp(peer, cred_cert), 0)) {
+        goto err;
+    }
+
+    ret = 1;
+err:
+    X509_free(peer);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CREDENTIAL_free(cred);
+    X509_free(x);
+    X509_free(cred_cert);
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(cred_key);
+    return ret;
+}
+
 /* A client that asked for no trust anchors is told of none. */
 static int test_available_trust_anchors_unasked(void)
 {
@@ -1114,6 +1250,7 @@ int setup_tests(void)
     ADD_TEST(test_compare_size);
     ADD_TEST(test_parse_private_keys);
     ADD_TEST(test_available_trust_anchors);
+    ADD_ALL_TESTS(test_credential_cert_sigalgs, OSSL_NELEM(cert_sigalgs_tests));
     ADD_TEST(test_available_trust_anchors_unasked);
     ADD_TEST(test_matched_trust_anchor);
     ADD_TEST(test_requested_trust_anchors_from_server);
