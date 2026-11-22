@@ -38,16 +38,18 @@ SSL_CREDENTIAL *ossl_ssl_credential_new(SSL_CREDENTIAL_TYPE type)
 /*
  * Store the digest and key type NIDs of leaf's signature in *mdnid and
  * *pknid, or NID_undef in both when leaf does not parse or its signature
- * algorithm is not known.  Leaves the error queue as it was.
+ * algorithm is not known, and in *is_mtc whether leaf is a Merkle Tree
+ * Certificate.  Leaves the error queue as it was.
  */
 static void leaf_signature_info(const CRYPTO_BUFFER *leaf, int *mdnid,
-    int *pknid)
+    int *pknid, int *is_mtc)
 {
     const unsigned char *der = CRYPTO_BUFFER_data(leaf);
     X509 *x;
 
     ERR_set_mark();
     x = d2i_X509(NULL, &der, (long)CRYPTO_BUFFER_len(leaf));
+    *is_mtc = x != NULL && ossl_ssl_cert_is_mtc(x);
     if (x == NULL || !X509_get_signature_info(x, mdnid, pknid, NULL, NULL)) {
         *mdnid = NID_undef;
         *pknid = NID_undef;
@@ -60,7 +62,7 @@ int ossl_ssl_credential_set1_cert_chain(SSL_CREDENTIAL *cred,
     STACK_OF(CRYPTO_BUFFER) *chain)
 {
     STACK_OF(CRYPTO_BUFFER) *copy = NULL;
-    int i, mdnid = NID_undef, pknid = NID_undef;
+    int i, mdnid = NID_undef, pknid = NID_undef, is_mtc = 0;
 
     if (chain != NULL) {
         if ((copy = sk_CRYPTO_BUFFER_dup(chain)) == NULL)
@@ -75,12 +77,13 @@ int ossl_ssl_credential_set1_cert_chain(SSL_CREDENTIAL *cred,
         }
         if (sk_CRYPTO_BUFFER_num(copy) > 0)
             leaf_signature_info(sk_CRYPTO_BUFFER_value(copy, 0), &mdnid,
-                &pknid);
+                &pknid, &is_mtc);
     }
     sk_CRYPTO_BUFFER_pop_free(cred->chain, CRYPTO_BUFFER_free);
     cred->chain = copy;
     cred->leaf_sig_mdnid = mdnid;
     cred->leaf_sig_pknid = pknid;
+    cred->leaf_is_mtc = is_mtc;
     return 1;
 }
 

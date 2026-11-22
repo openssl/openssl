@@ -2690,6 +2690,8 @@ struct ssl_credential_st {
      */
     int leaf_sig_mdnid;
     int leaf_sig_pknid;
+    /* Whether the leaf certificate is a Merkle Tree Certificate. */
+    int leaf_is_mtc;
     CRYPTO_REF_COUNT references;
 };
 /* STACK_OF(SSL_CREDENTIAL) is declared publicly in <openssl/ssl.h.in>. */
@@ -3213,6 +3215,12 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
 __owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
+/**
+ * @brief Whether cert is a Merkle Tree Certificate, by its signatureAlgorithm.
+ * @param cert the certificate to inspect
+ * @returns 1 if cert's signatureAlgorithm is id-alg-mtcProof, 0 otherwise.
+ */
+int ossl_ssl_cert_is_mtc(const X509 *cert);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
     int ref);

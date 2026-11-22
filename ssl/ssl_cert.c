@@ -446,12 +446,7 @@ static const uint8_t mtc_proof_alg_oid[] = {
     0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0xda, 0x4b, 0x2f, 0x00
 };
 
-/**
- * @brief Whether cert is a Merkle Tree Certificate, by its signatureAlgorithm.
- * @param cert the certificate to inspect
- * @returns 1 if cert's signatureAlgorithm is id-alg-mtcProof, 0 otherwise.
- */
-static int cert_is_mtc(const X509 *cert)
+int ossl_ssl_cert_is_mtc(const X509 *cert)
 {
     const X509_ALGOR *alg;
 
@@ -639,7 +634,7 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
         X509_STORE_CTX_set_verify_cb(ctx, s->verify_callback);
 
     /* A Merkle Tree Certificate is a proof, verified as one. */
-    if (sk != NULL && cert_is_mtc(x)) {
+    if (sk != NULL && ossl_ssl_cert_is_mtc(x)) {
         i = ssl_verify_mtc(s, x, verify_store, param);
         goto end;
     }
