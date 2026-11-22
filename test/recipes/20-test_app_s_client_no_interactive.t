@@ -10,7 +10,10 @@ use strict;
 use warnings;
 
 use IPC::Open3;
+use IO::Select;
+use IO::Socket::IP;
 use POSIX ':sys_wait_h';
+use Time::HiRes qw(time);
 use OpenSSL::Test qw/:DEFAULT result_file srctop_file bldtop_file/;
 use OpenSSL::Test::Utils;
 
@@ -36,7 +39,7 @@ plan skip_all => "$test_name needs ec, ecx or dh for TLS key exchange"
 plan skip_all => "$test_name only applies to the Windows stdin polling path"
     unless config('target') =~ /^(?:VC-|mingw)/;
 
-plan tests => 5;
+plan tests => 10;
 
 my $shlib_wrap   = bldtop_file("util", "wrap.pl");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -52,6 +55,13 @@ my $server_key   = srctop_file("test", "certs", "serverkey.pem");
 # Signalling it, however, would leave the application behind -- see
 # release_and_reap().
 my @wrap = ($^X, $shlib_wrap, $apps_openssl);
+
+# What says the client finished its handshake.  With -brief, s_client prints
+# this to stderr at the moment the handshake completes, and at no other time.
+# Its session summary is no use for this: it is also printed when the client
+# exits mid-handshake, and once a TLS 1.3 ServerHello has arrived that
+# already names the negotiated cipher.
+my $established = qr/^CONNECTION ESTABLISHED\r?$/m;
 
 # Both peers write to files rather than to pipes.  Nothing here drains a pipe
 # while they are running and Windows Perl cannot select() on one, so a chatty
@@ -202,20 +212,93 @@ sub release_and_reap
     reaped($pid, 5);
 }
 
+sub start_s_server
+{
+    my $tag = shift;
+    my ($out, $out_file) = result_handle("$tag-stdout.txt");
+    my ($err) = result_handle("$tag-stderr.txt");
+    my $pid = open3(my $stdin, ">&" . fileno($out), ">&" . fileno($err),
+                    @wrap, "s_server", "-accept", "0", "-naccept", "1",
+                    "-cert", $server_pem, "-key", $server_key);
+
+    return ($pid, $stdin, $out, $err, $out_file);
+}
+
+sub write_all
+{
+    my ($sock, $buf) = @_;
+
+    for (my $off = 0; $off < length($buf); ) {
+        my $w = syswrite($sock, $buf, length($buf) - $off, $off);
+
+        return unless defined $w;
+        $off += $w;
+    }
+}
+
+# Relay between the client and the server, but stall the handshake halfway:
+# pass on the server's first TLS record (its ServerHello), then hold back the
+# rest of its flight for $stall seconds.  The client then knows its cipher
+# without having finished, which is the state an early exit is easiest to
+# mistake for success in.  Runs until the client ($pid) exits or $limit
+# seconds pass.  Returns its wait status (undef if still running) and whether
+# the held flight was released while the client was still there to get it.
+# This polls in-process: select() works on sockets on Windows, pipes aside.
+sub relay_with_stall
+{
+    my ($pid, $client, $server, $stall, $limit) = @_;
+    my $sel = IO::Select->new($client, $server);
+    my $deadline = time() + $limit;
+    my ($held, $release_at, $released) = ("", undef, 0);
+
+    while (time() < $deadline) {
+        my $reaped = waitpid($pid, WNOHANG);
+
+        return ($?, $released) if $reaped == $pid;
+        last if $reaped < 0;
+        if (defined $release_at && !$released && time() >= $release_at) {
+            write_all($client, $held);
+            $released = 1;
+        }
+        if ($sel->count() == 0) {
+            select(undef, undef, undef, 0.1);
+            next;
+        }
+        foreach my $s ($sel->can_read(0.1)) {
+            my $from_server = $s == $server;
+            my $to = $from_server ? $client : $server;
+            my $n = sysread($s, my $buf, 16384);
+
+            unless ($n) {
+                # EOF: stop reading this side, and pass the close on unless
+                # data for the other side is still being held back.
+                $sel->remove($s);
+                shutdown($to, 1) if $released || !$from_server;
+                next;
+            }
+            if (!$from_server || $released) {
+                write_all($to, $buf);
+                next;
+            }
+            $held .= $buf;
+            next if defined $release_at || length($held) < 5;
+            my $first = 5 + unpack("n", substr($held, 3, 2));
+            next if length($held) < $first;
+            write_all($client, substr($held, 0, $first, ""));
+            $release_at = time() + $stall;
+        }
+    }
+    return (undef, $released);
+}
+
 # $s_server_i is the server's stdin: a pipe whose writer this recipe holds open
 # and never writes to.  That is what a test harness, or any script that pipes
 # into the app without sending anything, presents.  Such a pipe never becomes
 # readable, and the accept loop used to reach a blocking read of it before it
 # had accepted anything at all.  The writer must stay open for the whole run:
 # closing it makes the pipe readable at EOF and hides the problem.
-my ($s_server_out, $s_server_out_file) = result_handle("s_server-stdout.txt");
-my ($s_server_err) = result_handle("s_server-stderr.txt");
-my @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
-                    "-cert", $server_pem, "-key", $server_key);
-my $s_server_pid = open3(my $s_server_i,
-                         ">&" . fileno($s_server_out),
-                         ">&" . fileno($s_server_err),
-                         @wrap, @s_server_cmd);
+my ($s_server_pid, $s_server_i, $s_server_out, $s_server_err,
+    $s_server_out_file) = start_s_server("s_server");
 
 my $port = wait_for_port($s_server_out_file, 30);
 ok(defined $port, "s_server port check");
@@ -230,7 +313,7 @@ SKIP: {
         = result_handle("s_client-stdout.txt");
     my ($s_client_err, $s_client_err_file)
         = result_handle("s_client-stderr.txt");
-    my @s_client_cmd = ("s_client", "-no-interactive",
+    my @s_client_cmd = ("s_client", "-no-interactive", "-brief",
                         "-connect", "localhost:$port");
     my $s_client_pid = open3(my $s_client_i,
                              ">&" . fileno($s_client_out),
@@ -256,10 +339,9 @@ SKIP: {
     # Exiting is not on its own enough.  Before this fix the server blocked on
     # stdin ahead of its first accept(), so the handshake never started, and
     # the client still exited 0 as soon as a second of socket silence had
-    # passed.  print_stuff() reports "Cipher is (NONE)" in that state, so this
-    # is what separates the fix from a client that merely gave up on time.
-    like(slurp($s_client_out_file),
-         qr/^(?:New|Reused), [^,\n]+, Cipher is (?!\(NONE\))\S/m,
+    # passed.  This is what separates the fix from a client that merely gave
+    # up on time.
+    like(slurp($s_client_err_file), $established,
          "s_client -no-interactive completed the handshake");
 
     # -naccept 1 makes s_server leave once it has served one connection, so
@@ -275,3 +357,72 @@ SKIP: {
 release_and_reap("s_server", $s_server_pid, $s_server_i, 15) if $s_server_pid;
 close $s_server_out;
 close $s_server_err;
+
+# Now a server that is slow to finish the handshake.  With -nbio, s_client
+# drives its handshake from the same 1-second poll that watches stdin, and a
+# timeout there used to reach the -no-interactive exit mid-handshake: the
+# client exited 0 without ever finishing.  (Without -nbio the handshake blocks
+# inside SSL_write() instead and the poll never sees it.)  The client connects
+# to a relay in this recipe rather than to s_server, so that the relay can
+# stall the server's flight for longer than one poll.
+my $stall = 2.5;
+my ($s_server2_pid, $s_server2_i, $s_server2_out, $s_server2_err,
+    $s_server2_out_file) = start_s_server("s_server-stalled");
+my $port2 = wait_for_port($s_server2_out_file, 30);
+ok(defined $port2, "s_server port check for the stalled handshake");
+
+SKIP: {
+    skip "could not start s_server", 4 unless defined $port2;
+    my $listener = IO::Socket::IP->new(LocalHost => "127.0.0.1",
+                                       LocalPort => 0, Listen => 1)
+        or BAIL_OUT("cannot listen for the client: $@");
+
+    my ($s_client_out) = result_handle("s_client-stalled-stdout.txt");
+    my ($s_client_err, $s_client_err_file)
+        = result_handle("s_client-stalled-stderr.txt");
+    my @s_client_cmd = ("s_client", "-no-interactive", "-brief", "-nbio",
+                        "-connect", "127.0.0.1:" . $listener->sockport());
+    my $s_client_pid = open3(my $s_client_i,
+                             ">&" . fileno($s_client_out),
+                             ">&" . fileno($s_client_err),
+                             @wrap, @s_client_cmd);
+
+    my ($client, $server, $s_client_status, $released);
+
+    $client = $listener->accept()
+        if IO::Select->new($listener)->can_read(30);
+    $server = IO::Socket::IP->new(PeerHost => "localhost", PeerPort => $port2)
+        if $client;
+    diag("the relay could not connect the client to s_server")
+        unless $client && $server;
+    ($s_client_status, $released)
+        = relay_with_stall($s_client_pid, $client, $server, $stall, 30)
+        if $client && $server;
+
+    release_and_reap("s_client", $s_client_pid, $s_client_i, 15)
+        unless defined $s_client_status;
+    close $_ foreach grep { defined } ($client, $server, $listener);
+    close $s_client_out;
+    close $s_client_err;
+
+    diag("s_client stderr:\n" . slurp($s_client_err_file))
+        unless $released && defined $s_client_status;
+
+    # The client must still be there when the rest of the server's flight
+    # arrives: leaving before then is the early exit.
+    ok($released, "s_client -no-interactive waits for a stalled handshake");
+    ok(defined $s_client_status,
+       "s_client -no-interactive exits after a stalled handshake");
+    is($s_client_status, 0,
+       "s_client -no-interactive exit status after a stalled handshake");
+    like(slurp($s_client_err_file), $established,
+         "s_client -no-interactive completed the stalled handshake");
+}
+
+# Closing the relay's sockets ends s_server's only connection, so a working
+# build is already on its way out.
+$s_server2_pid = 0 if defined wait_for_exit($s_server2_pid, 10);
+release_and_reap("s_server", $s_server2_pid, $s_server2_i, 15)
+    if $s_server2_pid;
+close $s_server2_out;
+close $s_server2_err;
