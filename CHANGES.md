@@ -105,8 +105,7 @@ OpenSSL 4.2
    least one second, and at least 64 seconds, after the reseed that a change
    caused; output drawn before the kernel has reseeded can still repeat across
    the copies. Processes that cannot open the device (by default only root
-   can) and hosts without the device are unaffected. In a debug build,
-   OPENSSL_VMCLOCK names another path, for tests.
+   can) and hosts without the device are unaffected.
 
    *Yuxiang Ji*
 

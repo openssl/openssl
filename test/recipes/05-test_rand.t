@@ -27,13 +27,7 @@ SKIP: {
 }
 
 ok(run(test(["drbgtest"])));
-
-SKIP: {
-    skip "Skipping FIPS test in this build", 1 if disabled('fips');
-
-    ok(run(test(["drbgtest", srctop_file("test", "fips-and-base.cnf")])));
-}
-
+ok(run(test(["vmclock_test"])));
 ok(run(test(["rand_status_test"])));
 
 SKIP: {

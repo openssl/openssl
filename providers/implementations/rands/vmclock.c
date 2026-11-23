@@ -125,7 +125,16 @@ struct ossl_vmclock_page {
 #define OSSL_VMCLOCK_MAGIC 0x4b4c4356u
 #define OSSL_VMCLOCK_FLAG_VM_GEN_COUNTER_PRESENT (1u << 8)
 #define OSSL_VMCLOCK_SIZE_WITH_GENERATION 112u
+/*
+ * The device that holds the page. A test builds its own copy of this file
+ * with OSSL_VMCLOCK_DEVICE naming a regular file, which that copy accepts
+ * in place of the device.
+ */
+#ifndef OSSL_VMCLOCK_DEVICE
 #define OSSL_VMCLOCK_DEVICE "/dev/vmclock0"
+#else
+#define OSSL_VMCLOCK_REGULAR_FILE
+#endif
 
 /*
  * The number of times a reader looks at the sequence count before it gives
@@ -159,31 +168,14 @@ static uint64_t vmclock_le64(uint64_t v)
 }
 
 /*
- * OPENSSL_VMCLOCK names another device or file, for tests. Only a debug
- * build reads it, and there a set-user-ID or set-group-ID process ignores
- * it.
- */
-static const char *vmclock_path(void)
-{
-#ifndef NDEBUG
-    const char *path = ossl_safe_getenv("OPENSSL_VMCLOCK");
-
-    if (path != NULL && *path != '\0')
-        return path;
-#endif
-    return OSSL_VMCLOCK_DEVICE;
-}
-
-/*
- * The device or, in a debug build, where a test may name one, a regular
- * file that holds the whole structure: reading past the end of a shorter
- * file would fault.
+ * The device or, in a test's copy, a regular file that holds the whole
+ * structure: reading past the end of a shorter file would fault.
  */
 static int vmclock_file_ok(const struct stat *st)
 {
     if (S_ISCHR(st->st_mode))
         return 1;
-#ifndef NDEBUG
+#ifdef OSSL_VMCLOCK_REGULAR_FILE
     if (S_ISREG(st->st_mode)
         && st->st_size >= (off_t)sizeof(struct ossl_vmclock_page))
         return 1;
@@ -194,7 +186,6 @@ static int vmclock_file_ok(const struct stat *st)
 /* Maps the page, setting |*len|; returns NULL if there is none we can read. */
 static void *vmclock_map(size_t *len)
 {
-    const char *path = vmclock_path();
     long page_size = sysconf(_SC_PAGESIZE);
     volatile struct ossl_vmclock_page *page;
     struct stat st;
@@ -204,7 +195,7 @@ static void *vmclock_map(size_t *len)
     if (page_size <= 0 || (size_t)page_size < sizeof(struct ossl_vmclock_page))
         return NULL;
     /* O_NONBLOCK, so that a FIFO or another special file cannot block us. */
-    fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
+    fd = open(OSSL_VMCLOCK_DEVICE, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
     if (fd < 0)
         return NULL;
     if (fstat(fd, &st) != 0 || !vmclock_file_ok(&st)) {
