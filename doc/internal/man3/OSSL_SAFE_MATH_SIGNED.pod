@@ -61,14 +61,6 @@ safe_neg_TYPE() calculates the negation of I<a>.
 
 safe_abs_TYPE() calculates the absolute value of I<a>.
 
-=head1 NOTES
-
-The safe_muldiv_TYPE() function is not perfect.  There exist inputs where
-a valid result could be computed with infinite length integers but this
-function returns an error condition.  Such instances should, however,
-be rare in practice.  The converse is not true.  An invalid result will
-always be flagged as an error.
-
 =head1 RETURN VALUES
 
 All these functions return the result of the operation, if the operation
