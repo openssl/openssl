@@ -19,6 +19,7 @@
 
 #include "internal/numbers.h"
 #include "internal/packet_inline.h"
+#include "internal/endian.h"
 
 typedef struct {
     /* Pointer to where we are currently reading from */
@@ -145,6 +146,10 @@ __owur static ossl_inline int PACKET_get_sub_packet(PACKET *pkt,
     return 1;
 }
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
 /*
  * Peek ahead at 2 bytes in network order from |pkt| and store the value in
  * |*data|
@@ -152,11 +157,21 @@ __owur static ossl_inline int PACKET_get_sub_packet(PACKET *pkt,
 __owur static ossl_inline int PACKET_peek_net_2(const PACKET *pkt,
     unsigned int *data)
 {
+    DECLARE_IS_ENDIAN;
+    ossl_unused uint16_t *dptr = (uint16_t *)pkt->curr;
+
     if (PACKET_remaining(pkt) < 2)
         return 0;
-
-    *data = ((unsigned int)(*pkt->curr)) << 8;
-    *data |= *(pkt->curr + 1);
+    if (IS_LITTLE_ENDIAN) {
+#if __has_builtin(__builtin_bswap16)
+        *data = __builtin_bswap16(*dptr);
+#else
+        *data = ((unsigned int)(*pkt->curr)) << 8;
+        *data |= *(pkt->curr + 1);
+#endif
+    } else {
+        *data = *dptr;
+    }
 
     return 1;
 }
@@ -192,12 +207,22 @@ __owur static ossl_inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
 __owur static ossl_inline int PACKET_peek_net_3(const PACKET *pkt,
     unsigned long *data)
 {
+    DECLARE_IS_ENDIAN;
+    ossl_unused uint32_t *dptr = (uint32_t *)pkt->curr;
+
     if (PACKET_remaining(pkt) < 3)
         return 0;
-
-    *data = ((unsigned long)(*pkt->curr)) << 16;
-    *data |= ((unsigned long)(*(pkt->curr + 1))) << 8;
-    *data |= *(pkt->curr + 2);
+    if (IS_LITTLE_ENDIAN) {
+#if __has_builtin(__builtin_bswap32)
+        *data = __builtin_bswap32(*dptr) >> 8;
+#else
+        *data = ((unsigned long)(*pkt->curr)) << 16;
+        *data |= ((unsigned long)(*(pkt->curr + 1))) << 8;
+        *data |= *(pkt->curr + 2);
+#endif
+    } else {
+        *data = *dptr;
+    }
 
     return 1;
 }
@@ -233,13 +258,24 @@ __owur static ossl_inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
 __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
     unsigned long *data)
 {
+    DECLARE_IS_ENDIAN;
+    ossl_unused uint32_t *dptr = (uint32_t *)pkt->curr;
+
     if (PACKET_remaining(pkt) < 4)
         return 0;
 
-    *data = ((unsigned long)(*pkt->curr)) << 24;
-    *data |= ((unsigned long)(*(pkt->curr + 1))) << 16;
-    *data |= ((unsigned long)(*(pkt->curr + 2))) << 8;
-    *data |= *(pkt->curr + 3);
+    if (IS_LITTLE_ENDIAN) {
+#if __has_builtin(__builtin_bswap32)
+        *data = __builtin_bswap32(*dptr);
+#else
+        *data = ((unsigned long)(*pkt->curr)) << 24;
+        *data |= ((unsigned long)(*(pkt->curr + 1))) << 16;
+        *data |= ((unsigned long)(*(pkt->curr + 2))) << 8;
+        *data |= *(pkt->curr + 3);
+#endif
+    } else {
+        *data = *dptr;
+    }
 
     return 1;
 }
@@ -251,15 +287,26 @@ __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
 __owur static ossl_inline int PACKET_peek_net_6(const PACKET *pkt,
     uint64_t *data)
 {
+    DECLARE_IS_ENDIAN;
+    ossl_unused uint64_t *dptr = (uint64_t *)pkt->curr;
+
     if (PACKET_remaining(pkt) < 6)
         return 0;
 
-    *data = ((uint64_t)(*(pkt->curr))) << 40;
-    *data |= ((uint64_t)(*(pkt->curr + 1))) << 32;
-    *data |= ((uint64_t)(*(pkt->curr + 2))) << 24;
-    *data |= ((uint64_t)(*(pkt->curr + 3))) << 16;
-    *data |= ((uint64_t)(*(pkt->curr + 4))) << 8;
-    *data |= *(pkt->curr + 5);
+    if (IS_LITTLE_ENDIAN) {
+#if __has_builtin(__builtin_bswap64)
+        *data = __builtin_bswap64(*dptr) >> 16;
+#else
+        *data = ((uint64_t)(*(pkt->curr))) << 40;
+        *data |= ((uint64_t)(*(pkt->curr + 1))) << 32;
+        *data |= ((uint64_t)(*(pkt->curr + 2))) << 24;
+        *data |= ((uint64_t)(*(pkt->curr + 3))) << 16;
+        *data |= ((uint64_t)(*(pkt->curr + 4))) << 8;
+        *data |= *(pkt->curr + 5);
+#endif
+    } else {
+        *data = *dptr;
+    }
 
     return 1;
 }
@@ -282,17 +329,28 @@ __owur static ossl_inline int PACKET_get_net_6(PACKET *pkt, uint64_t *data)
 __owur static ossl_inline int PACKET_peek_net_8(const PACKET *pkt,
     uint64_t *data)
 {
+    DECLARE_IS_ENDIAN;
+    ossl_unused uint64_t *dptr = (uint64_t *)pkt->curr;
+
     if (PACKET_remaining(pkt) < 8)
         return 0;
 
-    *data = ((uint64_t)(*pkt->curr)) << 56;
-    *data |= ((uint64_t)(*(pkt->curr + 1))) << 48;
-    *data |= ((uint64_t)(*(pkt->curr + 2))) << 40;
-    *data |= ((uint64_t)(*(pkt->curr + 3))) << 32;
-    *data |= ((uint64_t)(*(pkt->curr + 4))) << 24;
-    *data |= ((uint64_t)(*(pkt->curr + 5))) << 16;
-    *data |= ((uint64_t)(*(pkt->curr + 6))) << 8;
-    *data |= *(pkt->curr + 7);
+    if (IS_LITTLE_ENDIAN) {
+#if __has_builtin(__builtin_bswap64)
+        *data = __builtin_bswap64(*dptr);
+#else
+        *data = ((uint64_t)(*pkt->curr)) << 56;
+        *data |= ((uint64_t)(*(pkt->curr + 1))) << 48;
+        *data |= ((uint64_t)(*(pkt->curr + 2))) << 40;
+        *data |= ((uint64_t)(*(pkt->curr + 3))) << 32;
+        *data |= ((uint64_t)(*(pkt->curr + 4))) << 24;
+        *data |= ((uint64_t)(*(pkt->curr + 5))) << 16;
+        *data |= ((uint64_t)(*(pkt->curr + 6))) << 8;
+        *data |= *(pkt->curr + 7);
+#endif
+    } else {
+        *data = *dptr;
+    }
 
     return 1;
 }
