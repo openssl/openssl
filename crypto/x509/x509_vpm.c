@@ -861,7 +861,7 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
 
 static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *param, size_t *plen, size_t idx)
 {
-    const X509_BUFFER *buf;
+    X509_BUFFER *buf;
 
     if (idx > INT_MAX)
         return NULL;

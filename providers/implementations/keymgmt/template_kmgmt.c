@@ -32,7 +32,7 @@ static void debug_print(const char *fmt, ...)
 {
 }
 #else
-static void debug_print(char *fmt, ...)
+static void debug_print(const char *fmt, ...)
 {
     char out[BUFSIZE];
     va_list argptr;

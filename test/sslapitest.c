@@ -3524,8 +3524,8 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *ocsp_resp;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
-    const char *signer_key_files[] = { "subinterCA.key", "interCA.key", "rootCA.key" };
-    const char *signer_cert_files[] = { "subinterCA.pem", "interCA.pem", "rootCA.pem" };
+    static const char *const signer_key_files[] = { "subinterCA.key", "interCA.key", "rootCA.key" };
+    static const char *const signer_cert_files[] = { "subinterCA.pem", "interCA.pem", "rootCA.pem" };
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
 
     if (*argi != 1 && *argi != 3)

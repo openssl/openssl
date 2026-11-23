@@ -396,7 +396,8 @@ static int check_prvenc(const uint8_t *prvenc, ML_KEM_KEY *key)
 static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
     int include_private)
 {
-    const void *pubenc = NULL, *prvenc = NULL, *seedenc = NULL;
+    const void *pubenc = NULL, *seedenc = NULL;
+    const unsigned char *prvenc = NULL;
     size_t publen = 0, prvlen = 0, seedlen = 0, puboff;
     const ML_KEM_VINFO *v;
     struct ml_kem_import_params_st p;
@@ -424,7 +425,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
     }
 
     if (p.privkey != NULL && include_private) {
-        if (OSSL_PARAM_get_octet_string_ptr(p.privkey, &prvenc, &prvlen) != 1)
+        if (OSSL_PARAM_get_octet_string_ptr(p.privkey, (const void **)&prvenc, &prvlen) != 1)
             return 0;
         if (prvlen != 0 && prvlen != v->prvkey_bytes) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
@@ -452,7 +453,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
     if (publen > 0 && prvlen > 0) {
         /* point to the ek offset in dk = DKpke||ek||H(ek)||z */
         puboff = prvlen - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES - publen;
-        if (memcmp(pubenc, (const unsigned char *)prvenc + puboff, publen) != 0) {
+        if (memcmp(pubenc, prvenc + puboff, publen) != 0) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
                 "explicit %s public key does not match private",
                 v->algorithm_name);

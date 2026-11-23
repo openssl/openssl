@@ -889,8 +889,8 @@ static void thread_general_worker(void)
     EVP_MD *md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
     EVP_CIPHER_CTX *cipherctx = EVP_CIPHER_CTX_new();
     EVP_CIPHER *ciph = EVP_CIPHER_fetch(multi_libctx, "AES-128-CBC", NULL);
-    const char *message = "Hello World";
-    size_t messlen = strlen(message);
+    static const unsigned char message[] = "Hello World";
+    size_t messlen = sizeof(message) - 1;
     /* Should be big enough for encryption output too */
     unsigned char out[EVP_MAX_MD_SIZE];
     const unsigned char key[AES_BLOCK_SIZE] = {
@@ -925,8 +925,7 @@ static void thread_general_worker(void)
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
             || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                (const unsigned char *)message,
-                (int)messlen))
+                message, (int)messlen))
             || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;
     }

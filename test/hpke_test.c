@@ -43,7 +43,7 @@ typedef struct {
     size_t ikmAuthlen;
     const unsigned char *psk;
     size_t psklen;
-    const char *pskid; /* want terminating NUL here */
+    const unsigned char *pskid; /* want terminating NUL here */
 } TEST_BASEDATA;
 
 typedef struct {
@@ -145,7 +145,7 @@ static int do_testhpke(const TEST_BASEDATA *base,
         goto end;
     if (base->mode == OSSL_HPKE_MODE_PSK
         || base->mode == OSSL_HPKE_MODE_PSKAUTH) {
-        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(sealctx, base->pskid,
+        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(sealctx, (const char *)base->pskid,
                 base->psk, base->psklen)))
             goto end;
     }
@@ -179,7 +179,7 @@ static int do_testhpke(const TEST_BASEDATA *base,
         if (!TEST_true(base->pskid != NULL && base->psk != NULL
                 && base->psklen > 0))
             goto end;
-        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(openctx, base->pskid,
+        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(openctx, (const char *)base->pskid,
                 base->psk, base->psklen)))
             goto end;
     }
@@ -383,7 +383,7 @@ static int x25519kdfsha256_hkdfsha256_aes128gcm_psk_test(void)
         first_expected_shared_secret, sizeof(first_expected_shared_secret),
         ksinfo, sizeof(ksinfo),
         NULL, 0, /* No Auth */
-        psk, sizeof(psk), (const char *)pskid
+        psk, sizeof(psk), pskid
     };
     const TEST_AEADDATA aeaddata[] = {
         { 0,

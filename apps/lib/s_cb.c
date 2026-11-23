@@ -470,7 +470,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     case (BIO_CB_READ | BIO_CB_RETURN):
         if (ret > 0 && processed != NULL) {
             BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
-                (const void *)bio, (const void *)argp, len, *processed, *processed);
+                (void *)bio, (const void *)argp, len, *processed, *processed);
             BIO_dump(out, argp, (int)*processed);
         } else {
             BIO_printf(out, "read from %p [%p] (%zu bytes => %d)\n",

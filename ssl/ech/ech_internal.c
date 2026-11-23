@@ -595,7 +595,7 @@ int ossl_ech_reset_hs_buffer(SSL_CONNECTION *s, const unsigned char *buf,
     s->s3.handshake_dgst = NULL;
     /* providing nothing at all is a real use (mid-HRR) */
     if (buf != NULL && blen > 0)
-        BIO_write(s->s3.handshake_buffer, (const void *)buf, (int)blen);
+        BIO_write(s->s3.handshake_buffer, buf, (int)blen);
     return 1;
 }
 

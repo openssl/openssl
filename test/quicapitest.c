@@ -327,7 +327,7 @@ static int test_fin_only_blocking(void)
     SSL_CTX *sctx = NULL;
     SSL *clientquic = NULL;
     QUIC_TSERVER *qtserv = NULL;
-    const char *msg = "Hello World";
+    static const unsigned char msg[] = "Hello World";
     uint64_t sid;
     size_t numbytes;
     unsigned char buf[32];
@@ -352,15 +352,14 @@ static int test_fin_only_blocking(void)
 
     if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid))
         || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
-            (const unsigned char *)msg,
-            strlen(msg), &numbytes))
-        || !TEST_size_t_eq(strlen(msg), numbytes))
+            msg, sizeof(msg) - 1, &numbytes))
+        || !TEST_size_t_eq(sizeof(msg) - 1, numbytes))
         goto end;
 
     ossl_quic_tserver_tick(qtserv);
 
     if (!TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
-        || !TEST_mem_eq(msg, strlen(msg), buf, numbytes))
+        || !TEST_mem_eq(msg, sizeof(msg) - 1, buf, numbytes))
 
         goto end;
 
@@ -1018,7 +1017,7 @@ static int test_bio_ssl(void)
     QUIC_TSERVER *qtserv = NULL;
     int testresult = 0;
     BIO *cbio = NULL, *strbio = NULL, *thisbio;
-    const char *msg = "Hello world";
+    static const unsigned char msg[] = "Hello world";
     int abortctr = 0, err, clienterr = 0, servererr = 0, retc = 0, rets = 0;
     size_t written, readbytes, msglen;
     int sid = 0, i;
@@ -1043,7 +1042,7 @@ static int test_bio_ssl(void)
             &clientquic, NULL, NULL)))
         goto err;
 
-    msglen = strlen(msg);
+    msglen = sizeof(msg) - 1;
 
     do {
         err = BIO_FLAGS_WRITE;
@@ -1090,7 +1089,7 @@ static int test_bio_ssl(void)
             || !TEST_mem_eq(msg, msglen, buf, readbytes))
             goto err;
 
-        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (const unsigned char *)msg,
+        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, msg,
                 msglen, &written)))
             goto err;
         ossl_quic_tserver_tick(qtserv);
@@ -2489,7 +2488,7 @@ static int generate_session_id_user_ssl(SSL *ssl, unsigned char *id,
     gen_sid_called++;
     if (ssl != gen_sid_expected_ssl
         || !SSL_is_quic(ssl)
-        || SSL_get_ex_data(ssl, gen_sid_idx) != (const void *)gen_sid_marker) {
+        || SSL_get_ex_data(ssl, gen_sid_idx) != gen_sid_marker) {
         gen_sid_arg_error = 1;
         return 0;
     }
@@ -5545,9 +5544,9 @@ static int test_ech(int idx)
                           "IeDwx/3oRX2qmYLUUYNq/wD/r8JC4j9pqgn3bwAEAAEAAQAOc2VydmVyLmV4YW1w\n"
                           "bGUAAA==\n"
                           "-----END ECHCONFIG-----\n";
-    const char ec_pub[] = "AGL+DQBezwAQAEEEUvUKpIyVN9dSe5EvC7MiEifMWBWyeeQV/6buEIhVyd3RBq42"
-                          "IeDwx/3oRX2qmYLUUYNq/wD/r8JC4j9pqgn3bwAEAAEAAQAOc2VydmVyLmV4YW1w"
-                          "bGUAAA==";
+    static const unsigned char ec_pub[] = "AGL+DQBezwAQAEEEUvUKpIyVN9dSe5EvC7MiEifMWBWyeeQV/6buEIhVyd3RBq42"
+                                          "IeDwx/3oRX2qmYLUUYNq/wD/r8JC4j9pqgn3bwAEAAEAAQAOc2VydmVyLmV4YW1w"
+                                          "bGUAAA==";
     size_t ec_publen = sizeof(ec_pub) - 1;
     BIO *in = NULL;
     OSSL_ECHSTORE *es = NULL;
@@ -5590,7 +5589,7 @@ static int test_ech(int idx)
 
     /* set echconfig for client */
     if (!TEST_true(SSL_set1_ech_config_list(clientquic,
-            (const unsigned char *)ec_pub, ec_publen))
+            ec_pub, ec_publen))
         || !TEST_true(SSL_set_tlsext_host_name(clientquic, inner)))
         goto err;
     /* we expect the connection to succeed */

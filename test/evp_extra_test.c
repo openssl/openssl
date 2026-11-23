@@ -5655,10 +5655,10 @@ static int test_EVP_rsa_invalid_key(void)
 
 static int test_EVP_rsa_pss_utf8_ptr_params(void)
 {
-    const char *digest = "SHA256";
-    const char *maskgenfunc = "MGF1";
-    const char *mgf1_digest = "SHA384";
-    const char *missing_provider = "provider=missing";
+    static const char *digest = "SHA256";
+    static const char *maskgenfunc = "MGF1";
+    static const char *mgf1_digest = "SHA384";
+    static const char *missing_provider = "provider=missing";
     OSSL_PARAM ptr_params[] = {
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
         OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MASKGENFUNC,

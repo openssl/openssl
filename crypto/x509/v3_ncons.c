@@ -690,7 +690,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     }
 
     eml = emltype->value.utf8string;
-    emlptr = (char *)eml->data;
+    emlptr = (const char *)eml->data;
     emlat = ia5memrchr(eml, '@');
 
     if (emlat == NULL) {

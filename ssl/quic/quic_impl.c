@@ -2735,7 +2735,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
     size_t *written)
 {
     QUIC_XSO *xso = ctx->xso;
-    const void *actual_buf;
+    const unsigned char *actual_buf;
     size_t actual_len, actual_written = 0;
     int accept_moving_buffer
         = ((xso->ssl_mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0);
