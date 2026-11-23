@@ -342,6 +342,15 @@ int main(int argc, char *argv[])
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
         /* We assume we've been called as 'openssl ...' */
+        while (argc > 1
+            && strcmp(argv[1], "-allow-insecure-private-keys") == 0) {
+            if (!CRYPTO_secret_check_disable())
+                app_bail_out("%s: could not disable the private key check\n",
+                    pname);
+            argv[1] = argv[0];
+            argc--;
+            argv++;
+        }
         global_help = argc > 1
             && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "--help") == 0
                 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0);

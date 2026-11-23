@@ -20,6 +20,7 @@
 #include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/secret_check.h"
 #include "internal/zeroization.h"
 #include "crypto/bn.h"
 #include "crypto/evp.h"
@@ -378,6 +379,15 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
     if ((r->n == NULL && n == NULL)
         || (r->e == NULL && e == NULL))
         return 0;
+
+    if (d != NULL && ossl_secret_check_enabled()) {
+        int width_bits = BN_num_bits(n != NULL ? n : r->n);
+
+        if (width_bits != 0 && !ossl_secret_bn_check(d, (size_t)width_bits)) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_SECRET_NOT_KEY_MATERIAL);
+            return 0;
+        }
+    }
 
     if (n != NULL) {
         ossl_public_bn_free(r->n);

@@ -44,6 +44,14 @@ extern "C" {
  */
 #define OSSL_PROV_FIPS_PARAM_DEFER_TESTS "defer-tests"
 
+/**
+ * @def OSSL_PROV_FIPS_PARAM_SECRET_CHECK
+ * A boolean that determines whether the FIPS provider rejects private keys
+ * and seeds whose encoding is evidently not key material. The default is 1.
+ * @see CRYPTO_secret_check_enable(3), fips_config(5)
+ */
+#define OSSL_PROV_FIPS_PARAM_SECRET_CHECK "secret-check"
+
 /* The following are provided for backwards compatibility */
 #define OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS OSSL_PROV_PARAM_SECURITY_CHECKS
 #define OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK

@@ -190,6 +190,7 @@ will be allowed but the desired configuration will B<not> be used.
  alg_section = evp_properties
  ssl_conf = ssl_configuration
  random = random
+ secret_check = secret_check
 
  [oids]
  ... new oids here ...
@@ -205,6 +206,9 @@ will be allowed but the desired configuration will B<not> be used.
 
  [random]
  ... random properties here ...
+
+ [secret_check]
+ ... private key check setting here ...
 
 The semantics of each module are described below. The phrase "in the
 initialization section" refers to the section identified by the
@@ -436,6 +440,34 @@ built-in entropy sources will be used.
 
 =back
 
+=head2 Secret Check Configuration
+
+The name B<secret_check> in the initialization section names the section
+that sets whether private keys and seeds are checked on load for an
+encoding that is evidently not key material.
+See L<CRYPTO_secret_check_enable(3)>.
+
+Within the secret check section, the following name has meaning:
+
+=over 4
+
+=item B<enabled>
+
+Recognised values are B<yes>, B<on>, B<true>, B<1> to enable the check and
+B<no>, B<off>, B<false>, B<0> to disable it, in lower or uppercase.
+Any other name or value in the section is an error.
+The setting applies to the whole process.
+A program that calls CRYPTO_secret_check_enable() or
+CRYPTO_secret_check_disable() after the configuration is loaded overrides it.
+The FIPS provider does not read this setting; it has its own
+B<secret-check> setting, see L<fips_config(5)>.
+For example:
+
+ [secret_check]
+ enabled = no
+
+=back
+
 =head1 EXAMPLES
 
 This example shows how to use quoting and escaping.
@@ -537,6 +569,7 @@ L<CONF_modules_load_file(3)>,
 L<OPENSSL_INIT_set_config_appname(3)>,
 L<OPENSSL_init_crypto(3)>,
 L<OPENSSL_init_ssl(3)>,
+L<CRYPTO_secret_check_enable(3)>,
 L<RAND_bytes(3)>,
 L<fips_config(5)>, and
 L<x509v3_config(5)>.

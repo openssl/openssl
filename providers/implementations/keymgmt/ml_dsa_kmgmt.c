@@ -16,6 +16,7 @@
 #include "crypto/ml_dsa.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/secret_check.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -248,6 +249,11 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
             return 0;
         if (seed_len != 0 && seed_len != ML_DSA_SEED_BYTES) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+            return 0;
+        }
+        if (seed_len != 0 && ossl_secret_check_enabled()
+            && !ossl_secret_bytes_check(seed, seed_len, 0)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_SECRET_NOT_KEY_MATERIAL);
             return 0;
         }
     }
