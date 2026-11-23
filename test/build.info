@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test conf_parse_list_test params_api_test params_conversion_test \
           constant_time_test crypto_memcmp_test ct_validation_helpers_test \
-          safe_math_test verify_extra_test clienthellotest \
+          safe_math_test safe_math_test_no_builtin verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
           asn1_string_poison_test \
           ct_test threadstest d2i_test \
@@ -405,6 +405,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[safe_math_test]=safe_math_test.c
   INCLUDE[safe_math_test]=../include ../apps/include
   DEPEND[safe_math_test]=../libcrypto libtestutil.a
+
+  SOURCE[safe_math_test_no_builtin]=safe_math_test.c
+  INCLUDE[safe_math_test_no_builtin]=../include ../apps/include
+  DEPEND[safe_math_test_no_builtin]=../libcrypto libtestutil.a
+  DEFINE[safe_math_test_no_builtin]=OPENSSL_NO_BUILTIN_OVERFLOW_CHECKING
 
   SOURCE[verify_extra_test]=verify_extra_test.c
   INCLUDE[verify_extra_test]=../include ../apps/include
