@@ -236,6 +236,7 @@ typedef struct {
 
 #if !defined(OPENSSL_NO_TLS1_2)
 static const SHORT_AEAD_RECORD_TEST short_aead_record_tests[] = {
+#ifndef OPENSSL_NO_DH
     { TLS1_TXT_DHE_RSA_WITH_AES_128_CCM, 0, SHORT_AEAD_RECORD_AES },
     { TLS1_TXT_DHE_RSA_WITH_AES_128_CCM,
         EVP_CCM_TLS_EXPLICIT_IV_LEN + EVP_CCM_TLS_TAG_LEN - 1,
@@ -243,10 +244,11 @@ static const SHORT_AEAD_RECORD_TEST short_aead_record_tests[] = {
     { TLS1_TXT_DHE_RSA_WITH_AES_128_CCM_8,
         EVP_CCM_TLS_EXPLICIT_IV_LEN + EVP_CCM8_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_AES },
-    { TLS1_TXT_DHE_RSA_WITH_AES_128_GCM_SHA256,
+#endif
+    { TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
         EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_AES },
-    { TLS1_TXT_DHE_RSA_WITH_ARIA_128_GCM_SHA256,
+    { TLS1_TXT_ECDHE_RSA_WITH_ARIA_128_GCM_SHA256,
         EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_ARIA },
     { TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -371,9 +373,9 @@ static int test_dtls12_short_aead_record(void)
     SSL_CTX_set_security_level(cctx, 0);
 
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx,
-            TLS1_TXT_DHE_RSA_WITH_AES_128_GCM_SHA256))
+            TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256))
         || !TEST_true(SSL_CTX_set_cipher_list(cctx,
-            TLS1_TXT_DHE_RSA_WITH_AES_128_GCM_SHA256))
+            TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256))
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL)))
         goto end;
