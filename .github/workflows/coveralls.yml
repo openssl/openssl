@@ -114,7 +114,7 @@ jobs:
              --exclude "${PWD}/test/*"
              --exclude "${PWD}/fuzz/*"
              --exclude "/usr/include/*"
-             --ignore-errors mismatch
+             --ignore-errors mismatch,inconsistent
              --branch-coverage
               -o ./lcov.info
     - name: Coveralls upload
