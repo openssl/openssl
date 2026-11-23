@@ -4186,3 +4186,8 @@ uint64_t ossl_quic_channel_get_on_new_conn_id_handled(const QUIC_CHANNEL *ch)
 {
     return ch->on_new_conn_id_handled;
 }
+
+const QUIC_CONN_ID *ossl_quic_channel_get_init_dcid(const QUIC_CHANNEL *ch)
+{
+    return &ch->init_dcid;
+}
