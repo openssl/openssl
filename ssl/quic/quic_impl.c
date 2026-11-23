@@ -1233,7 +1233,7 @@ void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)
     if (!expect_quic_csl(s, &ctx))
         goto free;
 
-    /* Returns 0 if no change. */
+    /* Returns 0 if no change or on failure. */
     if (!quic_set0_net_wbio(ctx.obj, net_wbio))
         goto free;
 
