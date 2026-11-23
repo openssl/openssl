@@ -1677,6 +1677,224 @@ end:
     return ret;
 }
 
+/*
+ * Known-answer test for the serialized SHA-256 format. The blob is built byte
+ * by byte, so that it is the same on all platforms: after "SHA256v2" come
+ * md_len, num, h[0..7], Nl and Nh as 32-bit little-endian integers, followed
+ * by the 64 bytes of the block buffer holding the buffered message bytes in
+ * message order. Deserializing it on a platform with a different byte order
+ * than the one that produced it must still yield the correct digest.
+ */
+static void put_le32(unsigned char **p, uint32_t v)
+{
+    *(*p)++ = (unsigned char)v;
+    *(*p)++ = (unsigned char)(v >> 8);
+    *(*p)++ = (unsigned char)(v >> 16);
+    *(*p)++ = (unsigned char)(v >> 24);
+}
+
+static int test_evp_md_ctx_deserialize_sha256_kat(void)
+{
+    static const uint32_t iv[8] = {
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    };
+    /* SHA-256("abc") */
+    static const unsigned char expected[] = {
+        0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
+        0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
+        0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c,
+        0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad
+    };
+    unsigned char blob[8 + 4 + 4 + 8 * 4 + 2 * 4 + 64];
+    unsigned char *p = blob;
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned int outlen = 0;
+    size_t buflen = 0;
+    OSSL_LIB_CTX *libctx = NULL;
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    int i, ret = 0;
+
+    memcpy(p, "SHA256v2", 8);
+    p += 8;
+    put_le32(&p, 32); /* md_len */
+    put_le32(&p, 3); /* num: 3 bytes buffered */
+    for (i = 0; i < 8; i++)
+        put_le32(&p, iv[i]); /* h: initial chaining value */
+    put_le32(&p, 3 * 8); /* Nl: length in bits */
+    put_le32(&p, 0); /* Nh */
+    memset(p, 0, 64);
+    memcpy(p, "abc", 3); /* buffered message bytes */
+
+    /* Use a separate library context: the default one only has "null" loaded */
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(md = EVP_MD_fetch(libctx, "SHA256", NULL))
+        || !TEST_ptr(mdctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestInit_ex2(mdctx, md, NULL))
+        || !TEST_true(EVP_MD_CTX_serialize(mdctx, NULL, &buflen))
+        || !TEST_size_t_eq(buflen, sizeof(blob))
+        || !TEST_true(EVP_MD_CTX_deserialize(mdctx, blob, sizeof(blob)))
+        || !TEST_true(EVP_DigestFinal_ex(mdctx, out, &outlen))
+        || !TEST_mem_eq(out, outlen, expected, sizeof(expected)))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_free(md);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
+/*
+ * Known-answer tests for the serialized SHA3-256 and SHAKE-128 formats.
+ *
+ * The serialized state of SHA-3 contexts must not depend on the byte order or
+ * the implementation (e.g. s390x CPACF vs. generic code) that produced it. The
+ * state array is given in the canonical order, i.e. 25 lanes as 64-bit
+ * little-endian integers, and the message is absorbed up to the last full
+ * block, so that the state array is non-trivial and the rest is buffered.
+ * The state and digests were computed with an independent Keccak
+ * implementation.
+ *
+ * These tests are skipped on 32-bit platforms: the generic code and some
+ * assembler implementations keep the state array bit-interleaved there, which
+ * is not converted when serializing.
+ */
+#define SHA3_KAT_STATE_LEN 200 /* 25 lanes of 64 bits */
+#define SHA3_KAT_BUF_LEN 168 /* KECCAK1600_WIDTH / 8 - 32 */
+#define SHA3_KAT_BLOB_LEN (8 + 6 * 8 + SHA3_KAT_STATE_LEN + SHA3_KAT_BUF_LEN)
+
+typedef struct {
+    const char *name;
+    uint64_t impl_id;
+    uint64_t md_size;
+    uint64_t block_size;
+    uint64_t pad;
+    size_t msglen; /* message is the bytes 0, 1, 2, ... */
+    const char *state_hex;
+    const char *digest_hex;
+} SHA3_SER_KAT;
+
+/*
+ * md_size of SHAKE is SIZE_MAX (no default output length) and is serialized
+ * as a 64-bit value, so it differs between 32-bit and 64-bit targets.
+ */
+static const SHA3_SER_KAT sha3_ser_kats[] = {
+    { "SHA3-256", 0x040100, 32, 136, 0x06, 139,
+        "282f36d2344383c9c48f853712a58b2bbd788c88bdb9edf9125fe44fd191c65d"
+        "6b600200d979ca11f65caa804f76a4e6df4a4bd42ad0f4f8f694733baf33ec36"
+        "6ec06afbc4a3a7a68f4d78169dd1b1b3a5e68b39a7fbd0df200b4c0706854d3e"
+        "88767fdfee7b493ae4b2cc9b1a6e0c76744ed0ce9caae1965f064d08edde2cbd"
+        "a1eeafe937e5a46a494434642ee489a52cfaca04c0cf8a78c0d23f499ec6b767"
+        "0c8e22a6070c8cd06010eeda65c1860735676c4038a3757dc8d9a27271ec3d68"
+        "19899b3f5f371395",
+        "d0af074a51ab3138db0581170b2f4e02f464095e9ad62cbe68a48c6938f34b47" },
+    { "SHAKE-128", 0x020080, (uint64_t)SIZE_MAX, 168, 0x1f, 172,
+        "5ab5e217289c923258e1e851416562237e6ef52f5bad419aef9a0a3d3a0131e5"
+        "a6c47347486fc05da2c5beea6107943659ef04dd730c09457b849ea9dd04a62d"
+        "6cddb7f5bb7befd482c8c7335946ec2ee39f3e16c17d73c9f2c524ff0850e303"
+        "9977bc16ac03707513064c30b8a27e4cae95fb7cc000060126b653ebe91bc0e4"
+        "18edbd93cf58c5bdc39a31745678c99ecc75c2583aacb25917c742b1136cf2b2"
+        "fd25222c00c1914175f1326c533043946cf0fdb03150b6b133b3b86945b458e7"
+        "616924110ac5d0db",
+        "e7a94267d22229d7ca7e410fea953b564b95343a42ba17f0497c39de6df5fbf9" },
+};
+
+static unsigned char *put_le64(unsigned char *p, uint64_t v)
+{
+    int i;
+
+    for (i = 0; i < 8; i++)
+        *p++ = (unsigned char)(v >> (8 * i));
+    return p;
+}
+
+static int test_evp_md_ctx_sha3_serialize_kat(int tstid)
+{
+    const SHA3_SER_KAT *t = &sha3_ser_kats[tstid];
+    unsigned char msg[SHA3_KAT_BUF_LEN + SHA3_KAT_BUF_LEN];
+    unsigned char blob[SHA3_KAT_BLOB_LEN], got[SHA3_KAT_BLOB_LEN];
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned char *p, *state = NULL, *digest = NULL;
+    unsigned int outlen = 0;
+    long statelen = 0, digestlen = 0;
+    size_t bufsz, gotlen = 0, i;
+    OSSL_LIB_CTX *libctx = NULL;
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx1 = NULL, *ctx2 = NULL;
+    int ret = 0;
+
+    if (sizeof(void *) < 8)
+        return TEST_skip("SHA-3 state is bit-interleaved on 32-bit platforms");
+    if (!TEST_size_t_le(t->msglen, sizeof(msg)))
+        return 0;
+    for (i = 0; i < t->msglen; i++)
+        msg[i] = (unsigned char)i;
+    bufsz = t->msglen % t->block_size;
+
+    if (!TEST_ptr(state = OPENSSL_hexstr2buf(t->state_hex, &statelen))
+        || !TEST_long_eq(statelen, SHA3_KAT_STATE_LEN)
+        || !TEST_ptr(digest = OPENSSL_hexstr2buf(t->digest_hex, &digestlen)))
+        goto end;
+
+    /* Assemble the expected serialized state */
+    p = blob;
+    memcpy(p, "KECCAKv2", 8);
+    p += 8;
+    p = put_le64(p, t->impl_id);
+    p = put_le64(p, t->md_size);
+    p = put_le64(p, t->block_size);
+    p = put_le64(p, bufsz);
+    p = put_le64(p, t->pad); /* canonical padding byte, not a CPACF code */
+    p = put_le64(p, 1); /* xof_state: absorbing */
+    memcpy(p, state, SHA3_KAT_STATE_LEN);
+    p += SHA3_KAT_STATE_LEN;
+    memset(p, 0, SHA3_KAT_BUF_LEN);
+    memcpy(p, msg + t->msglen - bufsz, bufsz);
+
+    /* Use a separate library context: the default one only has "null" loaded */
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(md = EVP_MD_fetch(libctx, t->name, NULL))
+        || !TEST_ptr(ctx1 = EVP_MD_CTX_new())
+        || !TEST_ptr(ctx2 = EVP_MD_CTX_new()))
+        goto end;
+
+    /* Deserializing the fixed state and finishing must give the digest */
+    if (!TEST_true(EVP_DigestInit_ex2(ctx1, md, NULL))
+        || !TEST_true(EVP_MD_CTX_deserialize(ctx1, blob, sizeof(blob))))
+        goto end;
+    if (EVP_MD_xof(md)) {
+        if (!TEST_true(EVP_DigestFinalXOF(ctx1, out, digestlen)))
+            goto end;
+        outlen = (unsigned int)digestlen;
+    } else if (!TEST_true(EVP_DigestFinal_ex(ctx1, out, &outlen))) {
+        goto end;
+    }
+    if (!TEST_mem_eq(out, outlen, digest, digestlen))
+        goto end;
+
+    /* Serializing the same input must give exactly the fixed state */
+    if (!TEST_true(EVP_DigestInit_ex2(ctx2, md, NULL))
+        || !TEST_true(EVP_DigestUpdate(ctx2, msg, t->msglen))
+        || !TEST_true(EVP_MD_CTX_serialize(ctx2, NULL, &gotlen))
+        || !TEST_size_t_eq(gotlen, sizeof(got))
+        || !TEST_true(EVP_MD_CTX_serialize(ctx2, got, &gotlen))
+        || !TEST_mem_eq(got, gotlen, blob, sizeof(blob)))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(state);
+    OPENSSL_free(digest);
+    EVP_MD_CTX_free(ctx1);
+    EVP_MD_CTX_free(ctx2);
+    EVP_MD_free(md);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
 static int test_evp_pbe_alg_add(void)
 {
@@ -1873,6 +2091,8 @@ int setup_tests(void)
     ADD_TEST(test_evp_md_ctx_copy);
     ADD_TEST(test_evp_md_ctx_copy2);
     ADD_ALL_TESTS(test_evp_md_ctx_serialize, 13);
+    ADD_TEST(test_evp_md_ctx_deserialize_sha256_kat);
+    ADD_ALL_TESTS(test_evp_md_ctx_sha3_serialize_kat, OSSL_NELEM(sha3_ser_kats));
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
 #if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
     ADD_TEST(test_evp_pbe_alg_add);
