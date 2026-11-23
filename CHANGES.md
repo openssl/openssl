@@ -234,6 +234,14 @@ OpenSSL 4.2
 
    *Daiki Ueno and Clemens Lang*
 
+ * Improved AES-GCM performance on `x86_64` processors with AVX512 and VAES
+   support.  The encryption and decryption loop width is now selected from the
+   message length, and GHASH uses Karatsuba multiplication with prefolded hash
+   keys.
+   <!-- https://github.com/openssl/openssl/pull/31633 -->
+
+   *Madan Mohan Manokar*
+
 OpenSSL 4.1
 -----------
 
@@ -640,14 +648,6 @@ OpenSSL 4.1
    This work was sponsored by Siemens AG.
 
    *Rajeev Ranjan*
-
- * Improved AES-GCM performance on `x86_64` processors with AVX512 and VAES
-   support.  The encryption and decryption loop width is now selected from the
-   message length, and GHASH uses Karatsuba multiplication with prefolded hash
-   keys.
-   <!-- https://github.com/openssl/openssl/pull/31633 -->
-
-   *Madan mohan Manokar*
 
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity ([RFC 9846 Section 4.3.10]) when a 0-RTT-capable resumption
