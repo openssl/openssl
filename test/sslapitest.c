@@ -9505,6 +9505,56 @@ end:
     return testresult;
 }
 
+static int test_ssl_bio_eof(int tls13)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *sslbio = NULL, *sbio, *cbio;
+    int version = tls13 ? TLS1_3_VERSION : TLS1_2_VERSION;
+    int testresult = 0;
+    char buf;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (!tls13)
+        return TEST_skip("TLSv1.2 is not available");
+#endif
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (tls13)
+        return TEST_skip("TLSv1.3 is not available");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), version, version, &sctx, &cctx, cert, privkey))
+        || !TEST_ptr(serverssl = SSL_new(sctx))
+        || !TEST_ptr(sslbio = BIO_new_ssl(cctx, 1))
+        || !TEST_long_eq(BIO_get_ssl(sslbio, &clientssl), 1)
+        || !TEST_true(BIO_new_bio_pair(&sbio, 0, &cbio, 0)))
+        goto end;
+    SSL_set_bio(serverssl, sbio, sbio);
+    BIO_push(sslbio, cbio);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_int_lt(BIO_read(sslbio, &buf, 1), 0)
+        || !TEST_true(BIO_should_retry(sslbio))
+        || !TEST_int_eq(BIO_eof(sslbio), 0))
+        goto end;
+
+    /* The close_notify ends TLS input while the transport remains open. */
+    testresult = TEST_int_eq(SSL_shutdown(serverssl), 0)
+        && TEST_int_eq(BIO_read(sslbio, &buf, 1), 0)
+        && TEST_false(BIO_should_retry(sslbio))
+        && TEST_int_eq(SSL_get_shutdown(clientssl), SSL_RECEIVED_SHUTDOWN)
+        && TEST_int_eq(BIO_eof(cbio), 0)
+        && TEST_int_eq(BIO_eof(sslbio), 1);
+
+end:
+    BIO_free_all(sslbio);
+    SSL_free(serverssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int cert_cb_cnt;
 
@@ -15205,6 +15255,7 @@ int setup_tests(void)
     ADD_TEST(test_ticket_abort_session_leak);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);
+    ADD_ALL_TESTS(test_ssl_bio_eof, 2);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
