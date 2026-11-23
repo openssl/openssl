@@ -154,7 +154,7 @@
         if (!__builtin_mul_overflow(a, b, &r))                       \
             return r;                                                \
         *err |= 1;                                                   \
-        return a * b;                                                \
+        return r;                                                    \
     }
 
 #else /* has(__builtin_mul_overflow) */
@@ -187,7 +187,12 @@
     {                                                                \
         if (b != 0 && a > max / b)                                   \
             *err |= 1;                                               \
-        return a * b;                                                \
+        /*                                                           \
+         * With 16-bit short and 32-bit int, unsigned short          \
+         * operands of 65535 promote to int and overflow when        \
+         * multiplied. Adding 0U forces unsigned arithmetic.         \
+         */                                                          \
+        return a * (b + 0U);                                         \
     }
 #endif /* has(__builtin_mul_overflow) */
 
