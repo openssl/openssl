@@ -140,6 +140,7 @@ There are a number of operation options that set the type of operation to be
 performed: encrypt, decrypt, sign, verify, resign, sign_receipt, verify_receipt,
 digest_create, digest_verify, compress, uncompress,
 EncryptedData_encrypt, EncryptedData_decrypt, data_create, data_out, or cmsout.
+These operation options are mutually exclusive.
 The relevance of the other options depends on the operation type
 and their meaning may vary according to it.
 
