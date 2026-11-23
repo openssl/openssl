@@ -235,13 +235,7 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
      * dlen <= 3 * floor(INT_MAX / 4). See #33812 for moving the check
      * into the internal functions and returning success/failure there.
      */
-    if (dlen < 0 || dlen > (INT_MAX / 4) * 3) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
-        *t = '\0';
-        return 0;
-    }
-
-    if (dlen == 0) {
+    if (dlen <= 0 || dlen > (INT_MAX / 4) * 3) {
         *t = '\0';
         return 0;
     }

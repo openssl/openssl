@@ -471,9 +471,8 @@ end:
 /*
  * An empty input is valid and must not touch the input pointer.
  * EVP_EncodeBlock() writes only the NUL terminator and returns 0 for empty
- * or invalid lengths, and raises `ERR_R_PASSED_INVALID_ARGUMENT` for
- * invalid lengths. EVP_DecodeBlock() writes nothing. EVP_DecodeBlock()
- * rejects a negative length.
+ * or out-of-contract lengths, without raising an error. EVP_DecodeBlock()
+ * writes nothing for an empty input and rejects a negative length.
  */
 static int test_block_zero_and_negative_length(void)
 {
@@ -494,22 +493,15 @@ static int test_block_zero_and_negative_length(void)
         || !TEST_uchar_eq(out[0], 0))
         return 0;
 
-    ERR_clear_error();
     out[0] = 0xff;
     if (!TEST_int_eq(EVP_EncodeBlock(out, in, -1), 0)
-        || !TEST_uchar_eq(out[0], 0)
-        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
-            ERR_R_PASSED_INVALID_ARGUMENT))
+        || !TEST_uchar_eq(out[0], 0))
         return 0;
 
-    ERR_clear_error();
     out[0] = 0xff;
     if (!TEST_int_eq(EVP_EncodeBlock(out, in, INT_MAX), 0)
-        || !TEST_uchar_eq(out[0], 0)
-        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
-            ERR_R_PASSED_INVALID_ARGUMENT))
+        || !TEST_uchar_eq(out[0], 0))
         return 0;
-    ERR_clear_error();
 
     if (!TEST_int_eq(EVP_DecodeBlock(NULL, NULL, 0), 0)
         || !TEST_int_eq(EVP_DecodeBlock(decoded, NULL, 0), 0)
