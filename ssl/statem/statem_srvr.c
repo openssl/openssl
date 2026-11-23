@@ -2088,22 +2088,55 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     unsigned long id;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
+    STACK_OF(SSL_COMP) *comp_methods;
 #endif
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
     CLIENTHELLO_MSG *clienthello = s->clienthello;
     DOWNGRADE dgrd = DOWNGRADE_NONE;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
     unsigned char *snonce = s->s3.server_random;
+    /*
+     * The callbacks called below are given the SSL and may switch it to
+     * another SSL_CTX.  When the connection holds the last reference to the
+     * SSL_CTX it had, the switch frees it.  So this function does not keep
+     * the connection's SSL_CTX in a local variable, it looks it up again
+     * wherever it is needed.
+     *
+     * NOTE: the DTLS cookie verification callback is deliberately handled
+     * differently.  The cookie is checked after the ClientHello callback has
+     * run, but the callback we use to check it is that of the SSL_CTX in use
+     * before the ClientHello callback ran, which we save here.  A function
+     * pointer stays valid after the SSL_CTX it was copied from has been
+     * freed.
+     *
+     * The alternative would be to treat it like everything else, and call the
+     * callback of whichever SSL_CTX is in use when the cookie is checked.  We
+     * do not, in order to keep existing applications working.  An application
+     * that switches SSL_CTX in its ClientHello callback may have set its
+     * cookie callbacks only on the original SSL_CTX.  That has always worked:
+     * the original SSL_CTX is normally still alive after the switch, and it
+     * was its callback that we called.  If we called the callback of the new
+     * SSL_CTX instead, and it had none, we would have to compare the cookie
+     * with the copy kept in the connection.  After DTLSv1_listen() there is
+     * no such copy, so the handshake would fail.
+     *
+     * When DTLSv1_listen() is not used, the original SSL_CTX is also the one
+     * whose callback generated the cookie, so the cookie is generated and
+     * verified by callbacks from the same SSL_CTX.
+     */
+    int (*verify_cookie_cb)(SSL *ssl, const unsigned char *cookie,
+        unsigned int cookie_len)
+        = SSL_CONNECTION_GET_CTX(s)->app_verify_cookie_cb;
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
-    if (sctx->client_hello_cb != NULL) {
+    if (SSL_CONNECTION_GET_CTX(s)->client_hello_cb != NULL) {
         /* A failure in the ClientHello callback terminates the connection. */
-        switch (sctx->client_hello_cb(ussl, &al, sctx->client_hello_cb_arg)) {
+        switch (SSL_CONNECTION_GET_CTX(s)->client_hello_cb(ussl, &al,
+            SSL_CONNECTION_GET_CTX(s)->client_hello_cb_arg)) {
         case SSL_CLIENT_HELLO_SUCCESS:
             break;
         case SSL_CLIENT_HELLO_RETRY:
@@ -2178,17 +2211,22 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         if ((SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) && clienthello->dtls_cookie_len != 0) {
             int verify_ret = 0;
 
+            /*
+             * NOTE: verify_cookie_cb is deliberately the callback saved before
+             * the ClientHello callback ran, and not that of the SSL_CTX now in
+             * use.  The comment at the top of this function explains why.
+             */
 #if !defined(OPENSSL_NO_DTLS)
             DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
-            if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
+            if (dl != NULL && dl->require_hvr_cookie && verify_cookie_cb == NULL) {
                 verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
                     clienthello->dtls_cookie,
                     (unsigned int)clienthello->dtls_cookie_len);
             } else
 #endif
-                if (sctx->app_verify_cookie_cb != NULL) {
-                verify_ret = sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
+                if (verify_cookie_cb != NULL) {
+                verify_ret = verify_cookie_cb(ussl, clienthello->dtls_cookie,
                     (unsigned int)clienthello->dtls_cookie_len);
             } else if (s->d1->cookie_len == clienthello->dtls_cookie_len
                 && memcmp(clienthello->dtls_cookie, s->d1->cookie,
@@ -2481,6 +2519,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * algorithms from the client, starting at q.
      */
     s->s3.tmp.new_compression = NULL;
+#ifndef OPENSSL_NO_COMP
+    /* No callbacks run from here to the end of the compression checks */
+    comp_methods = SSL_CONNECTION_GET_CTX(s)->comp_methods;
+#endif
     if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
          * We already checked above that the NULL compression method appears in
@@ -2506,8 +2548,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             goto err;
         }
         /* Look for resumed compression method */
-        for (m = 0; m < sk_SSL_COMP_num(sctx->comp_methods); m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
+        for (m = 0; m < sk_SSL_COMP_num(comp_methods); m++) {
+            comp = sk_SSL_COMP_value(comp_methods, m);
             if (comp_id == comp->id) {
                 s->s3.tmp.new_compression = comp;
                 break;
@@ -2530,14 +2572,14 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     } else if (s->hit) {
         comp = NULL;
-    } else if (ssl_allow_compression(s) && sctx->comp_methods) {
+    } else if (ssl_allow_compression(s) && comp_methods != NULL) {
         /* See if we have a match */
         int m, nn, v, done = 0;
         unsigned int o;
 
-        nn = sk_SSL_COMP_num(sctx->comp_methods);
+        nn = sk_SSL_COMP_num(comp_methods);
         for (m = 0; m < nn; m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
+            comp = sk_SSL_COMP_value(comp_methods, m);
             v = comp->id;
             for (o = 0; o < clienthello->compressions_len; o++) {
                 if (v == clienthello->compressions[o]) {
