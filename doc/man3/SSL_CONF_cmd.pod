@@ -869,6 +869,11 @@ is intended for configurations that are dedicated to connecting to a single
 server or cluster of servers, and not appropriate for configurations that
 are used to connect to a diverse set of destinations.
 
+=item B<SecurityLevel>
+
+The B<value> argument is the integer security level to set the system to.
+See L<SSL_CTX_set_security_level(3)> for the definitions of the available levels.
+
 =back
 
 =head1 SUPPORTED COMMAND TYPES

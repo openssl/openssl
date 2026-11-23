@@ -475,7 +475,7 @@ static int cmd_VerifyMode(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_SetCertificateFlags(SSL_CONF_CTX *cctx, const char *value)
 {
     static const ssl_flag_tbl ssl_certval_list[] = {
-        SSL_FLAG_CERTVAL("UseCheckTime", X509_V_FLAG_USE_CHECK_TIME),
+        // No facility for setting the time to use // SSL_FLAG_CERTVAL("UseCheckTime", X509_V_FLAG_USE_CHECK_TIME),
         SSL_FLAG_CERTVAL("CRLCheck", X509_V_FLAG_CRL_CHECK),
         SSL_FLAG_CERTVAL("CRLCheckAll", X509_V_FLAG_CRL_CHECK_ALL),
         SSL_FLAG_CERTVAL("IgnoreCritical", X509_V_FLAG_IGNORE_CRITICAL),
@@ -1036,7 +1036,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
     SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
-    SSL_CONF_CMD_STRING(SetCertificateFlags, NULL, 0),
+    SSL_CONF_CMD_STRING(SetCertificateFlags, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(SetHostFlags, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(SetExpectedDNSName, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(AddExpectedDNSName, NULL, SSL_CONF_FLAG_CERTIFICATE),
