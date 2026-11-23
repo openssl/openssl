@@ -154,7 +154,7 @@
         if (!__builtin_mul_overflow(a, b, &r))                       \
             return r;                                                \
         *err |= 1;                                                   \
-        return a * b;                                                \
+        return r;                                                    \
     }
 
 #else /* has(__builtin_mul_overflow) */
@@ -187,7 +187,8 @@
     {                                                                \
         if (b != 0 && a > max / b)                                   \
             *err |= 1;                                               \
-        return a * b;                                                \
+        /* Keep the product unsigned after integer promotion. */     \
+        return a * (b + 0U);                                         \
     }
 #endif /* has(__builtin_mul_overflow) */
 
