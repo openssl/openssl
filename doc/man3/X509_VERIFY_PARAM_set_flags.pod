@@ -204,6 +204,9 @@ B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> expands OCSP checking to the entire
 certificate chain if B<X509_V_FLAG_OCSP_RESP_CHECK> has also been
 enabled, and is otherwise ignored.
 
+For both OCSP flags, response expiry is checked against B<nextUpdate> when
+that field is present. No maximum response age is imposed when it is absent.
+
 If B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> is set, some additional features
 such as indirect CRLs and CRLs signed by different keys are enabled. By
 default these features are disabled.
