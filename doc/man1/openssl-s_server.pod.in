@@ -261,6 +261,9 @@ be used.
 
 The private key file for the second server identity (see B<-cert2>),
 if not combined with the certificate in the B<-cert2> file.
+With B<-no_default_cert> and server raw public key support enabled,
+B<-key2> without B<-cert2> gives a raw public key form of the second
+identity.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>
 
@@ -485,7 +488,14 @@ For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
 =item B<-servername>
 
-Servername for HostName TLS extension.
+The TLS servername (SNI) of the second server identity (see B<-cert2>
+and B<-key2>).
+A client whose servername extension matches this name, ignoring case,
+is served the second identity; with ECH, this name is compared with the
+servername in the decrypted inner ClientHello.
+A client that sends a different name is served the default identity,
+or, with B<-servername_fatal>, refused with an B<unrecognized_name>
+alert.
 
 =item B<-servername_fatal>
 

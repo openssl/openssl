@@ -460,7 +460,6 @@ typedef struct tlsextctx_st {
     char *servername;
     BIO *biodebug;
     int extension_error;
-    X509 *scert; /* ECH needs 2nd cert for testing */
 } tlsextctx;
 
 #ifndef OPENSSL_NO_ECH
@@ -612,46 +611,22 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
         else
             BIO_printf(p->biodebug,
                 "ssl_ech_servername_cb: ctx servername is NULL\n");
-        if (p->scert == NULL)
-            BIO_printf(p->biodebug,
-                "ssl_ech_servername_cb: No 2nd cert! That's bad.\n");
     }
     if (p->servername == NULL)
         return SSL_TLSEXT_ERR_NOACK;
-    if (p->scert == NULL)
-        return SSL_TLSEXT_ERR_NOACK;
-    if (echrv == SSL_ECH_STATUS_SUCCESS && servername != NULL) {
+    /*
+     * After a successful ECH decryption |servername| is the inner SNI,
+     * otherwise it is the client's only (outer) SNI.  Either way the second
+     * identity (-cert2/-key2) is selected when the name matches -servername.
+     */
+    if (servername != NULL) {
+        if (OPENSSL_strcasecmp(servername, p->servername) != 0)
+            return p->extension_error;
         if (ctx2 != NULL) {
-            int check_host = check_cert_might_be_valid(p->biodebug,
-                p->biodebug, p->scert, servername, NULL, NULL);
-
-            if (check_host == 1) {
-                if (p->biodebug != NULL)
-                    BIO_printf(p->biodebug,
-                        "ssl_ech_servername_cb: Switching context.\n");
-                SSL_set_SSL_CTX(s, ctx2);
-            } else {
-                if (p->biodebug != NULL)
-                    BIO_printf(p->biodebug,
-                        "ssl_ech_servername_cb: Not switching context "
-                        "- no name match (%d).\n",
-                        check_host);
-                if (OPENSSL_strcasecmp(servername, p->servername) != 0)
-                    return p->extension_error;
-            }
-        }
-    } else {
-        if (p->biodebug != NULL)
-            BIO_printf(p->biodebug,
-                "ssl_ech_servername_cb: Not switching context "
-                "- no ECH SUCCESS\n");
-        if (servername != NULL) {
-            if (OPENSSL_strcasecmp(servername, p->servername))
-                return p->extension_error;
-            if (ctx2 != NULL) {
-                BIO_puts(p->biodebug, "Switching server context.\n");
-                SSL_set_SSL_CTX(s, ctx2);
-            }
+            if (p->biodebug != NULL)
+                BIO_printf(p->biodebug,
+                    "ssl_ech_servername_cb: Switching context.\n");
+            SSL_set_SSL_CTX(s, ctx2);
         }
     }
     return SSL_TLSEXT_ERR_OK;
@@ -1718,7 +1693,7 @@ int s_server_main(int argc, char *argv[])
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
     X509 *s_cert2 = NULL;
-    tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING, NULL };
+    tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
     const char *ssl_config = NULL;
     int read_buf_len = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -2653,9 +2628,6 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
         }
-#ifndef OPENSSL_NO_ECH
-        tlsextcbp.scert = s_cert2;
-#endif
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto_neg_in) {

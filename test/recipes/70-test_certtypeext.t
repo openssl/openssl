@@ -117,7 +117,7 @@ $proxy->clear();
 $proxy->clientflags("-key $key_file -cert $clnt_ee -verify_return_error -partial_chain -verifyCAfile $cert_file");
 $proxy->serverflags("-Verify 1 -expected-rpks $key_file");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 19;
+plan tests => 22;
 ok(TLSProxy::Message->success
         && saw_message($proxy, TLSProxy::Message::MT_CERTIFICATE_REQUEST),
     "Client cert RPK verify");
@@ -283,7 +283,37 @@ ok(TLSProxy::Message->success
     "Server RPK resumption");
 unlink $session;
 
-# Test 18: Empty client_cert_type list is a decode error
+# Test 18: A key-only second identity (-key2 without -cert2) is selected
+# by SNI, and the client sees that identity's key.
+$proxy2->clear();
+$proxy2->clientflags("-servername rpk2.example -enable_server_rpk -verify_return_error -expected-rpks $key_file");
+$proxy2->serverflags("-key $cert_file -enable_server_rpk -servername rpk2.example -key2 $key_file");
+$proxy2->start();
+ok(TLSProxy::Message->success, "Key-only second identity selected by SNI");
+
+# Test 19: Server accepts only RPK client certificates, client sends no
+# client_certificate_type extension.  Required verification fails with
+# unsupported_certificate before any CertificateRequest.
+$proxy->clear();
+$proxy->clientflags("-key $key_file -cert $clnt_ee -partial_chain -verifyCAfile $cert_file");
+$proxy->serverflags("-client_cert_type rpk -Verify 1");
+$proxy->start();
+ok(TLSProxy::Message->fail
+        && server_alert_is(TLSProxy::Message::AL_DESC_UNSUPPORTED_CERTIFICATE)
+        && !saw_message($proxy, TLSProxy::Message::MT_CERTIFICATE_REQUEST),
+    "RPK-only client cert type, client without the extension, required auth");
+
+# Test 20: Same with optional verification: the handshake completes
+# without a CertificateRequest.
+$proxy->clear();
+$proxy->clientflags("-key $key_file -cert $clnt_ee -partial_chain -verifyCAfile $cert_file");
+$proxy->serverflags("-client_cert_type rpk -verify 1");
+$proxy->start();
+ok(TLSProxy::Message->success
+        && !saw_message($proxy, TLSProxy::Message::MT_CERTIFICATE_REQUEST),
+    "RPK-only client cert type, client without the extension, optional auth");
+
+# Test 21: Empty client_cert_type list is a decode error
 $proxy->clear();
 $proxy->clientflags("-partial_chain -verifyCAfile $cert_file");
 $proxy->serverflags("");
@@ -295,7 +325,7 @@ ok(TLSProxy::Message->fail
         && server_alert_is(TLSProxy::Message::AL_DESC_DECODE_ERROR),
     "Empty client_cert_type list");
 
-# Test 19: Truncated server_cert_type extension is a decode error
+# Test 22: Truncated server_cert_type extension is a decode error
 $proxy->clear();
 $proxy->clientflags("-partial_chain -verifyCAfile $cert_file");
 $proxy->serverflags("");

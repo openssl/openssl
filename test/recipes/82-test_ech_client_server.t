@@ -101,7 +101,7 @@ sub start_ech_client_server
                             "-cert2", $server_pem, "-key2", $server_key,
                             "-ech_dir", $ech_dir,
                             "-ech_noretry_dir", $ech_dir,
-                            "-servername", "example.com",
+                            "-servername", "server.example",
                             "-servername_fatal",
                             "-tls1_3");
         } elsif ($test_type eq "servername_fatal2" ) {
@@ -111,7 +111,7 @@ sub start_ech_client_server
                             "-cert2", $server_pem, "-key2", $server_key,
                             "-ech_dir", $ech_dir,
                             "-ech_noretry_dir", $ech_dir,
-                            "-servername", "example.com",
+                            "-servername", "server.example",
                             "-servername_fatal",
                             "-tls1_3");
         } else {
