@@ -1070,6 +1070,11 @@ struct ssl_ctx_st {
     SSL_new_pending_conn_cb_fn new_pending_conn_cb;
     void *new_pending_conn_arg;
 
+    /* Prefix stamped into every QUIC local CID for routing */
+    /* RFC 9000 s. 17.2: max Connection ID length is 20 bytes */
+    unsigned char quic_cid_prefix[20];
+    size_t quic_cid_prefix_len;
+
     /* TLS extensions. */
     struct {
         /* TLS extensions servername callback */

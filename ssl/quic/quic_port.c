@@ -169,7 +169,9 @@ static int port_init(QUIC_PORT *port)
         goto err;
 
     if ((port->lcidm = ossl_quic_lcidm_new(port->engine->libctx,
-             rx_short_dcid_len))
+             rx_short_dcid_len,
+             port->channel_ctx->quic_cid_prefix,
+             port->channel_ctx->quic_cid_prefix_len))
         == NULL)
         goto err;
 
