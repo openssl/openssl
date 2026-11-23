@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,27 @@
 #include "crypto/x509.h"
 
 #include "pcy_local.h"
+
+/* Sort the set for binary search and drop duplicates in linear time */
+static void policy_set_sort_unique(STACK_OF(ASN1_OBJECT) *set)
+{
+    ASN1_OBJECT *oid;
+    int i, num, unique = 1;
+
+    sk_ASN1_OBJECT_sort(set);
+    num = sk_ASN1_OBJECT_num(set);
+    for (i = 1; i < num; i++) {
+        oid = sk_ASN1_OBJECT_value(set, i);
+        if (OBJ_cmp(sk_ASN1_OBJECT_value(set, unique - 1), oid) == 0)
+            ASN1_OBJECT_free(oid);
+        else if (unique++ != i)
+            (void)sk_ASN1_OBJECT_set(set, unique - 1, oid);
+    }
+    while (sk_ASN1_OBJECT_num(set) > unique)
+        (void)sk_ASN1_OBJECT_pop(set);
+    /* Setting entries cleared the sorted flag that the lookup relies on */
+    sk_ASN1_OBJECT_sort(set);
+}
 
 /*
  * Set policy mapping entries in cache. Note: this modifies the passed
@@ -68,6 +89,11 @@ int ossl_policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
                 map->subjectDomainPolicy))
             goto bad_mapping;
         map->subjectDomainPolicy = NULL;
+    }
+
+    for (i = 0; i < sk_X509_POLICY_DATA_num(cache->data); i++) {
+        data = sk_X509_POLICY_DATA_value(cache->data, i);
+        policy_set_sort_unique(data->expected_policy_set);
     }
 
     ret = 1;

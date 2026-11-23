@@ -33,6 +33,7 @@
 
 #include "../crypto/x509/ext_dat.h"
 #include "../crypto/x509/standard_exts.h"
+#include "../crypto/x509/pcy_local.h"
 
 static int test_standard_exts(void)
 {
@@ -53,6 +54,185 @@ static int test_standard_exts(void)
             TEST_note("%d : %s", (*tmp)->ext_nid, OBJ_nid2sn((*tmp)->ext_nid));
     }
     return good;
+}
+
+static size_t policy_oid_comparisons;
+
+static int counting_policy_oid_cmp(const ASN1_OBJECT *const *a,
+    const ASN1_OBJECT *const *b)
+{
+    policy_oid_comparisons++;
+    return OBJ_cmp(*a, *b);
+}
+
+/* Create an unsigned certificate with the given policies and mappings */
+static X509 *make_policy_cert(const char *const *policies, size_t npolicies,
+    const char *issuer, const char *const *subjects, size_t nsubjects)
+{
+    CERTIFICATEPOLICIES *cpols = CERTIFICATEPOLICIES_new();
+    POLICY_MAPPINGS *maps = sk_POLICY_MAPPING_new_null();
+    POLICY_MAPPING *map = NULL;
+    POLICYINFO *pinfo = NULL;
+    X509 *cert = X509_new();
+    size_t i;
+    int ok = 0;
+
+    if (!TEST_ptr(cert) || !TEST_ptr(cpols) || !TEST_ptr(maps))
+        goto end;
+    for (i = 0; i < npolicies; i++) {
+        if (!TEST_ptr(pinfo = POLICYINFO_new())
+            || !TEST_ptr(pinfo->policyid = OBJ_txt2obj(policies[i], 1))
+            || !TEST_true(sk_POLICYINFO_push(cpols, pinfo)))
+            goto end;
+        pinfo = NULL;
+    }
+    for (i = 0; i < nsubjects; i++) {
+        if (!TEST_ptr(map = POLICY_MAPPING_new())
+            || !TEST_ptr(map->issuerDomainPolicy = OBJ_txt2obj(issuer, 1))
+            || !TEST_ptr(map->subjectDomainPolicy = OBJ_txt2obj(subjects[i], 1))
+            || !TEST_true(sk_POLICY_MAPPING_push(maps, map)))
+            goto end;
+        map = NULL;
+    }
+    ok = TEST_true(X509_add1_ext_i2d(cert, NID_certificate_policies, cpols, 0,
+             X509V3_ADD_DEFAULT))
+        && (nsubjects == 0
+            || TEST_true(X509_add1_ext_i2d(cert, NID_policy_mappings, maps, 0,
+                X509V3_ADD_DEFAULT)));
+
+end:
+    POLICYINFO_free(pinfo);
+    POLICY_MAPPING_free(map);
+    sk_POLICY_MAPPING_pop_free(maps, POLICY_MAPPING_free);
+    sk_POLICYINFO_pop_free(cpols, POLICYINFO_free);
+    if (!ok) {
+        X509_free(cert);
+        cert = NULL;
+    }
+    return cert;
+}
+
+static const char *const mapping_policies[] = { "1.2.1" };
+static const char *const mapping_subjects[] = {
+    "1.3.3", "1.3.1", "1.3.2", "1.3.1", "1.3.3", "1.3.2", "1.3.1"
+};
+
+/* The expected policy set is sorted, has no duplicates and is bsearched */
+static int test_policy_mapping_expected_set(void)
+{
+    X509_POLICY_LEVEL level = { 0 };
+    X509_POLICY_NODE node = { 0 };
+    X509 *cert = NULL;
+    const X509_POLICY_CACHE *cache;
+    X509_POLICY_DATA *data;
+    ASN1_OBJECT *issuer = OBJ_txt2obj("1.2.1", 1);
+    ASN1_OBJECT *other = OBJ_txt2obj("1.3.4", 1);
+    ASN1_OBJECT *subject = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(issuer)
+        || !TEST_ptr(other)
+        || !TEST_ptr(cert = make_policy_cert(mapping_policies,
+                         OSSL_NELEM(mapping_policies), "1.2.1", mapping_subjects,
+                         OSSL_NELEM(mapping_subjects)))
+        || !TEST_ptr(cache = ossl_policy_cache_set(cert))
+        || !TEST_ptr(data = ossl_policy_cache_find_data(cache, issuer))
+        || !TEST_true(sk_ASN1_OBJECT_is_sorted(data->expected_policy_set))
+        || !TEST_int_eq(sk_ASN1_OBJECT_num(data->expected_policy_set), 3))
+        goto end;
+
+    node.data = data;
+    for (i = 0; i < OSSL_NELEM(mapping_subjects); i++) {
+        ASN1_OBJECT_free(subject);
+        if (!TEST_ptr(subject = OBJ_txt2obj(mapping_subjects[i], 1))
+            || !TEST_true(ossl_policy_node_match(&level, &node, subject)))
+            goto end;
+    }
+    if (!TEST_false(ossl_policy_node_match(&level, &node, other))
+        || !TEST_false(ossl_policy_node_match(&level, &node, issuer)))
+        goto end;
+
+    /* A comparator that counts shows that the match is not a linear scan */
+    (void)sk_ASN1_OBJECT_set_cmp_func(data->expected_policy_set,
+        counting_policy_oid_cmp);
+    sk_ASN1_OBJECT_sort(data->expected_policy_set);
+    policy_oid_comparisons = 0;
+    if (!TEST_true(ossl_policy_node_match(&level, &node, subject))
+        || !TEST_size_t_gt(policy_oid_comparisons, 0))
+        goto end;
+
+    level.flags = X509_V_FLAG_INHIBIT_MAP;
+    ret = TEST_false(ossl_policy_node_match(&level, &node, subject))
+        && TEST_true(ossl_policy_node_match(&level, &node, issuer));
+
+end:
+    ASN1_OBJECT_free(subject);
+    ASN1_OBJECT_free(other);
+    ASN1_OBJECT_free(issuer);
+    X509_free(cert);
+    return ret;
+}
+
+/* Duplicate mappings give one child per distinct expected policy */
+static int test_policy_mapping_tree(void)
+{
+    static const char *const leaf_policies[] = { "1.3.1", "2.5.29.32.0" };
+    STACK_OF(X509) *certs = sk_X509_new_null();
+    STACK_OF(ASN1_OBJECT) *oids = sk_ASN1_OBJECT_new_null();
+    X509_POLICY_TREE *tree = NULL;
+    ASN1_OBJECT *oid = NULL;
+    X509 *cert = NULL;
+    int explicit_policy, ret = 0;
+
+    if (!TEST_ptr(certs)
+        || !TEST_ptr(oids)
+        || !TEST_ptr(oid = OBJ_txt2obj("1.2.1", 1))
+        || !TEST_true(sk_ASN1_OBJECT_push(oids, oid)))
+        goto end;
+    oid = NULL;
+
+    /* The chain goes from the leaf to the trust anchor */
+    if (!TEST_ptr(cert = make_policy_cert(leaf_policies,
+                      OSSL_NELEM(leaf_policies), NULL, NULL, 0))
+        || !TEST_true(sk_X509_push(certs, cert)))
+        goto end;
+    cert = NULL;
+    if (!TEST_ptr(cert = make_policy_cert(mapping_policies,
+                      OSSL_NELEM(mapping_policies), "1.2.1", mapping_subjects,
+                      OSSL_NELEM(mapping_subjects)))
+        || !TEST_true(sk_X509_push(certs, cert)))
+        goto end;
+    cert = NULL;
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(sk_X509_push(certs, cert)))
+        goto end;
+    cert = NULL;
+
+    /* The leaf level has 1.3.1 and the unmatched 1.3.2 and 1.3.3 */
+    if (!TEST_int_eq(X509_policy_check(&tree, &explicit_policy, certs, oids,
+                         X509_V_FLAG_EXPLICIT_POLICY),
+            X509_PCY_TREE_VALID)
+        || !TEST_ptr(tree)
+        || !TEST_int_eq(X509_policy_level_node_count(
+                            X509_policy_tree_get0_level(tree, 2)),
+            3))
+        goto end;
+    X509_policy_tree_free(tree);
+    tree = NULL;
+
+    ret = TEST_int_eq(X509_policy_check(&tree, &explicit_policy, certs, oids,
+                          X509_V_FLAG_EXPLICIT_POLICY
+                              | X509_V_FLAG_INHIBIT_MAP),
+        X509_PCY_TREE_FAILURE);
+
+end:
+    X509_policy_tree_free(tree);
+    X509_free(cert);
+    ASN1_OBJECT_free(oid);
+    sk_ASN1_OBJECT_pop_free(oids, ASN1_OBJECT_free);
+    sk_X509_pop_free(certs, X509_free);
+    return ret;
 }
 
 typedef struct {
@@ -1550,6 +1730,8 @@ int setup_tests(void)
     ADD_TEST(test_sign_caches_encoding);
     ADD_TEST(test_cmp_modified);
     ADD_TEST(test_standard_exts);
+    ADD_TEST(test_policy_mapping_expected_set);
+    ADD_TEST(test_policy_mapping_tree);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
     ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
     ADD_TEST(test_crl_add_ext_modifies);

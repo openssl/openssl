@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -137,8 +137,6 @@ void ossl_policy_node_free(X509_POLICY_NODE *node)
 int ossl_policy_node_match(const X509_POLICY_LEVEL *lvl,
     const X509_POLICY_NODE *node, const ASN1_OBJECT *oid)
 {
-    int i;
-    ASN1_OBJECT *policy_oid;
     const X509_POLICY_DATA *x = node->data;
 
     if ((lvl->flags & X509_V_FLAG_INHIBIT_MAP)
@@ -148,10 +146,5 @@ int ossl_policy_node_match(const X509_POLICY_LEVEL *lvl,
         return 0;
     }
 
-    for (i = 0; i < sk_ASN1_OBJECT_num(x->expected_policy_set); i++) {
-        policy_oid = sk_ASN1_OBJECT_value(x->expected_policy_set, i);
-        if (!OBJ_cmp(policy_oid, oid))
-            return 1;
-    }
-    return 0;
+    return sk_ASN1_OBJECT_find(x->expected_policy_set, (ASN1_OBJECT *)oid) >= 0;
 }
