@@ -560,6 +560,54 @@ jobs:
         OPENSSL_riscvcap: RV64GC_ZBA_ZBB_ZBC_ZBS_ZKT_V
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
+  solaris-sparc:
+    runs-on: solaris-sparc
+    needs: [validate-dispatch-inputs]
+    # Self-hosted runner: a Linux VM that runs each step in a Solaris zone on
+    # sparc-solaris over ssh. Its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
+    # Step env: does not reach the zone; pass variables on the command line.
+    if: |
+      github.repository == 'openssl/openssl' &&
+      ( github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && inputs.pr == '') ) &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: sparc-ci run {0}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: copy the tree to the Solaris zone
+      shell: bash
+      run: |
+        sparc-ci reset
+        tar -cf - --exclude=.git . | sparc-ci put
+    - name: config
+      run: ./Configure solaris64-sparcv9-gcc --strict-warnings enable-fips enable-md2 enable-rc5 enable-trace
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: gmake -j64
+    - name: get cpu info
+      run: ./util/opensslwrap.sh version -c
+    - name: make test
+      run: gmake test HARNESS_JOBS=16
+    - name: fetch test logs
+      if: failure()
+      shell: bash
+      run: sparc-ci get test-runs | tar -xf -
+    - name: save artifacts
+      if: failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: "ci@solaris-sparc"
+        path: test-runs
+
   freebsd-x86_64:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
