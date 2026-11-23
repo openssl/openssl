@@ -2080,6 +2080,62 @@ err:
     return MSG_PROCESS_ERROR;
 }
 
+/*
+ * Collect the ClientHello extensions again, after a callback that may have
+ * switched the connection to another SSL_CTX.
+ *
+ * The collected extensions are indexed by the custom extensions of the SSL_CTX
+ * in use when they were collected, and the new SSL_CTX may have a different
+ * set.  Nothing is done when neither set has any custom extensions.
+ *
+ * The built-in extensions keep their positions.  Those already parsed stay
+ * marked as parsed, so that they are not parsed a second time.
+ *
+ * Custom extensions do not keep their positions, and their parsed state is
+ * not carried over.  This must therefore not be called once any custom
+ * extension has been parsed, which first happens in
+ * tls_parse_all_extensions().
+ *
+ * It is called twice for each ClientHello: after the ClientHello callback,
+ * and again after the session lookup, immediately before
+ * tls_parse_all_extensions().  The collected extensions are freed when
+ * processing of the ClientHello ends, so it is not called after that.
+ *
+ * Returns 1 on success, or 0 on error with SSLfatal() already called.
+ */
+static int recollect_client_hello_exts(SSL_CONNECTION *s,
+    CLIENTHELLO_MSG *clienthello)
+{
+    PACKET extensions = clienthello->extensions;
+    void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
+        = s->ext.debug_cb;
+    RAW_EXTENSION *old = clienthello->pre_proc_exts;
+    size_t i;
+    int ret;
+
+    if (clienthello->pre_proc_exts_len == TLSEXT_IDX_num_builtins
+        && s->cert->custext.meths_count == 0)
+        return 1;
+
+    clienthello->pre_proc_exts = NULL;
+    clienthello->pre_proc_exts_len = 0;
+    /*
+     * The first collection has already initialised the built-in extensions
+     * and passed the extensions to the debug callback.
+     */
+    s->ext.debug_cb = NULL;
+    ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+        &clienthello->pre_proc_exts,
+        &clienthello->pre_proc_exts_len, 0);
+    s->ext.debug_cb = debug_cb;
+    if (ret) {
+        for (i = 0; i < TLSEXT_IDX_num_builtins; i++)
+            clienthello->pre_proc_exts[i].parsed = old[i].parsed;
+    }
+    OPENSSL_free(old);
+    return ret;
+}
+
 static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 {
     unsigned int j;
@@ -2152,33 +2208,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     /*
      * The callback may have switched to an SSL_CTX with a different set of
      * custom extensions, possibly in an earlier call that returned
-     * SSL_CLIENT_HELLO_RETRY. The collected extensions are indexed by the
-     * custom extensions in use when they were collected, so collect them
-     * again unless neither set has any.
+     * SSL_CLIENT_HELLO_RETRY.
      */
-    if (clienthello->pre_proc_exts_len != TLSEXT_IDX_num_builtins
-        || s->cert->custext.meths_count != 0) {
-        PACKET extensions = clienthello->extensions;
-        void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
-            = s->ext.debug_cb;
-        int ret;
-
-        OPENSSL_free(clienthello->pre_proc_exts);
-        clienthello->pre_proc_exts = NULL;
-        clienthello->pre_proc_exts_len = 0;
-        /*
-         * The first collection has already initialised the built-in
-         * extensions and passed the extensions to the debug callback.
-         */
-        s->ext.debug_cb = NULL;
-        ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
-            &clienthello->pre_proc_exts,
-            &clienthello->pre_proc_exts_len, 0);
-        s->ext.debug_cb = debug_cb;
-        if (!ret) {
-            /* SSLfatal already been called */
-            goto err;
-        }
+    if (!recollect_client_hello_exts(s, clienthello)) {
+        /* SSLfatal() already called */
+        goto err;
     }
 
     /* Set up the client_random */
@@ -2432,6 +2466,16 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
         ssl_check_for_safari(s, clienthello);
+
+    /*
+     * The callbacks called since the extensions were last collected, such as
+     * the PSK and session ticket callbacks, may also have switched to another
+     * SSL_CTX.  No custom extension has been parsed yet.
+     */
+    if (!recollect_client_hello_exts(s, clienthello)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
 
     /* TLS extensions */
     if (!tls_parse_all_extensions(s, SSL_EXT_CLIENT_HELLO,

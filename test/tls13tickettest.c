@@ -2352,10 +2352,12 @@ static int test_tls13_psk_unknown_identity_alert(int idx)
 }
 
 static SSL_CTX *switch_target;
+static int switch_find_calls;
 
 static int switch_ctx_find_cb(SSL *ssl, const unsigned char *id, size_t idlen,
     SSL_SESSION **sess)
 {
+    switch_find_calls++;
     *sess = NULL;
     return SSL_set_SSL_CTX(ssl, switch_target) != NULL;
 }
@@ -2430,6 +2432,99 @@ end:
     SSL_CTX_free(c);
     SSL_CTX_free(s);
     SSL_CTX_free(mid);
+    SSL_CTX_free(target);
+    SSL_CTX_free(vhost);
+    return test;
+}
+
+#define SWITCH_EXT_BASE 0xff10
+#define SWITCH_EXT_OTHER 0xff80
+#define SWITCH_EXT_COUNT 8
+
+static int switch_ext_parse_calls;
+
+static int switch_ext_parse_cb(SSL *ssl, unsigned int ext_type,
+    unsigned int context, const unsigned char *in, size_t inlen, X509 *x,
+    size_t chainidx, int *al, void *arg)
+{
+    switch_ext_parse_calls++;
+    return 1;
+}
+
+/* Add |count| custom ClientHello extensions, with types starting at |base| */
+static int add_switch_exts(SSL_CTX *ctx, unsigned int base, int count)
+{
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (!TEST_true(SSL_CTX_add_custom_ext(ctx, base + i,
+                SSL_EXT_CLIENT_HELLO, NULL, NULL, NULL,
+                switch_ext_parse_cb, NULL)))
+            return 0;
+    }
+    return 1;
+}
+
+/*
+ * A PSK find session callback switches the connection to a context with a
+ * different set of custom extensions, and reports that it has no PSK.  The
+ * client sends one custom extension, which only the new context knows.  That
+ * extension must be parsed, once, and the PSK callback must not be called a
+ * second time.
+ *
+ * With idx 0 the original context has no custom extensions and the new one
+ * has several.  With idx 1 the original context has several and the new one
+ * has only the one the client sends.
+ */
+static int test_tls13_psk_cb_switches_custom_exts(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL, *target = NULL, *vhost = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    int ntarget = idx == 0 ? SWITCH_EXT_COUNT : 1;
+    int test;
+
+    late_cert_calls = switch_find_calls = switch_ext_parse_calls = 0;
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &target, NULL, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &vhost, NULL, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_tlsext_servername_callback(target, late_sni_cb))
+        && TEST_true(SSL_CTX_set_tlsext_servername_arg(target, vhost))
+        && TEST_true(add_switch_exts(target, SWITCH_EXT_BASE, ntarget))
+        && TEST_true(SSL_CTX_add_custom_ext(c, SWITCH_EXT_BASE + ntarget - 1,
+            SSL_EXT_CLIENT_HELLO, NULL, NULL, NULL, NULL, NULL));
+    if (test == 0)
+        goto end;
+    if (idx != 0
+        && !TEST_true(add_switch_exts(s, SWITCH_EXT_OTHER, SWITCH_EXT_COUNT))) {
+        test = 0;
+        goto end;
+    }
+
+    test = TEST_true(tls_channel_init(c, s, &conn));
+    if (test == 0)
+        goto end;
+
+    switch_target = target;
+    probe_known = 0;
+    probe_wrong_key = 0;
+    SSL_set_psk_use_session_callback(conn.c.ssl, probe_psk_use_cb);
+    SSL_set_psk_find_session_callback(conn.s.ssl, switch_ctx_find_cb);
+    test = TEST_true(SSL_set_tlsext_host_name(conn.c.ssl, "review.example"))
+        && TEST_true(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0))
+        && TEST_int_eq(switch_find_calls, 1)
+        && TEST_int_eq(switch_ext_parse_calls, 1)
+        && TEST_int_eq(late_cert_calls, 1)
+        && TEST_false(SSL_session_reused(conn.c.ssl));
+
+end:
+    switch_target = NULL;
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
     SSL_CTX_free(target);
     SSL_CTX_free(vhost);
     return test;
@@ -2984,6 +3079,7 @@ int setup_tests(void)
 #else
     ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 2);
 #endif
+    ADD_ALL_TESTS(test_tls13_psk_cb_switches_custom_exts, 2);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_ALL_TESTS(test_tls13_suppress_early_data_want_write, 2);
 #endif
