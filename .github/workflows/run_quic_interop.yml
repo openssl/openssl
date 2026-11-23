@@ -73,7 +73,7 @@ jobs:
     steps: &client_steps
       - uses: actions/checkout@v6
         with:
-          repository: 'quic-interop/quic-interop-runner'
+          repository: 'nhorman/quic-interop-runner'
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@v6
@@ -133,7 +133,7 @@ jobs:
     steps: &server_steps
       - uses: actions/checkout@v6
         with:
-          repository: 'quic-interop/quic-interop-runner'
+          repository: 'nhorman/quic-interop-runner'
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/checkout@v6
