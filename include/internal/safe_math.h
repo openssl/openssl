@@ -320,7 +320,7 @@
  * that the final quotient cannot fit.  No wider integer type is needed.
  */
 
-#define OSSL_SAFE_MATH_MULDIVS(type_name, type, max)                    \
+#define OSSL_SAFE_MATH_MULDIVS(type_name, type, min, max)               \
     static ossl_inline ossl_unused type safe_muldiv_##type_name(type a, \
         type b, type c, int *err)                                       \
     {                                                                   \
@@ -373,11 +373,11 @@
             if (e2)                                                     \
                 goto overflow;                                          \
         }                                                               \
-        return negative ? q : safe_sub_##type_name(0, q, err);          \
+        return negative ? q : safe_neg_##type_name(q, err);             \
                                                                         \
     overflow:                                                           \
         *err |= 1;                                                      \
-        return max;                                                     \
+        return negative ? min : max;                                    \
     }
 
 #define OSSL_SAFE_MATH_MULDIVU(type_name, type, max)                    \
@@ -486,8 +486,9 @@
         OSSL_SAFE_MATH_MAXS(type))                                     \
     OSSL_SAFE_MATH_DIV_ROUND_UP(type_name, type,                       \
         OSSL_SAFE_MATH_MAXS(type))                                     \
-    OSSL_SAFE_MATH_MULDIVS(type_name, type, OSSL_SAFE_MATH_MAXS(type)) \
     OSSL_SAFE_MATH_NEGS(type_name, type, OSSL_SAFE_MATH_MINS(type))    \
+    OSSL_SAFE_MATH_MULDIVS(type_name, type, OSSL_SAFE_MATH_MINS(type), \
+        OSSL_SAFE_MATH_MAXS(type))                                     \
     OSSL_SAFE_MATH_ABSS(type_name, type, OSSL_SAFE_MATH_MINS(type))
 
 #define OSSL_SAFE_MATH_UNSIGNED(type_name, type)                       \
