@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,12 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
- * Uncomment this if the fallback non-builtin overflow checking is to
- * be tested.
- */
-/*#define OPENSSL_NO_BUILTIN_OVERFLOW_CHECKING*/
-
 #include "internal/nelem.h"
 #include "internal/safe_math.h"
 #include "testutil.h"
@@ -24,6 +18,8 @@
 OSSL_SAFE_MATH_SIGNED(int, int)
 OSSL_SAFE_MATH_UNSIGNED(uint, unsigned int)
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
+OSSL_SAFE_MATH_SIGNED(int64_t, int64_t)
+OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
 static const struct {
     int a, b;
@@ -295,38 +291,70 @@ err:
 static const struct {
     int a, b, c;
     int err;
+    int result;
 } test_muldiv_ints[] = {
-    { 3, 1, 2, 0 },
-    { 1, 3, 2, 0 },
-    { -3, 1, 2, 0 },
-    { 1, 3, -2, 0 },
-    { INT_MAX, INT_MAX, INT_MAX, 0 },
-    { INT_MIN, INT_MIN, INT_MAX, 1 },
-    { INT_MIN, INT_MIN, INT_MIN, 0 },
-    { INT_MAX, 2, 4, 0 },
-    { 8, INT_MAX, 4, 1 },
-    { INT_MAX, 8, 4, 1 },
-    { INT_MIN, 2, 4, 1 },
-    { 8, INT_MIN, 4, 1 },
-    { INT_MIN, 8, 4, 1 },
-    { 3, 4, 0, 1 },
+    { 3, 1, 2, 0, 1 },
+    { 1, 3, 2, 0, 1 },
+    { -3, 1, 2, 0, -1 },
+    { 1, 3, -2, 0, -1 },
+    { INT_MAX, INT_MAX, INT_MAX, 0, INT_MAX },
+    { INT_MIN, INT_MIN, INT_MAX, 1, 0 },
+    { INT_MIN, INT_MIN, INT_MIN, 0, INT_MIN },
+    { INT_MAX, 2, 4, 0, INT_MAX / 2 },
+    { 8, INT_MAX, 4, 1, 0 },
+    { INT_MIN, 2, 4, 0, INT_MIN / 2 },
+    { 8, INT_MIN, 4, 1, 0 },
+    { INT_MIN, -1, INT_MIN, 0, -1 },
+    { INT_MIN, -1, 2, 0, -(INT_MIN / 2) },
+    { INT_MIN, -1, -1, 0, INT_MIN },
+    { INT_MIN, 1, -1, 1, 0 },
+    { INT_MIN, 2, 2, 0, INT_MIN },
+    { INT_MIN, 2, -2, 1, 0 },
+    { INT_MAX - 1, INT_MAX - 1, INT_MAX, 0, INT_MAX - 2 },
+    { -(INT_MAX - 1), INT_MAX - 1, INT_MAX, 0, -(INT_MAX - 2) },
+    { INT_MAX - 1, INT_MAX - 1, -INT_MAX, 0, -(INT_MAX - 2) },
+    { -(INT_MAX - 1), INT_MAX - 1, -INT_MAX, 0, INT_MAX - 2 },
+    { -(INT_MAX - 1), -(INT_MAX - 1), INT_MAX, 0, INT_MAX - 2 },
+    { -(INT_MAX - 1), -(INT_MAX - 1), -INT_MAX, 0, -(INT_MAX - 2) },
+    { INT_MAX, INT_MAX / 2 + 1, INT_MAX / 2 + 1, 0, INT_MAX },
+    { INT_MIN, INT_MAX, INT_MIN, 0, INT_MAX },
+    { INT_MAX, INT_MAX, INT_MIN, 0, -(INT_MAX - 1) },
+    { INT_MAX, INT_MAX, 1, 1, 0 },
+    { -INT_MAX, INT_MAX, 1, 1, 0 },
+    { 0, INT_MIN, -1, 0, 0 },
+    { INT_MAX, 0, INT_MIN, 0, 0 },
+    { 3, 4, 0, 1, 0 },
+    { 0, 4, 0, 1, 0 },
+    { 3, 0, 0, 1, 0 },
+    { 0, 0, 0, 1, 0 },
+    /* Minimum products and overflowing intermediate products. */
+    { INT_MIN / 2, 2, 4, 0, INT_MIN / 4 },
+    { -2, INT_MAX / 2 + 1, 3, 0, INT_MIN / 3 },
+    { INT_MIN / 2, 2, INT_MIN, 0, 1 },
+    { INT_MIN / 2, 2, -1, 1, 0 },
+    { INT_MIN / 2, -4, -2, 0, INT_MIN },
 };
 
 static int test_int_muldiv(int n)
 {
-    int err = 0;
-    int r, real = 0;
     const int a = test_muldiv_ints[n].a;
     const int b = test_muldiv_ints[n].b;
     const int c = test_muldiv_ints[n].c;
+    int initial, swap, err;
+    int r;
 
-    r = safe_muldiv_int(a, b, c, &err);
-    if (c != 0)
-        real = (int)((int64_t)a * (int64_t)b / (int64_t)c);
-    if (!TEST_int_eq(err, test_muldiv_ints[n].err)
-        || (!err && !TEST_int_eq(r, real))) {
-        TEST_info("%d * %d / %d  r = %d  err = %d", a, b, c, r, err);
-        return 0;
+    for (initial = 0; initial <= 2; initial += 2) {
+        for (swap = 0; swap < 2; swap++) {
+            err = initial;
+            r = safe_muldiv_int(swap ? b : a, swap ? a : b, c, &err);
+            if (!TEST_int_eq(err, initial | test_muldiv_ints[n].err)
+                || (!test_muldiv_ints[n].err
+                    && !TEST_int_eq(r, test_muldiv_ints[n].result))
+                || (c == 0 && !TEST_int_eq(r, a == 0 || b == 0 ? 0 : INT_MAX))) {
+                TEST_info("case %d: initial error = %d, swap = %d", n, initial, swap);
+                return 0;
+            }
+        }
     }
     return 1;
 }
@@ -334,31 +362,162 @@ static int test_int_muldiv(int n)
 static const struct {
     unsigned int a, b, c;
     int err;
+    unsigned int result;
 } test_muldiv_uints[] = {
-    { 3, 1, 2, 0 },
-    { 1, 3, 2, 0 },
-    { UINT_MAX, UINT_MAX, UINT_MAX, 0 },
-    { UINT_MAX, 2, 4, 0 },
-    { 8, UINT_MAX, 4, 1 },
-    { UINT_MAX, 8, 4, 1 },
-    { 3, 4, 0, 1 },
+    { 3, 1, 2, 0, 1 },
+    { 1, 3, 2, 0, 1 },
+    { UINT_MAX, UINT_MAX, UINT_MAX, 0, UINT_MAX },
+    { UINT_MAX, 2, 4, 0, UINT_MAX / 2 },
+    { 8, UINT_MAX, 4, 1, 0 },
+    { UINT_MAX - 1, UINT_MAX - 1, UINT_MAX, 0, UINT_MAX - 2 },
+    { UINT_MAX, UINT_MAX / 2 + 1, UINT_MAX / 2 + 1, 0, UINT_MAX },
+    { UINT_MAX, UINT_MAX, 1, 1, 0 },
+    { UINT_MAX, UINT_MAX, UINT_MAX - 1, 1, 0 },
+    { 0, UINT_MAX, 1, 0, 0 },
+    { UINT_MAX, 0, UINT_MAX, 0, 0 },
+    { 3, 4, 0, 1, 0 },
+    { 0, 4, 0, 1, 0 },
+    { 3, 0, 0, 1, 0 },
+    { 0, 0, 0, 1, 0 },
 };
 
 static int test_uint_muldiv(int n)
 {
-    int err = 0;
-    unsigned int r, real = 0;
     const unsigned int a = test_muldiv_uints[n].a;
     const unsigned int b = test_muldiv_uints[n].b;
     const unsigned int c = test_muldiv_uints[n].c;
+    int initial, swap, err;
+    unsigned int r;
 
-    r = safe_muldiv_uint(a, b, c, &err);
-    if (c != 0)
-        real = (unsigned int)((uint64_t)a * (uint64_t)b / (uint64_t)c);
-    if (!TEST_int_eq(err, test_muldiv_uints[n].err)
-        || (!err && !TEST_uint_eq(r, real))) {
-        TEST_info("%u * %u / %u  r = %u  err = %d", a, b, c, r, err);
-        return 0;
+    for (initial = 0; initial <= 2; initial += 2) {
+        for (swap = 0; swap < 2; swap++) {
+            err = initial;
+            r = safe_muldiv_uint(swap ? b : a, swap ? a : b, c, &err);
+            if (!TEST_int_eq(err, initial | test_muldiv_uints[n].err)
+                || (!test_muldiv_uints[n].err
+                    && !TEST_uint_eq(r, test_muldiv_uints[n].result))
+                || (c == 0 && !TEST_uint_eq(r, a == 0 || b == 0 ? 0 : UINT_MAX))) {
+                TEST_info("case %d: initial error = %d, swap = %d", n, initial, swap);
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static const struct {
+    int64_t a, b, c;
+    int err;
+    int64_t result;
+} test_muldiv_int64_ts[] = {
+    { 3, 1, 2, 0, 1 },
+    { 1, 3, 2, 0, 1 },
+    { -3, 1, 2, 0, -1 },
+    { 1, 3, -2, 0, -1 },
+    { INT64_MAX, INT64_MAX, INT64_MAX, 0, INT64_MAX },
+    { INT64_MIN, INT64_MIN, INT64_MAX, 1, 0 },
+    { INT64_MIN, INT64_MIN, INT64_MIN, 0, INT64_MIN },
+    { INT64_MAX, 2, 4, 0, INT64_MAX / 2 },
+    { 8, INT64_MAX, 4, 1, 0 },
+    { INT64_MIN, 2, 4, 0, INT64_MIN / 2 },
+    { 8, INT64_MIN, 4, 1, 0 },
+    { INT64_MIN, -1, INT64_MIN, 0, -1 },
+    { INT64_MIN, -1, 2, 0, -(INT64_MIN / 2) },
+    { INT64_MIN, -1, -1, 0, INT64_MIN },
+    { INT64_MIN, 1, -1, 1, 0 },
+    { INT64_MIN, 2, 2, 0, INT64_MIN },
+    { INT64_MIN, 2, -2, 1, 0 },
+    { INT64_MAX - 1, INT64_MAX - 1, INT64_MAX, 0, INT64_MAX - 2 },
+    { -(INT64_MAX - 1), INT64_MAX - 1, INT64_MAX, 0, -(INT64_MAX - 2) },
+    { INT64_MAX - 1, INT64_MAX - 1, -INT64_MAX, 0, -(INT64_MAX - 2) },
+    { -(INT64_MAX - 1), INT64_MAX - 1, -INT64_MAX, 0, INT64_MAX - 2 },
+    { -(INT64_MAX - 1), -(INT64_MAX - 1), INT64_MAX, 0, INT64_MAX - 2 },
+    { -(INT64_MAX - 1), -(INT64_MAX - 1), -INT64_MAX, 0, -(INT64_MAX - 2) },
+    { INT64_MAX, INT64_MAX / 2 + 1, INT64_MAX / 2 + 1, 0, INT64_MAX },
+    { INT64_MIN, INT64_MAX, INT64_MIN, 0, INT64_MAX },
+    { INT64_MAX, INT64_MAX, INT64_MIN, 0, -(INT64_MAX - 1) },
+    { INT64_MAX, INT64_MAX, 1, 1, 0 },
+    { -INT64_MAX, INT64_MAX, 1, 1, 0 },
+    { 0, INT64_MIN, -1, 0, 0 },
+    { INT64_MAX, 0, INT64_MIN, 0, 0 },
+    { 3, 4, 0, 1, 0 },
+    { 0, 4, 0, 1, 0 },
+    { 3, 0, 0, 1, 0 },
+    { 0, 0, 0, 1, 0 },
+    /* Minimum products and overflowing intermediate products. */
+    { INT64_MIN / 2, 2, 4, 0, INT64_MIN / 4 },
+    { -2, INT64_MAX / 2 + 1, 3, 0, INT64_MIN / 3 },
+    { INT64_MIN / 2, 2, INT64_MIN, 0, 1 },
+    { INT64_MIN / 2, 2, -1, 1, 0 },
+    { INT64_MIN / 2, -4, -2, 0, INT64_MIN },
+};
+
+static int test_int64_t_muldiv(int n)
+{
+    const int64_t a = test_muldiv_int64_ts[n].a;
+    const int64_t b = test_muldiv_int64_ts[n].b;
+    const int64_t c = test_muldiv_int64_ts[n].c;
+    int initial, swap, err;
+    int64_t r;
+
+    for (initial = 0; initial <= 2; initial += 2) {
+        for (swap = 0; swap < 2; swap++) {
+            err = initial;
+            r = safe_muldiv_int64_t(swap ? b : a, swap ? a : b, c, &err);
+            if (!TEST_int_eq(err, initial | test_muldiv_int64_ts[n].err)
+                || (!test_muldiv_int64_ts[n].err
+                    && !TEST_int64_t_eq(r, test_muldiv_int64_ts[n].result))
+                || (c == 0 && !TEST_int64_t_eq(r, a == 0 || b == 0 ? 0 : INT64_MAX))) {
+                TEST_info("case %d: initial error = %d, swap = %d", n, initial, swap);
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static const struct {
+    uint64_t a, b, c;
+    int err;
+    uint64_t result;
+} test_muldiv_uint64_ts[] = {
+    { 3, 1, 2, 0, 1 },
+    { 1, 3, 2, 0, 1 },
+    { UINT64_MAX, UINT64_MAX, UINT64_MAX, 0, UINT64_MAX },
+    { UINT64_MAX, 2, 4, 0, UINT64_MAX / 2 },
+    { 8, UINT64_MAX, 4, 1, 0 },
+    { UINT64_MAX - 1, UINT64_MAX - 1, UINT64_MAX, 0, UINT64_MAX - 2 },
+    { UINT64_MAX, UINT64_MAX / 2 + 1, UINT64_MAX / 2 + 1, 0, UINT64_MAX },
+    { UINT64_MAX, UINT64_MAX, 1, 1, 0 },
+    { UINT64_MAX, UINT64_MAX, UINT64_MAX - 1, 1, 0 },
+    { 0, UINT64_MAX, 1, 0, 0 },
+    { UINT64_MAX, 0, UINT64_MAX, 0, 0 },
+    { 3, 4, 0, 1, 0 },
+    { 0, 4, 0, 1, 0 },
+    { 3, 0, 0, 1, 0 },
+    { 0, 0, 0, 1, 0 },
+};
+
+static int test_uint64_t_muldiv(int n)
+{
+    const uint64_t a = test_muldiv_uint64_ts[n].a;
+    const uint64_t b = test_muldiv_uint64_ts[n].b;
+    const uint64_t c = test_muldiv_uint64_ts[n].c;
+    int initial, swap, err;
+    uint64_t r;
+
+    for (initial = 0; initial <= 2; initial += 2) {
+        for (swap = 0; swap < 2; swap++) {
+            err = initial;
+            r = safe_muldiv_uint64_t(swap ? b : a, swap ? a : b, c, &err);
+            if (!TEST_int_eq(err, initial | test_muldiv_uint64_ts[n].err)
+                || (!test_muldiv_uint64_ts[n].err
+                    && !TEST_uint64_t_eq(r, test_muldiv_uint64_ts[n].result))
+                || (c == 0 && !TEST_uint64_t_eq(r, a == 0 || b == 0 ? 0 : UINT64_MAX))) {
+                TEST_info("case %d: initial error = %d, swap = %d", n, initial, swap);
+                return 0;
+            }
+        }
     }
     return 1;
 }
@@ -370,5 +529,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_size_t_ops, OSSL_NELEM(test_size_ts));
     ADD_ALL_TESTS(test_int_muldiv, OSSL_NELEM(test_muldiv_ints));
     ADD_ALL_TESTS(test_uint_muldiv, OSSL_NELEM(test_muldiv_uints));
+    ADD_ALL_TESTS(test_int64_t_muldiv, OSSL_NELEM(test_muldiv_int64_ts));
+    ADD_ALL_TESTS(test_uint64_t_muldiv, OSSL_NELEM(test_muldiv_uint64_ts));
     return 1;
 }
