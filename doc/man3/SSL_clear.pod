@@ -25,6 +25,9 @@ if L<SSL_shutdown(3)> was not called for the connection
 or at least L<SSL_set_shutdown(3)> was used to
 set the SSL_SENT_SHUTDOWN state.
 
+If a handshake was started but did not complete, its session is not kept. This
+includes a session set with L<SSL_set_session(3)> before that handshake.
+
 If a session was closed cleanly, the session object will be kept and all
 settings corresponding. This explicitly means, that e.g. the special method
 used during the session will be kept for the next handshake. So if the
@@ -71,7 +74,7 @@ The SSL_clear() operation was successful.
 =back
 
 L<SSL_new(3)>, L<SSL_free(3)>,
-L<SSL_shutdown(3)>, L<SSL_set_shutdown(3)>,
+L<SSL_shutdown(3)>, L<SSL_set_shutdown(3)>, L<SSL_set_session(3)>,
 L<SSL_CTX_set_options(3)>, L<ssl(7)>,
 L<SSL_CTX_set_client_cert_cb(3)>
 
