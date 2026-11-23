@@ -175,6 +175,9 @@
                                                                      \
             if (x <= max / y)                                        \
                 return a * b;                                        \
+            /* A negative product can also equal the minimum. */     \
+            if (((a < 0) ^ (b < 0)) && -x == min / y)                \
+                return min;                                          \
         }                                                            \
         *err |= 1;                                                   \
         return (a < 0) ^ (b < 0) ? min : max;                        \
