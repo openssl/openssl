@@ -4670,8 +4670,12 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         num = 1;
     }
 
-    inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
-    out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
+    /*
+     * Single-record fallback needs explicit IV, MAC and padding headroom
+     * in both buffers.
+     */
+    inp = app_malloc((size_t)mblengths[num - 1] + 1024, "multiblock input buffer");
+    out = app_malloc((size_t)mblengths[num - 1] + 1024, "multiblock output buffer");
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         app_bail_out("failed to allocate cipher context\n");
     if (!EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv))
@@ -4700,7 +4704,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         Time_F(START);
         for (count = 0; run && COND(count); count++) {
             EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
-            size_t len = mblengths[j];
+            unsigned int len = (unsigned int)mblengths[j];
             int packlen;
 
             memset(aad, 0, 8); /* avoid uninitialized values */
@@ -4734,13 +4738,13 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                 aad[12] = (unsigned char)(len);
                 pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                     EVP_AEAD_TLS1_AAD_LEN, aad);
-                ciph_success = EVP_Cipher(ctx, out, inp, (unsigned int)(len + pad));
+                ciph_success = EVP_Cipher(ctx, out, inp, len + pad);
             }
         }
         d = Time_F(STOP);
         BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n" : "%d %s ops in %.2fs\n", count, "evp", d);
         if ((ciph_success <= 0) && (mr == 0))
-            BIO_puts(bio_err, "Error performing cipher op\n");
+            BIO_printf(bio_err, "Error performing cipher op\n");
         results[D_EVP][j] = ((double)count) / d * mblengths[j];
     }
 
