@@ -2256,9 +2256,24 @@ static int probe_psk_use_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id
     return 1;
 }
 
+static int probe_cb_calls;
+
 static int probe_no_cert_cb(SSL *ssl, void *arg)
 {
+    probe_cb_calls++;
     return 0;
+}
+
+static int probe_ok_cert_cb(SSL *ssl, void *arg)
+{
+    probe_cb_calls++;
+    return 1;
+}
+
+static int probe_ok_sni_cb(SSL *ssl, int *alert, void *arg)
+{
+    probe_cb_calls++;
+    return SSL_TLSEXT_ERR_OK;
 }
 
 static int probe_reject_alpn(SSL *ssl, const unsigned char **out,
@@ -2269,16 +2284,18 @@ static int probe_reject_alpn(SSL *ssl, const unsigned char **out,
 }
 
 /*
- * Run a handshake that is bound to fail against a server with no certificate,
- * and return the alert the server sent.  The client offers a PSK that is either
- * known to the server (with the wrong key, so the binder fails) or not known.
- * Both sides are limited to the PSK's ciphersuite.  Otherwise the server may
- * select one with a different hash and drop the known PSK without verifying
- * its binder.
+ * Run a handshake that is bound to fail, and return the alert the server sent.
+ * The client offers a PSK that is either known to the server (with the wrong
+ * key, so the binder fails) or not known.  Both sides are limited to the PSK's
+ * ciphersuite.  Otherwise the server may select one with a different hash and
+ * drop the known PSK without verifying its binder.
  *
- * The case selects an additional failure the handshake would also hit if it
- * got past the PSK: 0 none, 1 no shared signature algorithms, 2 ALPN rejected,
- * 3 a certificate callback that supplies no certificate.
+ * The server has no certificate, except in case 6.  The case selects an
+ * additional failure the handshake would also hit if it got past the PSK:
+ * 0 none, 1 no shared signature algorithms, 2 ALPN rejected, 3 a certificate
+ * callback that fails.  In cases 4 and 5 a certificate callback or an SNI
+ * callback succeeds, but supplies no certificate.  In case 6 the server has a
+ * certificate, and its certificate callback fails.
  *
  * Returns the alert, or -1 if the handshake did not fail, and sets *reason to
  * the server's local error reason.
@@ -2291,7 +2308,8 @@ static int psk_failure_alert(int variant, int known, int *reason)
     int alert = -1;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
-            TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, NULL, NULL))
+            TLS1_3_VERSION, TLS1_3_VERSION, &s, &c,
+            variant == 6 ? cert : NULL, variant == 6 ? pkey : NULL))
         || !TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_AES_128_GCM_SHA256"))
         || !TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
         || !TEST_true(set_ctx_callbacks(c, s)))
@@ -2305,8 +2323,14 @@ static int psk_failure_alert(int variant, int known, int *reason)
             goto end;
         SSL_CTX_set_alpn_select_cb(s, probe_reject_alpn, NULL);
     }
-    if (variant == 3)
+    if (variant == 3 || variant == 6)
         SSL_CTX_set_cert_cb(s, probe_no_cert_cb, NULL);
+    if (variant == 4)
+        SSL_CTX_set_cert_cb(s, probe_ok_cert_cb, NULL);
+    if (variant == 5
+        && !TEST_true(SSL_CTX_set_tlsext_servername_callback(s, probe_ok_sni_cb)))
+        goto end;
+    probe_cb_calls = 0;
     probe_known = known;
     probe_wrong_key = 1;
     probe_alert = -1;
@@ -2349,6 +2373,34 @@ static int test_tls13_psk_unknown_identity_alert(int idx)
         && TEST_int_eq(unknown, bad_binder)
         && TEST_int_eq(bad_binder_reason, SSL_R_BINDER_DOES_NOT_VERIFY)
         && TEST_int_ne(unknown_reason, SSL_R_BINDER_DOES_NOT_VERIFY);
+}
+
+/*
+ * The alert and the server's error reason when the client offers an unknown
+ * PSK identity, and a callback that could have supplied a certificate has run.
+ *
+ * With idx 0 the server has no certificate, and its certificate callback
+ * succeeds without supplying one.  With idx 1 its SNI callback does the same.
+ * Both fail with decrypt_error, as a bad binder would.
+ *
+ * With idx 2 the server has a certificate and its certificate callback fails.
+ * That is a plain callback failure, with internal_error.
+ */
+static int test_tls13_psk_unknown_identity_callbacks(int idx)
+{
+    static const struct {
+        int variant, alert, reason;
+    } expect[] = {
+        { 4, SSL_AD_DECRYPT_ERROR, SSL_R_NO_CERTIFICATE_SET },
+        { 5, SSL_AD_DECRYPT_ERROR, SSL_R_NO_CERTIFICATE_SET },
+        { 6, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR },
+    };
+    int reason = 0;
+    int alert = psk_failure_alert(expect[idx].variant, 0, &reason);
+
+    return TEST_int_eq(alert, expect[idx].alert)
+        && TEST_int_eq(reason, expect[idx].reason)
+        && TEST_int_eq(probe_cb_calls, 1);
 }
 
 static int hrr_ch_count, hrr_ch_psk[2], hrr_cert_calls;
@@ -3172,6 +3224,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_sni_session_ctx);
     ADD_ALL_TESTS(test_tls13_ticket_unknown_late_cert, 2);
     ADD_ALL_TESTS(test_tls13_psk_unknown_identity_alert, 4);
+    ADD_ALL_TESTS(test_tls13_psk_unknown_identity_callbacks, 3);
     ADD_TEST(test_tls13_psk_dropped_after_hrr);
 #ifndef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 4);
