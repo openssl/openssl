@@ -1215,7 +1215,7 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
     if (!expect_quic_csl(s, &ctx))
         goto free;
 
-    /* Returns 0 if no change. */
+    /* Returns 0 if no change or on failure. */
     if (!quic_set0_net_rbio(ctx.obj, net_rbio))
         goto free;
 
