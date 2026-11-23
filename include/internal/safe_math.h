@@ -190,7 +190,11 @@
     {                                                                \
         if (b != 0 && a > max / b)                                   \
             *err |= 1;                                               \
-        /* Keep the product unsigned after integer promotion. */     \
+        /*                                                           \
+         * With 16-bit short and 32-bit int, unsigned short          \
+         * operands of 65535 promote to int and overflow when        \
+         * multiplied. Adding 0U forces unsigned arithmetic.         \
+         */                                                          \
         return a * (b + 0U);                                         \
     }
 #endif /* has(__builtin_mul_overflow) */
