@@ -6989,6 +6989,7 @@ struct failing_send_data {
     int capture; /* if set, accepted sends stop here instead of being forwarded */
     int sent_ok; /* sends accepted while capturing */
     size_t sent_len; /* length of the last send accepted while capturing */
+    unsigned char sent_addr[4]; /* IPv4 peer of the last send accepted while capturing */
 };
 
 static long failing_send_ctrl(BIO *bio, int cmd, long num, void *ptr)
@@ -7037,8 +7038,12 @@ static int failing_send_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
     }
 
     if (data->capture) {
+        size_t addr_len = sizeof(data->sent_addr);
+
         data->sent_ok++;
         data->sent_len = msg->data_len;
+        if (msg->peer != NULL)
+            BIO_ADDR_rawaddress(msg->peer, data->sent_addr, &addr_len);
         *msgs_processed = 1;
         return 1;
     }
@@ -7442,7 +7447,14 @@ end:
  * As above, but with the transient failure produced by a real full send
  * buffer: the client never reads.
  *
- * idx 0 runs with DTLS 1.2, idx 1 with DTLS 1.3.
+ * The listener's BIO may still have its read retry flag set, from a read which
+ * found nothing, when the write is blocked. That must not be reported as
+ * SSL_ERROR_WANT_READ.
+ *
+ * idx 0: DTLS 1.2
+ * idx 1: DTLS 1.3
+ * idx 2: DTLS 1.2, with the read retry flag set on the listener's BIO
+ * idx 3: DTLS 1.3, with the read retry flag set on the listener's BIO
  */
 static int test_dtls_nonblocking_write_dgram_pair_full(int idx)
 {
@@ -7451,16 +7463,16 @@ static int test_dtls_nonblocking_write_dgram_pair_full(int idx)
     BIO_ADDR *client_addr = NULL;
     size_t written = 0, readbytes = 0;
     unsigned char payload[1000], buf[2048];
-    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    int version = (idx & 1) == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
     int testresult = 0;
     int i, ret = 1;
 
 #ifdef OPENSSL_NO_DTLS1_2
-    if (idx == 0)
+    if ((idx & 1) == 0)
         return TEST_skip("DTLS 1.2 disabled");
 #endif
 #ifdef OPENSSL_NO_DTLS1_3
-    if (idx == 1)
+    if ((idx & 1) != 0)
         return TEST_skip("DTLS 1.3 disabled");
 #endif
 
@@ -7474,6 +7486,19 @@ static int test_dtls_nonblocking_write_dgram_pair_full(int idx)
     if (!TEST_true(create_mem_listener_conn(sctx, cctx, NULL, &listener,
             &clientssl, &serverssl, &client_addr)))
         goto end;
+
+    /*
+     * Let the listener take anything the client has sent since the handshake,
+     * which DTLS 1.3 does, so that a read has nothing to find. A read which
+     * finds nothing leaves the BIO's read retry flag set.
+     */
+    if ((idx & 2) != 0
+        && (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+            || !TEST_int_le(BIO_read(SSL_get_wbio(listener), buf, sizeof(buf)),
+                0)
+            || !TEST_true(BIO_should_read(SSL_get_wbio(listener)))))
+        goto end;
+    ERR_clear_error();
 
     /* The client never reads, so the pair's buffer eventually fills. */
     ERR_clear_error();
@@ -7561,14 +7586,20 @@ static BIO *push_failing_filter(BIO *base, struct failing_send_data *data)
  * send that the buffer BIO makes in the course of buffering a write must leave
  * the non-fatal error queued. An explicit flush is reported through the retry
  * flags instead, and leaves nothing on the queue.
+ *
+ * A successful flush also forgets the peer, so that the next message can be
+ * sent to a different one, even when nothing was left in the buffer to flush.
+ * A flush which fails for good does not report a retry the BIO underneath had
+ * left over from an earlier read.
  */
 static int test_buffer_bio_sendmmsg_nonfatal(void)
 {
     BIO *mem = NULL, *filter = NULL, *buffer = NULL;
-    BIO_ADDR *peer = NULL;
+    BIO_ADDR *peer = NULL, *peer2 = NULL;
     BIO_MSG msg;
     struct failing_send_data data;
     const unsigned char addr[] = { 127, 0, 0, 1 };
+    const unsigned char addr2[] = { 127, 0, 0, 2 };
     unsigned char payload[8192];
     size_t processed = 0;
     int testresult = 0;
@@ -7579,6 +7610,8 @@ static int test_buffer_bio_sendmmsg_nonfatal(void)
 
     if (!TEST_ptr(peer = BIO_ADDR_new())
         || !TEST_true(BIO_ADDR_rawmake(peer, AF_INET, addr, sizeof(addr), 0))
+        || !TEST_ptr(peer2 = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(peer2, AF_INET, addr2, sizeof(addr2), 0))
         || !TEST_ptr(mem = BIO_new(BIO_s_mem()))
         || !TEST_ptr(filter = push_failing_filter(mem, &data))
         || !TEST_ptr(buffer = BIO_new(BIO_f_buffer())))
@@ -7635,12 +7668,90 @@ static int test_buffer_bio_sendmmsg_nonfatal(void)
         || !TEST_size_t_eq(data.sent_len, 100))
         goto end;
 
+    /*
+     * Buffer some data and then send a message too big for the buffer. The
+     * buffered data goes first and the message is sent from inside the write,
+     * which leaves the buffer empty with the peer still recorded.
+     */
+    msg.data_len = 100;
+    processed = 0;
+    if (!TEST_true(BIO_sendmmsg(buffer, &msg, sizeof(msg), 1, 0, &processed))
+        || !TEST_size_t_eq(processed, 1)
+        || !TEST_int_eq(data.sent_ok, 2))
+        goto end;
+
+    msg.data_len = 5200;
+    processed = 0;
+    if (!TEST_true(BIO_sendmmsg(buffer, &msg, sizeof(msg), 1, 0, &processed))
+        || !TEST_size_t_eq(processed, 1)
+        || !TEST_int_eq(data.sent_ok, 4)
+        || !TEST_size_t_eq(data.sent_len, 5200)
+        || !TEST_size_t_eq(BIO_ctrl_wpending(buffer), 0))
+        goto end;
+
+    /* A flush with nothing to send succeeds and so forgets the peer. */
+    if (!TEST_int_eq((int)BIO_flush(buffer), 1))
+        goto end;
+
+    /* The next message is sent to the peer it names, not the previous one. */
+    msg.peer = peer2;
+    processed = 0;
+    if (!TEST_true(BIO_sendmmsg(buffer, &msg, sizeof(msg), 1, 0, &processed))
+        || !TEST_size_t_eq(processed, 1)
+        || !TEST_int_eq(data.sent_ok, 5)
+        || !TEST_mem_eq(data.sent_addr, sizeof(data.sent_addr),
+            addr2, sizeof(addr2)))
+        goto end;
+
+    /*
+     * A message which is not taken leaves nothing buffered either, so the peer
+     * it named must not be kept for the next message.
+     */
+    data.fails_remaining = 1;
+    processed = 0;
+    ERR_clear_error();
+    if (!TEST_false(BIO_sendmmsg(buffer, &msg, sizeof(msg), 1, 0, &processed))
+        || !TEST_size_t_eq(processed, 0)
+        || !TEST_int_eq(data.sent_ok, 5))
+        goto end;
+    ERR_clear_error();
+
+    msg.peer = peer;
+    processed = 0;
+    if (!TEST_true(BIO_sendmmsg(buffer, &msg, sizeof(msg), 1, 0, &processed))
+        || !TEST_size_t_eq(processed, 1)
+        || !TEST_int_eq(data.sent_ok, 6)
+        || !TEST_mem_eq(data.sent_addr, sizeof(data.sent_addr),
+            addr, sizeof(addr)))
+        goto end;
+
+    /*
+     * The BIO underneath may still have the read retry flag from a read which
+     * found nothing. A flush which fails for good must not copy it, or it is
+     * reported as a retry.
+     */
+    msg.data_len = 100;
+    processed = 0;
+    if (!TEST_true(BIO_sendmmsg(buffer, &msg, sizeof(msg), 1, 0, &processed))
+        || !TEST_size_t_eq(processed, 1))
+        goto end;
+
+    BIO_set_retry_read(BIO_next(buffer));
+    data.fatal_errno = EIO;
+    data.fails_remaining = 1;
+    ERR_clear_error();
+    if (!TEST_int_le((int)BIO_flush(buffer), 0)
+        || !TEST_false(BIO_should_retry(buffer)))
+        goto end;
+    ERR_clear_error();
+
     testresult = 1;
 end:
     BIO_free_all(buffer);
     BIO_free(filter);
     BIO_free(mem);
     BIO_ADDR_free(peer);
+    BIO_ADDR_free(peer2);
     BIO_meth_free(method_failing_send);
     method_failing_send = NULL;
     return testresult;
@@ -7661,7 +7772,7 @@ static int test_buffer_bio_sendmmsg_overflow(void)
 {
     BIO *mem = NULL, *filter = NULL, *buffer = NULL;
     BIO_ADDR *peer = NULL;
-    BIO_MSG msg;
+    BIO_MSG msg, msgs[2];
     struct failing_send_data data;
     const unsigned char addr[] = { 127, 0, 0, 1 };
     unsigned char payload[4000];
@@ -7717,6 +7828,29 @@ static int test_buffer_bio_sendmmsg_overflow(void)
         || !TEST_int_eq(data.sent_ok, 2)
         || !TEST_size_t_eq(data.sent_len, sizeof(payload)))
         goto end;
+
+    /*
+     * Of two messages in one call the first is taken and the second needs the
+     * buffered data sent first, which is rejected. The call succeeds for the
+     * message taken, so no retry is reported: that is only for a call which
+     * took none.
+     */
+    memset(msgs, 0, sizeof(msgs));
+    msgs[0].data = payload;
+    msgs[0].data_len = 100;
+    msgs[0].peer = peer;
+    msgs[1].data = payload;
+    msgs[1].data_len = sizeof(payload);
+    msgs[1].peer = peer;
+    data.fails_remaining = 1;
+    processed = 0;
+    ERR_clear_error();
+    if (!TEST_true(BIO_sendmmsg(buffer, msgs, sizeof(msgs[0]), 2, 0, &processed))
+        || !TEST_size_t_eq(processed, 1)
+        || !TEST_false(BIO_should_retry(buffer))
+        || !TEST_int_eq(data.sent_ok, 2))
+        goto end;
+    ERR_clear_error();
 
     testresult = 1;
 end:
@@ -7953,18 +8087,29 @@ end:
 }
 
 #ifndef OPENSSL_NO_DTLS1_3
+static unsigned char ticket_appdata[5200];
+
+static int set_ticket_appdata_cb(SSL *ssl, void *arg)
+{
+    size_t len = *(size_t *)arg;
+
+    return SSL_SESSION_set1_ticket_appdata(SSL_get_session(ssl),
+        ticket_appdata, len);
+}
+
 /*
  * Test that a write on a blocking listener connection is not reported as
  * SSL_ERROR_WANT_WRITE when the listener has failed, while the connection is
  * back in initialization because an additional session ticket is being sent.
  *
- * The ticket is flushed by the state machine rather than written by the record
- * layer, so the record layer's blocking wait is not involved. The failed
- * listener must still not be reported as a retry.
- *
  * Additional tickets are DTLS 1.3 only, so the version is pinned.
+ *
+ * idx 0: a normal ticket, smaller than the buffering BIO, which the state
+ *        machine flushes
+ * idx 1: a ticket with 5200 bytes of application data, larger than the
+ *        buffering BIO, which is sent directly by the record layer
  */
-static int test_dtls_blocking_ticket_listener_failed(void)
+static int test_dtls_blocking_ticket_listener_failed(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
@@ -7974,6 +8119,7 @@ static int test_dtls_blocking_ticket_listener_failed(void)
     int server_fd = -1, client_fd = -1;
     int testresult = 0;
     size_t written = 0;
+    size_t ticket_appdata_len = idx == 0 ? 0 : sizeof(ticket_appdata);
     int ret, err;
 
     memset(&send_data, 0, sizeof(send_data));
@@ -8024,8 +8170,15 @@ static int test_dtls_blocking_ticket_listener_failed(void)
         goto end;
     ERR_clear_error();
 
-    /* Put the connection back into initialization to send a ticket. */
-    if (!TEST_true(SSL_new_session_ticket(serverssl))
+    /*
+     * Put the connection back into initialization to send a ticket. The MTU is
+     * set above the size of the large ticket so that it is not fragmented.
+     */
+    SSL_set_options(serverssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_int_eq(SSL_set_mtu(serverssl, 9000), 9000)
+        || !TEST_true(SSL_CTX_set_session_ticket_cb(sctx, set_ticket_appdata_cb,
+            NULL, &ticket_appdata_len))
+        || !TEST_true(SSL_new_session_ticket(serverssl))
         || !TEST_true(SSL_in_init(serverssl)))
         goto end;
 
@@ -9902,11 +10055,11 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_dtls_nonblocking_handshake_flush_failure, 4);
 #endif
-    ADD_ALL_TESTS(test_dtls_nonblocking_write_dgram_pair_full, 2);
+    ADD_ALL_TESTS(test_dtls_nonblocking_write_dgram_pair_full, 4);
     ADD_TEST(test_dtls_nonblocking_read_retry);
     ADD_TEST(test_dtls_blocking_write_listener_failed);
 #ifndef OPENSSL_NO_DTLS1_3
-    ADD_TEST(test_dtls_blocking_ticket_listener_failed);
+    ADD_ALL_TESTS(test_dtls_blocking_ticket_listener_failed, 2);
 #endif
     ADD_ALL_TESTS(test_dtls_nonblocking_write_retry_two_conns, 2);
 

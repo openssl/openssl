@@ -103,7 +103,9 @@ alone.
 B<Peer address.> The destination address is taken from the peer field of the
 first message of the first call after a flush. It remains fixed for the entire
 flush cycle and is cleared automatically after each successful flush so that
-subsequent calls may supply a new peer address.
+subsequent calls may supply a new peer address. It is also cleared when a call
+leaves nothing in the write buffer, as when a message too big for the buffer is
+sent directly or no message in the call was taken.
 
 B<Thread safety.> The general BIO_sendmmsg() documentation states that
 concurrent readers and writers on the same BIO are permitted. That guarantee

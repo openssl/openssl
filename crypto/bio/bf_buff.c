@@ -200,8 +200,6 @@ start:
             i = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
                 ctx->obuf_len, 0);
             if (i <= 0) {
-                BIO_copy_next_retry(b);
-
                 if (i < 0)
                     return ((num > 0) ? num : i);
                 if (i == 0)
@@ -223,7 +221,6 @@ start:
     while (inl >= ctx->obuf_size) {
         i = buffer_send_next(b, ctx, in, inl, 0);
         if (i <= 0) {
-            BIO_copy_next_retry(b);
             if (i < 0)
                 return ((num > 0) ? num : i);
             if (i == 0)
@@ -384,7 +381,8 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             return 0;
         if (ctx->obuf_len <= 0) {
             ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
-            BIO_copy_next_retry(b);
+            if (ret <= 0)
+                BIO_copy_next_retry(b);
             break;
         }
 
@@ -393,7 +391,6 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (ctx->obuf_len > 0) {
                 r = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
                     ctx->obuf_len, 1);
-                BIO_copy_next_retry(b);
                 if (r <= 0)
                     return (long)r;
                 ctx->obuf_off += r;
@@ -405,7 +402,8 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             }
         }
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
-        BIO_copy_next_retry(b);
+        if (ret <= 0)
+            BIO_copy_next_retry(b);
 #ifndef OPENSSL_NO_SOCK
         BIO_ADDR_free(ctx->peer);
         ctx->peer = NULL;
@@ -523,6 +521,8 @@ static int buffer_puts(BIO *b, const char *str)
 static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
     const char *data, int len, int clear_nonfatal)
 {
+    int ret;
+
 #ifndef OPENSSL_NO_SOCK
     if (ctx->peer != NULL) {
         BIO_MSG msg;
@@ -558,7 +558,10 @@ static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
         return -1;
     }
 #endif
-    return BIO_write(b->next_bio, data, len);
+    ret = BIO_write(b->next_bio, data, len);
+    if (ret <= 0)
+        BIO_copy_next_retry(b);
+    return ret;
 }
 
 /*
@@ -592,7 +595,8 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     /*
      * Record the peer address on the first write so the flush path knows
      * where to send the accumulated data. The address is cleared after each
-     * flush so it can be set again for the next batch.
+     * flush, and below when nothing is left buffered, so it can be set again
+     * for the next batch.
      */
     if (ctx->peer == NULL) {
         if (msg->peer == NULL)
@@ -631,10 +635,8 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
             BIO_clear_retry_flags(b);
             ret = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
                 ctx->obuf_len, 0);
-            if (ret <= 0) {
-                BIO_copy_next_retry(b);
+            if (ret <= 0)
                 break;
-            }
             ctx->obuf_off = 0;
             ctx->obuf_len = 0;
         }
@@ -648,12 +650,28 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 
     /*
      * The error from a message which was not taken is only left for the caller
-     * if no message was, as it is otherwise reported by the count.
+     * if no message was, as it is otherwise reported by the count. The same
+     * goes for the retry flags: a send which failed for a message after the
+     * ones taken must not make the call look as if it should be repeated.
      */
-    if (*msgs_processed > 0)
+    if (*msgs_processed > 0) {
         ERR_pop_to_mark();
-    else
+        BIO_clear_retry_flags(b);
+    } else {
         ERR_clear_last_mark();
+    }
+
+    /*
+     * The peer is only needed while data is buffered, as anything sent from
+     * inside the write has gone to it by now. Without this a message sent
+     * directly, or one which was not taken, leaves the peer behind with nothing
+     * to flush, so the flush which would clear it returns early and the next
+     * message is sent to the previous peer.
+     */
+    if (ctx->obuf_len == 0) {
+        BIO_ADDR_free(ctx->peer);
+        ctx->peer = NULL;
+    }
 
     return (*msgs_processed > 0) ? 1 : 0;
 #else
