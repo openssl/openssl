@@ -468,7 +468,7 @@
 /* Calculate ranges of types */
 #define OSSL_SAFE_MATH_MAXS(type) ((type)((((type)1 << (sizeof(type) * 8 - 2)) - 1) * 2 + 1))
 #define OSSL_SAFE_MATH_MINS(type) (-OSSL_SAFE_MATH_MAXS(type) - 1)
-#define OSSL_SAFE_MATH_MAXU(type) (~(type)0)
+#define OSSL_SAFE_MATH_MAXU(type) ((type) ~(type)0)
 
 /*
  * Wrapper macros to create all the functions of a given type
