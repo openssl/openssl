@@ -21,6 +21,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include <openssl/trace.h>
+#include "crypto/evp.h"
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL_CONNECTION *s,
@@ -431,6 +432,68 @@ int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
     OSSL_TRACE_END(TLS);
 
     *secret_size = SSL3_MASTER_SECRET_SIZE;
+    return 1;
+}
+
+/*
+ * Decide whether to derive keys as opaque EVP_SKEY objects or raw bytes.
+ *
+ * Returns 1 to use opaque keys (for providers that cannot export key material,
+ * e.g., PKCS#11), or 0 to use raw bytes (the default).
+ *
+ * Opaque path is blocked if:
+ * - KTLS is enabled (kernel needs raw bytes)
+ * - SSL_OP_OPAQUE_RECORD_KEYS is not set
+ * - KDF, cipher, and MAC come from different providers
+ * - MAC key is needed but EVP_MAC is unavailable or cipher is composite
+ */
+int ssl_prefer_skey_derivation(const SSL_CONNECTION *s, const EVP_KDF *kdf,
+    const EVP_CIPHER *c, const EVP_MAC *mac, size_t mac_secret_size)
+{
+    const OSSL_PROVIDER *prov;
+
+    if (kdf == NULL || c == NULL || EVP_CIPHER_get_key_length(c) <= 0)
+        return 0;
+
+    /*
+     * KTLS needs raw key bytes for the kernel, so it always uses the raw
+     * key block path regardless of SSL_OP_OPAQUE_RECORD_KEYS.
+     */
+    if ((s->options & SSL_OP_ENABLE_KTLS) != 0)
+        return 0;
+
+    /*
+     * Default to raw bytes unless the application explicitly requested
+     * opaque keys.
+     */
+    if ((s->options & SSL_OP_OPAQUE_RECORD_KEYS) == 0)
+        return 0;
+
+    /*
+     * The cipher must support SKEY initialization to keep keys opaque.
+     * If not, fall back to raw key derivation rather than deriving opaque
+     * keys that must be immediately extracted.
+     */
+    if (c->einit_skey == NULL || c->dinit_skey == NULL)
+        return 0;
+
+    prov = EVP_KDF_get0_provider(kdf);
+    if (prov != EVP_CIPHER_get0_provider(c))
+        return 0;
+
+    if (mac_secret_size != 0) {
+        if (mac == NULL
+            || prov != EVP_MAC_get0_provider(mac)
+            || (EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
+            return 0;
+
+        /*
+         * The MAC must also support SKEY initialization to keep keys opaque.
+         */
+        if (mac->init_skey == NULL)
+            return 0;
+    }
+
     return 1;
 }
 

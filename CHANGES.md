@@ -144,6 +144,17 @@ OpenSSL 4.2
 
    *Iva Marinova*
 
+ * Added `SSL_OP_OPAQUE_RECORD_KEYS` option to control TLS key derivation
+   mode. By default, TLS derives record protection keys as raw bytes for
+   compatibility and performance. Applications can enable opaque key
+   derivation by setting `SSL_OP_OPAQUE_RECORD_KEYS` on their `SSL_CTX`,
+   which is required when using providers that cannot export key material
+   (such as PKCS#11 tokens). KTLS (kernel TLS offload) always uses raw key
+   bytes regardless of this setting.
+   <!-- https://github.com/openssl/openssl/pull/33168 -->
+
+   *Dmitry Belyavskiy*
+
  * Added support for deriving several symmetric keys and IVs from a single
    KDF operation. `EVP_KDF_derive_SKEYs()` performs the derivation and
    `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` collect the

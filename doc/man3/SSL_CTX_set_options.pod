@@ -259,6 +259,34 @@ RFC8879 certificate compression option on TLSv1.3 connections.
 If this option is set, the certificate compression extension will not be sent
 and compressed certificates will not be accepted from the peer.
 
+=item SSL_OP_OPAQUE_RECORD_KEYS
+
+Derive TLS record protection keys as opaque B<EVP_SKEY> objects instead of
+raw key bytes. This is required when using providers that cannot export key
+material, such as PKCS#11 tokens. By default, TLS derives keys as raw bytes
+for compatibility and performance.
+
+When this option is enabled and all conditions are met, TLS key derivation
+uses the multi-key KDF API (B<EVP_KDF_derive_SKEYs()>) to produce opaque key
+objects that remain within the provider and are never exposed as raw bytes.
+
+Opaque key derivation requires: (1) the provider supports multi-key derivation
+for the ciphersuite's KDF (TLS1-PRF or TLS13-KDF); (2) the KDF, cipher, and
+MAC (if applicable) all come from the same provider; (3) the cipher and MAC
+(if applicable) support opaque key initialization; (4) the cipher is not a
+composite AEAD mode (e.g., AES-CBC-HMAC-SHA256) when a MAC key is needed.
+
+If any requirement is not met, the option is ignored and raw key bytes are
+silently derived instead. If the provider lacks multi-key derivation support,
+the handshake fails with an error.
+
+The option is also ignored for TLS 1.3 integrity-only ciphersuites and the
+DTLS 1.3 sequence-number key, which always use raw bytes.
+
+KTLS (kernel TLS offload via B<SSL_OP_ENABLE_KTLS>) always uses raw key bytes
+regardless of this setting, as the kernel requires exportable key material.
+If KTLS encounters an opaque key, it will fall back to software crypto.
+
 =item SSL_OP_NO_COMPRESSION
 
 Do not use TLS record compression even if it is supported. This option is set by
