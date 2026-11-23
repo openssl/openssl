@@ -664,7 +664,12 @@ int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_ci
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (ctx->blocksize > 0 && num >= (unsigned int)ctx->blocksize) {
+        /*
+         * Modes processed byte by byte (CFB, OFB, CTR) have a block size of 1;
+         * their num counts bytes used in an underlying block as long as the IV.
+         */
+        if (ctx->blocksize > 0
+            && num >= (unsigned int)(ctx->blocksize > 1 ? ctx->blocksize : ctx->ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }

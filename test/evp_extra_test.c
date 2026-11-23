@@ -8448,6 +8448,63 @@ end:
     return ret;
 }
 
+static const struct {
+    const char *name;
+    int max_num;
+} set_num_cases[] = {
+    { "AES-128-CFB", 16 },
+    { "AES-128-OFB", 16 },
+    { "AES-128-CTR", 16 },
+};
+
+static int test_evp_cipher_set_num(int idx)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char key[16] = { 0 }, iv[16] = { 0 };
+    unsigned char in[32] = { 0 }, out[32];
+    unsigned int num = 0, got = 0;
+    OSSL_PARAM params[2];
+    int outl = 0, ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, set_num_cases[idx].name,
+                                            testpropq)))
+        goto err;
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out, &outl, in, 5))
+        || !TEST_int_eq(outl, 5))
+        goto err;
+
+    /* num counts bytes used in the current underlying block. */
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &num);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_int_eq((int)num, 5))
+        goto err;
+
+    /* A value just returned by get_params must be accepted again. */
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &num);
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto err;
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &got);
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_uint_eq(got, num))
+        goto err;
+
+    /* Values outside the underlying block are still rejected. */
+    num = (unsigned int)set_num_cases[idx].max_num;
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &num);
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 static int test_aes_xts_rejects_missing_iv(void)
 {
     static const unsigned char key[32] = {
@@ -9744,6 +9801,7 @@ int setup_tests(void)
 
     ADD_TEST(test_evp_cipher_negative_length);
     ADD_TEST(test_aes_xts_rejects_missing_iv);
+    ADD_ALL_TESTS(test_evp_cipher_set_num, OSSL_NELEM(set_num_cases));
 
     ADD_TEST(test_evp_cipher_pipeline);
 
