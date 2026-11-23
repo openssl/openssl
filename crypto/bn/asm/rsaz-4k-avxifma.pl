@@ -497,7 +497,7 @@ sub clear_stack {
 my $_bytes = shift;
 $code.="    vpxor   $zero, $zero, $zero\n    lea     -$_bytes(%rsp), %rsp\n";
 for (my $off = 0; $off < $_bytes; $off += 32) {
-    $code.=sprintf("    vmovdqu $zero, %d(%%rsp)\n", $off + 32 > $_bytes ? $_bytes - 32 : $off);
+    $code.=sprintf("    vmovdqu %s, %d(%%rsp)\n", $zero, $off + 32 > $_bytes ? $_bytes - 32 : $off);
 }
 $code.="    lea     $_bytes(%rsp), %rsp\n";
 }
