@@ -138,6 +138,32 @@ static void on_lost(void *arg)
 
     /* STREAM and CRYPTO stream chunks, FIN and stream FC frames */
     for (i = 0; i < num_chunks; ++i) {
+        /*
+         * Inform caller that stream needs an FC frame. This updates
+         * peer's send credit for our receiver frames.
+         *
+         * Note: We could track whether an FC frame was sent originally for the
+         * stream to determine if it really needs to be regenerated or not.
+         * However, if loss has occurred, it's probably better to ensure the
+         * peer has up-to-date flow control data for the stream. Given that
+         * these frames are extremely small, we may as well always send it when
+         * handling loss.
+         */
+        if (chunks[i].stream_id != UINT64_MAX) {
+            fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
+                chunks[i].stream_id, pkt, fifd->regen_frame_arg);
+        }
+
+        if (chunks[i].has_stop_sending && chunks[i].stream_id != UINT64_MAX)
+            fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                chunks[i].stream_id, pkt,
+                fifd->regen_frame_arg);
+
+        if (chunks[i].has_reset_stream && chunks[i].stream_id != UINT64_MAX)
+            fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                chunks[i].stream_id, pkt,
+                fifd->regen_frame_arg);
+
         sstream = fifd->get_sstream_by_id(chunks[i].stream_id,
             pkt->ackm_pkt.pkt_space,
             fifd->get_sstream_by_id_arg);
@@ -162,31 +188,6 @@ static void on_lost(void *arg)
             ossl_quic_sstream_mark_lost_fin(sstream);
             sstream_updated = 1;
         }
-
-        if (chunks[i].has_stop_sending && chunks[i].stream_id != UINT64_MAX)
-            fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
-                chunks[i].stream_id, pkt,
-                fifd->regen_frame_arg);
-
-        if (chunks[i].has_reset_stream && chunks[i].stream_id != UINT64_MAX)
-            fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
-                chunks[i].stream_id, pkt,
-                fifd->regen_frame_arg);
-
-        /*
-         * Inform caller that stream needs an FC frame.
-         *
-         * Note: We could track whether an FC frame was sent originally for the
-         * stream to determine if it really needs to be regenerated or not.
-         * However, if loss has occurred, it's probably better to ensure the
-         * peer has up-to-date flow control data for the stream. Given that
-         * these frames are extremely small, we may as well always send it when
-         * handling loss.
-         */
-        fifd->regen_frame(OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
-            chunks[i].stream_id,
-            pkt,
-            fifd->regen_frame_arg);
 
         if (sstream_updated && chunks[i].stream_id != UINT64_MAX)
             fifd->sstream_updated(chunks[i].stream_id,
