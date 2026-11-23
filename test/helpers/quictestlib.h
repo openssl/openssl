@@ -112,6 +112,14 @@ int qtest_create_quic_connection_ssl(SSL *listener, SSL *clientssl,
  */
 int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv);
 
+/**
+ * @brief As qtest_wait_for_timeout() but the server is a QUIC listener.
+ * @param s client
+ * @param listener listener
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_wait_for_timeout_ssl(SSL *s, SSL *listener);
+
 /*
  * Same as qtest_create_quic_connection but will stop (successfully) if the
  * clientssl indicates SSL_ERROR_WANT_XXX as specified by |wanterr|
@@ -135,6 +143,14 @@ int qtest_create_quic_connection_ssl_ex(SSL *listener, SSL *clientssl,
  * Shutdown the client SSL object gracefully
  */
 int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl);
+
+/**
+ * @brief As qtest_shutdown() but the server is a QUIC listener.
+ * @param listener listener
+ * @param clientssl client
+ * @returns 1 on success, 0 on failure
+ */
+int qtest_shutdown_ssl(SSL *listener, SSL *clientssl);
 
 /*
  * Confirm that the server has received the given transport error code.
