@@ -4179,6 +4179,12 @@ sub GCM_ENC_DEC {
   my $big_loop_nblocks = 32;
   my $big_loop_depth   = 32;
 
+  # ;; Lengths below this go straight to the small handler, which reads its
+  # ;; hash keys from the context, where only H^1..H^8 exist on a fresh key.
+  my $small_path_len = 128;
+  die "GCM_ENC_DEC: small_path_len ($small_path_len) exceeds 8 blocks\n"
+    if ($small_path_len > 8 * $AES_BLOCK_SIZE);
+
   # ;;; ===========================================================================
   # ;;; Dynamic block-loop dispatch
   # ;;; ---------------------------------------------------------------------------
@@ -4247,9 +4253,13 @@ sub GCM_ENC_DEC {
   # ;;; encoded below as block counts: 64 B, 128 B, 44*16 = 704 B and
   # ;;; 112*16 = 1792 B. They were tuned and cross-checked on both AMD (Zen 5)
   # ;;; and Intel (Ice Lake) VAES parts, so they are not machine-specific magic
-  # ;;; numbers; re-tuning for a new microarchitecture only shifts these
-  # ;;; thresholds, it does not affect correctness (any length is handled
-  # ;;; correctly by whichever loop it lands in).
+  # ;;; numbers. The 704 B and 1792 B crossovers, and the 64 B cascade from the
+  # ;;; 16-block tail, only choose between paths that already have the hash keys
+  # ;;; they use, so re-tuning them changes performance, not correctness. The
+  # ;;; 128 B crossover ($small_path_len) is bounded: the small handler hashes N
+  # ;;; blocks with H^N..H^1 read from the context, and on a fresh key only
+  # ;;; H^1..H^8 are there (H^9..H^16 stay zero until a wide loop or a long AAD
+  # ;;; computes them), so raising it above 8 blocks would produce wrong tags.
   # ;;; ===========================================================================
 
   if ($win64) {
@@ -4291,7 +4301,7 @@ ___
   # ;; handler (LE counter from context; shuffle mask loaded there). Wider paths
   # ;; set up the big-endian counter and ADDBE constants first.
   $code .= <<___;
-        cmp               \$128,$LENGTH
+        cmp               \$$small_path_len,$LENGTH
         jb               .L_message_below_equal_16_blocks_${label_suffix}
 
         vmovdqa64         SHUF_MASK(%rip),$SHUF_MASK
@@ -4426,7 +4436,7 @@ ___
   # ;; to 16 blocks in a single pass. GCM_ENC_DEC_SMALL expects the counter in
   # ;; LE, so convert it back from BE first.
   $code .= <<___;
-        cmp               \$128,$LENGTH
+        cmp               \$$small_path_len,$LENGTH
         jae               .L_8block_path_${label_suffix}
         vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx
         jmp               .L_message_below_equal_16_blocks_${label_suffix}

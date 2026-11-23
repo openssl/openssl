@@ -36,7 +36,7 @@
  * payload across two Update calls (with a non-block split), so those totals do
  * not by themselves hit each boundary in a single Update; test_gcm_dispatch_
  * boundary_update() adds N-1/N/N+1 one-shot payload updates at 64, 128, 704,
- * and 1792 B.
+ * and 1792 B, plus fresh-key one-shot updates of 9 to 16 full blocks.
  *
  * The test also verifies the VAES/AVX-512 path is actually the one dispatched:
  * on hosts without the required ISA it skips instead of silently passing while
@@ -510,9 +510,15 @@ err:
  * One-shot payload Update at internal dispatch boundaries. gcm_feed_split() in
  * test_gcm_tag halves each message, so e.g. total 704 B becomes 351+353 B per
  * call and never exercises the 704 B path selector in one Update.
+ *
+ * 144..256 are 9 to 16 full blocks on a freshly keyed context, where only
+ * H^1..H^8 are computed. They take the 8-block loop today, but would give wrong
+ * tags if the small-handler threshold were raised above 8 blocks, since that
+ * handler reads H^N..H^1 from the context.
  */
 static const size_t dispatch_edge_lens[] = {
-    63, 64, 65, 127, 128, 129, 703, 704, 705, 1791, 1792, 1793
+    63, 64, 65, 127, 128, 129, 144, 160, 176, 192, 208, 224, 240, 256,
+    703, 704, 705, 1791, 1792, 1793
 };
 
 #define NUM_EDGE_LENS \
