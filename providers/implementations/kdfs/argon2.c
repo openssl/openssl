@@ -1160,7 +1160,7 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
 
     free_memory(ctx);
     /* Never hand back a partially computed or unwritten output as a key */
-    if (!ret)
+    if (ret == 0)
         OPENSSL_cleanse(out, outlen);
 
     return ret;
