@@ -797,7 +797,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[pkey_meth_kdf_test]=../include ../apps/include
   DEPEND[pkey_meth_kdf_test]=../libcrypto libtestutil.a
 
-  SOURCE[evp_kdf_test]=evp_kdf_test.c
+  SOURCE[evp_kdf_test]=evp_kdf_test.c fake_blake2bprov.c
   INCLUDE[evp_kdf_test]=../include ../apps/include
   DEPEND[evp_kdf_test]=../libcrypto libtestutil.a
 
