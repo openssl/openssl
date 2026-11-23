@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with data_file slurp_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with data_file slurp_file app_fails/;
 
 use OpenSSL::Test::Utils;
 
@@ -56,7 +56,22 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 43;
+plan tests => 44;
+
+subtest "CMS operation option validation" => sub {
+    plan tests => 5;
+
+    app_fails("cms", "Reject conflicting operation options",
+        qr/Cannot use -digest_create together with -data_create/,
+        "-data_create", "-digest_create", "-in", $smcont, "-outform", "PEM");
+    app_fails("cms", "Reject conflicting operation options in reverse order",
+        qr/Cannot use -data_create together with -digest_create/,
+        "-digest_create", "-data_create", "-in", $smcont, "-outform", "PEM");
+
+    ok(run(app(["openssl", "cms", "-data_create", "-data_create",
+                "-in", $smcont, "-outform", "PEM"], stdout => 0)),
+        "Accept a repeated operation option");
+};
 
 ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");

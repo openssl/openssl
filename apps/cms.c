@@ -407,6 +407,7 @@ int cms_main(int argc, char **argv)
     int recipidx = -1;
     long ltmp;
     const char *mime_eol = "\n";
+    const char *operation_flag = NULL;
     OPTION_CHOICE o;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
@@ -416,6 +417,8 @@ int cms_main(int argc, char **argv)
     opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, cms_options);
     while ((o = opt_next()) != OPT_EOF) {
+        int selected_operation = 0;
+
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
@@ -439,25 +442,25 @@ int cms_main(int argc, char **argv)
             break;
 
         case OPT_ENCRYPT:
-            operation = SMIME_ENCRYPT;
+            selected_operation = SMIME_ENCRYPT;
             break;
         case OPT_DECRYPT:
-            operation = SMIME_DECRYPT;
+            selected_operation = SMIME_DECRYPT;
             break;
         case OPT_SIGN:
-            operation = SMIME_SIGN;
+            selected_operation = SMIME_SIGN;
             break;
         case OPT_VERIFY:
-            operation = SMIME_VERIFY;
+            selected_operation = SMIME_VERIFY;
             break;
         case OPT_RESIGN:
-            operation = SMIME_RESIGN;
+            selected_operation = SMIME_RESIGN;
             break;
         case OPT_SIGN_RECEIPT:
-            operation = SMIME_SIGN_RECEIPT;
+            selected_operation = SMIME_SIGN_RECEIPT;
             break;
         case OPT_VERIFY_RECEIPT:
-            operation = SMIME_VERIFY_RECEIPT;
+            selected_operation = SMIME_VERIFY_RECEIPT;
             rctfile = opt_arg();
             break;
         case OPT_VERIFY_PARTIAL:
@@ -467,34 +470,34 @@ int cms_main(int argc, char **argv)
             verify_retcode = 1;
             break;
         case OPT_DIGEST_CREATE:
-            operation = SMIME_DIGEST_CREATE;
+            selected_operation = SMIME_DIGEST_CREATE;
             break;
         case OPT_DIGEST:
             digesthex = opt_arg();
             break;
         case OPT_DIGEST_VERIFY:
-            operation = SMIME_DIGEST_VERIFY;
+            selected_operation = SMIME_DIGEST_VERIFY;
             break;
         case OPT_COMPRESS:
-            operation = SMIME_COMPRESS;
+            selected_operation = SMIME_COMPRESS;
             break;
         case OPT_UNCOMPRESS:
-            operation = SMIME_UNCOMPRESS;
+            selected_operation = SMIME_UNCOMPRESS;
             break;
         case OPT_ED_ENCRYPT:
-            operation = SMIME_ENCRYPTED_ENCRYPT;
+            selected_operation = SMIME_ENCRYPTED_ENCRYPT;
             break;
         case OPT_ED_DECRYPT:
-            operation = SMIME_ENCRYPTED_DECRYPT;
+            selected_operation = SMIME_ENCRYPTED_DECRYPT;
             break;
         case OPT_DATA_CREATE:
-            operation = SMIME_DATA_CREATE;
+            selected_operation = SMIME_DATA_CREATE;
             break;
         case OPT_DATA_OUT:
-            operation = SMIME_DATA_OUT;
+            selected_operation = SMIME_DATA_OUT;
             break;
         case OPT_CMSOUT:
-            operation = SMIME_CMSOUT;
+            selected_operation = SMIME_CMSOUT;
             break;
 
         case OPT_DEBUG_DECRYPT:
@@ -849,6 +852,16 @@ int cms_main(int argc, char **argv)
         case OPT_3DES_WRAP:
             wrapname = opt_flag() + 1;
             break;
+        }
+
+        if (selected_operation != 0) {
+            if (operation != 0 && operation != selected_operation) {
+                BIO_printf(bio_err, "%s: Cannot use %s together with %s\n",
+                    prog, opt_flag(), operation_flag);
+                goto opthelp;
+            }
+            operation = selected_operation;
+            operation_flag = opt_flag();
         }
     }
     if (!app_RAND_load())
