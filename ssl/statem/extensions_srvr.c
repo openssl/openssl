@@ -1348,8 +1348,6 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     const EVP_MD *md = NULL;
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
 
-    s->ext.psk_unknown_identity = 0;
-
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
      * ignore this extension

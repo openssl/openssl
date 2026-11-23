@@ -1897,7 +1897,8 @@ struct ssl_connection_st {
          * Did the server fail to find any of the client's offered PSK
          * identities?  Server side, TLS 1.3 only.  If the server ends up with
          * no certificate to authenticate with, the handshake fails as if a
-         * binder had failed to verify.
+         * binder had failed to verify.  This describes the latest ClientHello
+         * only, and is cleared before the extensions of the next are parsed.
          */
         bool psk_unknown_identity;
 

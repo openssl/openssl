@@ -2351,6 +2351,104 @@ static int test_tls13_psk_unknown_identity_alert(int idx)
         && TEST_int_ne(unknown_reason, SSL_R_BINDER_DOES_NOT_VERIFY);
 }
 
+static int hrr_ch_count, hrr_ch_psk[2], hrr_cert_calls;
+
+/* Record whether each ClientHello the client sends has a pre_shared_key */
+static void hrr_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    struct stats st = { 0 };
+
+    if (!write_p || content_type != SSL3_RT_HANDSHAKE || len == 0
+        || ((const unsigned char *)buf)[0] != SSL3_MT_CLIENT_HELLO)
+        return;
+    parse_ch_exts(buf, len, &st);
+    if (hrr_ch_count < (int)OSSL_NELEM(hrr_ch_psk))
+        hrr_ch_psk[hrr_ch_count] = st.ch_has_psk;
+    hrr_ch_count++;
+}
+
+/* Succeed for the first ClientHello, then remove the certificate and fail */
+static int hrr_cert_cb(SSL *ssl, void *arg)
+{
+    if (++hrr_cert_calls == 1)
+        return 1;
+    SSL_certs_clear(ssl);
+    return 0;
+}
+
+/*
+ * An unknown PSK identity in the first ClientHello must not affect how the
+ * server handles a second ClientHello that offers no PSK.
+ *
+ * The client offers a ticket the server cannot decrypt (a new context, so new
+ * ticket keys).  The server selects a ciphersuite whose hash differs from the
+ * ticket's, and a group the client sent no key share for.  The client's reply
+ * to the HelloRetryRequest therefore has no pre_shared_key extension.  The
+ * certificate callback succeeds for the first ClientHello.  For the second it
+ * removes the certificate and fails.
+ *
+ * That is a plain certificate callback failure, so the alert is
+ * internal_error.  It is not decrypt_error, which is for an unknown identity
+ * with no certificate to fall back on.
+ */
+static int test_tls13_psk_dropped_after_hrr(void)
+{
+    SSL_CTX *c = NULL, *s = NULL, *fresh = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    hrr_ch_count = hrr_cert_calls = 0;
+    hrr_ch_psk[0] = hrr_ch_psk[1] = -1;
+    probe_alert = -1;
+    probe_reason = 0;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &fresh, NULL, cert, pkey))
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(fresh, "TLS_AES_256_GCM_SHA384"))
+        && TEST_true(SSL_CTX_set1_groups_list(c, "P-256:P-384"))
+        && TEST_true(SSL_CTX_set1_groups_list(fresh, "P-384"))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl));
+    if (test == 0)
+        goto end;
+
+    SSL_CTX_set_cert_cb(fresh, hrr_cert_cb, NULL);
+    test = TEST_true(tls_channel_init(c, fresh, &resumed));
+    if (test == 0)
+        goto end;
+    SSL_set_msg_callback(resumed.c.ssl, hrr_msg_cb);
+    SSL_set_info_callback(resumed.s.ssl, probe_alert_cb);
+
+    test = TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_false(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(hrr_ch_count, 2)
+        && TEST_int_eq(hrr_ch_psk[0], 1)
+        && TEST_int_eq(hrr_ch_psk[1], 0)
+        && TEST_int_eq(hrr_cert_calls, 2)
+        && TEST_int_eq(probe_alert, SSL_AD_INTERNAL_ERROR)
+        && TEST_int_eq(probe_reason, SSL_R_CERT_CB_ERROR);
+
+end:
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(fresh);
+    return test;
+}
+
 static SSL_CTX *switch_target;
 static int switch_find_calls;
 
@@ -3074,6 +3172,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_sni_session_ctx);
     ADD_ALL_TESTS(test_tls13_ticket_unknown_late_cert, 2);
     ADD_ALL_TESTS(test_tls13_psk_unknown_identity_alert, 4);
+    ADD_TEST(test_tls13_psk_dropped_after_hrr);
 #ifndef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 4);
 #else

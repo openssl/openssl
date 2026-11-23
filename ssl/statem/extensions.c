@@ -90,6 +90,7 @@ static int init_etm(SSL_CONNECTION *s, unsigned int context);
 static int init_ems(SSL_CONNECTION *s, unsigned int context);
 static int final_ems(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_psk_kex_modes(SSL_CONNECTION *s, unsigned int context);
+static int init_psk(SSL_CONNECTION *s, unsigned int context);
 static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent);
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL_CONNECTION *s, unsigned int context);
@@ -482,8 +483,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
             | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_CALL_BOTH,
-        NULL, tls_parse_ctos_psk, tls_parse_stoc_psk, tls_construct_stoc_psk,
-        tls_construct_ctos_psk, final_psk }
+        init_psk, tls_parse_ctos_psk, tls_parse_stoc_psk,
+        tls_construct_stoc_psk, tls_construct_ctos_psk, final_psk }
 };
 
 #ifndef OPENSSL_NO_ECH
@@ -1880,6 +1881,17 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 static int init_psk_kex_modes(SSL_CONNECTION *s, unsigned int context)
 {
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_NONE;
+    return 1;
+}
+
+/*
+ * Forget that the previous ClientHello offered no PSK identity known to the
+ * server.  The ClientHello sent in response to a HelloRetryRequest may have no
+ * pre_shared_key extension, and tls_parse_ctos_psk() is then not called.
+ */
+static int init_psk(SSL_CONNECTION *s, unsigned int context)
+{
+    s->ext.psk_unknown_identity = 0;
     return 1;
 }
 
