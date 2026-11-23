@@ -18,6 +18,10 @@
 OSSL_SAFE_MATH_SIGNED(int, int)
 OSSL_SAFE_MATH_UNSIGNED(uint, unsigned int)
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
+OSSL_SAFE_MATH_SIGNED(schar, signed char)
+OSSL_SAFE_MATH_UNSIGNED(uchar, unsigned char)
+OSSL_SAFE_MATH_SIGNED(short, short)
+OSSL_SAFE_MATH_UNSIGNED(ushort, unsigned short)
 OSSL_SAFE_MATH_SIGNED(int64_t, int64_t)
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
@@ -47,6 +51,15 @@ static const struct {
     { INT_MAX, INT_MIN, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1 },
     { INT_MIN, INT_MAX, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0 },
     { 3, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0 },
+    /* Products equal to INT_MIN, with neither factor equal to one. */
+    { INT_MIN / 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 2, INT_MIN / 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -2, INT_MAX / 2 + 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MAX / 2 + 1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    /* Products just outside the signed range. */
+    { INT_MAX / 2 + 1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MIN / 2, -2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    { INT_MIN / 2 - 1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
 };
 
 static int test_int_ops(int n)
@@ -522,8 +535,190 @@ static int test_uint64_t_muldiv(int n)
     return 1;
 }
 
+static int test_limits(void)
+{
+    return TEST_int_eq(OSSL_SAFE_MATH_MINS(signed char), SCHAR_MIN)
+        && TEST_int_eq(OSSL_SAFE_MATH_MAXS(signed char), SCHAR_MAX)
+        && TEST_uint_eq(OSSL_SAFE_MATH_MAXU(unsigned char), UCHAR_MAX)
+        && TEST_int_eq(OSSL_SAFE_MATH_MINS(short), SHRT_MIN)
+        && TEST_int_eq(OSSL_SAFE_MATH_MAXS(short), SHRT_MAX)
+        && TEST_uint_eq(OSSL_SAFE_MATH_MAXU(unsigned short), USHRT_MAX)
+        && TEST_int_eq(OSSL_SAFE_MATH_MINS(int), INT_MIN)
+        && TEST_int_eq(OSSL_SAFE_MATH_MAXS(int), INT_MAX)
+        && TEST_uint_eq(OSSL_SAFE_MATH_MAXU(unsigned int), UINT_MAX)
+        && TEST_long_eq(OSSL_SAFE_MATH_MINS(long), LONG_MIN)
+        && TEST_long_eq(OSSL_SAFE_MATH_MAXS(long), LONG_MAX)
+        && TEST_ulong_eq(OSSL_SAFE_MATH_MAXU(unsigned long), ULONG_MAX)
+        && TEST_int64_t_eq(OSSL_SAFE_MATH_MINS(int64_t), INT64_MIN)
+        && TEST_int64_t_eq(OSSL_SAFE_MATH_MAXS(int64_t), INT64_MAX)
+        && TEST_uint64_t_eq(OSSL_SAFE_MATH_MAXU(uint64_t), UINT64_MAX);
+}
+
+static int test_schar_ops(void)
+{
+    int err = 0;
+    signed char r;
+
+    r = safe_add_schar(1, 2, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, 3))
+        return 0;
+    r = safe_mul_schar(SCHAR_MAX, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SCHAR_MAX))
+        return 0;
+    r = safe_muldiv_schar(SCHAR_MIN, 1, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SCHAR_MIN))
+        return 0;
+    r = safe_muldiv_schar(SCHAR_MIN, 2, 4, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SCHAR_MIN / 2))
+        return 0;
+    r = safe_muldiv_schar(SCHAR_MIN, -1, -1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SCHAR_MIN))
+        return 0;
+    r = safe_muldiv_schar(SCHAR_MAX - 1, SCHAR_MAX - 1, SCHAR_MAX, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SCHAR_MAX - 2))
+        return 0;
+    r = safe_add_schar(SCHAR_MAX, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SCHAR_MAX))
+        return 0;
+    err = 0;
+    r = safe_sub_schar(SCHAR_MIN, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SCHAR_MIN))
+        return 0;
+    err = 0;
+    r = safe_mul_schar(SCHAR_MIN, -1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SCHAR_MAX))
+        return 0;
+    err = 0;
+    r = safe_div_schar(SCHAR_MIN, -1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SCHAR_MAX))
+        return 0;
+    err = 0;
+    r = safe_neg_schar(SCHAR_MIN, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SCHAR_MIN))
+        return 0;
+    err = 0;
+    r = safe_abs_schar(SCHAR_MIN, &err);
+    return TEST_int_eq(err, 1) && TEST_int_eq(r, SCHAR_MIN);
+}
+
+static int test_short_ops(void)
+{
+    int err = 0;
+    short r;
+
+    r = safe_add_short(1, 2, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, 3))
+        return 0;
+    r = safe_mul_short(SHRT_MAX, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SHRT_MAX))
+        return 0;
+    r = safe_muldiv_short(SHRT_MIN, 1, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SHRT_MIN))
+        return 0;
+    r = safe_muldiv_short(SHRT_MIN, 2, 4, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SHRT_MIN / 2))
+        return 0;
+    r = safe_muldiv_short(SHRT_MIN, -1, -1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SHRT_MIN))
+        return 0;
+    r = safe_muldiv_short(SHRT_MAX - 1, SHRT_MAX - 1, SHRT_MAX, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_int_eq(r, SHRT_MAX - 2))
+        return 0;
+    r = safe_add_short(SHRT_MAX, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SHRT_MAX))
+        return 0;
+    err = 0;
+    r = safe_sub_short(SHRT_MIN, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SHRT_MIN))
+        return 0;
+    err = 0;
+    r = safe_mul_short(SHRT_MIN, -1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SHRT_MAX))
+        return 0;
+    err = 0;
+    r = safe_div_short(SHRT_MIN, -1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SHRT_MAX))
+        return 0;
+    err = 0;
+    r = safe_neg_short(SHRT_MIN, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_int_eq(r, SHRT_MIN))
+        return 0;
+    err = 0;
+    r = safe_abs_short(SHRT_MIN, &err);
+    return TEST_int_eq(err, 1) && TEST_int_eq(r, SHRT_MIN);
+}
+
+static int test_uchar_ops(void)
+{
+    int err = 0;
+    unsigned char r;
+
+    r = safe_add_uchar(1, 2, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, 3))
+        return 0;
+    r = safe_mul_uchar(UCHAR_MAX, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, UCHAR_MAX))
+        return 0;
+    r = safe_muldiv_uchar(UCHAR_MAX, 1, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, UCHAR_MAX))
+        return 0;
+    r = safe_muldiv_uchar(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, UCHAR_MAX))
+        return 0;
+    r = safe_muldiv_uchar(UCHAR_MAX - 1, UCHAR_MAX - 1, UCHAR_MAX, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, UCHAR_MAX - 2))
+        return 0;
+    r = safe_add_uchar(UCHAR_MAX, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_uint_eq(r, 0))
+        return 0;
+    err = 0;
+    r = safe_sub_uchar(0, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_uint_eq(r, UCHAR_MAX))
+        return 0;
+    err = 0;
+    r = safe_mul_uchar(UCHAR_MAX, UCHAR_MAX, &err);
+    return TEST_int_eq(err, 1) && TEST_uint_eq(r, 1);
+}
+
+static int test_ushort_ops(void)
+{
+    int err = 0;
+    unsigned short r;
+
+    r = safe_add_ushort(1, 2, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, 3))
+        return 0;
+    r = safe_mul_ushort(USHRT_MAX, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, USHRT_MAX))
+        return 0;
+    r = safe_muldiv_ushort(USHRT_MAX, 1, 1, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, USHRT_MAX))
+        return 0;
+    r = safe_muldiv_ushort(USHRT_MAX, USHRT_MAX, USHRT_MAX, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, USHRT_MAX))
+        return 0;
+    r = safe_muldiv_ushort(USHRT_MAX - 1, USHRT_MAX - 1, USHRT_MAX, &err);
+    if (!TEST_int_eq(err, 0) || !TEST_uint_eq(r, USHRT_MAX - 2))
+        return 0;
+    r = safe_add_ushort(USHRT_MAX, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_uint_eq(r, 0))
+        return 0;
+    err = 0;
+    r = safe_sub_ushort(0, 1, &err);
+    if (!TEST_int_eq(err, 1) || !TEST_uint_eq(r, USHRT_MAX))
+        return 0;
+    err = 0;
+    r = safe_mul_ushort(USHRT_MAX, USHRT_MAX, &err);
+    return TEST_int_eq(err, 1) && TEST_uint_eq(r, 1);
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_limits);
+    ADD_TEST(test_schar_ops);
+    ADD_TEST(test_uchar_ops);
+    ADD_TEST(test_short_ops);
+    ADD_TEST(test_ushort_ops);
     ADD_ALL_TESTS(test_int_ops, OSSL_NELEM(test_ints));
     ADD_ALL_TESTS(test_uint_ops, OSSL_NELEM(test_uints));
     ADD_ALL_TESTS(test_size_t_ops, OSSL_NELEM(test_size_ts));
