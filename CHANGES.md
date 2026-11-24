@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed ECH GREASE failing when X25519 is not available, for example with
+   a FIPS provider from OpenSSL 3.4 or later and the property query
+   "fips=yes". Unless a suite is set with `SSL_ech_set1_grease_suite()`,
+   GREASE ECH now uses P-256 when X25519 cannot be fetched.
+   <!-- https://github.com/openssl/openssl/issues/33724 -->
+
+   *Charalampos Stratakis*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
