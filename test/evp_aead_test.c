@@ -2327,7 +2327,8 @@ static int test_evp_aead_keylen_reinit(int idx)
         || !TEST_mem_eq(ct1, ct1len, ct2, ct2len + len)
         || !TEST_mem_eq(tag1, info->taglen, tag2, info->taglen)) {
         TEST_info("%s: NULL-key re-init after a wrong KEYLEN was offered "
-            "does not reproduce the reference ciphertext and tag", info->name);
+                  "does not reproduce the reference ciphertext and tag",
+            info->name);
         goto err;
     }
 
@@ -2455,7 +2456,8 @@ static int test_evp_aead_ivlen_reinit(int idx)
         || !TEST_mem_eq(ct1, ct1len, ct2, ct2len + len)
         || !TEST_mem_eq(tag1, info->taglen, tag2, info->taglen)) {
         TEST_info("%s: NULL-key re-init after a wrong IVLEN was offered "
-            "does not reproduce the reference ciphertext and tag", info->name);
+                  "does not reproduce the reference ciphertext and tag",
+            info->name);
         goto err;
     }
 
