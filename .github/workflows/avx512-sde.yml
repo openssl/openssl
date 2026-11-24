@@ -65,7 +65,7 @@ jobs:
 
   linux:
     needs: [validate-dispatch-inputs]
-    if: |
+    if: &inputs_valid |
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
@@ -115,9 +115,7 @@ jobs:
 
   windows:
     needs: [validate-dispatch-inputs]
-    if: |
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *inputs_valid
     runs-on: windows-2022
     env:
       VCVARS: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat

@@ -51,7 +51,7 @@ jobs:
 
   gcc:
     needs: [validate-dispatch-inputs]
-    if: |
+    if: &no_fork_schedule |
       (github.event_name != 'schedule' || github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
@@ -87,10 +87,7 @@ jobs:
 
   vs2013:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.event_name != 'schedule' || github.repository == 'openssl/openssl') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *no_fork_schedule
     strategy:
       fail-fast: false
       matrix:
@@ -148,10 +145,7 @@ jobs:
 
   clang:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.event_name != 'schedule' || github.repository == 'openssl/openssl') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *no_fork_schedule
     strategy:
       fail-fast: false
       matrix:

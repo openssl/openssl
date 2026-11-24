@@ -51,7 +51,7 @@ jobs:
 
   run-checker:
     needs: [validate-dispatch-inputs]
-    if: |
+    if: &inputs_valid |
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -101,9 +101,7 @@ jobs:
 
   jitter:
     needs: [validate-dispatch-inputs]
-    if: |
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *inputs_valid
     runs-on: ubuntu-latest
     steps:
     - name: checkout openssl

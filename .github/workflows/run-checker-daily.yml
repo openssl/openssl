@@ -51,7 +51,7 @@ jobs:
 
   run-checker:
     needs: [validate-dispatch-inputs]
-    if: |
+    if: &upstream_or_dispatch |
       (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
@@ -196,10 +196,7 @@ jobs:
 
   run-checker-sctp:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -243,10 +240,7 @@ jobs:
 
   enable_brotli_dynamic:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - name: install brotli
@@ -273,10 +267,7 @@ jobs:
 
   enable_zstd_dynamic:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - name: install zstd
@@ -303,10 +294,7 @@ jobs:
 
   enable_brotli_and_zstd_dynamic:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - name: install brotli and zstd
@@ -334,10 +322,7 @@ jobs:
 
   malloc_failure_testing:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - name: checkout openssl
@@ -364,10 +349,7 @@ jobs:
 
   enable_brotli_and_asan_ubsan:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - name: install brotli
@@ -398,10 +380,7 @@ jobs:
 
   enable_zstd_and_asan_ubsan:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - name: install zstd
@@ -432,10 +411,7 @@ jobs:
 
   enable_tfo:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     strategy:
       matrix:
         os: [ubuntu-latest, macos-15, macos-15-intel]
@@ -458,10 +434,7 @@ jobs:
 
   enable_buildtest:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -483,10 +456,7 @@ jobs:
 
   memory_sanitizer_slh_dsa:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -513,7 +483,7 @@ jobs:
 
   bn_debug:
     needs: [validate-dispatch-inputs]
-    if: |
+    if: &inputs_valid |
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
@@ -541,9 +511,7 @@ jobs:
 
   fuzz_tests_mfail_deep:
     needs: [validate-dispatch-inputs]
-    if: |
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *inputs_valid
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
