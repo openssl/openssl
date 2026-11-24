@@ -29,6 +29,16 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
+  * Fixed possible NULL dereference in non-SMTP DANE clients.
+    ([CVE-2026-84786])
+
+  * Fixed unbounded QUIC RETIRE_CONNECTION_ID frame sending queue.
+    ([CVE-2026-107494])
+
+  * Fixed relative CRL distribution point names rebuilt per CRL in X.509
+    verification.
+    ([CVE-2026-121482])
+
   * TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
   * Added support for Java keytool PKCS#12 files with symmetric keys.
@@ -2684,6 +2694,9 @@ OpenSSL 0.9.x
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-84786]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84786
+[CVE-2026-107494]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107494
+[CVE-2026-121482]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-121482
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
