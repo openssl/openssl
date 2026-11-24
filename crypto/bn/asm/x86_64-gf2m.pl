@@ -305,7 +305,10 @@ $code.=<<___;
 .Lend_mul_2x2:
 .cfi_endproc
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
+.section .rodata
+.align 64
 .asciz	"GF(2^m) Multiplication for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
+.previous
 .align	16
 ___
 

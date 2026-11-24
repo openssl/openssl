@@ -547,6 +547,9 @@ RC4_options:
 .Ldone:
 	ret
 .cfi_endproc
+.size	RC4_options,.-RC4_options
+
+.section .rodata
 .align	64
 .Lopts:
 .asciz	"rc4(8x,int)"
@@ -554,7 +557,7 @@ RC4_options:
 .asciz	"rc4(16x,int)"
 .asciz	"RC4 for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .align	64
-.size	RC4_options,.-RC4_options
+.previous
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
