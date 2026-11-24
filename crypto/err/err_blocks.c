@@ -12,28 +12,61 @@
 #include <openssl/err.h>
 #include "err_local.h"
 
-void ERR_new(void)
+void ERR_HANDLE_new(ERR_HANDLE **hdl)
 {
     ERR_STATE *es;
 
-    es = ossl_err_get_state_int(1);
-    if (es == NULL)
+    if (hdl == NULL)
         return;
+    es = (ERR_STATE *)*hdl;
+    if (es == NULL) {
+        es = *hdl = ossl_err_get_state_int(1);
+        if (es == NULL)
+            return;
+    }
 
     /* Allocate a slot */
     err_get_slot(es);
     err_clear(es, es->top, 0);
 }
 
-void ERR_set_debug(const char *file, int line, const char *func)
+void ERR_new(void)
+{
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
+    ERR_HANDLE_new(&hdl);
+}
+
+void ERR_HANDLE_set_debug(ERR_HANDLE **hdl, const char *file, int line, const char *func)
 {
     ERR_STATE *es;
 
-    es = ossl_err_get_state_int(1);
-    if (es == NULL)
+    if (hdl == NULL)
         return;
+    es = (ERR_STATE *)*hdl;
+    if (es == NULL) {
+        es = *hdl = ossl_err_get_state_int(1);
+        if (es == NULL)
+            return;
+    }
 
     err_set_debug(es, es->top, file, line, func);
+}
+
+void ERR_set_debug(const char *file, int line, const char *func)
+{
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
+    ERR_HANDLE_set_debug(&hdl, file, line, func);
+}
+
+void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    ERR_HANDLE_vset_error(hdl, lib, reason, fmt, args);
+    va_end(args);
 }
 
 void ERR_set_error(int lib, int reason, const char *fmt, ...)
@@ -45,7 +78,7 @@ void ERR_set_error(int lib, int reason, const char *fmt, ...)
     va_end(args);
 }
 
-void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
+void ERR_HANDLE_vset_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, va_list args)
 {
     ERR_STATE *es;
     char *buf = NULL;
@@ -53,9 +86,15 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     unsigned long flags = 0;
     size_t i;
 
-    es = ossl_err_get_state_int(1);
-    if (es == NULL)
+    if (hdl == NULL)
         return;
+    es = (ERR_STATE *)*hdl;
+    if (es == NULL) {
+        es = *hdl = ossl_err_get_state_int(1);
+        if (es == NULL)
+            return;
+    }
+
     i = es->top;
 
     if (fmt != NULL) {
@@ -113,4 +152,11 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     err_set_error(es, es->top, lib, reason);
     if (fmt != NULL)
         err_set_data(es, es->top, buf, buf_size, flags);
+}
+
+void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
+{
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
+
+    ERR_HANDLE_vset_error(&hdl, lib, reason, fmt, args);
 }

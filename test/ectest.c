@@ -1475,6 +1475,7 @@ static int check_named_curve_test(int id)
     BN_CTX *bn_ctx = NULL;
     static const unsigned char invalid_seed[] = "THIS IS NOT A VALID SEED";
     static size_t invalid_seed_len = sizeof(invalid_seed);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     /* Do some setup */
     nid = curves[id].nid;
@@ -1530,10 +1531,10 @@ static int check_named_curve_test(int id)
 
     /* Fail if the curve name doesn't match the parameters */
     EC_GROUP_set_curve_name(group, nid + 1);
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_int_le(EC_GROUP_check_named_curve(group, 0, NULL), 0))
         goto err;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* Restore curve name and ensure it's passing */
     EC_GROUP_set_curve_name(group, nid);
@@ -1598,32 +1599,32 @@ static int check_named_curve_test(int id)
      * depending on the internal EC_METHOD implementation, hence run
      * these tests conditionally to the success of EC_GROUP_set_curve().
      */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (EC_GROUP_set_curve(gtest, other_p, group_a, group_b, NULL)) {
         if (!TEST_int_le(EC_GROUP_check_named_curve(gtest, 0, NULL), 0))
             goto err;
     } else {
         /* clear the error stack if EC_GROUP_set_curve() failed */
-        ERR_pop_to_mark();
-        ERR_set_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
+        ERR_HANDLE_set_mark(&hdl);
     }
     if (EC_GROUP_set_curve(gtest, group_p, other_a, group_b, NULL)) {
         if (!TEST_int_le(EC_GROUP_check_named_curve(gtest, 0, NULL), 0))
             goto err;
     } else {
         /* clear the error stack if EC_GROUP_set_curve() failed */
-        ERR_pop_to_mark();
-        ERR_set_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
+        ERR_HANDLE_set_mark(&hdl);
     }
     if (EC_GROUP_set_curve(gtest, group_p, group_a, other_b, NULL)) {
         if (!TEST_int_le(EC_GROUP_check_named_curve(gtest, 0, NULL), 0))
             goto err;
     } else {
         /* clear the error stack if EC_GROUP_set_curve() failed */
-        ERR_pop_to_mark();
-        ERR_set_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
+        ERR_HANDLE_set_mark(&hdl);
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* Check that restoring the curve parameters passes */
     if (!TEST_true(EC_GROUP_set_curve(gtest, group_p, group_a, group_b, NULL))

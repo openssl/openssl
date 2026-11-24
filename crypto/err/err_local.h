@@ -69,27 +69,41 @@ static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
     const char *file, int line,
     const char *fn)
 {
+    size_t filelen = file == NULL || file[0] == '\0' ? 0 : strlen(file) + 1;
+    size_t funclen = fn == NULL || fn[0] == '\0' ? 0 : strlen(fn) + 1;
+    size_t totallen = filelen + funclen;
+    char *err_storage;
+
+    es->err_line[i] = line;
+    err_storage = (es->err_file[i] != NULL) ? es->err_file[i] : es->err_func[i];
+
     /*
      * We dup the file and fn strings because they may be provider owned. If the
      * provider gets unloaded, they may not be valid anymore.
      */
-    OPENSSL_free(es->err_file[i]);
-    if (file == NULL || file[0] == '\0')
-        es->err_file[i] = NULL;
-    else if ((es->err_file[i] = CRYPTO_malloc(strlen(file) + 1,
-                  NULL, 0))
-        != NULL)
-        /* We cannot use OPENSSL_strdup due to possible recursion */
-        strcpy(es->err_file[i], file);
+    OPENSSL_free(err_storage);
+    es->err_file[i] = es->err_func[i] = NULL;
 
-    es->err_line[i] = line;
-    OPENSSL_free(es->err_func[i]);
-    if (fn == NULL || fn[0] == '\0')
-        es->err_func[i] = NULL;
-    else if ((es->err_func[i] = CRYPTO_malloc(strlen(fn) + 1,
-                  NULL, 0))
-        != NULL)
+    if (totallen == 0) {
+        return;
+    }
+    /*
+     * err_file and err_func always get allocated in
+     * pairs, allocate them as one block here
+     */
+    err_storage = CRYPTO_malloc(totallen, NULL, 0);
+    if (err_storage == NULL)
+        return;
+
+    if (filelen != 0) {
+        es->err_file[i] = err_storage;
+        strcpy(es->err_file[i], file);
+    }
+
+    if (funclen != 0) {
+        es->err_func[i] = &err_storage[filelen];
         strcpy(es->err_func[i], fn);
+    }
 }
 
 static ossl_inline void err_set_data(ERR_STATE *es, size_t i,
@@ -104,14 +118,15 @@ static ossl_inline void err_set_data(ERR_STATE *es, size_t i,
 
 static ossl_inline void err_clear(ERR_STATE *es, size_t i, int deall)
 {
+    char *err_storage = (es->err_file[i] != NULL) ? es->err_file[i] : es->err_func[i];
+
     err_clear_data(es, i, (deall));
     es->err_marks[i] = 0;
     es->err_flags[i] = 0;
     es->err_buffer[i] = 0;
     es->err_line[i] = -1;
-    OPENSSL_free(es->err_file[i]);
+    OPENSSL_free(err_storage);
     es->err_file[i] = NULL;
-    OPENSSL_free(es->err_func[i]);
     es->err_func[i] = NULL;
 }
 

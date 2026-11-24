@@ -124,10 +124,11 @@ char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
 long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
     const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int status;
     long result = 0;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (conf == NULL) {
         status = NCONF_get_number_e(NULL, group, name, &result);
     } else {
@@ -136,7 +137,7 @@ long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
         CONF_set_nconf(&ctmp, conf);
         status = NCONF_get_number_e(&ctmp, group, name, &result);
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return status == 0 ? 0L : result;
 }
 
@@ -369,12 +370,13 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 long _CONF_get_number(const CONF *conf, const char *section,
     const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int status;
     long result = 0;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     status = NCONF_get_number_e(conf, section, name, &result);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return status == 0 ? 0L : result;
 }
 

@@ -234,6 +234,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     BUF_MEM *b = NULL;
     X509_OBJECT stmp, *tmp = NULL;
     const char *postfix = "";
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (name == NULL)
         return 0;
@@ -336,13 +337,13 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             }
 #endif
             res = 0;
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             if (type == X509_LU_X509)
                 res = X509_load_cert_file_ex(xl, b->data, ent->dir_type, libctx, propq);
             else if (type == X509_LU_CRL)
                 res = X509_load_crl_file(xl, b->data, ent->dir_type);
             /* else case will caught higher up */
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             /* unless OPENSSL_NO_POSIX_IO, gracefully skip found file if cert/CRL fails to load. */
 #ifndef OPENSSL_NO_POSIX_IO
             res = 1;

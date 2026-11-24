@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <openssl/core.h>
 #include <openssl/indicator.h>
+#include <openssl/err.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +97,20 @@ OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
     (const OSSL_CORE_HANDLE *prov))
 #define OSSL_FUNC_CORE_POP_ERROR_TO_MARK 10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_CORE_HANDLE *prov))
+#define OSSL_FUNC_CORE_NEW_ERROR_HANDLE 13
+OSSL_CORE_MAKE_FUNC(void, core_new_error_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl))
+#define OSSL_FUNC_CORE_SET_ERROR_DEBUG_HANDLE 14
+OSSL_CORE_MAKE_FUNC(void, core_set_error_debug_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl, const char *file, int line, const char *func))
+#define OSSL_FUNC_CORE_VSET_ERROR_HANDLE 15
+OSSL_CORE_MAKE_FUNC(void, core_vset_error_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl, uint32_t reason, const char *fmt, va_list args))
+#define OSSL_FUNC_CORE_SET_ERROR_MARK_HANDLE 16
+OSSL_CORE_MAKE_FUNC(int, core_set_error_mark_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl))
+#define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK_HANDLE 17
+OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl))
+#define OSSL_FUNC_CORE_POP_ERROR_TO_MARK_HANDLE 18
+OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl))
+#define OSSL_FUNC_CORE_COUNT_TO_MARK_HANDLE 19
+OSSL_CORE_MAKE_FUNC(int, core_count_to_mark_handle, (const OSSL_CORE_HANDLE *prov, ERR_HANDLE **hdl))
 
 /* Functions to access the OBJ database */
 

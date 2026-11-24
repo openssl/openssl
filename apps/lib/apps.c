@@ -307,28 +307,30 @@ static char *app_get_pass(const char *arg, int keepbio)
 
 char *app_conf_try_string(const CONF *conf, const char *group, const char *name)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     char *res;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     res = NCONF_get_string(conf, group, name);
     if (res == NULL)
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     else
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     return res;
 }
 
 int app_conf_try_number(const CONF *conf, const char *group, const char *name,
     long *result)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ok;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = NCONF_get_number(conf, group, name, result);
     if (!ok)
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     else
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     return ok;
 }
 
@@ -950,6 +952,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     const char *input_type;
     OSSL_PARAM itp[2];
     const OSSL_PARAM *params = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     /* 'failed' describes type of credential to load for potential error msg */
     if (failed == NULL) {
@@ -959,7 +962,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         return 0;
     }
     /* suppress any extraneous errors left over from failed parse attempts */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     SET_EXPECT1(ppkey, OSSL_STORE_INFO_PKEY);
     SET_EXPECT1(ppubkey, OSSL_STORE_INFO_PUBKEY);
@@ -1174,15 +1177,15 @@ end:
         if (ERR_SYSTEM_ERROR(err)) {
             /* provide more readable diagnostic output */
             BIO_printf(bio_err, ": %s", strerror(ERR_GET_REASON(err)));
-            ERR_pop_to_mark();
-            ERR_set_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
+            ERR_HANDLE_set_mark(&hdl);
         }
         BIO_puts(bio_err, "\n");
         ERR_print_errors(bio_err);
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     } else {
         /* clear any suppressed or spurious errors */
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     if (failed != NULL) {
         if (ppkey != NULL) {
@@ -1220,6 +1223,7 @@ end:
 
 int load_rpk_file(SSL *ssl, const char *file)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BIO *in = BIO_new_file(file, "r");
     char *name = NULL;
     char *header = NULL;
@@ -1231,7 +1235,7 @@ int load_rpk_file(SSL *ssl, const char *file)
     if (in == NULL)
         return ret;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     while (ret != 0) {
         PKCS8_PRIV_KEY_INFO *p8;
         EVP_PKEY *pkey = NULL;
@@ -1319,7 +1323,7 @@ int load_rpk_file(SSL *ssl, const char *file)
     OPENSSL_free(name);
     OPENSSL_free(header);
     OPENSSL_free(buf);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     BIO_free(in);
     return found && ret;
 }
@@ -2730,11 +2734,12 @@ int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
 
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int match;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     match = X509_check_private_key(cert, pkey);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     return match;
 }
 
@@ -2909,6 +2914,7 @@ void store_setup_crl_download(X509_STORE *st)
 
 int host_is_ip_address(const char *host)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 #ifndef INET6_ADDRSTRLEN /* not defined on OPENSSL_NO_SOCK */
 #define INET6_ADDRSTRLEN 46
 #endif
@@ -2927,10 +2933,10 @@ int host_is_ip_address(const char *host)
         stripped_host_ipv6[len] = '\0';
         host = stripped_host_ipv6;
     }
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     str = a2i_IPADDRESS(host);
     ret = str != NULL;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     ASN1_OCTET_STRING_free(str);
     return ret;
 }
@@ -2966,14 +2972,15 @@ static BIO *http_tls_shutdown(BIO *bio)
     if (bio != NULL) {
         BIO *cbio;
         const char *hint = tls_error_hint();
+        ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
         if (hint != NULL)
             BIO_printf(bio_err, "%s\n", hint);
-        (void)ERR_set_mark();
+        (void)ERR_HANDLE_set_mark(&hdl);
         BIO_ssl_shutdown(bio);
         cbio = BIO_pop(bio); /* connect+HTTP BIO */
         BIO_free(bio); /* SSL BIO */
-        (void)ERR_pop_to_mark(); /* hide SSL_R_READ_BIO_NOT_SET etc. */
+        (void)ERR_HANDLE_pop_to_mark(&hdl); /* hide SSL_R_READ_BIO_NOT_SET etc. */
         bio = cbio;
     }
     return bio;

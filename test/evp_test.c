@@ -1031,6 +1031,7 @@ static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
     CIPHER_DATA *cdat;
     int m;
@@ -1041,19 +1042,19 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if ((cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL) {
         /* a stitched cipher might not be available */
         if (strstr(alg, "HMAC") != NULL) {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             t->skip = 1;
             TEST_info("skipping, '%s' is not available", alg);
             return 1;
         }
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         return 0;
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
 
     if (!TEST_ptr(cdat = OPENSSL_zalloc(sizeof(*cdat))))
         return 0;
@@ -1068,7 +1069,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         cdat->aead = 0;
 
     if (data_chunk_size != 0 && !cipher_test_valid_fragmentation(cdat)) {
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
         EVP_CIPHER_free(cipher);
         OPENSSL_free(cdat);
         t->skip = 1;
@@ -1195,6 +1196,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     EVP_CIPHER_CTX *ctx = NULL, *duped;
     int fips_dupctx_supported = fips_provider_version_ge(libctx, 3, 2, 0);
     int fips_no_silent_error = fips_provider_version_ge(libctx, 3, 6, 0);
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(ctx_base = EVP_CIPHER_CTX_new()))
@@ -1316,26 +1318,26 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
 
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
             || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
                 && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
                     expected->iv_len))) {
             t->err = "INVALID_IV";
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto err;
         } else {
-            if (fips_no_silent_error && !TEST_int_eq(ERR_count_to_mark(), 0)) {
+            if (fips_no_silent_error && !TEST_int_eq(ERR_HANDLE_count_to_mark(&hdl), 0)) {
                 t->err = "GET_UPDATED_IV_SILENT_ERROR";
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 goto err;
             }
         }
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     }
 
     /* Test that the cipher dup functions correctly if it is supported */
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
         if (fips_dupctx_supported) {
             TEST_info("Doing a copy of Cipher %s Fails!\n",
@@ -1366,7 +1368,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             TEST_info("Allowing dup fail as an old fips provider is in use.");
         }
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (expected->mac_key != NULL
         && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
@@ -1618,21 +1620,21 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (expected->next_iv != NULL) {
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
             || !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
                 expected->iv_len)) {
             t->err = "INVALID_NEXT_IV";
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto err;
         } else {
-            if (fips_no_silent_error && !TEST_int_eq(ERR_count_to_mark(), 0)) {
+            if (fips_no_silent_error && !TEST_int_eq(ERR_HANDLE_count_to_mark(&hdl), 0)) {
                 t->err = "GET_UPDATED_IV_SILENT_ERROR";
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 goto err;
             }
         }
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     }
 
     t->err = NULL;
@@ -2096,6 +2098,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     int xof;
     int reinit = 1;
     size_t input_len, donelen;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
@@ -2168,9 +2171,9 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     if (fips_provider_version_gt(libctx, 3, 2, 0)) {
         /* HMAC will put an error on the stack here (digest is not set yet) */
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         size_before_init = EVP_MAC_CTX_get_mac_size(ctx);
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
@@ -2276,26 +2279,26 @@ retry:
                 expected->iv_len);
             ivparams[1] = OSSL_PARAM_construct_end();
         }
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         ret = EVP_MAC_init(ctx, NULL, 0, ivparams);
         if (expected->no_reinit) {
             if (ret) {
-                ERR_clear_last_mark();
+                ERR_HANDLE_clear_last_mark(&hdl);
                 t->err = "MAC_REINIT_SHOULD_FAIL";
                 goto err;
             }
         } else if (ret) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             OPENSSL_free(got);
             got = NULL;
             goto retry;
         } else {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             t->err = "MAC_REINIT_ERROR";
             goto err;
         }
         /* If reinitialization fails, it is unsupported by the algorithm */
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     }
     t->err = NULL;
 

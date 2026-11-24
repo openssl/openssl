@@ -374,13 +374,14 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt_ex(int pbe_nid,
     OSSL_LIB_CTX *ctx,
     const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     PKCS12_SAFEBAG *bag = NULL;
     EVP_CIPHER *pbe_ciph = NULL;
     X509_SIG *p8;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     pbe_ciph = EVP_CIPHER_fetch(ctx, OBJ_nid2sn(pbe_nid), propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     if (pbe_ciph != NULL)
         pbe_nid = -1;

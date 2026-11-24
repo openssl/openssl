@@ -273,6 +273,7 @@ static int set_enc_pubkey_test(int id)
     EVP_PKEY *in_key = NULL;
     int type = pkey_params[id].type;
     const struct pubkey *keys = pkey_params[id].keys;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (keys[0].key_bin == NULL)
         return TEST_skip("Not applicable test");
@@ -284,13 +285,13 @@ static int set_enc_pubkey_test(int id)
 
     for (i = 0; ret && i < NUM_KEYS && keys[i].key_bin != NULL; i++) {
         if (keys[i].bad) {
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             ret = ret
                 && TEST_int_le(EVP_PKEY_set1_encoded_public_key(in_key,
                                    keys[i].key_bin,
                                    keys[i].key_bin_len),
                     0);
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
         } else {
             ret = ret
                 && TEST_int_gt(EVP_PKEY_set1_encoded_public_key(in_key,

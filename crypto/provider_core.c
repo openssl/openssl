@@ -2314,11 +2314,17 @@ static OSSL_FUNC_core_get_libctx_fn core_get_libctx;
 static OSSL_FUNC_core_thread_start_fn core_thread_start;
 #ifndef FIPS_MODULE
 static OSSL_FUNC_core_new_error_fn core_new_error;
+static OSSL_FUNC_core_new_error_handle_fn core_new_error_handle;
 static OSSL_FUNC_core_set_error_debug_fn core_set_error_debug;
+static OSSL_FUNC_core_set_error_debug_handle_fn core_set_error_debug_handle;
 static OSSL_FUNC_core_vset_error_fn core_vset_error;
+static OSSL_FUNC_core_vset_error_handle_fn core_vset_error_handle;
 static OSSL_FUNC_core_set_error_mark_fn core_set_error_mark;
+static OSSL_FUNC_core_set_error_mark_handle_fn core_set_error_mark_handle;
 static OSSL_FUNC_core_clear_last_error_mark_fn core_clear_last_error_mark;
+static OSSL_FUNC_core_clear_last_error_mark_handle_fn core_clear_last_error_mark_handle;
 static OSSL_FUNC_core_pop_error_to_mark_fn core_pop_error_to_mark;
+static OSSL_FUNC_core_pop_error_to_mark_handle_fn core_pop_error_to_mark_handle;
 OSSL_FUNC_BIO_new_file_fn ossl_core_bio_new_file;
 OSSL_FUNC_BIO_new_membuf_fn ossl_core_bio_new_mem_buf;
 OSSL_FUNC_BIO_read_ex_fn ossl_core_bio_read_ex;
@@ -2444,10 +2450,21 @@ static void core_new_error(const OSSL_CORE_HANDLE *handle)
     ERR_new();
 }
 
+static void core_new_error_handle(const OSSL_CORE_HANDLE *handle, ERR_HANDLE **hdl)
+{
+    ERR_HANDLE_new(hdl);
+}
+
 static void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
     const char *file, int line, const char *func)
 {
     ERR_set_debug(file, line, func);
+}
+
+static void core_set_error_debug_handle(const OSSL_CORE_HANDLE *handle,
+    ERR_HANDLE **hdl, const char *file, int line, const char *func)
+{
+    ERR_HANDLE_set_debug(hdl, file, line, func);
 }
 
 static void core_vset_error(const OSSL_CORE_HANDLE *handle,
@@ -2471,9 +2488,35 @@ static void core_vset_error(const OSSL_CORE_HANDLE *handle,
     }
 }
 
+static void core_vset_error_handle(const OSSL_CORE_HANDLE *handle,
+    ERR_HANDLE **hdl, uint32_t reason, const char *fmt, va_list args)
+{
+    /*
+     * We created this object originally and we know it is actually an
+     * OSSL_PROVIDER *, so the cast is safe
+     */
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+
+    /*
+     * If the uppermost 8 bits are non-zero, it's an OpenSSL library
+     * error and will be treated as such.  Otherwise, it's a new style
+     * provider error and will be treated as such.
+     */
+    if (ERR_GET_LIB(reason) != 0) {
+        ERR_HANDLE_vset_error(hdl, ERR_GET_LIB(reason), ERR_GET_REASON(reason), fmt, args);
+    } else {
+        ERR_HANDLE_vset_error(hdl, prov->error_lib, (int)reason, fmt, args);
+    }
+}
+
 static int core_set_error_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_set_mark();
+}
+
+static int core_set_error_mark_handle(const OSSL_CORE_HANDLE *handle, ERR_HANDLE **hdl)
+{
+    return ERR_HANDLE_set_mark(hdl);
 }
 
 static int core_clear_last_error_mark(const OSSL_CORE_HANDLE *handle)
@@ -2481,14 +2524,29 @@ static int core_clear_last_error_mark(const OSSL_CORE_HANDLE *handle)
     return ERR_clear_last_mark();
 }
 
+static int core_clear_last_error_mark_handle(const OSSL_CORE_HANDLE *handle, ERR_HANDLE **hdl)
+{
+    return ERR_HANDLE_clear_last_mark(hdl);
+}
+
 static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_pop_to_mark();
 }
 
+static int core_pop_error_to_mark_handle(const OSSL_CORE_HANDLE *handle, ERR_HANDLE **hdl)
+{
+    return ERR_HANDLE_pop_to_mark(hdl);
+}
+
 static int core_count_to_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_count_to_mark();
+}
+
+static int core_count_to_mark_handle(const OSSL_CORE_HANDLE *handle, ERR_HANDLE **hdl)
+{
+    return ERR_HANDLE_count_to_mark(hdl);
 }
 
 static void core_indicator_get_callback(OPENSSL_CORE_CTX *libctx,
@@ -2652,13 +2710,21 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
 #ifndef FIPS_MODULE
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
+    { OSSL_FUNC_CORE_NEW_ERROR_HANDLE, (void (*)(void))core_new_error_handle },
     { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
+    { OSSL_FUNC_CORE_SET_ERROR_DEBUG_HANDLE, (void (*)(void))core_set_error_debug_handle },
     { OSSL_FUNC_CORE_VSET_ERROR, (void (*)(void))core_vset_error },
+    { OSSL_FUNC_CORE_VSET_ERROR_HANDLE, (void (*)(void))core_vset_error_handle },
     { OSSL_FUNC_CORE_SET_ERROR_MARK, (void (*)(void))core_set_error_mark },
+    { OSSL_FUNC_CORE_SET_ERROR_MARK_HANDLE, (void (*)(void))core_set_error_mark_handle },
     { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
         (void (*)(void))core_clear_last_error_mark },
+    { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK_HANDLE,
+        (void (*)(void))core_clear_last_error_mark_handle },
     { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
+    { OSSL_FUNC_CORE_POP_ERROR_TO_MARK_HANDLE, (void (*)(void))core_pop_error_to_mark_handle },
     { OSSL_FUNC_CORE_COUNT_TO_MARK, (void (*)(void))core_count_to_mark },
+    { OSSL_FUNC_CORE_COUNT_TO_MARK_HANDLE, (void (*)(void))core_count_to_mark_handle },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))ossl_core_bio_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))ossl_core_bio_new_mem_buf },
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))ossl_core_bio_read_ex },

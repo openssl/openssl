@@ -5753,3 +5753,12 @@ EVP_KDF_CTX_get1_SKEY                   ?	4_2_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_IV                     ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data_ex                   ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_set_mark                     ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_pop_to_mark                  ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_clear_last_mark              ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_count_to_mark                ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_pop                          ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_new                          ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_set_debug                    ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_set_error                    ?	4_2_0	EXIST::FUNCTION:
+ERR_HANDLE_vset_error                   ?	4_2_0	EXIST::FUNCTION:

@@ -24,6 +24,7 @@ int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     const BIGNUM *x_, int y_bit,
     BN_CTX *ctx)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     BN_CTX *new_ctx = NULL;
     BIGNUM *tmp1, *tmp2, *x, *y;
     int ret = 0;
@@ -101,24 +102,24 @@ int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
             goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!BN_mod_sqrt(y, tmp1, group->field, ctx)) {
 #ifndef FIPS_MODULE
         unsigned long err = ERR_peek_last_error();
 
         if (ERR_GET_LIB(err) == ERR_LIB_BN
             && ERR_GET_REASON(err) == BN_R_NOT_A_SQUARE) {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
         } else
 #endif
         {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         }
         goto err;
     }
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
 
     if (y_bit != BN_is_odd(y)) {
         if (BN_is_zero(y)) {

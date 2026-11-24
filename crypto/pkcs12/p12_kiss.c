@@ -75,6 +75,7 @@ int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
     int initial_skeys_count = 0;
     int ca_added_count = 0;
     int skeys_added_count = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (p12 == NULL) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_PKCS12_POINTER);
@@ -144,9 +145,9 @@ int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
             && ctx->cert != NULL && *ctx->cert == NULL) {
             int match;
 
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             match = X509_check_private_key(x, *ctx->pkey);
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             if (match) {
                 *ctx->cert = x;
                 continue;

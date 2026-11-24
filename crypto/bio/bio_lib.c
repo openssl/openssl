@@ -1044,6 +1044,7 @@ int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
  */
 int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int blocking = timeout <= 0;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
     int rv;
@@ -1058,7 +1059,7 @@ int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
     BIO_set_nbio(bio, !blocking);
 
 retry:
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     rv = BIO_do_connect(bio);
 
     if (rv <= 0) { /* could be timeout or retryable error or fatal error */
@@ -1086,7 +1087,7 @@ retry:
             }
         }
         if (timeout >= 0 && do_retry) {
-            ERR_pop_to_mark();
+            ERR_HANDLE_pop_to_mark(&hdl);
             /* will not actually wait if timeout == 0 (i.e., blocking BIO): */
             rv = bio_wait(bio, max_time, nap_milliseconds);
             if (rv > 0)
@@ -1094,14 +1095,14 @@ retry:
             ERR_raise(ERR_LIB_BIO,
                 rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
         } else {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             rv = -1;
             if (err == 0) /* missing error queue entry */
                 /* workaround: general error */
                 ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
         }
     } else {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
     }
 
     return rv;

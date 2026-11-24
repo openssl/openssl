@@ -252,6 +252,7 @@ static int test_x509_crl_tbs_cache(void)
 
 static int test_asn1_item_verify(void)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     int ret = 0;
     BIO *bio = NULL;
     X509 *x509 = NULL;
@@ -286,15 +287,15 @@ static int test_asn1_item_verify(void)
             0))
         goto err;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
                          alg, sig,
                          NULL, pkey),
             0)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         goto err;
     }
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     ret = 1;
 

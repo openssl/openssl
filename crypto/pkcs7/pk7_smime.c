@@ -100,11 +100,12 @@ err:
 static int add_cipher_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_CIPHER *cipher;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (cipher != NULL) {
         EVP_CIPHER_free(cipher);
         return PKCS7_simple_smimecap(sk, nid, arg);
@@ -115,11 +116,12 @@ static int add_cipher_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg,
 static int add_digest_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_MD *md;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (md != NULL) {
         EVP_MD_free(md);
         return PKCS7_simple_smimecap(sk, nid, arg);

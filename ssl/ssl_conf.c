@@ -617,6 +617,7 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     BIO *in = NULL;
     SSL_CTX *sslctx = (cctx->ssl != NULL) ? cctx->ssl->ctx : cctx->ctx;
     OSSL_DECODER_CTX *decoderctx = NULL;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (cctx->ctx != NULL || cctx->ssl != NULL) {
         in = BIO_new(BIO_s_file());
@@ -631,7 +632,7 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
                 sslctx->libctx, sslctx->propq);
         if (decoderctx == NULL)
             goto end;
-        ERR_set_mark();
+        ERR_HANDLE_set_mark(&hdl);
         while (!OSSL_DECODER_from_bio(decoderctx, in)
             && dhpkey == NULL
             && !BIO_eof(in))
@@ -639,10 +640,10 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
         OSSL_DECODER_CTX_free(decoderctx);
 
         if (dhpkey == NULL) {
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             goto end;
         }
-        ERR_pop_to_mark();
+        ERR_HANDLE_pop_to_mark(&hdl);
     } else {
         return 1;
     }

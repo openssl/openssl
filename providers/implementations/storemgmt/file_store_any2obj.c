@@ -130,6 +130,7 @@ static int der2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_CALLBACK *data_cb, void *data_cbarg,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     struct any2obj_ctx_st *ctx = vctx;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     BUF_MEM *mem = NULL;
@@ -138,9 +139,9 @@ static int der2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (in == NULL)
         return 0;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = (asn1_d2i_read_bio(in, &mem) >= 0);
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok && mem != NULL) {
         BUF_MEM_free(mem);
         mem = NULL;
@@ -166,6 +167,7 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     int isdss = -1;
     int ispub = -1;
     int ok = 0;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (in == NULL)
         goto err;
@@ -177,17 +179,17 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = BIO_read(in, &mem->data[0], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok)
         goto next;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     p = (unsigned char *)&mem->data[0];
     ok = ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) > 0;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok)
         goto next;
 
@@ -202,10 +204,10 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = BIO_read(in, &mem->data[mem_len], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
 next:
     /* Free resources we no longer need. */
@@ -238,6 +240,7 @@ static int pvk2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     const unsigned char *p;
     unsigned int saltlen, keylen;
     int ok = 0, isdss = -1;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (in == NULL)
         goto err;
@@ -249,17 +252,17 @@ static int pvk2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = BIO_read(in, &mem->data[0], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok)
         goto next;
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     p = (unsigned char *)&mem->data[0];
     ok = ossl_do_PVK_header(&p, 24, 0, &isdss, &saltlen, &keylen) > 0;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     if (!ok)
         goto next;
 
@@ -270,10 +273,10 @@ static int pvk2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto err;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ok = BIO_read(in, &mem->data[mem_len], (int)mem_want) == (int)mem_want;
     mem_len += mem_want;
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
 next:
     /* Free resources we no longer need. */

@@ -35,6 +35,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     EVP_PKEY *pkey, int ver,
     const OSSL_PARAM params[])
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
     const char *desc;
@@ -58,7 +59,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_FINALISED);
 
     locpctx = ctx->pctx;
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
 
     if (evp_pkey_ctx_is_legacy(locpctx))
         goto notsupported;
@@ -75,7 +76,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         props = locpctx->propquery;
 
     if (locpctx->pkey == NULL) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         goto err;
     }
@@ -93,14 +94,14 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      */
     if (!ossl_assert(locpctx->pkey->keymgmt == NULL
             || locpctx->pkey->keymgmt == locpctx->keymgmt)) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     supported_sig = evp_keymgmt_util_query_operation_name(locpctx->keymgmt,
         OSSL_OP_SIGNATURE);
     if (supported_sig == NULL) {
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -175,12 +176,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     if (provkey == NULL) {
         EVP_SIGNATURE_free(signature);
-        ERR_clear_last_mark();
+        ERR_HANDLE_clear_last_mark(&hdl);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
 
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
 
     /* No more legacy from here down to legacy: */
 
@@ -280,7 +281,7 @@ err:
     return 0;
 
 notsupported:
-    ERR_pop_to_mark();
+    ERR_HANDLE_pop_to_mark(&hdl);
     EVP_KEYMGMT_free(tmp_keymgmt);
 
     ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
@@ -327,6 +328,7 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
 int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     EVP_PKEY_CTX *pctx = ctx->pctx;
@@ -355,17 +357,18 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
         return 0;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = signature->digest_sign_update(pctx->op.sig.algctx, data, dsize);
-    if (ret <= 0 && ERR_count_to_mark() == 0)
+    if (ret <= 0 && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s digest_sign_update:%s", signature->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return ret;
 }
 
 int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     EVP_PKEY_CTX *pctx = ctx->pctx;
@@ -390,18 +393,19 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
         return 0;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     ret = signature->digest_verify_update(pctx->op.sig.algctx, data, dsize);
-    if (ret <= 0 && ERR_count_to_mark() == 0)
+    if (ret <= 0 && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s digest_verify_update:%s", signature->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     return ret;
 }
 
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     size_t *siglen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     int r = 0;
@@ -435,13 +439,13 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             pctx = dctx;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     r = signature->digest_sign_final(pctx->op.sig.algctx, sigret, siglen,
         sigret == NULL ? 0 : *siglen);
-    if (!r && ERR_count_to_mark() == 0)
+    if (!r && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s digest_sign_final:%s", signature->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     if (dctx == NULL && sigret != NULL)
         ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
     else
@@ -454,6 +458,7 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 {
     EVP_PKEY_CTX *pctx = ctx->pctx;
     int ret;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (pctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -475,13 +480,13 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 
             if (sigret != NULL)
                 ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             ret = signature->digest_sign(pctx->op.sig.algctx, sigret, siglen,
                 sigret == NULL ? 0 : *siglen, tbs, tbslen);
-            if (ret <= 0 && ERR_count_to_mark() == 0)
+            if (ret <= 0 && ERR_HANDLE_count_to_mark(&hdl) == 0)
                 ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
                     "%s digest_sign:%s", signature->type_name, desc);
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             return ret;
         }
     }
@@ -494,6 +499,7 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     size_t siglen)
 {
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
     EVP_SIGNATURE *signature;
     const char *desc;
     int r = 0;
@@ -527,12 +533,12 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             pctx = dctx;
     }
 
-    ERR_set_mark();
+    ERR_HANDLE_set_mark(&hdl);
     r = signature->digest_verify_final(pctx->op.sig.algctx, sig, siglen);
-    if (!r && ERR_count_to_mark() == 0)
+    if (!r && ERR_HANDLE_count_to_mark(&hdl) == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s digest_verify_final:%s", signature->type_name, desc);
-    ERR_clear_last_mark();
+    ERR_HANDLE_clear_last_mark(&hdl);
     if (dctx == NULL)
         ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
     else
@@ -544,6 +550,7 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
     size_t siglen, const unsigned char *tbs, size_t tbslen)
 {
     EVP_PKEY_CTX *pctx = ctx->pctx;
+    ERR_HANDLE *hdl = ERR_HANDLE_INITIALIZER;
 
     if (pctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -564,12 +571,12 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
             int ret;
 
             ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
-            ERR_set_mark();
+            ERR_HANDLE_set_mark(&hdl);
             ret = signature->digest_verify(pctx->op.sig.algctx, sigret, siglen, tbs, tbslen);
-            if (ret <= 0 && ERR_count_to_mark() == 0)
+            if (ret <= 0 && ERR_HANDLE_count_to_mark(&hdl) == 0)
                 ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
                     "%s digest_verify:%s", signature->type_name, desc);
-            ERR_clear_last_mark();
+            ERR_HANDLE_clear_last_mark(&hdl);
             return ret;
         }
     }
