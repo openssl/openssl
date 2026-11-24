@@ -358,32 +358,32 @@ int ERR_count_to_mark(void)
 
 int ERR_HANDLE_set_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return c_core_set_error_mark_handle(NULL, hdl);
+    return c_core_set_error_mark_handle == NULL ? ERR_set_mark() : c_core_set_error_mark_handle(NULL, hdl);
 }
 
 int ERR_HANDLE_pop_to_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return c_core_pop_error_to_mark_handle(NULL, hdl);
+    return c_core_pop_error_to_mark_handle == NULL ? ERR_pop_to_mark() : c_core_pop_error_to_mark_handle(NULL, hdl);
 }
 
 int ERR_HANDLE_clear_last_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return c_core_clear_last_error_mark_handle(NULL, hdl);
+    return c_core_clear_last_error_mark_handle == NULL ? ERR_clear_last_mark() : c_core_clear_last_error_mark_handle(NULL, hdl);
 }
 
 int ERR_HANDLE_count_to_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return c_core_count_to_mark_handle(NULL, hdl);
+    return c_core_count_to_mark_handle == NULL ? ERR_count_to_mark() : c_core_count_to_mark_handle(NULL, hdl);
 }
 
 void ERR_HANDLE_new(ERR_HANDLE **hdl)
 {
-    c_core_new_error_handle(NULL, hdl);
+    c_core_new_error_handle == NULL ? ERR_new() : c_core_new_error_handle(NULL, hdl);
 }
 
 void ERR_HANDLE_set_debug(ERR_HANDLE **hdl, const char *file, int line, const char *func)
 {
-    c_core_set_error_debug_handle(NULL, hdl, file, line, func);
+    c_core_set_error_debug_handle == NULL ? ERR_set_debug(file, line, func) : c_core_set_error_debug_handle(NULL, hdl, file, line, func);
 }
 
 void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, ...)
@@ -397,7 +397,7 @@ void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt
 
 void ERR_HANDLE_vset_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, va_list args)
 {
-    c_core_vset_error_handle(NULL, hdl, ERR_PACK(lib, 0, reason), fmt, args);
+    c_core_vset_error_handle == NULL ? ERR_vset_error(lib, reason, fmt, args) : c_core_vset_error_handle(NULL, hdl, ERR_PACK(lib, 0, reason), fmt, args);
 }
 
 #endif
