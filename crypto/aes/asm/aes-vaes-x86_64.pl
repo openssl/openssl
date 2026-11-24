@@ -179,6 +179,69 @@ ossl_aes_vaes_cleanup:
 ___
 }
 
+# YMM cleanup for the VAES-256 kernels. num_keys counts 32-byte broadcast
+# round keys. AVX2 only: this must stay executable on CPUs without AVX-512.
+$code .= <<___;
+
+.globl  ossl_aes_vaes256_cleanup
+.hidden ossl_aes_vaes256_cleanup
+.type   ossl_aes_vaes256_cleanup,\@abi-omnipotent
+.align  32
+ossl_aes_vaes256_cleanup:
+.cfi_startproc
+    endbranch
+    vpxor   %ymm0,%ymm0,%ymm0
+    test    $num_keys,$num_keys
+    jz      .Lvaes256_clear_registers
+
+.Lvaes256_clear_keys:
+    vmovdqu %ymm0,($key_schedule)
+    add     \$32,$key_schedule
+    dec     $num_keys
+    jnz     .Lvaes256_clear_keys
+
+.Lvaes256_clear_registers:
+___
+
+if ($win64) {
+    $code .= <<___;
+    # The low 128 bits of XMM6-XMM15 are nonvolatile on Win64.
+    vpxor   %xmm0,%xmm0,%xmm0
+    vpxor   %xmm1,%xmm1,%xmm1
+    vpxor   %xmm2,%xmm2,%xmm2
+    vpxor   %xmm3,%xmm3,%xmm3
+    vpxor   %xmm4,%xmm4,%xmm4
+    vpxor   %xmm5,%xmm5,%xmm5
+    vzeroupper
+    xor     %eax,%eax
+    xor     %ecx,%ecx
+    xor     %edx,%edx
+    xor     %r8d,%r8d
+    xor     %r9d,%r9d
+    xor     %r10d,%r10d
+    xor     %r11d,%r11d
+___
+} else {
+    $code .= <<___;
+    vzeroall
+    xor     %eax,%eax
+    xor     %ecx,%ecx
+    xor     %edx,%edx
+    xor     %esi,%esi
+    xor     %edi,%edi
+    xor     %r8d,%r8d
+    xor     %r9d,%r9d
+    xor     %r10d,%r10d
+    xor     %r11d,%r11d
+___
+}
+
+$code .= <<___;
+    ret
+.cfi_endproc
+.size   ossl_aes_vaes256_cleanup,.-ossl_aes_vaes256_cleanup
+___
+
 print $code;
 
 close STDOUT or die "error closing STDOUT: $!";
