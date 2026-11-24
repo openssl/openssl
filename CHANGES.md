@@ -33,6 +33,31 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `openssl speed` memory leaks in DSA parameter generation and
+   EdDSA/SM2 digest contexts.
+
+   *Tobias Brick*
+
+ * Fixed the default `openssl speed` EC selection enabling signature-only
+   algorithms for key agreement and key-agreement-only algorithms for signing.
+   Initialize and filter selections before forking so multi-process runs report
+   compatible EC results and include the default aggregate summary.
+   Also exclude verification-only LMS from key-generation/signing benchmarks.
+
+   *Tobias Brick*
+
+ * Fixed `openssl speed -testmode` skipping later selected public-key
+   benchmarks when the one-iteration test limit triggered the slow-operation
+   cutoff intended for timed benchmarks.
+
+   *Tobias Brick*
+
+ * Fixed `openssl speed` public-key benchmarks failing with small `-bytes`
+   values because the shared buffers were too small for signatures and RSA
+   ciphertext.
+
+   *Tobias Brick*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
