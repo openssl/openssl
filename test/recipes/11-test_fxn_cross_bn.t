@@ -10,6 +10,6 @@ use strict;
 use OpenSSL::Test;
 use OpenSSL::Test::Simple;
 
-setup("test_fn_cross_bn");
+setup("test_fxn_cross_bn");
 
-simple_test("test_fn_cross_bn", "fn_cross_bn_test");
+simple_test("test_fxn_cross_bn", "fxn_cross_bn_test");

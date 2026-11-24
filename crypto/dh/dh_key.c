@@ -18,8 +18,8 @@
 #include "dh_local.h"
 #include "crypto/bn.h"
 #include "crypto/dh.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 #include "crypto/security_bits.h"
 #include "internal/constant_time.h"
 
@@ -33,44 +33,44 @@ static int generate_key(DH *dh);
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m);
+static int dh_fxn_mod_exp(const DH *dh, OSSL_FXN *r, const OSSL_FXN *a,
+    const OSSL_FXN *p, const OSSL_FXN *m);
 static int dh_init(DH *dh);
 static int dh_finish(DH *dh);
 
 #ifndef S390X_MOD_EXP
 /*
  * ossl_dh_compute_key() for the default method, in constant time: Z stays in
- * a fixed-width OSSL_FN, as a BIGNUM's top would reveal its length.
+ * a fixed-width OSSL_FXN, as a BIGNUM's top would reveal its length.
  */
-static int dh_compute_key_fn(unsigned char *key, const BIGNUM *pub_key,
+static int dh_compute_key_fxn(unsigned char *key, const BIGNUM *pub_key,
     const DH *dh)
 {
-    const OSSL_FN *fn_pub = bn_get_ossl_fn(pub_key);
-    const OSSL_FN *fn_priv = bn_get_ossl_fn(dh->priv_key);
-    const OSSL_FN *fn_p = bn_get_ossl_fn(dh->params.p);
+    const OSSL_FXN *fxn_pub = bn_get_ossl_fxn(pub_key);
+    const OSSL_FXN *fxn_priv = bn_get_ossl_fxn(dh->priv_key);
+    const OSSL_FXN *fxn_p = bn_get_ossl_fxn(dh->params.p);
     int plen = BN_num_bytes(dh->params.p);
-    OSSL_FN *z = NULL, *pminus1 = NULL;
+    OSSL_FXN *z = NULL, *pminus1 = NULL;
     uint32_t bad;
     int ret = -1;
 
-    if (fn_pub == NULL || fn_priv == NULL || fn_p == NULL)
+    if (fxn_pub == NULL || fxn_priv == NULL || fxn_p == NULL)
         return -1;
-    if ((z = OSSL_FN_secure_new_limbs(ossl_fn_get_dsize(fn_p))) == NULL
-        || (pminus1 = OSSL_FN_new_limbs(ossl_fn_get_dsize(fn_p))) == NULL
-        || OSSL_FN_copy(pminus1, fn_p) == NULL
-        || !OSSL_FN_sub_word(pminus1, 1))
+    if ((z = OSSL_FXN_secure_new_limbs(ossl_fxn_get_dsize(fxn_p))) == NULL
+        || (pminus1 = OSSL_FXN_new_limbs(ossl_fxn_get_dsize(fxn_p))) == NULL
+        || OSSL_FXN_copy(pminus1, fxn_p) == NULL
+        || !OSSL_FXN_sub_word(pminus1, 1))
         goto err;
 
     /* (Step 1) Z = pub_key^priv_key mod p */
-    if (!dh_fn_mod_exp(dh, z, fn_pub, fn_priv, fn_p)) {
+    if (!dh_fxn_mod_exp(dh, z, fxn_pub, fxn_priv, fxn_p)) {
         ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         goto err;
     }
 
     /* (Step 2) Error if z <= 1 or z = p - 1; whether it is, is public */
-    bad = (uint32_t)(OSSL_FN_is_zero(z) | OSSL_FN_is_one(z))
-        | (constant_time_is_zero((unsigned int)OSSL_FN_cmp(z, pminus1))
+    bad = (uint32_t)(OSSL_FXN_is_zero(z) | OSSL_FXN_is_one(z))
+        | (constant_time_is_zero((unsigned int)OSSL_FXN_cmp(z, pminus1))
             & 1);
     if (constant_time_declassify_u32(bad)) {
         ERR_raise(ERR_LIB_DH, DH_R_INVALID_SECRET);
@@ -79,12 +79,12 @@ static int dh_compute_key_fn(unsigned char *key, const BIGNUM *pub_key,
 
     /* Return the padded key; z < p, so it always fits */
     if (!constant_time_declassify_u32(
-            (uint32_t)OSSL_FN_to_bytes_be(z, key, (size_t)plen)))
+            (uint32_t)OSSL_FXN_to_bytes_be(z, key, (size_t)plen)))
         goto err;
     ret = plen;
 err:
-    OSSL_FN_clear_free(z);
-    OSSL_FN_free(pminus1);
+    OSSL_FXN_clear_free(z);
+    OSSL_FXN_free(pminus1);
     return ret;
 }
 #endif
@@ -123,7 +123,7 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     /* The default method computes Z in constant time */
 #ifndef S390X_MOD_EXP
     if (dh->meth->bn_mod_exp == dh_bn_mod_exp)
-        return dh_compute_key_fn(key, pub_key, dh);
+        return dh_compute_key_fxn(key, pub_key, dh);
 #endif
 
     ctx = BN_CTX_new_ex(dh->libctx);
@@ -246,16 +246,16 @@ const DH_METHOD *DH_get_default_method(void)
 }
 
 /*
- * r = a^p mod m, with r at m's width.  This is the OSSL_FN core of the
- * default method, shared by dh_ossl_fn_mod_exp() and dh_compute_key_fn().
+ * r = a^p mod m, with r at m's width.  This is the OSSL_FXN core of the
+ * default method, shared by dh_ossl_fxn_mod_exp() and dh_compute_key_fxn().
  */
-static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
-    const OSSL_FN *p, const OSSL_FN *m)
+static int dh_fxn_mod_exp(const DH *dh, OSSL_FXN *r, const OSSL_FXN *a,
+    const OSSL_FXN *p, const OSSL_FXN *m)
 {
     int ret = 0;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN_MONT_CTX *fn_mont = NULL;
-    size_t fn_size;
+    OSSL_FXN_CTX *fxn_ctx = NULL;
+    OSSL_FXN_MONT_CTX *fxn_mont = NULL;
+    size_t fxn_size;
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         /*
@@ -265,71 +265,71 @@ static int dh_fn_mod_exp(const DH *dh, OSSL_FN *r, const OSSL_FN *a,
          * We cast to remove the const qualifier in this case, it should be
          * fine...
          */
-        OSSL_FN_MONT_CTX **pmont = (OSSL_FN_MONT_CTX **)&dh->method_mont_fn_p;
+        OSSL_FXN_MONT_CTX **pmont = (OSSL_FXN_MONT_CTX **)&dh->method_mont_fxn_p;
 
-        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dh->lock, m);
-        if (fn_mont == NULL)
+        fxn_mont = OSSL_FXN_MONT_CTX_set_locked(pmont, dh->lock, m);
+        if (fxn_mont == NULL)
             return 0;
     }
 
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size_from_nums(r, a, p, m, fn_mont);
-    if (fn_size == 0)
+    fxn_size = OSSL_FXN_mod_exp_mont_ctx_size_from_nums(r, a, p, m, fxn_mont);
+    if (fxn_size == 0)
         return 0;
 
-    fn_ctx = OSSL_FN_CTX_secure_new_size(dh->libctx, fn_size);
-    if (fn_ctx == NULL)
+    fxn_ctx = OSSL_FXN_CTX_secure_new_size(dh->libctx, fxn_size);
+    if (fxn_ctx == NULL)
         return 0;
     /*
-     * No OSSL_FN_CTX_start() here: OSSL_FN_mod_exp_mont_ctx_size_from_nums()
+     * No OSSL_FXN_CTX_start() here: OSSL_FXN_mod_exp_mont_ctx_size_from_nums()
      * budgets the callee's frames, not a caller frame.
      */
-    ret = OSSL_FN_mod_exp_mont(r, a, p, m, fn_ctx, fn_mont);
-    OSSL_FN_CTX_free(fn_ctx);
+    ret = OSSL_FXN_mod_exp_mont(r, a, p, m, fxn_ctx, fxn_mont);
+    OSSL_FXN_CTX_free(fxn_ctx);
     return ret;
 }
 
 /*
- * The OSSL_FN modular exponentiation backing the default
+ * The OSSL_FXN modular exponentiation backing the default
  * DH_METHOD::bn_mod_exp implementation; see dh_bn_mod_exp().
  */
-static int dh_ossl_fn_mod_exp(const DH *dh, BIGNUM *r,
+static int dh_ossl_fxn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m)
 {
     int ret;
-    OSSL_FN *fn_r = NULL;
-    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
+    OSSL_FXN *fxn_r = NULL;
+    const OSSL_FXN *fxn_a = NULL, *fxn_p = NULL, *fxn_m = NULL;
     int limbs;
 
-    fn_a = bn_get_ossl_fn(a);
-    fn_p = bn_get_ossl_fn(p);
-    fn_m = bn_get_ossl_fn(m);
-    if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
+    fxn_a = bn_get_ossl_fxn(a);
+    fxn_p = bn_get_ossl_fxn(p);
+    fxn_m = bn_get_ossl_fxn(m);
+    if (fxn_a == NULL || fxn_p == NULL || fxn_m == NULL)
         return 0;
-    limbs = (int)ossl_fn_get_dsize(fn_m);
+    limbs = (int)ossl_fxn_get_dsize(fxn_m);
 
     /*
      * The modexp result is reduced mod m, so it has at most dsize(m)
      * significant limbs and always fits in the acquired width; that width
      * is therefore the bn_release() width as well.
      */
-    if ((fn_r = bn_acquire_ossl_fn(r, limbs)) == NULL)
+    if ((fxn_r = bn_acquire_ossl_fxn(r, limbs)) == NULL)
         return 0;
-    ret = dh_fn_mod_exp(dh, fn_r, fn_a, fn_p, fn_m);
+    ret = dh_fxn_mod_exp(dh, fxn_r, fxn_a, fxn_p, fxn_m);
     bn_release(r, limbs);
     return ret;
 }
 
 /*
  * The default DH_METHOD::bn_mod_exp implementation.  This is where the
- * default method's BIGNUM -> OSSL_FN conversion happens; see
- * dh_ossl_fn_mod_exp() above.
+ * default method's BIGNUM -> OSSL_FXN conversion happens; see
+ * dh_ossl_fxn_mod_exp() above.
  *
  * On s390x, the hardware accelerated s390x_mod_exp_hw() is tried first
- * and the OSSL_FN path serves as its fallback, mirroring the role
+ * and the OSSL_FXN path serves as its fallback, mirroring the role
  * BN_mod_exp_mont() had before.
  *
- * Keeping the OSSL_FN conversion behind this hook means surgical
+ * Keeping the OSSL_FXN conversion behind this hook means surgical
  * overrides (DH_meth_set_bn_mod_exp()) keep being honored by the default
  * method's compute_key / generate_key operations.
  */
@@ -343,7 +343,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     if (rc >= 0)
         return rc;
 #endif
-    return dh_ossl_fn_mod_exp(dh, r, a, p, m);
+    return dh_ossl_fxn_mod_exp(dh, r, a, p, m);
 }
 
 static int dh_init(DH *dh)
@@ -357,8 +357,8 @@ static int dh_finish(DH *dh)
 {
     BN_MONT_CTX_free(dh->method_mont_p);
     dh->method_mont_p = NULL;
-    OSSL_FN_MONT_CTX_free(dh->method_mont_fn_p);
-    dh->method_mont_fn_p = NULL;
+    OSSL_FXN_MONT_CTX_free(dh->method_mont_fxn_p);
+    dh->method_mont_fxn_p = NULL;
     return 1;
 }
 
@@ -409,7 +409,7 @@ static int generate_key(DH *dh)
     int generate_new_key = 0;
 #ifndef FIPS_MODULE
     int l;
-    OSSL_FN *fn_priv;
+    OSSL_FXN *fxn_priv;
 #endif
     BN_CTX *ctx = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
@@ -468,7 +468,7 @@ static int generate_key(DH *dh)
                 goto err;
 #else
             if (dh->params.q == NULL) {
-                int fn_ok;
+                int fxn_ok;
 
                 /* secret exponent length, must satisfy 2^l < (p-1)/2 */
                 l = BN_num_bits(dh->params.p);
@@ -478,30 +478,30 @@ static int generate_key(DH *dh)
                 if (dh->length != 0 && dh->length < l)
                     l = dh->length;
                 /*
-                 * OSSL_FN_priv_rand() with OSSL_FN_RAND_TOP_ONE generates
+                 * OSSL_FXN_priv_rand() with OSSL_FXN_RAND_TOP_ONE generates
                  * exactly l significant bits, so the result always fits in
                  * the acquired width; that width is the bn_release() width
                  * as well.
                  */
-                fn_priv = bn_acquire_ossl_fn(priv_key,
+                fxn_priv = bn_acquire_ossl_fxn(priv_key,
                     (l + BN_BITS2 - 1) / BN_BITS2);
-                if (fn_priv == NULL)
+                if (fxn_priv == NULL)
                     goto err;
-                fn_ok = OSSL_FN_priv_rand(fn_priv, l, OSSL_FN_RAND_TOP_ONE,
-                    OSSL_FN_RAND_BOTTOM_ANY, 0, dh->libctx);
+                fxn_ok = OSSL_FXN_priv_rand(fxn_priv, l, OSSL_FXN_RAND_TOP_ONE,
+                    OSSL_FXN_RAND_BOTTOM_ANY, 0, dh->libctx);
                 /*
                  * We handle just one known case where g is a quadratic
                  * non-residue: for g = 2: p % 8 == 3.  The checks are
                  * on public parameters, so they stay at the BN level.
                  */
-                if (fn_ok
+                if (fxn_ok
                     && BN_is_word(dh->params.g, DH_GENERATOR_2)
                     && !BN_is_bit_set(dh->params.p, 2)) {
                     /* clear bit 0, since it won't be a secret anyway */
-                    fn_ok = OSSL_FN_clear_bit(fn_priv, 0);
+                    fxn_ok = OSSL_FXN_clear_bit(fxn_priv, 0);
                 }
                 bn_release(priv_key, (l + BN_BITS2 - 1) / BN_BITS2);
-                if (!fn_ok)
+                if (!fxn_ok)
                     goto err;
             } else
 #endif

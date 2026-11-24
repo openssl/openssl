@@ -17,8 +17,8 @@
 #include <openssl/ec.h>
 #include "ec_local.h"
 #include <crypto/bn.h>
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 #include <openssl/objects.h>
 
 static size_t crv_len = 0;
@@ -574,14 +574,14 @@ err:
     return ret;
 }
 
-static const int fn_ladder_curves[] = {
-    NID_X9_62_prime256v1, /* nistz256/nistp256 mul_fn (or mont ladder) */
+static const int fxn_ladder_curves[] = {
+    NID_X9_62_prime256v1, /* nistz256/nistp256 mul_fxn (or mont ladder) */
     NID_brainpoolP256r1, /* mont ladder */
-    NID_secp224r1, /* nistp224 mul_fn, when built */
-    NID_secp384r1, /* nistp384 mul_fn, when built */
-    NID_secp521r1, /* nistp521 mul_fn, when built */
+    NID_secp224r1, /* nistp224 mul_fxn, when built */
+    NID_secp384r1, /* nistp384 mul_fxn, when built */
+    NID_secp521r1, /* nistp521 mul_fxn, when built */
 #ifndef OPENSSL_NO_SM2
-    NID_sm2, /* sm2p256 mul_fn on ECP_SM2P256_ASM targets; mont ladder elsewhere */
+    NID_sm2, /* sm2p256 mul_fxn on ECP_SM2P256_ASM targets; mont ladder elsewhere */
 #endif
 };
 
@@ -603,8 +603,8 @@ static int clean_above_top(BIGNUM *bn, int w)
 /*
  * The opposite of clean_above_top(): set random garbage in the two limbs just
  * above the field width 'w', leaving the value in the low 'w' limbs (and the
- * BIGNUM's top) untouched.  The OSSL_FN ladder helpers copy the public curve
- * parameters into field-width temporaries (and use group->field_fn, a field-
+ * BIGNUM's top) untouched.  The OSSL_FXN ladder helpers copy the public curve
+ * parameters into field-width temporaries (and use group->field_fxn, a field-
  * width snapshot taken at curve setup), so limbs above the field width must not
  * affect the result -- the "no operand needs pre-cleaning" contract in
  * ec_local.h.  Polluting them, rather than cleaning them, actively confirms it.
@@ -628,20 +628,20 @@ static int clean_point(EC_POINT *P, int w)
 }
 
 /*
- * ossl_ec_point_ladder_step_fn() must reproduce, bit for bit, the output of
+ * ossl_ec_point_ladder_step_fxn() must reproduce, bit for bit, the output of
  * the BIGNUM ossl_ec_GFp_simple_ladder_step() from the same ladder state.
  */
-static int test_ladder_step_fn(int idx)
+static int test_ladder_step_fxn(int idx)
 {
     int ret = 0, w;
     EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *r0 = NULL, *s0 = NULL;
     EC_POINT *r1 = NULL, *s1 = NULL, *r2 = NULL, *s2 = NULL;
     BIGNUM *k = NULL;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FXN_CTX *fxnctx = NULL;
     BN_CTX *ctx = NULL;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fxn_ladder_curves[idx])))
         return 0;
     /* Skip methods that don't keep coordinates in Montgomery form */
     if (group->meth->field_encode == NULL) {
@@ -649,11 +649,11 @@ static int test_ladder_step_fn(int idx)
         return 1;
     }
 
-    w = (int)ossl_fn_get_dsize(group->field_fn);
+    w = (int)ossl_fxn_get_dsize(group->field_fxn);
 
     if (!TEST_ptr(ctx = BN_CTX_new())
-        || !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL,
-                         ossl_ec_point_ladder_step_fn_ctx_size(group, 0, 0, 0)))
+        || !TEST_ptr(fxnctx = OSSL_FXN_CTX_secure_new_size(NULL,
+                         ossl_ec_point_ladder_step_fxn_ctx_size(group, 0, 0, 0)))
         || !TEST_ptr(k = BN_new())
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(r0 = EC_POINT_new(group)) || !TEST_ptr(s0 = EC_POINT_new(group))
@@ -672,7 +672,7 @@ static int test_ladder_step_fn(int idx)
         || !TEST_true(EC_POINT_copy(r2, r0)) || !TEST_true(EC_POINT_copy(s2, s0)))
         goto err;
 
-    /* OSSL_FN side needs clean, w-wide coordinates. */
+    /* OSSL_FXN side needs clean, w-wide coordinates. */
     if (!TEST_true(clean_point(r2, w)) || !TEST_true(clean_point(s2, w))
         || !TEST_true(clean_point(P, w)))
         goto err;
@@ -683,14 +683,14 @@ static int test_ladder_step_fn(int idx)
     /*
      * Pollute only now that all BIGNUM-path reference work is done: those
      * functions trip bn_check_top on the polluted limbs in BN_DEBUG builds.
-     * The OSSL_FN side is the pollution's only target.
+     * The OSSL_FXN side is the pollution's only target.
      */
     if (!TEST_true(pollute_above_field(group->field, w))
         || !TEST_true(pollute_above_field(group->a, w))
         || !TEST_true(pollute_above_field(group->b, w)))
         goto err;
 
-    if (!TEST_true(ossl_ec_point_ladder_step_fn(group, r2, s2, P, fnctx)))
+    if (!TEST_true(ossl_ec_point_ladder_step_fxn(group, r2, s2, P, fxnctx)))
         goto err;
 
     /* x-only step: compare the X and Z coordinates of both r and s. */
@@ -702,7 +702,7 @@ static int test_ladder_step_fn(int idx)
 
     ret = 1;
 err:
-    OSSL_FN_CTX_free(fnctx);
+    OSSL_FXN_CTX_free(fxnctx);
     BN_CTX_free(ctx);
     BN_free(k);
     EC_POINT_free(P);
@@ -717,32 +717,32 @@ err:
 }
 
 /*
- * ossl_ec_point_ladder_pre_fn() must set up a valid x-only ladder state:
+ * ossl_ec_point_ladder_pre_fxn() must set up a valid x-only ladder state:
  * r represents 2P and s represents P.  Blinding randomises the coordinates but
  * preserves the affine x = X/Z, so we compare x(r) against x(2P) and x(s)
  * against x(P).  (r and s carry no meaningful Y after pre, so y is ignored.)
  */
-static int test_ladder_pre_fn(int idx)
+static int test_ladder_pre_fxn(int idx)
 {
     int ret = 0, w;
     EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *dbl = NULL, *r = NULL, *s = NULL;
     BIGNUM *k = NULL, *xexp = NULL, *xgot = NULL, *zi = NULL;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FXN_CTX *fxnctx = NULL;
     BN_CTX *ctx = NULL;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fxn_ladder_curves[idx])))
         return 0;
     if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
 
-    w = (int)ossl_fn_get_dsize(group->field_fn);
+    w = (int)ossl_fxn_get_dsize(group->field_fxn);
 
     if (!TEST_ptr(ctx = BN_CTX_new())
-        || !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL,
-                         ossl_ec_point_ladder_pre_fn_ctx_size(group, NULL, NULL, NULL)))
+        || !TEST_ptr(fxnctx = OSSL_FXN_CTX_secure_new_size(NULL,
+                         ossl_ec_point_ladder_pre_fxn_ctx_size(group, NULL, NULL, NULL)))
         || !TEST_ptr(k = BN_new())
         || !TEST_ptr(xexp = BN_new()) || !TEST_ptr(xgot = BN_new())
         || !TEST_ptr(zi = BN_new())
@@ -763,14 +763,14 @@ static int test_ladder_pre_fn(int idx)
     /*
      * Pollute only now that all BIGNUM-path reference work is done: those
      * functions trip bn_check_top on the polluted limbs in BN_DEBUG builds.
-     * The OSSL_FN side is the pollution's only target.
+     * The OSSL_FXN side is the pollution's only target.
      */
     if (!TEST_true(pollute_above_field(group->field, w))
         || !TEST_true(pollute_above_field(group->a, w))
         || !TEST_true(pollute_above_field(group->b, w)))
         goto err;
 
-    if (!TEST_true(ossl_ec_point_ladder_pre_fn(group, r, s, P, fnctx)))
+    if (!TEST_true(ossl_ec_point_ladder_pre_fxn(group, r, s, P, fxnctx)))
         goto err;
 
     /* Re-clean for the BIGNUM-path verification below. */
@@ -807,7 +807,7 @@ static int test_ladder_pre_fn(int idx)
 
     ret = 1;
 err:
-    OSSL_FN_CTX_free(fnctx);
+    OSSL_FXN_CTX_free(fxnctx);
     BN_CTX_free(ctx);
     BN_free(k);
     BN_free(xexp);
@@ -822,33 +822,33 @@ err:
 }
 
 /*
- * ossl_ec_point_ladder_post_fn() must reproduce the affine point recovered
+ * ossl_ec_point_ladder_post_fxn() must reproduce the affine point recovered
  * by the BIGNUM ossl_ec_GFp_simple_ladder_post() from the same final ladder
  * state.  We build a genuine state (BIGNUM pre + a few steps) and run both
  * posts on identical copies.
  */
-static int test_ladder_post_fn(int idx)
+static int test_ladder_post_fxn(int idx)
 {
     int ret = 0, w, i;
     EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *r0 = NULL, *s0 = NULL;
     EC_POINT *r1 = NULL, *s1 = NULL, *r2 = NULL, *s2 = NULL;
     BIGNUM *k = NULL;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FXN_CTX *fxnctx = NULL;
     BN_CTX *ctx = NULL;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fxn_ladder_curves[idx])))
         return 0;
     if (group->meth->field_encode == NULL) {
         EC_GROUP_free(group);
         return 1;
     }
 
-    w = (int)ossl_fn_get_dsize(group->field_fn);
+    w = (int)ossl_fxn_get_dsize(group->field_fxn);
 
     if (!TEST_ptr(ctx = BN_CTX_new())
-        || !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL,
-                         ossl_ec_point_ladder_post_fn_ctx_size(group, NULL, NULL, NULL)))
+        || !TEST_ptr(fxnctx = OSSL_FXN_CTX_secure_new_size(NULL,
+                         ossl_ec_point_ladder_post_fxn_ctx_size(group, NULL, NULL, NULL)))
         || !TEST_ptr(k = BN_new())
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(r0 = EC_POINT_new(group)) || !TEST_ptr(s0 = EC_POINT_new(group))
@@ -879,14 +879,14 @@ static int test_ladder_post_fn(int idx)
     /*
      * Pollute only now that all BIGNUM-path reference work is done: those
      * functions trip bn_check_top on the polluted limbs in BN_DEBUG builds.
-     * The OSSL_FN side is the pollution's only target.
+     * The OSSL_FXN side is the pollution's only target.
      */
     if (!TEST_true(pollute_above_field(group->field, w))
         || !TEST_true(pollute_above_field(group->a, w))
         || !TEST_true(pollute_above_field(group->b, w)))
         goto err;
 
-    if (!TEST_true(ossl_ec_point_ladder_post_fn(group, r2, s2, P, fnctx)))
+    if (!TEST_true(ossl_ec_point_ladder_post_fxn(group, r2, s2, P, fxnctx)))
         goto err;
 
     /* Re-clean for the BIGNUM-path EC_POINT_cmp() below. */
@@ -900,7 +900,7 @@ static int test_ladder_post_fn(int idx)
 
     ret = 1;
 err:
-    OSSL_FN_CTX_free(fnctx);
+    OSSL_FXN_CTX_free(fxnctx);
     BN_CTX_free(ctx);
     BN_free(k);
     EC_POINT_free(P);
@@ -915,21 +915,21 @@ err:
 }
 
 /*
- * End-to-end check that EC_POINT_mul_fn() agrees with the BIGNUM
+ * End-to-end check that EC_POINT_mul_fxn() agrees with the BIGNUM
  * EC_POINT_mul() for both k*G and k*P, over several random scalars.  For the
- * plain Montgomery method this exercises ossl_ec_scalar_mul_ladder_fn() and the
- * ossl_ec_GFp_mont_ladder_*_fn helpers; for methods with a specialised mul_fn
- * (nistz256, nistp*) it exercises that.
+ * plain Montgomery method this exercises ossl_ec_scalar_mul_ladder_fxn() and
+ * the ossl_ec_GFp_mont_ladder_*_fxn helpers; for methods with a specialised
+ * mul_fxn (nistz256, nistp*) it exercises that.
  */
-static int fn_check_scalar_mul(EC_GROUP *group)
+static int fxn_check_scalar_mul(EC_GROUP *group)
 {
     int ret = 0, iter;
     EC_POINT *P = NULL, *R1 = NULL, *R2 = NULL;
     const BIGNUM *order;
     BIGNUM *k = NULL, *kbig = NULL;
     BN_CTX *ctx = NULL;
-    OSSL_FN_CTX *fnctx = NULL;
-    size_t fnsz;
+    OSSL_FXN_CTX *fxnctx = NULL;
+    size_t fxnsz;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(k = BN_new())
@@ -941,22 +941,22 @@ static int fn_check_scalar_mul(EC_GROUP *group)
         goto err;
 
     /*
-     * EC_POINT_mul_fn() serves any prime-field (GF(p)) group via the generic
+     * EC_POINT_mul_fxn() serves any prime-field (GF(p)) group via the generic
      * ladder, dispatching the field multiplication by representation (a method
-     * mul_fn or Montgomery form when present, plain otherwise); only a
-     * non-prime-field group (GF(2^m)) has no OSSL_FN path.
+     * mul_fxn or Montgomery form when present, plain otherwise); only a
+     * non-prime-field group (GF(2^m)) has no OSSL_FXN path.
      */
     if (group->meth->field_type != NID_X9_62_prime_field) {
         ret = 1;
         goto err;
     }
     /* A group with a path must size successfully; a 0 here is a real error. */
-    fnsz = EC_POINT_mul_fn_ctx_size(group, NULL, NULL, NULL);
-    if (!TEST_size_t_ne(fnsz, 0))
+    fxnsz = EC_POINT_mul_fxn_ctx_size(group, NULL, NULL, NULL);
+    if (!TEST_size_t_ne(fxnsz, 0))
         goto err;
     /* Pre-size a caller-owned arena to exercise the non-NULL ctx path too. */
-    if (fnsz != OSSL_FN_CTX_SIZE_NONE
-        && !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL, fnsz)))
+    if (fxnsz != OSSL_FXN_CTX_SIZE_NONE
+        && !TEST_ptr(fxnctx = OSSL_FXN_CTX_secure_new_size(NULL, fxnsz)))
         goto err;
 
     /* A fixed random base point P for the variable-point checks. */
@@ -966,23 +966,23 @@ static int fn_check_scalar_mul(EC_GROUP *group)
 
     /* Alternate a NULL and a caller-provided arena to cover both ctx paths. */
     for (iter = 0; iter < 16; iter++) {
-        OSSL_FN_CTX *c = (iter & 1) ? fnctx : NULL;
+        OSSL_FXN_CTX *c = (iter & 1) ? fxnctx : NULL;
 
         if (!TEST_true(BN_rand_range(k, order))
             || !TEST_true(EC_POINT_mul(group, R1, k, NULL, NULL, ctx))
-            || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(k), NULL, c))
+            || !TEST_true(EC_POINT_mul_fxn(group, R2, bn_get_ossl_fxn(k), NULL, c))
             || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
             goto err;
 
         if (!TEST_true(BN_rand_range(k, order))
             || !TEST_true(EC_POINT_mul(group, R1, NULL, P, k, ctx))
-            || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(k), P, c))
+            || !TEST_true(EC_POINT_mul_fxn(group, R2, bn_get_ossl_fxn(k), P, c))
             || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
             goto err;
     }
 
     /*
-     * Out-of-range scalar: EC_POINT_mul_fn() reduces it (mod cardinality)
+     * Out-of-range scalar: EC_POINT_mul_fxn() reduces it (mod cardinality)
      * before dispatch, so the result is (kbig mod n)*P.  Verify against an
      * explicitly reduced scalar rather than EC_POINT_mul(kbig): the BIGNUM
      * path does not uniformly reduce an out-of-range scalar (e.g. sm2's
@@ -997,17 +997,17 @@ static int fn_check_scalar_mul(EC_GROUP *group)
         || !TEST_true(BN_nnmod(k, kbig, order, ctx))) /* k := kbig mod n */
         goto err;
     if (!TEST_true(EC_POINT_mul(group, R1, k, NULL, NULL, ctx))
-        || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(kbig), NULL, NULL))
+        || !TEST_true(EC_POINT_mul_fxn(group, R2, bn_get_ossl_fxn(kbig), NULL, NULL))
         || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
         goto err;
     if (!TEST_true(EC_POINT_mul(group, R1, NULL, P, k, ctx))
-        || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(kbig), P, NULL))
+        || !TEST_true(EC_POINT_mul_fxn(group, R2, bn_get_ossl_fxn(kbig), P, NULL))
         || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
         goto err;
 
     /*
      * Gap scalar: >= cardinality but of the same bit length, so
-     * EC_POINT_mul_fn() does NOT reduce it (its threshold is the bit length,
+     * EC_POINT_mul_fxn() does NOT reduce it (its threshold is the bit length,
      * not the value); it still yields (kbig mod n)*P.  Compare against the
      * explicitly reduced scalar.  kbig = cardinality + 1, used only while it
      * stays that wide.
@@ -1018,14 +1018,14 @@ static int fn_check_scalar_mul(EC_GROUP *group)
         goto err;
     if (BN_num_bits(kbig) == BN_num_bits(group->cardinality)
         && (!TEST_true(EC_POINT_mul(group, R1, k, NULL, NULL, ctx))
-            || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(kbig), NULL,
+            || !TEST_true(EC_POINT_mul_fxn(group, R2, bn_get_ossl_fxn(kbig), NULL,
                 NULL))
             || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0)))
         goto err;
 
     ret = 1;
 err:
-    OSSL_FN_CTX_free(fnctx);
+    OSSL_FXN_CTX_free(fxnctx);
     BN_free(k);
     BN_free(kbig);
     EC_POINT_free(P);
@@ -1035,15 +1035,15 @@ err:
     return ret;
 }
 
-static int test_scalar_mul_fn(int idx)
+static int test_scalar_mul_fxn(int idx)
 {
     int ret;
     EC_GROUP *group = NULL;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fxn_ladder_curves[idx])))
         return 0;
 
-    ret = fn_check_scalar_mul(group);
+    ret = fxn_check_scalar_mul(group);
     EC_GROUP_free(group);
     return ret;
 }
@@ -1054,7 +1054,7 @@ static int test_scalar_mul_fn(int idx)
  * nistp256 when the nistz256 assembly is present, or the plain
  * EC_GFp_simple_method) can still be exercised.
  */
-static EC_GROUP *fn_clone_group_with_method(int nid, const EC_METHOD *meth)
+static EC_GROUP *fxn_clone_group_with_method(int nid, const EC_METHOD *meth)
 {
     EC_GROUP *src = NULL, *dst = NULL, *ret = NULL;
     BN_CTX *ctx = NULL;
@@ -1095,21 +1095,21 @@ err:
 }
 
 /*
- * The plain EC_GFp_simple_method (no mul_fn, no Montgomery form) is not the
- * default for any built-in prime curve, yet EC_POINT_mul_fn() serves it through
- * the generic plain-representation ladder.  Exercise that path explicitly on a
- * P-256 group built with it, so it is covered regardless of which specialised
- * methods this platform compiles in.
+ * The plain EC_GFp_simple_method (no mul_fxn, no Montgomery form) is not the
+ * default for any built-in prime curve, yet EC_POINT_mul_fxn() serves it
+ * through the generic plain-representation ladder.  Exercise that path
+ * explicitly on a P-256 group built with it, so it is covered regardless of
+ * which specialised methods this platform compiles in.
  */
-static int test_scalar_mul_fn_plain(void)
+static int test_scalar_mul_fxn_plain(void)
 {
     int ret;
-    EC_GROUP *group = fn_clone_group_with_method(NID_X9_62_prime256v1,
+    EC_GROUP *group = fxn_clone_group_with_method(NID_X9_62_prime256v1,
         EC_GFp_simple_method());
 
     if (group == NULL)
         return 0;
-    ret = fn_check_scalar_mul(group);
+    ret = fxn_check_scalar_mul(group);
     EC_GROUP_free(group);
     return ret;
 }
@@ -1117,17 +1117,17 @@ static int test_scalar_mul_fn_plain(void)
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /*
  * nistp256's method is not selected for any built-in curve when nistz256 is
- * present, so exercise its mul_fn on a P-256 group built explicitly with it.
+ * present, so exercise its mul_fxn on a P-256 group built explicitly with it.
  */
-static int test_scalar_mul_fn_nistp256(void)
+static int test_scalar_mul_fxn_nistp256(void)
 {
     int ret;
-    EC_GROUP *group = fn_clone_group_with_method(NID_X9_62_prime256v1,
+    EC_GROUP *group = fxn_clone_group_with_method(NID_X9_62_prime256v1,
         EC_GFp_nistp256_method());
 
     if (group == NULL)
         return 0;
-    ret = fn_check_scalar_mul(group);
+    ret = fxn_check_scalar_mul(group);
     EC_GROUP_free(group);
     return ret;
 }
@@ -1139,7 +1139,7 @@ static int test_scalar_mul_fn_nistp256(void)
  * for both a projective input (Z_is_one == 0, the conversion runs) and an
  * affine one (Z_is_one == 1, the conversion is skipped).
  */
-static int fn_check_get_affine_coords_bytes(EC_GROUP *group)
+static int fxn_check_get_affine_coords_bytes(EC_GROUP *group)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;
@@ -1149,7 +1149,7 @@ static int fn_check_get_affine_coords_bytes(EC_GROUP *group)
     unsigned char *rx = NULL, *ry = NULL, *gx = NULL, *gy = NULL;
     size_t flen;
 
-    /* Only prime-field groups have the OSSL_FN affine extraction. */
+    /* Only prime-field groups have the OSSL_FXN affine extraction. */
     if (group->meth->field_type != NID_X9_62_prime_field)
         return 1;
 
@@ -1220,9 +1220,9 @@ static int test_get_affine_coords_bytes(int idx)
     int ret;
     EC_GROUP *group = NULL;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fxn_ladder_curves[idx])))
         return 0;
-    ret = fn_check_get_affine_coords_bytes(group);
+    ret = fxn_check_get_affine_coords_bytes(group);
     EC_GROUP_free(group);
     return ret;
 }
@@ -1232,17 +1232,17 @@ static int test_get_affine_coords_bytes(int idx)
  * prime256v1 selects the nistz256 assembly method whenever it is built, so the
  * nistp256 point_get_affine_coords_bytes is never reached through a built-in
  * curve.  Exercise it on a P-256 group built explicitly with the nistp256
- * method, mirroring test_scalar_mul_fn_nistp256().
+ * method, mirroring test_scalar_mul_fxn_nistp256().
  */
 static int test_get_affine_coords_bytes_nistp256(void)
 {
     int ret;
-    EC_GROUP *group = fn_clone_group_with_method(NID_X9_62_prime256v1,
+    EC_GROUP *group = fxn_clone_group_with_method(NID_X9_62_prime256v1,
         EC_GFp_nistp256_method());
 
     if (group == NULL)
         return 0;
-    ret = fn_check_get_affine_coords_bytes(group);
+    ret = fxn_check_get_affine_coords_bytes(group);
     EC_GROUP_free(group);
     return ret;
 }
@@ -1270,15 +1270,15 @@ int setup_tests(void)
     ADD_TEST(ecpkparams_reuse_error_test);
     ADD_ALL_TESTS(ecpkparams_i2d2i_test, (int)crv_len);
     ADD_TEST(named_group_creation_test);
-    ADD_ALL_TESTS(test_ladder_step_fn, OSSL_NELEM(fn_ladder_curves));
-    ADD_ALL_TESTS(test_ladder_pre_fn, OSSL_NELEM(fn_ladder_curves));
-    ADD_ALL_TESTS(test_ladder_post_fn, OSSL_NELEM(fn_ladder_curves));
-    ADD_ALL_TESTS(test_scalar_mul_fn, OSSL_NELEM(fn_ladder_curves));
-    ADD_TEST(test_scalar_mul_fn_plain);
+    ADD_ALL_TESTS(test_ladder_step_fxn, OSSL_NELEM(fxn_ladder_curves));
+    ADD_ALL_TESTS(test_ladder_pre_fxn, OSSL_NELEM(fxn_ladder_curves));
+    ADD_ALL_TESTS(test_ladder_post_fxn, OSSL_NELEM(fxn_ladder_curves));
+    ADD_ALL_TESTS(test_scalar_mul_fxn, OSSL_NELEM(fxn_ladder_curves));
+    ADD_TEST(test_scalar_mul_fxn_plain);
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-    ADD_TEST(test_scalar_mul_fn_nistp256);
+    ADD_TEST(test_scalar_mul_fxn_nistp256);
 #endif
-    ADD_ALL_TESTS(test_get_affine_coords_bytes, OSSL_NELEM(fn_ladder_curves));
+    ADD_ALL_TESTS(test_get_affine_coords_bytes, OSSL_NELEM(fxn_ladder_curves));
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     ADD_TEST(test_get_affine_coords_bytes_nistp256);
 #endif

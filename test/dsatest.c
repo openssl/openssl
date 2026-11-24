@@ -499,7 +499,7 @@ err:
 }
 
 /*
- * Signing with the default method warms the method_mont_fn_p cache.
+ * Signing with the default method warms the method_mont_fxn_p cache.
  * DSA_set_method() calls the old method's finish slot, and DSA_free()
  * calls it again; without dsa_finish() NULLing the freed caches, the
  * second call double-frees them and this test aborts.
@@ -530,7 +530,7 @@ static int dsa_finish_double_free_test(void)
         goto err;
     pub = priv = NULL;
 
-    /* Sign on the default method, warming the OSSL_FN mont cache */
+    /* Sign on the default method, warming the OSSL_FXN mont cache */
     if (!TEST_int_le(DSA_size(dsa), sizeof(signature))
         || !TEST_true(DSA_sign(0, msg, sizeof(msg), signature,
             &signature_len, dsa)))

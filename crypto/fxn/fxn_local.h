@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_FN_LOCAL_H
-#define OSSL_CRYPTO_FN_LOCAL_H
+#ifndef OSSL_CRYPTO_FXN_LOCAL_H
+#define OSSL_CRYPTO_FXN_LOCAL_H
 
 #include <string.h>
 #include <stddef.h>
@@ -16,50 +16,50 @@
 #include <openssl/opensslconf.h>
 #include <openssl/e_os2.h>
 #include "internal/common.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 
-#if OSSL_FN_BYTES == 4
+#if OSSL_FXN_BYTES == 4
 /* 32-bit systems */
-#define OSSL_FN_ULONG_C(n) UINT32_C(n)
-#define OSSL_FN_MASK UINT32_MAX
-#elif OSSL_FN_BYTES == 8
-#define OSSL_FN_ULONG_C(n) UINT64_C(n)
-#define OSSL_FN_MASK UINT64_MAX
+#define OSSL_FXN_ULONG_C(n) UINT32_C(n)
+#define OSSL_FXN_MASK UINT32_MAX
+#elif OSSL_FXN_BYTES == 8
+#define OSSL_FXN_ULONG_C(n) UINT64_C(n)
+#define OSSL_FXN_MASK UINT64_MAX
 #else
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
 
-#define OSSL_FN_HIGH_BIT_MASK (OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1))
-#define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS / 2)) - 1)
-#define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BITS / 2))
+#define OSSL_FXN_HIGH_BIT_MASK (OSSL_FXN_ULONG_C(1) << (OSSL_FXN_BITS - 1))
+#define OSSL_FXN_LOW_HALF_MASK ((OSSL_FXN_ULONG_C(1) << (OSSL_FXN_BITS / 2)) - 1)
+#define OSSL_FXN_HIGH_HALF_MASK (OSSL_FXN_LOW_HALF_MASK << (OSSL_FXN_BITS / 2))
 
-static ossl_inline size_t ossl_fn_totalsize(size_t limbs)
+static ossl_inline size_t ossl_fxn_totalsize(size_t limbs)
 {
     /*
      * TODO(FIXNUM): Since the number of limbs is currently represented
-     * as an 'int' in OSSL_FN, we must ensure that the desired size isn't
+     * as an 'int' in OSSL_FXN, we must ensure that the desired size isn't
      * larger than can be represented.
      */
     if (ossl_unlikely(limbs >= INT_MAX))
         return 0;
 
     /*
-     *    sizeof(OSSL_FN) + limbs * sizeof(OSSL_FN_ULONG) > SIZE_MAX
-     * => limbs * sizeof(OSSL_FN_ULONG) > SIZE_MAX - sizeof(OSSL_FN)
-     * => limbs > (SIZE_MAX - sizeof(OSSL_FN)) / sizeof(OSSL_FN_ULONG)
+     *    sizeof(OSSL_FXN) + limbs * sizeof(OSSL_FXN_ULONG) > SIZE_MAX
+     * => limbs * sizeof(OSSL_FXN_ULONG) > SIZE_MAX - sizeof(OSSL_FXN)
+     * => limbs > (SIZE_MAX - sizeof(OSSL_FXN)) / sizeof(OSSL_FXN_ULONG)
      */
-    if (ossl_unlikely(limbs > (SIZE_MAX - sizeof(OSSL_FN)) / sizeof(OSSL_FN_ULONG)))
+    if (ossl_unlikely(limbs > (SIZE_MAX - sizeof(OSSL_FXN)) / sizeof(OSSL_FXN_ULONG)))
         return 0;
-    return sizeof(OSSL_FN) + limbs * sizeof(OSSL_FN_ULONG);
+    return sizeof(OSSL_FXN) + limbs * sizeof(OSSL_FXN_ULONG);
 }
 
-static ossl_inline size_t ossl_fn_bytes_to_limbs(size_t size)
+static ossl_inline size_t ossl_fxn_bytes_to_limbs(size_t size)
 {
-    return (size + sizeof(OSSL_FN_ULONG) - 1) / sizeof(OSSL_FN_ULONG);
+    return (size + sizeof(OSSL_FXN_ULONG) - 1) / sizeof(OSSL_FXN_ULONG);
 }
 
-static ossl_inline size_t ossl_fn_bits_to_bytes(size_t size)
+static ossl_inline size_t ossl_fxn_bits_to_bytes(size_t size)
 {
     return (size + 7) / 8;
 }
@@ -68,11 +68,11 @@ static ossl_inline size_t ossl_fn_bits_to_bytes(size_t size)
  * Internal functions to support BIGNUM's bn_expand_internal, BN_copy, and
  * similar.
  * The caller must ensure that src and dest are not NULL.
- * With ossl_fn_copy_internal, bn_words may be given -1 to signify that the
+ * With ossl_fxn_copy_internal, bn_words may be given -1 to signify that the
  * number of BN_ULONG should be found in src.
  */
-static ossl_inline OSSL_FN *ossl_fn_copy_internal_limbs(OSSL_FN *dest,
-    const OSSL_FN_ULONG *src,
+static ossl_inline OSSL_FXN *ossl_fxn_copy_internal_limbs(OSSL_FXN *dest,
+    const OSSL_FXN_ULONG *src,
     int limbs)
 {
     if (ossl_unlikely(dest->dsize < limbs))
@@ -82,26 +82,26 @@ static ossl_inline OSSL_FN *ossl_fn_copy_internal_limbs(OSSL_FN *dest,
     return dest;
 }
 
-static ossl_inline OSSL_FN *ossl_fn_copy_internal(OSSL_FN *dest,
-    const OSSL_FN *src,
+static ossl_inline OSSL_FXN *ossl_fxn_copy_internal(OSSL_FXN *dest,
+    const OSSL_FXN *src,
     int bn_words)
 {
     int words = bn_words < 0 ? src->dsize : bn_words;
 
-    if (ossl_fn_copy_internal_limbs(dest, src->d, words) == NULL)
+    if (ossl_fxn_copy_internal_limbs(dest, src->d, words) == NULL)
         return NULL;
     return dest;
 }
 
-/* OSSL_FN_CTX internals */
+/* OSSL_FXN_CTX internals */
 
-struct ossl_fn_ctx_st {
+struct ossl_fxn_ctx_st {
     /*
-     * Pointer to the last OSSL_FN_CTX_start() location (a simple pointer into
-     * the memory area).  See the struct ossl_fn_ctx_frame_st definition below
+     * Pointer to the last OSSL_FXN_CTX_start() location (a simple pointer into
+     * the memory area).  See the struct ossl_fxn_ctx_frame_st definition below
      * for details.
      */
-    struct ossl_fn_ctx_frame_st *last_frame;
+    struct ossl_fxn_ctx_frame_st *last_frame;
 
     /*
      * Flags
@@ -136,27 +136,27 @@ struct ossl_fn_ctx_st {
     unsigned char memory[];
 };
 
-struct ossl_fn_ctx_frame_st {
+struct ossl_fxn_ctx_frame_st {
     /*
      * Pointer back to the whole arena where the frame is located,
      * for |last_frame| bookkeeping.
      */
-    struct ossl_fn_ctx_st *arena;
+    struct ossl_fxn_ctx_st *arena;
     /*
-     * Pointer to the previous frame in the arena, allowing OSSL_FN_CTX_end()
+     * Pointer to the previous frame in the arena, allowing OSSL_FXN_CTX_end()
      * to do its job.
      */
-    struct ossl_fn_ctx_frame_st *previous_frame;
+    struct ossl_fxn_ctx_frame_st *previous_frame;
     /*
-     * Tracking for peak usage instrumentation.  These count the OSSL_FN
+     * Tracking for peak usage instrumentation.  These count the OSSL_FXN
      * instances and total limbs allocated within this frame.
      */
     size_t n_numbers;
     size_t n_limbs;
     /*
-     * Every time OSSL_FN_CTX_get() is called, the current value of
+     * Every time OSSL_FXN_CTX_get() is called, the current value of
      * |free_memory| is returned, and it's updated by incrementing it
-     * by the number of bytes given by OSSL_FN_CTX_get().
+     * by the number of bytes given by OSSL_FXN_CTX_get().
      * The available number of bytes is limited by what's left in the arena.
      */
     unsigned char *free_memory; /* Pointer to the free area of the frame */
@@ -164,16 +164,16 @@ struct ossl_fn_ctx_frame_st {
     unsigned char memory[];
 };
 
-/* end OSSL_FN_CTX internals */
+/* end OSSL_FXN_CTX internals */
 
-/* OSSL_FN_MONT_ CTX internals (used for Montgomery multiplication) */
-struct ossl_fn_mont_ctx_st {
-    const OSSL_FN *N; /* The modulus */
-    const OSSL_FN *RR; /* used to convert to Montgomery form,
+/* OSSL_FXN_MONT_ CTX internals (used for Montgomery multiplication) */
+struct ossl_fxn_mont_ctx_st {
+    const OSSL_FXN *N; /* The modulus */
+    const OSSL_FXN *RR; /* used to convert to Montgomery form,
                           possibly zero-padded */
-    OSSL_FN_ULONG n0[2]; /* least significant word(s) of Ni */
+    OSSL_FXN_ULONG n0[2]; /* least significant word(s) of Ni */
     int ri; /* number of bits in R */
     unsigned int is_securely_allocated : 1; /* Flag: alloced securely */
-    OSSL_FN_ULONG memory[];
+    OSSL_FXN_ULONG memory[];
 };
 #endif

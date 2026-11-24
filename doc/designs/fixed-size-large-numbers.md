@@ -22,19 +22,19 @@ size of a number once it has been allocated.
 - [Goals][]
 - [Challenges][]
 - [Design][]
-  - [The `OSSL_FN` type][]
-  - [The `OSSL_FN_CTX` type][]
-    - [The `OSSL_FN_CTX` type, with frames][]
-    - [The `OSSL_FN_CTX` type, without frames][]
+  - [The `OSSL_FXN` type][]
+  - [The `OSSL_FXN_CTX` type][]
+    - [The `OSSL_FXN_CTX` type, with frames][]
+    - [The `OSSL_FXN_CTX` type, without frames][]
   - [The `BIGNUM` type][]
   - [Mutability][]
-  - [Memory functionality for `OSSL_FN`][]
-  - [Memory functionality for `OSSL_FN_CTX`][]
+  - [Memory functionality for `OSSL_FXN`][]
+  - [Memory functionality for `OSSL_FXN_CTX`][]
   - [Failures][]
 - [Repurposing existing code][]
-- [How to apply `OSSL_FN`][]
-- [Where to apply `OSSL_FN`][]
-- [How to apply `OSSL_FN_CTX`][]
+- [How to apply `OSSL_FXN`][]
+- [Where to apply `OSSL_FXN`][]
+- [How to apply `OSSL_FXN_CTX`][]
   - [The variant with frames][]
   - [The variant without frames][]
 - [Testing][]
@@ -96,8 +96,8 @@ The included sub-goals are:
   size adjustments of the large numbers once their individual size has been
   established
 * To define that large number type and API in such a way it's compatible
-  with the `BIGNUM` type, so that a `BIGNUM` may use an `OSSL_FN` as its
-  backing storage and selected call sites may acquire an `OSSL_FN` view of
+  with the `BIGNUM` type, so that a `BIGNUM` may use an `OSSL_FXN` as its
+  backing storage and selected call sites may acquire an `OSSL_FXN` view of
   a `BIGNUM`.
 * To ensure that the new large number API is constant-size
 * To repurpose as much as possible of our current `BIGNUM` code for the new
@@ -132,7 +132,7 @@ Design
 
 [Design]: #design
 
-The overall design defines a new type, `OSSL_FN` (where FN is short for
+The overall design defines a new type, `OSSL_FXN` (where FXN is short for
 "FIXNUM"), which can somehow be made compatible with `BIGNUM`, but yet be
 distinct.  Early thoughts on this was to make them essentially the same type
 internally, and cast between them, but unfortunately, a compliant C compiler
@@ -140,59 +140,59 @@ is very likely to auto-cast between them, making it difficult to keep them
 separate yet castable back and forth.
 
 To allow a stricter or more explicit way to remedy the flexibility of the C
-language, this design therefore defines a `OSSL_FN` which is separate from
+language, this design therefore defines a `OSSL_FXN` which is separate from
 the `BIGNUM`, yet compatible with BIGNUM insofar that the `BIGNUM` type
-wraps around the `OSSL_FN` type.
+wraps around the `OSSL_FXN` type.
 
 The compatibility is primarily at the storage and acquisition boundary.  A
-`BIGNUM` may use an `OSSL_FN` as its backing storage, and selected internal
+`BIGNUM` may use an `OSSL_FXN` as its backing storage, and selected internal
 crypto call sites that already receive `BIGNUM` values may acquire the
-embedded `OSSL_FN` and perform security-critical calculations with `OSSL_FN`
+embedded `OSSL_FXN` and perform security-critical calculations with `OSSL_FXN`
 functions.
 
 This does not mean that ordinary `BIGNUM` (`BN_`) operation functions are
-wrappers around corresponding `OSSL_FN` operation functions.  `BN_`
+wrappers around corresponding `OSSL_FXN` operation functions.  `BN_`
 functions retain their dynamic `BIGNUM` semantics.  Conversely, once
-execution has entered an `OSSL_FN` operation, that operation must remain
-inside the "`OSSL_FN` only" bubble and must not call functions that take
+execution has entered an `OSSL_FXN` operation, that operation must remain
+inside the "`OSSL_FXN` only" bubble and must not call functions that take
 `BIGNUM` arguments.
 
 This restriction does not apply to low-level helpers that operate only on
 `BN_ULONG` arrays or primitive limb values, such as existing `bn_` word
-functions.  `BN_ULONG` and `OSSL_FN_ULONG` are compatible, so such helpers
-may be reused by `OSSL_FN` code as long as they do not allocate, resize, or
+functions.  `BN_ULONG` and `OSSL_FXN_ULONG` are compatible, so such helpers
+may be reused by `OSSL_FXN` code as long as they do not allocate, resize, or
 otherwise operate on `BIGNUM` objects.
 
 The overall design also defines new associated types to replace their
-`BIGNUM` counterparts: `OSSL_FN_CTX`, `OSSL_FN_BLINDING`, `OSSL_FN_MONT_CTX`,
-and `OSSL_FN_RECP_CTX`.  Notably, however, the callback type `BN_GENCB`
+`BIGNUM` counterparts: `OSSL_FXN_CTX`, `OSSL_FXN_BLINDING`, `OSSL_FXN_MONT_CTX`,
+and `OSSL_FXN_RECP_CTX`.  Notably, however, the callback type `BN_GENCB`
 isn't replaced, as it contains nothing `BIGNUM`, and can therefore be reused
-unchanged with an `OSSL_FN` API.
+unchanged with an `OSSL_FXN` API.
 
-The `OSSL_FN` type and API will be designed in such a way to enable it to
+The `OSSL_FXN` type and API will be designed in such a way to enable it to
 become public at some point in the future.  *The initial version will not be
 public and will only be used internally within OpenSSL.*
 
 Let's go over the details
 
-The `OSSL_FN` type
+The `OSSL_FXN` type
 ------------------
 
-[The `OSSL_FN` type]: #the-ossl_fn-type
+[The `OSSL_FXN` type]: #the-ossl_fxn-type
 
-The `OSSL_FN` type would be a structure derived from the existing `BIGNUM`
+The `OSSL_FXN` type would be a structure derived from the existing `BIGNUM`
 type, retaining a minimum amount of data.  Just as was previously with
 `BIGNUM`, the absolute value of the number is stored in a `BN_ULONG` array.
-`OSSL_FN` itself is unsigned; sign handling remains with `BIGNUM` when
+`OSSL_FXN` itself is unsigned; sign handling remains with `BIGNUM` when
 `BIGNUM` values are used as carriers.
 
 ```c
-typedef struct ossl_fn_st OSSL_FN;
+typedef struct ossl_fxn_st OSSL_FXN;
 
-struct ossl_fn_st {
-    /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */
+struct ossl_fxn_st {
+    /* Flag: alloced with OSSL_FXN_new() or  OSSL_FXN_secure_new() */
     unsigned int is_dynamically_allocated : 1;
-    /* Flag: alloced with OSSL_FN_secure_new() */
+    /* Flag: alloced with OSSL_FXN_secure_new() */
     unsigned int is_securely_allocated : 1;
 
     /*
@@ -204,45 +204,45 @@ struct ossl_fn_st {
 };
 ```
 
-The `OSSL_FN_CTX` type
+The `OSSL_FXN_CTX` type
 ----------------------
 
-[The `OSSL_FN_CTX` type]: #the-ossl_fn_ctx-type
+[The `OSSL_FXN_CTX` type]: #the-ossl_fxn_ctx-type
 
-The `OSSL_FN_CTX` type is made to replace the `BN_CTX` type where `OSSL_FN`
+The `OSSL_FXN_CTX` type is made to replace the `BN_CTX` type where `OSSL_FXN`
 type is used instead of `BIGNUM`.
 
-The `OSSL_FN_CTX` type is to be implemented as an arena (a large enough chunk
-of memory) in which `OSSL_FN` instances are allocated.  More in detail, there
+The `OSSL_FXN_CTX` type is to be implemented as an arena (a large enough chunk
+of memory) in which `OSSL_FXN` instances are allocated.  More in detail, there
 are two possibilities.
 
-### The `OSSL_FN_CTX` type, with frames
+### The `OSSL_FXN_CTX` type, with frames
 
-[The `OSSL_FN_CTX` type, with frames]: #the-ossl_fn_ctx-type-with-frames
+[The `OSSL_FXN_CTX` type, with frames]: #the-ossl_fxn_ctx-type-with-frames
 
 This variant is intended to mimic all `BN_CTX` functionality.  The idea is to
-create a large `OSSL_FN_CTX` at the top function of a complex calculation, and
+create a large `OSSL_FXN_CTX` at the top function of a complex calculation, and
 pass it around to all sub-function calls.
 
-Each sub-function would begin with starting a frame (using `OSSL_FN_CTX_begin()`,
-similar in spirit to `BN_CTX_start()`) in the passed `OSSL_FN_CTX` arena,
-obtain what temporary `OSSL_FN`s it needs from it (using `OSSL_FN_CTX_get()`,
+Each sub-function would begin with starting a frame (using `OSSL_FXN_CTX_begin()`,
+similar in spirit to `BN_CTX_start()`) in the passed `OSSL_FXN_CTX` arena,
+obtain what temporary `OSSL_FXN`s it needs from it (using `OSSL_FXN_CTX_get()`,
 similar in spirit to `BN_CTX_get()`), perform what calculations it needs, and
-finish with ending the frame (using `OSSL_FN_CTX_end()`, similar in spirit to
-`BN_CTX_end()`), which relinquishing that frame's space in the `OSSL_FN_CTX`
+finish with ending the frame (using `OSSL_FXN_CTX_end()`, similar in spirit to
+`BN_CTX_end()`), which relinquishing that frame's space in the `OSSL_FXN_CTX`
 arena, and thereby making that same space available for the next sub-function.
 
 ```c
-typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
+typedef struct ossl_fxn_ctx_st OSSL_FXN_CTX;
 
-struct ossl_fn_ctx_frame_st; /* forwarding, see below */
-struct ossl_fn_ctx_st {
+struct ossl_fxn_ctx_frame_st; /* forwarding, see below */
+struct ossl_fxn_ctx_st {
     /*
-     * Pointer to the last OSSL_FN_CTX_start() location (a simple pointer into
-     * the memory area).  See the struct ossl_fn_ctx_frame_st definition below
+     * Pointer to the last OSSL_FXN_CTX_start() location (a simple pointer into
+     * the memory area).  See the struct ossl_fxn_ctx_frame_st definition below
      * for details.
      */
-    struct ossl_fn_ctx_frame_st *last_frame;
+    struct ossl_fxn_ctx_frame_st *last_frame;
     /*
      * The arena itself.
      */
@@ -250,21 +250,21 @@ struct ossl_fn_ctx_st {
     unsigned char memory[];
 };
 
-struct ossl_fn_ctx_frame_st {
+struct ossl_fxn_ctx_frame_st {
     /*
      * Pointer back to the whole arena where the frame is located, to access
      * |msize| and |memory| from it.
      */
-    struct ossl_fn_ctx_st *arena;
+    struct ossl_fxn_ctx_st *arena;
     /*
-     * Pointer to the previous frame in the arena, allowing OSSL_FN_CTX_end()
+     * Pointer to the previous frame in the arena, allowing OSSL_FXN_CTX_end()
      * to do its job.
      */
-    struct ossl_fn_ctx_frame_st *previous_frame;
+    struct ossl_fxn_ctx_frame_st *previous_frame;
     /*
-     * Pointer to the free area of the frame.  Every time OSSL_FN_CTX_get() is
+     * Pointer to the free area of the frame.  Every time OSSL_FXN_CTX_get() is
      * called, the current value of this pointer is returned, and it's updated
-     * by incrementing it by the number of bytes given by OSSL_FN_CTX_get().
+     * by incrementing it by the number of bytes given by OSSL_FXN_CTX_get().
      * The available number of bytes is limited by what's left in the arena.
      */
     unsigned char *free_memory;
@@ -286,25 +286,25 @@ for a maximum of 16 `BIGNUM`s.  A corresponding arena could the reasonably
 have the size 16 \* *size of largest fixed number* plus a little extra for
 bookkeeping purposes.
 
-### The `OSSL_FN_CTX` type, without frames
+### The `OSSL_FXN_CTX` type, without frames
 
-[The `OSSL_FN_CTX` type, without frames]: #the-ossl_fn_ctx-type-without-frames
+[The `OSSL_FXN_CTX` type, without frames]: #the-ossl_fxn_ctx-type-without-frames
 
-Compared to the variant with frames, this `OSSL_FN_CTX` variant is much
+Compared to the variant with frames, this `OSSL_FXN_CTX` variant is much
 simpler, but also more heap allocation intense.
 
 The idea with this one is that each function that needs to obtain temporary
-`OSSL_FN`s would also create their own `OSSL_FN_CTX`, independently from any
+`OSSL_FXN`s would also create their own `OSSL_FXN_CTX`, independently from any
 other function.
 
 ```c
-typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
+typedef struct ossl_fxn_ctx_st OSSL_FXN_CTX;
 
-struct ossl_fn_ctx_st {
+struct ossl_fxn_ctx_st {
     /*
-     * Pointer to the free area of the arena.  Every time OSSL_FN_CTX_get() is
+     * Pointer to the free area of the arena.  Every time OSSL_FXN_CTX_get() is
      * called, the current value of this pointer is returned, and it's updated
-     * by incrementing it by the number of bytes given by OSSL_FN_CTX_get().
+     * by incrementing it by the number of bytes given by OSSL_FXN_CTX_get().
      * The available number of bytes is limited by what's left in the arena.
      */
     unsigned char *free_memory;
@@ -321,33 +321,33 @@ Other associated types
 
 [Other associated types]: #other-associated-types
 
-There are a few types that, like `BN_CTX` / `OSSL_FN_CTX`, are used to hold
-a context around some more complicated calculations.  Just like `OSSL_FN_CTX`,
-The `OSSL_FN` variants of these types are made into strictly separate types,
+There are a few types that, like `BN_CTX` / `OSSL_FXN_CTX`, are used to hold
+a context around some more complicated calculations.  Just like `OSSL_FXN_CTX`,
+The `OSSL_FXN` variants of these types are made into strictly separate types,
 not compatible with their `BIGNUM` counterparts.
 
-| `BIGNUM` types | `OSSL_FN` types    |
+| `BIGNUM` types | `OSSL_FXN` types    |
 |----------------|--------------------|
-| `BN_BLINDING`  | `OSSL_FN_BLINDING` |
-| `BN_MONT_CTX`  | `OSSL_FN_MONT_CTX` |
-| `BN_RECP_CTX`  | `OSSL_FN_RECP_CTX` |
+| `BN_BLINDING`  | `OSSL_FXN_BLINDING` |
+| `BN_MONT_CTX`  | `OSSL_FXN_MONT_CTX` |
+| `BN_RECP_CTX`  | `OSSL_FXN_RECP_CTX` |
 
-Their `OSSL_FN` APIs for these types should be possible to create by
+Their `OSSL_FXN` APIs for these types should be possible to create by
 repurposing the corresponding `BIGNUM` APIs, with adjustments for the
-constant-size requirements of all `OSSL_FN` functions.
+constant-size requirements of all `OSSL_FXN` functions.
 
 The `BIGNUM` type
 -----------------
 
 [The `BIGNUM` type]: #the-bignum-type
 
-The `BIGNUM` type is changed to include a `OSSL_FN` for its data, while
+The `BIGNUM` type is changed to include a `OSSL_FXN` for its data, while
 retaining the fields that support the dynamic `BIGNUM` semantics:
 
 ```c
 struct bignum_st {
-    OSSL_FN *data;
-    /* Some of these flags are replicated in OSSL_FN, some are not */
+    OSSL_FXN *data;
+    /* Some of these flags are replicated in OSSL_FXN, some are not */
     int flags;
 
     BN_ULONG *d; /* Pointer to |data->d| */
@@ -360,34 +360,34 @@ struct bignum_st {
 In normal public use, `data` is non-NULL and `d` points at `data->d`.
 Certain internal or otherwise special `BIGNUM`s may still have `data` set to
 NULL, in which case `d` points directly at a `BN_ULONG` array.  Such cases
-must not be forced to grow an `OSSL_FN` backing object solely to fit this
-structure.  How `OSSL_FN` code should use the `BN_ULONG` data from such
+must not be forced to grow an `OSSL_FXN` backing object solely to fit this
+structure.  How `OSSL_FXN` code should use the `BN_ULONG` data from such
 `BIGNUM`s remains an implementation detail.
 
-When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`:
+When structured this way, it's easy to get an `OSSL_FXN` out of a `BIGNUM`:
 
 ```c
 /*
- * BN_acquire_fn() and BN_release_fn() function together.  It is done this
- * way as a safety measure, to make sure that a BIGNUM doesn't expand an OSSL_FN
+ * BN_acquire_fxn() and BN_release_fxn() function together.  It is done this
+ * way as a safety measure, to make sure that a BIGNUM doesn't expand an OSSL_FXN
  * that the caller currently has a handle on.  However, it's possible to
- * adjust the size of the OSSL_FN while acquiring it.
+ * adjust the size of the OSSL_FXN while acquiring it.
  */
-OSSL_FN *BN_acquire_fn(BIGNUM *a, size_t bits)
+OSSL_FXN *BN_acquire_fxn(BIGNUM *a, size_t bits)
 {
     if ((bn_expand(a, bits)) <= 0)
         return NULL;
     /* Implementation may do further acquisition bookkeeping here. */
     return a->data;
 }
-void BN_release_fn(BIGNUM *a)
+void BN_release_fxn(BIGNUM *a)
 {
     /* Implementation may do further release bookkeeping here. */
 }
 ```
 
 Note that these functions are not designed to be thread-safe.  By design,
-holding pointers to a `BIGNUM` and its wrapped `OSSL_FN` at the same time
+holding pointers to a `BIGNUM` and its wrapped `OSSL_FXN` at the same time
 should only happen in a very short term.
 
 Mutability
@@ -395,60 +395,60 @@ Mutability
 
 [Mutability]: #mutability
 
-The understanding is that within a `OSSL_FN` API, `dsize` is immutable as
-soon as a `OSSL_FN` has been allocated to its target size, except for when
-the `OSSL_FN` instance is freed.
+The understanding is that within a `OSSL_FXN` API, `dsize` is immutable as
+soon as a `OSSL_FXN` has been allocated to its target size, except for when
+the `OSSL_FXN` instance is freed.
 
 When accessed through the `BIGNUM` type (i.e. by the `BIGNUM` API), the
-`OSSL_FN` size may be reallocated to allow a larger size than initially
+`OSSL_FXN` size may be reallocated to allow a larger size than initially
 allocated, and `dsize` may be modified accordingly.  The exception is an
-acquired `OSSL_FN` view.  Once a caller has acquired the backing `OSSL_FN`
+acquired `OSSL_FXN` view.  Once a caller has acquired the backing `OSSL_FXN`
 from a `BIGNUM`, that backing size must be treated as immutable until
 release.  The owning `BIGNUM` must not simultaneously be used through `BN_`
 operations that could resize or otherwise reinterpret the same storage.
 
-The `OSSL_FN_CTX`  API is much more strict.  The size of an `OSSL_FN_CTX`
+The `OSSL_FXN_CTX`  API is much more strict.  The size of an `OSSL_FXN_CTX`
 instance is immutable after it has been allocated, except when it is freed.
 
-Memory functionality for `OSSL_FN`
+Memory functionality for `OSSL_FXN`
 ----------------------------------
 
-[Memory functionality for `OSSL_FN`]: #memory-functionality-for-ossl_fn
+[Memory functionality for `OSSL_FXN`]: #memory-functionality-for-ossl_fxn
 
 We anticipate that we will need the following functions to allocate and
-deallocate `OSSL_FN`s:
+deallocate `OSSL_FXN`s:
 
 ```c
-OSSL_FN *OSSL_FN_new(size_t size);
-void OSSL_FN_free(OSSL_FN *f);
+OSSL_FXN *OSSL_FXN_new(size_t size);
+void OSSL_FXN_free(OSSL_FXN *f);
 ```
 
-Memory functionality for `OSSL_FN_CTX`
+Memory functionality for `OSSL_FXN_CTX`
 --------------------------------------
 
-[Memory functionality for `OSSL_FN_CTX`]: #memory-functionality-for-ossl_fn_ctx
+[Memory functionality for `OSSL_FXN_CTX`]: #memory-functionality-for-ossl_fxn_ctx
 
-We anticipate that the `OSSL_FN_CTX` API will look very much like the
+We anticipate that the `OSSL_FXN_CTX` API will look very much like the
 `BN_CTX` API, except for the allocation functionality:
 
 ```c
-OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t arena_size);
-OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t arena_size);
-void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx);
+OSSL_FXN_CTX *OSSL_FXN_CTX_new(OSSL_LIB_CTX *libctx, size_t arena_size);
+OSSL_FXN_CTX *OSSL_FXN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t arena_size);
+void OSSL_FXN_CTX_free(OSSL_FXN_CTX *ctx);
 
-OSSL_FN *OSSL_FN_CTX_get(OSSL_FN_CTX *ctx, size_t size);
+OSSL_FXN *OSSL_FXN_CTX_get(OSSL_FXN_CTX *ctx, size_t size);
 ```
 
-*Something to be noted is that `OSSL_FN_CTX_secure_new()` allocates the
+*Something to be noted is that `OSSL_FXN_CTX_secure_new()` allocates the
 whole arena in secure memory.  The impact compared to allocating individual
-`OSSL_FN` instances in secure memory is considered minimal.*
+`OSSL_FXN` instances in secure memory is considered minimal.*
 
-If the variant of `OSSL_FN_CTX` *with frames* is chosen, the following
+If the variant of `OSSL_FXN_CTX` *with frames* is chosen, the following
 functions will also have to be defined:
 
 ```c
-int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
-int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
+int OSSL_FXN_CTX_start(OSSL_FXN_CTX *ctx);
+int OSSL_FXN_CTX_end(OSSL_FXN_CTX *ctx);
 ```
 
 Failures
@@ -457,10 +457,10 @@ Failures
 [Failures]: #failures
 
 A fixed size large number introduces new problems, which introduces new ways
-that the `OSSL_FN` API can fail:
+that the `OSSL_FXN` API can fail:
 
 * Overflow: this will happen when the caller has allocated an improperly
-  sized `OSSL_FN` to store future calculation results in.  *This is akin to
+  sized `OSSL_FXN` to store future calculation results in.  *This is akin to
   memory allocation failures in so far that there isn't enough memory space*
 
 Repurposing existing code
@@ -471,37 +471,37 @@ Repurposing existing code
 A majority of existing internal `BIGNUM` code operates directly on the `d`
 array of the existing `BIGNUM` structure, with the size of that array given
 separately, and are already essentially operating on fixed size numbers.
-This design assumes that such functions can be repurposed for `OSSL_FN`
+This design assumes that such functions can be repurposed for `OSSL_FXN`
 functionality with zero change, apart from function name changes.
 
 Furthermore, the remaining functions, which do manipulate the size of the
 `BIGNUM`, or are public facing `BIGNUM` functions, retain their current
 `BIGNUM` functionality, including size manipulation within the `BIGNUM`
-"bubble".  They are not wrapped around `OSSL_FN` functions; conversion
-between `BIGNUM` and `OSSL_FN` happens at top-level crypto call sites,
-where the embedded `OSSL_FN` is acquired and passed to `OSSL_FN`
-functions, during whose execution the `OSSL_FN` size is immutable (see
+"bubble".  They are not wrapped around `OSSL_FXN` functions; conversion
+between `BIGNUM` and `OSSL_FXN` happens at top-level crypto call sites,
+where the embedded `OSSL_FXN` is acquired and passed to `OSSL_FXN`
+functions, during whose execution the `OSSL_FXN` size is immutable (see
 [Mutability][]).
 
-How to apply `OSSL_FN`
+How to apply `OSSL_FXN`
 ======================
 
-[How to apply `OSSL_FN`]: #how-to-apply-ossl_fn
+[How to apply `OSSL_FXN`]: #how-to-apply-ossl_fxn
 
-The purpose of `OSSL_FN` is to make the number constant size (implying
+The purpose of `OSSL_FXN` is to make the number constant size (implying
 enhanced constant time) for a crypto system.  To guarantee this with high
 confidence, any function that performs some sort of numeric operation on a
-set of input `OSSL_FN`s must only use other functions that only affect the
+set of input `OSSL_FXN`s must only use other functions that only affect the
 contents of their `d` array, but not its size.  Those are typically other
-`OSSL_FN` functions, or reused bignum functions that receive the `d` array
+`OSSL_FXN` functions, or reused bignum functions that receive the `d` array
 and its size directly.
 
-Where to apply `OSSL_FN`
+Where to apply `OSSL_FXN`
 ========================
 
-[Where to apply `OSSL_FN`]: #where-to-apply-ossl_fn
+[Where to apply `OSSL_FXN`]: #where-to-apply-ossl_fxn
 
-`OSSL_FN` should primarily be used instead of `BIGNUM` in internal
+`OSSL_FXN` should primarily be used instead of `BIGNUM` in internal
 calculations throughout OpenSSLs libraries.  Exceptions can be made where
 calculations aren't security critical.
 
@@ -518,10 +518,10 @@ number in that key - usually *n* - has been seen by code, and this affects
 what size all numbers in an RSA key should be adjusted to before doing
 calculations on them.
 
-How to apply `OSSL_FN_CTX`
+How to apply `OSSL_FXN_CTX`
 ==========================
 
-[How to apply `OSSL_FN_CTX`]: #how-to-apply-ossl_fn_ctx
+[How to apply `OSSL_FXN_CTX`]: #how-to-apply-ossl_fxn_ctx
 
 The variant with frames
 -----------------------
@@ -529,22 +529,22 @@ The variant with frames
 [The variant with frames]: #the-variant-with-frames
 
 All internal uses of `BN_CTX_new()` and `BN_CTX_new_ex()` are to be replaced
-with calls of `OSSL_FN_CTX_new()`.
+with calls of `OSSL_FXN_CTX_new()`.
 
 All internal uses of `BN_CTX_secure_new()` and `BN_CTX_secure_new_ex()` are to
-be replaced with calls of `OSSL_FN_CTX_secure_new()`.
+be replaced with calls of `OSSL_FXN_CTX_secure_new()`.
 
 All internal uses of `BN_CTX_free()` are to be replaced with calls of
-`OSSL_FN_CTX_free()`.
+`OSSL_FXN_CTX_free()`.
 
 All internal uses of `BN_CTX_start()` are to be replaced with calls of
-`OSSL_FN_CTX_start()`.
+`OSSL_FXN_CTX_start()`.
 
 All internal uses of `BN_CTX_get()` are to be replaced with calls of
-`OSSL_FN_CTX_get()`.
+`OSSL_FXN_CTX_get()`.
 
 All internal uses of `BN_CTX_end()` are to be replaced with calls of
-`OSSL_FN_CTX_end()`.
+`OSSL_FXN_CTX_end()`.
 
 The variant without frames
 --------------------------
@@ -555,13 +555,13 @@ All internal uses of `BN_CTX_new()`, `BN_CTX_new_ex()`, `BN_CTX_secure_new()`,
 `BN_CTX_secure_new_ex()`, and `BN_CTX_free()` are to be dropped.
 
 All internal uses of `BN_CTX_start()` are to be replaced with calls of
-`OSSL_FN_CTX_new()`.
+`OSSL_FXN_CTX_new()`.
 
 All internal uses of `BN_CTX_get()` are to be replaced with calls of
-`OSSL_FN_CTX_get()`.
+`OSSL_FXN_CTX_get()`.
 
 All internal uses of `BN_CTX_end()` are to be replaced with calls of
-`OSSL_FN_CTX_free()`.
+`OSSL_FXN_CTX_free()`.
 
 Testing
 =======

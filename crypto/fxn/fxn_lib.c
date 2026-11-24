@@ -13,20 +13,20 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "internal/common.h"
-#include "crypto/fn_constants.h"
-#include "crypto/fnerr.h"
+#include "crypto/fxn_constants.h"
+#include "crypto/fxnerr.h"
 #include "../bn/bn_local.h" /* For BN_LLONG / BN_ULLONG */
-#include "fn_local.h"
+#include "fxn_local.h"
 #include "internal/constant_time.h"
 
-static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
+static OSSL_FXN *ossl_fxn_new_internal(size_t limbs, bool securely)
 {
-    /* Total size of the whole OSSL_FN, in bytes */
-    size_t totalsize = ossl_fn_totalsize(limbs);
+    /* Total size of the whole OSSL_FXN, in bytes */
+    size_t totalsize = ossl_fxn_totalsize(limbs);
     if (totalsize == 0)
         return NULL;
 
-    OSSL_FN *ret = NULL;
+    OSSL_FXN *ret = NULL;
 
     if (securely)
         ret = OPENSSL_secure_zalloc(totalsize);
@@ -41,13 +41,13 @@ static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
     return ret;
 }
 
-static void ossl_fn_free_internal(OSSL_FN *f, bool clear)
+static void ossl_fxn_free_internal(OSSL_FXN *f, bool clear)
 {
     if (f == NULL)
         return;
 
-    size_t limbssize = f->dsize * sizeof(OSSL_FN_ULONG);
-    size_t totalsize = limbssize + sizeof(OSSL_FN);
+    size_t limbssize = f->dsize * sizeof(OSSL_FXN_ULONG);
+    size_t totalsize = limbssize + sizeof(OSSL_FXN);
 
     if (f->is_dynamically_allocated) {
         if (f->is_securely_allocated)
@@ -61,136 +61,136 @@ static void ossl_fn_free_internal(OSSL_FN *f, bool clear)
     }
 }
 
-OSSL_FN *OSSL_FN_new_limbs(size_t size)
+OSSL_FXN *OSSL_FXN_new_limbs(size_t size)
 {
-    return ossl_fn_new_internal(size, false);
+    return ossl_fxn_new_internal(size, false);
 }
 
-OSSL_FN *OSSL_FN_secure_new_limbs(size_t size)
+OSSL_FXN *OSSL_FXN_secure_new_limbs(size_t size)
 {
-    return ossl_fn_new_internal(size, true);
+    return ossl_fxn_new_internal(size, true);
 }
 
-OSSL_FN *OSSL_FN_new_bytes(size_t size)
+OSSL_FXN *OSSL_FXN_new_bytes(size_t size)
 {
-    return OSSL_FN_new_limbs(ossl_fn_bytes_to_limbs(size));
+    return OSSL_FXN_new_limbs(ossl_fxn_bytes_to_limbs(size));
 }
 
-OSSL_FN *OSSL_FN_secure_new_bytes(size_t size)
+OSSL_FXN *OSSL_FXN_secure_new_bytes(size_t size)
 {
-    return OSSL_FN_secure_new_limbs(ossl_fn_bytes_to_limbs(size));
+    return OSSL_FXN_secure_new_limbs(ossl_fxn_bytes_to_limbs(size));
 }
 
-OSSL_FN *OSSL_FN_new_bits(size_t size)
+OSSL_FXN *OSSL_FXN_new_bits(size_t size)
 {
-    return OSSL_FN_new_bytes(ossl_fn_bits_to_bytes(size));
+    return OSSL_FXN_new_bytes(ossl_fxn_bits_to_bytes(size));
 }
 
-OSSL_FN *OSSL_FN_secure_new_bits(size_t size)
+OSSL_FXN *OSSL_FXN_secure_new_bits(size_t size)
 {
-    return OSSL_FN_secure_new_bytes(ossl_fn_bits_to_bytes(size));
+    return OSSL_FXN_secure_new_bytes(ossl_fxn_bits_to_bytes(size));
 }
 
-void OSSL_FN_free(OSSL_FN *f)
+void OSSL_FXN_free(OSSL_FXN *f)
 {
-    ossl_fn_free_internal(f, false);
+    ossl_fxn_free_internal(f, false);
 }
 
-void OSSL_FN_clear_free(OSSL_FN *f)
+void OSSL_FXN_clear_free(OSSL_FXN *f)
 {
-    ossl_fn_free_internal(f, true);
+    ossl_fxn_free_internal(f, true);
 }
 
-void OSSL_FN_clear(OSSL_FN *f)
+void OSSL_FXN_clear(OSSL_FXN *f)
 {
     if (ossl_unlikely(f == NULL))
         return;
 
-    size_t limbssize = f->dsize * sizeof(OSSL_FN_ULONG);
+    size_t limbssize = f->dsize * sizeof(OSSL_FXN_ULONG);
 
     OPENSSL_cleanse(f->d, limbssize);
 }
 
-size_t OSSL_FN_size_limbs(const OSSL_FN *a)
+size_t OSSL_FXN_size_limbs(const OSSL_FXN *a)
 {
     return a == NULL ? 0 : (size_t)a->dsize;
 }
 
 /*-
  * Sets a->d[0] to |w| and zeroes the remaining limbs, so the full dsize
- * array reflects the value |w|.  OSSL_FN is fixed-size: if a->dsize is 0
+ * array reflects the value |w|.  OSSL_FXN is fixed-size: if a->dsize is 0
  * there is no limb to write and the call fails with
- * OSSL_FN_R_RESULT_ARG_TOO_SMALL (the same reason ossl_fn_set_words() raises
+ * OSSL_FXN_R_RESULT_ARG_TOO_SMALL (the same reason ossl_fxn_set_words() raises
  * for an undersized destination).
  *
  * Constant-time with respect to |w|'s value: there is no value-dependent
  * control flow, since the full dsize array always holds the value.  The only
  * branch is on the operand's public width (dsize).
  */
-int OSSL_FN_set_word(OSSL_FN *a, OSSL_FN_ULONG w)
+int OSSL_FXN_set_word(OSSL_FXN *a, OSSL_FXN_ULONG w)
 {
     if (ossl_unlikely(a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     size_t dsize = (size_t)a->dsize;
 
     if (ossl_unlikely(dsize < 1)) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        ERR_raise(ERR_LIB_OSSL_FXN, OSSL_FXN_R_RESULT_ARG_TOO_SMALL);
         return 0;
     }
 
     a->d[0] = w;
     if (dsize > 1)
-        memset(&a->d[1], 0, sizeof(OSSL_FN_ULONG) * (dsize - 1));
+        memset(&a->d[1], 0, sizeof(OSSL_FXN_ULONG) * (dsize - 1));
     return 1;
 }
 
 /*-
- * Equivalent to OSSL_FN_set_word(a, 1).  Kept as a named function rather
+ * Equivalent to OSSL_FXN_set_word(a, 1).  Kept as a named function rather
  * than a macro or static inline, consistent with the rest of
- * crypto/fn/fn_lib.c.  Leak profile as for OSSL_FN_set_word().
+ * crypto/fxn/fxn_lib.c.  Leak profile as for OSSL_FXN_set_word().
  */
-int OSSL_FN_one(OSSL_FN *a)
+int OSSL_FXN_one(OSSL_FXN *a)
 {
-    return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(1));
+    return OSSL_FXN_set_word(a, OSSL_FXN_ULONG_C(1));
 }
 
 /*-
- * Equivalent to OSSL_FN_set_word(a, 0).  This is a plain value assignment,
+ * Equivalent to OSSL_FXN_set_word(a, 0).  This is a plain value assignment,
  * not a secure wipe: the compiler may optimise the writes away if the value
- * is not subsequently observed.  Use OSSL_FN_clear() (which calls
+ * is not subsequently observed.  Use OSSL_FXN_clear() (which calls
  * OPENSSL_cleanse()) when the limbs may hold secret data and must be wiped
- * irreversibly.  Leak profile as for OSSL_FN_set_word().
+ * irreversibly.  Leak profile as for OSSL_FXN_set_word().
  */
-int OSSL_FN_zero(OSSL_FN *a)
+int OSSL_FXN_zero(OSSL_FXN *a)
 {
-    return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
+    return OSSL_FXN_set_word(a, OSSL_FXN_ULONG_C(0));
 }
 
-/* The literal 0, backing bn_get_ossl_fn() */
-OSSL_FN_STATIC_DEFINE(zero, 0, 0);
-/* The literal 1, backing OSSL_FN_value_one() */
-OSSL_FN_STATIC_DEFINE(one, 1, 1);
+/* The literal 0, backing bn_get_ossl_fxn() */
+OSSL_FXN_STATIC_DEFINE(zero, 0, 0);
+/* The literal 1, backing OSSL_FXN_value_one() */
+OSSL_FXN_STATIC_DEFINE(one, 1, 1);
 
-const OSSL_FN *OSSL_FN_value_one(void)
+const OSSL_FXN *OSSL_FXN_value_one(void)
 {
-    return &ossl_fn_static_one_storage.fn;
+    return &ossl_fxn_static_one_storage.fxn;
 }
 
-const OSSL_FN *ossl_fn_get0_small_factors(void)
+const OSSL_FXN *ossl_fxn_get0_small_factors(void)
 {
-    return &ossl_fn_static_small_prime_factors_storage.fn;
+    return &ossl_fxn_static_small_prime_factors_storage.fxn;
 }
 
-static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
+static size_t ossl_fxn_num_bits_word(OSSL_FXN_ULONG l)
 {
-    OSSL_FN_ULONG x, mask;
+    OSSL_FXN_ULONG x, mask;
     size_t bits = (size_t)constant_time_select_int(
         (unsigned int)constant_time_is_zero_bn(l), 0, 1);
 
-#if OSSL_FN_BITS > 32
+#if OSSL_FXN_BITS > 32
     x = l >> 32;
     mask = ~constant_time_is_zero_bn(x);
     bits += 32 & (size_t)mask;
@@ -224,7 +224,7 @@ static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
     return bits;
 }
 
-size_t OSSL_FN_num_bits(const OSSL_FN *a)
+size_t OSSL_FXN_num_bits(const OSSL_FXN *a)
 {
     if (ossl_unlikely(a == NULL))
         return 0;
@@ -234,8 +234,8 @@ size_t OSSL_FN_num_bits(const OSSL_FN *a)
     size_t ret = 0;
 
     for (i = 0; i < dsize; i++) {
-        size_t limb_bits = ossl_fn_num_bits_word(a->d[i]);
-        size_t bits = i * OSSL_FN_BITS + limb_bits;
+        size_t limb_bits = ossl_fxn_num_bits_word(a->d[i]);
+        size_t bits = i * OSSL_FXN_BITS + limb_bits;
         size_t mask = (size_t)~constant_time_is_zero_bn(a->d[i]);
 
         ret = constant_time_select_s(mask, bits, ret);
@@ -244,7 +244,7 @@ size_t OSSL_FN_num_bits(const OSSL_FN *a)
     return ret;
 }
 
-int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
+int OSSL_FXN_cmp(const OSSL_FXN *a, const OSSL_FXN *b)
 {
     if (ossl_unlikely(a == NULL || b == NULL))
         return (b != NULL) - (a != NULL);
@@ -256,8 +256,8 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
     int res = 0;
 
     for (i = 0; i < max; i++) {
-        OSSL_FN_ULONG aw = i < asize ? a->d[i] : 0;
-        OSSL_FN_ULONG bw = i < bsize ? b->d[i] : 0;
+        OSSL_FXN_ULONG aw = i < asize ? a->d[i] : 0;
+        OSSL_FXN_ULONG bw = i < bsize ? b->d[i] : 0;
 
         res = constant_time_select_int(
             (unsigned int)constant_time_lt_bn(aw, bw), -1, res);
@@ -274,44 +274,44 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
  * public width (dsize); the returned value is the bit itself, which is the
  * information the caller asked for.
  */
-int OSSL_FN_is_bit_set(const OSSL_FN *a, size_t n)
+int OSSL_FXN_is_bit_set(const OSSL_FXN *a, size_t n)
 {
     if (ossl_unlikely(a == NULL))
         return 0;
 
     size_t limb, off;
 
-    limb = n / OSSL_FN_BITS;
-    off = n % OSSL_FN_BITS;
+    limb = n / OSSL_FXN_BITS;
+    off = n % OSSL_FXN_BITS;
     if (limb >= (size_t)a->dsize)
         return 0;
-    return (a->d[limb] >> off) & OSSL_FN_ULONG_C(1);
+    return (a->d[limb] >> off) & OSSL_FXN_ULONG_C(1);
 }
 
 /*-
  * Clears bit |n| of |a|.  An out-of-range index (n >= the operand's width
- * in bits) leaves |a| unchanged and fails with OSSL_FN_R_RESULT_ARG_TOO_SMALL;
- * OSSL_FN is fixed-size, so the operand cannot be grown to reach |n|.  The
+ * in bits) leaves |a| unchanged and fails with OSSL_FXN_R_RESULT_ARG_TOO_SMALL;
+ * OSSL_FXN is fixed-size, so the operand cannot be grown to reach |n|.  The
  * only control flow branches on the operand's public width (dsize) and on
  * the caller-chosen index |n|, not on limb values; whether the bit was
  * previously set is not revealed.
  */
-int OSSL_FN_clear_bit(OSSL_FN *a, size_t n)
+int OSSL_FXN_clear_bit(OSSL_FXN *a, size_t n)
 {
     if (ossl_unlikely(a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     size_t limb, off;
 
-    limb = n / OSSL_FN_BITS;
-    off = n % OSSL_FN_BITS;
+    limb = n / OSSL_FXN_BITS;
+    off = n % OSSL_FXN_BITS;
     if (limb >= (size_t)a->dsize) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        ERR_raise(ERR_LIB_OSSL_FXN, OSSL_FXN_R_RESULT_ARG_TOO_SMALL);
         return 0;
     }
-    a->d[limb] &= ~(OSSL_FN_ULONG_C(1) << off);
+    a->d[limb] &= ~(OSSL_FXN_ULONG_C(1) << off);
     return 1;
 }
 
@@ -322,7 +322,7 @@ int OSSL_FN_clear_bit(OSSL_FN *a, size_t n)
  * inspected depends only on the public width, not on the operand's value.
  * The returned value is the equality test the caller asked for.
  */
-int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w)
+int OSSL_FXN_is_word(const OSSL_FXN *a, OSSL_FXN_ULONG w)
 {
     if (ossl_unlikely(a == NULL))
         return 0;
@@ -343,23 +343,23 @@ int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w)
 }
 
 /*-
- * Equivalent to OSSL_FN_is_word(a, 0), kept as a named predicate for
- * readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ * Equivalent to OSSL_FXN_is_word(a, 0), kept as a named predicate for
+ * readability at call sites.  Leak profile as for OSSL_FXN_is_word():
  * branches only on the operand's public width (dsize).
  */
-int OSSL_FN_is_zero(const OSSL_FN *a)
+int OSSL_FXN_is_zero(const OSSL_FXN *a)
 {
-    return OSSL_FN_is_word(a, 0);
+    return OSSL_FXN_is_word(a, 0);
 }
 
 /*-
- * Equivalent to OSSL_FN_is_word(a, 1), kept as a named predicate for
- * readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ * Equivalent to OSSL_FXN_is_word(a, 1), kept as a named predicate for
+ * readability at call sites.  Leak profile as for OSSL_FXN_is_word():
  * branches only on the operand's public width (dsize).
  */
-int OSSL_FN_is_one(const OSSL_FN *a)
+int OSSL_FXN_is_one(const OSSL_FXN *a)
 {
-    return OSSL_FN_is_word(a, 1);
+    return OSSL_FXN_is_word(a, 1);
 }
 
 /*-
@@ -367,14 +367,14 @@ int OSSL_FN_is_one(const OSSL_FN *a)
  * caller asked for.  The only control flow branches on the operand's public
  * width (dsize), not on limb values.
  */
-int OSSL_FN_is_odd(const OSSL_FN *a)
+int OSSL_FXN_is_odd(const OSSL_FXN *a)
 {
     if (ossl_unlikely(a == NULL))
         return 0;
 
     if (a->dsize <= 0)
         return 0;
-    return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
+    return (int)(a->d[0] & OSSL_FXN_ULONG_C(1));
 }
 
 /*-
@@ -386,13 +386,13 @@ int OSSL_FN_is_odd(const OSSL_FN *a)
  * neither the condition nor the limb values steer control flow.  The only
  * branches are on the operands' public width.
  */
-int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
+int OSSL_FXN_consttime_swap(int condition, OSSL_FXN *a, OSSL_FXN *b)
 {
     size_t i, dsize;
-    OSSL_FN_ULONG mask;
+    OSSL_FXN_ULONG mask;
 
     if (ossl_unlikely(a == NULL || b == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -405,20 +405,20 @@ int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
      * rather than a partial swap.
      */
     if (ossl_unlikely(a->dsize != b->dsize)) {
-        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_MISMATCHED_WIDTHS,
+        ERR_raise_data(ERR_LIB_OSSL_FXN, OSSL_FXN_R_MISMATCHED_WIDTHS,
             "Both operands must be the same width, but they are %zu bytes "
             "and %zu bytes",
-            (size_t)a->dsize * sizeof(OSSL_FN_ULONG),
-            (size_t)b->dsize * sizeof(OSSL_FN_ULONG));
+            (size_t)a->dsize * sizeof(OSSL_FXN_ULONG),
+            (size_t)b->dsize * sizeof(OSSL_FXN_ULONG));
         return 0;
     }
 
     /* All ones when condition is non-zero, all zeros when it is zero. */
-    mask = ~constant_time_is_zero_bn((OSSL_FN_ULONG)condition);
+    mask = ~constant_time_is_zero_bn((OSSL_FXN_ULONG)condition);
     dsize = (size_t)a->dsize;
 
     for (i = 0; i < dsize; i++) {
-        OSSL_FN_ULONG t = a->d[i];
+        OSSL_FXN_ULONG t = a->d[i];
 
         a->d[i] = constant_time_select_bn(mask, b->d[i], t);
         b->d[i] = constant_time_select_bn(mask, t, b->d[i]);
@@ -432,7 +432,7 @@ int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
  * is the information the caller asked for.  The only control flow branches
  * on the operand's public width (dsize), not on limb values.
  */
-OSSL_FN_ULONG OSSL_FN_get_word(const OSSL_FN *a)
+OSSL_FXN_ULONG OSSL_FXN_get_word(const OSSL_FXN *a)
 {
     if (ossl_unlikely(a == NULL))
         return 0;
@@ -447,65 +447,65 @@ OSSL_FN_ULONG OSSL_FN_get_word(const OSSL_FN *a)
  * is an error, not an implicit grow.  The only control flow branches on the
  * operand's public width (dsize), not on limb values.
  */
-int OSSL_FN_set_bit(OSSL_FN *a, size_t pos)
+int OSSL_FXN_set_bit(OSSL_FXN *a, size_t pos)
 {
-    size_t limb = pos / OSSL_FN_BITS;
-    size_t off = pos % OSSL_FN_BITS;
+    size_t limb = pos / OSSL_FXN_BITS;
+    size_t off = pos % OSSL_FXN_BITS;
 
     if (ossl_unlikely(a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if (limb >= (size_t)a->dsize) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        ERR_raise(ERR_LIB_OSSL_FXN, OSSL_FXN_R_RESULT_ARG_TOO_SMALL);
         return 0;
     }
-    a->d[limb] |= OSSL_FN_ULONG_C(1) << off;
+    a->d[limb] |= OSSL_FXN_ULONG_C(1) << off;
     return 1;
 }
 
 /*-
  * Compute |a| mod |w| for a single-limb word |w|.
  *
- * Returns (OSSL_FN_ULONG)-1 when |w| is 0 (the error sentinel), matching the
+ * Returns (OSSL_FXN_ULONG)-1 when |w| is 0 (the error sentinel), matching the
  * BN counterpart's convention.  Control flow branches only on the operand's
  * public width (dsize), not on limb values; the reduction itself is the
  * arithmetic the caller asked for.
  */
-OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w)
+OSSL_FXN_ULONG OSSL_FXN_mod_word(const OSSL_FXN *a, OSSL_FXN_ULONG w)
 {
     size_t i;
 
     if (ossl_unlikely(a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
-        return (OSSL_FN_ULONG)-1;
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
+        return (OSSL_FXN_ULONG)-1;
     }
     if (w == 0)
-        return (OSSL_FN_ULONG)-1;
+        return (OSSL_FXN_ULONG)-1;
 
 #ifdef BN_LLONG
     {
         BN_ULLONG ret = 0;
 
         for (i = (size_t)a->dsize; i-- > 0;)
-            ret = (BN_ULLONG)(((ret << (BN_ULLONG)OSSL_FN_BITS) | a->d[i])
+            ret = (BN_ULLONG)(((ret << (BN_ULLONG)OSSL_FXN_BITS) | a->d[i])
                 % (BN_ULLONG)w);
-        return (OSSL_FN_ULONG)ret;
+        return (OSSL_FXN_ULONG)ret;
     }
 #else
-    if (w <= OSSL_FN_LOW_HALF_MASK) {
+    if (w <= OSSL_FXN_LOW_HALF_MASK) {
         /*
          * Fast path: reduce one half-limb at a time.  With |w| fitting in a
          * half-limb, the running remainder is smaller than |w| and the
          * shifts cannot overflow.
          */
-        OSSL_FN_ULONG ret = 0;
+        OSSL_FXN_ULONG ret = 0;
 
         for (i = (size_t)a->dsize; i-- > 0;) {
-            ret = ((ret << (OSSL_FN_BITS / 2))
-                      | ((a->d[i] >> (OSSL_FN_BITS / 2)) & OSSL_FN_LOW_HALF_MASK))
+            ret = ((ret << (OSSL_FXN_BITS / 2))
+                      | ((a->d[i] >> (OSSL_FXN_BITS / 2)) & OSSL_FXN_LOW_HALF_MASK))
                 % w;
-            ret = ((ret << (OSSL_FN_BITS / 2)) | (a->d[i] & OSSL_FN_LOW_HALF_MASK))
+            ret = ((ret << (OSSL_FXN_BITS / 2)) | (a->d[i] & OSSL_FXN_LOW_HALF_MASK))
                 % w;
         }
         return ret;
@@ -517,13 +517,13 @@ OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w)
          * reduction steps are constant-time masks, not branches, so limb
          * values never affect control flow.
          */
-        OSSL_FN_ULONG ret = 0;
+        OSSL_FXN_ULONG ret = 0;
         int bit;
 
         for (i = (size_t)a->dsize; i-- > 0;)
-            for (bit = OSSL_FN_BITS - 1; bit >= 0; bit--) {
+            for (bit = OSSL_FXN_BITS - 1; bit >= 0; bit--) {
                 /* 2 * ret >= w  iff  ret >= w - ret */
-                OSSL_FN_ULONG over = ~constant_time_lt_bn(ret, w - ret);
+                OSSL_FXN_ULONG over = ~constant_time_lt_bn(ret, w - ret);
 
                 ret = constant_time_select_bn(over, ret - (w - ret),
                     ret + ret);
@@ -536,10 +536,10 @@ OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w)
 #endif
 }
 
-OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
+OSSL_FXN *OSSL_FXN_copy(OSSL_FXN *a, const OSSL_FXN *b)
 {
     if (ossl_unlikely(a == NULL || b == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
 
@@ -550,21 +550,21 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
     size_t bl = b->dsize;
 
     if (al < bl) {
-        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL,
+        ERR_raise_data(ERR_LIB_OSSL_FXN, OSSL_FXN_R_RESULT_ARG_TOO_SMALL,
             "Needs to be at least %zu bytes, but is only %zu bytes",
-            bl * sizeof(OSSL_FN_ULONG), al * sizeof(OSSL_FN_ULONG));
+            bl * sizeof(OSSL_FXN_ULONG), al * sizeof(OSSL_FXN_ULONG));
         return NULL;
     }
 
-    memcpy(a->d, b->d, bl * sizeof(OSSL_FN_ULONG));
-    memset(a->d + bl, 0, (al - bl) * sizeof(OSSL_FN_ULONG));
+    memcpy(a->d, b->d, bl * sizeof(OSSL_FXN_ULONG));
+    memset(a->d + bl, 0, (al - bl) * sizeof(OSSL_FXN_ULONG));
     return a;
 }
 
-OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
+OSSL_FXN *OSSL_FXN_copy_truncate(OSSL_FXN *a, const OSSL_FXN *b)
 {
     if (ossl_unlikely(a == NULL || b == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
 
@@ -575,10 +575,10 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
     size_t bl = b->dsize;
 
     if (ossl_unlikely(al > bl)) {
-        memcpy(a->d, b->d, bl * sizeof(OSSL_FN_ULONG));
-        memset(&a->d[bl], 0, sizeof(OSSL_FN_ULONG) * (al - bl));
+        memcpy(a->d, b->d, bl * sizeof(OSSL_FXN_ULONG));
+        memset(&a->d[bl], 0, sizeof(OSSL_FXN_ULONG) * (al - bl));
     } else {
-        memcpy(a->d, b->d, al * sizeof(OSSL_FN_ULONG));
+        memcpy(a->d, b->d, al * sizeof(OSSL_FXN_ULONG));
     }
 
     return a;
@@ -594,30 +594,30 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
  * Constant-time profile: the byte layout depends only on |len| and |a|'s
  * public width, never on its value.
  */
-int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
+int OSSL_FXN_to_bytes_be(const OSSL_FXN *a, unsigned char *out, size_t len)
 {
     size_t dsize, nbytes, i;
     unsigned char over = 0;
     int fits;
 
     if (ossl_unlikely(a == NULL || out == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    dsize = ossl_fn_get_dsize(a);
-    nbytes = dsize * OSSL_FN_BYTES;
+    dsize = ossl_fxn_get_dsize(a);
+    nbytes = dsize * OSSL_FXN_BYTES;
 
     for (i = 0; i < len; i++) {
-        size_t limb = i / OSSL_FN_BYTES;
+        size_t limb = i / OSSL_FXN_BYTES;
 
         out[len - 1 - i] = limb < dsize
-            ? (unsigned char)(a->d[limb] >> (8 * (i % OSSL_FN_BYTES)))
+            ? (unsigned char)(a->d[limb] >> (8 * (i % OSSL_FXN_BYTES)))
             : 0;
     }
     /* Every byte of |a| beyond |len| must be zero for the value to fit. */
     for (; i < nbytes; i++)
-        over |= (unsigned char)(a->d[i / OSSL_FN_BYTES] >> (8 * (i % OSSL_FN_BYTES)));
+        over |= (unsigned char)(a->d[i / OSSL_FXN_BYTES] >> (8 * (i % OSSL_FXN_BYTES)));
 
     /* Whether the value fits is a validity condition, not a secret */
     fits = constant_time_is_zero_8(over) & 1;
@@ -631,31 +631,31 @@ int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
  * The bytes are read most-significant first and placed in |r|'s fixed width; a
  * shorter input is zero-extended.  The value must fit in |r|: it is an error
  * (return 0) for any input byte beyond |r|'s width to be non-zero, mirroring
- * OSSL_FN_to_bytes_be(), of which this is the counterpart (as BN_bin2bn() is of
- * BN_bn2binpad()).
+ * OSSL_FXN_to_bytes_be(), of which this is the counterpart (as BN_bin2bn() is
+ * of BN_bn2binpad()).
  *
  * Constant-time profile: the byte layout depends only on |len| and |r|'s
  * public width, never on the bytes' values.
  */
-int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
+int OSSL_FXN_from_bytes_be(OSSL_FXN *r, const unsigned char *in, size_t len)
 {
     size_t rbytes, i;
     unsigned char over = 0;
 
     if (ossl_unlikely(r == NULL || in == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    rbytes = ossl_fn_get_dsize(r) * OSSL_FN_BYTES;
+    rbytes = ossl_fxn_get_dsize(r) * OSSL_FXN_BYTES;
 
     for (i = 0; i < rbytes; i++) {
-        size_t limb = i / OSSL_FN_BYTES;
+        size_t limb = i / OSSL_FXN_BYTES;
         unsigned char b = i < len ? in[len - 1 - i] : 0;
 
-        if (i % OSSL_FN_BYTES == 0)
+        if (i % OSSL_FXN_BYTES == 0)
             r->d[limb] = 0;
-        r->d[limb] |= (OSSL_FN_ULONG)b << (8 * (i % OSSL_FN_BYTES));
+        r->d[limb] |= (OSSL_FXN_ULONG)b << (8 * (i % OSSL_FXN_BYTES));
     }
     /* Every input byte beyond |r|'s width must be zero for the value to fit. */
     for (; i < len; i++)
@@ -672,29 +672,29 @@ int OSSL_FN_from_bytes_be(OSSL_FN *r, const unsigned char *in, size_t len)
  * Constant-time profile: which bits are cleared depends only on |n| and |a|'s
  * public width, never on its value.
  */
-int OSSL_FN_mask_bits(OSSL_FN *a, int n)
+int OSSL_FXN_mask_bits(OSSL_FXN *a, int n)
 {
     int w, b, i;
 
     if (ossl_unlikely(a == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if (n < 0) {
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_SHIFT);
+        ERR_raise(ERR_LIB_OSSL_FXN, OSSL_FXN_R_INVALID_SHIFT);
         return 0;
     }
 
-    w = n / OSSL_FN_BITS;
-    b = n % OSSL_FN_BITS;
+    w = n / OSSL_FXN_BITS;
+    b = n % OSSL_FXN_BITS;
     if (w >= a->dsize) {
         /* |a| has fewer than |n| bits, so there is nothing to mask. */
-        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_BITS_TOO_SMALL);
+        ERR_raise(ERR_LIB_OSSL_FXN, OSSL_FXN_R_BITS_TOO_SMALL);
         return 0;
     }
 
     if (b != 0) {
-        a->d[w] &= ((OSSL_FN_ULONG)1 << b) - 1;
+        a->d[w] &= ((OSSL_FXN_ULONG)1 << b) - 1;
         w++;
     }
     for (i = w; i < a->dsize; i++)

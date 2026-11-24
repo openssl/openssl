@@ -8,24 +8,24 @@
  */
 
 #include <openssl/err.h>
-#include "crypto/fnerr.h"
-#include "fn_local.h"
+#include "crypto/fxnerr.h"
+#include "fxn_local.h"
 
 /* least significant word; 0 if the operand has no limbs (i.e. is zero) */
 #define lsw(n) \
-    (((n)->dsize == 0) ? (OSSL_FN_ULONG)0 : (n)->d[0])
+    (((n)->dsize == 0) ? (OSSL_FXN_ULONG)0 : (n)->d[0])
 
 /*-
- * OSSL_FN_kronecker() computes the Kronecker symbol (a/b), returning -1, 0,
+ * OSSL_FXN_kronecker() computes the Kronecker symbol (a/b), returning -1, 0,
  * or 1, using Cohen's algorithm 1.4.10 ("A Course in Algebraic Computational
  * Number Theory").
  *
- * OSSL_FN is unsigned, so sign handling belongs at the BIGNUM boundary.  The
+ * OSSL_FXN is unsigned, so sign handling belongs at the BIGNUM boundary.  The
  * mod-sqrt call site passes |p| (non-negative) and a non-negative candidate,
  * so the unsigned Jacobi symbol is exactly what is needed.
  *
  * lsw(n) tests dsize == 0 for a zero-limb number, i.e. zero.  Otherwise,
- * OSSL_FN has no significance top: dsize is the allocated width, not a
+ * OSSL_FXN has no significance top: dsize is the allocated width, not a
  * significance count.
  *
  * This function is not constant-time: it branches on values throughout (the
@@ -34,10 +34,10 @@
  *
  * Returns -2 for errors (because -1, 0, and 1 are all valid results).
  */
-int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
+int OSSL_FXN_kronecker(const OSSL_FXN *a, const OSSL_FXN *b, OSSL_FXN_CTX *ctx)
 {
     if (ossl_unlikely(a == NULL || b == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_FXN, ERR_R_PASSED_NULL_PARAMETER);
         return -2;
     }
 
@@ -49,11 +49,11 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
      * For any odd number n,
      *     tab[n & 7]
      * is $(-1)^{(n^2-1)/8}$ (using TeX notation).
-     * (The sign of n does not matter, but OSSL_FN is unsigned anyway.)
+     * (The sign of n does not matter, but OSSL_FXN is unsigned anyway.)
      */
     static const int tab[8] = { 0, 1, 0, -1, 0, -1, 0, 1 };
 
-    const void *token = OSSL_FN_CTX_start(ctx);
+    const void *token = OSSL_FXN_CTX_start(ctx);
     if (token == NULL)
         return -2;
 
@@ -61,15 +61,15 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
     size_t bl = (size_t)b->dsize;
     size_t L = al > bl ? al : bl;
 
-    OSSL_FN *A = OSSL_FN_CTX_get_limbs(ctx, token, L);
-    OSSL_FN *B = OSSL_FN_CTX_get_limbs(ctx, token, L);
+    OSSL_FXN *A = OSSL_FXN_CTX_get_limbs(ctx, token, L);
+    OSSL_FXN *B = OSSL_FXN_CTX_get_limbs(ctx, token, L);
     if (A == NULL || B == NULL)
         goto end;
 
-    err = (OSSL_FN_copy(A, a) == NULL);
+    err = (OSSL_FXN_copy(A, a) == NULL);
     if (err)
         goto end;
-    err = (OSSL_FN_copy(B, b) == NULL);
+    err = (OSSL_FXN_copy(B, b) == NULL);
     if (err)
         goto end;
 
@@ -81,23 +81,23 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 
     /* Cohen's step 1: */
 
-    if (OSSL_FN_is_zero(B)) {
-        ret = OSSL_FN_is_word(A, 1);
+    if (OSSL_FXN_is_zero(B)) {
+        ret = OSSL_FXN_is_word(A, 1);
         goto end;
     }
 
     /* Cohen's step 2: */
 
-    if (!OSSL_FN_is_odd(A) && !OSSL_FN_is_odd(B)) {
+    if (!OSSL_FXN_is_odd(A) && !OSSL_FXN_is_odd(B)) {
         ret = 0;
         goto end;
     }
 
     /* now  B  is non-zero */
     i = 0;
-    while (!OSSL_FN_is_bit_set(B, i))
+    while (!OSSL_FXN_is_bit_set(B, i))
         i++;
-    err = !OSSL_FN_rshift(B, B, i);
+    err = !OSSL_FXN_rshift(B, B, i);
     if (err)
         goto end;
     if (i & 1) {
@@ -121,16 +121,16 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 
         /*  B  is positive and odd */
 
-        if (OSSL_FN_is_zero(A)) {
-            ret = OSSL_FN_is_one(B) ? ret : 0;
+        if (OSSL_FXN_is_zero(A)) {
+            ret = OSSL_FXN_is_one(B) ? ret : 0;
             goto end;
         }
 
         /* now  A  is non-zero */
         i = 0;
-        while (!OSSL_FN_is_bit_set(A, i))
+        while (!OSSL_FXN_is_bit_set(A, i))
             i++;
-        err = !OSSL_FN_rshift(A, A, i);
+        err = !OSSL_FXN_rshift(A, A, i);
         if (err)
             goto end;
         if (i & 1) {
@@ -145,15 +145,15 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
             ret = -ret;
 
         /* (A, B) := (B mod |A|, |A|) */
-        err = !OSSL_FN_mod(B, B, A, ctx);
+        err = !OSSL_FXN_mod(B, B, A, ctx);
         if (err)
             goto end;
-        OSSL_FN *tmp = A;
+        OSSL_FXN *tmp = A;
         A = B;
         B = tmp;
     }
 end:
-    if (!OSSL_FN_CTX_end(ctx, token))
+    if (!OSSL_FXN_CTX_end(ctx, token))
         return -2;
     if (err)
         return -2;
@@ -162,40 +162,40 @@ end:
 }
 
 /*-
- * Calculate the arena payload size that OSSL_FN_kronecker() needs.
+ * Calculate the arena payload size that OSSL_FXN_kronecker() needs.
  *
  * @param[in]           a       The first operand
  * @param[in]           b       The second operand
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
- * The returned size includes any frame budget needed by OSSL_FN_kronecker().
+ * The returned size includes any frame budget needed by OSSL_FXN_kronecker().
  * Two temporaries of max(a, b) limbs are needed (the working copies A and B
- * that the algorithm swaps), plus the nested OSSL_FN_mod() (= OSSL_FN_div())
+ * that the algorithm swaps), plus the nested OSSL_FXN_mod() (= OSSL_FXN_div())
  * call in the loop body.
  */
-size_t OSSL_FN_kronecker_ctx_size_from_sizes(size_t a_dsize, size_t b_dsize)
+size_t OSSL_FXN_kronecker_ctx_size_from_sizes(size_t a_dsize, size_t b_dsize)
 {
     size_t L = a_dsize > b_dsize ? a_dsize : b_dsize;
-    if (ossl_fn_totalsize(L) == 0)
+    if (ossl_fxn_totalsize(L) == 0)
         return 0;
 
     /* Two temporaries of L limbs each, in our own frame. */
-    size_t own_size = OSSL_FN_CTX_size(1, 2, 2 * L);
+    size_t own_size = OSSL_FXN_CTX_size(1, 2, 2 * L);
 
     /*
-     * Nested: the loop-body reduction OSSL_FN_mod(B, B, A) with all three at
+     * Nested: the loop-body reduction OSSL_FXN_mod(B, B, A) with all three at
      * L limbs.
      */
-    size_t nested_size = OSSL_FN_mod_ctx_size_from_sizes(L, L, L);
+    size_t nested_size = OSSL_FXN_mod_ctx_size_from_sizes(L, L, L);
 
-    return ossl_fn_ctx_add_size(own_size, nested_size);
+    return ossl_fxn_ctx_add_size(own_size, nested_size);
 }
 
-size_t OSSL_FN_kronecker_ctx_size_from_nums(const OSSL_FN *a, const OSSL_FN *b)
+size_t OSSL_FXN_kronecker_ctx_size_from_nums(const OSSL_FXN *a, const OSSL_FXN *b)
 {
     if (a == NULL || b == NULL)
         return 0;
 
-    return OSSL_FN_kronecker_ctx_size_from_sizes(a->dsize, b->dsize);
+    return OSSL_FXN_kronecker_ctx_size_from_sizes(a->dsize, b->dsize);
 }

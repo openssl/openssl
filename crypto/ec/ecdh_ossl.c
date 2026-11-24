@@ -24,9 +24,9 @@
 #include <openssl/objects.h>
 #include <openssl/ec.h>
 #include "ec_local.h"
-#include "crypto/bn.h" /* bn_get_ossl_fn() */
-#include "crypto/fn.h" /* OSSL_FN_mod_mul() */
-#include "crypto/fn_intern.h"
+#include "crypto/bn.h" /* bn_get_ossl_fxn() */
+#include "crypto/fxn.h" /* OSSL_FXN_mod_mul() */
+#include "crypto/fxn_intern.h"
 
 int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
     const EC_POINT *pub_key, const EC_KEY *ecdh)
@@ -45,7 +45,7 @@ int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
  *
  *  - ecdh_simple_compute_key_bignum() - the classic variable-width BIGNUM
  *    computation, used for GF(2^m) groups;
- *  - ecdh_simple_compute_key_fn() - the constant-time OSSL_FN variant for
+ *  - ecdh_simple_compute_key_fxn() - the constant-time OSSL_FXN variant for
  *    prime-field (GF(p)) groups, where neither the private key nor the shared
  *    secret is ever materialised as a variable-width BIGNUM.
  *
@@ -158,7 +158,7 @@ err:
 }
 
 /**
- * Compute the ECDH shared secret for a prime-field group with OSSL_FN,
+ * Compute the ECDH shared secret for a prime-field group with OSSL_FXN,
  * keeping the private key and the shared point out of variable-width
  * BIGNUMs.  See the comment above ecdh_simple_compute_key_bignum() for the
  * standards followed.
@@ -171,14 +171,14 @@ err:
  * @param[in]   ecdh     The own key, holding the private key and the group.
  * @returns              1 on success, 0 on error.
  */
-static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
+static int ecdh_simple_compute_key_fxn(unsigned char **pout, size_t *poutlen,
     const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     EC_POINT *tmp = NULL;
     const BIGNUM *priv_key;
-    const OSSL_FN *scalar;
+    const OSSL_FXN *scalar;
     const EC_GROUP *group;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FXN_CTX *fxnctx = NULL;
     const void *token = NULL;
     int ret = 0;
     size_t buflen;
@@ -189,7 +189,7 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
         ERR_raise(ERR_LIB_EC, EC_R_MISSING_PRIVATE_KEY);
         goto err;
     }
-    scalar = bn_get_ossl_fn(priv_key);
+    scalar = bn_get_ossl_fxn(priv_key);
 
     group = EC_KEY_get0_group(ecdh);
 
@@ -212,43 +212,43 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
      */
     if (EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) {
         /*
-         * Fold the (public) cofactor into the secret scalar, staying in OSSL_FN
-         * form: product = (private_key * cofactor) mod cardinality.  As
-         * private_key < order and cardinality = order * cofactor, this equals
-         * private_key * cofactor exactly (the reduction never fires); reducing
-         * modulo the cardinality - not the order - preserves the cofactor's
-         * effect.  The result has the cardinality's fixed width, so a single
-         * context can hold |product|, size the modular multiply (any operand of
-         * that width does), and - made large enough - drive EC_POINT_mul_fn()
-         * too, rather than have it allocate its own.  |product| stays valid
-         * through that call because the multiply and the ladder both nest their
-         * scratch in frames above our own.
+         * Fold the (public) cofactor into the secret scalar, staying in
+         * OSSL_FXN form: product = (private_key * cofactor) mod cardinality.
+         * As private_key < order and cardinality = order * cofactor, this
+         * equals private_key * cofactor exactly (the reduction never fires);
+         * reducing modulo the cardinality - not the order - preserves the
+         * cofactor's effect.  The result has the cardinality's fixed width, so
+         * a single context can hold |product|, size the modular multiply (any
+         * operand of that width does), and - made large enough - drive
+         * EC_POINT_mul_fxn() too, rather than have it allocate its own.
+         * |product| stays valid through that call because the multiply and the
+         * ladder both nest their scratch in frames above our own.
          */
-        const OSSL_FN *cofactor = bn_get_ossl_fn(group->cofactor);
-        const OSSL_FN *cardinality = bn_get_ossl_fn(group->cardinality);
-        OSSL_FN *product;
+        const OSSL_FXN *cofactor = bn_get_ossl_fxn(group->cofactor);
+        const OSSL_FXN *cardinality = bn_get_ossl_fxn(group->cardinality);
+        OSSL_FXN *product;
         size_t width, own, mulsz, mfsz, size;
 
         if (cofactor == NULL || cardinality == NULL
-            || OSSL_FN_is_zero(cofactor)) {
+            || OSSL_FXN_is_zero(cofactor)) {
             ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_COFACTOR);
             goto err;
         }
-        width = ossl_fn_get_dsize(cardinality);
-        own = OSSL_FN_CTX_size(1, 1, width);
-        mulsz = OSSL_FN_mod_mul_ctx_size_from_sizes(width,
-            ossl_fn_get_dsize(scalar), ossl_fn_get_dsize(cofactor), width);
-        mfsz = EC_POINT_mul_fn_ctx_size(group, tmp, cardinality, pub_key);
+        width = ossl_fxn_get_dsize(cardinality);
+        own = OSSL_FXN_CTX_size(1, 1, width);
+        mulsz = OSSL_FXN_mod_mul_ctx_size_from_sizes(width,
+            ossl_fxn_get_dsize(scalar), ossl_fxn_get_dsize(cofactor), width);
+        mfsz = EC_POINT_mul_fxn_ctx_size(group, tmp, cardinality, pub_key);
         if (own == 0 || mulsz == 0 || mfsz == 0)
             goto err;
-        size = ossl_fn_ctx_add_size(own, ossl_fn_ctx_max_size(mulsz, mfsz));
+        size = ossl_fxn_ctx_add_size(own, ossl_fxn_ctx_max_size(mulsz, mfsz));
         if (size == 0)
             goto err;
 
-        if ((fnctx = OSSL_FN_CTX_secure_new_size(ecdh->libctx, size)) == NULL
-            || (token = OSSL_FN_CTX_start(fnctx)) == NULL
-            || (product = OSSL_FN_CTX_get_limbs(fnctx, token, width)) == NULL
-            || !OSSL_FN_mod_mul(product, scalar, cofactor, cardinality, fnctx))
+        if ((fxnctx = OSSL_FXN_CTX_secure_new_size(ecdh->libctx, size)) == NULL
+            || (token = OSSL_FXN_CTX_start(fxnctx)) == NULL
+            || (product = OSSL_FXN_CTX_get_limbs(fxnctx, token, width)) == NULL
+            || !OSSL_FXN_mod_mul(product, scalar, cofactor, cardinality, fxnctx))
             goto err;
         scalar = product;
     } else {
@@ -256,19 +256,19 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
          * No cofactor folding, but the ladder still needs an arena created with
          * ecdh->libctx so its coordinate blinding draws entropy from the
          * caller's context rather than the (possibly NULL) group->libctx.  A
-         * size of OSSL_FN_CTX_SIZE_NONE means the chosen implementation needs
-         * no context (and does no blinding), so leaving fnctx NULL is fine.
+         * size of OSSL_FXN_CTX_SIZE_NONE means the chosen implementation needs
+         * no context (and does no blinding), so leaving fxnctx NULL is fine.
          */
-        size_t size = EC_POINT_mul_fn_ctx_size(group, tmp, scalar, pub_key);
+        size_t size = EC_POINT_mul_fxn_ctx_size(group, tmp, scalar, pub_key);
 
         if (size == 0)
             goto err;
-        if (size != OSSL_FN_CTX_SIZE_NONE
-            && (fnctx = OSSL_FN_CTX_secure_new_size(ecdh->libctx, size)) == NULL)
+        if (size != OSSL_FXN_CTX_SIZE_NONE
+            && (fxnctx = OSSL_FXN_CTX_secure_new_size(ecdh->libctx, size)) == NULL)
             goto err;
     }
 
-    if (!EC_POINT_mul_fn(group, tmp, scalar, pub_key, fnctx)
+    if (!EC_POINT_mul_fxn(group, tmp, scalar, pub_key, fxnctx)
         || !EC_POINT_get_affine_coords_bytes(group, tmp, buf, NULL, buflen)) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_ARITHMETIC_FAILURE);
         goto err;
@@ -283,8 +283,8 @@ static int ecdh_simple_compute_key_fn(unsigned char **pout, size_t *poutlen,
 err:
     /* Step(4) - Destroy all intermediate calculations */
     if (token != NULL)
-        OSSL_FN_CTX_end(fnctx, token);
-    OSSL_FN_CTX_free(fnctx);
+        OSSL_FXN_CTX_end(fxnctx, token);
+    OSSL_FXN_CTX_free(fxnctx);
     EC_POINT_clear_free(tmp);
     OPENSSL_free(buf);
     return ret;
@@ -294,11 +294,11 @@ int ossl_ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     /*
-     * Prime-field (GF(p)) groups take the constant-time OSSL_FN path; GF(2^m)
+     * Prime-field (GF(p)) groups take the constant-time OSSL_FXN path; GF(2^m)
      * (the only other field type) keeps the BIGNUM computation.
      */
     if (EC_KEY_get0_group(ecdh)->meth->field_type == NID_X9_62_prime_field)
-        return ecdh_simple_compute_key_fn(pout, poutlen, pub_key, ecdh);
+        return ecdh_simple_compute_key_fxn(pout, poutlen, pub_key, ecdh);
     else
         return ecdh_simple_compute_key_bignum(pout, poutlen, pub_key, ecdh);
 }

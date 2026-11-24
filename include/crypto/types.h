@@ -14,9 +14,9 @@
 #pragma once
 
 /* At some point in the future, this may move to include/openssl/types.h */
-typedef struct ossl_fn_st OSSL_FN;
-typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
-typedef struct ossl_fn_mont_ctx_st OSSL_FN_MONT_CTX;
+typedef struct ossl_fxn_st OSSL_FXN;
+typedef struct ossl_fxn_ctx_st OSSL_FXN_CTX;
+typedef struct ossl_fxn_mont_ctx_st OSSL_FXN_MONT_CTX;
 
 #ifdef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;

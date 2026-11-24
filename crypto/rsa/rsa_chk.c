@@ -17,44 +17,44 @@
 #include <openssl/err.h>
 #include "crypto/rsa.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 #include "rsa_local.h"
 
 #ifndef FIPS_MODULE
 /*
- * Check that |w| is probably prime, on its OSSL_FN view.  Returns 1 when
+ * Check that |w| is probably prime, on its OSSL_FXN view.  Returns 1 when
  * probably prime, 0 when composite, -1 on error.
  */
-static int rsa_fn_check_prime(const BIGNUM *w, BN_GENCB *cb,
+static int rsa_fxn_check_prime(const BIGNUM *w, BN_GENCB *cb,
     OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    const OSSL_FN *fn_w = bn_get_ossl_fn(w);
-    size_t fn_size;
+    OSSL_FXN_CTX *fxn_ctx = NULL;
+    const OSSL_FXN *fxn_w = bn_get_ossl_fxn(w);
+    size_t fxn_size;
     int ret = -1;
 
-    if (fn_w == NULL)
+    if (fxn_w == NULL)
         return -1;
-    fn_size = ossl_fn_check_prime_ctx_size_from_nums(fn_w);
-    if (fn_size == 0)
+    fxn_size = ossl_fxn_check_prime_ctx_size_from_nums(fxn_w);
+    if (fxn_size == 0)
         return -1;
-    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
-    if (fn_ctx == NULL)
+    fxn_ctx = OSSL_FXN_CTX_new_size(libctx, fxn_size);
+    if (fxn_ctx == NULL)
         return -1;
-    ret = ossl_fn_check_prime(fn_w, 0, fn_ctx, 1, cb, libctx);
-    OSSL_FN_CTX_free(fn_ctx);
+    ret = ossl_fxn_check_prime(fxn_w, 0, fxn_ctx, 1, cb, libctx);
+    OSSL_FXN_CTX_free(fxn_ctx);
     return ret;
 }
 
 /* Create an arena of |size| bytes, reporting OOM on failure. */
-static OSSL_FN_CTX *rsa_fn_ctx_new(size_t size, OSSL_LIB_CTX *libctx)
+static OSSL_FXN_CTX *rsa_fxn_ctx_new(size_t size, OSSL_LIB_CTX *libctx)
 {
-    OSSL_FN_CTX *fn_ctx;
+    OSSL_FXN_CTX *fxn_ctx;
 
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    if (size != 0 && (fn_ctx = OSSL_FN_CTX_new_size(libctx, size)) != NULL)
-        return fn_ctx;
+    if (size != 0 && (fxn_ctx = OSSL_FXN_CTX_new_size(libctx, size)) != NULL)
+        return fxn_ctx;
 
     ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
     return NULL;
@@ -72,10 +72,10 @@ static OSSL_FN_CTX *rsa_fn_ctx_new(size_t size, OSSL_LIB_CTX *libctx)
  */
 static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 {
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *i = NULL, *j = NULL, *k = NULL, *l = NULL, *m = NULL;
-    const OSSL_FN *fn_p, *fn_q, *fn_d, *fn_e, *fn_n;
-    size_t fn_size, nl;
+    OSSL_FXN_CTX *fxn_ctx = NULL;
+    OSSL_FXN *i = NULL, *j = NULL, *k = NULL, *l = NULL, *m = NULL;
+    const OSSL_FXN *fxn_p, *fxn_q, *fxn_d, *fxn_e, *fxn_n;
+    size_t fxn_size, nl;
     int ret = 1, ex_primes = 0, idx;
     RSA_PRIME_INFO *pinfo;
 
@@ -105,7 +105,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     }
 
     /*
-     * The checks run on OSSL_FN views, which are unsigned; reject
+     * The checks run on OSSL_FXN views, which are unsigned; reject
      * negative components rather than validate their magnitudes.
      */
     if (BN_is_negative(key->p) || BN_is_negative(key->q)
@@ -127,13 +127,13 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     }
 
     /* p prime? */
-    if (rsa_fn_check_prime(key->p, cb, key->libctx) != 1) {
+    if (rsa_fxn_check_prime(key->p, cb, key->libctx) != 1) {
         ret = 0;
         ERR_raise(ERR_LIB_RSA, RSA_R_P_NOT_PRIME);
     }
 
     /* q prime? */
-    if (rsa_fn_check_prime(key->q, cb, key->libctx) != 1) {
+    if (rsa_fxn_check_prime(key->q, cb, key->libctx) != 1) {
         ret = 0;
         ERR_raise(ERR_LIB_RSA, RSA_R_Q_NOT_PRIME);
     }
@@ -141,7 +141,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     /* r_i prime? */
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
-        if (rsa_fn_check_prime(pinfo->r, cb, key->libctx) != 1) {
+        if (rsa_fxn_check_prime(pinfo->r, cb, key->libctx) != 1) {
             ret = 0;
             ERR_raise(ERR_LIB_RSA, RSA_R_MP_R_NOT_PRIME);
         }
@@ -151,24 +151,24 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         goto err;
 
     /*
-     * All subsequent checks run on OSSL_FN views of the key material.
+     * All subsequent checks run on OSSL_FXN views of the key material.
      * The temporaries i .. m serve as both scratch and intermediate
      * containers; those that hold products or the LCM of prime-minus-one
      * values are sized at the modulus width, the rest at their natural
      * width.
      */
-    fn_n = bn_get_ossl_fn(key->n);
-    fn_p = bn_get_ossl_fn(key->p);
-    fn_q = bn_get_ossl_fn(key->q);
-    fn_d = bn_get_ossl_fn(key->d);
-    fn_e = bn_get_ossl_fn(key->e);
-    if (fn_n == NULL || fn_p == NULL || fn_q == NULL || fn_d == NULL
-        || fn_e == NULL) {
+    fxn_n = bn_get_ossl_fxn(key->n);
+    fxn_p = bn_get_ossl_fxn(key->p);
+    fxn_q = bn_get_ossl_fxn(key->q);
+    fxn_d = bn_get_ossl_fxn(key->d);
+    fxn_e = bn_get_ossl_fxn(key->e);
+    if (fxn_n == NULL || fxn_p == NULL || fxn_q == NULL || fxn_d == NULL
+        || fxn_e == NULL) {
         ret = -1;
         ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
-    nl = (size_t)ossl_fn_get_dsize((OSSL_FN *)fn_n);
+    nl = (size_t)ossl_fxn_get_dsize((OSSL_FXN *)fxn_n);
 
     /*
      * Phase 1: n = p*q * r_3...r_i?
@@ -179,43 +179,43 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
      * container, and the comparison against n must see the spill to
      * reject it.  An equal product stays within the modulus width.
      */
-    i = OSSL_FN_secure_new_limbs(nl + 1);
+    i = OSSL_FXN_secure_new_limbs(nl + 1);
     if (i == NULL) {
         ret = -1;
         ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
-    fn_size = OSSL_FN_mul_ctx_size_from_nums(i, fn_p, fn_q);
+    fxn_size = OSSL_FXN_mul_ctx_size_from_nums(i, fxn_p, fxn_q);
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
-        fn_size = ossl_fn_ctx_max_size(fn_size,
-            OSSL_FN_mul_ctx_size_from_nums(i, i, bn_get_ossl_fn(pinfo->r)));
+        fxn_size = ossl_fxn_ctx_max_size(fxn_size,
+            OSSL_FXN_mul_ctx_size_from_nums(i, i, bn_get_ossl_fxn(pinfo->r)));
     }
-    if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
+    if ((fxn_ctx = rsa_fxn_ctx_new(fxn_size, key->libctx)) == NULL) {
         ret = -1;
         goto err;
     }
 
-    if (!OSSL_FN_mul(i, fn_p, fn_q, fn_ctx)) {
+    if (!OSSL_FXN_mul(i, fxn_p, fxn_q, fxn_ctx)) {
         ret = -1;
         goto err;
     }
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
-        if (!OSSL_FN_mul(i, i, bn_get_ossl_fn(pinfo->r), fn_ctx)) {
+        if (!OSSL_FXN_mul(i, i, bn_get_ossl_fxn(pinfo->r), fxn_ctx)) {
             ret = -1;
             goto err;
         }
     }
-    if (OSSL_FN_cmp(i, fn_n) != 0) {
+    if (OSSL_FXN_cmp(i, fxn_n) != 0) {
         ret = 0;
         if (ex_primes)
             ERR_raise(ERR_LIB_RSA, RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES);
         else
             ERR_raise(ERR_LIB_RSA, RSA_R_N_DOES_NOT_EQUAL_P_Q);
     }
-    OSSL_FN_CTX_free(fn_ctx);
-    fn_ctx = NULL;
+    OSSL_FXN_CTX_free(fxn_ctx);
+    fxn_ctx = NULL;
 
     /*
      * Phase 2: d*e = 1 mod \lambda(n)?, with \lambda(n) the LCM of all the
@@ -223,17 +223,17 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
      * m is the running LCM and l the product term, both at the
      * modulus width.
      */
-    j = OSSL_FN_secure_new_limbs(nl);
-    k = OSSL_FN_secure_new_limbs(nl);
-    l = OSSL_FN_secure_new_limbs(nl);
-    m = OSSL_FN_secure_new_limbs(nl);
+    j = OSSL_FXN_secure_new_limbs(nl);
+    k = OSSL_FXN_secure_new_limbs(nl);
+    l = OSSL_FXN_secure_new_limbs(nl);
+    m = OSSL_FXN_secure_new_limbs(nl);
     if (j == NULL || k == NULL || l == NULL || m == NULL) {
         ret = -1;
         ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
-    if (!OSSL_FN_copy(i, fn_p) || !OSSL_FN_sub_word(i, 1)
-        || !OSSL_FN_copy(j, fn_q) || !OSSL_FN_sub_word(j, 1)) {
+    if (!OSSL_FXN_copy(i, fxn_p) || !OSSL_FXN_sub_word(i, 1)
+        || !OSSL_FXN_copy(j, fxn_q) || !OSSL_FXN_sub_word(j, 1)) {
         ret = -1;
         goto err;
     }
@@ -243,65 +243,65 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
      * both operands at the modulus width, which dominates the muls, the
      * gcds, and the closing mod_mul.
      */
-    fn_size = OSSL_FN_div_ctx_size_from_nums(m, NULL, l, m);
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mul_ctx_size_from_nums(l, i, j));
-    fn_size
-        = ossl_fn_ctx_max_size(fn_size, OSSL_FN_gcd_ctx_size_from_nums(i, j));
-    fn_size = ossl_fn_ctx_max_size(fn_size,
-        OSSL_FN_mod_mul_ctx_size_from_nums(i, fn_d, fn_e, m));
-    if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
+    fxn_size = OSSL_FXN_div_ctx_size_from_nums(m, NULL, l, m);
+    fxn_size = ossl_fxn_ctx_max_size(fxn_size,
+        OSSL_FXN_mul_ctx_size_from_nums(l, i, j));
+    fxn_size
+        = ossl_fxn_ctx_max_size(fxn_size, OSSL_FXN_gcd_ctx_size_from_nums(i, j));
+    fxn_size = ossl_fxn_ctx_max_size(fxn_size,
+        OSSL_FXN_mod_mul_ctx_size_from_nums(i, fxn_d, fxn_e, m));
+    if ((fxn_ctx = rsa_fxn_ctx_new(fxn_size, key->libctx)) == NULL) {
         ret = -1;
         goto err;
     }
 
     /* now compute m = \lambda(n) = LCM(i, j, r_3 - 1...) */
-    if (!OSSL_FN_mul(l, i, j, fn_ctx)
-        || !OSSL_FN_gcd(m, i, j, fn_ctx)
-        || !OSSL_FN_div(m, NULL, l, m, fn_ctx)) { /* remainder 0 */
+    if (!OSSL_FXN_mul(l, i, j, fxn_ctx)
+        || !OSSL_FXN_gcd(m, i, j, fxn_ctx)
+        || !OSSL_FXN_div(m, NULL, l, m, fxn_ctx)) { /* remainder 0 */
         ret = -1;
         goto err;
     }
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
-        if (!OSSL_FN_copy(k, bn_get_ossl_fn(pinfo->r))
-            || !OSSL_FN_sub_word(k, 1)
-            || !OSSL_FN_mul(l, m, k, fn_ctx)
-            || !OSSL_FN_gcd(m, m, k, fn_ctx)
-            || !OSSL_FN_div(m, NULL, l, m, fn_ctx)) { /* rem 0 */
+        if (!OSSL_FXN_copy(k, bn_get_ossl_fxn(pinfo->r))
+            || !OSSL_FXN_sub_word(k, 1)
+            || !OSSL_FXN_mul(l, m, k, fxn_ctx)
+            || !OSSL_FXN_gcd(m, m, k, fxn_ctx)
+            || !OSSL_FXN_div(m, NULL, l, m, fxn_ctx)) { /* rem 0 */
             ret = -1;
             goto err;
         }
     }
-    if (!OSSL_FN_mod_mul(i, fn_d, fn_e, m, fn_ctx)) {
+    if (!OSSL_FXN_mod_mul(i, fxn_d, fxn_e, m, fxn_ctx)) {
         ret = -1;
         goto err;
     }
 
-    if (!OSSL_FN_is_one(i)) {
+    if (!OSSL_FXN_is_one(i)) {
         ret = 0;
         ERR_raise(ERR_LIB_RSA, RSA_R_D_E_NOT_CONGRUENT_TO_1);
     }
-    OSSL_FN_CTX_free(fn_ctx);
-    fn_ctx = NULL;
+    OSSL_FXN_CTX_free(fxn_ctx);
+    fxn_ctx = NULL;
 
     /*
      * Phase 3: the CRT parameter checks.  The moduli here are the
-     * prime(-minus-one) values, and OSSL_FN_div sizes its arena divisor
+     * prime(-minus-one) values, and OSSL_FXN_div sizes its arena divisor
      * copies from the divisor's width, so the p-1 / q-1 / r_i-1 values
      * are kept in prime-width temporaries (pm1, qm1, rm1).
      */
     {
-        OSSL_FN *pm1 = NULL, *qm1 = NULL, *rm1 = NULL;
-        size_t pl = (size_t)ossl_fn_get_dsize((OSSL_FN *)fn_p);
-        size_t ql = (size_t)ossl_fn_get_dsize((OSSL_FN *)fn_q);
+        OSSL_FXN *pm1 = NULL, *qm1 = NULL, *rm1 = NULL;
+        size_t pl = (size_t)ossl_fxn_get_dsize((OSSL_FXN *)fxn_p);
+        size_t ql = (size_t)ossl_fxn_get_dsize((OSSL_FXN *)fxn_q);
         int phase3 = 1;
 
-        pm1 = OSSL_FN_secure_new_limbs(pl);
-        qm1 = OSSL_FN_secure_new_limbs(ql);
+        pm1 = OSSL_FXN_secure_new_limbs(pl);
+        qm1 = OSSL_FXN_secure_new_limbs(ql);
         if (pm1 == NULL || qm1 == NULL
-            || !OSSL_FN_copy(pm1, fn_p) || !OSSL_FN_sub_word(pm1, 1)
-            || !OSSL_FN_copy(qm1, fn_q) || !OSSL_FN_sub_word(qm1, 1)) {
+            || !OSSL_FXN_copy(pm1, fxn_p) || !OSSL_FXN_sub_word(pm1, 1)
+            || !OSSL_FXN_copy(qm1, fxn_q) || !OSSL_FXN_sub_word(qm1, 1)) {
             ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
             phase3 = -1;
         }
@@ -312,8 +312,8 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
          * the moduli, so the arena stays proportionate.
          */
         if (phase3 == 1) {
-            OSSL_FN_clear_free(k);
-            k = OSSL_FN_secure_new_limbs(pl > ql ? pl : ql);
+            OSSL_FXN_clear_free(k);
+            k = OSSL_FXN_secure_new_limbs(pl > ql ? pl : ql);
             if (k == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
                 phase3 = -1;
@@ -322,122 +322,122 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 
         if (phase3 == 1 && key->dmp1 != NULL && key->dmq1 != NULL
             && key->iqmp != NULL) {
-            fn_size = OSSL_FN_mod_ctx_size_from_nums(k, fn_d, pm1);
-            fn_size = ossl_fn_ctx_max_size(fn_size,
-                OSSL_FN_mod_ctx_size_from_nums(k, fn_d, qm1));
-            fn_size = ossl_fn_ctx_max_size(fn_size,
-                OSSL_FN_mod_inverse_ctx_size_from_nums(k, fn_q, fn_p));
-            if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
+            fxn_size = OSSL_FXN_mod_ctx_size_from_nums(k, fxn_d, pm1);
+            fxn_size = ossl_fxn_ctx_max_size(fxn_size,
+                OSSL_FXN_mod_ctx_size_from_nums(k, fxn_d, qm1));
+            fxn_size = ossl_fxn_ctx_max_size(fxn_size,
+                OSSL_FXN_mod_inverse_ctx_size_from_nums(k, fxn_q, fxn_p));
+            if ((fxn_ctx = rsa_fxn_ctx_new(fxn_size, key->libctx)) == NULL) {
                 phase3 = -1;
             }
 
             /* dmp1 = d mod (p-1)? */
-            if (phase3 == 1 && !OSSL_FN_mod(k, fn_d, pm1, fn_ctx))
+            if (phase3 == 1 && !OSSL_FXN_mod(k, fxn_d, pm1, fxn_ctx))
                 phase3 = -1;
             if (phase3 == 1
-                && OSSL_FN_cmp(k, bn_get_ossl_fn(key->dmp1)) != 0) {
+                && OSSL_FXN_cmp(k, bn_get_ossl_fxn(key->dmp1)) != 0) {
                 ERR_raise(ERR_LIB_RSA, RSA_R_DMP1_NOT_CONGRUENT_TO_D);
                 phase3 = 0;
             }
 
             /* dmq1 = d mod (q-1)? */
-            if (phase3 == 1 && !OSSL_FN_mod(k, fn_d, qm1, fn_ctx))
+            if (phase3 == 1 && !OSSL_FXN_mod(k, fxn_d, qm1, fxn_ctx))
                 phase3 = -1;
             if (phase3 == 1
-                && OSSL_FN_cmp(k, bn_get_ossl_fn(key->dmq1)) != 0) {
+                && OSSL_FXN_cmp(k, bn_get_ossl_fxn(key->dmq1)) != 0) {
                 ERR_raise(ERR_LIB_RSA, RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
                 phase3 = 0;
             }
 
             /* iqmp = q^-1 mod p? */
             if (phase3 == 1
-                && !OSSL_FN_mod_inverse(k, fn_q, fn_p, fn_ctx))
+                && !OSSL_FXN_mod_inverse(k, fxn_q, fxn_p, fxn_ctx))
                 phase3 = -1;
             if (phase3 == 1
-                && OSSL_FN_cmp(k, bn_get_ossl_fn(key->iqmp)) != 0) {
+                && OSSL_FXN_cmp(k, bn_get_ossl_fxn(key->iqmp)) != 0) {
                 ERR_raise(ERR_LIB_RSA, RSA_R_IQMP_NOT_INVERSE_OF_Q);
                 phase3 = 0;
             }
-            OSSL_FN_CTX_free(fn_ctx);
-            fn_ctx = NULL;
+            OSSL_FXN_CTX_free(fxn_ctx);
+            fxn_ctx = NULL;
         }
 
         for (idx = 0; phase3 == 1 && idx < ex_primes; idx++) {
-            const OSSL_FN *fn_r, *fn_rd, *fn_pp, *fn_t;
-            OSSL_FN *kr = NULL;
+            const OSSL_FXN *fxn_r, *fxn_rd, *fxn_pp, *fxn_t;
+            OSSL_FXN *kr = NULL;
             size_t rl;
 
             pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
-            fn_r = bn_get_ossl_fn(pinfo->r);
-            fn_rd = bn_get_ossl_fn(pinfo->d);
-            fn_pp = bn_get_ossl_fn(pinfo->pp);
-            fn_t = bn_get_ossl_fn(pinfo->t);
-            if (fn_r == NULL || fn_rd == NULL || fn_pp == NULL
-                || fn_t == NULL) {
+            fxn_r = bn_get_ossl_fxn(pinfo->r);
+            fxn_rd = bn_get_ossl_fxn(pinfo->d);
+            fxn_pp = bn_get_ossl_fxn(pinfo->pp);
+            fxn_t = bn_get_ossl_fxn(pinfo->t);
+            if (fxn_r == NULL || fxn_rd == NULL || fxn_pp == NULL
+                || fxn_t == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
                 phase3 = -1;
                 break;
             }
-            rl = (size_t)ossl_fn_get_dsize((OSSL_FN *)fn_r);
+            rl = (size_t)ossl_fxn_get_dsize((OSSL_FXN *)fxn_r);
 
             /*
              * d_i = d mod (r_i - 1)?  The results are r_i-width, so the
              * result container is anchored at r_i's width per prime;
              * k (anchored at p/q's width) can be narrower.
              */
-            rm1 = OSSL_FN_secure_new_limbs(rl);
-            kr = OSSL_FN_secure_new_limbs(rl);
+            rm1 = OSSL_FXN_secure_new_limbs(rl);
+            kr = OSSL_FXN_secure_new_limbs(rl);
             if (rm1 == NULL || kr == NULL
-                || !OSSL_FN_copy(rm1, fn_r)
-                || !OSSL_FN_sub_word(rm1, 1)) {
+                || !OSSL_FXN_copy(rm1, fxn_r)
+                || !OSSL_FXN_sub_word(rm1, 1)) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
                 phase3 = -1;
-                OSSL_FN_clear_free(kr);
-                OSSL_FN_clear_free(rm1);
+                OSSL_FXN_clear_free(kr);
+                OSSL_FXN_clear_free(rm1);
                 break;
             }
-            fn_size = OSSL_FN_mod_ctx_size_from_nums(kr, fn_d, rm1);
-            fn_size = ossl_fn_ctx_max_size(fn_size,
-                OSSL_FN_mod_inverse_ctx_size_from_nums(kr, fn_pp, fn_r));
-            if ((fn_ctx = rsa_fn_ctx_new(fn_size, key->libctx)) == NULL) {
+            fxn_size = OSSL_FXN_mod_ctx_size_from_nums(kr, fxn_d, rm1);
+            fxn_size = ossl_fxn_ctx_max_size(fxn_size,
+                OSSL_FXN_mod_inverse_ctx_size_from_nums(kr, fxn_pp, fxn_r));
+            if ((fxn_ctx = rsa_fxn_ctx_new(fxn_size, key->libctx)) == NULL) {
                 phase3 = -1;
             } else {
-                if (!OSSL_FN_mod(kr, fn_d, rm1, fn_ctx))
+                if (!OSSL_FXN_mod(kr, fxn_d, rm1, fxn_ctx))
                     phase3 = -1;
-                if (phase3 == 1 && OSSL_FN_cmp(kr, fn_rd) != 0) {
+                if (phase3 == 1 && OSSL_FXN_cmp(kr, fxn_rd) != 0) {
                     ERR_raise(ERR_LIB_RSA,
                         RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D);
                     phase3 = 0;
                 }
                 /* t_i = R_i ^ -1 mod r_i ? */
                 if (phase3 == 1
-                    && !OSSL_FN_mod_inverse(kr, fn_pp, fn_r, fn_ctx))
+                    && !OSSL_FXN_mod_inverse(kr, fxn_pp, fxn_r, fxn_ctx))
                     phase3 = -1;
-                if (phase3 == 1 && OSSL_FN_cmp(kr, fn_t) != 0) {
+                if (phase3 == 1 && OSSL_FXN_cmp(kr, fxn_t) != 0) {
                     ERR_raise(ERR_LIB_RSA,
                         RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R);
                     phase3 = 0;
                 }
-                OSSL_FN_CTX_free(fn_ctx);
-                fn_ctx = NULL;
+                OSSL_FXN_CTX_free(fxn_ctx);
+                fxn_ctx = NULL;
             }
-            OSSL_FN_clear_free(kr);
-            OSSL_FN_clear_free(rm1);
+            OSSL_FXN_clear_free(kr);
+            OSSL_FXN_clear_free(rm1);
             rm1 = NULL;
         }
-        OSSL_FN_clear_free(pm1);
-        OSSL_FN_clear_free(qm1);
+        OSSL_FXN_clear_free(pm1);
+        OSSL_FXN_clear_free(qm1);
         if (phase3 != 1)
             ret = phase3;
     }
 
 err:
-    OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_clear_free(i);
-    OSSL_FN_clear_free(j);
-    OSSL_FN_clear_free(k);
-    OSSL_FN_clear_free(l);
-    OSSL_FN_clear_free(m);
+    OSSL_FXN_CTX_free(fxn_ctx);
+    OSSL_FXN_clear_free(i);
+    OSSL_FXN_clear_free(j);
+    OSSL_FXN_clear_free(k);
+    OSSL_FXN_clear_free(l);
+    OSSL_FXN_clear_free(m);
     return ret;
 }
 #endif /* FIPS_MODULE */

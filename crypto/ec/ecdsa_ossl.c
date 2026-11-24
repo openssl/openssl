@@ -18,8 +18,8 @@
 #include <openssl/obj_mac.h>
 #include <openssl/rand.h>
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h" /* ossl_fn_gen_dsa_nonce() */
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h" /* ossl_fxn_gen_dsa_nonce() */
 #include "internal/constant_time.h"
 #include "ec_local.h"
 #include "internal/deterministic_nonce.h"
@@ -38,7 +38,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     const unsigned char *dgst, int dlen,
     unsigned int nonce_type, const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq);
-static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
+static int ecdsa_sign_setup_fxn(EC_KEY *eckey, BN_CTX *ctx_in,
     BIGNUM **kinvp, BIGNUM **rp,
     const unsigned char *dgst, int dlen,
     unsigned int nonce_type, const char *digestname,
@@ -271,7 +271,7 @@ err:
     return ret;
 }
 
-static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
+static int ecdsa_sign_setup_fxn(EC_KEY *eckey, BN_CTX *ctx_in,
     BIGNUM **kinvp, BIGNUM **rp,
     const unsigned char *dgst, int dlen,
     unsigned int nonce_type, const char *digestname,
@@ -285,10 +285,10 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
     int ret = 0;
     int order_bits, nlimbs;
     const BIGNUM *priv_key;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FXN_CTX *fxnctx = NULL;
     const void *token = NULL;
-    const OSSL_FN *order_fn, *priv_fn = NULL;
-    OSSL_FN *kf = NULL, *kinvf = NULL;
+    const OSSL_FXN *order_fxn, *priv_fxn = NULL;
+    OSSL_FXN *kf = NULL, *kinvf = NULL;
     size_t w, need = 0;
 
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
@@ -336,48 +336,48 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
 
     /*
      * The order is public; the secret-scalar work below needs only its
-     * read-only OSSL_FN view.
+     * read-only OSSL_FXN view.
      */
     nlimbs = bn_get_top(order);
-    if ((order_fn = bn_get_ossl_fn(order)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if ((order_fxn = bn_get_ossl_fxn(order)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
 
     /*
      * The deterministic (RFC6979) and hedged nonce generators derive k from the
-     * private key; they take its read-only OSSL_FN view and write straight into
-     * the OSSL_FN nonce, so no BIGNUM nonce is ever materialised.  The random
-     * path (dgst == NULL) draws straight into the OSSL_FN too.
+     * private key; they take its read-only OSSL_FXN view and write straight
+     * into the OSSL_FXN nonce, so no BIGNUM nonce is ever materialised.  The
+     * random path (dgst == NULL) draws straight into the OSSL_FXN too.
      */
-    if (dgst != NULL && (priv_fn = bn_get_ossl_fn(priv_key)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if (dgst != NULL && (priv_fxn = bn_get_ossl_fxn(priv_key)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
 
     /*
      * Secure arena holding the secret nonce k, plus the scratch that nests on
-     * top of it: the k*G ladder and the inverse below.  order_fn is at least
+     * top of it: the k*G ladder and the inverse below.  order_fxn is at least
      * nlimbs wide, so sizing both against it is an upper bound.  Creating the
-     * arena with eckey->libctx (rather than letting EC_POINT_mul_fn() allocate
+     * arena with eckey->libctx (rather than letting EC_POINT_mul_fxn() allocate
      * its own against the possibly-NULL group->libctx) is what lets the
      * ladder's coordinate blinding draw entropy from the caller's context.
      */
-    w = ossl_fn_get_dsize(order_fn);
-    need = ossl_fn_ctx_max_size(
-        OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(w, w, w, w),
-        EC_POINT_mul_fn_ctx_size(group, tmp_point, order_fn, NULL));
+    w = ossl_fxn_get_dsize(order_fxn);
+    need = ossl_fxn_ctx_max_size(
+        OSSL_FXN_mod_inverse_prime_ctx_size_from_sizes(w, w, w, w),
+        EC_POINT_mul_fxn_ctx_size(group, tmp_point, order_fxn, NULL));
     /* ... plus the outer frame holding the nonce k itself. */
-    need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 1, (size_t)nlimbs));
+    need = ossl_fxn_ctx_add_size(need, OSSL_FXN_CTX_size(1, 1, (size_t)nlimbs));
     if (need == 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need);
-    if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
+    fxnctx = OSSL_FXN_CTX_secure_new_size(eckey->libctx, need);
+    if (fxnctx == NULL || (token = OSSL_FXN_CTX_start(fxnctx)) == NULL)
         goto err;
-    if ((kf = OSSL_FN_CTX_get_limbs(fnctx, token, nlimbs)) == NULL)
+    if ((kf = OSSL_FXN_CTX_get_limbs(fxnctx, token, nlimbs)) == NULL)
         goto err;
 
     do {
@@ -387,29 +387,29 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
                 int res;
 
                 if (nonce_type == 1)
-                    res = ossl_fn_gen_deterministic_nonce_rfc6979(kf, order,
-                        priv_fn, dgst, dlen, digestname, libctx, propq);
+                    res = ossl_fxn_gen_deterministic_nonce_rfc6979(kf, order,
+                        priv_fxn, dgst, dlen, digestname, libctx, propq);
                 else
-                    res = ossl_fn_gen_dsa_nonce(kf, order_fn, priv_fn,
+                    res = ossl_fxn_gen_dsa_nonce(kf, order_fxn, priv_fxn,
                         dgst, dlen, eckey->libctx);
                 if (!res) {
                     ERR_raise(ERR_LIB_EC,
                         EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
-            } else if (!OSSL_FN_priv_rand_range(kf, order_fn, 0,
+            } else if (!OSSL_FXN_priv_rand_range(kf, order_fxn, 0,
                            eckey->libctx)) {
                 ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                 goto err;
             }
-        } while (OSSL_FN_is_zero(kf));
+        } while (OSSL_FXN_is_zero(kf));
 
         /*
          * Compute r, the x-coordinate of k*G reduced mod the order.  k is the
-         * secret nonce, so the multiplication goes through EC_POINT_mul_fn();
+         * secret nonce, so the multiplication goes through EC_POINT_mul_fxn();
          * the x-coordinate, and hence r, is public.
          */
-        if (!EC_POINT_mul_fn(group, tmp_point, kf, NULL, fnctx)
+        if (!EC_POINT_mul_fxn(group, tmp_point, kf, NULL, fxnctx)
             || !EC_POINT_get_affine_coordinates(group, tmp_point, X, NULL,
                 ctx)) {
             ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
@@ -423,17 +423,17 @@ static int ecdsa_sign_setup_fn(EC_KEY *eckey, BN_CTX *ctx_in,
     } while (BN_is_zero(r));
 
     /*
-     * Compute the inverse of k straight into the OSSL_FN of the returned
+     * Compute the inverse of k straight into the OSSL_FXN of the returned
      * BIGNUM, so the secret nonce is never handed over as a BIGNUM.
      */
-    if ((kinvf = bn_acquire_ossl_fn(kinv, nlimbs)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if ((kinvf = bn_acquire_ossl_fxn(kinv, nlimbs)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
-    if (!ossl_ec_group_do_inverse_ord_fn(group, kinvf, kf, fnctx)) {
+    if (!ossl_ec_group_do_inverse_ord_fxn(group, kinvf, kf, fxnctx)) {
         bn_release(kinv, nlimbs);
         kinvf = NULL;
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
     bn_release(kinv, nlimbs);
@@ -452,8 +452,8 @@ err:
         BN_clear_free(r);
     }
     if (token != NULL)
-        OSSL_FN_CTX_end(fnctx, token);
-    OSSL_FN_CTX_free(fnctx);
+        OSSL_FXN_CTX_end(fxnctx, token);
+    OSSL_FXN_CTX_free(fxnctx);
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
     EC_POINT_free(tmp_point);
@@ -470,14 +470,14 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     const EC_GROUP *group;
 
     /*
-     * Prime-field (GF(p)) groups take the constant-time OSSL_FN secret-scalar
-     * path; GF(2^m) has no EC_POINT_mul_fn() and keeps the BIGNUM computation.
+     * Prime-field (GF(p)) groups take the constant-time OSSL_FXN secret-scalar
+     * path; GF(2^m) has no EC_POINT_mul_fxn() and keeps the BIGNUM computation.
      * A NULL eckey/group is left to the BIGNUM path, which reports it.
      */
     if (eckey != NULL
         && (group = EC_KEY_get0_group(eckey)) != NULL
         && group->meth->field_type == NID_X9_62_prime_field)
-        return ecdsa_sign_setup_fn(eckey, ctx_in, kinvp, rp, dgst, dlen,
+        return ecdsa_sign_setup_fxn(eckey, ctx_in, kinvp, rp, dgst, dlen,
             nonce_type, digestname, libctx, propq);
 
     return ecdsa_sign_setup_bignum(eckey, ctx_in, kinvp, rp, dgst, dlen,
@@ -503,11 +503,11 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     const EC_GROUP *group;
     ECDSA_SIG *ret;
     const BIGNUM *priv_key;
-    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FXN_CTX *fxnctx = NULL;
     const void *token = NULL;
-    OSSL_FN_MONT_CTX *mont;
-    const OSSL_FN *order_fn;
-    OSSL_FN *t = NULL, *u = NULL, *d = NULL, *sf = NULL;
+    OSSL_FXN_MONT_CTX *mont;
+    const OSSL_FXN *order_fxn;
+    OSSL_FXN *t = NULL, *u = NULL, *d = NULL, *sf = NULL;
     size_t need, w;
 
     group = EC_KEY_get0_group(eckey);
@@ -569,7 +569,7 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     /*
      * s = kinv * (r * d + m) mod order.  The private key d and the nonce
      * inverse kinv are secret, so the arithmetic is done with Montgomery
-     * multiplications, never division, in a secure OSSL_FN arena; r, m and
+     * multiplications, never division, in a secure OSSL_FXN arena; r, m and
      * the resulting s are public.  Multiplying an operand in the Montgomery
      * domain by a plain one gives a plain product, so only one operand of each
      * multiplication needs converting.  Every operand is first reduced to
@@ -577,29 +577,29 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
      * strict-width functions need.
      */
     nlimbs = bn_get_top(order);
-    if (group->fn_mont_ctx_ord == NULL) {
+    if (group->fxn_mont_ctx_ord == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
         goto err;
     }
-    mont = group->fn_mont_ctx_ord;
-    order_fn = OSSL_FN_MONT_CTX_get0_modulus(mont);
-    w = ossl_fn_get_dsize(order_fn);
-    need = ossl_fn_ctx_max_size(ossl_ec_group_fn_reduce_ord_ctx_size(group),
-        OSSL_FN_to_mont_quick_ctx_size_from_sizes(w, w, w));
-    need = ossl_fn_ctx_max_size(need,
-        OSSL_FN_mul_mont_quick_ctx_size_from_sizes(w, w, w, w));
-    need = ossl_fn_ctx_add_size(need, OSSL_FN_CTX_size(1, 3, 3 * w));
+    mont = group->fxn_mont_ctx_ord;
+    order_fxn = OSSL_FXN_MONT_CTX_get0_modulus(mont);
+    w = ossl_fxn_get_dsize(order_fxn);
+    need = ossl_fxn_ctx_max_size(ossl_ec_group_fxn_reduce_ord_ctx_size(group),
+        OSSL_FXN_to_mont_quick_ctx_size_from_sizes(w, w, w));
+    need = ossl_fxn_ctx_max_size(need,
+        OSSL_FXN_mul_mont_quick_ctx_size_from_sizes(w, w, w, w));
+    need = ossl_fxn_ctx_add_size(need, OSSL_FXN_CTX_size(1, 3, 3 * w));
     if (need == 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if ((fnctx = OSSL_FN_CTX_secure_new_size(eckey->libctx, need)) == NULL
-        || (token = OSSL_FN_CTX_start(fnctx)) == NULL
-        || (t = OSSL_FN_CTX_get_limbs(fnctx, token, w)) == NULL
-        || (u = OSSL_FN_CTX_get_limbs(fnctx, token, w)) == NULL
-        || (d = OSSL_FN_CTX_get_limbs(fnctx, token, w)) == NULL
-        || !ossl_ec_group_fn_reduce_ord(group, d, priv_key, fnctx)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if ((fxnctx = OSSL_FXN_CTX_secure_new_size(eckey->libctx, need)) == NULL
+        || (token = OSSL_FXN_CTX_start(fxnctx)) == NULL
+        || (t = OSSL_FXN_CTX_get_limbs(fxnctx, token, w)) == NULL
+        || (u = OSSL_FXN_CTX_get_limbs(fxnctx, token, w)) == NULL
+        || (d = OSSL_FXN_CTX_get_limbs(fxnctx, token, w)) == NULL
+        || !ossl_ec_group_fxn_reduce_ord(group, d, priv_key, fxnctx)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
 
@@ -620,21 +620,21 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
         }
 
         /* t = r * d, u = m, t = (t + u) * kinv */
-        if (!ossl_ec_group_fn_reduce_ord(group, u, ret->r, fnctx)
-            || !OSSL_FN_to_mont_quick(u, u, mont, fnctx)
-            || !OSSL_FN_mul_mont_quick(t, u, d, mont, fnctx)
-            || !ossl_ec_group_fn_reduce_ord(group, u, m, fnctx)
-            || !OSSL_FN_mod_add_quick(t, t, u, order_fn)
-            || !OSSL_FN_to_mont_quick(t, t, mont, fnctx)
-            || !ossl_ec_group_fn_reduce_ord(group, u, ckinv, fnctx)
-            || !OSSL_FN_mul_mont_quick(t, t, u, mont, fnctx)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        if (!ossl_ec_group_fxn_reduce_ord(group, u, ret->r, fxnctx)
+            || !OSSL_FXN_to_mont_quick(u, u, mont, fxnctx)
+            || !OSSL_FXN_mul_mont_quick(t, u, d, mont, fxnctx)
+            || !ossl_ec_group_fxn_reduce_ord(group, u, m, fxnctx)
+            || !OSSL_FXN_mod_add_quick(t, t, u, order_fxn)
+            || !OSSL_FXN_to_mont_quick(t, t, mont, fxnctx)
+            || !ossl_ec_group_fxn_reduce_ord(group, u, ckinv, fxnctx)
+            || !OSSL_FXN_mul_mont_quick(t, t, u, mont, fxnctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
             goto err;
         }
 
         /* s is public: it is half of the signature */
-        CONSTTIME_DECLASSIFY(ossl_fn_get_words(t), w * OSSL_FN_BYTES);
-        if (OSSL_FN_is_zero(t)) {
+        CONSTTIME_DECLASSIFY(ossl_fxn_get_words(t), w * OSSL_FXN_BYTES);
+        if (OSSL_FXN_is_zero(t)) {
             /*
              * if kinv and r have been supplied by the caller, don't
              * generate new kinv and r values
@@ -655,13 +655,13 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     } while (1);
 
     /* Move the public result s into the returned BIGNUM. */
-    if ((sf = bn_acquire_ossl_fn(ret->s, nlimbs)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+    if ((sf = bn_acquire_ossl_fxn(ret->s, nlimbs)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
-    if (OSSL_FN_copy_truncate(sf, t) == NULL) {
+    if (OSSL_FXN_copy_truncate(sf, t) == NULL) {
         bn_release(ret->s, nlimbs);
-        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_OSSL_FXN_LIB);
         goto err;
     }
     bn_release(ret->s, nlimbs);
@@ -673,8 +673,8 @@ err:
         ret = NULL;
     }
     if (token != NULL)
-        OSSL_FN_CTX_end(fnctx, token);
-    OSSL_FN_CTX_free(fnctx);
+        OSSL_FXN_CTX_end(fxnctx, token);
+    OSSL_FXN_CTX_free(fxnctx);
     BN_CTX_free(ctx);
     BN_clear_free(m);
     BN_clear_free(kinv);

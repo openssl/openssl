@@ -51,7 +51,7 @@ printf "# define NUMPRIMES %d\n\n", $num;
 print <<'EOF';
 /*
  * Packs a 64-bit limb as one or two array entries depending on limb
- * width; shared by crypto/bn/bn_prime.c and crypto/fn/fn_prime_consts.c.
+ * width; shared by crypto/bn/bn_prime.c and crypto/fxn/fxn_prime_consts.c.
  */
 # if BN_BITS2 == 64
 #  define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo

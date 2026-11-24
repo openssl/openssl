@@ -17,9 +17,9 @@
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63(), EC_POINT_mul_fn() */
-#include "crypto/bn.h" /* bn_get_ossl_fn(), bn_get_top() */
-#include "crypto/fn.h"
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63(), EC_POINT_mul_fxn() */
+#include "crypto/bn.h" /* bn_get_ossl_fxn(), bn_get_top() */
+#include "crypto/fxn.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
@@ -114,8 +114,8 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     int rc = 0, ciphertext_leni;
     size_t i;
     BN_CTX *ctx = NULL;
-    OSSL_FN *k = NULL;
-    const OSSL_FN *order_fn = NULL;
+    OSSL_FXN *k = NULL;
+    const OSSL_FXN *order_fxn = NULL;
     BIGNUM *x1 = NULL;
     BIGNUM *y1 = NULL;
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
@@ -176,15 +176,15 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     }
 
     /*
-     * The nonce k is secret, so it is an OSSL_FN and never takes BIGNUM
+     * The nonce k is secret, so it is an OSSL_FXN and never takes BIGNUM
      * form.  The order is public and stays a BIGNUM; only its read-only
-     * OSSL_FN view is needed, which needs no bn_release().
+     * OSSL_FXN view is needed, which needs no bn_release().
      */
-    if ((order_fn = bn_get_ossl_fn(order)) == NULL) {
+    if ((order_fxn = bn_get_ossl_fxn(order)) == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
         goto done;
     }
-    if ((k = OSSL_FN_secure_new_limbs(bn_get_top(order))) == NULL)
+    if ((k = OSSL_FXN_secure_new_limbs(bn_get_top(order))) == NULL)
         goto done;
 
     x2y2 = OPENSSL_calloc(2, field_size);
@@ -200,13 +200,13 @@ int ossl_sm2_encrypt(const EC_KEY *key,
         goto done;
 
 again:
-    if (!OSSL_FN_priv_rand_range(k, order_fn, 0, libctx))
+    if (!OSSL_FXN_priv_rand_range(k, order_fxn, 0, libctx))
         goto done;
 
     /* x1 and y1 become C1 and so are public. */
-    if (!EC_POINT_mul_fn(group, kG, k, NULL, NULL)
+    if (!EC_POINT_mul_fxn(group, kG, k, NULL, NULL)
         || !EC_POINT_get_affine_coordinates(group, kG, x1, y1, ctx)
-        || !EC_POINT_mul_fn(group, kP, k, P, NULL)) {
+        || !EC_POINT_mul_fxn(group, kP, k, P, NULL)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
@@ -295,7 +295,7 @@ done:
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
     EVP_MD_CTX_free(hash);
-    OSSL_FN_clear_free(k);
+    OSSL_FXN_clear_free(k);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
@@ -368,8 +368,8 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     }
 
     /*
-     * The private key is read through its BIGNUM's OSSL_FN view, so the
-     * multiplication takes it as an OSSL_FN and it is never copied into a
+     * The private key is read through its BIGNUM's OSSL_FXN view, so the
+     * multiplication takes it as an OSSL_FXN and it is never copied into a
      * BIGNUM of ours.
      *
      * The shared point's coordinates key the KDF below; extract them straight
@@ -377,8 +377,8 @@ int ossl_sm2_decrypt(const EC_KEY *key,
      */
     if (!EC_POINT_set_affine_coordinates(group, C1, sm2_ctext->C1x,
             sm2_ctext->C1y, NULL)
-        || !EC_POINT_mul_fn(group, C1,
-            bn_get_ossl_fn(EC_KEY_get0_private_key(key)), C1, NULL)
+        || !EC_POINT_mul_fxn(group, C1,
+            bn_get_ossl_fxn(EC_KEY_get0_private_key(key)), C1, NULL)
         || !EC_POINT_get_affine_coords_bytes(group, C1, x2y2,
             x2y2 + field_size, field_size)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);

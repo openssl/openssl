@@ -17,8 +17,8 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 #include <openssl/rand.h>
 #include "rsa_local.h"
 
@@ -76,7 +76,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
 }
 
 /**
- * Recover the public exponent e = d^-1 mod (p-1)(q-1), computed on OSSL_FN
+ * Recover the public exponent e = d^-1 mod (p-1)(q-1), computed on OSSL_FXN
  * views.
  *
  * @param[in]   d       The private exponent.
@@ -88,65 +88,65 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
 static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,
     const BIGNUM *q)
 {
-    /* e = d^-1 mod (p-1)(q-1), computed on OSSL_FN views */
+    /* e = d^-1 mod (p-1)(q-1), computed on OSSL_FXN views */
     BIGNUM *ret = NULL;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *r0 = NULL, *r1 = NULL, *r2 = NULL, *fn_e = NULL;
-    const OSSL_FN *fn_d, *fn_p, *fn_q;
-    size_t pl, ql, nl, fn_size;
+    OSSL_FXN_CTX *fxn_ctx = NULL;
+    OSSL_FXN *r0 = NULL, *r1 = NULL, *r2 = NULL, *fxn_e = NULL;
+    const OSSL_FXN *fxn_d, *fxn_p, *fxn_q;
+    size_t pl, ql, nl, fxn_size;
 
     if (d == NULL || p == NULL || q == NULL)
         return NULL;
-    /* OSSL_FN views are unsigned; negative inputs have no inverse here */
+    /* OSSL_FXN views are unsigned; negative inputs have no inverse here */
     if (BN_is_negative(d) || BN_is_negative(p) || BN_is_negative(q))
         return NULL;
 
-    fn_d = bn_get_ossl_fn(d);
-    fn_p = bn_get_ossl_fn(p);
-    fn_q = bn_get_ossl_fn(q);
-    if (fn_d == NULL || fn_p == NULL || fn_q == NULL)
+    fxn_d = bn_get_ossl_fxn(d);
+    fxn_p = bn_get_ossl_fxn(p);
+    fxn_q = bn_get_ossl_fxn(q);
+    if (fxn_d == NULL || fxn_p == NULL || fxn_q == NULL)
         return NULL;
-    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
-    ql = ossl_fn_get_dsize((OSSL_FN *)fn_q);
+    pl = ossl_fxn_get_dsize((OSSL_FXN *)fxn_p);
+    ql = ossl_fxn_get_dsize((OSSL_FXN *)fxn_q);
     nl = pl + ql;
 
-    r0 = OSSL_FN_secure_new_limbs(nl);
-    r1 = OSSL_FN_secure_new_limbs(pl);
-    r2 = OSSL_FN_secure_new_limbs(ql);
+    r0 = OSSL_FXN_secure_new_limbs(nl);
+    r1 = OSSL_FXN_secure_new_limbs(pl);
+    r2 = OSSL_FXN_secure_new_limbs(ql);
     if (r0 == NULL || r1 == NULL || r2 == NULL)
         goto err;
 
-    if (!OSSL_FN_copy(r1, fn_p) || !OSSL_FN_sub_word(r1, 1)
-        || !OSSL_FN_copy(r2, fn_q) || !OSSL_FN_sub_word(r2, 1))
+    if (!OSSL_FXN_copy(r1, fxn_p) || !OSSL_FXN_sub_word(r1, 1)
+        || !OSSL_FXN_copy(r2, fxn_q) || !OSSL_FXN_sub_word(r2, 1))
         goto err;
 
     /*
      * The mul and the mod_inverse run sequentially in one arena.  The
      * latter's result is acquired only later, at r0's width.
      */
-    fn_size = ossl_fn_ctx_max_size(OSSL_FN_mul_ctx_size_from_nums(r0, r1, r2),
-        OSSL_FN_mod_inverse_ctx_size_from_sizes(nl, ossl_fn_get_dsize(fn_d),
+    fxn_size = ossl_fxn_ctx_max_size(OSSL_FXN_mul_ctx_size_from_nums(r0, r1, r2),
+        OSSL_FXN_mod_inverse_ctx_size_from_sizes(nl, ossl_fxn_get_dsize(fxn_d),
             nl));
-    if (fn_size == 0)
+    if (fxn_size == 0)
         goto err;
     /* TODO(FIXNUM): a secure arena is a possible future consideration */
-    fn_ctx = OSSL_FN_CTX_new_size(NULL, fn_size);
-    if (fn_ctx == NULL)
+    fxn_ctx = OSSL_FXN_CTX_new_size(NULL, fxn_size);
+    if (fxn_ctx == NULL)
         goto err;
 
-    if (!OSSL_FN_mul(r0, r1, r2, fn_ctx))
+    if (!OSSL_FXN_mul(r0, r1, r2, fxn_ctx))
         goto err;
 
     ret = BN_new();
     if (ret == NULL)
         goto err;
-    fn_e = bn_acquire_ossl_fn(ret, (int)nl);
-    if (fn_e == NULL) {
+    fxn_e = bn_acquire_ossl_fxn(ret, (int)nl);
+    if (fxn_e == NULL) {
         BN_free(ret);
         ret = NULL;
         goto err;
     }
-    if (!OSSL_FN_mod_inverse(fn_e, fn_d, r0, fn_ctx)) {
+    if (!OSSL_FXN_mod_inverse(fxn_e, fxn_d, r0, fxn_ctx)) {
         BN_free(ret);
         ret = NULL;
         goto err;
@@ -158,10 +158,10 @@ static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,
     bn_release(ret, (int)nl);
 
 err:
-    OSSL_FN_CTX_free(fn_ctx);
-    OSSL_FN_clear_free(r0);
-    OSSL_FN_clear_free(r1);
-    OSSL_FN_clear_free(r2);
+    OSSL_FXN_CTX_free(fxn_ctx);
+    OSSL_FXN_clear_free(r0);
+    OSSL_FXN_clear_free(r1);
+    OSSL_FXN_clear_free(r2);
     return ret;
 }
 

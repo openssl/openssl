@@ -26,14 +26,14 @@
 #include <openssl/bn.h>
 #include "bn_local.h"
 #include "crypto/bn.h"
-#include "crypto/fn_constants.h"
+#include "crypto/fxn_constants.h"
 #include "internal/nelem.h"
 
 const BIGNUM ossl_bn_inv_sqrt_2 = {
-    .data = (OSSL_FN *)&ossl_fn_static_inv_sqrt_2_storage.fn,
-    .d = (BN_ULONG *)ossl_fn_static_inv_sqrt_2_storage.fixed.d,
-    .top = (int)OSSL_NELEM(ossl_fn_static_inv_sqrt_2_storage.fixed.d),
-    .dmax = (int)OSSL_NELEM(ossl_fn_static_inv_sqrt_2_storage.fixed.d),
+    .data = (OSSL_FXN *)&ossl_fxn_static_inv_sqrt_2_storage.fxn,
+    .d = (BN_ULONG *)ossl_fxn_static_inv_sqrt_2_storage.fixed.d,
+    .top = (int)OSSL_NELEM(ossl_fxn_static_inv_sqrt_2_storage.fixed.d),
+    .dmax = (int)OSSL_NELEM(ossl_fxn_static_inv_sqrt_2_storage.fixed.d),
     .flags = BN_FLG_STATIC_DATA,
 };
 
