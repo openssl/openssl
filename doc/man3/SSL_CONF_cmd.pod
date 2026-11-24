@@ -412,11 +412,6 @@ These options indicate a file or directory used for building certificate
 chains or verifying certificate chains. These options are only supported
 if certificate operations are permitted.
 
-=item B<AddCAFile>, B<AddCAPath>
-
-These options indicate a file or directory containing trusted certificate
-authorities for validation.
-
 =item B<RequestCAFile>
 
 This option indicates a file containing a set of certificates in PEM form.

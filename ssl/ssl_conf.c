@@ -627,49 +627,6 @@ static int cmd_SetHostFlags(SSL_CONF_CTX *cctx, const char *value)
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
 }
 
-static int do_add(SSL_CONF_CTX *cctx,
-    const char *CAfile, const char *CApath)
-{
-    X509_STORE **st;
-    SSL_CTX *ctx;
-    OSSL_LIB_CTX *libctx = NULL;
-    const char *propq = NULL;
-
-    if (cctx->ctx != NULL) {
-        ctx = cctx->ctx;
-    } else if (cctx->ssl != NULL) {
-        ctx = cctx->ssl->ctx;
-    } else {
-        return 1;
-    }
-    if (ctx != NULL) {
-        libctx = ctx->libctx;
-        propq = ctx->propq;
-    }
-    st = &ctx->cert_store;
-    if (*st == NULL) {
-        *st = X509_STORE_new();
-        if (*st == NULL)
-            return 0;
-    }
-
-    if (CAfile != NULL && !X509_STORE_load_file_ex(*st, CAfile, libctx, propq))
-        return 0;
-    if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
-        return 0;
-    return 1;
-}
-
-static int cmd_AddCAPath(SSL_CONF_CTX *cctx, const char *value)
-{
-    return do_add(cctx, NULL, value);
-}
-
-static int cmd_AddCAFile(SSL_CONF_CTX *cctx, const char *value)
-{
-    return do_add(cctx, value, NULL);
-}
-
 static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
@@ -1043,10 +1000,6 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(SetExpectedIPAddress, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(AddExpectedIPAddress, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(SecurityLevel, NULL, 0),
-    SSL_CONF_CMD(AddCAPath, "addCApath", SSL_CONF_FLAG_CERTIFICATE,
-        SSL_CONF_TYPE_DIR),
-    SSL_CONF_CMD(AddCAFile, "addCAfile", SSL_CONF_FLAG_CERTIFICATE,
-        SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
         SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_FLAG_CERTIFICATE,
