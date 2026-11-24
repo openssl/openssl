@@ -28,7 +28,20 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.1.0 and OpenSSL 4.1.1 [under development]
 
-  * none
+OpenSSL 4.1.1 is a security patch release.  The most severe CVE fixed
+in this release is Low.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed possible NULL dereference in non-SMTP DANE clients.
+    ([CVE-2026-84786])
+
+  * Fixed unbounded QUIC RETIRE_CONNECTION_ID frame sending queue.
+    ([CVE-2026-107494])
+
+  * Fixed relative CRL distribution point names rebuilt per CRL in X.509
+    verification.
+    ([CVE-2026-121482])
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1.0 [23 Oct 2026]
 
@@ -2673,6 +2686,9 @@ OpenSSL 0.9.x
 [CVE-2026-84782]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84782
 [CVE-2026-84783]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84783
 [CVE-2026-84784]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84784
+[CVE-2026-84786]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84786
+[CVE-2026-107494]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107494
+[CVE-2026-121482]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-121482
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
