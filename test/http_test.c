@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <string.h>
 
+#include "internal/time.h"
 #include "testutil.h"
 
 #define HTTP_STATUS_CODE_OK 200
@@ -854,6 +855,52 @@ static OSSL_HTTP_REQ_CTX *new_nbio_ctx(BIO **wbio, BIO **rbio)
     return OSSL_HTTP_REQ_CTX_new(*wbio, *rbio, 1024);
 }
 
+/* Make the first read of the response status line request a retry. */
+static long retry_once(BIO *bio, int oper, const char *argp, size_t len,
+    int cmd, long argl, int ret, size_t *processed)
+{
+    if (oper == BIO_CB_GETS) {
+        OSSL_TIME *start = (OSSL_TIME *)BIO_get_callback_arg(bio);
+
+        *start = ossl_time_now();
+        BIO_set_callback_ex(bio, NULL);
+        BIO_set_retry_read(bio);
+        return -1;
+    }
+    return ret;
+}
+
+/**
+ * @brief Check that the synchronous exchange waits before retrying a read.
+ * @param idx Zero for the default timeout, one for a finite timeout.
+ * @returns 1 on success, else 0.
+ */
+static int test_http_exchange_retry(int idx)
+{
+    static const char resp[] = "HTTP/1.0 200 OK\r\n\r\n";
+    BIO *wbio = NULL, *rbio = NULL;
+    OSSL_HTTP_REQ_CTX *rctx = new_nbio_ctx(&wbio, &rbio);
+    OSSL_TIME start = ossl_time_zero();
+    int ok = 0;
+
+    if (!TEST_ptr(rctx)
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0, NULL, NULL, RPATH))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, NULL, 0, idx == 0 ? 0 : 60, 0))
+        || !TEST_int_eq(BIO_puts(BIO_next(rbio), resp), (int)sizeof(resp) - 1))
+        goto end;
+    BIO_set_callback_arg(rbio, (char *)&start);
+    BIO_set_callback_ex(rbio, retry_once);
+    ok = TEST_ptr_eq(OSSL_HTTP_REQ_CTX_exchange(rctx), rbio)
+        && TEST_false(ossl_time_is_zero(start))
+        /* Allow for clock resolution when checking the 100 ms polling interval. */
+        && TEST_uint64_t_ge(ossl_time2ms(ossl_time_subtract(ossl_time_now(), start)), 50);
+end:
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free_all(rbio);
+    return ok;
+}
+
 /**
  * Responses whose outcome must not depend on how they are split across
  * calls to OSSL_HTTP_REQ_CTX_nbio() that return -1.
@@ -1085,6 +1132,7 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
+    ADD_ALL_TESTS(test_http_exchange_retry, 2);
     ADD_ALL_TESTS(test_http_split_resp, 2 * OSSL_NELEM(split_resp_tests));
     ADD_ALL_TESTS(test_http_reuse_resp, 2 * OSSL_NELEM(reuse_resp_tests));
     ADD_TEST(test_http_adapt_proxy_empty_server);

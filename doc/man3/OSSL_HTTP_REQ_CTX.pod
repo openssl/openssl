@@ -153,23 +153,27 @@ OSSL_HTTP_REQ_CTX_nbio() attempts to send the request prepared in I<rctx>
 and to gather the response via HTTP, using the I<wbio> and I<rbio>
 that were given when calling OSSL_HTTP_REQ_CTX_new().
 The function may need to be called again if its result is -1, which indicates
-L<BIO_should_retry(3)>.  In such a case it is advisable to sleep a little in
-between, using L<BIO_wait(3)> on the read BIO to prevent a busy loop.
+L<BIO_should_retry(3)>. The caller should wait before retrying.
+L<BIO_wait(3)> can be used with a nonzero deadline.
 See OSSL_HTTP_REQ_CTX_set_expected() how the response content type,
 the response body, the HTTP transfer timeout, and "keep-alive" are treated.
 
 The client rejects responses with status 1xx, 204, or 304. Once their headers
 have been parsed, OSSL_HTTP_REQ_CTX_nbio() returns 0 and leaves any subsequent
 bytes available on I<rbio>, including when HTTP tracing is enabled.
+After a 1xx response, the final response may still be pending, so the client
+marks the connection unavailable for another request and OSSL_HTTP_is_alive()
+returns 0.
 
 For other rejected responses, OSSL_HTTP_REQ_CTX_nbio() may read the body
 for diagnostics when HTTP tracing is enabled. This read can require a retry.
 If C<Content-Length> is present, tracing ends after that many bytes, including
 when the length is zero. An earlier end of input raises an additional error
 for the length mismatch. Without C<Content-Length>, tracing continues until
-the end of input. In either case the function returns 0 when it finishes
-tracing the rejected response. With HTTP tracing disabled it reports the
-response error without waiting for the body.
+the end of input. When tracing finishes, the function returns 0 with the
+original reason for rejecting the response on the error queue.
+With HTTP tracing disabled it reports the response error without waiting
+for the body.
 
 The maximum response content length applies to the C<Content-Length> value,
 the length of an expected ASN.1 structure, and the number of error body bytes
@@ -216,9 +220,8 @@ If the limit is not 0 and the number of lines exceeds the limit,
 then the HTTP_R_RESPONSE_TOO_MANY_HDRLINES error is indicated.
 Setting the limit to 0 disables the check.
 
-OSSL_HTTP_is_alive() can be used to query if the HTTP connection
-given by I<rctx> is still alive, i.e., has not been closed.
-It returns 0 if I<rctx> is NULL.
+OSSL_HTTP_is_alive() indicates whether the client considers the connection
+available for another request.
 
 If the client application requested or required a persistent connection
 and this was granted by the server, it can keep I<rctx> as long as it wants
@@ -291,9 +294,9 @@ The returned BIO must not be freed by the caller.
 OSSL_HTTP_REQ_CTX_get_resp_len() returns the recorded response length,
 or 0 if the length is unknown or I<rctx> is NULL.
 
-OSSL_HTTP_is_alive() returns 1 if its argument is non-NULL
-and the client requested a persistent connection
-and the server did not disagree on keeping the connection open, else 0.
+OSSL_HTTP_is_alive() returns 1 if the client requested persistence and still
+considers the connection available for another request. Otherwise, or if
+I<rctx> is NULL, it returns 0.
 
 =head1 SEE ALSO
 

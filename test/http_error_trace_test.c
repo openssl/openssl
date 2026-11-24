@@ -124,7 +124,8 @@ static int expect_http_error(int reason)
  * @param ctx Request context to reinitialize.
  * @param request BIO receiving the request.
  * @param writer Peer supplying the response.
- * @param status_code Response status. 304 uses an If-None-Match request header.
+ * @param status_code Response status. The GET requests persistence for 103
+ * and includes If-None-Match for 304.
  * @param content_type Response Content-Type, or NULL to omit it.
  * @param declared_len Content-Length, or -1 to omit it.
  * @returns 1 on success, or 0 after a test assertion fails.
@@ -133,13 +134,15 @@ static int prepare_response(OSSL_HTTP_REQ_CTX *ctx, BIO *request, BIO *writer,
     int status_code, const char *content_type, long declared_len)
 {
     char header[256], type_header[80] = "", length_header[80] = "";
+    int keep_alive = status_code == 103;
     int len;
 
     (void)BIO_reset(request);
     if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(ctx, 0, NULL, NULL, "/"))
         || (status_code == 304
             && !TEST_true(OSSL_HTTP_REQ_CTX_add1_header(ctx, "If-None-Match", "\"fixture\"")))
-        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(ctx, NULL, 1, 0, 0)))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(ctx, NULL, 1, 0, keep_alive))
+        || (keep_alive && !TEST_true(OSSL_HTTP_REQ_CTX_set1_req(ctx, NULL, NULL, NULL))))
         return 0;
     if (content_type != NULL)
         snprintf(type_header, sizeof(type_header), "Content-Type: %s\r\n", content_type);
@@ -335,6 +338,49 @@ static int test_no_trace(void)
     return run_fixtures(&fixture, 1, 0, 1);
 }
 
+/* A 404 can record both its status and a Content-Type mismatch before retry. */
+static int test_rejected_headers(void)
+{
+    static const char headers[] = "HTTP/1.1 404 Not Found\r\n"
+                                  "Content-Type: text/plain\r\n";
+    static const char header[] = "Content-Length: invalid\r\n\r\n";
+    BIO *writer = NULL, *reader = NULL, *request = NULL;
+    OSSL_HTTP_REQ_CTX *ctx = new_context(&request, &reader, &writer, 1);
+    const char *data = NULL;
+    unsigned long err;
+    int ok = 0;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(ctx, 0, NULL, NULL, "/"))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(ctx, NULL, 1, 0, 0))
+        || !put(writer, headers, sizeof(headers) - 1))
+        goto end;
+    /* Discard diagnostics from the first call while retaining a caller error. */
+    ERR_raise(ERR_LIB_USER, ERR_R_INTERNAL_ERROR);
+    if (!TEST_true(ERR_set_mark())
+        || !TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(ctx), -1)
+        || !TEST_true(ERR_pop_to_mark()))
+        goto end;
+    if (!put(writer, header, sizeof(header) - 1)
+        || !TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(ctx), 0)
+        || !TEST_ulong_eq(ERR_get_error(), ERR_PACK(ERR_LIB_USER, 0, ERR_R_INTERNAL_ERROR)))
+        goto end;
+    err = ERR_get_error_all(NULL, NULL, NULL, &data, NULL);
+    ok = TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_HTTP)
+        && TEST_int_eq(ERR_GET_REASON(err), HTTP_R_STATUS_CODE_UNSUPPORTED)
+        && TEST_str_eq(data, "code=404, reason=Not Found")
+        && expect_http_error(HTTP_R_CONTENT_TYPE_MISMATCH)
+        && expect_http_error(HTTP_R_ERROR_PARSING_CONTENT_LENGTH)
+        && TEST_ulong_eq(ERR_peek_error(), 0);
+end:
+    OSSL_HTTP_REQ_CTX_free(ctx);
+    BIO_free(request);
+    BIO_free_all(reader);
+    BIO_free(writer);
+    ERR_clear_error();
+    return ok;
+}
+
 /**
  * @struct bodyless_fixture_st
  * @brief A rejected response ending at its headers, with optional following data.
@@ -383,6 +429,7 @@ static int test_bodyless(int idx)
     if (!TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(ctx), 0)
         || !expect_http_error(HTTP_R_STATUS_CODE_UNSUPPORTED)
         || !TEST_ulong_eq(ERR_peek_error(), 0)
+        || (fixture->status_code == 103 && !TEST_false(OSSL_HTTP_is_alive(ctx)))
         || !TEST_int_eq(BIO_eof(reader), fixture->close))
         goto end;
 #ifndef OPENSSL_NO_TRACE
@@ -509,6 +556,7 @@ static int test_reuse(void)
 int setup_tests(void)
 {
     ADD_TEST(test_no_trace);
+    ADD_TEST(test_rejected_headers);
 #ifndef OPENSSL_NO_TRACE
     memset(long_body, 'x', sizeof(long_body) - 1);
     memset(long_line, 'x', sizeof(long_line) - 2);
