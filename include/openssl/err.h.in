@@ -366,6 +366,7 @@ void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt
 void ERR_HANDLE_vset_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, va_list args);
 
 /* Main error raising functions */
+#ifdef BUILDING_OPENSSL
 static ossl_inline void ERR_raise_data_int(const char *file, const int line, const char *func, int lib, int reason, const char *fmt, ...)
 {
     va_list args;
@@ -380,6 +381,14 @@ static ossl_inline void ERR_raise_data_int(const char *file, const int line, con
 #define ERR_raise_data(...) ERR_raise_data_int(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC, __VA_ARGS__)
 
 #define ERR_raise(lib, reason) ERR_raise_data((lib), (reason), NULL)
+#else
+#define ERR_raise(lib, reason) ERR_raise_data((lib), (reason), NULL)
+#define ERR_raise_data                                           \
+    (ERR_new(),                                                  \
+        ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC), \
+        ERR_set_error)
+#endif
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Backward compatibility */
 #define ERR_put_error(lib, func, reason, file, line) \
