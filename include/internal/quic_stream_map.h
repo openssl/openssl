@@ -640,6 +640,16 @@ QUIC_STREAM *ossl_quic_stream_map_get_by_id(QUIC_STREAM_MAP *qsm,
  */
 void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s);
 
+/**
+ * @brief Checks whether a stream has data to send now.
+ *
+ * @param s  Stream to check.
+ * @return 1 if the stream has STREAM data or a FIN that stream and
+ *         connection flow control let the TX packetiser send now, 0
+ *         otherwise.
+ */
+int ossl_quic_stream_has_data_to_send(QUIC_STREAM *s);
+
 /*
  * Sets the RR stepping value, n. The RR rotation will be advanced every n
  * packets. The default value is 1.

@@ -360,6 +360,11 @@ int ossl_quic_stream_map_is_local_allowed_by_stream_limit(QUIC_STREAM_MAP *qsm,
     return stream_ordinal < stream_limit;
 }
 
+int ossl_quic_stream_has_data_to_send(QUIC_STREAM *s)
+{
+    return stream_has_data_to_send(s);
+}
+
 void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 {
     int should_be_active, allowed_by_stream_limit = 1;

@@ -2086,13 +2086,6 @@ static int check_handshake_12(struct helper *h)
         && check_crypto_data(h);
 }
 
-static int check_no_probe_12(struct helper *h)
-{
-    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
-
-    return TEST_uint_eq(probe->pto[QUIC_PN_SPACE_INITIAL], 0);
-}
-
 static const struct script_op pto_script_12[] = {
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
         secret_1, sizeof(secret_1) },
@@ -2117,8 +2110,14 @@ static const struct script_op pto_script_12[] = {
     { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
     { OPK_CHECK, 0, 0, NULL, 0, check_handshake_12 },
     { OPK_EXPECT_NO_FRAME },
-    /* a single probe, as the Handshake keys are available */
-    { OPK_CHECK, 0, 0, NULL, 0, check_no_probe_12 },
+    /* the second probe resends the Initial data */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
     { OPK_END }
 };
 
@@ -2256,6 +2255,218 @@ static const struct script_op pto_script_11[] = {
 };
 #endif
 
+/* Handshake PTO with CRYPTO data of one packet in flight */
+static const struct script_op pto_script_14[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_3 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    /* a second PTO resends the data from the start */
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+#ifdef OPK_NO_VALIDATION
+/* Handshake PTO with anti-amplification credit for less than a full datagram */
+static const struct script_op pto_script_15[] = {
+    { OPK_NO_VALIDATION },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    /* 3 * 100 = 300 covers the first packet and a probe of pto_crypto_3 */
+    { OPK_ADD_CREDIT, 100 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_3 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+#endif
+
+#ifdef OPK_NO_VALIDATION
+/* With credit for part of the CRYPTO data, the probe carries what fits */
+static int check_part_probe(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 0)
+        && TEST_uint64_t_lt(h->frame.crypto.len, sizeof(pto_crypto_3))
+        && check_crypto_data(h);
+}
+
+static const struct script_op pto_script_16[] = {
+    { OPK_NO_VALIDATION },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_ADD_CREDIT, 60 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_part_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+#endif
+
+/* Handshake PTO with new CRYPTO data queued */
+static const unsigned char pto_crypto_next_byte[1] = { 64 };
+
+static int check_new_byte_17(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, sizeof(pto_crypto_3))
+        && TEST_uint64_t_eq(h->frame.crypto.len, 1)
+        && check_crypto_data(h);
+}
+
+static const struct script_op pto_script_17[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_next_byte,
+        sizeof(pto_crypto_next_byte) },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* the first probe sends the queued data */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_new_byte_17 },
+    { OPK_EXPECT_NO_FRAME },
+    /* a second PTO resends the unacknowledged data from the start */
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+#ifdef OPK_NO_VALIDATION
+/* With credit below the packet overhead plus its ACK, nothing is sent */
+static int rx_handshake_ack_eliciting(struct helper *h);
+
+static const struct script_op pto_script_18[] = {
+    { OPK_NO_VALIDATION },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    /*
+     * 3 * 49 = 147 leaves 41 after the first packet, more than the overhead
+     * of the probe but less than the overhead plus its ACK
+     */
+    { OPK_ADD_CREDIT, 49 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_handshake_ack_eliciting },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+#endif
+
+/* Initial PTO with more Handshake data queued than fits in one datagram */
+static uint64_t handshake_end_19;
+
+static int check_handshake_first_19(struct helper *h)
+{
+    handshake_end_19 = h->frame.crypto.offset + h->frame.crypto.len;
+    return TEST_uint64_t_eq(h->frame.crypto.offset, 0)
+        && TEST_uint64_t_lt(handshake_end_19, sizeof(pto_crypto_5))
+        && check_crypto_data(h);
+}
+
+static int check_handshake_next_19(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.crypto.offset, handshake_end_19)
+        && check_crypto_data(h);
+}
+
+static const struct script_op pto_script_19[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_5,
+        sizeof(pto_crypto_5) },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    /* the first probe leaves the datagram to the queued Handshake data */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_PING },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_handshake_first_19 },
+    { OPK_EXPECT_NO_FRAME },
+    /* the second resends the Initial data, with Handshake data still queued */
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_handshake_next_19 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_END }
+};
+
 static const struct script_op *const pto_scripts[] = {
     pto_script_1,
     pto_script_2,
@@ -2272,6 +2483,16 @@ static const struct script_op *const pto_scripts[] = {
     pto_script_10,
     pto_script_11,
 #endif
+    pto_script_14,
+#ifdef OPK_NO_VALIDATION
+    pto_script_15,
+    pto_script_16,
+#endif
+    pto_script_17,
+#ifdef OPK_NO_VALIDATION
+    pto_script_18,
+#endif
+    pto_script_19,
 };
 
 static int test_pto_script(int idx)
@@ -2504,6 +2725,417 @@ static int test_cc_ack_script(int idx)
     return run_script(idx, cc_ack_scripts[idx]);
 }
 
+/* 1-RTT PTO probes with STREAM data of stream 42 in flight */
+static int confirm_handshake(struct helper *h)
+{
+    return TEST_true(ossl_ackm_on_handshake_confirmed(h->args.ackm));
+}
+
+static int ack_stream_data(struct helper *h)
+{
+    QUIC_STREAM *s = ossl_quic_stream_map_get_by_id(h->args.qsm, 42);
+
+    return TEST_ptr(s)
+        && TEST_true(ossl_quic_sstream_mark_acked(s->sstream, 0,
+            sizeof(stream_9) - 1));
+}
+
+static int check_stream_9_fin(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.stream.offset, 0)
+        && TEST_true(h->frame.stream.is_fin)
+        && check_stream_9(h);
+}
+
+static int check_fin_only(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.stream.offset, sizeof(stream_9))
+        && TEST_uint64_t_eq(h->frame.stream.len, 0)
+        && TEST_true(h->frame.stream.is_fin);
+}
+
+static int check_new_data(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.stream.stream_id, 46)
+        && TEST_uint64_t_eq(h->frame.stream.offset, 0)
+        && check_stream_9(h);
+}
+
+static const unsigned char stream_pto_big[3000];
+
+static int check_first_part(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.stream.offset, 0)
+        && TEST_uint64_t_gt(h->frame.stream.len, 0)
+        && TEST_false(h->frame.stream.is_fin);
+}
+
+/* The probe resends the data and the FIN */
+static const struct script_op stream_pto_script_1[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_STREAM_FIN, 42 },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM_FIN },
+    { OPK_CHECK, 0, 0, NULL, 0, check_stream_9_fin },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* With the data acknowledged, the probe resends the FIN alone */
+static const struct script_op stream_pto_script_2[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_STREAM_FIN, 42 },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ack_stream_data },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM_OFF_FIN },
+    { OPK_CHECK, 0, 0, NULL, 0, check_fin_only },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* With new data on another stream, the probe carries that instead */
+static const struct script_op stream_pto_script_3[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_NEW, 46 },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 46 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_STREAM_SEND, 46, 0, stream_9, sizeof(stream_9) },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM },
+    { OPK_CHECK, 0, 0, NULL, 0, check_new_data },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* The probe resends what fits of data larger than a packet. The rest waits */
+static const struct script_op stream_pto_script_4[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_SEND, 42, 0, stream_pto_big, sizeof(stream_pto_big) },
+    { OPK_STREAM_FIN, 42 },
+    { OPK_CONN_TXFC_BUMP, 10000 },
+    { OPK_STREAM_TXFC_BUMP, 10000, 42 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_part },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Data blocked by flow control on another stream does not stop the resend */
+static int check_resent_42(struct helper *h)
+{
+    return TEST_uint64_t_eq(h->frame.stream.stream_id, 42)
+        && TEST_uint64_t_eq(h->frame.stream.offset, 0)
+        && check_stream_9(h);
+}
+
+static const struct script_op stream_pto_script_5[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_STREAM_NEW, 38 },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_SEND, 38, 0, stream_9, sizeof(stream_9) },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM },
+    { OPK_CHECK, 0, 0, NULL, 0, check_resent_42 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* A stream waiting for MAX_STREAMS does not stop the resend */
+static uint64_t stream_limit_11(int uni, void *arg)
+{
+    return 11;
+}
+
+/* Stream 46 has ordinal 11, so it is not allowed by the limit */
+static int limit_streams(struct helper *h)
+{
+    h->args.qsm->get_stream_limit_cb = stream_limit_11;
+    return 1;
+}
+
+static const struct script_op stream_pto_script_6[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_CHECK, 0, 0, NULL, 0, limit_streams },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_NEW, 46 },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 46 },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_STREAM_SEND, 46, 0, stream_9, sizeof(stream_9) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM },
+    { OPK_CHECK, 0, 0, NULL, 0, check_resent_42 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* A FIN never sent on a lower-ID stream does not stop the resend */
+static uint64_t stream_limit_uni_only(int uni, void *arg)
+{
+    return uni ? 100 : 0;
+}
+
+/* Stream 36 is bidirectional, so it is not allowed by the limit */
+static int limit_bidi_streams(struct helper *h)
+{
+    h->args.qsm->get_stream_limit_cb = stream_limit_uni_only;
+    return 1;
+}
+
+/* Mark stream 42 unidirectional, as its ID says */
+static int make_stream_42_uni(struct helper *h)
+{
+    QUIC_STREAM *s = ossl_quic_stream_map_get_by_id(h->args.qsm, 42);
+
+    if (!TEST_ptr(s))
+        return 0;
+
+    s->type |= QUIC_STREAM_DIR_UNI;
+    return 1;
+}
+
+static const struct script_op stream_pto_script_7[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_CHECK, 0, 0, NULL, 0, limit_bidi_streams },
+    { OPK_STREAM_NEW, 36 },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_CHECK, 0, 0, NULL, 0, make_stream_42_uni },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_STREAM_FIN, 36 },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM },
+    { OPK_CHECK, 0, 0, NULL, 0, check_resent_42 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* A 1-RTT probe resends HANDSHAKE_DONE until it is acknowledged */
+static const struct script_op stream_pto_script_8[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_CHECK, 0, 0, NULL, 0, schedule_handshake_done },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* Once HANDSHAKE_DONE is acknowledged, the probe resends only the data */
+static int ack_1rtt_pn_0(struct helper *h)
+{
+    OSSL_QUIC_ACK_RANGE range = { 0, 0 };
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+
+    ack.ack_ranges = &range;
+    ack.num_ack_ranges = 1;
+    return TEST_true(ossl_ackm_on_rx_ack_frame(h->args.ackm, &ack,
+        QUIC_PN_SPACE_APP, fake_now(NULL)));
+}
+
+static const struct script_op stream_pto_script_9[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_CHECK, 0, 0, NULL, 0, schedule_handshake_done },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ack_1rtt_pn_0 },
+    { OPK_STREAM_NEW, 42 },
+    { OPK_STREAM_SEND, 42, 0, stream_9, sizeof(stream_9) },
+    { OPK_CONN_TXFC_BUMP, 1000 },
+    { OPK_STREAM_TXFC_BUMP, 1000, 42 },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_STREAM },
+    { OPK_CHECK, 0, 0, NULL, 0, check_resent_42 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+/* A lost copy of HANDSHAKE_DONE is not resent once another is acknowledged */
+static int ping_1rtt(struct helper *h)
+{
+    ossl_quic_tx_packetiser_schedule_ack_eliciting(h->txp, QUIC_PN_SPACE_APP);
+    return 1;
+}
+
+static int ack_1rtt_pn_4(struct helper *h)
+{
+    OSSL_QUIC_ACK_RANGE range = { 4, 4 };
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+
+    ack.ack_ranges = &range;
+    ack.num_ack_ranges = 1;
+    return TEST_true(ossl_ackm_on_rx_ack_frame(h->args.ackm, &ack,
+        QUIC_PN_SPACE_APP, fake_now(NULL)));
+}
+
+static const struct script_op stream_pto_script_10[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_HANDSHAKE_COMPLETE },
+    { OPK_CHECK, 0, 0, NULL, 0, confirm_handshake },
+    { OPK_CHECK, 0, 0, NULL, 0, schedule_handshake_done },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    /* the probe sends a second copy, then the first is acknowledged */
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ack_1rtt_pn_0 },
+    /* an ACK of PN 4 declares the second copy in PN 1 lost */
+    { OPK_CHECK, 0, 0, NULL, 0, ping_1rtt },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ping_1rtt },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ping_1rtt },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, ack_1rtt_pn_4 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
+static const struct script_op *const stream_pto_scripts[] = {
+    stream_pto_script_1,
+    stream_pto_script_2,
+    stream_pto_script_3,
+    stream_pto_script_4,
+    stream_pto_script_5,
+    stream_pto_script_6,
+    stream_pto_script_7,
+    stream_pto_script_8,
+    stream_pto_script_9,
+    stream_pto_script_10,
+};
+
+static int test_stream_pto_script(int idx)
+{
+    return run_script(idx, stream_pto_scripts[idx]);
+}
+
 /*
  * Dynamic Script 1.
  *
@@ -2594,6 +3226,7 @@ int setup_tests(void)
     fill_pto_crypto(pto_crypto_5, sizeof(pto_crypto_5));
     ADD_ALL_TESTS(test_pto_script, OSSL_NELEM(pto_scripts));
     ADD_ALL_TESTS(test_cc_ack_script, OSSL_NELEM(cc_ack_scripts));
+    ADD_ALL_TESTS(test_stream_pto_script, OSSL_NELEM(stream_pto_scripts));
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,
         (int)(OSSL_NELEM(dyn_script_1_crypto_1a)

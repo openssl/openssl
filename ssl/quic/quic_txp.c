@@ -74,6 +74,7 @@ struct ossl_quic_tx_packetiser_st {
 
     /* Internal state - frame (re)generation flags. */
     unsigned int want_handshake_done : 1;
+    unsigned int handshake_done_unacked : 1; /* sent, not yet acknowledged */
     unsigned int want_max_data : 1;
     unsigned int want_max_streams_bidi : 1;
     unsigned int want_max_streams_uni : 1;
@@ -1699,7 +1700,9 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
 
     switch (frame_type) {
     case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
-        txp->want_handshake_done = 1;
+        /* Regenerate it only while no copy is acknowledged */
+        if (txp->handshake_done_unacked)
+            txp->want_handshake_done = 1;
         break;
     case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
         txp->want_max_data = 1;
@@ -1869,6 +1872,9 @@ static void on_confirm_notify(uint64_t frame_type, uint64_t stream_id,
         ossl_quic_stream_map_notify_reset_stream_acked(txp->args.qsm, s);
         ossl_quic_stream_map_update_state(txp->args.qsm, s);
     } break;
+    case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
+        txp->handshake_done_unacked = 0;
+        break;
     default:
         assert(0);
         break;
@@ -2177,11 +2183,11 @@ static int determine_stream_len(struct tx_helper *h,
 }
 
 /*
- * Resend unacknowledged Initial CRYPTO data, such as the ClientHello, in a PTO
- * probe rather than a bare PING (RFC 9002 s. 6.2.4), until the Handshake keys
- * are available. Data still queued goes out first. Otherwise each probe takes
- * what fits after the data of the probe before it, and the rest stays in
- * flight. On allocation failure the probe carries what was queued, or a PING.
+ * Resend unacknowledged Initial or Handshake CRYPTO data, such as the
+ * ServerHello or the Finished, in a PTO probe rather than a bare PING (RFC 9002
+ * s. 6.2.4). Data still queued goes out first. Otherwise each probe takes what
+ * fits after the data of the probe before it, and the rest stays in flight. On
+ * allocation failure the probe carries what was queued, or a PING.
  */
 static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
     struct txp_pkt *pkt, uint32_t pn_space)
@@ -2192,23 +2198,39 @@ static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
     uint64_t from = txp->probe_crypto_next[pn_space], start, end, hdr_bytes;
     size_t space_left;
 
-    if (pn_space != QUIC_PN_SPACE_INITIAL || probe->pto[pn_space] == 0)
+    if (pn_space == QUIC_PN_SPACE_APP || probe->pto[pn_space] == 0)
         return;
 
-    if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
-            QUIC_ENC_LEVEL_HANDSHAKE))
+    /*
+     * The first probe gives way to queued Handshake data. The second resends
+     * the Initial data, which may hold a lost ServerHello.
+     */
+    if (pn_space == QUIC_PN_SPACE_INITIAL && probe->pto[pn_space] > 1
+        && sstream_is_pending(txp->args.crypto[QUIC_PN_SPACE_HANDSHAKE]))
         return;
 
     if (sstream_is_pending(crypto))
         return;
 
     /*
-     * Data requeued here stays queued even if the probe is not sent, so wait
-     * until the anti-amplification limit lets a full probe out.
+     * Data requeued here stays queued even if the probe is not sent, so the
+     * probe must fit within the anti-amplification limit. An Initial packet,
+     * or a Handshake packet after one (hwm > 0), is in a datagram that may be
+     * padded, so wait until the limit lets a full datagram out. Otherwise
+     * shrink the probe to the limit.
      */
-    if (!ossl_quic_tx_packetiser_check_unvalidated_credit(txp,
-            pkt->h.max_ppl + pkt->geom.pkt_overhead))
-        return;
+    if (pn_space == QUIC_PN_SPACE_INITIAL || pkt->geom.hwm > 0) {
+        if (!ossl_quic_tx_packetiser_check_unvalidated_credit(txp,
+                pkt->geom.hwm + pkt->h.max_ppl + pkt->geom.pkt_overhead))
+            return;
+    } else {
+        if (txp->unvalidated_credit
+            <= pkt->geom.pkt_overhead + pkt->h.bytes_appended)
+            return;
+
+        if (pkt->h.max_ppl > txp->unvalidated_credit - pkt->geom.pkt_overhead)
+            pkt->h.max_ppl = txp->unvalidated_credit - pkt->geom.pkt_overhead;
+    }
 
     space_left = tx_helper_get_space_left_ack_eliciting(&pkt->h);
     while (space_left >= MIN_FRAME_SIZE_CRYPTO
@@ -2229,9 +2251,8 @@ static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
 /*
  * After a PTO probe is sent, move the start of the next probe past the CRYPTO
  * data this one carried, unless unacknowledged data between the start and that
- * data is still to be resent. With nothing more to resend, or once the
- * Handshake keys are available, a single probe is enough. When no probe is
- * left, the next PTO starts from the beginning again.
+ * data is still to be resent. With nothing more to resend, a single probe is
+ * enough. When no probe is left, the next PTO starts from the beginning again.
  */
 static void txp_crypto_probe_sent(OSSL_QUIC_TX_PACKETISER *txp,
     QUIC_TXPIM_PKT *tpkt, OSSL_ACKM_PROBE_INFO *probe, uint32_t pn_space)
@@ -2254,14 +2275,87 @@ static void txp_crypto_probe_sent(OSSL_QUIC_TX_PACKETISER *txp,
         txp->probe_crypto_next[pn_space] = chunks[i].end + 1;
     }
 
-    if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
-            QUIC_ENC_LEVEL_HANDSHAKE)
-        || !ossl_quic_sstream_get_first_unacked(crypto,
+    if (!ossl_quic_sstream_get_first_unacked(crypto,
             txp->probe_crypto_next[pn_space], &start, &end))
         probe->pto[pn_space] = 0;
 
     if (probe->pto[pn_space] == 0)
         txp->probe_crypto_next[pn_space] = 0;
+}
+
+struct probe_stream_st {
+    QUIC_STREAM *stream; /* lowest-ID stream with unacked sent data or FIN */
+    int pending; /* some stream has data or a FIN it can send now */
+};
+
+/* Find the stream a 1-RTT probe resends from, or note sendable new data */
+static void find_probe_stream(QUIC_STREAM *s, void *arg)
+{
+    struct probe_stream_st *ps = arg;
+    uint64_t start, end;
+
+    if (s->sstream == NULL)
+        return;
+
+    /* The TXP sends only from active streams, which respect stream limits */
+    if (s->active && ossl_quic_stream_has_data_to_send(s)) {
+        ps->pending = 1;
+        return;
+    }
+
+    if (ossl_quic_sstream_is_totally_acked(s->sstream))
+        return;
+
+    /* Skip a stream whose unacked data or FIN was never sent */
+    if (ossl_quic_sstream_get_first_unacked(s->sstream, 0, &start, &end)) {
+        if (start >= ossl_quic_txfc_get_swm(&s->txfc))
+            return;
+    } else if (ossl_quic_sstream_has_pending(s->sstream)) {
+        return;
+    }
+
+    if (ps->stream == NULL || s->id < ps->stream->id)
+        ps->stream = s;
+}
+
+/*
+ * Resend the first unacknowledged STREAM data, or the FIN alone, of one stream
+ * in a 1-RTT PTO probe rather than a bare PING (RFC 9002 s. 6.2.4), unless some
+ * stream has data it can send now. It is requeued as lost and sent as usual.
+ */
+static void txp_requeue_stream_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
+    struct txp_pkt *pkt)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(txp->args.ackm);
+    struct probe_stream_st ps = { 0 };
+    OSSL_QUIC_FRAME_STREAM shdr = { 0 };
+    QUIC_SSTREAM *qss;
+    uint64_t start, end, hdr_bytes;
+
+    if (pkt->h.enc_level != QUIC_ENC_LEVEL_1RTT
+        || probe->pto[QUIC_PN_SPACE_APP] == 0)
+        return;
+
+    ossl_quic_stream_map_visit(txp->args.qsm, find_probe_stream, &ps);
+    if (ps.pending || ps.stream == NULL)
+        return;
+
+    qss = ps.stream->sstream;
+    if (!ossl_quic_sstream_get_first_unacked(qss, 0, &start, &end)) {
+        /* Only the FIN is unacked */
+        ossl_quic_sstream_mark_lost_fin(qss);
+    } else {
+        shdr.stream_id = ps.stream->id;
+        shdr.offset = start;
+        shdr.len = end - start + 1;
+        shdr.has_explicit_len = 1;
+        if (!determine_stream_len(&pkt->h, &shdr,
+                tx_helper_get_space_left(&pkt->h), &hdr_bytes, &shdr.len)
+            || !ossl_quic_sstream_mark_lost(qss, start, start + shdr.len - 1))
+            return;
+    }
+
+    ossl_quic_stream_map_update_state(txp->args.qsm, ps.stream);
 }
 
 static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
@@ -2834,7 +2928,14 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
      * We now serialize frames into the packet in descending order of priority.
      */
 
-    /* HANDSHAKE_DONE (Regenerate) */
+    /*
+     * HANDSHAKE_DONE (Regenerate). A 1-RTT PTO probe resends it until it is
+     * acknowledged, as the peer cannot confirm the handshake without it.
+     */
+    if (a.allow_handshake_done && txp->handshake_done_unacked
+        && ossl_ackm_get0_probe_request(txp->args.ackm)->pto[pn_space] > 0)
+        txp->want_handshake_done = 1;
+
     if (a.allow_handshake_done && txp->want_handshake_done
         && tx_helper_get_space_left(h) >= MIN_FRAME_SIZE_HANDSHAKE_DONE) {
         WPACKET *wpkt = tx_helper_begin(h);
@@ -3019,11 +3120,13 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
     /* Stream-specific frames */
-    if (a.allow_stream_rel && txp->handshake_complete)
+    if (a.allow_stream_rel && txp->handshake_complete) {
+        txp_requeue_stream_for_probe(txp, pkt);
         if (!txp_generate_stream_related(txp, pkt,
                 &have_ack_eliciting,
                 &pkt->stream_head))
             goto fatal_err;
+    }
 
     /* PING */
     tx_helper_unrestrict(h);
@@ -3259,8 +3362,10 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
     if (tpkt->ackm_pkt.is_ack_eliciting)
         txp->force_ack_eliciting &= ~(1UL << pn_space);
 
-    if (tpkt->had_handshake_done_frame)
+    if (tpkt->had_handshake_done_frame) {
         txp->want_handshake_done = 0;
+        txp->handshake_done_unacked = 1;
+    }
 
     if (tpkt->had_max_data_frame) {
         txp->want_max_data = 0;
@@ -3302,7 +3407,7 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
         if (a.allow_force_ack_eliciting /* (i.e., not for 0-RTT) */
             && probe_info->pto[pn_space] > 0) {
             --probe_info->pto[pn_space];
-            if (pn_space == QUIC_PN_SPACE_INITIAL)
+            if (pn_space != QUIC_PN_SPACE_APP)
                 txp_crypto_probe_sent(txp, tpkt, probe_info, pn_space);
         }
     }
