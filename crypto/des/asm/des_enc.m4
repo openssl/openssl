@@ -5,7 +5,7 @@
 ! in the file LICENSE in the source distribution or at
 ! https://www.openssl.org/source/license.html
 !
-!  To expand the m4 macros: m4 -B 8192 des_enc.m4 > des_enc.S
+!  To expand the m4 macros: m4 des_enc.m4 > des_enc.S
 !
 !  Global registers 1 to 5 are used. This is the same as done by the
 !  cc compiler. The UltraSPARC load/store little endian feature is used.
