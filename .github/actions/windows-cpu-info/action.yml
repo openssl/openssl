@@ -1,0 +1,25 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: get cpu info
+description: Print Coreinfo output and the CPU features OpenSSL detects in _build
+
+runs:
+  using: composite
+  steps:
+  - name: download coreinfo
+    shell: pwsh
+    run: |
+      mkdir _build\coreinfo
+      Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
+  - name: get cpu info
+    working-directory: _build
+    shell: pwsh
+    run: |
+      7z.exe x coreinfo/Coreinfo.zip
+      ./Coreinfo64.exe -accepteula -f
+      ./apps/openssl.exe version -c
