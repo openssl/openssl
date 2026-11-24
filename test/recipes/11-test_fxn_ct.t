@@ -9,6 +9,6 @@
 use strict;
 use OpenSSL::Test;              # get 'plan'
 use OpenSSL::Test::Simple;
-setup("test_fn_ct");
+setup("test_fxn_ct");
 
-simple_test("test_fn_ct", "fn_ct_test");
+simple_test("test_fxn_ct", "fxn_ct_test");

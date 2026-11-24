@@ -76,8 +76,8 @@ const EC_METHOD *EC_GFp_mont_method(void)
         ossl_ec_GFp_simple_ladder_step,
         ossl_ec_GFp_simple_ladder_post,
         0, /* group_full_init */
-        0, /* mul_fn */
-        0, /* mul_fn_ctx_size */
+        0, /* mul_fxn */
+        0, /* mul_fxn_ctx_size */
         ossl_ec_GFp_simple_point_get_affine_coords_bytes
     };
 

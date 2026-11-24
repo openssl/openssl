@@ -9,6 +9,6 @@
 use strict;
 use OpenSSL::Test;              # get 'plan'
 use OpenSSL::Test::Simple;
-setup("test_fn_api");
+setup("test_fxn_api");
 
-simple_test("test_fn_api", "fn_api_test");
+simple_test("test_fxn_api", "fxn_api_test");

@@ -66,24 +66,24 @@ static int start_fake_rand(const char *hex_bytes)
 }
 
 /*-
- * Feed the fake RNG a scalar for code that draws it with OSSL_FN.
+ * Feed the fake RNG a scalar for code that draws it with OSSL_FXN.
  *
- * OSSL_FN_priv_rand_range() draws its bytes straight into the number's limb
- * array - see ossl_fn_rand() in crypto/fn/fn_rand.c - so the stream it reads
+ * OSSL_FXN_priv_rand_range() draws its bytes straight into the number's limb
+ * array - see ossl_fxn_rand() in crypto/fxn/fxn_rand.c - so the stream it reads
  * back is the value's byte image in the host's order.  BN_priv_rand_range_ex(),
- * which this test fed before SM2 moved to OSSL_FN, always read the stream
+ * which this test fed before SM2 moved to OSSL_FXN, always read the stream
  * big-endian.  Take the scalar in the usual big-endian hex, as the standards
- * print it, and lay the bytes out the way OSSL_FN will read them.
+ * print it, and lay the bytes out the way OSSL_FXN will read them.
  *
  * Re-laying the big-endian value into the host's limb image means: on a
  * little-endian host reverse the whole buffer; on a big-endian host reverse
  * the order of the BN_ULONG-sized limb groups only (within a limb a big-endian
  * host already stores the most-significant byte first, so just the limb order
  * is opposite to the big-endian byte string).  The hex has to be exactly as
- * wide as the draw OSSL_FN will make - a whole number of limbs, which for these
- * 256-bit orders is the 32 bytes of the scalar itself.
+ * wide as the draw OSSL_FXN will make - a whole number of limbs, which for
+ * these 256-bit orders is the 32 bytes of the scalar itself.
  */
-static int start_fake_rand_fn(const char *hex_bytes)
+static int start_fake_rand_fxn(const char *hex_bytes)
 {
     DECLARE_IS_ENDIAN;
     const size_t w = sizeof(BN_ULONG);
@@ -221,7 +221,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
     if (!TEST_ptr(ctext))
         goto done;
 
-    start_fake_rand_fn(k_hex);
+    start_fake_rand_fxn(k_hex);
     if (!TEST_true(ossl_sm2_encrypt(key, digest,
             (const uint8_t *)message, msg_len,
             ctext, &ctext_len))) {
@@ -383,7 +383,7 @@ static int test_sm2_sign(const EC_GROUP *group,
             goto done;
     }
 
-    start_fake_rand_fn(k_hex);
+    start_fake_rand_fxn(k_hex);
     sig = ossl_sm2_do_sign(key, EVP_sm3(), userid,
         userid_len, (const uint8_t *)message, msg_len);
     if (!TEST_ptr(sig)) {

@@ -24,7 +24,7 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
 
 /**
  * Generate a deterministic nonce in [1, q-1] per RFC 6979, with the
- * private key as an OSSL_FN.
+ * private key as an OSSL_FXN.
  *
  * @param[out]  out         the nonce; must be wide enough to hold q.
  * @param[in]   q           the group order.
@@ -36,8 +36,8 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
  * @param[in]   propq       a property query string for the digest fetch.
  * @returns                 1 on success, 0 on error.
  */
-int ossl_fn_gen_deterministic_nonce_rfc6979(OSSL_FN *out, const BIGNUM *q,
-    const OSSL_FN *priv,
+int ossl_fxn_gen_deterministic_nonce_rfc6979(OSSL_FXN *out, const BIGNUM *q,
+    const OSSL_FXN *priv,
     const unsigned char *hm, size_t hmlen,
     const char *digestname,
     OSSL_LIB_CTX *libctx,

@@ -11,8 +11,8 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 #include "rsa_local.h"
 
 void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
@@ -63,10 +63,10 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 {
     RSA_PRIME_INFO *pinfo;
     BIGNUM *p1 = NULL, *p2 = NULL;
-    OSSL_FN_CTX *fn_ctx = NULL;
-    OSSL_FN *fn_pp = NULL;
-    const OSSL_FN *fn_p1, *fn_p2;
-    size_t fn_size, ppl;
+    OSSL_FXN_CTX *fxn_ctx = NULL;
+    OSSL_FXN *fxn_pp = NULL;
+    const OSSL_FXN *fxn_p1, *fxn_p2;
+    size_t fxn_size, ppl;
     int i, rv = 0, ex_primes;
 
     if ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0) {
@@ -91,33 +91,33 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
             goto err;
         }
 
-        fn_p1 = bn_get_ossl_fn(p1);
-        fn_p2 = bn_get_ossl_fn(p2);
-        if (fn_p1 == NULL || fn_p2 == NULL)
+        fxn_p1 = bn_get_ossl_fxn(p1);
+        fxn_p2 = bn_get_ossl_fxn(p2);
+        if (fxn_p1 == NULL || fxn_p2 == NULL)
             goto err;
-        ppl = ossl_fn_get_dsize((OSSL_FN *)fn_p1)
-            + ossl_fn_get_dsize((OSSL_FN *)fn_p2);
+        ppl = ossl_fxn_get_dsize((OSSL_FXN *)fxn_p1)
+            + ossl_fxn_get_dsize((OSSL_FXN *)fxn_p2);
 
-        if ((fn_pp = bn_acquire_ossl_fn(pinfo->pp, (int)ppl)) == NULL)
+        if ((fxn_pp = bn_acquire_ossl_fxn(pinfo->pp, (int)ppl)) == NULL)
             goto err;
-        fn_size = OSSL_FN_mul_ctx_size_from_nums(fn_pp, fn_p1, fn_p2);
-        if (fn_size == 0)
+        fxn_size = OSSL_FXN_mul_ctx_size_from_nums(fxn_pp, fxn_p1, fxn_p2);
+        if (fxn_size == 0)
             goto err;
         /* TODO(FIXNUM): a secure arena is a possible future consideration */
-        fn_ctx = OSSL_FN_CTX_new_size(NULL, fn_size);
-        if (fn_ctx == NULL)
+        fxn_ctx = OSSL_FXN_CTX_new_size(NULL, fxn_size);
+        if (fxn_ctx == NULL)
             goto err;
-        if (!OSSL_FN_mul(fn_pp, fn_p1, fn_p2, fn_ctx)) {
+        if (!OSSL_FXN_mul(fxn_pp, fxn_p1, fxn_p2, fxn_ctx)) {
             bn_release(pinfo->pp, (int)ppl);
-            OSSL_FN_CTX_free(fn_ctx);
-            fn_ctx = NULL;
+            OSSL_FXN_CTX_free(fxn_ctx);
+            fxn_ctx = NULL;
             goto err;
         }
         /* pp = p1 * p2 fits in the sum of the operand widths */
         bn_release(pinfo->pp, (int)ppl);
-        fn_pp = NULL;
-        OSSL_FN_CTX_free(fn_ctx);
-        fn_ctx = NULL;
+        fxn_pp = NULL;
+        OSSL_FXN_CTX_free(fxn_ctx);
+        fxn_ctx = NULL;
 
         /* save previous one */
         p1 = pinfo->pp;
@@ -126,7 +126,7 @@ int ossl_rsa_multip_calc_product(RSA *rsa)
 
     rv = 1;
 err:
-    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FXN_CTX_free(fxn_ctx);
     return rv;
 }
 

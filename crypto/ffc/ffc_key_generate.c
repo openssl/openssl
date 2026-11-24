@@ -9,7 +9,7 @@
 
 #include "internal/ffc.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h"
+#include "crypto/fxn.h"
 
 /*
  * SP800-56Ar3 5.6.1.1.4 Key pair generation by testing candidates.
@@ -26,8 +26,8 @@ int ossl_ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
 {
     int ret = 0, qbits = BN_num_bits(params->q), plimbs;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
-    OSSL_FN *fn_priv = NULL, *two_powN = NULL;
-    const OSSL_FN *fn_q = NULL, *fn_m;
+    OSSL_FXN *fxn_priv = NULL, *two_powN = NULL;
+    const OSSL_FXN *fxn_q = NULL, *fxn_m;
 
     /* Deal with the edge cases where the value of N and/or s is not set */
     if (s == 0)
@@ -42,38 +42,38 @@ int ossl_ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
     /* Candidates and two_powN may reach 2^N, i.e. N + 1 bits */
     plimbs = (N + BN_BITS2) / BN_BITS2;
 
-    if ((fn_q = bn_get_ossl_fn(params->q)) == NULL)
+    if ((fxn_q = bn_get_ossl_fxn(params->q)) == NULL)
         return 0;
 
     /*
      * Acquire the writable result first.  The generation loop below exits
-     * only when fn_priv < fn_m <= 2^N, so the generated key has at most N
+     * only when fxn_priv < fxn_m <= 2^N, so the generated key has at most N
      * significant bits and always fits in the acquired width; that width
      * is therefore the bn_release() width as well.
      */
-    if ((fn_priv = bn_acquire_ossl_fn(priv, plimbs)) == NULL)
+    if ((fxn_priv = bn_acquire_ossl_fxn(priv, plimbs)) == NULL)
         return 0;
-    if ((two_powN = OSSL_FN_new_limbs(plimbs)) == NULL)
+    if ((two_powN = OSSL_FXN_new_limbs(plimbs)) == NULL)
         goto err;
 
     /* Step (5) : M = min(2 ^ N, q) */
-    if (!OSSL_FN_one(two_powN) || !OSSL_FN_lshift(two_powN, two_powN, N))
+    if (!OSSL_FXN_one(two_powN) || !OSSL_FXN_lshift(two_powN, two_powN, N))
         goto err;
-    fn_m = (OSSL_FN_cmp(two_powN, fn_q) > 0) ? fn_q : two_powN;
+    fxn_m = (OSSL_FXN_cmp(two_powN, fxn_q) > 0) ? fxn_q : two_powN;
 
     do {
         /* Steps (3, 4 & 7) :  c + 1 = 1 + random[0..2^N - 1] */
-        if (!OSSL_FN_priv_rand_range(fn_priv, two_powN, 0, libctx)
-            || !OSSL_FN_add_word(fn_priv, 1))
+        if (!OSSL_FXN_priv_rand_range(fxn_priv, two_powN, 0, libctx)
+            || !OSSL_FXN_add_word(fxn_priv, 1))
             goto err;
         /* Step (6) : loop if c > M - 2 (i.e. c + 1 >= M) */
-        if (OSSL_FN_cmp(fn_priv, fn_m) < 0)
+        if (OSSL_FXN_cmp(fxn_priv, fxn_m) < 0)
             break;
     } while (1);
 
     ret = 1;
 err:
     bn_release(priv, plimbs);
-    OSSL_FN_free(two_powN);
+    OSSL_FXN_free(two_powN);
     return ret;
 }

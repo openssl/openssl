@@ -1236,35 +1236,35 @@ IF[{- !$disabled{tests} -}]
       DEPEND[rsa_x931_test]=../libcrypto.a libtestutil.a
     ENDIF
 
-    PROGRAMS{noinst}=fn_internal_test
-    SOURCE[fn_internal_test]=fn_internal_test.c
-    INCLUDE[fn_internal_test]=.. ../include ../crypto/fn ../apps/include
-    DEPEND[fn_internal_test]=../libcrypto.a libtestutil.a
+    PROGRAMS{noinst}=fxn_internal_test
+    SOURCE[fxn_internal_test]=fxn_internal_test.c
+    INCLUDE[fxn_internal_test]=.. ../include ../crypto/fxn ../apps/include
+    DEPEND[fxn_internal_test]=../libcrypto.a libtestutil.a
 
-    PROGRAMS{noinst}=fn_api_test
-    SOURCE[fn_api_test]=fn_api_test.c
-    INCLUDE[fn_api_test]=.. ../include ../crypto/fn ../apps/include
-    DEPEND[fn_api_test]=../libcrypto.a libtestutil.a
+    PROGRAMS{noinst}=fxn_api_test
+    SOURCE[fxn_api_test]=fxn_api_test.c
+    INCLUDE[fxn_api_test]=.. ../include ../crypto/fxn ../apps/include
+    DEPEND[fxn_api_test]=../libcrypto.a libtestutil.a
 
-    PROGRAMS{noinst}=fn_cross_bn_test
-    SOURCE[fn_cross_bn_test]=fn_cross_bn_test.c
-    INCLUDE[fn_cross_bn_test]=.. ../include ../crypto/fn ../apps/include
-    DEPEND[fn_cross_bn_test]=../libcrypto.a libtestutil.a
+    PROGRAMS{noinst}=fxn_cross_bn_test
+    SOURCE[fxn_cross_bn_test]=fxn_cross_bn_test.c
+    INCLUDE[fxn_cross_bn_test]=.. ../include ../crypto/fxn ../apps/include
+    DEPEND[fxn_cross_bn_test]=../libcrypto.a libtestutil.a
 
-    PROGRAMS{noinst}=fn_ct_test
-    SOURCE[fn_ct_test]=fn_ct_test.c
-    INCLUDE[fn_ct_test]=.. ../include ../crypto/fn ../apps/include
-    DEPEND[fn_ct_test]=../libcrypto.a libtestutil.a
+    PROGRAMS{noinst}=fxn_ct_test
+    SOURCE[fxn_ct_test]=fxn_ct_test.c
+    INCLUDE[fxn_ct_test]=.. ../include ../crypto/fxn ../apps/include
+    DEPEND[fxn_ct_test]=../libcrypto.a libtestutil.a
 
     PROGRAMS{noinst}=pkey_ct_test
     SOURCE[pkey_ct_test]=pkey_ct_test.c
     INCLUDE[pkey_ct_test]=.. ../include ../apps/include
     DEPEND[pkey_ct_test]=../libcrypto.a libtestutil.a
 
-    PROGRAMS{noinst}=fntest
-    SOURCE[fntest]=fntest.c
-    INCLUDE[fntest]=.. ../include ../crypto/fn ../apps/include
-    DEPEND[fntest]=../libcrypto.a libtestutil.a
+    PROGRAMS{noinst}=fxntest
+    SOURCE[fxntest]=fxntest.c
+    INCLUDE[fxntest]=.. ../include ../crypto/fxn ../apps/include
+    DEPEND[fxntest]=../libcrypto.a libtestutil.a
 
     SOURCE[bn_internal_test]=bn_internal_test.c
     INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include

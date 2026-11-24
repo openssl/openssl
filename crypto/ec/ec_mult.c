@@ -19,8 +19,8 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h" /* ossl_fn_get_dsize() */
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h" /* ossl_fxn_get_dsize() */
 #include "ec_local.h"
 #include "internal/refcount.h"
 
@@ -419,7 +419,7 @@ err:
 }
 
 /*-
- * The OSSL_FN Montgomery ladder below works in whatever representation the
+ * The OSSL_FXN Montgomery ladder below works in whatever representation the
  * group stores its coordinates in: Montgomery for methods that encode them
  * (meth->field_encode != NULL), plain residues mod the field otherwise (e.g.
  * the nist method).  Only three field operations depend on that choice - the
@@ -428,26 +428,26 @@ err:
  * both.  These helpers hide the choice, keeping the ladder bodies
  * representation-agnostic.
  */
-static ossl_inline int ec_fn_is_mont(const EC_GROUP *group)
+static ossl_inline int ec_fxn_is_mont(const EC_GROUP *group)
 {
     return group->meth->field_encode != NULL;
 }
 
-static ossl_inline int ec_fn_fmul(const EC_GROUP *group, OSSL_FN *r,
-    const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
+static ossl_inline int ec_fxn_fmul(const EC_GROUP *group, OSSL_FXN *r,
+    const OSSL_FXN *a, const OSSL_FXN *b, OSSL_FXN_CTX *ctx)
 {
-    return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick(r, a, b, group->fn_mont_ctx, ctx)
-        : OSSL_FN_mod_mul(r, a, b, group->field_fn, ctx);
+    return ec_fxn_is_mont(group)
+        ? OSSL_FXN_mul_mont_quick(r, a, b, group->fxn_mont_ctx, ctx)
+        : OSSL_FXN_mod_mul(r, a, b, group->field_fxn, ctx);
 }
 
 /* Copy a BIGNUM field element into 'dst' at fixed width; see ec_local.h. */
-int ossl_ec_fn_read(OSSL_FN *dst, const BIGNUM *src)
+int ossl_ec_fxn_read(OSSL_FXN *dst, const BIGNUM *src)
 {
-    const OSSL_FN *s = bn_get_ossl_fn(src);
+    const OSSL_FXN *s = bn_get_ossl_fxn(src);
 
-    return s != NULL ? OSSL_FN_copy_truncate(dst, s) != NULL
-                     : OSSL_FN_set_word(dst, 0);
+    return s != NULL ? OSSL_FXN_copy_truncate(dst, s) != NULL
+                     : OSSL_FXN_set_word(dst, 0);
 }
 
 /**
@@ -457,131 +457,131 @@ int ossl_ec_fn_read(OSSL_FN *dst, const BIGNUM *src)
  *
  * @param[in]   group   The group whose field the helpers operate in.
  * @returns             The field element width, in limbs.
- * @retval      0       if the group lacks the OSSL_FN data its
+ * @retval      0       if the group lacks the OSSL_FXN data its
  *                      representation needs.
  */
-static size_t ec_fn_field_dsize(const EC_GROUP *group)
+static size_t ec_fxn_field_dsize(const EC_GROUP *group)
 {
-    if (group->field_fn == NULL
-        || (ec_fn_is_mont(group) && group->fn_mont_ctx == NULL))
+    if (group->field_fxn == NULL
+        || (ec_fxn_is_mont(group) && group->fxn_mont_ctx == NULL))
         return 0;
-    return ossl_fn_get_dsize(group->field_fn);
+    return ossl_fxn_get_dsize(group->field_fxn);
 }
 
 /**
- * Calculate the arena payload size that ec_fn_fmul() needs.
+ * Calculate the arena payload size that ec_fxn_fmul() needs.
  *
- * @param[in]   group   The group whose field ec_fn_fmul() operates in.
+ * @param[in]   group   The group whose field ec_fxn_fmul() operates in.
  * @returns             The arena payload size, in bytes.
  * @retval      0       on arithmetic overflow or invalid input.
  */
-static size_t ec_fn_fmul_ctx_size(const EC_GROUP *group)
+static size_t ec_fxn_fmul_ctx_size(const EC_GROUP *group)
 {
-    size_t pl = ec_fn_field_dsize(group);
+    size_t pl = ec_fxn_field_dsize(group);
 
     if (pl == 0)
         return 0;
-    return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick_ctx_size_from_sizes(pl, pl, pl, pl)
-        : OSSL_FN_mod_mul_ctx_size_from_sizes(pl, pl, pl, pl);
+    return ec_fxn_is_mont(group)
+        ? OSSL_FXN_mul_mont_quick_ctx_size_from_sizes(pl, pl, pl, pl)
+        : OSSL_FXN_mod_mul_ctx_size_from_sizes(pl, pl, pl, pl);
 }
 
 /* Field squaring; Montgomery has no dedicated square, so it reuses the mul. */
-static ossl_inline int ec_fn_fsqr(const EC_GROUP *group, OSSL_FN *r,
-    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+static ossl_inline int ec_fxn_fsqr(const EC_GROUP *group, OSSL_FXN *r,
+    const OSSL_FXN *a, OSSL_FXN_CTX *ctx)
 {
-    return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick(r, a, a, group->fn_mont_ctx, ctx)
-        : OSSL_FN_mod_sqr(r, a, group->field_fn, ctx);
+    return ec_fxn_is_mont(group)
+        ? OSSL_FXN_mul_mont_quick(r, a, a, group->fxn_mont_ctx, ctx)
+        : OSSL_FXN_mod_sqr(r, a, group->field_fxn, ctx);
 }
 
 /**
- * Calculate the arena payload size that ec_fn_fsqr() needs.
+ * Calculate the arena payload size that ec_fxn_fsqr() needs.
  *
- * @param[in]   group   The group whose field ec_fn_fsqr() operates in.
+ * @param[in]   group   The group whose field ec_fxn_fsqr() operates in.
  * @returns             The arena payload size, in bytes.
  * @retval      0       on arithmetic overflow or invalid input.
  */
-static size_t ec_fn_fsqr_ctx_size(const EC_GROUP *group)
+static size_t ec_fxn_fsqr_ctx_size(const EC_GROUP *group)
 {
-    size_t pl = ec_fn_field_dsize(group);
+    size_t pl = ec_fxn_field_dsize(group);
 
     if (pl == 0)
         return 0;
-    return ec_fn_is_mont(group)
-        ? OSSL_FN_mul_mont_quick_ctx_size_from_sizes(pl, pl, pl, pl)
-        : OSSL_FN_mod_sqr_ctx_size_from_sizes(pl, pl, pl);
+    return ec_fxn_is_mont(group)
+        ? OSSL_FXN_mul_mont_quick_ctx_size_from_sizes(pl, pl, pl, pl)
+        : OSSL_FXN_mod_sqr_ctx_size_from_sizes(pl, pl, pl);
 }
 
 /* Encode a plain, reduced value in place into the coordinate representation. */
-static ossl_inline int ec_fn_encode(const EC_GROUP *group, OSSL_FN *r,
-    OSSL_FN_CTX *ctx)
+static ossl_inline int ec_fxn_encode(const EC_GROUP *group, OSSL_FXN *r,
+    OSSL_FXN_CTX *ctx)
 {
-    return ec_fn_is_mont(group)
-        ? OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx)
+    return ec_fxn_is_mont(group)
+        ? OSSL_FXN_to_mont(r, r, group->fxn_mont_ctx, ctx)
         : 1; /* plain representation: nothing to encode */
 }
 
 /**
- * Calculate the arena payload size that ec_fn_encode() needs.
+ * Calculate the arena payload size that ec_fxn_encode() needs.
  *
- * @param[in]   group                  The group whose field ec_fn_encode()
+ * @param[in]   group                  The group whose field ec_fxn_encode()
  *                                     operates in.
  * @returns                            The arena payload size, in bytes.
- * @retval      OSSL_FN_CTX_SIZE_NONE  for a plain representation, which
+ * @retval      OSSL_FXN_CTX_SIZE_NONE  for a plain representation, which
  *                                     needs no arena.
  * @retval      0                      on arithmetic overflow or invalid input.
  */
-static size_t ec_fn_encode_ctx_size(const EC_GROUP *group)
+static size_t ec_fxn_encode_ctx_size(const EC_GROUP *group)
 {
     size_t pl;
 
-    if (!ec_fn_is_mont(group))
-        return OSSL_FN_CTX_SIZE_NONE; /* plain: no arena needed */
-    if ((pl = ec_fn_field_dsize(group)) == 0)
+    if (!ec_fxn_is_mont(group))
+        return OSSL_FXN_CTX_SIZE_NONE; /* plain: no arena needed */
+    if ((pl = ec_fxn_field_dsize(group)) == 0)
         return 0;
-    return OSSL_FN_to_mont_ctx_size_from_sizes(pl, pl, pl);
+    return OSSL_FXN_to_mont_ctx_size_from_sizes(pl, pl, pl);
 }
 
 /*
  * r := a^-1 in the coordinate representation.  A Montgomery-form operand is
  * decoded, inverted, and re-encoded; a plain one is inverted directly.  The
- * inverse is Fermat's a^(m-2) mod m via OSSL_FN_mod_inverse_prime(), which is
+ * inverse is Fermat's a^(m-2) mod m via OSSL_FXN_mod_inverse_prime(), which is
  * constant-time in the secret operand for the prime field modulus, reusing the
  * group's field Montgomery context on both paths.
  */
-static ossl_inline int ec_fn_finv(const EC_GROUP *group, OSSL_FN *r,
-    const OSSL_FN *a, OSSL_FN_CTX *ctx)
+static ossl_inline int ec_fxn_finv(const EC_GROUP *group, OSSL_FXN *r,
+    const OSSL_FXN *a, OSSL_FXN_CTX *ctx)
 {
-    const OSSL_FN *p_fn = group->field_fn;
+    const OSSL_FXN *p_fxn = group->field_fxn;
 
-    if (ec_fn_is_mont(group))
-        return OSSL_FN_from_mont(r, a, group->fn_mont_ctx, ctx)
-            && OSSL_FN_mod_inverse_prime(r, r, p_fn, ctx, group->fn_mont_ctx)
-            && OSSL_FN_to_mont(r, r, group->fn_mont_ctx, ctx);
-    return OSSL_FN_mod_inverse_prime(r, a, p_fn, ctx, group->fn_mont_ctx);
+    if (ec_fxn_is_mont(group))
+        return OSSL_FXN_from_mont(r, a, group->fxn_mont_ctx, ctx)
+            && OSSL_FXN_mod_inverse_prime(r, r, p_fxn, ctx, group->fxn_mont_ctx)
+            && OSSL_FXN_to_mont(r, r, group->fxn_mont_ctx, ctx);
+    return OSSL_FXN_mod_inverse_prime(r, a, p_fxn, ctx, group->fxn_mont_ctx);
 }
 
 /**
- * Calculate the arena payload size that ec_fn_finv() needs.
+ * Calculate the arena payload size that ec_fxn_finv() needs.
  *
- * @param[in]   group   The group whose field ec_fn_finv() operates in.
+ * @param[in]   group   The group whose field ec_fxn_finv() operates in.
  * @returns             The arena payload size, in bytes.
  * @retval      0       on arithmetic overflow or invalid input.
  */
-static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
+static size_t ec_fxn_finv_ctx_size(const EC_GROUP *group)
 {
-    size_t pl = ec_fn_field_dsize(group);
+    size_t pl = ec_fxn_field_dsize(group);
     size_t frm, inv, tom, m;
 
     if (pl == 0)
         return 0;
-    if (!ec_fn_is_mont(group))
-        return OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(pl, pl, pl, pl);
+    if (!ec_fxn_is_mont(group))
+        return OSSL_FXN_mod_inverse_prime_ctx_size_from_sizes(pl, pl, pl, pl);
 
-    frm = OSSL_FN_from_mont_ctx_size_from_sizes(pl, pl, pl);
-    inv = OSSL_FN_mod_inverse_prime_ctx_size_from_sizes(pl, pl, pl, pl);
-    tom = OSSL_FN_to_mont_ctx_size_from_sizes(pl, pl, pl);
+    frm = OSSL_FXN_from_mont_ctx_size_from_sizes(pl, pl, pl);
+    inv = OSSL_FXN_mod_inverse_prime_ctx_size_from_sizes(pl, pl, pl, pl);
+    tom = OSSL_FXN_to_mont_ctx_size_from_sizes(pl, pl, pl);
     if (frm == 0 || inv == 0 || tom == 0)
         return 0;
     m = frm;
@@ -593,87 +593,87 @@ static size_t ec_fn_finv_ctx_size(const EC_GROUP *group)
 }
 
 /*-
- * OSSL_FN x-only (differential) Montgomery-ladder step; see the banner in
+ * OSSL_FXN x-only (differential) Montgomery-ladder step; see the banner in
  * ec_local.h.  Mirrors ossl_ec_GFp_simple_ladder_step() operation for
- * operation, with the field arithmetic on the coordinates' OSSL_FN view.  The
+ * operation, with the field arithmetic on the coordinates' OSSL_FXN view.  The
  * BIGNUM original is already branchless, so this port is genuinely
  * constant-time: no value-dependent control flow.
  */
-int ossl_ec_point_ladder_step_fn(const EC_GROUP *group, EC_POINT *r,
-    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx)
+int ossl_ec_point_ladder_step_fxn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FXN_CTX *ctx)
 {
     const void *token = NULL;
-    const OSSL_FN *p_fn = group->field_fn;
-    OSSL_FN *t0, *t1, *t2, *t3, *t4, *t5, *t6, *ca, *cb, *px;
-    OSSL_FN *rx = NULL, *rz = NULL, *sx = NULL, *sz = NULL;
-    int w = (int)ossl_fn_get_dsize(p_fn);
+    const OSSL_FXN *p_fxn = group->field_fxn;
+    OSSL_FXN *t0, *t1, *t2, *t3, *t4, *t5, *t6, *ca, *cb, *px;
+    OSSL_FXN *rx = NULL, *rz = NULL, *sx = NULL, *sz = NULL;
+    int w = (int)ossl_fxn_get_dsize(p_fxn);
     int ret = 0;
 
-    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+    if ((token = OSSL_FXN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t1 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t2 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t3 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t4 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t5 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t6 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (ca = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (cb = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (px = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL)
+    if ((t0 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t1 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t2 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t3 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t4 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t5 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t6 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (ca = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (cb = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (px = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL)
         goto err;
 
     /* r, s, p are distinct; acquire r/s coords, then copy p->X, a and b to w. */
-    if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
-        || (rz = bn_acquire_ossl_fn(r->Z, w)) == NULL
-        || (sx = bn_acquire_ossl_fn(s->X, w)) == NULL
-        || (sz = bn_acquire_ossl_fn(s->Z, w)) == NULL)
+    if ((rx = bn_acquire_ossl_fxn(r->X, w)) == NULL
+        || (rz = bn_acquire_ossl_fxn(r->Z, w)) == NULL
+        || (sx = bn_acquire_ossl_fxn(s->X, w)) == NULL
+        || (sz = bn_acquire_ossl_fxn(s->Z, w)) == NULL)
         goto err;
-    if (!ossl_ec_fn_read(px, p->X)
-        || !ossl_ec_fn_read(ca, group->a)
-        || !ossl_ec_fn_read(cb, group->b))
+    if (!ossl_ec_fxn_read(px, p->X)
+        || !ossl_ec_fxn_read(ca, group->a)
+        || !ossl_ec_fxn_read(cb, group->b))
         goto err;
 
-    if (!ec_fn_fmul(group, t6, rx, sx, ctx)
-        || !ec_fn_fmul(group, t0, rz, sz, ctx)
-        || !ec_fn_fmul(group, t4, rx, sz, ctx)
-        || !ec_fn_fmul(group, t3, rz, sx, ctx)
-        || !ec_fn_fmul(group, t5, ca, t0, ctx)
-        || !OSSL_FN_mod_add_quick(t5, t6, t5, p_fn)
-        || !OSSL_FN_mod_add_quick(t6, t3, t4, p_fn)
-        || !ec_fn_fmul(group, t5, t6, t5, ctx)
-        || !ec_fn_fsqr(group, t0, t0, ctx)
-        || !OSSL_FN_mod_lshift_quick(t2, cb, 2, p_fn)
-        || !ec_fn_fmul(group, t0, t2, t0, ctx)
-        || !OSSL_FN_mod_lshift1_quick(t5, t5, p_fn)
-        || !OSSL_FN_mod_sub_quick(t3, t4, t3, p_fn)
+    if (!ec_fxn_fmul(group, t6, rx, sx, ctx)
+        || !ec_fxn_fmul(group, t0, rz, sz, ctx)
+        || !ec_fxn_fmul(group, t4, rx, sz, ctx)
+        || !ec_fxn_fmul(group, t3, rz, sx, ctx)
+        || !ec_fxn_fmul(group, t5, ca, t0, ctx)
+        || !OSSL_FXN_mod_add_quick(t5, t6, t5, p_fxn)
+        || !OSSL_FXN_mod_add_quick(t6, t3, t4, p_fxn)
+        || !ec_fxn_fmul(group, t5, t6, t5, ctx)
+        || !ec_fxn_fsqr(group, t0, t0, ctx)
+        || !OSSL_FXN_mod_lshift_quick(t2, cb, 2, p_fxn)
+        || !ec_fxn_fmul(group, t0, t2, t0, ctx)
+        || !OSSL_FXN_mod_lshift1_quick(t5, t5, p_fxn)
+        || !OSSL_FXN_mod_sub_quick(t3, t4, t3, p_fxn)
         /* s->Z output */
-        || !ec_fn_fsqr(group, sz, t3, ctx)
-        || !ec_fn_fmul(group, t4, sz, px, ctx)
-        || !OSSL_FN_mod_add_quick(t0, t0, t5, p_fn)
+        || !ec_fxn_fsqr(group, sz, t3, ctx)
+        || !ec_fxn_fmul(group, t4, sz, px, ctx)
+        || !OSSL_FXN_mod_add_quick(t0, t0, t5, p_fxn)
         /* s->X output */
-        || !OSSL_FN_mod_sub_quick(sx, t0, t4, p_fn)
-        || !ec_fn_fsqr(group, t4, rx, ctx)
-        || !ec_fn_fsqr(group, t5, rz, ctx)
-        || !ec_fn_fmul(group, t6, t5, ca, ctx)
-        || !OSSL_FN_mod_add_quick(t1, rx, rz, p_fn)
-        || !ec_fn_fsqr(group, t1, t1, ctx)
-        || !OSSL_FN_mod_sub_quick(t1, t1, t4, p_fn)
-        || !OSSL_FN_mod_sub_quick(t1, t1, t5, p_fn)
-        || !OSSL_FN_mod_sub_quick(t3, t4, t6, p_fn)
-        || !ec_fn_fsqr(group, t3, t3, ctx)
-        || !ec_fn_fmul(group, t0, t5, t1, ctx)
-        || !ec_fn_fmul(group, t0, t2, t0, ctx)
+        || !OSSL_FXN_mod_sub_quick(sx, t0, t4, p_fxn)
+        || !ec_fxn_fsqr(group, t4, rx, ctx)
+        || !ec_fxn_fsqr(group, t5, rz, ctx)
+        || !ec_fxn_fmul(group, t6, t5, ca, ctx)
+        || !OSSL_FXN_mod_add_quick(t1, rx, rz, p_fxn)
+        || !ec_fxn_fsqr(group, t1, t1, ctx)
+        || !OSSL_FXN_mod_sub_quick(t1, t1, t4, p_fxn)
+        || !OSSL_FXN_mod_sub_quick(t1, t1, t5, p_fxn)
+        || !OSSL_FXN_mod_sub_quick(t3, t4, t6, p_fxn)
+        || !ec_fxn_fsqr(group, t3, t3, ctx)
+        || !ec_fxn_fmul(group, t0, t5, t1, ctx)
+        || !ec_fxn_fmul(group, t0, t2, t0, ctx)
         /* r->X output */
-        || !OSSL_FN_mod_sub_quick(rx, t3, t0, p_fn)
-        || !OSSL_FN_mod_add_quick(t3, t4, t6, p_fn)
-        || !ec_fn_fsqr(group, t4, t5, ctx)
-        || !ec_fn_fmul(group, t4, t4, t2, ctx)
-        || !ec_fn_fmul(group, t1, t1, t3, ctx)
-        || !OSSL_FN_mod_lshift1_quick(t1, t1, p_fn)
+        || !OSSL_FXN_mod_sub_quick(rx, t3, t0, p_fxn)
+        || !OSSL_FXN_mod_add_quick(t3, t4, t6, p_fxn)
+        || !ec_fxn_fsqr(group, t4, t5, ctx)
+        || !ec_fxn_fmul(group, t4, t4, t2, ctx)
+        || !ec_fxn_fmul(group, t1, t1, t3, ctx)
+        || !OSSL_FXN_mod_lshift1_quick(t1, t1, p_fxn)
         /* r->Z output */
-        || !OSSL_FN_mod_add_quick(rz, t4, t1, p_fn))
+        || !OSSL_FXN_mod_add_quick(rz, t4, t1, p_fxn))
         goto err;
 
     ret = 1;
@@ -687,78 +687,78 @@ err:
         bn_release(s->X, w);
     if (sz != NULL)
         bn_release(s->Z, w);
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FXN_CTX_end(ctx, token);
     return ret;
 }
 
-size_t ossl_ec_point_ladder_step_fn_ctx_size(const EC_GROUP *group,
+size_t ossl_ec_point_ladder_step_fxn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, EC_POINT *s, EC_POINT *p)
 {
-    const OSSL_FN *p_fn = group->field_fn;
-    size_t w = ossl_fn_get_dsize(p_fn);
-    size_t own = OSSL_FN_CTX_size(1, 10, 10 * w); /* t0..t6, ca, cb, px */
-    size_t mul = ec_fn_fmul_ctx_size(group);
-    size_t sqr = ec_fn_fsqr_ctx_size(group);
+    const OSSL_FXN *p_fxn = group->field_fxn;
+    size_t w = ossl_fxn_get_dsize(p_fxn);
+    size_t own = OSSL_FXN_CTX_size(1, 10, 10 * w); /* t0..t6, ca, cb, px */
+    size_t mul = ec_fxn_fmul_ctx_size(group);
+    size_t sqr = ec_fxn_fsqr_ctx_size(group);
 
-    return ossl_fn_ctx_add_size(own, ossl_fn_ctx_max_size(mul, sqr));
+    return ossl_fxn_ctx_add_size(own, ossl_fxn_ctx_max_size(mul, sqr));
 }
 
 /*-
- * OSSL_FN x-only ladder setup; see the banner in ec_local.h.  Mirrors
+ * OSSL_FXN x-only ladder setup; see the banner in ec_local.h.  Mirrors
  * ossl_ec_GFp_simple_ladder_pre() operation for operation: r := 2p and s := p
  * in projective x-only coordinates, followed by independent coordinate
  * blinding.  Like the original it reuses the output-point coordinates as
  * scratch.  The only branch is on the public p->Z_is_one.
  */
-int ossl_ec_point_ladder_pre_fn(const EC_GROUP *group, EC_POINT *r,
-    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx)
+int ossl_ec_point_ladder_pre_fxn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FXN_CTX *ctx)
 {
     const void *token = NULL;
-    const OSSL_FN *p_fn = group->field_fn;
-    OSSL_FN *ca, *cb, *px;
-    OSSL_FN *rx = NULL, *rz = NULL, *ry = NULL;
-    OSSL_FN *sx = NULL, *sz = NULL, *sy = NULL;
+    const OSSL_FXN *p_fxn = group->field_fxn;
+    OSSL_FXN *ca, *cb, *px;
+    OSSL_FXN *rx = NULL, *rz = NULL, *ry = NULL;
+    OSSL_FXN *sx = NULL, *sz = NULL, *sy = NULL;
     OSSL_LIB_CTX *libctx;
-    int w = (int)ossl_fn_get_dsize(p_fn);
+    int w = (int)ossl_fxn_get_dsize(p_fxn);
     int ret = 0;
 
     if (!p->Z_is_one) /* the ladder always passes p in affine form */
         return 0;
 
-    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+    if ((token = OSSL_FXN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if ((ca = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (cb = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (px = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL)
+    if ((ca = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (cb = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (px = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL)
         goto err;
 
-    if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
-        || (rz = bn_acquire_ossl_fn(r->Z, w)) == NULL
-        || (ry = bn_acquire_ossl_fn(r->Y, w)) == NULL
-        || (sx = bn_acquire_ossl_fn(s->X, w)) == NULL
-        || (sz = bn_acquire_ossl_fn(s->Z, w)) == NULL
-        || (sy = bn_acquire_ossl_fn(s->Y, w)) == NULL)
+    if ((rx = bn_acquire_ossl_fxn(r->X, w)) == NULL
+        || (rz = bn_acquire_ossl_fxn(r->Z, w)) == NULL
+        || (ry = bn_acquire_ossl_fxn(r->Y, w)) == NULL
+        || (sx = bn_acquire_ossl_fxn(s->X, w)) == NULL
+        || (sz = bn_acquire_ossl_fxn(s->Z, w)) == NULL
+        || (sy = bn_acquire_ossl_fxn(s->Y, w)) == NULL)
         goto err;
-    if (!ossl_ec_fn_read(px, p->X)
-        || !ossl_ec_fn_read(ca, group->a)
-        || !ossl_ec_fn_read(cb, group->b))
+    if (!ossl_ec_fxn_read(px, p->X)
+        || !ossl_ec_fxn_read(ca, group->a)
+        || !ossl_ec_fxn_read(cb, group->b))
         goto err;
 
     /*
      * r := 2p, x-only.  Scratch layout matches the BIGNUM original:
      * t1=s->Z, t2=r->Z, t3=s->X, t4=r->X, t5=s->Y.
      */
-    if (!ec_fn_fsqr(group, sx, px, ctx) /* t3 = p->X^2 */
-        || !OSSL_FN_mod_sub_quick(rx, sx, ca, p_fn) /* t4 = t3 - a */
-        || !ec_fn_fsqr(group, rx, rx, ctx) /* t4 = t4^2 */
-        || !ec_fn_fmul(group, sy, px, cb, ctx) /* t5 = p->X * b */
-        || !OSSL_FN_mod_lshift_quick(sy, sy, 3, p_fn) /* t5 <<= 3 */
-        || !OSSL_FN_mod_sub_quick(rx, rx, sy, p_fn) /* r->X = t4 - t5 */
-        || !OSSL_FN_mod_add_quick(sz, sx, ca, p_fn) /* t1 = t3 + a */
-        || !ec_fn_fmul(group, rz, px, sz, ctx) /* t2 = p->X * t1 */
-        || !OSSL_FN_mod_add_quick(rz, cb, rz, p_fn) /* t2 = b + t2 */
-        || !OSSL_FN_mod_lshift_quick(rz, rz, 2, p_fn)) /* r->Z = t2 << 2 */
+    if (!ec_fxn_fsqr(group, sx, px, ctx) /* t3 = p->X^2 */
+        || !OSSL_FXN_mod_sub_quick(rx, sx, ca, p_fxn) /* t4 = t3 - a */
+        || !ec_fxn_fsqr(group, rx, rx, ctx) /* t4 = t4^2 */
+        || !ec_fxn_fmul(group, sy, px, cb, ctx) /* t5 = p->X * b */
+        || !OSSL_FXN_mod_lshift_quick(sy, sy, 3, p_fxn) /* t5 <<= 3 */
+        || !OSSL_FXN_mod_sub_quick(rx, rx, sy, p_fxn) /* r->X = t4 - t5 */
+        || !OSSL_FXN_mod_add_quick(sz, sx, ca, p_fxn) /* t1 = t3 + a */
+        || !ec_fxn_fmul(group, rz, px, sz, ctx) /* t2 = p->X * t1 */
+        || !OSSL_FXN_mod_add_quick(rz, cb, rz, p_fxn) /* t2 = b + t2 */
+        || !OSSL_FXN_mod_lshift_quick(rz, rz, 2, p_fxn)) /* r->Z = t2 << 2 */
         goto err;
 
     /*
@@ -767,22 +767,22 @@ int ossl_ec_point_ladder_pre_fn(const EC_GROUP *group, EC_POINT *r,
      * to the operation's context; group->libctx is unreliable here because a
      * named-curve group commonly carries a NULL (global default) libctx.
      */
-    libctx = OSSL_FN_CTX_get0_libctx(ctx);
+    libctx = OSSL_FXN_CTX_get0_libctx(ctx);
     do {
-        if (!OSSL_FN_priv_rand_range(ry, p_fn, 0, libctx))
+        if (!OSSL_FXN_priv_rand_range(ry, p_fxn, 0, libctx))
             goto err;
-    } while (OSSL_FN_is_zero(ry));
+    } while (OSSL_FXN_is_zero(ry));
     do {
-        if (!OSSL_FN_priv_rand_range(sz, p_fn, 0, libctx))
+        if (!OSSL_FXN_priv_rand_range(sz, p_fxn, 0, libctx))
             goto err;
-    } while (OSSL_FN_is_zero(sz));
+    } while (OSSL_FXN_is_zero(sz));
 
     /* encode the blinding factors into the coordinate representation, then blind */
-    if (!ec_fn_encode(group, ry, ctx)
-        || !ec_fn_encode(group, sz, ctx)
-        || !ec_fn_fmul(group, rz, rz, ry, ctx)
-        || !ec_fn_fmul(group, rx, rx, ry, ctx)
-        || !ec_fn_fmul(group, sx, px, sz, ctx)) /* s := p (blinded) */
+    if (!ec_fxn_encode(group, ry, ctx)
+        || !ec_fxn_encode(group, sz, ctx)
+        || !ec_fxn_fmul(group, rz, rz, ry, ctx)
+        || !ec_fxn_fmul(group, rx, rx, ry, ctx)
+        || !ec_fxn_fmul(group, sx, px, sz, ctx)) /* s := p (blinded) */
         goto err;
 
     r->Z_is_one = 0;
@@ -802,44 +802,44 @@ err:
         bn_release(s->Z, w);
     if (sy != NULL)
         bn_release(s->Y, w);
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FXN_CTX_end(ctx, token);
     return ret;
 }
 
-size_t ossl_ec_point_ladder_pre_fn_ctx_size(const EC_GROUP *group,
+size_t ossl_ec_point_ladder_pre_fxn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, EC_POINT *s, EC_POINT *p)
 {
-    const OSSL_FN *p_fn = group->field_fn;
-    size_t w = ossl_fn_get_dsize(p_fn);
-    size_t own = OSSL_FN_CTX_size(1, 3, 3 * w); /* ca, cb, px */
-    size_t mul = ec_fn_fmul_ctx_size(group);
-    size_t sqr = ec_fn_fsqr_ctx_size(group);
+    const OSSL_FXN *p_fxn = group->field_fxn;
+    size_t w = ossl_fxn_get_dsize(p_fxn);
+    size_t own = OSSL_FXN_CTX_size(1, 3, 3 * w); /* ca, cb, px */
+    size_t mul = ec_fxn_fmul_ctx_size(group);
+    size_t sqr = ec_fxn_fsqr_ctx_size(group);
     /*
      * The blinding factors handed to the encode step are w-wide and reduced
      * (< field), so the encode context is a safe upper bound.  For a plain
-     * representation the encode is a no-op (OSSL_FN_CTX_SIZE_NONE).
+     * representation the encode is a no-op (OSSL_FXN_CTX_SIZE_NONE).
      */
-    size_t enc = ec_fn_encode_ctx_size(group);
+    size_t enc = ec_fxn_encode_ctx_size(group);
 
-    return ossl_fn_ctx_add_size(own,
-        ossl_fn_ctx_max_size(ossl_fn_ctx_max_size(mul, sqr), enc));
+    return ossl_fxn_ctx_add_size(own,
+        ossl_fxn_ctx_max_size(ossl_fxn_ctx_max_size(mul, sqr), enc));
 }
 
 /*-
- * OSSL_FN Y-recovery and back-conversion to affine; see the banner in
+ * OSSL_FXN Y-recovery and back-conversion to affine; see the banner in
  * ec_local.h.  Mirrors ossl_ec_GFp_simple_ladder_post() operation for
- * operation, working on the coordinates' OSSL_FN view.  The two early returns
+ * operation, working on the coordinates' OSSL_FXN view.  The two early returns
  * and the FLT inversion match the original's constant-time profile.
  */
-int ossl_ec_point_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
-    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx)
+int ossl_ec_point_ladder_post_fxn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FXN_CTX *ctx)
 {
     const void *token = NULL;
-    const OSSL_FN *p_fn = group->field_fn;
-    const OSSL_FN *sx, *sz;
-    OSSL_FN *t0, *t1, *t2, *t3, *t4, *t5, *t6, *ca, *cb, *px, *py;
-    OSSL_FN *rx = NULL, *ry = NULL, *rz = NULL;
-    int w = (int)ossl_fn_get_dsize(p_fn);
+    const OSSL_FXN *p_fxn = group->field_fxn;
+    const OSSL_FXN *sx, *sz;
+    OSSL_FXN *t0, *t1, *t2, *t3, *t4, *t5, *t6, *ca, *cb, *px, *py;
+    OSSL_FXN *rx = NULL, *ry = NULL, *rz = NULL;
+    int w = (int)ossl_fxn_get_dsize(p_fxn);
     int ret = 0;
 
     /* Edge cases, branching on the public result -- as the BIGNUM original. */
@@ -851,64 +851,64 @@ int ossl_ec_point_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
         return 1;
     }
 
-    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+    if ((token = OSSL_FXN_CTX_start(ctx)) == NULL)
         return 0;
 
-    if ((t0 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t1 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t2 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t3 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t4 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t5 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (t6 = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (ca = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (cb = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (px = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL
-        || (py = OSSL_FN_CTX_get_limbs(ctx, token, w)) == NULL)
+    if ((t0 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t1 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t2 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t3 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t4 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t5 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (t6 = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (ca = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (cb = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (px = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL
+        || (py = OSSL_FXN_CTX_get_limbs(ctx, token, w)) == NULL)
         goto err;
 
-    if ((rx = bn_acquire_ossl_fn(r->X, w)) == NULL
-        || (ry = bn_acquire_ossl_fn(r->Y, w)) == NULL
-        || (rz = bn_acquire_ossl_fn(r->Z, w)) == NULL)
+    if ((rx = bn_acquire_ossl_fxn(r->X, w)) == NULL
+        || (ry = bn_acquire_ossl_fxn(r->Y, w)) == NULL
+        || (rz = bn_acquire_ossl_fxn(r->Z, w)) == NULL)
         goto err;
-    sx = bn_get_ossl_fn(s->X);
-    sz = bn_get_ossl_fn(s->Z);
-    if (!ossl_ec_fn_read(px, p->X)
-        || !ossl_ec_fn_read(py, p->Y)
-        || !ossl_ec_fn_read(ca, group->a)
-        || !ossl_ec_fn_read(cb, group->b))
+    sx = bn_get_ossl_fxn(s->X);
+    sz = bn_get_ossl_fxn(s->Z);
+    if (!ossl_ec_fxn_read(px, p->X)
+        || !ossl_ec_fxn_read(py, p->Y)
+        || !ossl_ec_fxn_read(ca, group->a)
+        || !ossl_ec_fxn_read(cb, group->b))
         goto err;
 
-    if (!OSSL_FN_mod_lshift1_quick(t4, py, p_fn) /* t4 = 2*p->Y */
-        || !ec_fn_fmul(group, t6, rx, t4, ctx)
-        || !ec_fn_fmul(group, t6, sz, t6, ctx)
-        || !ec_fn_fmul(group, t5, rz, t6, ctx)
-        || !OSSL_FN_mod_lshift1_quick(t1, cb, p_fn) /* t1 = 2*b */
-        || !ec_fn_fmul(group, t1, sz, t1, ctx)
-        || !ec_fn_fsqr(group, t3, rz, ctx)
-        || !ec_fn_fmul(group, t2, t3, t1, ctx)
-        || !ec_fn_fmul(group, t6, rz, ca, ctx)
-        || !ec_fn_fmul(group, t1, px, rx, ctx)
-        || !OSSL_FN_mod_add_quick(t1, t1, t6, p_fn)
-        || !ec_fn_fmul(group, t1, sz, t1, ctx)
-        || !ec_fn_fmul(group, t0, px, rz, ctx)
-        || !OSSL_FN_mod_add_quick(t6, rx, t0, p_fn)
-        || !ec_fn_fmul(group, t6, t6, t1, ctx)
-        || !OSSL_FN_mod_add_quick(t6, t6, t2, p_fn)
-        || !OSSL_FN_mod_sub_quick(t0, t0, rx, p_fn)
-        || !ec_fn_fsqr(group, t0, t0, ctx)
-        || !ec_fn_fmul(group, t0, t0, sx, ctx)
-        || !OSSL_FN_mod_sub_quick(t0, t6, t0, p_fn)
-        || !ec_fn_fmul(group, t1, sz, t4, ctx)
-        || !ec_fn_fmul(group, t1, t3, t1, ctx)
+    if (!OSSL_FXN_mod_lshift1_quick(t4, py, p_fxn) /* t4 = 2*p->Y */
+        || !ec_fxn_fmul(group, t6, rx, t4, ctx)
+        || !ec_fxn_fmul(group, t6, sz, t6, ctx)
+        || !ec_fxn_fmul(group, t5, rz, t6, ctx)
+        || !OSSL_FXN_mod_lshift1_quick(t1, cb, p_fxn) /* t1 = 2*b */
+        || !ec_fxn_fmul(group, t1, sz, t1, ctx)
+        || !ec_fxn_fsqr(group, t3, rz, ctx)
+        || !ec_fxn_fmul(group, t2, t3, t1, ctx)
+        || !ec_fxn_fmul(group, t6, rz, ca, ctx)
+        || !ec_fxn_fmul(group, t1, px, rx, ctx)
+        || !OSSL_FXN_mod_add_quick(t1, t1, t6, p_fxn)
+        || !ec_fxn_fmul(group, t1, sz, t1, ctx)
+        || !ec_fxn_fmul(group, t0, px, rz, ctx)
+        || !OSSL_FXN_mod_add_quick(t6, rx, t0, p_fxn)
+        || !ec_fxn_fmul(group, t6, t6, t1, ctx)
+        || !OSSL_FXN_mod_add_quick(t6, t6, t2, p_fxn)
+        || !OSSL_FXN_mod_sub_quick(t0, t0, rx, p_fxn)
+        || !ec_fxn_fsqr(group, t0, t0, ctx)
+        || !ec_fxn_fmul(group, t0, t0, sx, ctx)
+        || !OSSL_FXN_mod_sub_quick(t0, t6, t0, p_fxn)
+        || !ec_fxn_fmul(group, t1, sz, t4, ctx)
+        || !ec_fxn_fmul(group, t1, t3, t1, ctx)
         /* t1 := t1^-1 in the coordinate representation */
-        || !ec_fn_finv(group, t1, t1, ctx)
+        || !ec_fxn_finv(group, t1, t1, ctx)
         /* r->X, r->Y outputs */
-        || !ec_fn_fmul(group, rx, t5, t1, ctx)
-        || !ec_fn_fmul(group, ry, t0, t1, ctx)
+        || !ec_fxn_fmul(group, rx, t5, t1, ctx)
+        || !ec_fxn_fmul(group, ry, t0, t1, ctx)
         /* r->Z := representation of 1 */
-        || !OSSL_FN_set_word(rz, 1)
-        || !ec_fn_encode(group, rz, ctx))
+        || !OSSL_FXN_set_word(rz, 1)
+        || !ec_fxn_encode(group, rz, ctx))
         goto err;
 
     r->Z_is_one = 1;
@@ -921,32 +921,33 @@ err:
         bn_release(r->Y, w);
     if (rz != NULL)
         bn_release(r->Z, w);
-    OSSL_FN_CTX_end(ctx, token);
+    OSSL_FXN_CTX_end(ctx, token);
     return ret;
 }
 
-size_t ossl_ec_point_ladder_post_fn_ctx_size(const EC_GROUP *group,
+size_t ossl_ec_point_ladder_post_fxn_ctx_size(const EC_GROUP *group,
     EC_POINT *r, EC_POINT *s, EC_POINT *p)
 {
-    const OSSL_FN *p_fn = group->field_fn;
-    size_t w = ossl_fn_get_dsize(p_fn);
-    size_t own = OSSL_FN_CTX_size(1, 11, 11 * w); /* t0..t6, ca, cb, px, py */
-    size_t mul = ec_fn_fmul_ctx_size(group);
-    size_t sqr = ec_fn_fsqr_ctx_size(group);
-    size_t inv = ec_fn_finv_ctx_size(group);
+    const OSSL_FXN *p_fxn = group->field_fxn;
+    size_t w = ossl_fxn_get_dsize(p_fxn);
+    size_t own = OSSL_FXN_CTX_size(1, 11, 11 * w); /* t0..t6, ca, cb, px, py */
+    size_t mul = ec_fxn_fmul_ctx_size(group);
+    size_t sqr = ec_fxn_fsqr_ctx_size(group);
+    size_t inv = ec_fxn_finv_ctx_size(group);
 
-    return ossl_fn_ctx_add_size(own,
-        ossl_fn_ctx_max_size(ossl_fn_ctx_max_size(mul, sqr), inv));
+    return ossl_fxn_ctx_add_size(own,
+        ossl_fxn_ctx_max_size(ossl_fxn_ctx_max_size(mul, sqr), inv));
 }
 
 /*-
- * The OSSL_FN counterpart of ossl_ec_scalar_mul_ladder(), above.  Same
+ * The OSSL_FXN counterpart of ossl_ec_scalar_mul_ladder(), above.  Same
  * ladder, same conditional swaps, same timing-attack defenses; the only
- * difference is that the secret scalar arrives as an OSSL_FN and is never
+ * difference is that the secret scalar arrives as an OSSL_FXN and is never
  * materialised as a BIGNUM.  The Montgomery-ladder point arithmetic runs
- * directly on the coordinates' OSSL_FN views (ossl_ec_point_ladder_*_fn), which
- * dispatch the field multiplication by the group's coordinate representation,
- * so this path serves any prime-field (GF(p)) group (Montgomery or plain).
+ * directly on the coordinates' OSSL_FXN views (ossl_ec_point_ladder_*_fxn),
+ * which dispatch the field multiplication by the group's coordinate
+ * representation, so this path serves any prime-field (GF(p)) group (Montgomery
+ * or plain).
  *
  * The point coordinates stay BIGNUMs and the point half of the algorithm is
  * untouched.  Nothing is lost by that: the scalar and the coordinates never
@@ -954,9 +955,9 @@ size_t ossl_ec_point_ladder_post_fn_ctx_size(const EC_GROUP *group,
  * the (public) cardinality and read a bit at a time to steer the swaps.
  *
  * Two contortions of the BIGNUM version fall away here.  It has to cope with
- * a negative scalar, which an unsigned OSSL_FN cannot present; and it expands
+ * a negative scalar, which an unsigned OSSL_FXN cannot present; and it expands
  * k and lambda to group_top + 2 words up front, because otherwise a carry
- * could provoke a reallocation whose timing would leak.  OSSL_FN is
+ * could provoke a reallocation whose timing would leak.  OSSL_FXN is
  * fixed-width, so there is no reallocation to hide, and group_top + 1 words
  * are provably enough: k starts below the cardinality, and the two additions
  * of the cardinality can carry it up by less than two bits, which one extra
@@ -964,16 +965,16 @@ size_t ossl_ec_point_ladder_post_fn_ctx_size(const EC_GROUP *group,
  *
  * Returns 1 on success, 0 otherwise.
  */
-int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
-    const OSSL_FN *scalar, const EC_POINT *point,
-    OSSL_FN_CTX *fnctx)
+int ossl_ec_scalar_mul_ladder_fxn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FXN *scalar, const EC_POINT *point,
+    OSSL_FXN_CTX *fxnctx)
 {
     int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
     EC_POINT *p = NULL;
     EC_POINT *s = NULL;
-    const OSSL_FN *cardinality_fn = NULL;
-    OSSL_FN *k = NULL;
-    OSSL_FN *lambda = NULL;
+    const OSSL_FXN *cardinality_fxn = NULL;
+    OSSL_FXN *k = NULL;
+    OSSL_FXN *lambda = NULL;
     const void *token = NULL;
     size_t width;
     int ret = 0;
@@ -991,8 +992,8 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
         return 0;
     }
     /*
-     * The OSSL_FN ladder point arithmetic serves any prime-field (GF(p)) group,
-     * dispatching the field multiplication by the group's coordinate
+     * The OSSL_FXN ladder point arithmetic serves any prime-field (GF(p))
+     * group, dispatching the field multiplication by the group's coordinate
      * representation (Montgomery when the method encodes coordinates, plain
      * otherwise).
      * There is no BIGNUM fallback on the secret path, so refuse non-prime-field
@@ -1002,8 +1003,8 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
-    /* The scratch arena is caller-owned; EC_POINT_mul_fn() sizes/allocates it. */
-    if (fnctx == NULL) {
+    /* The scratch arena is caller-owned; EC_POINT_mul_fxn() sizes/allocates it. */
+    if (fxnctx == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -1032,10 +1033,10 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
 
     /*
      * The cardinality (order * cofactor) is a public, immutable group
-     * attribute, precomputed by EC_GROUP_set_generator(); use its OSSL_FN view
+     * attribute, precomputed by EC_GROUP_set_generator(); use its OSSL_FXN view
      * directly (no BN_mul(), no allocation, no release).
      */
-    if ((cardinality_fn = bn_get_ossl_fn(group->cardinality)) == NULL) {
+    if ((cardinality_fxn = bn_get_ossl_fxn(group->cardinality)) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
@@ -1047,44 +1048,44 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
      * |k| and |lambda| are secret-derived; they live in the outer frame of the
      * caller-provided arena for the whole ladder, while the ladder helpers push
      * their own nested frames on top for their scratch.  The arena is sized for
-     * both by ossl_ec_scalar_mul_ladder_fn_ctx_size().
+     * both by ossl_ec_scalar_mul_ladder_fxn_ctx_size().
      *
-     * The OSSL_FN calls from here on raise their own errors, so failures are
+     * The OSSL_FXN calls from here on raise their own errors, so failures are
      * not re-raised under ERR_LIB_EC - there is no ERR_R_*_LIB code for the
-     * OSSL_FN library to tag them with.
+     * OSSL_FXN library to tag them with.
      */
-    if ((token = OSSL_FN_CTX_start(fnctx)) == NULL)
+    if ((token = OSSL_FXN_CTX_start(fxnctx)) == NULL)
         goto err;
 
-    if ((k = OSSL_FN_CTX_get_limbs(fnctx, token, width)) == NULL
-        || (lambda = OSSL_FN_CTX_get_limbs(fnctx, token, width)) == NULL)
+    if ((k = OSSL_FXN_CTX_get_limbs(fxnctx, token, width)) == NULL
+        || (lambda = OSSL_FXN_CTX_get_limbs(fxnctx, token, width)) == NULL)
         goto err;
 
     /*
-     * EC_POINT_mul_fn() ensures num_bits(scalar) <= bits(cardinality) before
+     * EC_POINT_mul_fxn() ensures num_bits(scalar) <= bits(cardinality) before
      * dispatch, so the blinded value stays within |width| and
-     * OSSL_FN_copy_truncate() drops no significant limb.  A scalar merely
+     * OSSL_FXN_copy_truncate() drops no significant limb.  A scalar merely
      * >= cardinality is fine: scalar + {1,2}*cardinality still falls in the
      * fixed [2^bits, 2^(bits+1)) window the ladder relies on.  Guard, rather
      * than silently truncate, against a wider scalar reaching here through a
-     * direct call that bypassed EC_POINT_mul_fn().
+     * direct call that bypassed EC_POINT_mul_fxn().
      */
-    if (ossl_unlikely(OSSL_FN_num_bits(scalar) > (size_t)cardinality_bits)) {
+    if (ossl_unlikely(OSSL_FXN_num_bits(scalar) > (size_t)cardinality_bits)) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    if (OSSL_FN_copy_truncate(k, scalar) == NULL)
+    if (OSSL_FXN_copy_truncate(k, scalar) == NULL)
         goto err;
 
-    if (!OSSL_FN_add(lambda, k, cardinality_fn)
-        || !OSSL_FN_add(k, lambda, cardinality_fn))
+    if (!OSSL_FXN_add(lambda, k, cardinality_fxn)
+        || !OSSL_FXN_add(k, lambda, cardinality_fxn))
         goto err;
     /*
      * lambda := scalar + cardinality
      * k := scalar + 2*cardinality
      */
-    kbit = OSSL_FN_is_bit_set(lambda, cardinality_bits);
-    if (!OSSL_FN_consttime_swap(kbit, k, lambda))
+    kbit = OSSL_FXN_is_bit_set(lambda, cardinality_bits);
+    if (!OSSL_FXN_consttime_swap(kbit, k, lambda))
         goto err;
 
     /*
@@ -1101,14 +1102,14 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
 
     /*
      * The coordinate CSWAPs below run at the field width; capture it for the
-     * swap width.  The _fn ladder helpers copy the public base point's
+     * swap width.  The _fxn ladder helpers copy the public base point's
      * coordinates into field-width temporaries themselves and widen r/s in
      * place, so nothing about p or r/s needs preparing here.
      */
-    group_top = (int)ossl_fn_get_dsize(group->field_fn);
+    group_top = (int)ossl_fxn_get_dsize(group->field_fxn);
 
     /* Initialize the Montgomery ladder */
-    if (!ossl_ec_point_ladder_pre_fn(group, r, s, p, fnctx)) {
+    if (!ossl_ec_point_ladder_pre_fxn(group, r, s, p, fxnctx)) {
         ERR_raise(ERR_LIB_EC, EC_R_LADDER_PRE_FAILURE);
         goto err;
     }
@@ -1128,11 +1129,11 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
 
     /* The ladder logic is spelled out in ossl_ec_scalar_mul_ladder(), above. */
     for (i = cardinality_bits - 1; i >= 0; i--) {
-        kbit = OSSL_FN_is_bit_set(k, i) ^ pbit;
+        kbit = OSSL_FXN_is_bit_set(k, i) ^ pbit;
         EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one);
 
         /* Perform a single step of the Montgomery ladder */
-        if (!ossl_ec_point_ladder_step_fn(group, r, s, p, fnctx)) {
+        if (!ossl_ec_point_ladder_step_fxn(group, r, s, p, fxnctx)) {
             ERR_raise(ERR_LIB_EC, EC_R_LADDER_STEP_FAILURE);
             goto err;
         }
@@ -1147,7 +1148,7 @@ int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
 #undef EC_POINT_CSWAP
 
     /* Finalize ladder (and recover full point coordinates) */
-    if (!ossl_ec_point_ladder_post_fn(group, r, s, p, fnctx)) {
+    if (!ossl_ec_point_ladder_post_fxn(group, r, s, p, fxnctx)) {
         ERR_raise(ERR_LIB_EC, EC_R_LADDER_POST_FAILURE);
         goto err;
     }
@@ -1160,7 +1161,7 @@ err:
      * before that); the caller retains ownership of the arena either way.
      */
     if (token != NULL)
-        OSSL_FN_CTX_end(fnctx, token);
+        OSSL_FXN_CTX_end(fxnctx, token);
     EC_POINT_free(p);
     EC_POINT_clear_free(s);
 
@@ -1170,12 +1171,13 @@ err:
 #undef EC_POINT_BN_set_flags
 
 /*
- * Arena size ossl_ec_scalar_mul_ladder_fn() needs: an outer frame holding k and
- * lambda (cardinality-top + 1 limbs each), plus the largest of the pre/step/post
- * helper arenas, which push nested frames on top of that outer frame.
+ * Arena size ossl_ec_scalar_mul_ladder_fxn() needs: an outer frame holding k
+ * and lambda (cardinality-top + 1 limbs each), plus the largest of the
+ * pre/step/post helper arenas, which push nested frames on top of that outer
+ * frame.
  */
-size_t ossl_ec_scalar_mul_ladder_fn_ctx_size(const EC_GROUP *group,
-    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+size_t ossl_ec_scalar_mul_ladder_fxn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FXN *scalar, const EC_POINT *point)
 {
     size_t width, max_sz;
 
@@ -1184,14 +1186,14 @@ size_t ossl_ec_scalar_mul_ladder_fn_ctx_size(const EC_GROUP *group,
         return 0;
 
     /* Largest of the three helper arenas, added on top of the k/lambda frame. */
-    max_sz = ossl_fn_ctx_max_size(
-        ossl_fn_ctx_max_size(
-            ossl_ec_point_ladder_pre_fn_ctx_size(group, r, NULL, NULL),
-            ossl_ec_point_ladder_step_fn_ctx_size(group, r, NULL, NULL)),
-        ossl_ec_point_ladder_post_fn_ctx_size(group, r, NULL, NULL));
+    max_sz = ossl_fxn_ctx_max_size(
+        ossl_fxn_ctx_max_size(
+            ossl_ec_point_ladder_pre_fxn_ctx_size(group, r, NULL, NULL),
+            ossl_ec_point_ladder_step_fxn_ctx_size(group, r, NULL, NULL)),
+        ossl_ec_point_ladder_post_fxn_ctx_size(group, r, NULL, NULL));
 
     width = (size_t)bn_get_top(group->cardinality) + 1;
-    return ossl_fn_ctx_add_size(OSSL_FN_CTX_size(1, 2, 2 * width), max_sz);
+    return ossl_fxn_ctx_add_size(OSSL_FXN_CTX_size(1, 2, 2 * width), max_sz);
 }
 
 /*

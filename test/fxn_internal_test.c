@@ -8,44 +8,44 @@
  */
 
 /**
- * @file Internal tests of OSSL_FN
+ * @file Internal tests of OSSL_FXN
  *
- * This tests OSSL_FN internals only, i.e. anything that requires including
- * ../crypto/fn/fn_local.h, such as introspection.
+ * This tests OSSL_FXN internals only, i.e. anything that requires including
+ * ../crypto/fxn/fxn_local.h, such as introspection.
  */
 
 #include <openssl/bn.h>
-#include "crypto/fn.h"
-#include "crypto/fn_intern.h"
+#include "crypto/fxn.h"
+#include "crypto/fxn_intern.h"
 #include "crypto/bn.h"
 #include "crypto/bn_dh.h"
-#include "fn_local.h"
+#include "fxn_local.h"
 #include "testutil.h"
 
 static int test_struct(void)
 {
-    TEST_note("OSSL_FN struct is %zu bytes\n", sizeof(OSSL_FN));
-    TEST_note("OSSL_FN 'd' array starts at offset %zu\n", offsetof(OSSL_FN, d));
+    TEST_note("OSSL_FXN struct is %zu bytes\n", sizeof(OSSL_FXN));
+    TEST_note("OSSL_FXN 'd' array starts at offset %zu\n", offsetof(OSSL_FXN, d));
 
     /*
      * Note: The working theory for the moment is that the 'd' array *must*
-     * align with the end of the OSSL_FN struct.
+     * align with the end of the OSSL_FXN struct.
      * If it turns out that this isn't the case, we can choose to run
      * TEST_size_t_eq() for display purposes, but ignore its result and
      * return 1.
      */
-    return TEST_size_t_eq(sizeof(OSSL_FN), offsetof(OSSL_FN, d));
+    return TEST_size_t_eq(sizeof(OSSL_FXN), offsetof(OSSL_FXN, d));
 }
 
 static int test_alloc(void)
 {
     int ret = 1;
-    OSSL_FN *f = NULL;
-    const OSSL_FN_ULONG *u = NULL;
+    OSSL_FXN *f = NULL;
+    const OSSL_FXN_ULONG *u = NULL;
 
     /*
-     * OSSL_FN_new_bits() calls OSSL_FN_new_bytes(), which calls
-     * OSSL_FN_new_limbs(), so we're exercising all three in one go.
+     * OSSL_FXN_new_bits() calls OSSL_FXN_new_bytes(), which calls
+     * OSSL_FXN_new_limbs(), so we're exercising all three in one go.
      *
      * The curious size formula is there to check that the number of bits that
      * is passed in gets properly rounded up to the number of limbs they fit
@@ -53,15 +53,15 @@ static int test_alloc(void)
      * This formula aims for two limbs (each of which is at least 32 bits),
      * shaving off 17 bits for demonstration purposes.
      */
-    if (!TEST_ptr(f = OSSL_FN_new_bits(sizeof(OSSL_FN_ULONG) * 16 - 17))
-        || !TEST_true(ossl_fn_is_dynamically_allocated(f))
-        || !TEST_false(ossl_fn_is_securely_allocated(f))
-        || !TEST_size_t_eq(ossl_fn_get_dsize(f), 2)
-        || !TEST_ptr(u = ossl_fn_get_words(f))
+    if (!TEST_ptr(f = OSSL_FXN_new_bits(sizeof(OSSL_FXN_ULONG) * 16 - 17))
+        || !TEST_true(ossl_fxn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fxn_is_securely_allocated(f))
+        || !TEST_size_t_eq(ossl_fxn_get_dsize(f), 2)
+        || !TEST_ptr(u = ossl_fxn_get_words(f))
         || !TEST_size_t_eq(u[0], 0)
         || !TEST_size_t_eq(u[1], 0))
         ret = 0;
-    OSSL_FN_free(f);
+    OSSL_FXN_free(f);
 
     return ret;
 }
@@ -69,12 +69,12 @@ static int test_alloc(void)
 static int test_secure_alloc(void)
 {
     int ret = 1;
-    OSSL_FN *f = NULL;
-    const OSSL_FN_ULONG *u = NULL;
+    OSSL_FXN *f = NULL;
+    const OSSL_FXN_ULONG *u = NULL;
 
     /*
-     * OSSL_FN_secure_new_bits() calls OSSL_FN_secure_new_bytes(), which calls
-     * OSSL_FN_secure_new_limbs(), so we're exercising all three in one go.
+     * OSSL_FXN_secure_new_bits() calls OSSL_FXN_secure_new_bytes(), which calls
+     * OSSL_FXN_secure_new_limbs(), so we're exercising all three in one go.
      *
      * The curious size formula is there to check that the number of bits that
      * is passed in gets properly rounded up to the number of limbs they fit
@@ -82,15 +82,15 @@ static int test_secure_alloc(void)
      * This formula aims for two limbs (each of which is at least 32 bits),
      * shaving off 17 bits for demonstration purposes.
      */
-    if (!TEST_ptr(f = OSSL_FN_secure_new_bits(sizeof(OSSL_FN_ULONG) * 16 - 17))
-        || !TEST_true(ossl_fn_is_dynamically_allocated(f))
-        || !TEST_true(ossl_fn_is_securely_allocated(f))
-        || !TEST_size_t_eq(ossl_fn_get_dsize(f), 2)
-        || !TEST_ptr(u = ossl_fn_get_words(f))
+    if (!TEST_ptr(f = OSSL_FXN_secure_new_bits(sizeof(OSSL_FXN_ULONG) * 16 - 17))
+        || !TEST_true(ossl_fxn_is_dynamically_allocated(f))
+        || !TEST_true(ossl_fxn_is_securely_allocated(f))
+        || !TEST_size_t_eq(ossl_fxn_get_dsize(f), 2)
+        || !TEST_ptr(u = ossl_fxn_get_words(f))
         || !TEST_size_t_eq(u[0], 0)
         || !TEST_size_t_eq(u[1], 0))
         ret = 0;
-    OSSL_FN_free(f);
+    OSSL_FXN_free(f);
 
     return ret;
 }
@@ -98,71 +98,71 @@ static int test_secure_alloc(void)
 static int test_ctx(void)
 {
     int ret = 1;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN *f = NULL;
+    OSSL_FXN_CTX *ctx = NULL;
+    OSSL_FXN *f = NULL;
     const void *token = NULL;
 
     /*
-     * Make a CTX that is likely to contain two 2048-bit or one 4096-bit OSSL_FN
-     * and one frame (let's overestimate its size to 128 bytes).
-     * Note that OSSL_FN_CTX_new() takes a maximum number of limbs in the last
+     * Make a CTX that is likely to contain two 2048-bit or one 4096-bit
+     * OSSL_FXN and one frame (let's overestimate its size to 128 bytes).
+     * Note that OSSL_FXN_CTX_new() takes a maximum number of limbs in the last
      * parameter, so we must ensure that we get that number right.
      */
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 2, 4096 / OSSL_FN_BITS))) {
+    if (!TEST_ptr(ctx = OSSL_FXN_CTX_new(NULL, 1, 2, 4096 / OSSL_FXN_BITS))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
-    /* Check that we can get 1 2048-bit OSSL_FN instance, and check its metadata */
-    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+    /* Check that we can get 1 2048-bit OSSL_FXN instance, and check its metadata */
+    if (!TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
-        || !TEST_false(ossl_fn_is_securely_allocated(f)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_false(ossl_fxn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fxn_is_securely_allocated(f)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
-        ret = 0;
-        /* It's pointless to try more tests after this failure */
-        goto end;
-    }
-
-    /* Check that we can get 2 2048-bit OSSL_FN instances, but not 3 */
-    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
-        ret = 0;
-        /* It's pointless to try more tests after this failure */
-        goto end;
-    }
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, token, 2048)))
-        ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
-    /* Check that we can get 1 4096-bit OSSL_FN instance, but not 2 */
-    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+    /* Check that we can get 2 2048-bit OSSL_FXN instances, but not 3 */
+    if (!TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 4096))
-        || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, token, 2048)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_ptr_null(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token))) {
+        ret = 0;
+        /* It's pointless to try more tests after this failure */
+        goto end;
+    }
+
+    /* Check that we can get 1 4096-bit OSSL_FXN instance, but not 2 */
+    if (!TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
+        ret = 0;
+        /* It's pointless to try more tests after this failure */
+        goto end;
+    }
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 4096))
+        || !TEST_ptr_null(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048)))
+        ret = 0;
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
 end:
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
 
     return ret;
 }
@@ -170,63 +170,63 @@ end:
 static int test_ctx_size(void)
 {
     int ret = 1;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN *f = NULL;
+    OSSL_FXN_CTX *ctx = NULL;
+    OSSL_FXN *f = NULL;
     const void *token = NULL;
-    size_t size = OSSL_FN_CTX_size(1, 2, 4096 / OSSL_FN_BITS);
+    size_t size = OSSL_FXN_CTX_size(1, 2, 4096 / OSSL_FXN_BITS);
 
     if (!TEST_size_t_ne(size, 0)
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size))) {
+        || !TEST_ptr(ctx = OSSL_FXN_CTX_new_size(NULL, size))) {
         ret = 0;
         goto end;
     }
 
-    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         goto end;
     }
 
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
-        || !TEST_false(ossl_fn_is_securely_allocated(f))
-        || !TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, token, 2048)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_false(ossl_fxn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fxn_is_securely_allocated(f))
+        || !TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_ptr_null(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048)))
         ret = 0;
 
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token)))
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token)))
         ret = 0;
 
 end:
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
 
     /*
-     * Force each term of OSSL_FN_CTX_size() to overflow in turn,
+     * Force each term of OSSL_FXN_CTX_size() to overflow in turn,
      * keeping the others at a minimal valid context (1 frame, 1
      * number, 1 limb) so only the overflowing term is unrealistic.
      */
-    if (!TEST_size_t_eq(OSSL_FN_CTX_size(SIZE_MAX, 1, 1), 0))
+    if (!TEST_size_t_eq(OSSL_FXN_CTX_size(SIZE_MAX, 1, 1), 0))
         ret = 0;
-    if (!TEST_size_t_eq(OSSL_FN_CTX_size(1, SIZE_MAX, 1), 0))
+    if (!TEST_size_t_eq(OSSL_FXN_CTX_size(1, SIZE_MAX, 1), 0))
         ret = 0;
-    if (!TEST_size_t_eq(OSSL_FN_CTX_size(1, 1, SIZE_MAX), 0))
+    if (!TEST_size_t_eq(OSSL_FXN_CTX_size(1, 1, SIZE_MAX), 0))
         ret = 0;
     /* A context must have at least one frame. */
-    if (!TEST_size_t_eq(OSSL_FN_CTX_size(0, 1, 1), 0))
+    if (!TEST_size_t_eq(OSSL_FXN_CTX_size(0, 1, 1), 0))
         ret = 0;
     /*
      * Numbers and limbs must both be present or both absent: a context
      * with one budget but not the other can never allocate a usable
-     * number, since OSSL_FN_CTX_get_limbs() allocates the OSSL_FN header
+     * number, since OSSL_FXN_CTX_get_limbs() allocates the OSSL_FXN header
      * and its limbs together.
      */
-    if (!TEST_size_t_eq(OSSL_FN_CTX_size(1, 0, 1), 0))
+    if (!TEST_size_t_eq(OSSL_FXN_CTX_size(1, 0, 1), 0))
         ret = 0;
-    if (!TEST_size_t_eq(OSSL_FN_CTX_size(1, 1, 0), 0))
+    if (!TEST_size_t_eq(OSSL_FXN_CTX_size(1, 1, 0), 0))
         ret = 0;
-    if (!TEST_ptr_null(OSSL_FN_CTX_new_size(NULL, SIZE_MAX)))
+    if (!TEST_ptr_null(OSSL_FXN_CTX_new_size(NULL, SIZE_MAX)))
         ret = 0;
-    /* A size of 0 is the error return of OSSL_FN_CTX_size(). */
-    if (!TEST_ptr_null(OSSL_FN_CTX_new_size(NULL, 0)))
+    /* A size of 0 is the error return of OSSL_FXN_CTX_size(). */
+    if (!TEST_ptr_null(OSSL_FXN_CTX_new_size(NULL, 0)))
         ret = 0;
 
     return ret;
@@ -235,40 +235,40 @@ end:
 static int test_secure_ctx(void)
 {
     int ret = 1;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN *f = NULL;
+    OSSL_FXN_CTX *ctx = NULL;
+    OSSL_FXN *f = NULL;
     const void *token = NULL;
 
     /*
-     * Make a CTX that is likely to contain two 2048-bit OSSL_FN and one frame
+     * Make a CTX that is likely to contain two 2048-bit OSSL_FXN and one frame
      * (let's overestimate its size to 128 bytes).
-     * Note that OSSL_FN_CTX_new() takes a maximum number of limbs in the last
+     * Note that OSSL_FXN_CTX_new() takes a maximum number of limbs in the last
      * parameter, so we must ensure that we get that number right.
      */
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_secure_new(NULL, 1, 2, 2048 / OSSL_FN_BITS))) {
+    if (!TEST_ptr(ctx = OSSL_FXN_CTX_secure_new(NULL, 1, 2, 2048 / OSSL_FXN_BITS))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
-    /* Check that we can get 1 2048-bit OSSL_FN instance, and check its metadata */
-    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+    /* Check that we can get 1 2048-bit OSSL_FXN instance, and check its metadata */
+    if (!TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
-        || !TEST_true(ossl_fn_is_securely_allocated(f)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_false(ossl_fxn_is_dynamically_allocated(f))
+        || !TEST_true(ossl_fxn_is_securely_allocated(f)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
 end:
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
 
     return ret;
 }
@@ -276,38 +276,38 @@ end:
 static int test_secure_ctx_size(void)
 {
     int ret = 1;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN *f = NULL;
+    OSSL_FXN_CTX *ctx = NULL;
+    OSSL_FXN *f = NULL;
     const void *token = NULL;
-    size_t size = OSSL_FN_CTX_size(1, 1, 2048 / OSSL_FN_BITS);
+    size_t size = OSSL_FXN_CTX_size(1, 1, 2048 / OSSL_FXN_BITS);
 
     if (!TEST_size_t_ne(size, 0)
-        || !TEST_ptr(ctx = OSSL_FN_CTX_secure_new_size(NULL, size))) {
+        || !TEST_ptr(ctx = OSSL_FXN_CTX_secure_new_size(NULL, size))) {
         ret = 0;
         goto end;
     }
 
-    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         goto end;
     }
 
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token, 2048))
-        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
-        || !TEST_true(ossl_fn_is_securely_allocated(f))
-        || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, token, 2048)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048))
+        || !TEST_false(ossl_fxn_is_dynamically_allocated(f))
+        || !TEST_true(ossl_fxn_is_securely_allocated(f))
+        || !TEST_ptr_null(f = OSSL_FXN_CTX_get_bits(ctx, token, 2048)))
         ret = 0;
 
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token)))
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token)))
         ret = 0;
 
 end:
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
 
-    if (!TEST_ptr_null(OSSL_FN_CTX_secure_new_size(NULL, SIZE_MAX)))
+    if (!TEST_ptr_null(OSSL_FXN_CTX_secure_new_size(NULL, SIZE_MAX)))
         ret = 0;
-    /* A size of 0 is the error return of OSSL_FN_CTX_size(). */
-    if (!TEST_ptr_null(OSSL_FN_CTX_secure_new_size(NULL, 0)))
+    /* A size of 0 is the error return of OSSL_FXN_CTX_size(). */
+    if (!TEST_ptr_null(OSSL_FXN_CTX_secure_new_size(NULL, 0)))
         ret = 0;
 
     return ret;
@@ -316,15 +316,15 @@ end:
 static int test_ctx_peak_used(void)
 {
     int ret = 1;
-    OSSL_FN_CTX *ctx = NULL;
-    OSSL_FN *f = NULL;
+    OSSL_FXN_CTX *ctx = NULL;
+    OSSL_FXN *f = NULL;
     const void *token1 = NULL;
     const void *token2 = NULL;
     size_t frames, numbers, limbs;
-    size_t limbs_2048 = 2048 / OSSL_FN_BITS;
-    size_t limbs_4096 = 4096 / OSSL_FN_BITS;
+    size_t limbs_2048 = 2048 / OSSL_FXN_BITS;
+    size_t limbs_4096 = 4096 / OSSL_FXN_BITS;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 2, 4, 256))) {
+    if (!TEST_ptr(ctx = OSSL_FXN_CTX_new(NULL, 2, 4, 256))) {
         ret = 0;
         goto end;
     }
@@ -332,7 +332,7 @@ static int test_ctx_peak_used(void)
     /*
      * Fresh context.
      */
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 0)
         || !TEST_size_t_eq(numbers, 0)
         || !TEST_size_t_eq(limbs, 0))
@@ -341,7 +341,7 @@ static int test_ctx_peak_used(void)
     /*
      * NULL context: all out parameters set to 0.
      */
-    OSSL_FN_CTX_peak_usage(NULL, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(NULL, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 0)
         || !TEST_size_t_eq(numbers, 0)
         || !TEST_size_t_eq(limbs, 0))
@@ -350,16 +350,16 @@ static int test_ctx_peak_used(void)
     /*
      * NULL out parameters are tolerated.
      */
-    OSSL_FN_CTX_peak_usage(ctx, NULL, NULL, NULL);
+    OSSL_FXN_CTX_peak_usage(ctx, NULL, NULL, NULL);
 
     /*
      * Start frame 1.
      */
-    if (!TEST_ptr(token1 = OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token1 = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         goto end;
     }
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 1)
         || !TEST_size_t_eq(numbers, 0)
         || !TEST_size_t_eq(limbs, 0))
@@ -368,9 +368,9 @@ static int test_ctx_peak_used(void)
     /*
      * Allocate one number in frame 1.
      */
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token1, 2048)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token1, 2048)))
         ret = 0;
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 1)
         || !TEST_size_t_eq(numbers, 1)
         || !TEST_size_t_eq(limbs, limbs_2048))
@@ -379,11 +379,11 @@ static int test_ctx_peak_used(void)
     /*
      * Start frame 2 (nested inside frame 1).
      */
-    if (!TEST_ptr(token2 = OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token2 = OSSL_FXN_CTX_start(ctx))) {
         ret = 0;
         goto end;
     }
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 2)
         || !TEST_size_t_eq(numbers, 1)
         || !TEST_size_t_eq(limbs, limbs_2048))
@@ -392,9 +392,9 @@ static int test_ctx_peak_used(void)
     /*
      * Allocate one number in frame 2.
      */
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token2, 4096)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token2, 4096)))
         ret = 0;
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 2)
         || !TEST_size_t_eq(numbers, 2)
         || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096))
@@ -403,15 +403,15 @@ static int test_ctx_peak_used(void)
     /*
      * Allocate a second number in frame 2.
      */
-    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, token2, 2048)))
+    if (!TEST_ptr(f = OSSL_FXN_CTX_get_bits(ctx, token2, 2048)))
         ret = 0;
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 2)
         || !TEST_size_t_eq(numbers, 3)
         || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096 + limbs_2048))
         ret = 0;
 
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token2))) {
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token2))) {
         ret = 0;
         goto end;
     }
@@ -419,13 +419,13 @@ static int test_ctx_peak_used(void)
     /*
      * After ending frame 2: peaks must not decrease.
      */
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 2)
         || !TEST_size_t_eq(numbers, 3)
         || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096 + limbs_2048))
         ret = 0;
 
-    if (!TEST_true(OSSL_FN_CTX_end(ctx, token1))) {
+    if (!TEST_true(OSSL_FXN_CTX_end(ctx, token1))) {
         ret = 0;
         goto end;
     }
@@ -433,62 +433,62 @@ static int test_ctx_peak_used(void)
     /*
      * After ending frame 1: peaks still preserved.
      */
-    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    OSSL_FXN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
     if (!TEST_size_t_eq(frames, 2)
         || !TEST_size_t_eq(numbers, 3)
         || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096 + limbs_2048))
         ret = 0;
 
 end:
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
 
     return ret;
 }
 
 /*
- * OSSL_FN_CTX_get_limbs() and friends only hand out numbers from the most
+ * OSSL_FXN_CTX_get_limbs() and friends only hand out numbers from the most
  * recent frame, and only to the caller holding that frame's token.
  */
 static int test_ctx_token(void)
 {
     int ret = 0;
-    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FXN_CTX *ctx = NULL;
     const void *outer = NULL, *inner = NULL;
 
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 2, 4, 4 * 4)))
+    if (!TEST_ptr(ctx = OSSL_FXN_CTX_new(NULL, 2, 4, 4 * 4)))
         goto end;
 
     /* No frame at all */
-    if (!TEST_ptr_null(OSSL_FN_CTX_get_limbs(ctx, ctx, 4)))
+    if (!TEST_ptr_null(OSSL_FXN_CTX_get_limbs(ctx, ctx, 4)))
         goto end;
 
-    if (!TEST_ptr(outer = OSSL_FN_CTX_start(ctx))
-        || !TEST_ptr_null(OSSL_FN_CTX_get_limbs(ctx, NULL, 4))
-        || !TEST_ptr(OSSL_FN_CTX_get_limbs(ctx, outer, 4)))
+    if (!TEST_ptr(outer = OSSL_FXN_CTX_start(ctx))
+        || !TEST_ptr_null(OSSL_FXN_CTX_get_limbs(ctx, NULL, 4))
+        || !TEST_ptr(OSSL_FXN_CTX_get_limbs(ctx, outer, 4)))
         goto end;
 
     /*
      * Inner frame: the outer token no longer allows allocation, as that
      * would be allocating in someone else's frame.
      */
-    if (!TEST_ptr(inner = OSSL_FN_CTX_start(ctx))
-        || !TEST_ptr_null(OSSL_FN_CTX_get_limbs(ctx, outer, 4))
-        || !TEST_ptr_null(OSSL_FN_CTX_get_bytes(ctx, outer, 4))
-        || !TEST_ptr_null(OSSL_FN_CTX_get_bits(ctx, outer, 4))
-        || !TEST_ptr(OSSL_FN_CTX_get_limbs(ctx, inner, 4))
-        || !TEST_ptr(OSSL_FN_CTX_get_bits(ctx, inner, 4 * OSSL_FN_BITS))
-        || !TEST_true(OSSL_FN_CTX_end(ctx, inner)))
+    if (!TEST_ptr(inner = OSSL_FXN_CTX_start(ctx))
+        || !TEST_ptr_null(OSSL_FXN_CTX_get_limbs(ctx, outer, 4))
+        || !TEST_ptr_null(OSSL_FXN_CTX_get_bytes(ctx, outer, 4))
+        || !TEST_ptr_null(OSSL_FXN_CTX_get_bits(ctx, outer, 4))
+        || !TEST_ptr(OSSL_FXN_CTX_get_limbs(ctx, inner, 4))
+        || !TEST_ptr(OSSL_FXN_CTX_get_bits(ctx, inner, 4 * OSSL_FXN_BITS))
+        || !TEST_true(OSSL_FXN_CTX_end(ctx, inner)))
         goto end;
 
     /* With the inner frame gone, its stale token is refused */
-    if (!TEST_ptr_null(OSSL_FN_CTX_get_limbs(ctx, inner, 4))
-        || !TEST_ptr(OSSL_FN_CTX_get_limbs(ctx, outer, 4))
-        || !TEST_true(OSSL_FN_CTX_end(ctx, outer)))
+    if (!TEST_ptr_null(OSSL_FXN_CTX_get_limbs(ctx, inner, 4))
+        || !TEST_ptr(OSSL_FXN_CTX_get_limbs(ctx, outer, 4))
+        || !TEST_true(OSSL_FXN_CTX_end(ctx, outer)))
         goto end;
 
     ret = 1;
 end:
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
     return ret;
 }
 
@@ -497,84 +497,84 @@ static int test_ctx_size_compose(void)
     size_t s1 = 42, s2 = 100;
     size_t maxu = OSSL_SAFE_MATH_MAXU(size_t);
 
-    return TEST_size_t_eq(ossl_fn_ctx_add_size(s1, s2), s1 + s2)
-        && TEST_size_t_eq(ossl_fn_ctx_add_size(OSSL_FN_CTX_SIZE_NONE, s1),
+    return TEST_size_t_eq(ossl_fxn_ctx_add_size(s1, s2), s1 + s2)
+        && TEST_size_t_eq(ossl_fxn_ctx_add_size(OSSL_FXN_CTX_SIZE_NONE, s1),
             s1)
-        && TEST_size_t_eq(ossl_fn_ctx_add_size(s1, OSSL_FN_CTX_SIZE_NONE),
+        && TEST_size_t_eq(ossl_fxn_ctx_add_size(s1, OSSL_FXN_CTX_SIZE_NONE),
             s1)
-        && TEST_size_t_eq(ossl_fn_ctx_add_size(OSSL_FN_CTX_SIZE_NONE,
-                              OSSL_FN_CTX_SIZE_NONE),
-            OSSL_FN_CTX_SIZE_NONE)
-        && TEST_size_t_eq(ossl_fn_ctx_add_size(0, s1), 0)
-        && TEST_size_t_eq(ossl_fn_ctx_add_size(s1, 0), 0)
-        && TEST_size_t_eq(ossl_fn_ctx_add_size(maxu, s1), 0)
-        && TEST_size_t_eq(ossl_fn_ctx_max_size(s1, s2), s2)
-        && TEST_size_t_eq(ossl_fn_ctx_max_size(s2, s1), s2)
-        && TEST_size_t_eq(ossl_fn_ctx_max_size(OSSL_FN_CTX_SIZE_NONE, s1),
+        && TEST_size_t_eq(ossl_fxn_ctx_add_size(OSSL_FXN_CTX_SIZE_NONE,
+                              OSSL_FXN_CTX_SIZE_NONE),
+            OSSL_FXN_CTX_SIZE_NONE)
+        && TEST_size_t_eq(ossl_fxn_ctx_add_size(0, s1), 0)
+        && TEST_size_t_eq(ossl_fxn_ctx_add_size(s1, 0), 0)
+        && TEST_size_t_eq(ossl_fxn_ctx_add_size(maxu, s1), 0)
+        && TEST_size_t_eq(ossl_fxn_ctx_max_size(s1, s2), s2)
+        && TEST_size_t_eq(ossl_fxn_ctx_max_size(s2, s1), s2)
+        && TEST_size_t_eq(ossl_fxn_ctx_max_size(OSSL_FXN_CTX_SIZE_NONE, s1),
             s1)
-        && TEST_size_t_eq(ossl_fn_ctx_max_size(OSSL_FN_CTX_SIZE_NONE,
-                              OSSL_FN_CTX_SIZE_NONE),
-            OSSL_FN_CTX_SIZE_NONE)
-        && TEST_size_t_eq(ossl_fn_ctx_max_size(0, s1), 0)
-        && TEST_size_t_eq(ossl_fn_ctx_max_size(s1, 0), 0);
+        && TEST_size_t_eq(ossl_fxn_ctx_max_size(OSSL_FXN_CTX_SIZE_NONE,
+                              OSSL_FXN_CTX_SIZE_NONE),
+            OSSL_FXN_CTX_SIZE_NONE)
+        && TEST_size_t_eq(ossl_fxn_ctx_max_size(0, s1), 0)
+        && TEST_size_t_eq(ossl_fxn_ctx_max_size(s1, 0), 0);
 }
 
 /*
- * bn_get_ossl_fn() on global BN_FLG_STATIC_DATA constants must return their
- * OSSL_FN backing directly.  These are defined with the OSSL_FN_STATIC_*
- * machinery; the test verifies the BIGNUM views resolve to usable OSSL_FN
+ * bn_get_ossl_fxn() on global BN_FLG_STATIC_DATA constants must return their
+ * OSSL_FXN backing directly.  These are defined with the OSSL_FXN_STATIC_*
+ * machinery; the test verifies the BIGNUM views resolve to usable OSSL_FXN
  * operands.
  */
 static int test_static_const_views(void)
 {
-    const OSSL_FN *f1 = NULL;
-    const OSSL_FN *f2 = NULL;
-    const OSSL_FN *fp = NULL;
-    const OSSL_FN *fs = NULL;
+    const OSSL_FXN *f1 = NULL;
+    const OSSL_FXN *f2 = NULL;
+    const OSSL_FXN *fp = NULL;
+    const OSSL_FXN *fs = NULL;
 
     /* The literal 1: 1 limb, value 1, one shared storage object */
-    if (!TEST_ptr(f1 = OSSL_FN_value_one())
-        || !TEST_size_t_eq(ossl_fn_get_dsize(f1), 1)
-        || !TEST_true(OSSL_FN_is_word(f1, 1))
-        || !TEST_ptr_eq(bn_get_ossl_fn(BN_value_one()), f1))
+    if (!TEST_ptr(f1 = OSSL_FXN_value_one())
+        || !TEST_size_t_eq(ossl_fxn_get_dsize(f1), 1)
+        || !TEST_true(OSSL_FXN_is_word(f1, 1))
+        || !TEST_ptr_eq(bn_get_ossl_fxn(BN_value_one()), f1))
         return 0;
 
     /* The literal 2: 1 limb, value 2 */
-    if (!TEST_ptr(f2 = bn_get_ossl_fn(&ossl_bignum_const_2))
-        || !TEST_size_t_eq(ossl_fn_get_dsize(f2), 1)
-        || !TEST_true(OSSL_FN_is_word(f2, 2)))
+    if (!TEST_ptr(f2 = bn_get_ossl_fxn(&ossl_bignum_const_2))
+        || !TEST_size_t_eq(ossl_fxn_get_dsize(f2), 1)
+        || !TEST_true(OSSL_FXN_is_word(f2, 2)))
         return 0;
 
-    /* A group prime: BIGNUM and OSSL_FN views carry the same value */
-    if (!TEST_ptr(fp = bn_get_ossl_fn(&ossl_bignum_ffdhe2048_p))
-        || !TEST_size_t_eq(ossl_fn_get_dsize(fp), OSSL_FN_BYTES == 8 ? 32 : 64)
-        || !TEST_size_t_eq(OSSL_FN_num_bits(fp),
+    /* A group prime: BIGNUM and OSSL_FXN views carry the same value */
+    if (!TEST_ptr(fp = bn_get_ossl_fxn(&ossl_bignum_ffdhe2048_p))
+        || !TEST_size_t_eq(ossl_fxn_get_dsize(fp), OSSL_FXN_BYTES == 8 ? 32 : 64)
+        || !TEST_size_t_eq(OSSL_FXN_num_bits(fp),
             (size_t)BN_num_bits(&ossl_bignum_ffdhe2048_p))
-        || !TEST_false(OSSL_FN_is_zero(fp)))
+        || !TEST_false(OSSL_FXN_is_zero(fp)))
         return 0;
 
     /* inv_sqrt_2: non-NULL, non-zero, 4 limbs on 64-bit / 8 on 32-bit */
-    if (!TEST_ptr(fs = bn_get_ossl_fn(&ossl_bn_inv_sqrt_2))
-        || !TEST_size_t_eq(ossl_fn_get_dsize(fs),
-            OSSL_FN_BYTES == 8 ? 4 : 8)
-        || !TEST_false(OSSL_FN_is_zero(fs)))
+    if (!TEST_ptr(fs = bn_get_ossl_fxn(&ossl_bn_inv_sqrt_2))
+        || !TEST_size_t_eq(ossl_fxn_get_dsize(fs),
+            OSSL_FXN_BYTES == 8 ? 4 : 8)
+        || !TEST_false(OSSL_FXN_is_zero(fs)))
         return 0;
 
     /* small_prime_factors: the internal accessor and the BN view agree */
-    if (!TEST_ptr(fs = ossl_fn_get0_small_factors())
-        || !TEST_ptr_eq(bn_get_ossl_fn(ossl_bn_get0_small_factors()), fs)
-        || !TEST_size_t_eq(OSSL_FN_num_bits(fs), 1037))
+    if (!TEST_ptr(fs = ossl_fxn_get0_small_factors())
+        || !TEST_ptr_eq(bn_get_ossl_fxn(ossl_bn_get0_small_factors()), fs)
+        || !TEST_size_t_eq(OSSL_FXN_num_bits(fs), 1037))
         return 0;
 
     return 1;
 }
 
 /*
- * Test that OSSL_FN_CTX_free() cleanses the whole context allocation
+ * Test that OSSL_FXN_CTX_free() cleanses the whole context allocation
  * before freeing it.  Custom memory hooks record the pointer and size of
  * each allocation, and check that the buffer handed back to free() has
  * been zeroed.  The hooks are installed by global_init(); the test resets
- * the records before exercising OSSL_FN_CTX, and frees are only counted
+ * the records before exercising OSSL_FXN_CTX, and frees are only counted
  * when they match a recorded allocation, so only the test's own activity
  * is measured.
  */
@@ -635,7 +635,7 @@ static void *hook_malloc(size_t num, const char *file, int line)
 static void *hook_realloc(void *addr, size_t num, const char *file, int line)
 {
     /*
-     * This should never be called, 'cause OSSL_FN_CTX functions should
+     * This should never be called, 'cause OSSL_FXN_CTX functions should
      * call OPENSSL_clear_realloc(), which never calls the realloc hook.
      * The records are deliberately not kept straight here: the test
      * asserts this hook was never called, and using addr after
@@ -656,8 +656,8 @@ static void hook_free(void *ptr, const char *file, int line)
 static int test_ctx_free_clear(void)
 {
     int ret = 0;
-    OSSL_FN_CTX *ctx = NULL;
-    size_t size = OSSL_FN_CTX_size(2, 4, 16);
+    OSSL_FXN_CTX *ctx = NULL;
+    size_t size = OSSL_FXN_CTX_size(2, 4, 16);
     const void *token = NULL;
 
     if (!TEST_size_t_ne(size, 0))
@@ -672,14 +672,14 @@ static int test_ctx_free_clear(void)
     hooks_active = 1;
 
     /* Setup: Create the arena, get a number and fill it with a non-zero pattern */
-    if (TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size))
-        && TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
-        OSSL_FN *fn;
+    if (TEST_ptr(ctx = OSSL_FXN_CTX_new_size(NULL, size))
+        && TEST_ptr(token = OSSL_FXN_CTX_start(ctx))) {
+        OSSL_FXN *fxn;
 
-        if (TEST_ptr(fn = OSSL_FN_CTX_get_limbs(ctx, token, 4))) {
-            OSSL_FN_ULONG *u = (OSSL_FN_ULONG *)ossl_fn_get_words(fn);
+        if (TEST_ptr(fxn = OSSL_FXN_CTX_get_limbs(ctx, token, 4))) {
+            OSSL_FXN_ULONG *u = (OSSL_FXN_ULONG *)ossl_fxn_get_words(fxn);
 
-            memset(u, 0xff, 4 * OSSL_FN_BYTES);
+            memset(u, 0xff, 4 * OSSL_FXN_BYTES);
 
             /*
              * Ever so hopeful, to be cleared by the test of
@@ -687,14 +687,14 @@ static int test_ctx_free_clear(void)
              */
             ret = 1;
         }
-        (void)OSSL_FN_CTX_end(ctx, token);
+        (void)OSSL_FXN_CTX_end(ctx, token);
     }
 
     /*
      * This is what we're actually testing, and should be called unconditionally
      * anyway, so the arena gets freed if it was allocated.
      */
-    OSSL_FN_CTX_free(ctx);
+    OSSL_FXN_CTX_free(ctx);
     hooks_active = 0;
 
     if (!TEST_int_eq(recorded_allocs_nonzero, 0))
