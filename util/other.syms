@@ -562,6 +562,8 @@ OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT        define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
+PKCS7_OP_SET_NO_SIGNING_TIME            define
+PKCS7_set_no_signing_time               define
 RAND_cleanup                            define deprecated 1.1.0
 SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define

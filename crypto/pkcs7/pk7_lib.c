@@ -62,6 +62,19 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
         }
 
         break;
+    case PKCS7_OP_SET_NO_SIGNING_TIME:
+        if (nid == NID_pkcs7_signed || nid == NID_pkcs7_signedAndEnveloped) {
+            if (larg != 0)
+                p7->state |= PKCS7_STATE_NO_SIGNING_TIME;
+            else
+                p7->state &= ~PKCS7_STATE_NO_SIGNING_TIME;
+            ret = 1;
+        } else {
+            ERR_raise(ERR_LIB_PKCS7,
+                PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE);
+            ret = 0;
+        }
+        break;
     default:
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNKNOWN_OPERATION);
         ret = 0;
