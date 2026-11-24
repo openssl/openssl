@@ -47,6 +47,7 @@
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <unistd.h>
 #endif
 
@@ -196,6 +197,13 @@ static SSL_CTX *create_ctx(const char *cert_path, const char *key_path)
     ctx = SSL_CTX_new(OSSL_QUIC_server_method());
     if (ctx == NULL)
         goto err;
+
+#ifndef _WIN32
+    /* Connection threads make concurrent blocking calls in one QUIC domain. */
+    if (!SSL_CTX_set_domain_flags(ctx,
+            SSL_DOMAIN_FLAG_MULTI_THREAD | SSL_DOMAIN_FLAG_BLOCKING))
+        goto err;
+#endif
 
     /*
      * Load the server's certificate *chain* file (PEM format), which includes
@@ -562,6 +570,8 @@ out:
     return;
 }
 
+static void *serve_connection(void *arg);
+
 /**
  * @brief Runs the QUIC server to accept and handle client connections.
  *
@@ -579,7 +589,7 @@ out:
  * - Creates a QUIC listener using the provided SSL_CTX and associates it
  *   with the specified UDP socket.
  * - Waits for incoming QUIC connections and accepts them.
- * - For each connection:
+ * - For each connection, in its own thread except on Windows:
  *   - Accepts incoming streams.
  *   - Processes each stream using `process_new_stream`.
  *   - Shuts down the connection upon completion.
@@ -601,8 +611,10 @@ out:
 static int run_quic_server(SSL_CTX *ctx, BIO *sock)
 {
     int ok = 0;
-    SSL *listener, *conn, *stream;
-    unsigned long errcode;
+    SSL *listener, *conn;
+#ifndef _WIN32
+    pthread_t thread;
+#endif
     uint64_t flags = 0;
 
     /*
@@ -644,68 +656,94 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
         }
         printf("Accepted new connection\n");
 
-        /*
-         * QUIC requires that we inform the connection that
-         * we always want to accept new streams, rather than reject them
-         * Additionally, while we don't make an explicit call here, we
-         * are using the default stream mode, as would be specified by
-         * a call to SSL_set_default_stream_mode
-         */
-        if (!SSL_set_incoming_stream_policy(conn,
-                SSL_INCOMING_STREAM_POLICY_ACCEPT,
-                0)) {
-            fprintf(stderr, "Failed to set incoming stream policy\n");
-            goto close_conn;
-        }
-
-        /*
-         * Until the connection is closed, accept incoming stream
-         * requests and serve them
-         */
-        for (;;) {
-            /*
-             * Note that SSL_accept_stream is blocking here, as the
-             * conn SSL object inherited the default blocking property
-             * from its parent, the listener SSL object.  As such there
-             * is no need to handle retry failures here.
-             */
-            stream = SSL_accept_stream(conn, 0);
-            if (stream == NULL) {
-                /*
-                 * If we don't get a stream, either we
-                 * Hit a legitimate error, and should bail out
-                 * or
-                 * The Client closed the connection, and there are no
-                 * more incoming streams expected
-                 *
-                 * Filter on the shutdown error, and only print an error
-                 * message if the cause is not SHUTDOWN
-                 */
-                ERR_print_errors_fp(stderr);
-                errcode = ERR_get_error();
-                if (ERR_GET_REASON(errcode) != SSL_R_PROTOCOL_IS_SHUTDOWN)
-                    fprintf(stderr, "Failure in accept stream, error %s\n",
-                        ERR_reason_error_string(errcode));
-                break;
-            }
-            process_new_stream(stream);
-            SSL_free(stream);
-        }
-
-        /*
-         * Shut down the connection. We may need to call this multiple times
-         * to ensure the connection is shutdown completely.
-         */
-    close_conn:
-        while (SSL_shutdown(conn) != 1)
+#ifdef _WIN32
+        serve_connection(conn);
+#else
+        if (pthread_create(&thread, NULL, serve_connection, conn) != 0) {
+            fprintf(stderr, "Failed to create thread\n");
+            SSL_free(conn);
             continue;
-
-        SSL_free(conn);
+        }
+        pthread_detach(thread);
+#endif
     }
 
 err:
     SSL_free(listener);
     return ok;
+}
+
+/**
+ * @brief Serves a QUIC connection until the client closes it, then frees it.
+ *
+ * @param arg Pointer to the SSL object representing the QUIC connection.
+ * @return Always NULL.
+ */
+static void *serve_connection(void *arg)
+{
+    SSL *conn = arg;
+    SSL *stream;
+    unsigned long errcode;
+
+    /*
+     * QUIC requires that we inform the connection that
+     * we always want to accept new streams, rather than reject them
+     * Additionally, while we don't make an explicit call here, we
+     * are using the default stream mode, as would be specified by
+     * a call to SSL_set_default_stream_mode
+     */
+    if (!SSL_set_incoming_stream_policy(conn,
+            SSL_INCOMING_STREAM_POLICY_ACCEPT,
+            0)) {
+        fprintf(stderr, "Failed to set incoming stream policy\n");
+        goto close_conn;
+    }
+
+    /*
+     * Until the connection is closed, accept incoming stream
+     * requests and serve them
+     */
+    for (;;) {
+        /*
+         * Note that SSL_accept_stream is blocking here, as the
+         * conn SSL object inherited the default blocking property
+         * from its parent, the listener SSL object.  As such there
+         * is no need to handle retry failures here.
+         */
+        stream = SSL_accept_stream(conn, 0);
+        if (stream == NULL) {
+            /*
+             * If we don't get a stream, either we
+             * Hit a legitimate error, and should bail out
+             * or
+             * The Client closed the connection, and there are no
+             * more incoming streams expected
+             *
+             * Filter on the shutdown error, and only print an error
+             * message if the cause is not SHUTDOWN
+             */
+            ERR_print_errors_fp(stderr);
+            errcode = ERR_get_error();
+            if (ERR_GET_REASON(errcode) != SSL_R_PROTOCOL_IS_SHUTDOWN)
+                fprintf(stderr, "Failure in accept stream, error %s\n",
+                    ERR_reason_error_string(errcode));
+            break;
+        }
+        process_new_stream(stream);
+        SSL_free(stream);
+    }
+
+    /*
+     * Shut down the connection. We may need to call this multiple times
+     * to ensure the connection is shutdown completely.
+     */
+close_conn:
+    while (SSL_shutdown(conn) != 1)
+        continue;
+
+    SSL_free(conn);
+
+    return NULL;
 }
 
 /**
