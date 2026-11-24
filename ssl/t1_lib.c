@@ -1365,7 +1365,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     /* Check the possible prefixes (remark: Leading and trailing spaces already cleared) */
     while (continue_while_loop && len > 0
         && ((current_prefix = strchr(prefixes, elem[0])) != NULL
-            || OPENSSL_strncasecmp(current_prefix = (char *)DEFAULT_GROUPNAME_FIRST_CHARACTER, elem, 1) == 0)) {
+            || OPENSSL_strncasecmp(current_prefix = DEFAULT_GROUPNAME_FIRST_CHARACTER, elem, 1) == 0)) {
 
         switch (*current_prefix) {
         case TUPLE_DELIMITER_CHARACTER:

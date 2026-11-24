@@ -552,8 +552,8 @@ static void opt_number_error(const char *v)
 {
     size_t i = 0;
     struct strstr_pair_st {
-        char *prefix;
-        char *name;
+        const char *prefix;
+        const char *name;
     } b[] = {
         { "0x", "a hexadecimal" },
         { "0X", "a hexadecimal" },

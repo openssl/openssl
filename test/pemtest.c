@@ -99,9 +99,9 @@ static int test_cert_key_cert(void)
 static int test_empty_payload(void)
 {
     BIO *b;
-    static char *emptypay = "-----BEGIN CERTIFICATE-----\n"
-                            "-\n" /* Base64 EOF character */
-                            "-----END CERTIFICATE-----";
+    static const char *emptypay = "-----BEGIN CERTIFICATE-----\n"
+                                  "-\n" /* Base64 EOF character */
+                                  "-----END CERTIFICATE-----";
     char *name = NULL, *header = NULL;
     unsigned char *data = NULL;
     long len;
@@ -127,12 +127,12 @@ err:
 static int test_protected_params(void)
 {
     BIO *b;
-    static char *protectedpay = "-----BEGIN RSA PRIVATE KEY-----\n"
-                                "Proc-Type: 4,ENCRYPTED\n"
-                                "DEK-Info: AES-256-CBC,4A44448ED28992710556549B35100CEA\n"
-                                "\n"
-                                "Xw3INxKeH+rUUF57mjATpvj6zknVhedwrlRmRvnwlLv5wqIy5Ae4UVLPh7SUswfC\n"
-                                "-----END RSA PRIVATE KEY-----\n";
+    static const char *protectedpay = "-----BEGIN RSA PRIVATE KEY-----\n"
+                                      "Proc-Type: 4,ENCRYPTED\n"
+                                      "DEK-Info: AES-256-CBC,4A44448ED28992710556549B35100CEA\n"
+                                      "\n"
+                                      "Xw3INxKeH+rUUF57mjATpvj6zknVhedwrlRmRvnwlLv5wqIy5Ae4UVLPh7SUswfC\n"
+                                      "-----END RSA PRIVATE KEY-----\n";
     EVP_PKEY *pkey = NULL;
     int ret = 0;
 

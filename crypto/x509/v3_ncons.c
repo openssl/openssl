@@ -90,13 +90,16 @@ ASN1_SEQUENCE(NAME_CONSTRAINTS) = {
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 
-#define IA5_OFFSET_LEN(ia5base, offset) \
-    ((ia5base)->length - ((unsigned char *)(offset) - (ia5base)->data))
+static ossl_inline size_t ia5_offset_len(const ASN1_IA5STRING *ia5base,
+    const char *offset)
+{
+    return ia5base->length - (offset - (const char *)ia5base->data);
+}
 
 /* Like memchr but for ASN1_IA5STRING. Additionally you can specify the
  * starting point to search from
  */
-#define ia5memchr(str, start, c) memchr(start, c, IA5_OFFSET_LEN(str, start))
+#define ia5memchr(str, start, c) memchr(start, c, ia5_offset_len(str, start))
 
 /* Like memrrchr but for ASN1_IA5STRING */
 static char *ia5memrchr(ASN1_IA5STRING *str, int c)
@@ -687,7 +690,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     }
 
     eml = emltype->value.utf8string;
-    emlptr = (char *)eml->data;
+    emlptr = (const char *)eml->data;
     emlat = ia5memrchr(eml, '@');
 
     if (emlat == NULL) {
@@ -719,7 +722,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     }
     /* Just have hostname left to match: case insensitive */
     emlptr = emlat + 1;
-    emlhostlen = IA5_OFFSET_LEN(eml, emlptr);
+    emlhostlen = ia5_offset_len(eml, emlptr);
     if (emlhostlen != strlen(ulabel)
         || ia5ncasecmp(ulabel, emlptr, emlhostlen) != 0) {
         ret = X509_V_ERR_PERMITTED_VIOLATION;
@@ -767,8 +770,8 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
         baseptr = baseat + 1;
     }
     emlptr = emlat + 1;
-    basehostlen = IA5_OFFSET_LEN(base, baseptr);
-    emlhostlen = IA5_OFFSET_LEN(eml, emlptr);
+    basehostlen = ia5_offset_len(base, baseptr);
+    emlhostlen = ia5_offset_len(eml, emlptr);
     /* Just have hostname left to match: case insensitive */
     if (basehostlen != emlhostlen || ia5ncasecmp(baseptr, emlptr, emlhostlen))
         return X509_V_ERR_PERMITTED_VIOLATION;

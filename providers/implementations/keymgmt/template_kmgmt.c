@@ -28,11 +28,11 @@ extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
 
 #define BUFSIZE 1000
 #if defined(NDEBUG) || defined(OPENSSL_NO_STDIO)
-static void debug_print(char *fmt, ...)
+static void debug_print(const char *fmt, ...)
 {
 }
 #else
-static void debug_print(char *fmt, ...)
+static void debug_print(const char *fmt, ...)
 {
     char out[BUFSIZE];
     va_list argptr;

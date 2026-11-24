@@ -36,7 +36,7 @@
  */
 typedef struct {
     uint16_t id;
-    char *synonyms[4];
+    const char *synonyms[4];
 } synonymttab_t;
 
 /* max length of string we'll try map to a suite */

@@ -87,7 +87,7 @@ static ossl_inline void siv128_dbl(SIV_BLOCK *b)
 }
 
 __owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *out,
-    unsigned char const *in, size_t len)
+    const unsigned char *in, size_t len)
 {
     SIV_BLOCK t;
     size_t out_len = sizeof(out->byte);
@@ -130,7 +130,7 @@ err:
 }
 
 __owur static ossl_inline int siv128_do_encrypt(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    unsigned char const *in, size_t len,
+    const unsigned char *in, size_t len,
     SIV_BLOCK *icv)
 {
     int out_len = (int)len;

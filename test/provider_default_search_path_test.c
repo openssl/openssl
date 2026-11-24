@@ -14,7 +14,7 @@
 static int test_default_libctx(void)
 {
     OSSL_LIB_CTX *ctx = NULL;
-    char *path = "./some/path";
+    const char *path = "./some/path";
     const char *retrieved_path = NULL;
     int ok;
 
@@ -28,8 +28,8 @@ static int test_default_libctx(void)
 static int test_explicit_libctx(void)
 {
     OSSL_LIB_CTX *ctx = NULL;
-    char *def_libctx_path = "./some/path";
-    char *path = "./another/location";
+    const char *def_libctx_path = "./some/path";
+    const char *path = "./another/location";
     const char *retrieved_defctx_path = NULL;
     const char *retrieved_path = NULL;
     int ok;

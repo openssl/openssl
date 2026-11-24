@@ -278,7 +278,7 @@ static int asn1_template_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
     }
 
     if (flags & ASN1_TFLG_SK_MASK) {
-        char *tname;
+        const char *tname;
         const ASN1_VALUE *skitem;
         STACK_OF(const_ASN1_VALUE) *stack;
 

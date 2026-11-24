@@ -927,7 +927,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     const EVP_CIPHER *snenc = NULL;
     unsigned char *insecret;
     unsigned char secret[EVP_MAX_MD_SIZE];
-    char *log_label;
+    const char *log_label;
     size_t keylen, ivlen, taglen;
     int ret = 0, l;
     int direction = sending ? OSSL_RECORD_DIRECTION_WRITE

@@ -557,7 +557,7 @@ static int test_kdf_tls1_prf_derive_multi_dup(void)
             || !TEST_mem_eq(iv, iv_len_out, div, div_len))
             goto err;
         /* The copy must own its IV, not point into the original */
-        if (!TEST_ptr_ne((void *)iv, (void *)div))
+        if (!TEST_ptr_ne((const void *)iv, (const void *)div))
             goto err;
     }
 

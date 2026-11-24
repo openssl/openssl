@@ -538,7 +538,7 @@ int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
     OSSL_PARAM params[3];
     char mddefault[100] = "";
     char mdmandatory[100] = "";
-    char *result = NULL;
+    const char *result = NULL;
     int rv = -2;
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST,

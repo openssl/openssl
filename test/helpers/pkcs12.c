@@ -481,7 +481,7 @@ static int check_asn1_string(const ASN1_TYPE *av, const char *txt)
 
     case V_ASN1_OCTET_STRING:
         if (!TEST_mem_eq(txt, strlen(txt),
-                (char *)ASN1_STRING_get0_data(av->value.octet_string),
+                (const char *)ASN1_STRING_get0_data(av->value.octet_string),
                 ASN1_STRING_get_length(av->value.octet_string)))
             goto err;
         break;

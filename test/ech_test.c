@@ -20,7 +20,7 @@
 static OSSL_LIB_CTX *libctx = NULL;
 static char *propq = NULL;
 static int verbose = 0;
-static char *certsdir = NULL;
+static const char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 static char *rootcert = NULL;
@@ -164,14 +164,14 @@ static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
 /* general test vector values */
 
 /* standard x25519 ech key pair with public key example.com */
-static const char pem_kp1[] = "-----BEGIN PRIVATE KEY-----\n"
-                              "MC4CAQAwBQYDK2VuBCIEILDIeo9Eqc4K9/uQ0PNAyMaP60qrxiSHT2tNZL3ksIZS\n"
-                              "-----END PRIVATE KEY-----\n"
-                              "-----BEGIN ECHCONFIG-----\n"
-                              "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
-                              "AQALZXhhbXBsZS5jb20AAA==\n"
-                              "-----END ECHCONFIG-----\n";
-static const char ec_kp1[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEAAQALZXhhbXBsZS5jb20AAA==";
+static const unsigned char pem_kp1[] = "-----BEGIN PRIVATE KEY-----\n"
+                                       "MC4CAQAwBQYDK2VuBCIEILDIeo9Eqc4K9/uQ0PNAyMaP60qrxiSHT2tNZL3ksIZS\n"
+                                       "-----END PRIVATE KEY-----\n"
+                                       "-----BEGIN ECHCONFIG-----\n"
+                                       "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
+                                       "AQALZXhhbXBsZS5jb20AAA==\n"
+                                       "-----END ECHCONFIG-----\n";
+static const unsigned char ec_kp1[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEAAQALZXhhbXBsZS5jb20AAA==";
 static size_t ec_kp1len = sizeof(ec_kp1) - 1;
 
 /*
@@ -184,7 +184,7 @@ static const char pem_kp2[] = "-----BEGIN PRIVATE KEY-----\n"
                               "-----BEGIN ECHCONFIG-----\n"
                               "AEf+DQBDvQAgACCr9pErR7E/gNeoni+0YpDZaMd7XN+hFnCN+H0Xnm1EHQAEAAEAAQAUZnJvbnQuc2VydmVyLmV4YW1wbGUAAA==\n"
                               "-----END ECHCONFIG-----\n";
-static const char ec_kp2[] = "AEf+DQBDvQAgACCr9pErR7E/gNeoni+0YpDZaMd7XN+hFnCN+H0Xnm1EHQAEAAEAAQAUZnJvbnQuc2VydmVyLmV4YW1wbGUAAA==";
+static const unsigned char ec_kp2[] = "AEf+DQBDvQAgACCr9pErR7E/gNeoni+0YpDZaMd7XN+hFnCN+H0Xnm1EHQAEAAEAAQAUZnJvbnQuc2VydmVyLmV4YW1wbGUAAA==";
 static size_t ec_kp2len = sizeof(ec_kp2) - 1;
 
 /* another, used in grease/retry-config tests, pn: f1.server.example */
@@ -197,59 +197,59 @@ static const char pem_kp3[] = "-----BEGIN PRIVATE KEY-----\n"
                               "-----END ECHCONFIG-----\n";
 
 /* standard x25519 ECHConfigList with public key example.com */
-static const char pem_pk1[] = "-----BEGIN ECHCONFIG-----\n"
-                              "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
-                              "AQALZXhhbXBsZS5jb20AAA==\n"
-                              "-----END ECHCONFIG-----\n";
+static const unsigned char pem_pk1[] = "-----BEGIN ECHCONFIG-----\n"
+                                       "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
+                                       "AQALZXhhbXBsZS5jb20AAA==\n"
+                                       "-----END ECHCONFIG-----\n";
 
 /* an ECDSA private with an x25519 ech public key example.com */
-static const char pem_mismatch_priv[] = "-----BEGIN EC PRIVATE KEY-----\n"
-                                        "MHcCAQEEIGKONznbHOMEKT4AKMufc37O9lUEBHO+Nb6ztkXhGXLcoAoGCCqGSM49\n"
-                                        "AwEHoUQDQgAEYDznfezvj5ufhQsZOQvSdiNpYKCd8tRI1aI3gc4y7gmdDUKpwzHa\n"
-                                        "VS4Qq0xyeG6fDMJv668UCotQANFsifGirQ==\n"
-                                        "-----END EC PRIVATE KEY-----\n"
-                                        "-----BEGIN ECHCONFIG-----\n"
-                                        "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
-                                        "AQALZXhhbXBsZS5jb20AAA==\n"
-                                        "-----END ECHCONFIG-----\n";
+static const unsigned char pem_mismatch_priv[] = "-----BEGIN EC PRIVATE KEY-----\n"
+                                                 "MHcCAQEEIGKONznbHOMEKT4AKMufc37O9lUEBHO+Nb6ztkXhGXLcoAoGCCqGSM49\n"
+                                                 "AwEHoUQDQgAEYDznfezvj5ufhQsZOQvSdiNpYKCd8tRI1aI3gc4y7gmdDUKpwzHa\n"
+                                                 "VS4Qq0xyeG6fDMJv668UCotQANFsifGirQ==\n"
+                                                 "-----END EC PRIVATE KEY-----\n"
+                                                 "-----BEGIN ECHCONFIG-----\n"
+                                                 "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
+                                                 "AQALZXhhbXBsZS5jb20AAA==\n"
+                                                 "-----END ECHCONFIG-----\n";
 
 /*
  * This ECHConfigList has 4 entries with different versions,
  * from drafts: 13,10,13,9 - since our runtime no longer supports
  * version 9 or 10, we should see 2 configs loaded.
  */
-static const char pem_4_to_2[] = "-----BEGIN ECHCONFIG-----\n"
-                                 "APv+DQA6xQAgACBm54KSIPXu+pQq2oY183wt3ybx7CKbBYX0ogPq5u6FegAEAAEA\n"
-                                 "AQALZXhhbXBsZS5jb20AAP4KADzSACAAIIP+0Qt0WGBF3H5fz8HuhVRTCEMuHS4K\n"
-                                 "hu6ibR/6qER4AAQAAQABAAAAC2V4YW1wbGUuY29tAAD+DQA6QwAgACB3xsNUtSgi\n"
-                                 "piYpUkW6OSrrg03I4zIENMFa0JR2+Mm1WwAEAAEAAQALZXhhbXBsZS5jb20AAP4J\n"
-                                 "ADsAC2V4YW1wbGUuY29tACCjJCv5w/yaHjbOc6nVuM/GksIGLgDR+222vww9dEk8\n"
-                                 "FwAgAAQAAQABAAAAAA==\n"
-                                 "-----END ECHCONFIG-----\n";
+static const unsigned char pem_4_to_2[] = "-----BEGIN ECHCONFIG-----\n"
+                                          "APv+DQA6xQAgACBm54KSIPXu+pQq2oY183wt3ybx7CKbBYX0ogPq5u6FegAEAAEA\n"
+                                          "AQALZXhhbXBsZS5jb20AAP4KADzSACAAIIP+0Qt0WGBF3H5fz8HuhVRTCEMuHS4K\n"
+                                          "hu6ibR/6qER4AAQAAQABAAAAC2V4YW1wbGUuY29tAAD+DQA6QwAgACB3xsNUtSgi\n"
+                                          "piYpUkW6OSrrg03I4zIENMFa0JR2+Mm1WwAEAAEAAQALZXhhbXBsZS5jb20AAP4J\n"
+                                          "ADsAC2V4YW1wbGUuY29tACCjJCv5w/yaHjbOc6nVuM/GksIGLgDR+222vww9dEk8\n"
+                                          "FwAgAAQAAQABAAAAAA==\n"
+                                          "-----END ECHCONFIG-----\n";
 
 /* mis-spelled PEM string */
-static const char pem_typo[] = "-----BEGIN PRIVATE KEY-----\n"
-                               "MC4CAQAwBQYDK2VuBCIEILDIeo9Eqc4K9/uQ0PNAyMaP60qrxiSHT2tNZL3ksIZS\n"
-                               "-----END PRIVATE KEY-----\n"
-                               "-----BEGIN ExHCOxFIG-----\n"
-                               "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
-                               "AQALZXhhbXBsZS5jb20AAA==\n"
-                               "-----END ExHCOxFIG-----\n";
+static const unsigned char pem_typo[] = "-----BEGIN PRIVATE KEY-----\n"
+                                        "MC4CAQAwBQYDK2VuBCIEILDIeo9Eqc4K9/uQ0PNAyMaP60qrxiSHT2tNZL3ksIZS\n"
+                                        "-----END PRIVATE KEY-----\n"
+                                        "-----BEGIN ExHCOxFIG-----\n"
+                                        "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
+                                        "AQALZXhhbXBsZS5jb20AAA==\n"
+                                        "-----END ExHCOxFIG-----\n";
 
 /* single-line base64(ECHConfigList) form of pem_pk1 */
-static const char b64_pk1[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
-                              "AQALZXhhbXBsZS5jb20AAA==";
+static const unsigned char b64_pk1[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
+                                       "AQALZXhhbXBsZS5jb20AAA==";
 
 /* single-line base64(ECHConfigList) form of pem_6_to3 */
-static const char b64_6_to_3[] = "AXn+DQA6xQAgACBm54KSIPXu+pQq2oY183wt3ybx7CKbBYX0ogPq5u6FegAEAAE"
-                                 "AAQALZXhhbXBsZS5jb20AAP4KADzSACAAIIP+0Qt0WGBF3H5fz8HuhVRTCEMuHS"
-                                 "4Khu6ibR/6qER4AAQAAQABAAAAC2V4YW1wbGUuY29tAAD+CQA7AAtleGFtcGxlL"
-                                 "mNvbQAgoyQr+cP8mh42znOp1bjPxpLCBi4A0ftttr8MPXRJPBcAIAAEAAEAAQAA"
-                                 "AAD+DQA6QwAgACB3xsNUtSgipiYpUkW6OSrrg03I4zIENMFa0JR2+Mm1WwAEAAE"
-                                 "AAQALZXhhbXBsZS5jb20AAP4KADwDACAAIH0BoAdiJCX88gv8nYpGVX5BpGBa9y"
-                                 "T0Pac3Kwx6i8URAAQAAQABAAAAC2V4YW1wbGUuY29tAAD+DQA6QwAgACDcZIAx7"
-                                 "OcOiQuk90VV7/DO4lFQr5I3Zw9tVbK8MGw1dgAEAAEAAQALZXhhbXBsZS5jb20A"
-                                 "AA==";
+static const unsigned char b64_6_to_3[] = "AXn+DQA6xQAgACBm54KSIPXu+pQq2oY183wt3ybx7CKbBYX0ogPq5u6FegAEAAE"
+                                          "AAQALZXhhbXBsZS5jb20AAP4KADzSACAAIIP+0Qt0WGBF3H5fz8HuhVRTCEMuHS"
+                                          "4Khu6ibR/6qER4AAQAAQABAAAAC2V4YW1wbGUuY29tAAD+CQA7AAtleGFtcGxlL"
+                                          "mNvbQAgoyQr+cP8mh42znOp1bjPxpLCBi4A0ftttr8MPXRJPBcAIAAEAAEAAQAA"
+                                          "AAD+DQA6QwAgACB3xsNUtSgipiYpUkW6OSrrg03I4zIENMFa0JR2+Mm1WwAEAAE"
+                                          "AAQALZXhhbXBsZS5jb20AAP4KADwDACAAIH0BoAdiJCX88gv8nYpGVX5BpGBa9y"
+                                          "T0Pac3Kwx6i8URAAQAAQABAAAAC2V4YW1wbGUuY29tAAD+DQA6QwAgACDcZIAx7"
+                                          "OcOiQuk90VV7/DO4lFQr5I3Zw9tVbK8MGw1dgAEAAEAAQALZXhhbXBsZS5jb20A"
+                                          "AA==";
 
 /* same as above but binary encoded */
 static const unsigned char bin_6_to_3[] = {
@@ -304,8 +304,8 @@ static const unsigned char bin_6_to_3[] = {
 };
 
 /* base64(ECHConfigList) with corrupt ciphersuite length and public_name */
-static const char b64_bad_cs[] = "AD7+DQA6uAAgACAogff+HZbirYdQCfXI01GBPP8AEKYyK/D/0DoeXD84fgAQAAE"
-                                 "AAQgLZXhhbUNwbGUuYwYAAAAAQwA=";
+static const unsigned char b64_bad_cs[] = "AD7+DQA6uAAgACAogff+HZbirYdQCfXI01GBPP8AEKYyK/D/0DoeXD84fgAQAAE"
+                                          "AAQgLZXhhbUNwbGUuYwYAAAAAQwA=";
 
 /* An ECHConfigList with one ECHConfig but of the wrong version */
 static const unsigned char bin_bad_ver[] = {
@@ -730,7 +730,7 @@ static const unsigned char bin_long_ext[] = {
 
 /* struct for ingest test vector and results */
 typedef struct INGEST_TV_T {
-    char *name; /* name for verbose output */
+    const char *name; /* name for verbose output */
     const unsigned char *tv; /* test vector */
     size_t len; /* len(tv) - sizeof(tv) if binary, subtract 1 for strings */
     int pemenc; /* whether PEM encoded (1) or not (0) */
@@ -745,96 +745,96 @@ typedef struct INGEST_TV_T {
 
 static ingest_tv_t ingest_tvs[] = {
     /* PEM test vectors */
-    { "PEM basic/last", (unsigned char *)pem_kp1, sizeof(pem_kp1) - 1,
+    { "PEM basic/last", pem_kp1, sizeof(pem_kp1) - 1,
         1, 1, 1, 1, OSSL_ECHSTORE_LAST, 1, 1, 1 },
-    { "PEM basic/0", (unsigned char *)pem_pk1, sizeof(pem_pk1) - 1,
+    { "PEM basic/0", pem_pk1, sizeof(pem_pk1) - 1,
         1, 1, 0, 1, 0, 1, 0, 1 },
-    { "PEM basic/2nd", (unsigned char *)pem_pk1, sizeof(pem_pk1) - 1,
+    { "PEM basic/2nd", pem_pk1, sizeof(pem_pk1) - 1,
         1, 1, 0, 1, 2, 0, 0, 1 },
-    { "ECDSA priv + 25519 pub", (unsigned char *)pem_mismatch_priv,
+    { "ECDSA priv + 25519 pub", pem_mismatch_priv,
         sizeof(pem_mismatch_priv) - 1,
         1, 0, 0, 0, 0, 0, 0, 0 },
-    { "PEM string typo", (unsigned char *)pem_typo, sizeof(pem_typo) - 1,
+    { "PEM string typo", pem_typo, sizeof(pem_typo) - 1,
         1, 0, 0, 0, 0, 0, 0, 0 },
     /* downselect from the 2, at each position */
-    { "PEM 4->2/0", (unsigned char *)pem_4_to_2, sizeof(pem_4_to_2) - 1,
+    { "PEM 4->2/0", pem_4_to_2, sizeof(pem_4_to_2) - 1,
         1, 1, 0, 2, 0, 1, 0, 1 },
-    { "PEM 4->2/1", (unsigned char *)pem_4_to_2, sizeof(pem_4_to_2) - 1,
+    { "PEM 4->2/1", pem_4_to_2, sizeof(pem_4_to_2) - 1,
         1, 1, 0, 2, 1, 1, 0, 1 },
     /* in the next one below, downselect fails, so we still have 2 entries */
-    { "PEM 4->2/2", (unsigned char *)pem_4_to_2, sizeof(pem_4_to_2) - 1,
+    { "PEM 4->2/2", pem_4_to_2, sizeof(pem_4_to_2) - 1,
         1, 1, 0, 2, 3, 0, 0, 2 },
     /* b64 test vectors */
-    { "B64 basic/last", (unsigned char *)b64_pk1, sizeof(b64_pk1) - 1,
+    { "B64 basic/last", b64_pk1, sizeof(b64_pk1) - 1,
         0, 1, 0, 1, OSSL_ECHSTORE_LAST, 1, 0, 1 },
-    { "B64 6->3/2", (unsigned char *)b64_6_to_3, sizeof(b64_6_to_3) - 1,
+    { "B64 6->3/2", b64_6_to_3, sizeof(b64_6_to_3) - 1,
         0, 1, 0, 3, 2, 1, 0, 1 },
-    { "B64 bad suitelen", (unsigned char *)b64_bad_cs, sizeof(b64_bad_cs) - 1,
+    { "B64 bad suitelen", b64_bad_cs, sizeof(b64_bad_cs) - 1,
         0, 0, 0, 0, 0, 0, 0, 0 },
     /* binary test vectors */
-    { "bin 6->3/2", (unsigned char *)bin_6_to_3, sizeof(bin_6_to_3),
+    { "bin 6->3/2", bin_6_to_3, sizeof(bin_6_to_3),
         0, 1, 0, 3, 2, 1, 0, 1 },
-    { "bin 2 symm suites", (unsigned char *)bin_multi_suite,
+    { "bin 2 symm suites", bin_multi_suite,
         sizeof(bin_multi_suite),
         0, 1, 0, 1, OSSL_ECHSTORE_LAST, 1, 0, 1 },
-    { "bin all-zero pub", (unsigned char *)bin_zero, sizeof(bin_zero),
+    { "bin all-zero pub", bin_zero, sizeof(bin_zero),
         0, 1, 0, 1, OSSL_ECHSTORE_LAST, 1, 0, 1 },
-    { "bin ok exts", (unsigned char *)bin_ok_exts, sizeof(bin_ok_exts),
+    { "bin ok exts", bin_ok_exts, sizeof(bin_ok_exts),
         0, 1, 0, 1, OSSL_ECHSTORE_LAST, 1, 0, 1 },
-    { "bin bad ver", (unsigned char *)bin_bad_ver, sizeof(bin_bad_ver),
+    { "bin bad ver", bin_bad_ver, sizeof(bin_bad_ver),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin 2 bad ver", (unsigned char *)bin_bad_ver2, sizeof(bin_bad_ver2),
+    { "bin 2 bad ver", bin_bad_ver2, sizeof(bin_bad_ver2),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad len", (unsigned char *)bin_bad_olen, sizeof(bin_bad_olen),
+    { "bin bad len", bin_bad_olen, sizeof(bin_bad_olen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad inner len", (unsigned char *)bin_bad_ilen, sizeof(bin_bad_ilen),
+    { "bin bad inner len", bin_bad_ilen, sizeof(bin_bad_ilen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad pk len", (unsigned char *)bin_bad_pklen, sizeof(bin_bad_pklen),
+    { "bin bad pk len", bin_bad_pklen, sizeof(bin_bad_pklen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad suitelen", (unsigned char *)bin_bad_cslen, sizeof(bin_bad_cslen),
+    { "bin bad suitelen", bin_bad_cslen, sizeof(bin_bad_cslen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad pn len", (unsigned char *)bin_bad_pnlen, sizeof(bin_bad_pnlen),
+    { "bin bad pn len", bin_bad_pnlen, sizeof(bin_bad_pnlen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad extlen", (unsigned char *)bin_bad_extlen, sizeof(bin_bad_extlen),
+    { "bin bad extlen", bin_bad_extlen, sizeof(bin_bad_extlen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad kemid", (unsigned char *)bin_bad_kemid, sizeof(bin_bad_kemid),
+    { "bin bad kemid", bin_bad_kemid, sizeof(bin_bad_kemid),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad kdfid", (unsigned char *)bin_bad_kdfid, sizeof(bin_bad_kdfid),
+    { "bin bad kdfid", bin_bad_kdfid, sizeof(bin_bad_kdfid),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad aeadid", (unsigned char *)bin_bad_aeadid, sizeof(bin_bad_aeadid),
+    { "bin bad aeadid", bin_bad_aeadid, sizeof(bin_bad_aeadid),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin exp aeadid", (unsigned char *)bin_bad_aeadid_ff,
+    { "bin exp aeadid", bin_bad_aeadid_ff,
         sizeof(bin_bad_aeadid_ff),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad,good", (unsigned char *)bin_bad_then_good,
+    { "bin bad,good", bin_bad_then_good,
         sizeof(bin_bad_then_good),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin mand ext", (unsigned char *)bin_mand_ext, sizeof(bin_mand_ext),
+    { "bin mand ext", bin_mand_ext, sizeof(bin_mand_ext),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin bad inner extlen", (unsigned char *)bin_bad_inner_extlen,
+    { "bin bad inner extlen", bin_bad_inner_extlen,
         sizeof(bin_bad_inner_extlen),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin NUL in PN", (unsigned char *)bin_nul_in_pn, sizeof(bin_nul_in_pn),
+    { "bin NUL in PN", bin_nul_in_pn, sizeof(bin_nul_in_pn),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin PN ends in dot", (unsigned char *)bin_pn_dot_at_end,
+    { "bin PN ends in dot", bin_pn_dot_at_end,
         sizeof(bin_pn_dot_at_end),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin short", (unsigned char *)bin_short, sizeof(bin_short),
+    { "bin short", bin_short, sizeof(bin_short),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin empty", (unsigned char *)bin_empty, sizeof(bin_empty),
+    { "bin empty", bin_empty, sizeof(bin_empty),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin ver short", (unsigned char *)bin_ver_short, sizeof(bin_ver_short),
+    { "bin ver short", bin_ver_short, sizeof(bin_ver_short),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin long ext", (unsigned char *)bin_long_ext, sizeof(bin_long_ext),
+    { "bin long ext", bin_long_ext, sizeof(bin_long_ext),
         0, 0, 0, 0, 0, 0, 0, 0 },
-    { "bin good then bad", (unsigned char *)bin_good_then_bad,
+    { "bin good then bad", bin_good_then_bad,
         sizeof(bin_good_then_bad),
         0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
 /* similar, but slightly simpler setup for file reading tests */
 typedef struct FNT_T {
-    char *fname; /* relative file name */
+    const char *fname; /* relative file name */
     int read; /* expected result from a pem_read of that */
 } fnt_t;
 
@@ -1093,7 +1093,7 @@ static int ech_api_basic_calls(void)
     char *router = NULL, *outer = "example.com";
     unsigned char alpns[] = { 'h', '2' };
     size_t alpns_len = sizeof(alpns);
-    char *gsuite = "X25519,hkdf-sha256,aes-256-gcm";
+    const char *gsuite = "X25519,hkdf-sha256,aes-256-gcm";
     uint16_t gtype = 0xfe09;
     unsigned char *rc = NULL;
     size_t rclen = 0;
@@ -1196,12 +1196,12 @@ static int ech_boring_compat(void)
         || !TEST_ptr(ctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
         || !TEST_ptr(s = SSL_new(ctx))
         || !TEST_true(SSL_set1_ech_config_list(s, NULL, 0))
-        || !TEST_true(SSL_set1_ech_config_list(s, (uint8_t *)b64_pk1,
+        || !TEST_true(SSL_set1_ech_config_list(s, b64_pk1,
             sizeof(b64_pk1) - 1))
-        || !TEST_true(SSL_set1_ech_config_list(s, (uint8_t *)bin_6_to_3,
+        || !TEST_true(SSL_set1_ech_config_list(s, bin_6_to_3,
             sizeof(bin_6_to_3)))
         /* test a fail */
-        || !TEST_false(SSL_set1_ech_config_list(s, (uint8_t *)b64_pk1,
+        || !TEST_false(SSL_set1_ech_config_list(s, b64_pk1,
             sizeof(b64_pk1) - 2)))
         goto end;
     rv = 1;
@@ -1667,7 +1667,7 @@ static int ech_in_out_test(int idx)
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
             &clientssl, NULL, NULL))
         || !TEST_true(SSL_set1_ech_config_list(clientssl,
-            (unsigned char *)ec_kp2,
+            ec_kp2,
             ec_kp2len)))
         goto end;
     if (idx == 0) {
@@ -1922,7 +1922,7 @@ static int ech_alpn_in_out_test(int idx)
     if (idx == 0) {
         /* set the correct ECHConfigList on client */
         if (!TEST_true(SSL_set1_ech_config_list(clientssl,
-                (unsigned char *)ec_kp2, ec_kp2len)))
+                ec_kp2, ec_kp2len)))
             goto end;
         if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                 SSL_ERROR_NONE)))
@@ -1931,7 +1931,7 @@ static int ech_alpn_in_out_test(int idx)
     if (idx == 1 || idx == 2) {
         /* set the wrong ECHConfigList on client */
         if (!TEST_true(SSL_set1_ech_config_list(clientssl,
-                (unsigned char *)ec_kp1, ec_kp1len)))
+                ec_kp1, ec_kp1len)))
             goto end;
         if (!TEST_false(create_ssl_connection(serverssl, clientssl,
                 SSL_ERROR_SSL))
@@ -2065,7 +2065,7 @@ static int ech_grease_test(int idx)
         goto end;
     /* for 4th test, set a real but wrong ECHConfig which'll override GREASE setting */
     if (idx == 3) {
-        if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp1,
+        if (!TEST_true(SSL_set1_ech_config_list(clientssl, ec_kp1,
                 ec_kp1len)))
             goto end;
         /* real but wrong => failure, due to ECH */

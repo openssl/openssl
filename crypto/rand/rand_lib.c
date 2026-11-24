@@ -559,7 +559,7 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
     EVP_RAND *rand;
     const char *propq;
-    char *name;
+    const char *name;
     EVP_RAND_CTX *ctx = NULL;
     int fallback = 0;
 #ifdef OPENSSL_NO_FIPS_JITTER

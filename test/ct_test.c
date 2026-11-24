@@ -25,8 +25,8 @@
 /* Used when declaring buffers to read text files into */
 #define CT_TEST_MAX_FILE_SIZE 8096
 
-static char *certs_dir = NULL;
-static char *ct_dir = NULL;
+static const char *certs_dir = NULL;
+static const char *ct_dir = NULL;
 
 typedef struct ct_test_fixture {
     const char *test_case_name;

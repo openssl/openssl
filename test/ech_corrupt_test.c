@@ -29,7 +29,7 @@ static OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
 static int verbose = 0;
 static int testcase = 0;
 static int testiter = 0;
-static char *certsdir = NULL;
+static const char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 static unsigned char *hpke_info = NULL;
@@ -49,8 +49,8 @@ static const char pem_kp1[] = "-----BEGIN PRIVATE KEY-----\n"
                               "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
                               "AQALZXhhbXBsZS5jb20AAA==\n"
                               "-----END ECHCONFIG-----\n";
-static const char echconfig[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
-                                "AQALZXhhbXBsZS5jb20AAA==";
+static const unsigned char echconfig[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
+                                         "AQALZXhhbXBsZS5jb20AAA==";
 static size_t echconfiglen = sizeof(echconfig) - 1;
 
 /* a second ECHConfig for when we want to use the wrong one */
@@ -1089,7 +1089,7 @@ static int ech_get_sh_offsets(const unsigned char *sh,
 /* Do a HPKE seal of a padded encoded inner */
 static int seal_encoded_inner(char **out, int *outlen,
     unsigned char *ei, size_t eilen,
-    const char *ch, int chlen,
+    const unsigned char *ch, int chlen,
     size_t echoffset, size_t echlen)
 {
     int res = 0;
@@ -1148,7 +1148,7 @@ err:
 }
 
 /* We'll either corrupt or copy the message based on the test index */
-static int corrupt_or_copy(const char *msg, const int msglen,
+static int corrupt_or_copy(const unsigned char *msg, const int msglen,
     char **msgout, int *msgoutlen)
 {
     TEST_ECHINNER *ti = NULL;
@@ -1190,7 +1190,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
         }
         if (testiter == 1) /* the only case with a short ciphertext for now */
             short_test = 1;
-        if (!TEST_true(ossl_ech_helper_get_ch_offsets((const unsigned char *)msg
+        if (!TEST_true(ossl_ech_helper_get_ch_offsets(msg
                     + SSL3_RT_HEADER_LENGTH
                     + SSL3_HM_HEADER_LENGTH,
                 msglen
@@ -1240,7 +1240,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
         if (testiter >= (int)OSSL_NELEM(test_echs))
             return 0;
         to = &test_echs[testiter];
-        if (!TEST_true(ossl_ech_helper_get_ch_offsets((const unsigned char *)msg
+        if (!TEST_true(ossl_ech_helper_get_ch_offsets(msg
                     + SSL3_RT_HEADER_LENGTH
                     + SSL3_HM_HEADER_LENGTH,
                 msglen
@@ -1291,7 +1291,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
                 return 0;
             if ((ts->borkage & OSSL_ECH_BORK_HRR) != 0) {
-                rv = ech_get_sh_offsets((unsigned char *)msg + 9,
+                rv = ech_get_sh_offsets(msg + 9,
                     msglen - 9,
                     &exts, &echoffset,
                     &echtype);
@@ -1309,7 +1309,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
         if ((ts->borkage & OSSL_ECH_BORK_REPLACE) != 0 && (ts->borkage & OSSL_ECH_BORK_HRR) != 0) {
             if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
                 return 0;
-            rv = ech_get_sh_offsets((unsigned char *)msg + 9,
+            rv = ech_get_sh_offsets(msg + 9,
                 msglen - 9,
                 &exts, &echoffset, &echtype);
             if (!TEST_int_eq(rv, 1))
@@ -1349,7 +1349,7 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     char *copy = NULL;
     int copylen = 0;
 
-    ret = corrupt_or_copy(in, inl, &copy, &copylen);
+    ret = corrupt_or_copy((const unsigned char *)in, inl, &copy, &copylen);
     if (ret == 0)
         goto out;
     ret = BIO_write(next, copy, inl);
@@ -1489,7 +1489,7 @@ static int test_ch_corrupt(int testidx)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
             c_to_s_fbio)))
         goto end;
-    if (!TEST_true(SSL_set1_ech_config_list(client, (unsigned char *)echconfig,
+    if (!TEST_true(SSL_set1_ech_config_list(client, echconfig,
             echconfiglen)))
         goto end;
     if (!TEST_true(SSL_set_tlsext_host_name(client, "foo.example.com")))
@@ -1562,7 +1562,7 @@ static int test_sh_corrupt(int testidx)
             goto end;
     } else {
         if (!TEST_true(SSL_set1_ech_config_list(client,
-                (unsigned char *)echconfig,
+                echconfig,
                 echconfiglen)))
             goto end;
     }
@@ -1647,7 +1647,7 @@ static int test_ech_corrupt(int testidx)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
             c_to_s_fbio)))
         goto end;
-    if (!TEST_true(SSL_set1_ech_config_list(client, (unsigned char *)echconfig,
+    if (!TEST_true(SSL_set1_ech_config_list(client, echconfig,
             echconfiglen)))
         goto end;
     if (!TEST_true(SSL_set_tlsext_host_name(client, "foo.example.com")))
@@ -1735,7 +1735,7 @@ static int ech_retry_config_test(int idx)
     if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "foo.example.com")))
         goto end;
     /* set a real but wrong ECHConfig */
-    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp2,
+    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (const unsigned char *)ec_kp2,
             ec_kp2len)))
         goto end;
     if (idx == 1) /* corrupt as desired */

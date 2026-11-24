@@ -4291,7 +4291,7 @@ static int user_data_add(struct user_data_st *user_data, size_t i)
 #define USER_COMMAND_KEY_UPDATE 4
 #define USER_COMMAND_FIN 5
 
-static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
+static int user_data_execute(struct user_data_st *user_data, int cmd, const char *arg)
 {
     const int version1_3 = SSL_is_dtls(user_data->con) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 

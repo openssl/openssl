@@ -18,12 +18,12 @@
 /* The maximum size of the static buffers used to test most things */
 #define MAX_LEN 20
 
-static void swap_copy(unsigned char *out, const void *in, size_t len)
+static void swap_copy(unsigned char *out, const unsigned char *in, size_t len)
 {
     size_t j;
 
     for (j = 0; j < len; j++)
-        out[j] = ((unsigned char *)in)[len - j - 1];
+        out[j] = in[len - j - 1];
 }
 
 /*
@@ -35,7 +35,7 @@ static void swap_copy(unsigned char *out, const void *in, size_t len)
  * byte reversal.
  */
 static void le_copy(unsigned char *out, size_t outlen,
-    const void *in, size_t inlen)
+    const unsigned char *in, size_t inlen)
 {
     DECLARE_IS_ENDIAN;
 
@@ -43,7 +43,7 @@ static void le_copy(unsigned char *out, size_t outlen,
         memcpy(out, in, outlen);
     } else {
         if (outlen < inlen) {
-            in = (const char *)in + inlen - outlen;
+            in += inlen - outlen;
             inlen = outlen;
         }
         if (!ossl_assert(outlen <= inlen))
@@ -147,17 +147,17 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
 
     /* Check signed types */
     if (bit32) {
-        le_copy(buf, sizeof(i32), &i32, sizeof(i32));
+        le_copy(buf, sizeof(i32), (const unsigned char *)&i32, sizeof(i32));
         sz = sizeof(i32) < width ? sizeof(i32) : width;
         if (!TEST_mem_eq(buf, sz, cmp, sz))
             return 0;
     }
-    le_copy(buf, sizeof(i64), &i64, sizeof(i64));
+    le_copy(buf, sizeof(i64), (const unsigned char *)&i64, sizeof(i64));
     sz = sizeof(i64) < width ? sizeof(i64) : width;
     if (!TEST_mem_eq(buf, sz, cmp, sz))
         return 0;
     if (sizet && !signd) {
-        le_copy(buf, sizeof(s), &s, sizeof(s));
+        le_copy(buf, sizeof(s), (const unsigned char *)&s, sizeof(s));
         sz = sizeof(s) < width ? sizeof(s) : width;
         if (!TEST_mem_eq(buf, sz, cmp, sz))
             return 0;
@@ -210,13 +210,13 @@ static int test_param_int(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_int(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_int(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -241,13 +241,13 @@ static int test_param_long(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_long(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_long(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -270,13 +270,13 @@ static int test_param_uint(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_uint(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_uint(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -301,13 +301,13 @@ static int test_param_ulong(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_ulong(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_ulong(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -332,13 +332,13 @@ static int test_param_int32(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_int32(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_int32(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -363,13 +363,13 @@ static int test_param_uint32(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_uint32(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_uint32(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -394,13 +394,13 @@ static int test_param_int64(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_int64(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_int64(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -425,13 +425,13 @@ static int test_param_uint64(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_uint64(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_uint64(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -456,13 +456,13 @@ static int test_param_size_t(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_size_t(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_size_t(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;
@@ -487,13 +487,13 @@ static int test_param_time_t(int n)
     param.data = &out;
     if (!TEST_true(OSSL_PARAM_set_time_t(&param, in)))
         return 0;
-    le_copy(cmp, sizeof(out), &out, sizeof(out));
+    le_copy(cmp, sizeof(out), (const unsigned char *)&out, sizeof(out));
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
     if (!TEST_true(OSSL_PARAM_get_time_t(&param, &in)))
         return 0;
-    le_copy(cmp, sizeof(in), &in, sizeof(in));
+    le_copy(cmp, sizeof(in), (const unsigned char *)&in, sizeof(in));
     if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
         return 0;
     param.data = &out;

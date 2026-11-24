@@ -26,7 +26,7 @@ static int test_basic(void)
     SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
     QUIC_TSERVER *qtserv = NULL;
     SSL *cssl = NULL;
-    char *msg = "Hello World!";
+    static const char *msg = "Hello World!";
     size_t msglen = strlen(msg);
     unsigned char buf[80];
     size_t bytesread;
