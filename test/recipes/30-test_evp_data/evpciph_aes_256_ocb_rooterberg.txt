@@ -1,0 +1,4909 @@
+#
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Rooterberg d446fbab
+
+# a6cca81cfd64b6c5c15cffd891da0d409306ff6aa769799ddd778899545bd23e  aes_ocb_256_120_128.json
+Title = AES-256-OCB Rooterberg test vectors from aes_ocb_256_120_128.json
+
+# tcId 1: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000000000
+AAD =
+Tag = acf913c08a988b61a3c99e37e09bc1df
+Plaintext =
+Ciphertext =
+
+# tcId 2: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000000000
+AAD =
+Tag = d4d72ccb16563c9ea017844fccf7f6f8
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 52dcd7d7a04e57cdeab39675802c8e42
+
+# tcId 3: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 01e62388ad576e78994d73ad974200ea
+Plaintext =
+Ciphertext =
+
+# tcId 4: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 79c81c833199d9879a9369d5bb2e37cd
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 52dcd7d7a04e57cdeab39675802c8e42
+
+# tcId 5: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 355bc10fbe92821be64a354c190e49a9
+Plaintext =
+Ciphertext =
+
+# tcId 6: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 651fa5414c299d73b9cac23af5c196ea
+Plaintext =
+Ciphertext =
+
+# tcId 7: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 5c1972554891361574ddcea7bcfeedb0
+Plaintext =
+Ciphertext =
+
+# tcId 8: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 32f905aeefdcf4621c299db25613d1d3
+Plaintext = 54
+Ciphertext = 1d
+
+# tcId 9: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = c4607b7dab18046abffe6887c8c8b3f0
+Plaintext = a5
+Ciphertext = f5
+
+# tcId 10: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 905770b38dd7ad96e1076e1935c797f9
+Plaintext = 22
+Ciphertext = 72
+
+# tcId 11: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = d1bf80268c31f524a2cf749df12c8798
+Plaintext = 5436
+Ciphertext = 1d09
+
+# tcId 12: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = b66f9e98192d6dd84913e702a9935bb6
+Plaintext = a59b
+Ciphertext = f536
+
+# tcId 13: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = d830be64a26269b7e34f14a1b1b7193e
+Plaintext = 2231
+Ciphertext = 7237
+
+# tcId 14: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = ff38d58fb75542f054416803e257a220
+Plaintext = 54366c
+Ciphertext = 1d09d7
+
+# tcId 15: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = c3cc44a83bb6c35c6e025a50651ef615
+Plaintext = a59b32
+Ciphertext = f53632
+
+# tcId 16: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 283b3942dde730ee098116cebed98a8c
+Plaintext = 22315e
+Ciphertext = 72374b
+
+# tcId 17: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 5a4e4b25eec7da8eb58739caf5b18a4c
+Plaintext = 54366c32501b49
+Ciphertext = 1d09d747c5303f
+
+# tcId 18: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 825c186c05e32542a249c53f8e0ce723
+Plaintext = a59b324a8869ca
+Ciphertext = f5363283f0e9e9
+
+# tcId 19: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 5f12d362b3e5ef3446bd55b825af4f89
+Plaintext = 22315e0e3ef1a4
+Ciphertext = 72374bdaf8ea14
+
+# tcId 20: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = e3abd59acca7ffafcd1573602274805f
+Plaintext = 54366c32501b4943
+Ciphertext = 1d09d747c5303f58
+
+# tcId 21: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 2c4ccbe60894e75e1ce14f519bb65172
+Plaintext = a59b324a8869cafb
+Ciphertext = f5363283f0e9e937
+
+# tcId 22: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = dc671158801aca7ec14677e0ab0cc82c
+Plaintext = 22315e0e3ef1a432
+Ciphertext = 72374bdaf8ea14d1
+
+# tcId 23: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = b801922cdb83266662bc4ead0294361a
+Plaintext = 54366c32501b4943563026f3
+Ciphertext = 1d09d747c5303f5869eeb7a9
+
+# tcId 24: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = c77ab375c980898c2a2a6c9cf31cb9d5
+Plaintext = a59b324a8869cafb1d6df57f
+Ciphertext = f5363283f0e9e9378b906c46
+
+# tcId 25: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 6802c0d42c8884de087f55c7d385df1b
+Plaintext = 22315e0e3ef1a432e283f5e8
+Ciphertext = 72374bdaf8ea14d14f11d45c
+
+# tcId 26: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 72e20f7ea0b7cdb128b86f36584a7734
+Plaintext = 54366c32501b4943563026f3705abc
+Ciphertext = 1d09d747c5303f5869eeb7a900bf6e
+
+# tcId 27: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 81e4f1d741823e5ff247406622d1ebf3
+Plaintext = a59b324a8869cafb1d6df57f658dfe
+Ciphertext = f5363283f0e9e9378b906c464f4130
+
+# tcId 28: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 0fb2f45851cf12282f147c30be19eb86
+Plaintext = 22315e0e3ef1a432e283f5e8d47bba
+Ciphertext = 72374bdaf8ea14d14f11d45c8c8490
+
+# tcId 29: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 715512b7348d5bc451b5b9e2cad73a15
+Plaintext = 54366c32501b4943563026f3705abc07
+Ciphertext = eb773aabe8fa3c02e8c9e3b8da13c9a9
+
+# tcId 30: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 7769571f6cca67f5a94a7059a8a07101
+Plaintext = a59b324a8869cafb1d6df57f658dfef8
+Ciphertext = 4c6165b8b51dc9bd702617223013d0f5
+
+# tcId 31: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 5f474fc2f2a79ba10da2bdf6d0e5d9e0
+Plaintext = 22315e0e3ef1a432e283f5e8d47bbaf4
+Ciphertext = a2182b875ee860ee16ee721f4ac6a9e4
+
+# tcId 32: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 102c75c1f93b4b6e305d621cc4e375fc
+Plaintext = 54366c32501b4943563026f3705abc07ff
+Ciphertext = eb773aabe8fa3c02e8c9e3b8da13c9a9be
+
+# tcId 33: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = b37528e2d2d070278a58db2257658d26
+Plaintext = a59b324a8869cafb1d6df57f658dfef80c
+Ciphertext = 4c6165b8b51dc9bd702617223013d0f5f2
+
+# tcId 34: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = ebae7c66687680e22bbde0d1618b468f
+Plaintext = 22315e0e3ef1a432e283f5e8d47bbaf445
+Ciphertext = a2182b875ee860ee16ee721f4ac6a9e402
+
+# tcId 35: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 91b7079d4507394c0a5292d847cb3894
+Plaintext = 54366c32501b4943563026f3705abc07ff085d2b4e919dc368a74c0dd2b881
+Ciphertext = eb773aabe8fa3c02e8c9e3b8da13c9a9be68ac97e7d023369531b2dee37a78
+
+# tcId 36: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 0c4b22457a7f06bf2989c80dc5ae08a0
+Plaintext = a59b324a8869cafb1d6df57f658dfef80c381fd86ead7d6286842e8b14345a
+Ciphertext = 4c6165b8b51dc9bd702617223013d0f5f2031698d23929e67a5e588a32b6eb
+
+# tcId 37: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 284f0f43953579c80a105ebaaadaf410
+Plaintext = 22315e0e3ef1a432e283f5e8d47bbaf44573de28a4dadcb9e4d7a679817b53
+Ciphertext = a2182b875ee860ee16ee721f4ac6a9e402274dbeee9c23d845eb78ac1db4ba
+
+# tcId 38: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 9a1ee1bf8da433fb402a6a8d982a9dc5
+Plaintext = 54366c32501b4943563026f3705abc07ff085d2b4e919dc368a74c0dd2b881a3
+Ciphertext = eb773aabe8fa3c02e8c9e3b8da13c9a9fa182885e39520fe8d1dfaff6539f048
+
+# tcId 39: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 8c95940a4f54e81ef5c1952ac42eaf7f
+Plaintext = a59b324a8869cafb1d6df57f658dfef80c381fd86ead7d6286842e8b14345ab2
+Ciphertext = 4c6165b8b51dc9bd702617223013d0f52f2dfadd691dabc360833e0fcd9d37b8
+
+# tcId 40: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 146338d482f406567d3f672f8bc3afa9
+Plaintext = 22315e0e3ef1a432e283f5e8d47bbaf44573de28a4dadcb9e4d7a679817b5322
+Ciphertext = a2182b875ee860ee16ee721f4ac6a9e431b282e12ba1a98ee1bf24005cdbece5
+
+# tcId 41: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = ab575aff780cf50df76b0b8de4104085
+Plaintext = 54366c32501b4943563026f3705abc07ff085d2b4e919dc368a74c0dd2b881a3b526b7c63f49d26ff8cb8b212292b6c582d936c71fc0933b92f6e039575797bda2b3299d7b50ba256e0393f5f7c7e6c2
+Ciphertext = eb773aabe8fa3c02e8c9e3b8da13c9a9fa182885e39520fe8d1dfaff6539f048a3d9b2af8b5fac7b2b10515fced5c2334fd82071a037f29f3dc7ecb965e51cf18e98349f38b85bdc54a549f8ebc6dc9d
+
+# tcId 42: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = b5ff2f2483168bd51aa99c788a452409
+Plaintext = a59b324a8869cafb1d6df57f658dfef80c381fd86ead7d6286842e8b14345ab2e7a958ea22ff4d226745fe4d9bac7447afbed1f539294b69eb2e03d107b4368c5d8d6ae591320828d7b0115ecc8bb041
+Ciphertext = 4c6165b8b51dc9bd702617223013d0f52f2dfadd691dabc360833e0fcd9d37b8e9a14d19608a261c5ceb7693dd5a0cc685792935339df5d9c493f4fb3914594a54b382ef357b79c4f4e490738da42d11
+
+# tcId 43: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 1a76cb1b21d3662198d8e7edae612ccc
+Plaintext = 22315e0e3ef1a432e283f5e8d47bbaf44573de28a4dadcb9e4d7a679817b53225d7efae5a912731e17eff52406e46dd9473118b0f4b0861ea22d485792d0c062d71cdb2bcba99f41f34fd51a399e3231
+Ciphertext = a2182b875ee860ee16ee721f4ac6a9e431b282e12ba1a98ee1bf24005cdbece58bc823b3d44b04a0fe8013a84e4688ffad553b38131028bfe3813ac1d085b096e90a652debe3a164e791a3ddbc1ba00d
+
+# tcId 44: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9029f2572fd2437af6afe325dcb3ca3057156fdf57411f8cf7a492272a9d01b5
+IV = 14a5e1e5ea7dd5452e2259008c8e52
+AAD =
+Tag = 6983696034fed50ce71742e7fccab342
+Plaintext = 54366c32501b4943563026f3705abc07ff085d2b4e919dc368a74c0dd2b881a3b526b7c63f49d26ff8cb8b212292b6c582d936c71fc0933b92f6e039575797bda2b3299d7b50ba256e0393f5f7c7e6c242689c702bcbee0c50f045473f429f4cb8b1d1f5989cda6da5f0b11112380df42b4a73a4f8d878745b52d64d07d95c667d
+Ciphertext = eb773aabe8fa3c02e8c9e3b8da13c9a9fa182885e39520fe8d1dfaff6539f048a3d9b2af8b5fac7b2b10515fced5c2334fd82071a037f29f3dc7ecb965e51cf18e98349f38b85bdc54a549f8ebc6dc9d4832de6f498474c7af5c7c92d81fa3b3714634bbaf7e993e2980a4a9b1d1ff2e0f654549056a0b37cf59c5d32808de841d
+
+# tcId 45: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3e6bfc073de8a002941e9844be8dfc7fcbefc595311c3ac27a0e892216b0b302
+IV = e5a44a616e80b67832a360e2604f94
+AAD = 84ade431b1fd4f1ff636991bdf9a9d92
+Tag = 3b5bae9bd2a847509770a738e6896866
+Plaintext = a59b324a8869cafb1d6df57f658dfef80c381fd86ead7d6286842e8b14345ab2e7a958ea22ff4d226745fe4d9bac7447afbed1f539294b69eb2e03d107b4368c5d8d6ae591320828d7b0115ecc8bb0416a1452853d8444c40f9079e644652b2a73190c28552c0cb852400b523047eed50f2ea845bb3d43baf764ad3c206c5485a0
+Ciphertext = 4c6165b8b51dc9bd702617223013d0f52f2dfadd691dabc360833e0fcd9d37b8e9a14d19608a261c5ceb7693dd5a0cc685792935339df5d9c493f4fb3914594a54b382ef357b79c4f4e490738da42d11cc6e281cbfbf42dcfa5097b994776089a742a3655f9ff250f25802bc910baf79c068e461f060c663a0c1e65f6382e01523
+
+# tcId 46: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4d9c539517d4f0a5e3a281c51bcc4f5781de49343ade23ea57a3d075aadd8226
+IV = a08f5a75b996e0ea566f6837e4cf26
+AAD = d966b1861d6ea74fe8a9cb2fb6c77d272897f3c2bd3dd02ac1638ca19479
+Tag = 41ca64104db2ea338538131ea666c224
+Plaintext = 22315e0e3ef1a432e283f5e8d47bbaf44573de28a4dadcb9e4d7a679817b53225d7efae5a912731e17eff52406e46dd9473118b0f4b0861ea22d485792d0c062d71cdb2bcba99f41f34fd51a399e32319a02d05f96db98c8d73440df23de32ff634b54827cd8559afb28408a5189fb706d1817fe91e9b0cb12e14a015eaf4abc3f
+Ciphertext = a2182b875ee860ee16ee721f4ac6a9e431b282e12ba1a98ee1bf24005cdbece58bc823b3d44b04a0fe8013a84e4688ffad553b38131028bfe3813ac1d085b096e90a652debe3a164e791a3ddbc1ba00df0fe07b5fb08f93d0e543eeb0f2c631f27ebdc0a4983827e6cff957545e6250e8cf6220068c061283246323628f5108e37
+
+# tcId 47: aad size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5aa845c287789aa3180c602b49356160d3dd48f0896dfe777ed06f99333f8717
+IV = f267eef359f0d3eb8667e2fad076a5
+AAD =
+Tag = 979efde9f5e64f76b909f269988e95bc
+Plaintext = 388a57c7a2581fa3b5333d4ae1591df6
+Ciphertext = 65a6748624095389f8f8a6f5f718e006
+
+# tcId 48: aad size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4a1c0d016b0712fd212a6b944332f83f0ad5ce10a3d8f0800c09b7e763f83790
+IV = ebf698d5df33479e4a0b2afa7dcf70
+AAD = d1
+Tag = 6e053a44af459d7059f6116e5ec9a843
+Plaintext = 5736d7a37af961131d48b8e44dc62afa
+Ciphertext = 5f2d64b60ff06b62a64e8aeff4761bda
+
+# tcId 49: aad size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 74d4d91d729e406da4bc25aa0e748235d597bec5912c6b9f80991b5a1249eadf
+IV = 5de93561d0e5c3de402fcd1284fe22
+AAD = 620a3d80a84725aa71e28d3d4596c7
+Tag = 595e948ae0ed4d94fc5dbcfb9ca1f7f9
+Plaintext = 81b1b1ebc22ac3d383262dc9d4f1d1d1
+Ciphertext = 551244fe1c59f5e657fc1c75b38ecd99
+
+# tcId 50: aad size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = c6efbaab996e719e80cbbd8a55f4fe75968da3ce10b482521dcf0afc8f822a65
+IV = d9ebe06465bf1fa5727c0faf387297
+AAD = 665833c456738cfa98e10ea3c665d22c
+Tag = 933357458fa2d59c69c356d75e2d4b2b
+Plaintext = 53383186264b2ae2c96da9c9b79c56e6
+Ciphertext = bf3fefbd8d3a16166ff120845efc4c3b
+
+# tcId 51: aad size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 914994461682be79d67209e9067b4807250603027bb53b9066d1fb45a53a15d3
+IV = 67e73a8ccc26c0cf522e24d55b7bd4
+AAD = 082195c4de7c6aa099b0772c59068b048b
+Tag = 185ca1ff6f076b64e72465d6b54432d9
+Plaintext = 04712747a39ff6c174b413ad9f6f6990
+Ciphertext = 437674c99b7f74695caed154171e0dff
+
+# tcId 52: aad size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 2ea763da131c0d97aa15ab6f7f9ea51bb1bb805b6d0775b359663e14517cbce3
+IV = f69bb8d1bd9332d7214ab0c3e34ee2
+AAD = 6d861a338ad063aa09eb0dc48a23532e7d869a59fb106f4d9b8a9b3e9de86e
+Tag = 736675b9371e8e25b4a1274efa03c754
+Plaintext = d4cf17b68c31da3dfda1815566de3e55
+Ciphertext = 7468ed18d7cb193fae113d37f2ec0714
+
+# tcId 53: aad size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d73ddc8cdb4725dffade46811c3e07c5aa1c5331aa6cfe397e5358e19b9ec90c
+IV = 7e97d0359a706aea3ba16440772a06
+AAD = e109ea9c142ee2ccdce2c80da72e95b2d1e93882f8f23030df0c866af7b02847
+Tag = d1a4f7fbcdb1244ef36d4fec5b2554fa
+Plaintext = 9fce1f921a1f515b2e09c05e0ea354dc
+Ciphertext = 5a7d69c70937fcbfef3c2712bc94056c
+
+# tcId 54: aad size = 33 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 400ca245b451376cd532ff04f6450e83ef2b562223969cad367003b4475d8e00
+IV = ba92324945ca99303990226baa3d47
+AAD = 8e0c03560433e755ddb069a7eaef5888bfb930d3945389ed8fea966628298957e9
+Tag = 4669d0983b37f5e6996ed825f9b76c68
+Plaintext = ef59493f1a178f91bb91044314cc0367
+Ciphertext = d1937ebddb265ba28e3daf79492629c7
+
+# tcId 55: aad size = 65 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5eff0c257cbac65e3c3edf72d26dc95d4ce5197e333c9b3fd6d5fd855e1aa7bc
+IV = 3e9b5325b4a19feec16adec8f1b064
+AAD = 0647ae918b0a742fe6431dc7674eeefe85c02a920e96276c019414e6953dd1fec4e0f88bc5cb4b97df57a9ad689a2c8b30835be3609d6d11921556e85bc9c27501
+Tag = 4f36bd18ebdc940cafd87875c901a396
+Plaintext = 72e976b4fec26f0e906c99a676081667
+Ciphertext = 839c5e06be92133a4700ddafac7a44d5
+
+# tcId 56: aad size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f74824b728a1121240e9ce20477ff760303a7e07c7c1128d1625b8afd9bcf481
+IV = 2b381c8d086264833a9846562c20dc
+AAD = 0572cad7fa480363e6101299ce7b37cef2b5cea5a633ffa7848821222c3c7431b352642a0c795161bd1713d907c3eaf1825e4ae1d9253177136d1faedfb672d5d5ee9e52087eca3bc497870c1871e681547368f7e620e1db910d0ca1e76a0e762ff6c6da0bc0d8b97ee7ef721c74ce11c093360e053b608d2d7e4db34f21c5505a
+Tag = 162b657cbe363e3bade92c425965d9d9
+Plaintext = bba11f758d7041e116232499a3afd69d
+Ciphertext = 68b3eb5a29feac7dc1230b3f5c979089
+
+# tcId 57: aad size = 257 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9e5c6157355bbbdd38d6d6620cd172b48737708a9c9f9163f51faf47f977e2c8
+IV = 544e1b20a8ac50dee7f9a535313287
+AAD = 30a1d9502b1b26dcaba658f5e062680ab5a6b5e4e7f72ec595fe2c9c9dc5ccf9b2f3413a0623da16aa7975a970a28064bb92b1cf778e7008e28ccff4d17ad189680b56fa52e6e1e3158507cffe0c4c0b152ae626c4e8a933ca36c6e181fca0949df9dc9ef484c1240b0b5da81860782c576f6a68ce856fabac35edd8d834a0d67d15e62729451ea6ed93c5f8411d88ad8c5445910f40c25fef6dc60ecfc863c4b331d7b0f34e16a67e45860328c1debd6bf76ceecceca89a8fe5a79384e486bd89d3256c10ac559df0b8370776d1afb1b8fb3ed436764a971f1f9ba6c0094dbee2b4cc90604313028c0b1c770a531ed296c99c7ff58ca240e8e76761ddc1d8c3f1
+Tag = 195e038ffca707c9ef798a8138c94bce
+Plaintext = 61c22dc3cdf3ecd7855f7941ca4c8319
+Ciphertext = 46b3fb3e494e7358a161a3a457ef7c10
+
+# tcId 58: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 59: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 60: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1b6919c0140899587343096a0c68f0b8
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 61: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 9ae89841958918d9f2c288eb8de97139
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 62: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1b6818c1150998597242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 63: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 9a6818c1150998597242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 64: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6918c1150998597242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 65: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c0150998597242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 66: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a681841150998597242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 67: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998587242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 68: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998d97242086b0d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 69: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998597242086b0c69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 70: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998597242086b8d69f1b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 71: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998597242086b0d6971b9
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 72: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998597242086b0d69f1b8
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 73: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e2e4f9785c53a71c063e3037572e37b75534daa730c644e341dc8caf28888bef
+IV = 0c50515d1cf9c8f55cc9ffc103b10b
+AAD =
+Tag = 1a6818c1150998597242086b0d69f139
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 74: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 75: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 76: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = aad56f38bff085ba15930e54ca7ffe8d
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 77: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = 2b54eeb93e71043b94128fd54bfe7f0c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 78: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = aad46e39bef184bb14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 79: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = 2bd46e39bef184bb14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 80: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd56e39bef184bb14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 81: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e38bef184bb14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 82: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46eb9bef184bb14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 83: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef184ba14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 84: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef1843b14920f55cb7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 85: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef184bb14920f55ca7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 86: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef184bb14920f554b7eff8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 87: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef184bb14920f55cb7e7f8c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 88: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef184bb14920f55cb7eff8d
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 89: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 635d63df3fc0a33ff5890e6e023bcbf549e3c46272cdcc0a72634b2fd8b859ef
+IV = 6743b259a8c307149cd51fcf1781f2
+AAD =
+Tag = abd46e39bef184bb14920f55cb7eff0c
+Plaintext =
+Ciphertext = 8911542a979630a9c33dd8df21a3dd4e
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 90: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 91: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 92: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c962b829b338031771b6d76cd3606d65
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 93: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = 48e339a832b98296f03756ed52e1ece4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 94: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c963b928b239021670b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 95: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = 4863b928b239021670b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 96: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c862b928b239021670b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 97: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b929b239021670b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 98: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b9a8b239021670b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 99: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239021770b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 100: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239029670b7d66dd2616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 101: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239021670b7d66dd3616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 102: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239021670b7d66d52616c64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 103: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239021670b7d66dd261ec64
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 104: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239021670b7d66dd2616c65
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 105: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 3ce659843fd5c00174ca26e44b62afc2386d7d8ffd97169ef125e0973bed632a
+IV = 03a61a09a1dba303faa1c0e8e32bf3
+AAD = f821d97e7b28b337b815d3fa6b5dd968
+Tag = c863b928b239021670b7d66dd2616ce4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 106: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 107: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 108: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a4d55cf649ca37b84cc325cf5033424b
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 109: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = 2554dd77c84bb639cd42a44ed1b2c3ca
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 110: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a4d45df748cb36b94dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 111: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = 25d45df748cb36b94dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 112: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d55df748cb36b94dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 113: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df648cb36b94dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 114: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45d7748cb36b94dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 115: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36b84dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 116: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36394dc224ce5132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 117: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36b94dc224ce5032434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 118: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36b94dc224ced132434a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 119: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36b94dc224ce5132c34a
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 120: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36b94dc224ce5132434b
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 121: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = e59ea8034c843fed0674844677971ece96e9133c6499bbc2fe28741b3343a8a6
+IV = 39a292b699d8f12493b7628c12d516
+AAD = 6384cc4981d9ab3223a17e79785b8fb0
+Tag = a5d45df748cb36b94dc224ce513243ca
+Plaintext =
+Ciphertext = 1eae2223288161616b0796860d96f132
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 122: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b0c0d0e
+AAD =
+Tag = 35872d3d7900cb7ce409d62051002fd4
+Plaintext = 76ef8cfe3b58bf7c82b591a472d97fad
+Ciphertext = ffffffffffffffffffffffffffffffff
+
+# tcId 123: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b0c0d0e
+AAD = ffffffffffffffffffffffffffffffff
+Tag = 6abf2c506bec26b17218b3dbdc3c5ea1
+Plaintext = 76ef8cfe3b58bf7c82b591a472d97fad079346093e29992a864b014045ae00b6
+Ciphertext = ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# tcId 124: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b0c0d0e
+AAD = 00000000000000000000000000000000
+Tag = afee34cb5b524b099e3259511cfcc0ab
+Plaintext = 8476c5dd074f44056ae8925da5a4d2fb6e8691802b950e05981d00c0bd45614b
+Ciphertext = 0000000000000000000000000000000000000000000000000000000000000000
+
+# 981a9393d44294c2092a4434ee4d9edbf24462d5697e2ab68566833d9535b779  aes_ocb_256_96_128.json
+Title = AES-256-OCB Rooterberg test vectors from aes_ocb_256_96_128.json
+
+# tcId 1: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = fcc605c39fba1127271ae807940c61c0
+Plaintext =
+Ciphertext =
+
+# tcId 2: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = f13ebfcb53d55ad3028f1ac07362e782
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 777312dbc0244682ea433f11c17e5da2
+
+# tcId 3: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 51d9358bb875f43e1d9e059de3d5a0f5
+Plaintext =
+Ciphertext =
+
+# tcId 4: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 5c218f83741abfca380bf75a04bb26b7
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 777312dbc0244682ea433f11c17e5da2
+
+# tcId 5: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 5700d84f2077f40db84756aef495ce5d
+Plaintext =
+Ciphertext =
+
+# tcId 6: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = 288f236a81c576e9252c3f618fd8944e
+Plaintext =
+Ciphertext =
+
+# tcId 7: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 44077d5fa34548ddd507dae6e7758690
+Plaintext =
+Ciphertext =
+
+# tcId 8: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = c8b485f4648e8aa11a938f948ff89572
+Plaintext = bb
+Ciphertext = 23
+
+# tcId 9: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = e7af9ba819545849d796a3df595180e2
+Plaintext = d6
+Ciphertext = 79
+
+# tcId 10: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 4f77a2a50f032b7d9f9edadf75fa6701
+Plaintext = dc
+Ciphertext = 51
+
+# tcId 11: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 92c9ca6ef7a9367209b9bd7d561e4f54
+Plaintext = bbeb
+Ciphertext = 2309
+
+# tcId 12: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = e3e0e383977558beb555ff15e4f465b8
+Plaintext = d64d
+Ciphertext = 7910
+
+# tcId 13: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 6f3f79f192ea8508bde9bb5fe76951a8
+Plaintext = dc70
+Ciphertext = 510a
+
+# tcId 14: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 43159961ea504c5e8716923c50239832
+Plaintext = bbeb7b
+Ciphertext = 2309fb
+
+# tcId 15: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = d099e5365c9105eed8f3ea0ac2e45e0b
+Plaintext = d64d43
+Ciphertext = 7910e8
+
+# tcId 16: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 89eab6a4efb7c735901fa0ddb13699a8
+Plaintext = dc7089
+Ciphertext = 510a84
+
+# tcId 17: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = a2cad431ad4db963bb50bfe0d1378b7e
+Plaintext = bbeb7bdbe9f25b
+Ciphertext = 2309fb246e698b
+
+# tcId 18: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = 7fd0c5fb8c384fd3490192b94c75f0c6
+Plaintext = d64d43a5b4f3cc
+Ciphertext = 7910e8a868f78e
+
+# tcId 19: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 0f648c9ff49dfa4211b6ded624eea20d
+Plaintext = dc708916c3c5ac
+Ciphertext = 510a8436719aa8
+
+# tcId 20: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = d30e349e9b81178bacd2fcd509f58b9f
+Plaintext = bbeb7bdbe9f25b74
+Ciphertext = 2309fb246e698b37
+
+# tcId 21: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = c0f35003abbe4a748d8d77e2a518a9cd
+Plaintext = d64d43a5b4f3ccae
+Ciphertext = 7910e8a868f78e65
+
+# tcId 22: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 9f75752b8338f74ca1fcd66f0c7c22c2
+Plaintext = dc708916c3c5acf3
+Ciphertext = 510a8436719aa8c2
+
+# tcId 23: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 6e1c18b857519e42b9944f949d172be0
+Plaintext = bbeb7bdbe9f25b7484c5b781
+Ciphertext = 2309fb246e698b37ce81754c
+
+# tcId 24: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = 5f9262c9cc14d92925102353fef54e2a
+Plaintext = d64d43a5b4f3ccae91c7459e
+Ciphertext = 7910e8a868f78e651313cb67
+
+# tcId 25: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 66809fa74008a84c6ebbad6caa70d204
+Plaintext = dc708916c3c5acf393bcb918
+Ciphertext = 510a8436719aa8c271dfe4c7
+
+# tcId 26: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 51f00df433d945fdf90a5e9ea8d26d72
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f1
+Ciphertext = 2309fb246e698b37ce81754ca0bde2
+
+# tcId 27: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = 813ad3f7f2795e3d81679c0621b19f79
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97
+Ciphertext = 7910e8a868f78e651313cb67cad759
+
+# tcId 28: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 165fde03f3ac5d442e6f0afb0a444eb4
+Plaintext = dc708916c3c5acf393bcb918f57f4c
+Ciphertext = 510a8436719aa8c271dfe4c708d18e
+
+# tcId 29: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 55b26b2ec0650ce90f022b3dfbffaa3f
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f119
+Ciphertext = 79d774fa0389ae2d8824f14c961a61af
+
+# tcId 30: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = 773722ab38bbc59d5259edb6cf891c11
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97d4
+Ciphertext = 16e3df4c1a6dd3f5500b58b2ef6849bc
+
+# tcId 31: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 3208cb790d895c83c252e3f349c57787
+Plaintext = dc708916c3c5acf393bcb918f57f4c69
+Ciphertext = d257edebea8a0a91af448aee6a284bab
+
+# tcId 32: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 173e634fd4cdccbfaf43f868da91733e
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f11939
+Ciphertext = 79d774fa0389ae2d8824f14c961a61af6a
+
+# tcId 33: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = b1c101a4f768689dbe56c062b661257d
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97d426
+Ciphertext = 16e3df4c1a6dd3f5500b58b2ef6849bcc0
+
+# tcId 34: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 0fb16f89b02ceed8ecbe75bb0f0b2558
+Plaintext = dc708916c3c5acf393bcb918f57f4c69ce
+Ciphertext = d257edebea8a0a91af448aee6a284babca
+
+# tcId 35: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 0393e80e9bc05d464b23970756a554b7
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f11939c92792e68375967b6ab5ae6b1185
+Ciphertext = 79d774fa0389ae2d8824f14c961a61af6aa7783793426aebeb6c612838a856
+
+# tcId 36: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = d971078c5ca67dc4a8d52be6c3a86171
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97d426d31b0e0a49927a87d66ddaed6839
+Ciphertext = 16e3df4c1a6dd3f5500b58b2ef6849bcc09dea68e6d8987c660021158f7c43
+
+# tcId 37: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 478aaf61941bb379486491ff6529860d
+Plaintext = dc708916c3c5acf393bcb918f57f4c69ce3db40c2deed233f36a9c1e26ae3e
+Ciphertext = d257edebea8a0a91af448aee6a284babca085b462d78b2d1f4a48f374dde60
+
+# tcId 38: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = e3be6c102df698dc5c58cb185eabb16a
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f11939c92792e68375967b6ab5ae6b118594
+Ciphertext = 79d774fa0389ae2d8824f14c961a61afed049db4e5c70a5cfde40624e3672dd6
+
+# tcId 39: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = d2fb9ea59a129feaaae8706a8cde229e
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97d426d31b0e0a49927a87d66ddaed683928
+Ciphertext = 16e3df4c1a6dd3f5500b58b2ef6849bcecdebad40396719edb2e455215838ab5
+
+# tcId 40: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 3ad873004e993766e30d28a8b5d4b0dd
+Plaintext = dc708916c3c5acf393bcb918f57f4c69ce3db40c2deed233f36a9c1e26ae3e4e
+Ciphertext = d257edebea8a0a91af448aee6a284babc59c1c1664d7f28072f4bae6714045e0
+
+# tcId 41: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = 77d9bb0e618c791791a994d062b4bf19
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f11939c92792e68375967b6ab5ae6b11859482c5218c326d665bc18eba3b555233820348e433dae020d21f68dd01cd0fb314510dff7a815b1ec211ce0cd15f79e5c1
+Ciphertext = 79d774fa0389ae2d8824f14c961a61afed049db4e5c70a5cfde40624e3672dd6ee3d4ea250c9ad9b4112af844dd386eb7853f79242eb403834ce0ee6e6ab88d152e743df93f8e4265017439c3b609e8e
+
+# tcId 42: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = f2bf8e7e78372f4b2f6e808bd6c8a4b1
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97d426d31b0e0a49927a87d66ddaed683928a9b9f94465c233ccc96b2158176c5810b6b3db9d6661f3a0d12a2aa9e3cb04b0ca5d8c204435dcb12061aa8eacc1048b
+Ciphertext = 16e3df4c1a6dd3f5500b58b2ef6849bcecdebad40396719edb2e455215838ab5c08ecbe7cd481c700c15bcb1f4e0d19983035d83037935c4f514f6a43977015da006c960491ee554913cd95eda95f702
+
+# tcId 43: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 7bfec5537de92b70f9f62ce0291a7b78
+Plaintext = dc708916c3c5acf393bcb918f57f4c69ce3db40c2deed233f36a9c1e26ae3e4e645170c655eba52975d7b2abb6985f263b919b5915a417e1b60126ad71ebbc620eb5b25812fa91e0db81a92808d3eada
+Ciphertext = d257edebea8a0a91af448aee6a284babc59c1c1664d7f28072f4bae6714045e0cf98fe050bb9e3dcafff0b34ae02f5e7fe90a4bd00a4c20a3b53f8f4f053c7111f662a784a3a25783bf301a8d75884e2
+
+# tcId 44: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7925bc43b747bc9086821c920e4ac40e705c161fb0961176a05c5eb182a4e42
+IV = 1b829bc85873a3a065865276
+AAD =
+Tag = f818815236527c1ac9768d051a54e261
+Plaintext = bbeb7bdbe9f25b7484c5b781e592f11939c92792e68375967b6ab5ae6b11859482c5218c326d665bc18eba3b555233820348e433dae020d21f68dd01cd0fb314510dff7a815b1ec211ce0cd15f79e5c139f6d6f3f2399d20a6c8ffb9470472755929ee78001cb09cca9fc2be5fea15fe5969b685da08c163683ca12048bb6d06e9
+Ciphertext = 79d774fa0389ae2d8824f14c961a61afed049db4e5c70a5cfde40624e3672dd6ee3d4ea250c9ad9b4112af844dd386eb7853f79242eb403834ce0ee6e6ab88d152e743df93f8e4265017439c3b609e8efc4f5376d9edb67b61a1fbca0c86c3616449f3203ebb710c945b97155ebb9548ab1b9d656127156e5304c44a1cfcef7881
+
+# tcId 45: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 984dacb86b34558bd37d6ad7b3c998fe0fae013b023dd5fa823c02cc743d9b8c
+IV = 4f8373f383575588a319a813
+AAD = 221d2d180d8efbeb441f5856f24d7ebb
+Tag = 9fa833975652b5c1ad8fe9935c40ecb5
+Plaintext = d64d43a5b4f3ccae91c7459e1c1c97d426d31b0e0a49927a87d66ddaed683928a9b9f94465c233ccc96b2158176c5810b6b3db9d6661f3a0d12a2aa9e3cb04b0ca5d8c204435dcb12061aa8eacc1048b936259259a6b47099e3415b9a1b29719d3e3bcdbfeda48406813f8b56a8ee795a163031b9d1189c1725692b267dafca078
+Ciphertext = 16e3df4c1a6dd3f5500b58b2ef6849bcecdebad40396719edb2e455215838ab5c08ecbe7cd481c700c15bcb1f4e0d19983035d83037935c4f514f6a43977015da006c960491ee554913cd95eda95f7025177ab2894cd58fc7820d5240710d21066d6060d48ba97bd17777e4ecfe818a3b08258c4d14bf4a7a3198baf60e60b9f42
+
+# tcId 46: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = b1ec7a92fff507041f81f2a80761098ac48e1fe8781b8d7dbf61d872d275907c
+IV = ce6294de25575fee3311e06c
+AAD = 6c1fde20f55000a7130959fa1014946c6a484c8fa1dd1197c10f704f46a3
+Tag = 508fa438ee84ab27a54c7a96b6ab546f
+Plaintext = dc708916c3c5acf393bcb918f57f4c69ce3db40c2deed233f36a9c1e26ae3e4e645170c655eba52975d7b2abb6985f263b919b5915a417e1b60126ad71ebbc620eb5b25812fa91e0db81a92808d3eada873ab222598f48957f9f98a2ec76aa8370ec0b8b5a5e4eb6301adfff7d671c4238cef22da9830516c5afcd311a21f741b3
+Ciphertext = d257edebea8a0a91af448aee6a284babc59c1c1664d7f28072f4bae6714045e0cf98fe050bb9e3dcafff0b34ae02f5e7fe90a4bd00a4c20a3b53f8f4f053c7111f662a784a3a25783bf301a8d75884e2bfa9a9811eaccd395ae4cc219b0840941c277148e53c5809cd679a791c8850f1253dff33da629c62e69bda2d212b00e4f3
+
+# tcId 47: aad size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 45fd265c8ef3ab6e67a5dafa60439ebcf6cb69f841fa1e832e2d10dea4f1b45a
+IV = e096f114423ebbbd437523ad
+AAD =
+Tag = 71c1bbeca103cefdae9ee5615bad060a
+Plaintext = 3b6de1b8dfb58ef3a7eae2e8ccf317fe
+Ciphertext = cfb095a78a328e2fccbb958b59e9b9eb
+
+# tcId 48: aad size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 983fa0ce9df86217e592e9d76df17fb7eb59b76a3b9eaafa58df9e5312808ef2
+IV = b74c49e821593bbe2e543564
+AAD = b4
+Tag = 4e6b156e2931d58bff9aca725fe43db0
+Plaintext = c77d9dead31a1a8b2d0939a5a27e11f5
+Ciphertext = 52eb1806183322e165a9e9efea582914
+
+# tcId 49: aad size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 3d639d0ee48184a902e2b961517efe1508f7e39b819a1dc0e88ac6a3e87e82f4
+IV = 5071783692fac153767ab655
+AAD = 29a63ba17d1d8d8e62edfe28be4091
+Tag = 12b77b1a813913cab3601e1a1f89d9c4
+Plaintext = 60d29f4698bfaf3f5c357d2ed61978e4
+Ciphertext = a5aba54c4f4acd6cceb4332f8227beed
+
+# tcId 50: aad size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = c7e662e8620e51dbef714d8a896d9cbd637f57bcc1e57a8669a8bb6349d9b675
+IV = 4fa9120c60b94497ea242f69
+AAD = 18a8b3190dc6d035c45e48679b3659be
+Tag = af33d995cfdfc0c13a4515da2e7de428
+Plaintext = 70278ad3ebf3c3b3da903739d37f9d26
+Ciphertext = 0fe044f0a68c74ca542289ca26e964bd
+
+# tcId 51: aad size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 69937f6207c32ec9fd78d9eaaf9869e766b2d692a265d4df8f89973e2fe43784
+IV = a47325fdac369b40dbc82cde
+AAD = d77fe2ae8a4bab0b91a967e25971911349
+Tag = 6205f8a2ee9b8a64dc9cc22878707159
+Plaintext = 2323240856eaeb79f4027c2709825a86
+Ciphertext = dde92be6bc81c7d0f7c5eb358c6e24b2
+
+# tcId 52: aad size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 56f4997e0368f0876d1bd401a45324a57e767ac3c8bd55317b5ea8cd59eeca79
+IV = ce95559c6d65d00b7d93f565
+AAD = bc90c6f32161f57d47ae71457cd67b34cef8529e65cef3afe4c601e7887c8e
+Tag = 3ca40203baac8cb9fe14f18a49560e81
+Plaintext = 8e259be6d2e7e353f9237178e7b212cc
+Ciphertext = c19219c561f457167b9dacdc6eaa3e0f
+
+# tcId 53: aad size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5dea6f3e046c9eb0a189dc46609bccc091a8cc2894535c5bdaabbfd950e286c3
+IV = 8098f23190e1dad6eab6f503
+AAD = 0bbc15b48c2855bf4144edb810201405e18ec6590fcd99d8fb09a0da7001ede6
+Tag = d677150d392a3fa31ccfad32a346a0c3
+Plaintext = bd596d338d7055ea8b781c2a2929e6f9
+Ciphertext = 34a9826754611528f0e8cc08d096b7e2
+
+# tcId 54: aad size = 33 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 938dc674542851651427d65142ee11eac63b7462fa994b90bc1b4ff0078b9b62
+IV = 0f89412cd35b7baed2d4a4eb
+AAD = 0a3ebf0e574c6b5b3eb02082ebb12769a30c8a42831a83425be6ea06ef5c5cc947
+Tag = e2008678098fdfcce46401bfd0503a35
+Plaintext = 2dafcc594bc5f715f898bc5076840db2
+Ciphertext = 6b8a119738e1e48f5cc69236b569c572
+
+# tcId 55: aad size = 65 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = bb75d3fd2cd60f1e847591f48552b631d9b7f3bc6d9e54a7ee364df8f0682221
+IV = f703695b38411d2a1c4faff2
+AAD = 4aa45fa78e57a604594988b042c89473f9981d2cdfe4f44320860c627cba91d852a57f781c20fade45e03a7cb14fa43f80dca3608a4c64a37c36f5e8a50a94b6b8
+Tag = 78c1345bdce038e86dacd30fb4a8d9fd
+Plaintext = 3423d2b37786acfb295e8b752766ffd8
+Ciphertext = f3ab0697dec912a6223c0442caf81001
+
+# tcId 56: aad size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6236d02ec162cbaee16c835b98363708d63d8187eec6b15f09b9627d4487ef8b
+IV = 642ee0198e1c25a6e74ea4e3
+AAD = a93c0cea36f681af4b71d55fcc0e07916744d4f18e608d0e2b5d19993add5edc46bef9ec4580a554ebd6e57d8a7f65266f3db68cd8ee99af5ca412a9713ccb797f2ebed8bee0c24e909b09078c8a0abca1f9d7bab32ddec98e20f3b855d10235b32e0c1f3a779f99040001a6151b7d8b751cf32310189f88ab686127304d4d5763
+Tag = 9f3955f9260f6eff6926dc5fca81dd33
+Plaintext = 53e5afd0a3cd2e227e0f2ede2d368966
+Ciphertext = ddc6e26d3d17f560f92b2cf634b8f6d4
+
+# tcId 57: aad size = 257 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 19a92fe4224d14fb10e6e5514672a880b4a47bb3f8e8dc1c017b19dbdab4f36e
+IV = def7e73eecb3292347dc7287
+AAD = 8265434bc40174485b0f9ebb7f1ee59399888dc8e3b650b2b992730051897bdd9e2b8b463e88ad9e7b32d960677ddb7e263f659f70d734a178c696f49b593d9f264a497cc32978a9489694fa23931b65f633f68334584e07c4a89df8f6661afba0c88ade57c84ffcc87d6b3c0af3b713d10b1a259e9931e1131b02f3f939df635f2612cf10f75fe2145eb8081bc7bff60d072b9600ce2358884feeececfc8e784c281c6ef31a75567a4efa3f4a6ccce0d9faca2358fae66c2043fcc1d022ede27d4abf49a381305bdcd0c6ccf7b086473ffc1bc5b84e585b64e4cee303d9eb1af602fb5158ebd664387edf3386908d8bfa0ccf5ecfb191e360753b302474752408
+Tag = 16970f8d8c6f09c1c6f2b1a6bd4ebeb9
+Plaintext = 3bf588b7471546040a6fe3eafe86cf28
+Ciphertext = ac0b1e035a02ee5496ce64b2ff31f402
+
+# tcId 58: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 59: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 60: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3c8e901244c9d3bd87cac89caeee0dc5
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 61: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = bd0f1193c548523c064b491d2f6f8c44
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 62: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3c8f911345c8d2bc86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 63: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = bd8f911345c8d2bc86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 64: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8e911345c8d2bc86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 65: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911245c8d2bc86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 66: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f919345c8d2bc86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 67: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d2bd86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 68: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d23c86cbc99dafef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 69: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d2bc86cbc99daeef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 70: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d2bc86cbc99d2fef0cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 71: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d2bc86cbc99dafef8cc4
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 72: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d2bc86cbc99dafef0cc5
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 73: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 686101a10942da30be501dac666dff6aa342cce0f271a5d2c0feac6063a9ece2
+IV = 6f4128049c71b9249e06e010
+AAD =
+Tag = 3d8f911345c8d2bc86cbc99dafef0c44
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 74: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 75: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 76: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cc8e859b07182cde4177da59c0500292
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 77: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = 4d0f041a8699ad5fc0f65bd841d18313
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 78: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cc8f849a06192ddf4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 79: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = 4d8f849a06192ddf4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 80: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8e849a06192ddf4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 81: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849b06192ddf4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 82: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f841a06192ddf4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 83: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192dde4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 84: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192d5f4076db58c1510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 85: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192ddf4076db58c0510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 86: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192ddf4076db5841510393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 87: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192ddf4076db58c1518393
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 88: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192ddf4076db58c1510392
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 89: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d6792208ea5413ed4eefd0f6d8bcacd3406163f06c0bc70967d3220250c76e50
+IV = accf706aa0d3f81fbd24ac3f
+AAD =
+Tag = cd8f849a06192ddf4076db58c1510313
+Plaintext =
+Ciphertext = a9c195159624a215077501d76b8b42a2
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 90: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 91: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 92: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 886ad1eb66fdebece472a393bca8ee66
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 93: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 09eb506ae77c6a6d65f322123d296fe7
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 94: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 886bd0ea67fceaede573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 95: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 096bd0ea67fceaede573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 96: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896ad0ea67fceaede573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 97: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0eb67fceaede573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 98: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd06a67fceaede573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 99: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fceaece573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 100: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fcea6de573a292bda9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 101: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fceaede573a292bca9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 102: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fceaede573a2923da9ef67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 103: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fceaede573a292bda96f67
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 104: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fceaede573a292bda9ef66
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 105: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 438dabdf1dbc6d7eef3ba06faa545c0b64896269468971c902fd7f88a42e7baa
+IV = 793a763a6df94c59efc2e550
+AAD = f34c59f4c3c9e16737923cf7fe9198cb
+Tag = 896bd0ea67fceaede573a292bda9efe7
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 106: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 107: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 108: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a12643b56e2495ad47a6f656e6b32d1d
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 109: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = 20a7c234efa5142cc62777d76732ac9c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 110: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a12742b46f2594ac46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 111: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = 202742b46f2594ac46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 112: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02642b46f2594ac46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 113: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b56f2594ac46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 114: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742346f2594ac46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 115: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f2594ad46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 116: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f25942c46a7f757e7b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 117: Bit 96 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f2594ac46a7f757e6b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 118: Bit 103 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f2594ac46a7f75767b22c1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 119: Bit 119 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f2594ac46a7f757e7b2ac1c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 120: Bit 120 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f2594ac46a7f757e7b22c1d
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 121: Bit 127 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 223288c28d86442d22418db5fb87e5a3008c5ab613111a1b27770095a7208436
+IV = ac7f4da26b060b8086baf015
+AAD = a0b8e22191be4f9f2345bbcdc8e9366d
+Tag = a02742b46f2594ac46a7f757e7b22c9c
+Plaintext =
+Ciphertext = 2ff3763c85e72672accb84d5b00b0ff9
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 122: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD =
+Tag = cd5988adcd356fe102c2d5a6682e55cd
+Plaintext = b906f7d5c064b56308a3d56a05cf8f28
+Ciphertext = ffffffffffffffffffffffffffffffff
+
+# tcId 123: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD = ffffffffffffffffffffffffffffffff
+Tag = 77016b6d22ad8c39a685466f68181f2e
+Plaintext = b906f7d5c064b56308a3d56a05cf8f282f4bf6146de9df7a1a72dd8070bb2689
+Ciphertext = ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# tcId 124: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD = 00000000000000000000000000000000
+Tag = 17b143b57e12dcbcebb64b87e6ee489b
+Plaintext = de3c283c509b59c23b5b3c0288fb9554f71d68cbccda1348d59738a0646cd704
+Ciphertext = 0000000000000000000000000000000000000000000000000000000000000000
+
+# 303defdad88066c32d39766c6b8f8d3579cbfc5dbd01eda204602898b79d0e30  aes_ocb_256_96_64.json
+Title = AES-256-OCB Rooterberg test vectors from aes_ocb_256_96_64.json
+
+# tcId 1: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = 1d7aac48746a2e9f
+Plaintext =
+Ciphertext =
+
+# tcId 2: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = 58ad6013288a220b
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 260635f57a646a6380a27c03b02c6303
+
+# tcId 3: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = b0659c0053a5cb86
+Plaintext =
+Ciphertext =
+
+# tcId 4: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = f5b2505b0f45c712
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 260635f57a646a6380a27c03b02c6303
+
+# tcId 5: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = dbbcd808bbc40cc4
+Plaintext =
+Ciphertext =
+
+# tcId 6: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = a897b7e9bbf6d2f0
+Plaintext =
+Ciphertext =
+
+# tcId 7: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = a84d1d772b224339
+Plaintext =
+Ciphertext =
+
+# tcId 8: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = a1f127bd705740e2
+Plaintext = 52
+Ciphertext = 03
+
+# tcId 9: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 7152776a7bd83022
+Plaintext = ea
+Ciphertext = 32
+
+# tcId 10: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = e819207b74048d33
+Plaintext = a1
+Ciphertext = e5
+
+# tcId 11: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = 0faf7c24980ede05
+Plaintext = 5279
+Ciphertext = 037e
+
+# tcId 12: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 0d6f1977b89525f4
+Plaintext = eae5
+Ciphertext = 3289
+
+# tcId 13: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = 76ba8b5186e8a044
+Plaintext = a16b
+Ciphertext = e5a0
+
+# tcId 14: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = 15a1a2e3ee16e045
+Plaintext = 52793d
+Ciphertext = 037eba
+
+# tcId 15: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 93a31e4eb7b75a96
+Plaintext = eae5ef
+Ciphertext = 328991
+
+# tcId 16: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = 47854815e227b769
+Plaintext = a16b5f
+Ciphertext = e5a07c
+
+# tcId 17: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = 76ca9a5de9b8f0cd
+Plaintext = 52793d870119bb
+Ciphertext = 037eba9688ef4c
+
+# tcId 18: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 4523a7a557eabf0c
+Plaintext = eae5efdae396a1
+Ciphertext = 3289915a819c1e
+
+# tcId 19: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = a3fdb8ca723218e4
+Plaintext = a16b5fa051fc62
+Ciphertext = e5a07c4cd4cfd2
+
+# tcId 20: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = 97e7e52a38d56e43
+Plaintext = 52793d870119bb3b
+Ciphertext = 037eba9688ef4c5b
+
+# tcId 21: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 81a494e25b8a8f46
+Plaintext = eae5efdae396a1eb
+Ciphertext = 3289915a819c1e7a
+
+# tcId 22: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = 81ff8da2f88dee40
+Plaintext = a16b5fa051fc6299
+Ciphertext = e5a07c4cd4cfd294
+
+# tcId 23: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = a6476331807e05cc
+Plaintext = 52793d870119bb3bac355d14
+Ciphertext = 037eba9688ef4c5b65e3ed80
+
+# tcId 24: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 5f848a044f66853e
+Plaintext = eae5efdae396a1eb281ea560
+Ciphertext = 3289915a819c1e7a41ecaef0
+
+# tcId 25: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = f55a7fa165d827fa
+Plaintext = a16b5fa051fc629930684578
+Ciphertext = e5a07c4cd4cfd294b48ee519
+
+# tcId 26: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = d0ae51968b08ba74
+Plaintext = 52793d870119bb3bac355d141c9b1a
+Ciphertext = 037eba9688ef4c5b65e3ed8064bf65
+
+# tcId 27: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = a52f6807083db7e2
+Plaintext = eae5efdae396a1eb281ea5609ab34d
+Ciphertext = 3289915a819c1e7a41ecaef036cf59
+
+# tcId 28: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = bdf7823578bd7ad2
+Plaintext = a16b5fa051fc629930684578976744
+Ciphertext = e5a07c4cd4cfd294b48ee519f090d1
+
+# tcId 29: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = a6d0d163d423f5fa
+Plaintext = 52793d870119bb3bac355d141c9b1ad6
+Ciphertext = 25ecf270b77b76bd1d85907df42e5f58
+
+# tcId 30: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = c90c98e66720a707
+Plaintext = eae5efdae396a1eb281ea5609ab34dd5
+Ciphertext = 8b2fff24ffaa227fa2ab1ceb3f77219f
+
+# tcId 31: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = ea5870b275b7a883
+Plaintext = a16b5fa051fc62993068457897674408
+Ciphertext = ee90cf410fd04570f2d187e3a6019968
+
+# tcId 32: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = fc924dbec86ca3cd
+Plaintext = 52793d870119bb3bac355d141c9b1ad6e2
+Ciphertext = 25ecf270b77b76bd1d85907df42e5f5825
+
+# tcId 33: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 99c78219cd11ee25
+Plaintext = eae5efdae396a1eb281ea5609ab34dd502
+Ciphertext = 8b2fff24ffaa227fa2ab1ceb3f77219f0f
+
+# tcId 34: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = ee4ac72b173385c2
+Plaintext = a16b5fa051fc6299306845789767440837
+Ciphertext = ee90cf410fd04570f2d187e3a6019968f1
+
+# tcId 35: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = f68f42479be7e2fa
+Plaintext = 52793d870119bb3bac355d141c9b1ad6e2b32d80a8f22c32dad9be415d1614
+Ciphertext = 25ecf270b77b76bd1d85907df42e5f5825e77647bafaaabc01f5326a4266e2
+
+# tcId 36: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 9dc6bbd8535aaafa
+Plaintext = eae5efdae396a1eb281ea5609ab34dd502e90fcce8d537efd3e94c4756118d
+Ciphertext = 8b2fff24ffaa227fa2ab1ceb3f77219f0f8a40596baf7f73ad2c7fa9cdac55
+
+# tcId 37: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = 47fd9c23582f0e98
+Plaintext = a16b5fa051fc6299306845789767440837965ed7b5fc0702811d0525f25aca
+Ciphertext = ee90cf410fd04570f2d187e3a6019968f17e369be1c81a40eeaee9dbba0933
+
+# tcId 38: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = 07a595c1c9a54e76
+Plaintext = 52793d870119bb3bac355d141c9b1ad6e2b32d80a8f22c32dad9be415d1614b9
+Ciphertext = 25ecf270b77b76bd1d85907df42e5f5886059aa59401403d11535e55625421c2
+
+# tcId 39: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 29ec0283c8b66b28
+Plaintext = eae5efdae396a1eb281ea5609ab34dd502e90fcce8d537efd3e94c4756118da2
+Ciphertext = 8b2fff24ffaa227fa2ab1ceb3f77219fc6de01cd820c90e26339cbdeeecf3d93
+
+# tcId 40: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = addafd61ef39b154
+Plaintext = a16b5fa051fc6299306845789767440837965ed7b5fc0702811d0525f25aca6b
+Ciphertext = ee90cf410fd04570f2d187e3a6019968513633452477a84109520054bd53a0fa
+
+# tcId 41: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = 40490ede5a97d240
+Plaintext = 52793d870119bb3bac355d141c9b1ad6e2b32d80a8f22c32dad9be415d1614b9ec9165e3672b3acd92abb49cb4f3adb8b6cd3e906184ffa359bc2770a3ac9612c66e552ac90ddd300cdc28a312f9fc6e
+Ciphertext = 25ecf270b77b76bd1d85907df42e5f5886059aa59401403d11535e55625421c2d17f63052245ee79de1d9cfcdc9c8f3504b1f928b05d20c1b79e42538be27ff455ce69ba83a8be58f4d06e42032dc404
+
+# tcId 42: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = fb9959ea6a66ce0f
+Plaintext = eae5efdae396a1eb281ea5609ab34dd502e90fcce8d537efd3e94c4756118da29cf602f52671846df4095409e06544b25c0fef640c435e2132d40d9c2323a685a5753203c6f886b893bb21e8ae72f43a
+Ciphertext = 8b2fff24ffaa227fa2ab1ceb3f77219fc6de01cd820c90e26339cbdeeecf3d930938d6b270868d25561be2df898bd6273c0537d2b6517d22db1e244948fc16848d41590350e8fcfaa23762ffadea3c52
+
+# tcId 43: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = 322c57ce05cf66ff
+Plaintext = a16b5fa051fc6299306845789767440837965ed7b5fc0702811d0525f25aca6bbda3f4d1ff1c2d6440d717286c26ba056ec72e4a62d69e139758800a12ea7d49b75d4491d4985884797d4fbb08cbc84a
+Ciphertext = ee90cf410fd04570f2d187e3a6019968513633452477a84109520054bd53a0fa1190dd0196beb86a05c0649ee17a7c6e51e7705913f9aad31558a70165c0b9718c7a1fa56c4f302a85c26fde868ab339
+
+# tcId 44: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 625903695963a84aa1e78002e47f9b84658d3f7eb0b384276cfe9fabd0a391b5
+IV = 63e9011e9540c898289d5571
+AAD =
+Tag = d21c55fdfc3e48e7
+Plaintext = 52793d870119bb3bac355d141c9b1ad6e2b32d80a8f22c32dad9be415d1614b9ec9165e3672b3acd92abb49cb4f3adb8b6cd3e906184ffa359bc2770a3ac9612c66e552ac90ddd300cdc28a312f9fc6e0ddfe7d8ca6a77dda2af6d6ca924d958a70cf5bed5b2291da982c79d12a7095283e9612f4f83911bf048968cf6a7028dcc
+Ciphertext = 25ecf270b77b76bd1d85907df42e5f5886059aa59401403d11535e55625421c2d17f63052245ee79de1d9cfcdc9c8f3504b1f928b05d20c1b79e42538be27ff455ce69ba83a8be58f4d06e42032dc404707476bdd8d7fca15f9566f83cc3d0aa179eb1567325704f750ebabbc2c1e7eb98a3188137b870415a140fbf6696640642
+
+# tcId 45: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d261772bef8faea9a48a8187dbc4bd094af0fdc35ba63e6f4c91fee397c18b47
+IV = d6760331aff20a2ad15cf534
+AAD = 83f1d1f95e36a47114407cff6228abd3
+Tag = 16817dc23287eece
+Plaintext = eae5efdae396a1eb281ea5609ab34dd502e90fcce8d537efd3e94c4756118da29cf602f52671846df4095409e06544b25c0fef640c435e2132d40d9c2323a685a5753203c6f886b893bb21e8ae72f43a7474496dfcd7391de307250f450129d3a2c0c3f02a6c16b86a57dca4f53e06c8bc64f0ea6be4144f5854f2d2dad97d89ad
+Ciphertext = 8b2fff24ffaa227fa2ab1ceb3f77219fc6de01cd820c90e26339cbdeeecf3d930938d6b270868d25561be2df898bd6273c0537d2b6517d22db1e244948fc16848d41590350e8fcfaa23762ffadea3c52e427dd25d2649da3aadaa4e07300911057f94076c36d1c3f1f377dfe615cfef2a115f44b840062a403c266d68d04f517ed
+
+# tcId 46: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 107a0fc7af7ccb0a95cfffeec8da5bc15265b1de67fc5ec791c38cffbc9d0e72
+IV = dc2999766377f0fd74e3a6ed
+AAD = 5757483c475402d0e8df42d7f1b3a15415b0744b53e349bb97dae50ec314
+Tag = 2fbf76b60a414397
+Plaintext = a16b5fa051fc6299306845789767440837965ed7b5fc0702811d0525f25aca6bbda3f4d1ff1c2d6440d717286c26ba056ec72e4a62d69e139758800a12ea7d49b75d4491d4985884797d4fbb08cbc84adc48f711a19c8eaaa8c8adfc1b044b352d579fd776514812a2a6a64be53131c9576d5cfd5aa00a1b213f3ad6ea6990e7c3
+Ciphertext = ee90cf410fd04570f2d187e3a6019968513633452477a84109520054bd53a0fa1190dd0196beb86a05c0649ee17a7c6e51e7705913f9aad31558a70165c0b9718c7a1fa56c4f302a85c26fde868ab339db02d78412b6be0d1c9afa53f1ed7b3196ece0569df000693f4d43606d67e2bb50b66dbc4ab43e56d12b71951ea4e140f8
+
+# tcId 47: aad size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = bc62f19d0552508866ac86844c16e296e447d7e7b5e930605a4534b58e3ddc4a
+IV = 922e91f3d5b9379bfa076920
+AAD =
+Tag = 0d25ac63c6464164
+Plaintext = 38bf4d5e367367d4af088ff298ad48a8
+Ciphertext = 1efd8130c7aff4170bb20d6c3127b6e7
+
+# tcId 48: aad size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = ddec24a047d61a5fd45d5f0c4f82a798b9e886a808e171ee9adb9e3b296c8232
+IV = 89bb0ace1079d4efa85da078
+AAD = d7
+Tag = 0fdc65b1e58ece36
+Plaintext = ba58a10c05fc69a7183a047a29445298
+Ciphertext = e5283e76d7efbe1b005df2f11ef6acd6
+
+# tcId 49: aad size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 4900a883c133f10c7348d634d39acfc6aa705483e29cfb6249edcee44c746dd9
+IV = a4dd79b3146e60e79239fb49
+AAD = 0f782c674e95809d751201490003a1
+Tag = fdeb72703feed0a9
+Plaintext = 982ecc82855f73c16f180d433be1fed6
+Ciphertext = 5e12ec64f0f5ff241207fd68d7c1eb45
+
+# tcId 50: aad size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9c6e45ec13eec2b7857dbf0d4f740ae22a50b7b6beb6ace485322f656780ec28
+IV = adaf4b767451441d4836a351
+AAD = e677af9b657f7b1217e872fefeb5cdaf
+Tag = c94bc19a0a63d5f0
+Plaintext = fa17154f79645031c56741d9ddfd8ee7
+Ciphertext = 9cb14f2c693fa049035365c292159833
+
+# tcId 51: aad size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 84214370a2f81bc5e642887cb17af11e9157ee0fa9293810a2565965ff1fb18f
+IV = 832813e50bd2db742b30ee63
+AAD = 8350d291f92d99f91d3d313ac25afefbb6
+Tag = fa932ae0dd47d89e
+Plaintext = ef09766c75358223b52abca9272194f7
+Ciphertext = 22f80c0e7645a4aa99b92455108b1b2d
+
+# tcId 52: aad size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = ffff0d24ccd9c9305933e4cd6a8d3a504056def4ad9290015d6a48cce1136f24
+IV = 5e29b9ebff1e90ce68b59be1
+AAD = f13d619a7ddcbd6ad346030f62e8b098ccca37db75be6c545847afb098e12f
+Tag = aca6b27c7c161510
+Plaintext = 9db2650915b55bcac84e9cfec0089510
+Ciphertext = 1bac29d32d16b8d29cc620710ac1ce94
+
+# tcId 53: aad size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = db8d3325a5d0774a06c8bc5d48d4b914c4a2e65f87e40a6993d9e2140c4ce6ce
+IV = 6f911eda1566cce206db22a8
+AAD = 4c65ab288e6e19a1b50c3a50902646130cb87affc58807a20895ef7ccdd8c574
+Tag = fc8ab3881c0cd0e4
+Plaintext = 3cb8d7f39d5ec3eab7f4d205ce348ba3
+Ciphertext = b2c559301c93e0db8805fe00b6db2e23
+
+# tcId 54: aad size = 33 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d9b30881f3b9aef585decda43259bb9de2c98113a685514e7588e383fbaa9bf5
+IV = 594cfb6a6ab223d679fe3fce
+AAD = 49e8a41959586b2cb545359d1f93a4dd1b6ef006b2fcf8317feb17ccdf37e14d36
+Tag = 4a8923ed20b00518
+Plaintext = f2d1b6795c7c008a0c5e98d34c563a30
+Ciphertext = 0fc1813bf56bd01d9f91409982066018
+
+# tcId 55: aad size = 65 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = aafdb7d95149811c802bdf3378ca5274ee29a495a885bf830c38f34373d24104
+IV = a1130e72a7469433f0896c1d
+AAD = da73312b6ae22e08096fdaf7b63359f790ce8f6cea90ce2e6408e5816cdfc24e45588063525fc7be5b1031407141e6ede6cf7b178e6cae748cc19530947bc285b4
+Tag = eac3be248b2689ba
+Plaintext = 5dfc9ce2396f1be86748a40ba3ad342f
+Ciphertext = 3c837f6524728cb94be5db22a8262978
+
+# tcId 56: aad size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6cd61b158fb13c50a7f3f08d9084986fb748dd0de747f5368011c08dd3b9557b
+IV = b8162bb7a61a5ddb0b361472
+AAD = 7253c80a64ae885eb97ee5f8372dfcbfeace8094fd6a559fa2a9967b3ab3fcfd1c02b06ffe3a1dc4f3cbe90e7e87903cbc7108c8e9e3e173eb6605d41a5ce15a4dad483813308a7340b43ed57936b7fc32d976e5cda75376677873ca5886ecf75136afc83f15c6d972607ed609a0fe1726c265c8e902bcd85a02338dc530d6006f
+Tag = f06aea24c0ea2c58
+Plaintext = 0df2b38fe1af96cbb8061a0ee7868a2c
+Ciphertext = 5a3a86098a088bf463a3ea538de68db3
+
+# tcId 57: aad size = 257 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1c028b786c487c81a196630dad1fb40ba6ea6ffdab369edbcf20714c86c1081
+IV = 8a971dbd40a3638a1c3ef239
+AAD = f71fc912069783fdff1bf1bd478ac9714d638f8657f42ef21775a6ce1cdc77cc362bcbf9ee0f1aa06dbbe1600f55b6de3880651d5252ae57c19a4261c7644d848f44868b9faf6fd1444bee0491de8f35b8f9194c3f0320144008a7c4b1302ad12a1f0f5dfe25687a55d7d790dc73850d3c8c1cf129cc32b1214dc9011001d1b936cb2b8811ec09de040c07f0b0a760f8bde70a4d91653388bb5da22b521de1e2708636df5486d731cec3057a2693124781b7331998098f070ce6d54811f3febffd73cebcc92b00681e04634652bfbfeff8c837522dadadaaa839e3cb9a598fa2762cf23348c544beb486c760ba6834d307d7f8635cb88b09d5fe736cd219367299
+Tag = 39f630ee7a62c166
+Plaintext = 20e95343bdf69a9736dc07de2be69b13
+Ciphertext = 8dc18067ca13a272d0173327f9ffb459
+
+# tcId 58: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 0000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 59: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = ffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 60: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 47bc0be9bd3aa942
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 61: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = c63d8a683cbb28c3
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 62: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 47bd0ae8bc3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 63: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = c6bd0ae8bc3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 64: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bc0ae8bc3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 65: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0ae9bc3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 66: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0a68bc3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 67: Bit 32 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0ae8bd3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 68: Bit 39 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0ae83c3ba843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 69: Bit 55 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0ae8bc3b2843
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 70: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0ae8bc3ba842
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 71: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1363f1b3049b5f5c631cece259b27e34238d6ccb686597290325bcf62891ed73
+IV = 1393ee7a5cad2049fd6b4f45
+AAD =
+Tag = 46bd0ae8bc3ba8c3
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 72: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 0000000000000000
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 73: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = ffffffffffffffff
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 74: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 52275103ba2e9d74
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 75: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = d3a6d0823baf1cf5
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 76: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 52265002bb2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 77: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = d3265002bb2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 78: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53275002bb2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 79: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53265003bb2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 80: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53265082bb2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 81: Bit 32 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53265002ba2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 82: Bit 39 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 532650023b2f9c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 83: Bit 55 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53265002bb2f1c75
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 84: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53265002bb2f9c74
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 85: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 5b03d4cd40bde3ac98e2972f532853f6a84e0d11b00b4d71baced442c064d891
+IV = bab8209318d2098fae75ab29
+AAD =
+Tag = 53265002bb2f9cf5
+Plaintext =
+Ciphertext = 79deb314b205e47fbf2579b556e991e0
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 86: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 0000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 87: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = ffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 88: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6dcbec4a32f3c67d
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 89: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = ec4a6dcbb37247fc
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 90: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6dcaed4b33f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 91: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = eccaed4b33f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 92: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccbed4b33f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 93: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaed4a33f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 94: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaedcb33f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 95: Bit 32 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaed4b32f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 96: Bit 39 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaed4bb3f2c77c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 97: Bit 55 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaed4b33f2477c
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 98: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaed4b33f2c77d
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 99: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 36647bd64a94f8b4513e0be4b2062992e9274b36771350217d5a19813587b063
+IV = 366c78de3658ccebe9b1b274
+AAD = 04521d353885f97a391495478153d991
+Tag = 6ccaed4b33f2c7fc
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 100: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 0000000000000000
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 101: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = ffffffffffffffff
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 102: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 38998f2a06d5dc5d
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 103: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = b9180eab87545ddc
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 104: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 38988e2b07d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 105: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = b9988e2b07d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 106: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39998e2b07d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 107: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988e2a07d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 108: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988eab07d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 109: Bit 32 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988e2b06d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 110: Bit 39 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988e2b87d4dd5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 111: Bit 55 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988e2b07d45d5c
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 112: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988e2b07d4dd5d
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 113: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 7e2f002e1fb72ec41f0b3980d87cb58be2ccc203627b934e0ad130a52f5df1d0
+IV = c3dac1e5dc95350a4e8f7e52
+AAD = 85df1ad8a360e12783ff3b8838824a87
+Tag = 39988e2b07d4dddc
+Plaintext =
+Ciphertext = 6a96f1b72187dfc6b2584733f85b0768
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 114: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD =
+Tag = 220f2f4e5537bf89
+Plaintext = bca58fd32901853e614bdb6c9d9d2861
+Ciphertext = ffffffffffffffffffffffffffffffff
+
+# tcId 115: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD = ffffffffffffffffffffffffffffffff
+Tag = 368e6650cdaa908c
+Plaintext = bca58fd32901853e614bdb6c9d9d2861ff3e0c310479418435a5715b323919e0
+Ciphertext = ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# tcId 116: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD = 00000000000000000000000000000000
+Tag = 254d8fdac88a7260
+Plaintext = 576bb36fd6d94b11307d072155edecf84e2eb73fa5fc14f158bb2d3c728af399
+Ciphertext = 0000000000000000000000000000000000000000000000000000000000000000
+
+# 1c8b62c13417e64fa9fe279cf4810ff1d6f2366d8f5b5f89e103983db4def94d  aes_ocb_256_96_96.json
+Title = AES-256-OCB Rooterberg test vectors from aes_ocb_256_96_96.json
+
+# tcId 1: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = a22e46ee18183fa7d631e7c0
+Plaintext =
+Ciphertext =
+
+# tcId 2: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = 2bba0ddc2ec52f857b7e9ced
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 918dbf2807fb8d371593468524886cdc
+
+# tcId 3: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 0f3176a63fd7dabeecb50a5a
+Plaintext =
+Ciphertext =
+
+# tcId 4: basic [Basic]
+Cipher = AES-256-OCB
+Key = 0000000000000000000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 86a53d94090aca9c41fa7177
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 918dbf2807fb8d371593468524886cdc
+
+# tcId 5: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 94271c1ea25044b5fcf67fb2
+Plaintext =
+Ciphertext =
+
+# tcId 6: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 38e7bac4576b847fef928403
+Plaintext =
+Ciphertext =
+
+# tcId 7: message size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 070d3cc2196b1fc40a3f62f7
+Plaintext =
+Ciphertext =
+
+# tcId 8: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 565514b9f53b786e62b52769
+Plaintext = b5
+Ciphertext = 67
+
+# tcId 9: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 411ec7f70e5179bc0d471be8
+Plaintext = 11
+Ciphertext = 86
+
+# tcId 10: message size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = cfc0f539a4520de71181ca86
+Plaintext = 41
+Ciphertext = e7
+
+# tcId 11: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = c4ab55c82f97d8446138530e
+Plaintext = b542
+Ciphertext = 67d0
+
+# tcId 12: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = e4544cf5237c30e64978ef67
+Plaintext = 112a
+Ciphertext = 8617
+
+# tcId 13: message size = 2 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = f22fbaee6d5204fbf428627f
+Plaintext = 412d
+Ciphertext = e7c0
+
+# tcId 14: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 4276c9b0e70564b84c54645a
+Plaintext = b542a1
+Ciphertext = 67d075
+
+# tcId 15: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = a52e16573196d304feae3185
+Plaintext = 112aa4
+Ciphertext = 8617c5
+
+# tcId 16: message size = 3 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = e27e00a55a152690f9077636
+Plaintext = 412db0
+Ciphertext = e7c09f
+
+# tcId 17: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 980c2e4c2a16feb1b587a4a8
+Plaintext = b542a1c22a4810
+Ciphertext = 67d07562d5bee0
+
+# tcId 18: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 30e593e572db69939bc0c0f0
+Plaintext = 112aa41253f83f
+Ciphertext = 8617c5da3cdcb9
+
+# tcId 19: message size = 7 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 7ad9a733927377ee711d872c
+Plaintext = 412db0332fa654
+Ciphertext = e7c09fe5aeb631
+
+# tcId 20: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = bef5f4364239b898b730c498
+Plaintext = b542a1c22a48103a
+Ciphertext = 67d07562d5bee091
+
+# tcId 21: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 5f5b80990d711ff67d5843d7
+Plaintext = 112aa41253f83fbf
+Ciphertext = 8617c5da3cdcb96e
+
+# tcId 22: message size = 8 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = e7939f21fa6381910e8d46fd
+Plaintext = 412db0332fa6540f
+Ciphertext = e7c09fe5aeb63124
+
+# tcId 23: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 4a0adc5bc7fd8cd57fa1096b
+Plaintext = b542a1c22a48103a0ae83e2e
+Ciphertext = 67d07562d5bee091efd8acdf
+
+# tcId 24: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 11e25c0ff2ef24f0d967ba0b
+Plaintext = 112aa41253f83fbf4123cce4
+Ciphertext = 8617c5da3cdcb96e98043fbf
+
+# tcId 25: message size = 12 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 603aa978393b7e57158abee8
+Plaintext = 412db0332fa6540f0043c4fc
+Ciphertext = e7c09fe5aeb63124f16bded5
+
+# tcId 26: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 2da566bd824ef4b854380bdf
+Plaintext = b542a1c22a48103a0ae83e2e295a74
+Ciphertext = 67d07562d5bee091efd8acdfc834bf
+
+# tcId 27: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 4113f6df9a0d716101fd78c6
+Plaintext = 112aa41253f83fbf4123cce497edbc
+Ciphertext = 8617c5da3cdcb96e98043fbfaabe84
+
+# tcId 28: message size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = c22ce12c8e8deef2f60dab34
+Plaintext = 412db0332fa6540f0043c4fc5c996c
+Ciphertext = e7c09fe5aeb63124f16bded5f9b2da
+
+# tcId 29: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 9df3f1ddceb037e384e911b1
+Plaintext = b542a1c22a48103a0ae83e2e295a74ff
+Ciphertext = eb9d5256cfccc308a068e018420005f1
+
+# tcId 30: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 1fcbb0b22fa1d472c7d5e723
+Plaintext = 112aa41253f83fbf4123cce497edbcd8
+Ciphertext = 37d88eb1e30ebed3daeffce0d4ef7eb9
+
+# tcId 31: message size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 6017f16f21f663198b0823e0
+Plaintext = 412db0332fa6540f0043c4fc5c996cec
+Ciphertext = 2a8a89eb4d44b4f340de3c68920a48b1
+
+# tcId 32: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 43a8cefe1c8609e839d5bb71
+Plaintext = b542a1c22a48103a0ae83e2e295a74ff7b
+Ciphertext = eb9d5256cfccc308a068e018420005f197
+
+# tcId 33: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = f4699177ce48f005f2096da8
+Plaintext = 112aa41253f83fbf4123cce497edbcd813
+Ciphertext = 37d88eb1e30ebed3daeffce0d4ef7eb97b
+
+# tcId 34: message size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 94af9bd57e45b7990e94272c
+Plaintext = 412db0332fa6540f0043c4fc5c996ceceb
+Ciphertext = 2a8a89eb4d44b4f340de3c68920a48b19a
+
+# tcId 35: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 74359e1331a70aa4a6c7ebfe
+Plaintext = b542a1c22a48103a0ae83e2e295a74ff7b218c1230f6ec75ff2723e9e2414b
+Ciphertext = eb9d5256cfccc308a068e018420005f1971330108c4a901627e963a5635a1b
+
+# tcId 36: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 7569b4d19428b16d3a336e06
+Plaintext = 112aa41253f83fbf4123cce497edbcd81367a0fdceba9595fee808767dbb01
+Ciphertext = 37d88eb1e30ebed3daeffce0d4ef7eb97b6982ff33954fe0177a8e0ef2e7e2
+
+# tcId 37: message size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 675b2634da17bdfcb7d1dc6e
+Plaintext = 412db0332fa6540f0043c4fc5c996cecebd5003bfc494d4ea9ab36a4806122
+Ciphertext = 2a8a89eb4d44b4f340de3c68920a48b19a6f8441a4876a6efb3117724a5944
+
+# tcId 38: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = d052ce0222659345ea6ff7b3
+Plaintext = b542a1c22a48103a0ae83e2e295a74ff7b218c1230f6ec75ff2723e9e2414ba1
+Ciphertext = eb9d5256cfccc308a068e018420005f10b1e108e64668935de26b6b8ef699e05
+
+# tcId 39: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = aeaaa7739541cfae57e2dba1
+Plaintext = 112aa41253f83fbf4123cce497edbcd81367a0fdceba9595fee808767dbb01e7
+Ciphertext = 37d88eb1e30ebed3daeffce0d4ef7eb99f45cf98a3b959ea8e7e981e86331175
+
+# tcId 40: message size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 60a5555ce7aa06a5098150fd
+Plaintext = 412db0332fa6540f0043c4fc5c996cecebd5003bfc494d4ea9ab36a480612284
+Ciphertext = 2a8a89eb4d44b4f340de3c68920a48b1e3be5fc1aa18711e81b13eaff140d93c
+
+# tcId 41: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 6d46ec6db6c3cedde84b1088
+Plaintext = b542a1c22a48103a0ae83e2e295a74ff7b218c1230f6ec75ff2723e9e2414ba14cae10b3b1e30d3c3f260a0427ba4e60830d84955ec2ee63b4c623d75d8e22cebb0724af18146081066c8efa05d8983d
+Ciphertext = eb9d5256cfccc308a068e018420005f10b1e108e64668935de26b6b8ef699e05afdbf080bd724f819335ddd4b0f586053c039924c518610fa617a8cca4804f0f44ec6944981084be8a0f35800844b0ea
+
+# tcId 42: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = 5dc5f9cb2b0e0dfb2382c9c2
+Plaintext = 112aa41253f83fbf4123cce497edbcd81367a0fdceba9595fee808767dbb01e79f0a16cf84525227837bf65aaa60e0c27f591f2f3dbd391547a8b2a76fc36625218dab8be4cb1cc1647e172ce087a14f
+Ciphertext = 37d88eb1e30ebed3daeffce0d4ef7eb99f45cf98a3b959ea8e7e981e86331175a81db0660cece852c98eb88cc8bd6e80aa56d6835670af13d042cd5c0d4b5dbd93d45461264e718d9ab0f727e7a4d70c
+
+# tcId 43: message size = 80 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = aa6118c0c2b9a99d5311a146
+Plaintext = 412db0332fa6540f0043c4fc5c996cecebd5003bfc494d4ea9ab36a480612284a37ef74d1264c047053958921c1f8dfa2935f96fbd92f904e1c5ec9580b6b500b8bf14408a1503372e7f2a5da612a932
+Ciphertext = 2a8a89eb4d44b4f340de3c68920a48b1e3be5fc1aa18711e81b13eaff140d93c20f8429bcd9201643b6309c484ce59415a1f106e31b0e7f1bd176e4e739e20a0a57cbf032345dc3c7b5424be032b0554
+
+# tcId 44: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = a1581ce7aedb584e0f82aae36f32265db820338130b3bf606737f257aedca846
+IV = 931a7fa17b7cc7439a773e79
+AAD =
+Tag = 4310e611e0f1a89347edc0cc
+Plaintext = b542a1c22a48103a0ae83e2e295a74ff7b218c1230f6ec75ff2723e9e2414ba14cae10b3b1e30d3c3f260a0427ba4e60830d84955ec2ee63b4c623d75d8e22cebb0724af18146081066c8efa05d8983da5ba9eb02d6244bc5f4a9efcf1b61ff1e07b28419dd82eed040a2f723ea4a4554d5b3af16cd62ed23969a22982443060b5
+Ciphertext = eb9d5256cfccc308a068e018420005f10b1e108e64668935de26b6b8ef699e05afdbf080bd724f819335ddd4b0f586053c039924c518610fa617a8cca4804f0f44ec6944981084be8a0f35800844b0eadb777d593dc943d42aefc5897a7d52bd13c7fb4ba49b627a1ee0a4acc50b3c9955be82e469c1a32c4c75921a318eba209c
+
+# tcId 45: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6c9608257c0cbd0a8fed2734434c38c8a7a849016fd21dd398458b06add06e47
+IV = 8c6ca0f2144e7fdbc3fe603a
+AAD = 5eaa2c0eb23fba0e828eab4aa341042e
+Tag = bb1eadb86b9dd96d462cd4e1
+Plaintext = 112aa41253f83fbf4123cce497edbcd81367a0fdceba9595fee808767dbb01e79f0a16cf84525227837bf65aaa60e0c27f591f2f3dbd391547a8b2a76fc36625218dab8be4cb1cc1647e172ce087a14f383ceab7ca7b365959b6fe4f3d7556e13f3e3b2c3ec558ff8a92f6b6707351a40929633c7e6b8257bcbc8523de2e10c536
+Ciphertext = 37d88eb1e30ebed3daeffce0d4ef7eb99f45cf98a3b959ea8e7e981e86331175a81db0660cece852c98eb88cc8bd6e80aa56d6835670af13d042cd5c0d4b5dbd93d45461264e718d9ab0f727e7a4d70c0794321cd026549ce8306b4715e0a849ddb2ee28390b7438040254b864c4e680a86d7e8beda8674f7e0911fd0d396db037
+
+# tcId 46: message size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d70a407327b80a66d84cf9c92cd501663ead8c34ee6b3175a7499196a32be4eb
+IV = 07f007c69b510d5300510c20
+AAD = 642921bb0362b427e82f886a37a5f24c0dde3c8361d443deb53c1e6adc6e
+Tag = 154c5991d82ba81b4743d5c7
+Plaintext = 412db0332fa6540f0043c4fc5c996cecebd5003bfc494d4ea9ab36a480612284a37ef74d1264c047053958921c1f8dfa2935f96fbd92f904e1c5ec9580b6b500b8bf14408a1503372e7f2a5da612a9321f51cdd41aa50d9de99d86af097e4831d7462bc23ab6af0b007f7ff358a0d3685562094d0796b5e464a8e5dfc8e19506ee
+Ciphertext = 2a8a89eb4d44b4f340de3c68920a48b1e3be5fc1aa18711e81b13eaff140d93c20f8429bcd9201643b6309c484ce59415a1f106e31b0e7f1bd176e4e739e20a0a57cbf032345dc3c7b5424be032b055436659f18bc9b24d8144daf341076870889d794436b4c0185f330c0f760c203c04412f2ce1042fbee5106022890ef981461
+
+# tcId 47: aad size = 0 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 6485de5decaea251a6c17f0107afff004ab903efdce0ca388d8fd6355f7fb96e
+IV = 5140424c26cc9c5b7177aaf2
+AAD =
+Tag = 20ee25afefa0d60508fbaa40
+Plaintext = cea90d640d034b2b64d9882611d7320c
+Ciphertext = dcf482c82da448e45aa56e190ba012ad
+
+# tcId 48: aad size = 1 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5e434cbeb538ffda0201bfa9c6710ed584a17a253ec0b7820d9d30d2ba73f946
+IV = 5c6b2223e13fcae221a1aceb
+AAD = b0
+Tag = fe5a1ebf8f400e77a18af102
+Plaintext = 0e1cc3a37ae5f50fc1c3db68dde6741a
+Ciphertext = d9f6ec69b102aff494740f20b215517d
+
+# tcId 49: aad size = 15 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5ca5f6552d97b4991d4738dc7a393a2294bb03522d6e08db9dfb84112e9f4ef1
+IV = f2b57ccc1980bfb64cf96849
+AAD = dcc76eaad9b517cf8c0f68db1cda05
+Tag = ac230293b48d760ac1b673e1
+Plaintext = f27b9933d455e525ffc7bc00b57d5d59
+Ciphertext = a893f2edc5d87792dcb391f4193a0fa9
+
+# tcId 50: aad size = 16 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = e744b9dcfd727f63f63608b5a1586f39144fe8449e3b4e2fa1d67946c8c70a72
+IV = 71e35f9453175a9cac52b0a2
+AAD = caf3ad6d681b254d5fc8677377a424e3
+Tag = 8da9eb67d4080a54362da3e8
+Plaintext = 174cf8da4d5432b049c16dcb586a089c
+Ciphertext = 2c52cb50888eaf5a2490f691870f7827
+
+# tcId 51: aad size = 17 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = f7504614cc0b6a434e94026f5f0043f7f778010e2e2dc0c32864723eaeb06b32
+IV = 4890ed762c6568e4f0663fe7
+AAD = 1c17d3b0f074902c27a30e3a4f5a267d69
+Tag = a913ed17a8bda96959766471
+Plaintext = d7b68951afa35b65cc8a5ed73aaa4bd8
+Ciphertext = fe91ce1258b0da9b387a7551cd54957a
+
+# tcId 52: aad size = 31 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 9af021eccc4554b668e0d91ab52df96f189dabde0f5e801f9b82c34971ee1db4
+IV = 5bb967e23357585dd05c0039
+AAD = 3868d1269e97586f8562de3ce42ac04cf0a8c930b1542f10aa73213184f58d
+Tag = 7b3e5d9ec27e193bf188a5f1
+Plaintext = 093aeb03d7fb994f3b6d25a8e34b3793
+Ciphertext = fdf9812928255f3659c14a901563c3d0
+
+# tcId 53: aad size = 32 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = d785c0698b52e77f0d51b1e0e5aea2d956f0a2799d9b3850425ecc5c15651bd4
+IV = cc72d7bcb4a6f81feab9892b
+AAD = 0b1eefae5dc09f76209de211af0a7ae54247fbcf397ca37bc10c12e5fc13aea4
+Tag = a6f83edb9ecf426bb85a0d72
+Plaintext = 5af39b9880af7034b5e19abaa45b87a1
+Ciphertext = 99119eefb822c0daf1e7eb9fc705a30d
+
+# tcId 54: aad size = 33 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5a19146257f466096f8d3027cd51ac78a54c986be8489380aa1509484ac41a25
+IV = 237cf92ce04ea2dfb9015b49
+AAD = 04bcbe14617c7fced80026f6129a58baaecd9d4f3a508569ff8b298b4d9a5e606f
+Tag = 295102ec1c5a8727a7ae4a51
+Plaintext = bd03c9bd07b122d1ae8834ab60f8d69b
+Ciphertext = f0194ff8af05c14faf2b201a41ed5e96
+
+# tcId 55: aad size = 65 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 27edb86f296b022b782b32087664a5a997fef5fcdd4cf2413d15161b1d112324
+IV = 159468a6cd551a5f3250c739
+AAD = 96008818527942f906da6edd89ddf62bbe33bfd71080b30632f71554d1e48e19610d167ecd8646c32aca220fedaf6ab799c08360a5ad0a42a270db96d05e11d799
+Tag = 6ff470d7b81de73b859cf5b5
+Plaintext = a054d69604e4dc70c89d92c05383effe
+Ciphertext = 8c7a11ab6ba085294b89a23662aa5eb0
+
+# tcId 56: aad size = 129 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 98f2f62357f9b4f1a7aaf84c97b5628d4ef1bf4be24b1f021145b39fc8685298
+IV = 28fd1eabbf879f54b12e3e31
+AAD = 165d2c54c4901c4235137f2a38dd9d091ddee3b4913397d2ef182df7a9e64038cc137f69e7971eeeabfa0d7ea52c8db14caff344fcaff06b955df4c34dfd863bb0bbf7c5f7adaed5dac373681df85a618c54b5a8586eee964b7fa75c00ddff9741570fef99428b38b89a49426f169d1b1f8f3a664cd1c99cac8760d580ebea9720
+Tag = f8eddb736639d5b12b47eed3
+Plaintext = a7b6a9138c8576398268713b1d34f83c
+Ciphertext = b7b812d9192820762de7664bf2112504
+
+# tcId 57: aad size = 257 [Pseudorandom]
+Cipher = AES-256-OCB
+Key = 5b58ef9795f9990632bfcd8afb512dfcbf9c5e737cf8bdb1bfcd0baec4286009
+IV = 5264b41148567442de2f0410
+AAD = c798177cf1ea239e643662a2f88ec9bea9d94332bcd2050396744a3345b64195cc6b2783677ab8aec315373eb803aa2e9e3f76e6329e353b3386ee43f7437a042e07ec8f1feee350df254426a4f666dfa595c79510beace0a5daa9c7fea1360b2fa84e5d032c3769c4ce6afe63f4966027a9d7ee8cd3ca46a53e67bf8e25037ff86b551577de0de761aa6bbdf02d96237ef7f98ad7404b316796a01473d1321cd0a17824985498cc7a02be5e8609d56fc748af8eb6dbc092d0e8cb2f27970d8e240640ead6e2eeeb5a3b66f05a99984456c0925a8e11dbce5813ab91eab04cb88cb2add1381c7f57c396958978e5975679a7685305c49ba348b08442a128cac9b1
+Tag = 322d5f5430ad9b80d2c33905
+Plaintext = 8d9d4e5a273ab38eb88c4561cd70d164
+Ciphertext = f98793542f4147ae63445072451d3f07
+
+# tcId 58: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 59: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = ffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 60: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 05c799c0589c5663c16db90a
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 61: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 84461841d91dd7e240ec388b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 62: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 05c698c1599d5762c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 63: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 84c698c1599d5762c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 64: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c798c1599d5762c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 65: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c0599d5762c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 66: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c69841599d5762c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 67: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d5763c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 68: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d57e2c06cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 69: Bit 64 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d5762c16cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 70: Bit 71 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d5762406cb80b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 71: Bit 87 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d5762c06c380b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 72: Bit 88 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d5762c06cb80a
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 73: Bit 95 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 1121dcb6b181f7a65071757cd9ed350f5115f8fe1f00e16d284f6f3329415f28
+IV = 224d7f156c53decb69dc9c9d
+AAD =
+Tag = 04c698c1599d5762c06cb88b
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 74: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 000000000000000000000000
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 75: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = ffffffffffffffffffffffff
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 76: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 93d3445a00e60c865d7512a4
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 77: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 1252c5db81678d07dcf49325
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 78: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 93d2455b01e70d875c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 79: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 12d2455b01e70d875c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 80: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d3455b01e70d875c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 81: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455a01e70d875c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 82: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d245db01e70d875c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 83: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d865c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 84: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d075c7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 85: Bit 64 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d875d7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 86: Bit 71 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d87dc7413a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 87: Bit 87 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d875c7493a5
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 88: Bit 88 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d875c7413a4
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 89: Bit 95 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = d3739fdea140da3e6e64acf915189f1e4019f99fb57d3a37fde959608ccbee67
+IV = d2a6c9ddf2451d5112f12b5e
+AAD =
+Tag = 92d2455b01e70d875c741325
+Plaintext =
+Ciphertext = 4d5d1631f564f569bfb0bb0bd624ea83
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 90: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = 000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 91: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = ffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 92: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c07081fb0fc848f8c7e650cc
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 93: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = 41f1007a8e49c9794667d14d
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 94: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c07180fa0ec949f9c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 95: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = 417180fa0ec949f9c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 96: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17080fa0ec949f9c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 97: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fb0ec949f9c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 98: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c171807a0ec949f9c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 99: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec949f8c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 100: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec94979c6e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 101: Bit 64 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec949f9c7e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 102: Bit 71 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec949f946e751cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 103: Bit 87 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec949f9c6e7d1cd
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 104: Bit 88 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec949f9c6e751cc
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 105: Bit 95 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 13daca99c951fc684dab1984142e75c82eea444ca0a3721bef060bad20ad2ccb
+IV = 1e61844bdf0a532f61c0de4a
+AAD = 86a9dd8c903a46b56a8a6347a05bb873
+Tag = c17180fa0ec949f9c6e7514d
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 106: tag changed to all 0 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 000000000000000000000000
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 107: tag changed to all 1 [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = ffffffffffffffffffffffff
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 108: all lsbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3c866ba9ba8e8a9fd41eaa10
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 109: all msbs changed in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = bd07ea283b0f0b1e559f2b91
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 110: Bit 0 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3c876aa8bb8f8b9ed51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 111: Bit 7 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = bd876aa8bb8f8b9ed51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 112: Bit 8 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d866aa8bb8f8b9ed51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 113: Bit 24 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa9bb8f8b9ed51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 114: Bit 31 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876a28bb8f8b9ed51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 115: Bit 56 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b9fd51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 116: Bit 63 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b1ed51fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 117: Bit 64 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b9ed41fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 118: Bit 71 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b9e551fab11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 119: Bit 87 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b9ed51f2b11
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 120: Bit 88 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b9ed51fab10
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 121: Bit 95 modified in tag [ModifiedTag]
+Cipher = AES-256-OCB
+Key = 6068f5bf6be73d306549be572796d58c3e55c941dcb315d7079dfaab168bdc2f
+IV = 661738ed18e0417cd94e0b17
+AAD = b0b8b97c256d2257a8154b3d9f3b0872
+Tag = 3d876aa8bb8f8b9ed51fab91
+Plaintext =
+Ciphertext = 76a10f1c5e57ee0c4dec5a0c3f77ef6d
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 122: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD =
+Tag = 9bc042b6be477875bd172687
+Plaintext = 1cb2d2c93b057742925bc13833784b17
+Ciphertext = ffffffffffffffffffffffffffffffff
+
+# tcId 123: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD = ffffffffffffffffffffffffffffffff
+Tag = efd9435c3357711a0527cd40
+Plaintext = 1cb2d2c93b057742925bc13833784b17c9aa5959394c6b33bb077e9d8bd8733f
+Ciphertext = ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# tcId 124: special case ciphertext [EdgeCaseCt]
+Cipher = AES-256-OCB
+Key = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+IV = 000102030405060708090a0b
+AAD = 00000000000000000000000000000000
+Tag = 111ed5d019c46ebcad503d1d
+Plaintext = 346a857956523e9189b0b850df76b6377b78bf844f05f9ce19e88839067b7d3d
+Ciphertext = 0000000000000000000000000000000000000000000000000000000000000000
