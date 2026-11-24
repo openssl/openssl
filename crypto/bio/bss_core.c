@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core_dispatch.h>
 #include "bio_local.h"
+#include <openssl/core_dispatch.h>
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
 

@@ -87,6 +87,13 @@ static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
 static OSSL_FUNC_indicator_cb_fn *c_indcbfn = NULL;
 static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
+static OSSL_FUNC_core_new_error_handle_fn *c_core_new_error_handle;
+static OSSL_FUNC_core_set_error_debug_handle_fn *c_core_set_error_debug_handle;
+static OSSL_FUNC_core_vset_error_handle_fn *c_core_vset_error_handle;
+static OSSL_FUNC_core_set_error_mark_handle_fn *c_core_set_error_mark_handle;
+static OSSL_FUNC_core_clear_last_error_mark_handle_fn *c_core_clear_last_error_mark_handle;
+static OSSL_FUNC_core_pop_error_to_mark_handle_fn *c_core_pop_error_to_mark_handle;
+static OSSL_FUNC_core_count_to_mark_handle_fn *c_core_count_to_mark_handle;
 
 #include "providers/fips/fipsparams.inc"
 
@@ -842,6 +849,27 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     else if (c != f)   \
         return 0;
         switch (in->function_id) {
+        case OSSL_FUNC_CORE_NEW_ERROR_HANDLE:
+            set_func(c_core_new_error_handle, OSSL_FUNC_core_new_error_handle(in));
+            break;
+        case OSSL_FUNC_CORE_SET_ERROR_DEBUG_HANDLE:
+            set_func(c_core_set_error_debug_handle, OSSL_FUNC_core_set_error_debug_handle(in));
+            break;
+        case OSSL_FUNC_CORE_VSET_ERROR_HANDLE:
+            set_func(c_core_vset_error_handle, OSSL_FUNC_core_vset_error_handle(in));
+            break;
+        case OSSL_FUNC_CORE_SET_ERROR_MARK_HANDLE:
+            set_func(c_core_set_error_mark_handle, OSSL_FUNC_core_set_error_mark_handle(in));
+            break;
+        case OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK_HANDLE:
+            set_func(c_core_clear_last_error_mark_handle, OSSL_FUNC_core_clear_last_error_mark_handle(in));
+            break;
+        case OSSL_FUNC_CORE_POP_ERROR_TO_MARK_HANDLE:
+            set_func(c_core_pop_error_to_mark_handle, OSSL_FUNC_core_pop_error_to_mark_handle(in));
+            break;
+        case OSSL_FUNC_CORE_COUNT_TO_MARK_HANDLE:
+            set_func(c_core_count_to_mark_handle, OSSL_FUNC_core_count_to_mark_handle(in));
+            break;
         case OSSL_FUNC_CORE_GET_LIBCTX:
             set_func(c_get_libctx, OSSL_FUNC_core_get_libctx(in));
             break;
@@ -1118,32 +1146,32 @@ int ERR_count_to_mark(void)
 
 int ERR_HANDLE_set_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return ERR_set_mark();
+    return c_core_set_error_mark_handle(NULL, hdl);
 }
 
 int ERR_HANDLE_pop_to_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return ERR_pop_to_mark();
+    return c_core_pop_error_to_mark_handle(NULL, hdl);
 }
 
 int ERR_HANDLE_clear_last_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return ERR_clear_last_mark();
+    return c_core_clear_last_error_mark_handle(NULL, hdl);
 }
 
 int ERR_HANDLE_count_to_mark(ossl_unused ERR_HANDLE **hdl)
 {
-    return ERR_count_to_mark();
+    return c_core_count_to_mark_handle(NULL, hdl);
 }
 
 void ERR_HANDLE_new(ERR_HANDLE **hdl)
 {
-    ERR_new();
+    c_core_new_error_handle(NULL, hdl);
 }
 
 void ERR_HANDLE_set_debug(ERR_HANDLE **hdl, const char *file, int line, const char *func)
 {
-    ERR_set_debug(file, line, func);
+    c_core_set_error_debug_handle(NULL, hdl, file, line, func);
 }
 
 void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, ...)
@@ -1151,13 +1179,13 @@ void ERR_HANDLE_set_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt
     va_list args;
 
     va_start(args, fmt);
-    ERR_vset_error(lib, reason, fmt, args);
+    ERR_HANDLE_vset_error(hdl, lib, reason, fmt, args);
     va_end(args);
 }
 
 void ERR_HANDLE_vset_error(ERR_HANDLE **hdl, int lib, int reason, const char *fmt, va_list args)
 {
-    ERR_vset_error(lib, reason, fmt, args);
+    c_core_vset_error_handle(NULL, hdl, ERR_PACK(lib, 0, reason), fmt, args);
 }
 
 /*
