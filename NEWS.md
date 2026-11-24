@@ -33,6 +33,9 @@ in this release is Low.
 
 This release incorporates the following bug fixes and mitigations:
 
+  * Fixed unbounded out-of-order fragment reassembly in QUIC streams.
+    ([CVE-2026-84785])
+
   * Fixed possible NULL dereference in non-SMTP DANE clients.
     ([CVE-2026-84786])
 
@@ -2689,6 +2692,7 @@ OpenSSL 0.9.x
 [CVE-2026-84786]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84786
 [CVE-2026-107494]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107494
 [CVE-2026-121482]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-121482
+[CVE-2026-84785]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84785
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md

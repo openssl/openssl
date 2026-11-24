@@ -33,6 +33,26 @@ OpenSSL 4.1
 
 ### Changes between 4.1.0 and 4.1.1 [xx XXX xxxx]
 
+ * Fixed unbounded out-of-order fragment reassembly in QUIC streams.
+
+   Severity: Low
+
+   Issue summary: A QUIC peer that sends many small out-of-order STREAM
+   fragments while withholding the first byte of the stream may cause OpenSSL
+   to buffer a large number of reassembly nodes occupying much larger memory
+   than the actual data sent.
+
+   Impact summary: A remote peer can pin large amounts of memory on a server
+   that accepts incoming QUIC streams, potentially exhausting memory and
+   causing Denial of Service.
+
+   Reported by: Duc Anh Luu (University of Melbourne) and Arpe.
+
+   ([CVE-2026-84785])
+   <!-- https://github.com/openssl/openssl/pull/33346 -->
+
+   *Duc Anh Luu*
+
  * Fixed possible NULL dereference in non-SMTP DANE clients.
 
    Severity: Low
@@ -24580,6 +24600,7 @@ ndif
 [CVE-2026-84786]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84786
 [CVE-2026-107494]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107494
 [CVE-2026-121482]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-121482
+[CVE-2026-84785]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84785
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
