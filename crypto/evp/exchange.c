@@ -241,6 +241,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     }
 
     evp_pkey_ctx_free_old_ops(ctx);
+    EVP_PKEY_free(ctx->peerkey);
+    ctx->peerkey = NULL;
     ctx->operation = EVP_PKEY_OP_DERIVE;
 
     ERR_set_mark();
