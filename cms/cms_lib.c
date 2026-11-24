@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
@@ -15,9 +17,6 @@
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include "internal/sizes.h"
-#include "internal/cryptlib.h"
-#include "crypto/x509.h"
 #include "cms_local.h"
 #include "internal/cms.h"
 
@@ -124,7 +123,8 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
     if (*pos == NULL || cms->contentIncomplete)
         return BIO_new(BIO_s_mem());
     /* Else content was read in: return read only BIO for it */
-    return BIO_new_mem_buf((*pos)->data, (*pos)->length);
+    return BIO_new_mem_buf(ASN1_STRING_get0_data(*pos),
+        (int)ASN1_STRING_get_length(*pos));
 }
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
@@ -392,7 +392,7 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     BIO *mdbio = NULL;
     const ASN1_OBJECT *digestoid;
     EVP_MD *digest = NULL;
-    char alg[OSSL_MAX_NAME_SIZE];
+    char alg[CMS_MAX_NAME_SIZE];
     size_t xof_len = 0;
 
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
@@ -697,7 +697,7 @@ int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls)
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
             if (!X509_CRL_up_ref(rch->d.crl)
-                || !ossl_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
+                || !cms_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
                 /* push cannot fail on reserved stack */
                 sk_X509_CRL_pop_free(*crls, X509_CRL_free);
                 *crls = NULL;

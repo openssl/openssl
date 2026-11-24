@@ -766,6 +766,12 @@ were added in OpenSSL 3.5.
 
 d2i_IPAddrBlocks() and i2d_IPAddrBlocks() were added in OpenSSL 4.1.
 
+d2i_CMS_ContentInfo(), d2i_CMS_ReceiptRequest(), d2i_CMS_bio(),
+i2d_CMS_ContentInfo(), i2d_CMS_ReceiptRequest() and i2d_CMS_bio() moved to the
+new libcms library in OpenSSL 4.2. Deprecated variants remain in libcrypto,
+declared in F<< <openssl/cms.h> >>, until a future major release.  See
+L<libcms(7)>.
+
 =head1 COPYRIGHT
 
 Copyright 1998-2026 The OpenSSL Project Authors. All Rights Reserved.

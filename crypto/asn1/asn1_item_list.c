@@ -66,7 +66,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(BIGNUM),
     ASN1_ITEM_ref(CBIGNUM),
     ASN1_ITEM_ref(CERTIFICATEPOLICIES),
-#ifndef OPENSSL_NO_CMS
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     ASN1_ITEM_ref(CMS_ContentInfo),
     ASN1_ITEM_ref(CMS_EnvelopedData),
     ASN1_ITEM_ref(CMS_ReceiptRequest),
