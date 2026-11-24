@@ -61,7 +61,8 @@ jobs:
         gcc: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, gcc-14]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
+    - &checkout
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
@@ -103,10 +104,7 @@ jobs:
       IMAGE: ghcr.io/openssl/openssl-vs2013:latest
       VCVARS: C:\vc12\vcvars_${{ matrix.arch }}.cmd
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: pull the VS2013 toolchain image
@@ -152,10 +150,7 @@ jobs:
         clang: [clang-11, clang-12, clang-13, clang-14, clang-15, clang-16, clang-17, clang-18, clang-19, clang-20, clang-21]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: install packages
       run: |
         set -euo pipefail

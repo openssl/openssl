@@ -70,7 +70,8 @@ jobs:
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - &checkout
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           ref: ${{ github.event.inputs.head_sha || github.sha }}
@@ -120,10 +121,7 @@ jobs:
     env:
       VCVARS: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
     steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.inputs.head_sha || github.sha }}
+      - *checkout
 
       - name: install nasm
         uses: ./.github/actions/install-nasm

@@ -175,7 +175,8 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - &checkout
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
@@ -199,10 +200,7 @@ jobs:
     if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Install Dependencies for sctp option
@@ -247,7 +245,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
-    - name: checkout openssl
+    - &checkout_openssl
+      name: checkout openssl
       uses: actions/checkout@v6
       with:
         persist-credentials: false
@@ -274,11 +273,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
-    - name: checkout openssl
-      uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout_openssl
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -302,11 +297,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
-    - name: checkout openssl
-      uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout_openssl
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -325,11 +316,7 @@ jobs:
     if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
-    - name: checkout openssl
-      uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout_openssl
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
@@ -356,11 +343,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
-    - name: checkout openssl
-      uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout_openssl
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
@@ -387,11 +370,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
-    - name: checkout openssl
-      uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout_openssl
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
@@ -417,10 +396,7 @@ jobs:
         os: [ubuntu-latest, macos-15, macos-15-intel]
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -437,10 +413,7 @@ jobs:
     if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -459,10 +432,7 @@ jobs:
     if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
@@ -488,10 +458,7 @@ jobs:
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       run: ./config --debug --strict-warnings -DBN_DEBUG --banner=Configured -DOPENSSL_NO_SECURE_MEMORY && perl configdata.pm --dump
     - name: make
@@ -515,10 +482,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer

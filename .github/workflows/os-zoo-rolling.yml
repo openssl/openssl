@@ -68,7 +68,8 @@ jobs:
     steps:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers python3 ${{ matrix.cc }}
-    - uses: actions/checkout@v6
+    - &checkout
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
@@ -102,10 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: install packages
       run: ${{ matrix.zoo.install }}
     - name: config

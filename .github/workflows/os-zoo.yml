@@ -73,7 +73,8 @@ jobs:
     steps:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
-    - uses: actions/checkout@v6
+    - &checkout
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
@@ -138,10 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: prepare package sources
       if: matrix.zoo.setup != ''
       run: ${{ matrix.zoo.setup }}
@@ -181,10 +179,7 @@ jobs:
         os: [macos-15, macos-15-intel, macos-26, macos-26-intel]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -213,10 +208,7 @@ jobs:
             vcvars: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
@@ -254,10 +246,7 @@ jobs:
     env:
       VCVARS: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsarm64.bat
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     # no nasm: VC-WIN64-ARM has no asm_arch, so Configure disables asm
@@ -299,10 +288,7 @@ jobs:
     if: *upstream_or_dispatch
     runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
@@ -354,10 +340,7 @@ jobs:
       # On by default in gcc 14's runtime and very slow on aarch64; gcc 11 had it off.
       ASAN_OPTIONS: detect_stack_use_after_return=0
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       run: ./config --strict-warnings ${{ matrix.config }}
     - name: config dump
@@ -389,10 +372,7 @@ jobs:
     if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: run container
       run: |
         CONTAINER_ID=$(podman run -d -v $(pwd):/mnt -w /mnt --platform=linux/i386 docker.io/i386/debian:13 sleep infinity)
@@ -440,10 +420,7 @@ jobs:
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
@@ -464,10 +441,7 @@ jobs:
     # this job out of forks (a manual dispatch there would hang forever).
     if: *nightly_only
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-trace
     - name: config dump
@@ -488,10 +462,7 @@ jobs:
     # this job out of forks (a manual dispatch there would hang forever).
     if: *nightly_only
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
@@ -510,10 +481,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: *upstream_or_dispatch
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
@@ -551,10 +519,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: *upstream_or_dispatch
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - *checkout
     - name: config
       uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
       with:
