@@ -260,6 +260,10 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             break;
         }
 
+        /* Renegotiation thresholds apply to each connection separately */
+        bs->byte_count = 0;
+        bs->last_time = (unsigned long)time(NULL);
+
         if (next != NULL)
             ret = BIO_ctrl(next, cmd, num, ptr);
         else if (sc->rbio != NULL)

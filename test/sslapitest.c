@@ -14026,6 +14026,70 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_2
+/*
+ * Test that BIO_reset() on an SSL BIO restarts the byte count used for
+ * BIO_set_ssl_renegotiate_bytes(): data sent on the previous connection must
+ * not count towards the threshold of the next one.
+ */
+static int test_ssl_bio_reset_renegotiate(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    BIO *clientbio = NULL;
+    static const char data[400] = { 0 };
+    char buf[sizeof(data)];
+    size_t nbytes = 0;
+    int testresult = 0, i;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_2_VERSION, TLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_ptr(clientbio = BIO_new(BIO_f_ssl()))
+        || !TEST_int_eq(BIO_set_ssl(clientbio, clientssl, BIO_NOCLOSE), 1))
+        goto end;
+
+    BIO_set_ssl_renegotiate_bytes(clientbio, 512);
+
+    /* Each connection stays below the threshold on its own */
+    for (i = 0; i < 2; i++) {
+        if (i > 0 && !TEST_int_eq(BIO_reset(clientbio), 1))
+            goto end;
+        SSL_free(serverssl);
+        serverssl = NULL;
+
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_true(BIO_write_ex(clientbio, data, sizeof(data), &nbytes))
+            || !TEST_size_t_eq(nbytes, sizeof(data))
+            || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &nbytes))
+            || !TEST_size_t_eq(nbytes, sizeof(data))
+            || !TEST_long_eq(BIO_get_num_renegotiates(clientbio), 0)
+            || !TEST_false(SSL_renegotiate_pending(clientssl)))
+            goto end;
+    }
+
+    /* The threshold is still set: more data on this connection exceeds it */
+    if (!TEST_true(BIO_write_ex(clientbio, data, sizeof(data), &nbytes))
+        || !TEST_long_eq(BIO_get_num_renegotiates(clientbio), 1)
+        || !TEST_true(SSL_renegotiate_pending(clientssl)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    BIO_free(clientbio);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int cert_cb_cnt;
 
@@ -20609,6 +20673,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_send_fatal_alert_dtls_timer, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_bio_eof, 2);
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_ssl_bio_reset_renegotiate);
+#endif
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
