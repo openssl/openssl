@@ -2588,6 +2588,322 @@ end:
     return res;
 }
 
+/*
+ * Messages seen by one side of a connection, in order. Each entry is a
+ * handshake message type, ECH_LOG_CCS or ECH_LOG_ALERT(description), with
+ * ECH_LOG_RECV added for a received message.
+ */
+typedef struct {
+    int msgs[32];
+    size_t nmsgs;
+    int overflow; /* set if more than OSSL_NELEM(msgs) were seen */
+    size_t cert_list_len; /* certificate_list length of a Certificate */
+} ech_flight_log_t;
+
+#define ECH_LOG_CCS 0x200
+#define ECH_LOG_ALERT(desc) (0x100 + (desc))
+#define ECH_LOG_RECV 0x1000
+
+static void ech_flight_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    ech_flight_log_t *log = arg;
+    const unsigned char *p = buf;
+    PACKET pkt, ctx, list;
+    int ev;
+
+    if (content_type == SSL3_RT_HANDSHAKE && len >= 1)
+        ev = p[0];
+    else if (content_type == SSL3_RT_CHANGE_CIPHER_SPEC)
+        ev = ECH_LOG_CCS;
+    else if (content_type == SSL3_RT_ALERT && len >= 2)
+        ev = ECH_LOG_ALERT(p[1]);
+    else
+        return;
+    if (log->nmsgs == OSSL_NELEM(log->msgs)) {
+        log->overflow = 1;
+        return;
+    }
+    log->msgs[log->nmsgs++] = write_p ? ev : ev | ECH_LOG_RECV;
+    /* Certificate: header, [TLSv1.3 certificate_request_context], list */
+    if (ev == SSL3_MT_CERTIFICATE
+        && PACKET_buf_init(&pkt, p, len)
+        && PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH)
+        && (SSL_version(ssl) != TLS1_3_VERSION
+            || PACKET_get_length_prefixed_1(&pkt, &ctx))
+        && PACKET_get_length_prefixed_3(&pkt, &list))
+        log->cert_list_len = PACKET_remaining(&list);
+}
+
+/*
+ * Check the messages logged in one direction against |want|. A received
+ * TLSv1.2 ChangeCipherSpec is not passed to the message callback, so
+ * ChangeCipherSpec is skipped when checking received messages.
+ */
+static int ech_flight_log_eq(const char *who, const ech_flight_log_t *log,
+    int received, const int *want, size_t nwant)
+{
+    size_t i, j = 0;
+    int ok = !log->overflow;
+
+    for (i = 0; i < log->nmsgs; i++) {
+        if (((log->msgs[i] & ECH_LOG_RECV) != 0) != received
+            || (received && log->msgs[i] == (ECH_LOG_CCS | ECH_LOG_RECV)))
+            continue;
+        while (received && j < nwant && want[j] == ECH_LOG_CCS)
+            j++;
+        if (j >= nwant || (log->msgs[i] & ~ECH_LOG_RECV) != want[j])
+            ok = 0;
+        j++;
+    }
+    while (received && j < nwant && want[j] == ECH_LOG_CCS)
+        j++;
+    if (TEST_true(ok) && TEST_size_t_eq(j, nwant))
+        return 1;
+    for (i = 0; i < log->nmsgs; i++)
+        TEST_info("%s message %zu: %#x", who, i, (unsigned int)log->msgs[i]);
+    return 0;
+}
+
+/* Index of the first logged |ev|, or OSSL_NELEM(log->msgs) if not seen */
+static size_t ech_flight_log_find(const ech_flight_log_t *log, int ev)
+{
+    size_t i;
+
+    for (i = 0; i < log->nmsgs; i++)
+        if (log->msgs[i] == ev)
+            return i;
+    return OSSL_NELEM(log->msgs);
+}
+
+/*
+ * RFC 9849 sections 6.1.6 and 6.1.7: when the server rejects ECH, the client
+ * completes the handshake for the public name and only then sends
+ * ech_required.  If the server requested a client certificate, the client
+ * answers with an empty Certificate and no CertificateVerify, even though it
+ * has a certificate configured.  The server negotiating TLSv1.2 is a
+ * rejection too (section 6.1.4).  A resumed session does not authenticate the
+ * server for the public name, so the client aborts it with illegal_parameter
+ * instead and makes no retry configs available.
+ *
+ * idx 0: TLSv1.3, no CertificateRequest
+ * idx 1: TLSv1.3, CertificateRequest
+ * idx 2: TLSv1.3, CertificateRequest, middlebox compatibility mode off
+ * idx 3: TLSv1.2, no CertificateRequest
+ * idx 4: TLSv1.2, CertificateRequest
+ * idx 5: TLSv1.2, resumption of a session from a connection without ECH
+ */
+static int ech_reject_client_flight_test(int idx)
+{
+    int res = 0;
+    int tls12 = idx >= 3, certreq = idx == 1 || idx == 2 || idx == 4;
+    int resume = idx == 5;
+    int alert = resume ? SSL_AD_ILLEGAL_PARAMETER : SSL_AD_ECH_REQUIRED;
+    OSSL_ECHSTORE *es = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    unsigned char *retryconfig = NULL;
+    size_t retryconfiglen = 0;
+    unsigned char buf[16];
+    BIO *in = NULL;
+    SSL_SESSION *sess = NULL;
+    ech_flight_log_t clog = { 0 }, slog = { 0 };
+    static const int flight0[] = {
+        SSL3_MT_CLIENT_HELLO, ECH_LOG_CCS, SSL3_MT_FINISHED,
+        ECH_LOG_ALERT(SSL_AD_ECH_REQUIRED)
+    };
+    static const int flight1[] = {
+        SSL3_MT_CLIENT_HELLO, ECH_LOG_CCS, SSL3_MT_CERTIFICATE,
+        SSL3_MT_FINISHED, ECH_LOG_ALERT(SSL_AD_ECH_REQUIRED)
+    };
+    static const int flight2[] = {
+        SSL3_MT_CLIENT_HELLO, SSL3_MT_CERTIFICATE, SSL3_MT_FINISHED,
+        ECH_LOG_ALERT(SSL_AD_ECH_REQUIRED)
+    };
+    static const int flight3[] = {
+        SSL3_MT_CLIENT_HELLO, SSL3_MT_CLIENT_KEY_EXCHANGE, ECH_LOG_CCS,
+        SSL3_MT_FINISHED, ECH_LOG_ALERT(SSL_AD_ECH_REQUIRED)
+    };
+    static const int flight4[] = {
+        SSL3_MT_CLIENT_HELLO, SSL3_MT_CERTIFICATE,
+        SSL3_MT_CLIENT_KEY_EXCHANGE, ECH_LOG_CCS, SSL3_MT_FINISHED,
+        ECH_LOG_ALERT(SSL_AD_ECH_REQUIRED)
+    };
+    static const int flight5[] = {
+        SSL3_MT_CLIENT_HELLO, ECH_LOG_CCS, SSL3_MT_FINISHED,
+        ECH_LOG_ALERT(SSL_AD_ILLEGAL_PARAMETER)
+    };
+    static const struct {
+        const int *msgs;
+        size_t n;
+    } flights[] = {
+        { flight0, OSSL_NELEM(flight0) },
+        { flight1, OSSL_NELEM(flight1) },
+        { flight2, OSSL_NELEM(flight2) },
+        { flight3, OSSL_NELEM(flight3) },
+        { flight4, OSSL_NELEM(flight4) },
+        { flight5, OSSL_NELEM(flight5) },
+    };
+
+    clog.cert_list_len = SIZE_MAX;
+    slog.cert_list_len = SIZE_MAX;
+
+    /* the server has only pem_kp2, the client is given ec_kp1 */
+    if (!TEST_ptr(in = BIO_new(BIO_s_mem()))
+        || !TEST_int_gt(BIO_write(in, pem_kp2, (int)strlen(pem_kp2)), 0)
+        || !TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), tls12 ? TLS1_2_VERSION : TLS1_3_VERSION,
+            TLS1_3_VERSION, &sctx, &cctx, cert, privkey))
+        || (tls12
+            && !TEST_true(SSL_CTX_set_max_proto_version(sctx,
+                TLS1_2_VERSION)))
+        || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
+        || !TEST_true(SSL_CTX_use_certificate_file(cctx, cert,
+            SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(cctx, privkey,
+            SSL_FILETYPE_PEM)))
+        goto end;
+    if (certreq)
+        SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, ech_admit_cb);
+    if (idx == 2) {
+        SSL_CTX_clear_options(sctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+        SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    }
+    if (resume) {
+        /* get a TLSv1.2 session for the public name, without ECH */
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                NULL, NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(clientssl, "example.com"))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_ptr(sess = SSL_get1_session(clientssl)))
+            goto end;
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+    }
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || (sess != NULL && !TEST_true(SSL_set_session(clientssl, sess)))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl,
+            "back.server.example"))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl,
+            (unsigned char *)ec_kp1, ec_kp1len)))
+        goto end;
+    SSL_set_msg_callback(clientssl, ech_flight_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &clog);
+    SSL_set_msg_callback(serverssl, ech_flight_msg_cb);
+    SSL_set_msg_callback_arg(serverssl, &slog);
+
+    /* the client fails */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(SSL_version(clientssl),
+            tls12 ? TLS1_2_VERSION : TLS1_3_VERSION)
+        || !TEST_int_eq(SSL_session_reused(clientssl), resume)
+        || !TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+            &retryconfiglen)))
+        goto end;
+    /* retry_configs are sent in TLSv1.3 EncryptedExtensions only */
+    if (tls12 ? !TEST_size_t_eq(retryconfiglen, 0)
+              : !TEST_size_t_gt(retryconfiglen, 0))
+        goto end;
+
+    /*
+     * The server completes the handshake and then reads the alert, which is
+     * sent with the final traffic keys.
+     */
+    if (!TEST_int_eq(SSL_accept(serverssl), 1)
+        || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
+        || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
+        goto end;
+
+    /* what the client sent is what the server received */
+    if (!ech_flight_log_eq("client", &clog, 0, flights[idx].msgs,
+            flights[idx].n)
+        || !ech_flight_log_eq("server", &slog, 1, flights[idx].msgs,
+            flights[idx].n))
+        goto end;
+    /* the client verified the server's Finished before sending the alert */
+    if (!TEST_size_t_lt(ech_flight_log_find(&clog,
+                            SSL3_MT_FINISHED | ECH_LOG_RECV),
+            ech_flight_log_find(&clog, ECH_LOG_ALERT(alert))))
+        goto end;
+    if (certreq
+        && (!TEST_size_t_eq(clog.cert_list_len, 0)
+            || !TEST_size_t_eq(slog.cert_list_len, 0)))
+        goto end;
+    res = 1;
+end:
+    BIO_free(in);
+    OPENSSL_free(retryconfig);
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_ECHSTORE_free(es);
+    return res;
+}
+
+/*
+ * An ECH configuration set on a client after a handshake without ECH has no
+ * effect on that connection: a later session ticket, application data and
+ * post-handshake authentication with the client's certificate all work.
+ */
+static int ech_late_config_test(void)
+{
+    int res = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    unsigned char buf[16];
+    size_t n;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_use_certificate_file(cctx, cert,
+            SSL_FILETYPE_PEM))
+        || !TEST_true(SSL_CTX_use_PrivateKey_file(cctx, privkey,
+            SSL_FILETYPE_PEM)))
+        goto end;
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER | SSL_VERIFY_POST_HANDSHAKE,
+        ech_admit_cb);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+    SSL_set_post_handshake_auth(clientssl, 1);
+    if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example"))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl,
+            (unsigned char *)ec_kp1, ec_kp1len))
+        || !TEST_true(SSL_new_session_ticket(serverssl))
+        || !TEST_int_eq(SSL_do_handshake(serverssl), 1)
+        || !TEST_true(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_int_eq(SSL_do_handshake(serverssl), 1)
+        || !TEST_true(SSL_write_ex(serverssl, "hello", 5, &n))
+        || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &n))
+        || !TEST_mem_eq(buf, n, "hello", 5)
+        || !TEST_true(SSL_write_ex(clientssl, "world", 5, &n))
+        || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &n))
+        || !TEST_mem_eq(buf, n, "world", 5)
+        || !TEST_ptr(SSL_get0_peer_certificate(serverssl)))
+        goto end;
+    res = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return res;
+}
+
 static unsigned char sni_cb_random[SSL3_RANDOM_SIZE];
 static int sni_cb_random_cnt = 0;
 
@@ -2743,6 +3059,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     ADD_ALL_TESTS(test_ech_keylog_random, 4);
     ADD_TEST(ech_unauth_client_status_test);
+    ADD_ALL_TESTS(ech_reject_client_flight_test, 6);
+    ADD_TEST(ech_late_config_test);
     ADD_ALL_TESTS(test_ech_cb_server_random, 3);
     return 1;
 err:
