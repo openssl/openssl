@@ -51,7 +51,7 @@ jobs:
 
   alpine:
     needs: [validate-dispatch-inputs]
-    if: |
+    if: &upstream_or_dispatch |
       (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
@@ -94,10 +94,7 @@ jobs:
 
   linux:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     strategy:
       fail-fast: false
       matrix:
@@ -177,10 +174,7 @@ jobs:
 
   macos:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     strategy:
       fail-fast: false
       matrix:
@@ -208,10 +202,7 @@ jobs:
 
   windows:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     strategy:
       fail-fast: false
       matrix:
@@ -279,10 +270,7 @@ jobs:
 
   windows-arm64:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: windows-11-arm
     env:
       VCVARS: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsarm64.bat
@@ -335,10 +323,7 @@ jobs:
   # repository clause is new -- a cron in a fork expresses nobody's intent.
   linux-arm64:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v6
@@ -428,10 +413,7 @@ jobs:
 
   linux-x86:
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -478,7 +460,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     # Self-hosted runner; its label only exists in openssl/openssl, so keep
     # this job out of forks (a manual dispatch there would hang forever).
-    if: |
+    if: &nightly_only |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
         (github.event_name == 'workflow_dispatch' && inputs.pr == '') ) &&
@@ -507,12 +489,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     # Self-hosted runner; its label only exists in openssl/openssl, so keep
     # this job out of forks (a manual dispatch there would hang forever).
-    if: |
-      github.repository == 'openssl/openssl' &&
-      ( github.event_name == 'schedule' ||
-        (github.event_name == 'workflow_dispatch' && inputs.pr == '') ) &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *nightly_only
     steps:
     - uses: actions/checkout@v6
       with:
@@ -536,12 +513,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     # Self-hosted runner; its label only exists in openssl/openssl, so keep
     # this job out of forks (a manual dispatch there would hang forever).
-    if: |
-      github.repository == 'openssl/openssl' &&
-      ( github.event_name == 'schedule' ||
-        (github.event_name == 'workflow_dispatch' && inputs.pr == '') ) &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *nightly_only
     steps:
     - uses: actions/checkout@v6
       with:
@@ -611,10 +583,7 @@ jobs:
   freebsd-x86_64:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     steps:
     - uses: actions/checkout@v6
       with:
@@ -655,10 +624,7 @@ jobs:
   openbsd-x86_64:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    if: *upstream_or_dispatch
     steps:
     - uses: actions/checkout@v6
       with:
