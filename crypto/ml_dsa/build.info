@@ -43,6 +43,7 @@ ENDIF
 
 # Assembly implementations
 GENERATE[ml_dsa_ntt-x86_64.s]=asm/ml_dsa_ntt-x86_64.pl
+DEPEND[ml_dsa_ntt-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[ml_dsa_ntt-armv8.S]=asm/ml_dsa_ntt-armv8.pl
 
 DEFINE[../../libcrypto]=$ML_DSA_DEF
