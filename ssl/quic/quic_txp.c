@@ -69,8 +69,8 @@ struct ossl_quic_tx_packetiser_st {
 
     size_t unvalidated_credit; /* Limit of data we can send until validated */
 
-    /* Initial CRYPTO offset after the data sent in pending PTO probes. */
-    uint64_t probe_crypto_next;
+    /* Per PN space, the CRYPTO offset from which the next PTO probe resends */
+    uint64_t probe_crypto_next[QUIC_PN_SPACE_NUM];
 
     /* Internal state - frame (re)generation flags. */
     unsigned int want_handshake_done : 1;
@@ -2155,23 +2155,28 @@ static int determine_stream_len(struct tx_helper *h,
 
 /*
  * Resend unacknowledged Initial CRYPTO data, such as the ClientHello, in a PTO
- * probe rather than a bare PING (RFC 9002 s. 6.2.4). Data still queued goes out
- * first. Otherwise each probe takes what fits after the data of the probe
- * before it, and the rest stays in flight. On allocation failure the probe
- * carries what was queued, or a PING.
+ * probe rather than a bare PING (RFC 9002 s. 6.2.4), until the Handshake keys
+ * are available. Data still queued goes out first. Otherwise each probe takes
+ * what fits after the data of the probe before it, and the rest stays in
+ * flight. On allocation failure the probe carries what was queued, or a PING.
  */
 static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
-    struct txp_pkt *pkt)
+    struct txp_pkt *pkt, uint32_t pn_space)
 {
-    QUIC_SSTREAM *crypto = txp->args.crypto[QUIC_PN_SPACE_INITIAL];
+    QUIC_SSTREAM *crypto = txp->args.crypto[pn_space];
     OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(txp->args.ackm);
     OSSL_QUIC_FRAME_CRYPTO chdr = { 0 };
-    uint64_t from = txp->probe_crypto_next, start, end, hdr_bytes;
+    uint64_t from = txp->probe_crypto_next[pn_space], start, end, hdr_bytes;
     size_t space_left;
 
-    if (pkt->h.enc_level != QUIC_ENC_LEVEL_INITIAL
-        || probe->pto[QUIC_PN_SPACE_INITIAL] == 0
-        || sstream_is_pending(crypto))
+    if (pn_space != QUIC_PN_SPACE_INITIAL || probe->pto[pn_space] == 0)
+        return;
+
+    if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
+            QUIC_ENC_LEVEL_HANDSHAKE))
+        return;
+
+    if (sstream_is_pending(crypto))
         return;
 
     /*
@@ -2199,35 +2204,41 @@ static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
 }
 
 /*
- * After an Initial PTO probe is sent, start the next one after the CRYPTO data
- * it carried from where the probes left off. Queued data sent from a later
- * offset leaves the unacknowledged data before it to the next probe. With
- * nothing more to resend, a single probe is enough.
+ * After a PTO probe is sent, move the start of the next probe past the CRYPTO
+ * data this one carried, unless unacknowledged data between the start and that
+ * data is still to be resent. With nothing more to resend, or once the
+ * Handshake keys are available, a single probe is enough. When no probe is
+ * left, the next PTO starts from the beginning again.
  */
 static void txp_crypto_probe_sent(OSSL_QUIC_TX_PACKETISER *txp,
-    QUIC_TXPIM_PKT *tpkt, OSSL_ACKM_PROBE_INFO *probe)
+    QUIC_TXPIM_PKT *tpkt, OSSL_ACKM_PROBE_INFO *probe, uint32_t pn_space)
 {
-    QUIC_SSTREAM *crypto = txp->args.crypto[QUIC_PN_SPACE_INITIAL];
+    QUIC_SSTREAM *crypto = txp->args.crypto[pn_space];
     const QUIC_TXPIM_CHUNK *chunks = ossl_quic_txpim_pkt_get_chunks(tpkt);
     size_t i, num_chunks = ossl_quic_txpim_pkt_get_num_chunks(tpkt);
     uint64_t start, end;
 
     for (i = 0; i < num_chunks; ++i) {
         if (chunks[i].stream_id != UINT64_MAX
-            || chunks[i].end < txp->probe_crypto_next)
+            || chunks[i].end < txp->probe_crypto_next[pn_space])
             continue;
 
         if (!ossl_quic_sstream_get_first_unacked(crypto,
-                txp->probe_crypto_next, &start, &end)
+                txp->probe_crypto_next[pn_space], &start, &end)
             || start < chunks[i].start)
             break;
 
-        txp->probe_crypto_next = chunks[i].end + 1;
+        txp->probe_crypto_next[pn_space] = chunks[i].end + 1;
     }
 
-    if (!ossl_quic_sstream_get_first_unacked(crypto, txp->probe_crypto_next,
-            &start, &end))
-        probe->pto[QUIC_PN_SPACE_INITIAL] = 0;
+    if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
+            QUIC_ENC_LEVEL_HANDSHAKE)
+        || !ossl_quic_sstream_get_first_unacked(crypto,
+            txp->probe_crypto_next[pn_space], &start, &end))
+        probe->pto[pn_space] = 0;
+
+    if (probe->pto[pn_space] == 0)
+        txp->probe_crypto_next[pn_space] = 0;
 }
 
 static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
@@ -2979,7 +2990,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp,
 
     /* CRYPTO Frames */
     if (a.allow_crypto) {
-        txp_requeue_crypto_for_probe(txp, pkt);
+        txp_requeue_crypto_for_probe(txp, pkt, pn_space);
         if (!txp_generate_crypto_frames(txp, pkt, &have_ack_eliciting))
             goto fatal_err;
     }
@@ -3269,11 +3280,8 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
             && probe_info->pto[pn_space] > 0) {
             --probe_info->pto[pn_space];
             if (pn_space == QUIC_PN_SPACE_INITIAL)
-                txp_crypto_probe_sent(txp, tpkt, probe_info);
+                txp_crypto_probe_sent(txp, tpkt, probe_info, pn_space);
         }
-
-        if (probe_info->pto[QUIC_PN_SPACE_INITIAL] == 0)
-            txp->probe_crypto_next = 0;
     }
 
     ossl_quic_fifd_pkt_discard_unreliable(&txp->fifd, tpkt);
