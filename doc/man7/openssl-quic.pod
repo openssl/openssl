@@ -235,11 +235,12 @@ L<SSL_set_alpn_protos(3)>.
 =item
 
 Whether QUIC operates in a client or server mode is determined by the
-B<SSL_METHOD> used, rather than by calls to L<SSL_set_connect_state(3)> or
-L<SSL_set_accept_state(3)>. It is not necessary to call either of
-L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)> before connecting, but
-if either of these are called, the function called must be congruent with the
-B<SSL_METHOD> being used.
+B<SSL_METHOD> used. The generic L<OSSL_QUIC_method(3)> can be used for either
+role by calling L<SSL_set_connect_state(3)> or L<SSL_set_accept_state(3)> before
+starting the handshake. If either function is called with a dedicated client or
+server method, it must be congruent with that method.
+L<SSL_is_server(3)> reports the configured role of a QUIC connection and the
+role of the connection associated with a QUIC stream.
 
 =item
 

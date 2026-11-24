@@ -443,6 +443,18 @@ static int expect_quic_listener(const SSL *s, QCTX *ctx)
     return expect_quic_as(s, ctx, QCTX_L);
 }
 
+int ossl_quic_is_server(const SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic_as(s, &ctx,
+            QCTX_C | QCTX_S | QCTX_L | QCTX_NO_ERROR))
+        return 0;
+
+    /* Callbacks may use this while the QUIC connection is already locked. */
+    return ctx.qc != NULL ? ctx.qc->as_server_state : ctx.ql != NULL;
+}
+
 static int expect_quic_domain(const SSL *s, QCTX *ctx)
 {
     return expect_quic_as(s, ctx, QCTX_D);

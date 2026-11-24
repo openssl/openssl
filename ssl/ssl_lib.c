@@ -6952,8 +6952,14 @@ int SSL_session_reused(const SSL *s)
 
 int SSL_is_server(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc;
 
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return ossl_quic_is_server(s);
+#endif
+
+    sc = SSL_CONNECTION_FROM_CONST_SSL(s);
     if (sc == NULL)
         return 0;
 

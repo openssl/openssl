@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `SSL_is_server()` to report the configured role for QUIC connections
+   and streams. (#33628)
+
+   *Alaric Dailey*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
