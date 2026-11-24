@@ -2467,6 +2467,48 @@ static const struct script_op pto_script_19[] = {
     { OPK_END }
 };
 
+/* A PTO also probes the other packet number space with data in flight */
+static int check_initial_pkt(struct helper *h)
+{
+    return TEST_int_eq(h->qrx_pkt->hdr->type, QUIC_PKT_TYPE_INITIAL);
+}
+
+static int check_handshake_pkt(struct helper *h);
+
+static const struct script_op pto_script_20[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_HANDSHAKE, 0, pto_crypto_3,
+        sizeof(pto_crypto_3) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, check_initial_pkt },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_3 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, check_handshake_pkt },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_3 },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_nothing_sent },
+    { OPK_CHECK, 0, 0, NULL, 0, pto_flush_qtx },
+    { OPK_RX_PKT_NONE },
+    { OPK_END }
+};
+
 static const struct script_op *const pto_scripts[] = {
     pto_script_1,
     pto_script_2,
@@ -2493,6 +2535,7 @@ static const struct script_op *const pto_scripts[] = {
     pto_script_18,
 #endif
     pto_script_19,
+    pto_script_20,
 };
 
 static int test_pto_script(int idx)

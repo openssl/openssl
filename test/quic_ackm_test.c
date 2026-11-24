@@ -1232,6 +1232,106 @@ err:
     return testresult;
 }
 
+static int rx_pkt(OSSL_ACKM *ackm, int space, QUIC_PN pn, int ack_eliciting)
+{
+    OSSL_ACKM_RX_PKT pkt = { 0 };
+
+    pkt.pkt_num = pn;
+    pkt.pkt_space = space;
+    pkt.is_ack_eliciting = ack_eliciting;
+    pkt.time = fake_time;
+    return TEST_int_eq(ossl_ackm_on_rx_packet(ackm, &pkt), 1);
+}
+
+/*
+ * A server probes Initial or Handshake at once when an ack-eliciting packet
+ * arrives in that space while its own data there is unacknowledged, at most
+ * twice per space.
+ */
+static int test_server_early_probe(int idx)
+{
+    int space = idx / 2 == 0 ? QUIC_PN_SPACE_INITIAL : QUIC_PN_SPACE_HANDSHAKE;
+    int acked = idx % 2;
+    int testresult = 0, have_statm = 0;
+    OSSL_STATM statm;
+    OSSL_CC_DATA *ccdata = NULL;
+    OSSL_ACKM *ackm = NULL;
+    OSSL_ACKM_TX_PKT tx = { 0 };
+    struct pkt_info info = { 0 };
+    OSSL_ACKM_PROBE_INFO *probe;
+    OSSL_QUIC_ACK_RANGE range = { 0, 0 };
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+
+    fake_time = TIME_BASE;
+
+    if (!TEST_int_eq(ossl_statm_init(&statm), 1))
+        goto err;
+
+    have_statm = 1;
+
+    if (!TEST_ptr(ccdata = ossl_cc_dummy_method.new(fake_now, NULL))
+        || !TEST_ptr(ackm = ossl_ackm_new(fake_now, NULL, &statm,
+                         &ossl_cc_dummy_method, ccdata,
+                         /* is_server */ 1)))
+        goto err;
+
+    tx.pkt_num = 0;
+    tx.pkt_space = space;
+    tx.is_inflight = 1;
+    tx.is_ack_eliciting = 1;
+    tx.num_bytes = 1200;
+    tx.largest_acked = QUIC_PN_INVALID;
+    tx.on_lost = on_lost;
+    tx.on_acked = on_acked;
+    tx.on_discarded = on_discarded;
+    tx.cb_arg = &info;
+    tx.time = fake_time;
+    if (!TEST_int_eq(ossl_ackm_on_tx_packet(ackm, &tx), 1))
+        goto err;
+
+    probe = ossl_ackm_get0_probe_request(ackm);
+
+    if (acked) {
+        /* With the data acknowledged, the client is not waiting */
+        ack.ack_ranges = &range;
+        ack.num_ack_ranges = 1;
+        if (!TEST_true(ossl_ackm_on_rx_ack_frame(ackm, &ack, space, fake_time))
+            || !rx_pkt(ackm, space, 0, 1)
+            || !TEST_uint_eq(probe->pto[space], 0))
+            goto err;
+    } else {
+        /*
+         * An ACK-only packet does not probe, and ack-eliciting ones probe at
+         * most twice, not counting those received while a probe is pending.
+         */
+        if (!rx_pkt(ackm, space, 0, 0)
+            || !TEST_uint_eq(probe->pto[space], 0)
+            || !rx_pkt(ackm, space, 1, 1)
+            || !TEST_uint_gt(probe->pto[space], 0)
+            || !rx_pkt(ackm, space, 2, 1))
+            goto err;
+
+        probe->pto[space] = 0;
+        if (!rx_pkt(ackm, space, 3, 1)
+            || !TEST_uint_gt(probe->pto[space], 0))
+            goto err;
+
+        probe->pto[space] = 0;
+        if (!rx_pkt(ackm, space, 4, 1)
+            || !TEST_uint_eq(probe->pto[space], 0))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    ossl_ackm_free(ackm);
+    if (ccdata != NULL)
+        ossl_cc_dummy_method.free(ccdata);
+    if (have_statm)
+        ossl_statm_destroy(&statm);
+    return testresult;
+}
+
 /*
  * Driver
  * ******************************************************************
@@ -1266,5 +1366,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_tx_ack_time_script, OSSL_NELEM(tx_ack_time_scripts));
     ADD_ALL_TESTS(test_rx_ack, OSSL_NELEM(rx_test_scripts) * QUIC_PN_SPACE_NUM);
     ADD_TEST(test_tx_pseudo_loss);
+    ADD_ALL_TESTS(test_server_early_probe, 4);
     return 1;
 }

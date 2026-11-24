@@ -558,6 +558,9 @@ struct ossl_ackm_st {
     /* Probe request counts for reporting to the user. */
     OSSL_ACKM_PROBE_INFO pending_probe;
 
+    /* Probes requested on receipt rather than at the PTO, per PN space */
+    unsigned char early_probes[QUIC_PN_SPACE_NUM];
+
     /* Generated ACK frames for each PN space. */
     OSSL_QUIC_FRAME_ACK ack[QUIC_PN_SPACE_NUM];
     OSSL_QUIC_ACK_RANGE ack_ranges[QUIC_PN_SPACE_NUM][MAX_RX_ACK_RANGES];
@@ -1373,7 +1376,7 @@ static void ackm_queue_probe(OSSL_ACKM *ackm, int pkt_space)
 
 int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
 {
-    int pkt_space;
+    int pkt_space, i;
     OSSL_TIME earliest_loss_time;
     OSSL_ACKM_TX_PKT *lost_pkts;
 
@@ -1402,10 +1405,14 @@ int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
         /*
          * PTO. The user of the ACKM should send new data if available, else
          * retransmit old data, or if neither is available, send a single PING
-         * frame.
+         * frame. Also probe the other packet number spaces with ack-eliciting
+         * packets in flight, so that, for example, a lost ServerHello is
+         * resent along with a Handshake probe (RFC 9002 s. 6.2.4).
          */
         ackm_get_pto_time_and_space(ackm, &pkt_space);
-        ackm_queue_probe(ackm, pkt_space);
+        for (i = QUIC_PN_SPACE_INITIAL; i < QUIC_PN_SPACE_NUM; ++i)
+            if (i == pkt_space || ackm->ack_eliciting_bytes_in_flight[i] > 0)
+                ackm_queue_probe(ackm, i);
     }
 
     ++ackm->pto_count;
@@ -1652,6 +1659,23 @@ int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt)
      */
     if (pkt->is_ack_eliciting)
         ackm_on_rx_ack_eliciting(ackm, pkt->time, pkt->pkt_space, was_missing);
+
+    /*
+     * An ack-eliciting Initial or Handshake packet from a client that has not
+     * acknowledged all of our data in that space suggests it is still waiting
+     * for some of it. Request a probe at once rather than at the PTO, at most
+     * twice per space and not while one is already pending. RFC 9002 s. 6.2.3
+     * allows sending unacknowledged CRYPTO data before the PTO a limited number
+     * of times per connection.
+     */
+    if (ackm->is_server && pkt->is_ack_eliciting
+        && pkt->pkt_space != QUIC_PN_SPACE_APP
+        && ackm->ack_eliciting_bytes_in_flight[pkt->pkt_space] > 0
+        && ackm->pending_probe.pto[pkt->pkt_space] == 0
+        && ackm->early_probes[pkt->pkt_space] < 2) {
+        ++ackm->early_probes[pkt->pkt_space];
+        ackm_queue_probe(ackm, pkt->pkt_space);
+    }
 
     /* Update the ECN counters according to which ECN signal we got, if any. */
     switch (pkt->ecn) {
