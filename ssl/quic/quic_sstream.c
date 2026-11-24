@@ -296,8 +296,10 @@ int ossl_quic_sstream_mark_acked(QUIC_SSTREAM *qss,
      * A copy of the range may still be queued for retransmission. Remove it
      * first, so that a failure never leaves a byte both NEW and ACKED.
      */
-    if (!ossl_uint_set_remove(&qss->new_set, &r)
-        || !ossl_uint_set_insert(&qss->acked_set, &r))
+    if (!ossl_uint_set_remove(&qss->new_set, &r))
+        return 0;
+
+    if (!ossl_uint_set_insert(&qss->acked_set, &r))
         return 0;
 
     qss_cull(qss);
