@@ -21,6 +21,7 @@ DEFINE[../../providers/libdefault.a]=$CMLLDEF
 GENERATE[cmll-x86.S]=asm/cmll-x86.pl
 DEPEND[cmll-x86.S]=../perlasm/x86asm.pl
 GENERATE[cmll-x86_64.s]=asm/cmll-x86_64.pl
+DEPEND[cmll-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[cmllt4-sparcv9.S]=asm/cmllt4-sparcv9.pl
 INCLUDE[cmllt4-sparcv9.o]=..
 DEPEND[cmllt4-sparcv9.S]=../perlasm/sparcv9_modes.pl

@@ -39,6 +39,7 @@ DEFINE[../../providers/libdefault.a]=$CHACHADEF
 
 GENERATE[chacha-x86.S]=asm/chacha-x86.pl
 GENERATE[chacha-x86_64.s]=asm/chacha-x86_64.pl
+DEPEND[chacha-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[chacha-ppc.s]=asm/chacha-ppc.pl
 GENERATE[chachap10-ppc.s]=asm/chachap10-ppc.pl
 GENERATE[chacha-armv4.S]=asm/chacha-armv4.pl

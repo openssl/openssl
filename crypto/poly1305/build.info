@@ -40,6 +40,7 @@ GENERATE[poly1305-sparcv9.S]=asm/poly1305-sparcv9.pl
 INCLUDE[poly1305-sparcv9.o]=..
 GENERATE[poly1305-x86.S]=asm/poly1305-x86.pl
 GENERATE[poly1305-x86_64.s]=asm/poly1305-x86_64.pl
+DEPEND[poly1305-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[poly1305-ia64.s]=asm/poly1305-ia64.S
 GENERATE[poly1305-ppc.s]=asm/poly1305-ppc.pl
 GENERATE[poly1305-ppcfp.s]=asm/poly1305-ppcfp.pl

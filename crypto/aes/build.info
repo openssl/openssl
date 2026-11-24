@@ -104,13 +104,21 @@ GENERATE[aesni-x86.S]=asm/aesni-x86.pl
 DEPEND[aesni-586.S]=../perlasm/x86asm.pl
 
 GENERATE[aes-x86_64.s]=asm/aes-x86_64.pl
+DEPEND[aes-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[vpaes-x86_64.s]=asm/vpaes-x86_64.pl
+DEPEND[vpaes-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[bsaes-x86_64.s]=asm/bsaes-x86_64.pl
+DEPEND[bsaes-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[aesni-x86_64.s]=asm/aesni-x86_64.pl
+DEPEND[aesni-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[aes-cfb-avx512.s]=asm/aes-cfb-avx512.pl
+DEPEND[aes-cfb-avx512.s]=../perlasm/x86_64-xlate.pl
 GENERATE[aesni-sha1-x86_64.s]=asm/aesni-sha1-x86_64.pl
+DEPEND[aesni-sha1-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[aesni-sha256-x86_64.s]=asm/aesni-sha256-x86_64.pl
+DEPEND[aesni-sha256-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[aesni-mb-x86_64.s]=asm/aesni-mb-x86_64.pl
+DEPEND[aesni-mb-x86_64.s]=../perlasm/x86_64-xlate.pl ../perlasm/x86_64-support.pl
 
 GENERATE[aes-sparcv9.S]=asm/aes-sparcv9.pl
 INCLUDE[aes-sparcv9.o]=..
@@ -156,6 +164,7 @@ GENERATE[aes-s390x.S]=asm/aes-s390x.pl
 INCLUDE[aes-s390x.o]=..
 
 GENERATE[aesni-xts-avx512.s]=asm/aesni-xts-avx512.pl
+DEPEND[aesni-xts-avx512.s]=../perlasm/x86_64-xlate.pl
 
 GENERATE[aes-c64xplus.S]=asm/aes-c64xplus.pl
 
