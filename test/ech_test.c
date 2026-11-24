@@ -2745,6 +2745,11 @@ static int ech_reject_client_flight_test(int idx)
         { flight5, OSSL_NELEM(flight5) },
     };
 
+#ifdef OPENSSL_NO_TLS1_2
+    if (tls12)
+        return TEST_skip("TLS 1.2 is disabled");
+#endif
+
     clog.cert_list_len = SIZE_MAX;
     slog.cert_list_len = SIZE_MAX;
 
