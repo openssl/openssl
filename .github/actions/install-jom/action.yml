@@ -1,0 +1,32 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: install jom
+description: Install jom on a Windows runner and add it to PATH
+
+runs:
+  using: composite
+  steps:
+  # openssl/openssl uses its own mirror; the checksum is in .github/ci-deps.json
+  - name: install jom
+    if: github.repository == 'openssl/openssl'
+    shell: pwsh
+    run: |
+      mkdir C:\jom
+      Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe -MaximumRetryCount 3 -RetryIntervalSec 30
+      $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+      $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+      if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+      "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+  - name: install jom (forks)
+    if: github.repository != 'openssl/openssl'
+    shell: pwsh
+    run: |
+      mkdir C:\jom
+      Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+      Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+      "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append

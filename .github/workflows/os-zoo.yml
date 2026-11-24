@@ -220,22 +220,9 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
-      run: |
-        $installer = "nasm-3.01-installer-x64.exe"
-        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer -MaximumRetryCount 3 -RetryIntervalSec 30
-        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
-        $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
-        if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
-        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
-        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      uses: ./.github/actions/install-nasm
     - name: install jom
-      run: |
-        mkdir C:\jom
-        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe -MaximumRetryCount 3 -RetryIntervalSec 30
-        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
-        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
-        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
-        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      uses: ./.github/actions/install-jom
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -251,16 +238,8 @@ jobs:
       run: |
         call "${{ matrix.platform.vcvars }}"
         jom /j4 /S
-    - name: download coreinfo
-      run: |
-        mkdir _build\coreinfo
-        Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Coreinfo.zip" -outfile "_build\coreinfo\Coreinfo.zip" -MaximumRetryCount 3 -RetryIntervalSec 30
     - name: get cpu info
-      working-directory: _build
-      run: |
-        7z.exe x coreinfo/Coreinfo.zip
-        ./Coreinfo64.exe -accepteula -f
-        apps/openssl.exe version -c
+      uses: ./.github/actions/windows-cpu-info
     - name: test
       working-directory: _build
       shell: cmd
@@ -284,13 +263,7 @@ jobs:
     # no nasm: VC-WIN64-ARM has no asm_arch, so Configure disables asm
     # here jom is an x86/x64 binary and Windows 11 on ARM runs it under emulation
     - name: install jom
-      run: |
-        mkdir C:\jom
-        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe -MaximumRetryCount 3 -RetryIntervalSec 30
-        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
-        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
-        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
-        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      uses: ./.github/actions/install-jom
     - name: prepare the build directory
       run: mkdir _build
     - name: config

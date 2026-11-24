@@ -1,0 +1,38 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: install nasm
+description: Install NASM on a Windows runner and add it to PATH
+
+inputs:
+  arch:
+    description: NASM installer architecture, x64 or x86
+    default: x64
+
+runs:
+  using: composite
+  steps:
+  # openssl/openssl uses its own mirror; the checksum is in .github/ci-deps.json
+  - name: install nasm
+    if: github.repository == 'openssl/openssl'
+    shell: pwsh
+    run: |
+      $installer = "nasm-3.01-installer-${{ inputs.arch == 'x86' && 'x86' || 'x64' }}.exe"
+      Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer -MaximumRetryCount 3 -RetryIntervalSec 30
+      $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+      $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+      if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+      Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+      "C:\Program Files${{ inputs.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+  - name: install nasm (forks)
+    if: github.repository != 'openssl/openssl'
+    shell: pwsh
+    run: |
+      $installer = "nasm-3.01-installer-${{ inputs.arch == 'x86' && 'x86' || 'x64' }}.exe"
+      Invoke-WebRequest -Uri "https://www.nasm.us/pub/nasm/releasebuilds/3.01/win${{ inputs.arch == 'x86' && '32' || '64' }}/$installer" -OutFile $installer
+      Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+      "C:\Program Files${{ inputs.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
