@@ -486,6 +486,19 @@ static int test_sstream_ack_merge(void)
         || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 0))
         goto err;
 
+    /* An ACK that overlaps one ACKed range and touches the one before it */
+    ossl_quic_sstream_free(sstream);
+    if (!TEST_ptr(sstream = ossl_quic_sstream_new(32))
+        || !TEST_true(ossl_quic_sstream_append(sstream, data_2, 24, &consumed))
+        || !TEST_size_t_eq(consumed, 24)
+        || !TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 0, 23))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 0, 5))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 7, 23))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 6, 8))
+        || !TEST_true(ossl_quic_sstream_is_totally_acked(sstream))
+        || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 0))
+        goto err;
+
     testresult = 1;
 err:
     ossl_quic_sstream_free(sstream);
