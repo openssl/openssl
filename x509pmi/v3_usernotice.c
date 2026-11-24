@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
-
-#include <crypto/asn1.h>
+#include "../crypto/x509/ext_dat.h"
 
 ASN1_ITEM_TEMPLATE(OSSL_USER_NOTICE_SYNTAX) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_USER_NOTICE_SYNTAX, USERNOTICE)
 ASN1_ITEM_TEMPLATE_END(OSSL_USER_NOTICE_SYNTAX)
@@ -28,9 +28,9 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
         NOTICEREF *ref;
         ref = notice->noticeref;
         if (BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
-                ref->organization->length,
-                ref->organization->length
-                    ? ref->organization->data
+                (int)ASN1_STRING_get_length(ref->organization),
+                ASN1_STRING_get_length(ref->organization)
+                    ? ASN1_STRING_get0_data(ref->organization)
                     : (const unsigned char *)"")
             <= 0)
             return 0;
@@ -62,9 +62,9 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
         return 1;
 
     return BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
-               notice->exptext->length,
-               notice->exptext->length
-                   ? notice->exptext->data
+               (int)ASN1_STRING_get_length(notice->exptext),
+               ASN1_STRING_get_length(notice->exptext)
+                   ? ASN1_STRING_get0_data(notice->exptext)
                    : (const unsigned char *)"")
         >= 0;
 }

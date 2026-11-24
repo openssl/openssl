@@ -22,6 +22,26 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 4.1
 
+=head3 The attribute certificate API has moved to libx509pmi
+
+The X.509 attribute certificate (PMI) implementation has moved to a new
+library, libx509pmi, together with the PMI extension and attribute types
+declared in F<< <openssl/x509v3.h> >>, including B<ADMISSIONS>,
+B<ADMISSION_SYNTAX>, B<NAMING_AUTHORITY> and B<PROFESSION_INFO>. The copies
+remaining in libcrypto are deprecated, and stay exported for ABI
+compatibility until a future major release.
+
+Applications should include F<< <libx509pmi/x509_acert.h> >> in place of
+F<< <openssl/x509_acert.h> >>, and F<< <libx509pmi/x509v3.h> >> in place of
+F<< <openssl/x509v3.h> >> where they use the types above, call
+L<OSSL_X509PMI_init(3)> before any other libx509pmi function, and link with
+libx509pmi; a F<libx509pmi.pc> pkg-config file is installed.
+
+Switching headers without also linking libx509pmi will fail to link, as
+libx509pmi exports the API under its own symbol names.
+
+See L<libx509pmi(7)>.
+
 =head3 Deprecation of X509_OBJECT_up_ref_count()
 
 This function has been deprecated in OpenSSL 4.2.  Despite its name, it does

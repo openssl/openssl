@@ -7,7 +7,7 @@ X509_ACERT_add_attr_nconf
 
 =head1 SYNOPSIS
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  int X509_ACERT_add_attr_nconf(CONF *conf, const char *section,
                                X509_ACERT *acert);
@@ -50,6 +50,11 @@ L<ASN1_generate_nconf(3)>.
 =head1 HISTORY
 
 The function X509_ACERT_add_attr_nconf() was added in OpenSSL 3.4.
+
+X509_ACERT_add_attr_nconf() moved to the new libx509pmi library in OpenSSL
+4.2. A deprecated variant remains in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <libx509pmi/x509_acert.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
-#include <openssl/x509_acert.h>
 
 #include "testutil.h"
 
@@ -203,6 +203,9 @@ int setup_tests(void)
         TEST_error("Error parsing test options\n");
         return 0;
     }
+
+    if (!TEST_true(OSSL_X509PMI_init()) || !TEST_true(OSSL_X509PMI_init()))
+        return 0;
 
     cnt = test_get_argument_count();
     if (cnt < 1) {

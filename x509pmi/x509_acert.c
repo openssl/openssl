@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <string.h>
-#include <crypto/ctype.h>
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
@@ -254,8 +255,7 @@ static int check_asn1_attribute(const char **value)
         return 0;
 
     p += 5;
-    while (ossl_isspace(*p))
-        p++;
+    p += strspn(p, " \t\n\v\f\r");
 
     *value = p;
     return 1;
@@ -325,4 +325,51 @@ int X509_ACERT_add1_ext_i2d(X509_ACERT *x, int nid, void *value, int crit,
 const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
 {
     return x->acinfo->extensions;
+}
+
+int X509_ACERT_verify(X509_ACERT *a, EVP_PKEY *r)
+{
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->acinfo->signature) != 0)
+        return 0;
+
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_ACERT_INFO), &a->sig_alg,
+        &a->signature, a->acinfo,
+        NULL, r, NULL, NULL);
+}
+
+int X509_ACERT_sign(X509_ACERT *x, EVP_PKEY *pkey, const EVP_MD *md)
+{
+    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_ACERT_INFO), &x->sig_alg,
+        &x->acinfo->signature,
+        &x->signature, x->acinfo, NULL,
+        pkey, md, NULL, NULL);
+}
+
+int X509_ACERT_sign_ctx(X509_ACERT *x, EVP_MD_CTX *ctx)
+{
+    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_ACERT_INFO),
+        &x->sig_alg, &x->acinfo->signature, &x->signature,
+        x->acinfo, ctx);
+}
+
+#ifndef OPENSSL_NO_STDIO
+X509_ACERT *d2i_X509_ACERT_fp(FILE *fp, X509_ACERT **acert)
+{
+    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_ACERT), fp, acert);
+}
+
+int i2d_X509_ACERT_fp(FILE *fp, const X509_ACERT *acert)
+{
+    return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_ACERT), fp, acert);
+}
+#endif
+
+X509_ACERT *d2i_X509_ACERT_bio(BIO *bp, X509_ACERT **acert)
+{
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_ACERT), bp, acert);
+}
+
+int i2d_X509_ACERT_bio(BIO *bp, const X509_ACERT *acert)
+{
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_ACERT), bp, acert);
 }

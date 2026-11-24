@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
-#include <crypto/x509.h>
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
+#include "pmi_local.h"
 
 ASN1_SEQUENCE(OSSL_HASH) = {
     ASN1_SIMPLE(OSSL_HASH, algorithmIdentifier, X509_ALGOR),
@@ -59,7 +61,7 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
     if (hash->algorithmIdentifier->parameter) {
         if (BIO_printf(out, "%*sParameter: ", indent, "") <= 0)
             return 0;
-        if (ossl_print_attribute_value(out, 0, hash->algorithmIdentifier->parameter,
+        if (ossl_x509pmi_print_attribute_value(out, 0, hash->algorithmIdentifier->parameter,
                 indent + 4)
             <= 0)
             return 0;
@@ -70,7 +72,8 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
         return 0;
     if (hash->hashValue == NULL)
         return 0;
-    return ossl_bio_print_hex(out, hash->hashValue->data, hash->hashValue->length);
+    return ossl_x509pmi_bio_print_hex(out, ASN1_STRING_get0_data(hash->hashValue),
+        (int)ASN1_STRING_get_length(hash->hashValue));
 }
 
 static int i2r_INFO_SYNTAX_POINTER(X509V3_EXT_METHOD *method,
@@ -100,9 +103,9 @@ static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
     case OSSL_INFO_SYNTAX_TYPE_CONTENT:
         if (BIO_printf(out, "%*sContent: ", indent, "") <= 0)
             return 0;
-        if (BIO_printf(out, "%.*s", info->choice.content->length,
-                info->choice.content->length
-                    ? info->choice.content->data
+        if (BIO_printf(out, "%.*s", (int)ASN1_STRING_get_length(info->choice.content),
+                ASN1_STRING_get_length(info->choice.content)
+                    ? ASN1_STRING_get0_data(info->choice.content)
                     : (const unsigned char *)"")
             <= 0)
             return 0;
@@ -149,27 +152,27 @@ static int i2r_OSSL_ATTRIBUTE_DESCRIPTOR(X509V3_EXT_METHOD *method,
     if (BIO_printf(out, "%*sSyntax:\n", indent, "") <= 0)
         return 0;
     if (BIO_printf(out, "%*s%.*s", indent + 4, "",
-            ad->attributeSyntax->length,
-            ad->attributeSyntax->length
-                ? ad->attributeSyntax->data
+            (int)ASN1_STRING_get_length(ad->attributeSyntax),
+            ASN1_STRING_get_length(ad->attributeSyntax)
+                ? ASN1_STRING_get0_data(ad->attributeSyntax)
                 : (const unsigned char *)"")
         <= 0)
         return 0;
     if (BIO_puts(out, "\n\n") <= 0)
         return 0;
     if (ad->name != NULL) {
-        if (BIO_printf(out, "%*sName: %.*s\n", indent, "", ad->name->length,
-                ad->name->length
-                    ? ad->name->data
+        if (BIO_printf(out, "%*sName: %.*s\n", indent, "", (int)ASN1_STRING_get_length(ad->name),
+                ASN1_STRING_get_length(ad->name)
+                    ? ASN1_STRING_get0_data(ad->name)
                     : (const unsigned char *)"")
             <= 0)
             return 0;
     }
     if (ad->description != NULL) {
         if (BIO_printf(out, "%*sDescription: %.*s\n", indent, "",
-                ad->description->length,
-                ad->description->length
-                    ? ad->description->data
+                (int)ASN1_STRING_get_length(ad->description),
+                ASN1_STRING_get_length(ad->description)
+                    ? ASN1_STRING_get0_data(ad->description)
                     : (const unsigned char *)"")
             <= 0)
             return 0;

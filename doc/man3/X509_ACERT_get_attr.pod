@@ -10,7 +10,7 @@ X509_ACERT_get_attr_count
 
 =head1 SYNOPSIS
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  X509_ATTRIBUTE *X509_ACERT_get_attr(const X509_ACERT *x, int loc);
  int X509_ACERT_get_attr_by_NID(const X509_ACERT *x, int nid, int lastpos);
@@ -46,6 +46,11 @@ attribute certificate.
 
 X509_ACERT_get0_attr(), X509_ACERT_get_attr_by_NID(), X509_ACERT_get_attr_by_OBJ() and
 X509_ACERT_get_attr_count() were added in OpenSSL 3.4.
+
+All of these functions moved to the new libx509pmi library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in
+F<< <openssl/x509_acert.h> >>, until a future major release.  See
+L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

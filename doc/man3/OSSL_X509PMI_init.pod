@@ -1,0 +1,40 @@
+=pod
+
+=head1 NAME
+
+OSSL_X509PMI_init - initialise libx509pmi
+
+=head1 SYNOPSIS
+
+ #include <libx509pmi/x509_acert.h>
+
+ int OSSL_X509PMI_init(void);
+
+=head1 DESCRIPTION
+
+OSSL_X509PMI_init() initialises libx509pmi. An application must call it
+before calling any other libx509pmi function. It may be called more than
+once, and from more than one thread.
+
+=head1 RETURN VALUES
+
+OSSL_X509PMI_init() returns 1 on success and 0 on failure.
+
+=head1 SEE ALSO
+
+L<libx509pmi(7)>
+
+=head1 HISTORY
+
+OSSL_X509PMI_init() was added in OpenSSL 4.2.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

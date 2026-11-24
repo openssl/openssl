@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
-#include <crypto/x509.h>
-#include "ext_dat.h"
+#include <openssl/err.h>
+#include "../crypto/x509/ext_dat.h"
 
 ASN1_SEQUENCE(OSSL_ROLE_SPEC_CERT_ID) = {
     ASN1_EXP(OSSL_ROLE_SPEC_CERT_ID, roleName, GENERAL_NAME, 0),
@@ -26,6 +28,50 @@ ASN1_ITEM_TEMPLATE(OSSL_ROLE_SPEC_CERT_ID_SYNTAX) = ASN1_EX_TEMPLATE_TYPE(ASN1_T
 ASN1_ITEM_TEMPLATE_END(OSSL_ROLE_SPEC_CERT_ID_SYNTAX)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ROLE_SPEC_CERT_ID_SYNTAX)
+
+static int serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
+{
+    int i, ok;
+    int64_t l;
+    uint64_t ul;
+    const char *neg;
+    const unsigned char *data = ASN1_STRING_get0_data(bs);
+    int length = (int)ASN1_STRING_get_length(bs);
+
+    if (length == 0) {
+        if (BIO_puts(out, " (Empty)") <= 0)
+            return -1;
+        return 0;
+    }
+
+    ERR_set_mark();
+    ok = ASN1_INTEGER_get_int64(&l, bs);
+    ERR_pop_to_mark();
+
+    if (ok) { /* Reading an int64_t succeeded: print decimal and hex. */
+        if (ASN1_STRING_type(bs) == V_ASN1_NEG_INTEGER) {
+            ul = 0 - (uint64_t)l;
+            neg = "-";
+        } else {
+            ul = l;
+            neg = "";
+        }
+        if (BIO_printf(out, " %s%ju (%s0x%jx)", neg, ul, neg, ul) <= 0)
+            return -1;
+    } else { /* Reading an int64_t failed: just print hex. */
+        neg = (ASN1_STRING_type(bs) == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
+        if (BIO_printf(out, "\n%*s%s", indent, "", neg) <= 0)
+            return -1;
+
+        for (i = 0; i < length - 1; i++) {
+            if (BIO_printf(out, "%02x%c", data[i], ':') <= 0)
+                return -1;
+        }
+        if (BIO_printf(out, "%02x", data[i]) <= 0)
+            return -1;
+    }
+    return 0;
+}
 
 static int i2r_OSSL_ROLE_SPEC_CERT_ID(X509V3_EXT_METHOD *method,
     OSSL_ROLE_SPEC_CERT_ID *rscid,
@@ -46,7 +92,7 @@ static int i2r_OSSL_ROLE_SPEC_CERT_ID(X509V3_EXT_METHOD *method,
             return 0;
         if (BIO_printf(out, "%*sRole Certificate Serial Number:", indent, "") <= 0)
             return 0;
-        if (ossl_serial_number_print(out, rscid->roleCertSerialNumber, indent) != 0)
+        if (serial_number_print(out, rscid->roleCertSerialNumber, indent) != 0)
             return 0;
     }
     if (rscid->roleCertLocator != NULL) {

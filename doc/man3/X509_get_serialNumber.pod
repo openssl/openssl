@@ -17,7 +17,7 @@ X509_ACERT_set1_serialNumber
  const ASN1_INTEGER *X509_get0_serialNumber(const X509 *x);
  int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 
- #include <openssl/x509_acert.h>
+ #include <libx509pmi/x509_acert.h>
 
  ASN1_INTEGER *X509_ACERT_get0_serialNumber(X509_ACERT *x);
  int X509_ACERT_set1_serialNumber(X509_ACERT *x, ASN1_INTEGER *serial);
@@ -75,6 +75,11 @@ available in all versions of OpenSSL.
 The X509_get0_serialNumber() function was added in OpenSSL 1.1.0.
 The X509_ACERT_get0_serialNumber() and X509_ACERT_set1_serialNumber()
 functions were added in OpenSSL 3.4.
+
+X509_ACERT_get0_serialNumber() and X509_ACERT_set1_serialNumber() moved to the
+new libx509pmi library in OpenSSL 4.2. Deprecated variants remain in
+libcrypto, declared in F<< <openssl/x509_acert.h> >>, until a future major
+release.  See L<libx509pmi(7)>.
 
 =head1 COPYRIGHT
 

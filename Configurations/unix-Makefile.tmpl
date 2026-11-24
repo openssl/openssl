@@ -122,6 +122,7 @@ RELEASE_DATE={- my $t = localtime;
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
+LIBX509PMI_VERSION_NUMBER=1.0.0
 SHLIB_TARGET={- $target{shared_target} -}
 
 LIBS={- join(" \\\n" . ' ' x 5,
@@ -942,6 +943,10 @@ install_dev: install_runtime_libs
 	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
 		"$(DESTDIR)$(INSTALLTOP)/include/openssl" \
 		$(SRCDIR)/include/openssl/*.h $(BLDDIR)/include/openssl/*.h
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/libx509pmi"
+	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
+		"$(DESTDIR)$(INSTALLTOP)/include/libx509pmi" \
+		$(SRCDIR)/include/libx509pmi/*.h $(BLDDIR)/include/libx509pmi/*.h
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -1016,6 +1021,13 @@ uninstall_dev: uninstall_runtime_libs
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/openssl"
+	@set -e; for i in $(SRCDIR)/include/libx509pmi/*.h \
+			  $(BLDDIR)/include/libx509pmi/*.h; do \
+		fn=`basename $$i`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/libx509pmi/$$fn"; \
+		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/libx509pmi/$$fn"; \
+	done
+	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/libx509pmi"
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -1463,6 +1475,9 @@ errors:
            include/internal/pem.h
            include/internal/asn1.h
            include/internal/sslconf.h );
+   my @x509pmiheaders_tmpl =
+       qw( include/openssl/x509_acert.h include/openssl/x509v3.h
+           include/libx509pmi/x509_acert.h );
    my @cryptoskipheaders = ( @sslheaders_tmpl,
        qw( include/openssl/conf_api.h
            include/openssl/ebcdic.h
@@ -1471,7 +1486,8 @@ errors:
            include/openssl/symhacks.h ) );
    our %cryptoheaders = ();
    our %sslheaders = ();
-   foreach my $d ( qw( include/openssl include/internal ) ) {
+   our %x509pmiheaders = ();
+   foreach my $d ( qw( include/openssl include/internal include/libx509pmi ) ) {
        my @header_patterns =
            map { catfile($config{sourcedir}, $d, $_) } ( '*.h', '*.h.in' );
        foreach my $f ( map { glob($_) } @header_patterns ) {
@@ -1496,6 +1512,7 @@ errors:
                    && !( grep { $_ eq $fn } @cryptoskipheaders ));
            # The logic to add files to @sslheaders is much simpler...
            $sslheaders{$new_f} = 1 if grep { $_ eq $fn } @sslheaders_tmpl;
+           $x509pmiheaders{$new_f} = 1 if grep { $_ eq $fn } @x509pmiheaders_tmpl;
        }
    }
    "";
@@ -1512,6 +1529,8 @@ CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
+X509PMIHEADERS={- join(" \\\n" . ' ' x 15,
+                       fill_lines(" ", $COLUMNS - 15, sort keys %x509pmiheaders)) -}
 
 renumber: build_generated
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
@@ -1524,6 +1543,15 @@ renumber: build_generated
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(SSLHEADERS)
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(LIBX509PMI_VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libx509pmi.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                --renumber \
+                $(X509PMIHEADERS)
+	$(PERL) $(SRCDIR)/util/mklibx509pminames.pl \
+                --filter-num $(SRCDIR)/util/libx509pmi.num $(SRCDIR)
+	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; s/:DEPRECATEDIN_4_2$$/:/; print' \
+                $(SRCDIR)/util/libx509pmi.num
 
 .PHONY: ordinals
 ordinals: build_generated
@@ -1535,6 +1563,14 @@ ordinals: build_generated
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(SSLHEADERS)
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(LIBX509PMI_VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libx509pmi.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                $(X509PMIHEADERS)
+	$(PERL) $(SRCDIR)/util/mklibx509pminames.pl \
+                --filter-num $(SRCDIR)/util/libx509pmi.num $(SRCDIR)
+	$(PERL) -n -i -e 'next if /DEPRECATEDIN_(?!4_2)/; s/,DEPRECATEDIN_4_2//; s/DEPRECATEDIN_4_2,//; s/:DEPRECATEDIN_4_2$$/:/; print' \
+                $(SRCDIR)/util/libx509pmi.num
 
 test_ordinals:
 	"$(MAKE)" run_tests TESTS=test_ordinals
@@ -1730,10 +1766,15 @@ EOF
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
+          my $ord_node_prefix = $args{generator}->[2]
+              ? " --node-prefix $args{generator}->[2]" : "";
+          my $ord_renames =
+              join("", map { /^--/ ? " $_" : " --rename $_" }
+                       @{$args{generator}}[3 .. $#{$args{generator}}]);
           return <<"EOF";
 $target: $gen0 $deps \$(SRCDIR)/util/mkdef.pl
 	$tofile $target \\
-		\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name --OS $mkdef_os
+		\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name$ord_node_prefix$ord_renames --OS $mkdef_os
 EOF
       } elsif (platform->isasm($args{src})
                || platform->iscppasm($args{src})) {
@@ -1992,6 +2033,16 @@ EOF
       my $shared_imp = "";
       $shared_imp .= ' '.$target{shared_impflag}.basename($import)
           if defined $target{shared_impflag} && defined $import;
+      # macOS records library version metadata via link flags, and
+      # LIB_LDFLAGS carries them with the global shared library version.
+      # For a library with a shlib_version of its own, append overriding
+      # flags; the linker uses the last occurrence.
+      my $shared_versions = "";
+      if ($target{shared_target} eq "darwin-shared") {
+          my $v = platform->shlib_version($args{lib});
+          $shared_versions = " -current_version $v -compatibility_version $v"
+              if $v ne $config{shlib_version};
+      }
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
 
       # There is at least one platform where the compiler-as-linker needs to
@@ -2054,7 +2105,7 @@ EOF
       if (!run_on_windows()) {
           $recipe .= <<"EOF";
 $full: $fulldeps
-	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_versions$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
@@ -2065,7 +2116,7 @@ $full: $fulldeps
 	\$(file >\$@.lst, \\
 		$fullobjs \\
 	)
-	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_versions$shared_imp \\
 		-o $full$shared_def \\
 		@\$@.lst \\
 		$linklibs \$(LIB_EX_LIBS)

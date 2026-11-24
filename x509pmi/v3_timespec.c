@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
-#include <crypto/asn1.h>
-#include "ext_dat.h"
+#include "../crypto/x509/ext_dat.h"
 
 static const char *const WEEKDAY_NAMES[7] = {
     "SUN",
@@ -131,27 +132,27 @@ static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
     if (time->startTime != NULL && time->endTime != NULL) {
         if (!BIO_puts(out, "Any time between "))
             return 0;
-        if (!ossl_asn1_time_print_ex(out, time->startTime, 0))
+        if (!ASN1_TIME_print_ex(out, time->startTime, 0))
             return 0;
         if (!BIO_puts(out, " and "))
             return 0;
-        if (!ossl_asn1_time_print_ex(out, time->endTime, 0))
+        if (!ASN1_TIME_print_ex(out, time->endTime, 0))
             return 0;
     } else if (time->startTime != NULL) {
         if (!BIO_puts(out, "Any time after "))
             return 0;
-        if (!ossl_asn1_time_print_ex(out, time->startTime, 0))
+        if (!ASN1_TIME_print_ex(out, time->startTime, 0))
             return 0;
-        if (BIO_printf(out, "%.*s", time->startTime->length,
-                time->startTime->length
-                    ? time->startTime->data
+        if (BIO_printf(out, "%.*s", (int)ASN1_STRING_get_length(time->startTime),
+                ASN1_STRING_get_length(time->startTime)
+                    ? ASN1_STRING_get0_data(time->startTime)
                     : (const unsigned char *)"")
             <= 0)
             return 0;
     } else if (time->endTime != NULL) {
         if (!BIO_puts(out, "Any time until "))
             return 0;
-        if (!ossl_asn1_time_print_ex(out, time->endTime, 0))
+        if (!ASN1_TIME_print_ex(out, time->endTime, 0))
             return 0;
     } else { /* Invalid: there must be SOME time specified. */
         return BIO_puts(out, "INVALID (EMPTY)");

@@ -7,14 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libx509pmi/names.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
-
-#include <crypto/asn1.h>
 
 static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
 {
@@ -56,7 +56,9 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         case V_ASN1_UTF8STRING:
         case V_ASN1_IA5STRING:
             bs = at->value.asn1_string;
-            if (BIO_write(bp, (char *)bs->data, bs->length) != bs->length)
+            if (BIO_write(bp, ASN1_STRING_get0_data(bs),
+                    (int)ASN1_STRING_get_length(bs))
+                != (int)ASN1_STRING_get_length(bs))
                 goto err;
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
@@ -64,8 +66,8 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         case V_ASN1_SEQUENCE:
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
-            if (ASN1_parse_dump(bp, at->value.sequence->data,
-                    at->value.sequence->length, i, 1)
+            if (ASN1_parse_dump(bp, ASN1_STRING_get0_data(at->value.sequence),
+                    (long)ASN1_STRING_get_length(at->value.sequence), i, 1)
                 <= 0)
                 goto err;
             break;
