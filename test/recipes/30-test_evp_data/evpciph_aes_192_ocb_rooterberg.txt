@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Rooterberg d446fbab
+# https://github.com/bleichenbacher-daniel/Rooterberg/tree/d446fbab
 
 # c0aba081fb0684ba8672f12368741323c1a7927b022fb32bffe757326cf7a634  aes_ocb_192_120_128.json
 Title = AES-192-OCB Rooterberg test vectors from aes_ocb_192_120_128.json
