@@ -1351,6 +1351,52 @@ err:
     return testresult;
 }
 
+/* A failure before accept must return with the worker already joined. */
+static int test_blocking_quic_connect_failure(int idx)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *listener = NULL, *client = NULL, *server = NULL;
+    int ret = 0;
+
+    if (!qtest_supports_blocking())
+        return TEST_skip("Blocking tests not supported in this build");
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method()))
+        || !TEST_true(qtest_create_quic_objects_ex(libctx, cctx, NULL, cert,
+            privkey, QTEST_FLAG_BLOCK, &listener, &client, NULL, NULL))
+        || !TEST_true(SSL_get_blocking_mode(client)))
+        goto end;
+
+    if (idx == 0) {
+        /* Fail SSL_connect() locally without sending an Initial. */
+        if (!TEST_true(SSL_set1_initial_peer_addr(client, NULL)))
+            goto end;
+    } else {
+        /* Fail the listener before it has a channel to report the error. */
+        ossl_quic_port_raise_net_error(ossl_quic_listener_get_port(listener),
+            NULL);
+        ERR_clear_error();
+    }
+
+    if (!TEST_false(qtest_create_quic_connection_ssl(listener, client, &server))
+        || !TEST_ptr_null(server))
+        goto end;
+    if (idx == 1) {
+        SSL_CONN_CLOSE_INFO info;
+
+        if (!TEST_true(SSL_get_conn_close_info(client, &info, sizeof(info)))
+            || !TEST_str_eq(info.reason, "QUIC test server handshake failed"))
+            goto end;
+    }
+    ret = 1;
+end:
+    SSL_free(server);
+    SSL_free(listener);
+    SSL_free(client);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
 static int use_session_cb_cnt = 0;
 static int find_session_cb_cnt = 0;
 static const char *pskid = "Identity";
@@ -6173,6 +6219,7 @@ int setup_tests(void)
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
+    ADD_ALL_TESTS(test_blocking_quic_connect_failure, 2);
     ADD_TEST(test_quic_psk);
     ADD_ALL_TESTS(test_client_auth, 3);
     ADD_ALL_TESTS(test_alpn, 2);
