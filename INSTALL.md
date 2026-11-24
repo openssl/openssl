@@ -752,7 +752,8 @@ and Certificate Request Message Format (CRMF).
 
 ### no-cms
 
-Don't build support for Cryptographic Message Syntax (CMS).
+Don't build support for Cryptographic Message Syntax (CMS).  This also
+disables Time Stamping (TS) support, see [no-ts](#no-ts).
 
 ### no-comp
 
