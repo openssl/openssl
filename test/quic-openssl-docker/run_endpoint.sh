@@ -75,6 +75,17 @@ if [ "$ROLE" == "client" ]; then
         done
         exit 0
         ;;
+    "multiconnect")
+        for req in $REQUESTS
+        do
+            OUTFILE=$(basename $req)
+            echo -n "$OUTFILE " > ./reqfile.txt
+            HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+            HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+            SSLKEYLOGFILE=/logs/keys.log SSL_CERT_FILE=/certs/ca.pem SSL_CERT_DIR=/certs quic-hq-interop $HOSTNAME $HOSTPORT ./reqfile.txt || exit 1
+        done
+        exit 0
+        ;;
     "chacha20")
         for req in $REQUESTS
         do
@@ -95,7 +106,7 @@ elif [ "$ROLE" == "server" ]; then
     echo "TESTCASE is $TESTCASE"
     rm -f $CURLRC 
     case "$TESTCASE" in
-    "handshake"|"transfer"|"ipv6")
+    "handshake"|"transfer"|"ipv6"|"multiconnect")
         NO_ADDR_VALIDATE=yes SSLKEYLOGFILE=/logs/keys.log FILEPREFIX=/www quic-hq-interop-server 443 /certs/cert.pem /certs/priv.key
         ;;
     "retry")
