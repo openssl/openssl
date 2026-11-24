@@ -38,6 +38,7 @@ DEFINE[../../providers/liblegacy.a]=$MD5DEF
 GENERATE[md5-586.S]=asm/md5-586.pl
 
 GENERATE[md5-x86_64.s]=asm/md5-x86_64.pl
+DEPEND[md5-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[md5-aarch64.S]=asm/md5-aarch64.pl
 INCLUDE[md5-aarch64.o]=..
 
