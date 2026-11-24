@@ -58,11 +58,15 @@ Also the list of CRLs must not contain duplicates.
 The optional parameters library context I<libctx> and property query I<propq>
 are used when retrieving algorithms from providers.
 
-CMS_get0_signers() retrieves the signer certificate(s) from I<cms>; it may only
-be called after a successful CMS_verify() or CMS_SignedData_verify() operation.
-Only the certificates of signatures that passed verification are returned.
+CMS_get0_signers() retrieves the signer certificate(s) from I<cms>; it should
+only be called after a successful CMS_verify() or CMS_SignedData_verify()
+operation.
+Once I<cms> has been verified, only the certificates of signatures that passed
+the last verification are returned, so none are returned if it failed.
 This matters when B<CMS_VERIFY_PARTIAL> is set, where the verification may
 succeed even though some of the signatures failed.
+If I<cms> has not been verified, all signer certificates associated with
+I<cms> are returned and none of them can be considered verified.
 
 CMS_SignerInfo_verify() verifies the signed attributes attached to the given
 SignerInfo B<si>.
@@ -176,7 +180,8 @@ CMS_SignedData_verify() returns a memory BIO containing the verified content,
 or NULL on error.
 
 CMS_get0_signers() returns the certificates of all signers whose signatures
-passed verification, or NULL if an error occurred.
+passed verification, or of all signers if no verification was done, or NULL
+if there are none or an error occurred.
 
 The error can be obtained from L<ERR_get_error(3)>.
 
