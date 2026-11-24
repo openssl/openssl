@@ -3869,8 +3869,9 @@ end:
 /*
  * Everything held for incomplete messages is released however the connection
  * ends. The allocator is exact, so unlike a leak checker this also fails in a
- * build without one. A cycle without fragments is run first, so that state which
- * outlives a connection (error queue, lazily created tables) is not counted.
+ * build without one. A cycle without fragments is run twice first, so that state
+ * which outlives a connection (error queue, lazily created tables) is not
+ * counted.
  *
  *   0: SSL_free with fragments held
  *   1: SSL_clear with fragments held, then SSL_free
@@ -3912,7 +3913,13 @@ static int test_dtls_reassembly_cleanup(int idx)
     if (!mfail_is_installed())
         return TEST_skip("allocation tracking not available");
 
-    if (!reasm_cleanup_cycle(idx, 0))
+    /*
+     * The first cycle leaves behind state created lazily, which a later cycle
+     * does not create again. Take the count from the second, so that it is not
+     * included and cannot hide a leak of the same size.
+     */
+    if (!reasm_cleanup_cycle(idx, 0)
+        || !reasm_cleanup_cycle(idx, 0))
         return 0;
     before = reasm_leftover;
     if (!reasm_cleanup_cycle(idx, 1))
