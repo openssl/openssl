@@ -4,6 +4,7 @@
 
 X509_digest,
 X509_digest_sig,
+X509_digest_sig_ex,
 X509_CRL_digest,
 X509_pubkey_digest,
 X509_NAME_digest,
@@ -19,6 +20,9 @@ PKCS7_ISSUER_AND_SERIAL_digest
                  unsigned int *len);
  ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
                                     EVP_MD **md_used, int *md_is_fallback);
+ ASN1_OCTET_STRING *X509_digest_sig_ex(const X509 *cert,
+                                       EVP_MD **md_used, int *md_is_fallback,
+                                       OSSL_LIB_CTX *libctx, const char *propq);
 
  int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
                      unsigned int *len);
@@ -52,6 +56,12 @@ in I<*md_used> and must be freed by the caller (if it is not NULL).
 Unless I<md_is_fallback> is NULL,
 the I<*md_is_fallback> is set to 1 if the hash algorithm used is a fallback,
 otherwise to 0.
+The hash algorithm is fetched from the library context and property query
+of the public key of I<cert>.
+
+X509_digest_sig_ex() is similar to X509_digest_sig() but fetches the hash
+algorithm from the library context I<libctx> using the property query
+I<propq>.
 
 X509_pubkey_digest() returns a digest of the DER representation of the public
 key in the specified X509 I<data> object.
@@ -67,7 +77,8 @@ to a place where the digest size will be stored.
 
 =head1 RETURN VALUES
 
-X509_digest_sig() returns an ASN1_OCTET_STRING pointer on success, else NULL.
+X509_digest_sig() and X509_digest_sig_ex() return an ASN1_OCTET_STRING pointer
+on success, else NULL.
 
 All other functions described here return 1 for success and 0 for failure.
 
@@ -78,6 +89,8 @@ L<EVP_sha1(3)>
 =head1 HISTORY
 
 The X509_digest_sig() function was added in OpenSSL 3.0.
+
+The X509_digest_sig_ex() function was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

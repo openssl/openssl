@@ -11,6 +11,9 @@
 
 /* CMP functions for PKIStatusInfo handling and PKIMessage decomposition */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
+
 #include <stdio.h>
 
 #include "cmp_local.h"
@@ -278,7 +281,7 @@ OSSL_CMP_PKISI *OSSL_CMP_STATUSINFO_new(int status, int fail_info,
 
     if (text != NULL) {
         if ((utf8_text = ASN1_UTF8STRING_new()) == NULL
-            || !ossl_asn1_string_set1_string(utf8_text, text))
+            || !ASN1_STRING_set1_string(utf8_text, text))
             goto err;
         if ((si->statusString = sk_ASN1_UTF8STRING_new_null()) == NULL)
             goto err;

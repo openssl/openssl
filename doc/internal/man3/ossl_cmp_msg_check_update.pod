@@ -74,7 +74,7 @@ Confirmation (PKIConf) messages following in the same or future transactions.
 
 =head1 RETURN VALUES
 
-ossl_cmp_msg_check_update() returns 1 on success, -1 on error.
+ossl_cmp_msg_check_update() returns 1 on success, 0 on error.
 
 =head1 SEE ALSO
 

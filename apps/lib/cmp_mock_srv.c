@@ -10,9 +10,10 @@
 
 #include "apps.h"
 #include "cmp_mock_srv.h"
-#include "../../crypto/cmp/cmp_local.h" /* for access to msg->protection */
+#include "../../cmp/cmp_local.h" /* for access to msg->protection */
+#include "crypto/asn1.h"
 
-#include <openssl/cmp.h>
+#include <libcmp/cmp.h>
 #include <openssl/err.h>
 #include <openssl/cmperr.h>
 

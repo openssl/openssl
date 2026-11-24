@@ -10,6 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
+#include "crypto/asn1.h"
 
 typedef struct test_fixture {
     const char *test_case_name;

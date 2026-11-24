@@ -8,6 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
 #include "cmp_local.h"
 #include <openssl/cmp_util.h>
 
@@ -286,7 +288,7 @@ verify_ss_cert_trans(OSSL_CMP_CTX *ctx, X509 *trusted /* may be NULL */,
     }
 
     if (trans != NULL
-        && !ossl_x509_add_cert_new(&untrusted, trans, X509_ADD_FLAG_UP_REF))
+        && !ossl_cmp_x509_add_cert_new(&untrusted, trans, X509_ADD_FLAG_UP_REF))
         goto err;
 
     res = verify_ss_cert(OSSL_CMP_CTX_get0_libctx(ctx),
