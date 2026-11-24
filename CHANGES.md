@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Fixed `SMIME_crlf_copy()` treating BIO read errors as end-of-file.
+   <!-- https://github.com/openssl/openssl/issues/33820 -->
+
+   *Alaric Dailey*
+
  * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
    *Filip Skokan*
