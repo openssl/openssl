@@ -88,6 +88,11 @@ client certificate type, the request is instead accepted, and sending it
 terminates the connection with a B<certificate_required> alert, just as
 when the client declines to return a certificate.
 
+The request also fails, with an B<SSL_R_BAD_WRITE_RETRY> error and without
+affecting the connection, while an earlier L<SSL_write(3)> that returned
+B<SSL_ERROR_WANT_WRITE> has not yet been completed.
+That write must be completed before the request is made.
+
 =head1 NOTES
 
 The client's response arrives asynchronously, and only once the client

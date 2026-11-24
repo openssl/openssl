@@ -11544,6 +11544,91 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+/*
+ * A post-handshake authentication request fails while an application data
+ * write is pending retry, and succeeds once that write is completed.
+ */
+static int test_pha_local_in_write(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    static const char mess[] = "A test message";
+    int messlen = (int)strlen(mess);
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp = NULL;
+    char buf[20];
+    int testresult = 0;
+
+    if (!TEST_ptr(bretry)
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    /* Swap the server's write BIO to force a retry */
+    tmp = SSL_get_wbio(serverssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, bretry);
+    bretry = NULL;
+
+    if (!TEST_int_eq(SSL_write(serverssl, mess, messlen), -1)
+        || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Reinstate the original write BIO */
+    SSL_set0_wbio(serverssl, tmp);
+    tmp = NULL;
+
+    /* The request fails while the write is pending */
+    SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
+    if (!TEST_false(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            SSL_R_BAD_WRITE_RETRY))
+        goto end;
+    ERR_clear_error();
+
+    /* Once the write is completed, the request succeeds */
+    if (!TEST_int_eq(SSL_write(serverssl, mess, messlen), messlen)
+        || !TEST_true(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_int_eq(SSL_do_handshake(serverssl), 1))
+        goto end;
+
+    /* The client reads the data, then processes the request */
+    if (!TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)), messlen)
+        || !TEST_mem_eq(buf, messlen, mess, messlen)
+        || !TEST_int_le(SSL_read(clientssl, buf, sizeof(buf)), 0))
+        goto end;
+
+    /* The server consumes the response, and the connection remains usable */
+    if (!TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0)
+        || !TEST_int_eq(SSL_write(clientssl, mess, messlen), messlen)
+        || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), messlen)
+        || !TEST_mem_eq(buf, messlen, mess, messlen))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+    return testresult;
+}
 #endif
 
 #if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
@@ -20561,6 +20646,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_pha_key_update);
+    ADD_TEST(test_pha_local_in_write);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
