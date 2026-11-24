@@ -231,6 +231,7 @@ jobs:
         call "${{ matrix.platform.vcvars }}"
         jom /j4 /S
     - name: get cpu info
+      continue-on-error: true
       uses: ./.github/actions/windows-cpu-info
     - name: test
       working-directory: _build
