@@ -95,8 +95,7 @@ the data generated I<without> the NUL terminator is returned from the function.
 B<t> must not be NULL. B<f> must not be NULL unless B<n> is zero. B<n> must be
 nonnegative and small enough that the length of the encoded data fits in an
 int. If B<n> is negative or too large, EVP_EncodeBlock() encodes no data: it
-writes only a NUL terminator to B<t> and returns 0. No error is added to the
-error stack in this case.
+writes only a NUL terminator to B<t> and returns 0.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.
 
@@ -189,6 +188,15 @@ L<evp(7)>
 The EVP_DecodeUpdate() function was fixed in OpenSSL 3.5,
 so now it produces the number of bytes specified in B<outl*>
 and does not decode padding bytes (B<=>) to 6 zero bits.
+
+=head1 BUGS
+
+If B<n> is out of range for EVP_EncodeBlock(), the function assumes that B<t>
+has the space to write a NUL terminator. If it does not, undefined behavior
+can happen.
+
+An out-of-range length is indistinguishable from the successful encoding of an
+empty input: EVP_EncodeBlock() writes only a NUL terminator and returns 0.
 
 =head1 COPYRIGHT
 
