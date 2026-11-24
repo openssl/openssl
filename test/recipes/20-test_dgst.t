@@ -538,7 +538,7 @@ subtest "Hex signature output with `dgst` CLI" => sub {
 };
 
 subtest "Listing supported digests with `dgst` CLI" => sub {
-    plan tests => 3;
+    plan tests => 6;
 
     my @listdata = run(app(['openssl', 'dgst', '-list']), capture => 1);
     chomp(@listdata);
@@ -548,6 +548,31 @@ subtest "Listing supported digests with `dgst` CLI" => sub {
     # Only check digests that are always present, each printed as "-<name>"
     ok($listing =~ /-sha256\b/, "LIST: Check sha256 is listed");
     ok($listing =~ /-sha512\b/, "LIST: Check sha512 is listed");
+    # Provider-only names (not in the OBJ database) must be listed too
+    ok($listing =~ /-sha2-256\b/, "LIST: Check sha2-256 is listed");
+
+    # Each name must be listed exactly once
+    my %seen;
+    my @names = $listing =~ /-(\S+)/g;
+    my $dups = grep { $seen{$_}++ } @names;
+    ok($dups == 0, "LIST: Check there are no duplicates");
+
+    # With the legacy provider loaded, its digests must be listed too
+    SKIP: {
+        # md4 may be disabled even when the legacy provider isn't
+        # (e.g. with no-bulk, which cascades to disable md4)
+        skip "Legacy provider or MD4 not available", 1
+            if disabled("legacy") || disabled("md4");
+        my $provpath = bldtop_dir("providers");
+        my @legacy = run(app(['openssl', 'dgst',
+                              '-provider-path', $provpath,
+                              '-provider', 'default', '-provider', 'legacy',
+                              '-list']), capture => 1);
+        chomp(@legacy);
+        my $legacy_listing = join("\n", @legacy);
+        ok($legacy_listing =~ /-md4\b/,
+           "LIST: Check md4 is listed with the legacy provider");
+    }
 };
 
 subtest "signing and verifying with DER `-keyform` `dgst` CLI" => sub {

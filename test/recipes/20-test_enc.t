@@ -41,7 +41,7 @@ my @ciphers =
                      |rc2|rc4|seed)/x} @ciphers
     if disabled("legacy");
 
-plan tests => 11 + (scalar @ciphers)*2;
+plan tests => 12 + (scalar @ciphers)*2;
 
  SKIP: {
      skip "Problems getting ciphers...", 1 + scalar(@ciphers)
@@ -102,6 +102,30 @@ plan tests => 11 + (scalar @ciphers)*2;
                  "-out", "key_from_uri.enc" ]))
         && File::Compare::compare("key_from_cmdline.enc", "key_from_uri.enc") == 0,
         "Check that key from URI gives an equal result comparing to the explicit one");
+
+     subtest "Listing supported ciphers with `enc -list`" => sub {
+         plan tests => 5;
+
+         my @listdata = run(app([$cmd, "enc", "-list"]), capture => 1);
+         chomp(@listdata);
+         my $listing = join("\n", @listdata);
+
+         ok($listing =~ /Supported ciphers:/, "LIST: Check header is printed");
+         # Only check ciphers that are always present, each printed as "-<name>"
+         ok($listing =~ /-aes-128-cbc\b/, "LIST: Check aes-128-cbc is listed");
+         # Provider-only names (not in the OBJ database) must be listed too
+         ok($listing =~ /-aes-128-wrap\b/,
+            "LIST: Check aes-128-wrap is listed");
+         # AEAD ciphers are not usable with enc, so must not be listed
+         ok($listing !~ /-aes-128-gcm\b/,
+            "LIST: Check aes-128-gcm is not listed");
+
+         # Each name must be listed exactly once
+         my %seen;
+         my @names = $listing =~ /-(\S+)/g;
+         my $dups = grep { $seen{$_}++ } @names;
+         ok($dups == 0, "LIST: Check there are no duplicates");
+     };
 
      # -P prints the salt/key/iv and exits.  With a fixed salt and PBKDF2 the
      # derived key and iv are deterministic, so the whole output can be checked.

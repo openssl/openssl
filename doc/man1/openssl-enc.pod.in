@@ -71,7 +71,9 @@ Print out a usage message.
 
 =item B<-list>
 
-List all supported ciphers.
+List all supported ciphers, including ciphers that are only available
+through loaded providers.  The listing reflects the providers loaded at
+the point this option is given.
 
 =item B<-ciphers>
 

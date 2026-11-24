@@ -13,6 +13,7 @@
 #include <limits.h>
 #include "apps.h"
 #include "progs.h"
+#include "names.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -36,12 +37,10 @@
 #define XSTR(a) #a
 
 static int set_hex(const char *in, unsigned char *out, int size);
-static void show_ciphers(const OBJ_NAME *name, void *bio_);
-
-struct doall_enc_ciphers {
-    BIO *bio;
-    int n;
-};
+static void collect_obj_cipher_name(const OBJ_NAME *name, void *arg);
+static void collect_prov_ciphers(EVP_CIPHER *cipher, void *arg);
+static void print_cipher_names(BIO *bio, STACK_OF(OPENSSL_CSTRING) *names);
+static void free_cipher_name(OPENSSL_STRING name);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -198,7 +197,7 @@ int enc_main(int argc, char **argv)
     long n;
     int streamable = 1;
     int wrap = 0;
-    struct doall_enc_ciphers dec;
+    STACK_OF(OPENSSL_CSTRING) *names = NULL;
 #ifndef OPENSSL_NO_ZLIB
     int do_zlib = 0;
     BIO *bzl = NULL;
@@ -245,10 +244,17 @@ int enc_main(int argc, char **argv)
             goto end;
         case OPT_LIST:
             BIO_puts(bio_out, "Supported ciphers:\n");
-            dec.bio = bio_out;
-            dec.n = 0;
-            OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
-                show_ciphers, &dec);
+            names = sk_OPENSSL_CSTRING_new(name_cmp);
+            if (names == NULL) {
+                BIO_printf(bio_err, "%s: Out of memory\n", prog);
+                goto end;
+            }
+            OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
+                collect_obj_cipher_name, names);
+            EVP_CIPHER_do_all_provided(app_get0_libctx(),
+                collect_prov_ciphers, names);
+            print_cipher_names(bio_out, names);
+            sk_OPENSSL_CSTRING_pop_free(names, free_cipher_name);
             BIO_puts(bio_out, "\n");
             ret = 0;
             goto end;
@@ -852,32 +858,116 @@ end:
     return ret;
 }
 
-static void show_ciphers(const OBJ_NAME *name, void *arg)
+/*
+ * Fetch a cipher by name and check that this app can use it.
+ * Returns the fetched cipher, or NULL if it's not fetchable or unusable.
+ * Fetch failures are expected here (e.g. algorithms from providers that
+ * aren't loaded), so the error stack is silenced around the fetch.
+ */
+static EVP_CIPHER *fetch_usable_cipher(const char *name)
 {
-    struct doall_enc_ciphers *dec = (struct doall_enc_ciphers *)arg;
+    EVP_CIPHER *cipher;
+
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(app_get0_libctx(), name, app_get0_propq());
+    ERR_pop_to_mark();
+    if (cipher == NULL
+        || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+        || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE
+        /* Keyless ciphers (e.g. NULL) cannot be used by this app */
+        || EVP_CIPHER_get_key_length(cipher) == 0) {
+        EVP_CIPHER_free(cipher);
+        return NULL;
+    }
+    return cipher;
+}
+
+static void add_cipher_name(STACK_OF(OPENSSL_CSTRING) *names,
+    const char *name, int lowercase)
+{
+    char *copy = OPENSSL_strdup(name);
+    char *p;
+
+    if (copy == NULL)
+        return;
+    if (lowercase)
+        for (p = copy; *p != '\0'; p++)
+            *p = tolower((unsigned char)*p);
+    if (sk_OPENSSL_CSTRING_push(names, copy) <= 0)
+        OPENSSL_free(copy);
+}
+
+static void collect_obj_cipher_name(const OBJ_NAME *name, void *arg)
+{
+    STACK_OF(OPENSSL_CSTRING) *names = arg;
     EVP_CIPHER *cipher;
 
     if (!islower((unsigned char)*name->name))
         return;
 
-    /* Filter out ciphers that we cannot use */
-    cipher = EVP_CIPHER_fetch(app_get0_libctx(), name->name, app_get0_propq());
-    if (cipher == NULL
-        || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
-        || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0
-        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE) {
-        EVP_CIPHER_free(cipher);
+    cipher = fetch_usable_cipher(name->name);
+    if (cipher == NULL)
         return;
-    }
-
-    BIO_printf(dec->bio, "-%-25s", name->name);
-    if (++dec->n == 3) {
-        BIO_puts(dec->bio, "\n");
-        dec->n = 0;
-    } else
-        BIO_puts(dec->bio, " ");
-
     EVP_CIPHER_free(cipher);
+
+    add_cipher_name(names, name->name, 0);
+}
+
+static void collect_prov_cipher_name(const char *name, void *arg)
+{
+    STACK_OF(OPENSSL_CSTRING) *names = arg;
+
+    /* Skip non-alphabetic names, such as numeric OID aliases */
+    if (!isalpha((unsigned char)*name))
+        return;
+
+    /*
+     * Provider names are conventionally upper case; display them in
+     * lower case, consistent with the OBJ derived names.
+     */
+    add_cipher_name(names, name, 1);
+}
+
+static void collect_prov_ciphers(EVP_CIPHER *cipher, void *arg)
+{
+    EVP_CIPHER *fetched;
+
+    fetched = fetch_usable_cipher(EVP_CIPHER_get0_name(cipher));
+    if (fetched == NULL)
+        return;
+    EVP_CIPHER_free(fetched);
+
+    EVP_CIPHER_names_do_all(cipher, collect_prov_cipher_name, arg);
+}
+
+static void print_cipher_names(BIO *bio, STACK_OF(OPENSSL_CSTRING) *names)
+{
+    const char *prev = NULL;
+    int i, n = 0;
+
+    sk_OPENSSL_CSTRING_sort(names);
+    for (i = 0; i < sk_OPENSSL_CSTRING_num(names); i++) {
+        const char *name = sk_OPENSSL_CSTRING_value(names, i);
+
+        /* Drop duplicates (the case-insensitive sort groups them together) */
+        if (prev != NULL && OPENSSL_strcasecmp(prev, name) == 0)
+            continue;
+        prev = name;
+
+        BIO_printf(bio, "-%-25s", name);
+        if (++n == 3) {
+            BIO_puts(bio, "\n");
+            n = 0;
+        } else {
+            BIO_puts(bio, " ");
+        }
+    }
+}
+
+static void free_cipher_name(OPENSSL_STRING name)
+{
+    OPENSSL_free(name);
 }
 
 static int set_hex(const char *in, unsigned char *out, int size)

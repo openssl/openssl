@@ -62,7 +62,9 @@ Specifies name of a supported digest to be used. See option B<-list> below :
 
 =item B<-list>
 
-Prints out a list of supported message digests.
+Prints out a list of supported message digests, including digests that
+are only available through loaded providers.  The listing reflects the
+providers loaded at the point this option is given.
 
 =item B<-c>
 
