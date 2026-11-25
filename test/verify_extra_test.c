@@ -736,8 +736,7 @@ static int test_store_ctx(void)
     return test_self_signed(bad_f, 0, 0);
 }
 
-static int do_test_purpose(int purpose, int purpose2, int override,
-                           int expected)
+static int do_test_purpose(int purpose, int purpose2, int override, int expected)
 {
     X509 *eecert = load_cert_from_file(ee_cert); /* may result in NULL */
     X509 *untrcert = load_cert_from_file(ca_cert);
@@ -879,14 +878,12 @@ static int test_purpose_ssl_server(void)
 
 static int test_purpose_ssl_client_override_fail(void)
 {
-    return do_test_purpose(X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT,
-                           0, 1);
+    return do_test_purpose(X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT, 0, 1);
 }
 
 static int test_purpose_ssl_client_override_pass(void)
 {
-    return do_test_purpose(X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT,
-                           1, 0);
+    return do_test_purpose(X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT, 1, 0);
 }
 
 static int test_purpose_any(void)

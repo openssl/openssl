@@ -422,7 +422,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
      * that include additional information packed into the unsigned attributes
      * of the signerInfo elements.
      * Read this: they are not organized by document but by signer, therefore
-     * mulitple * objects may exist.
+     * multiple * objects may exist.
      * Extract timestamp, if available, to set the correct time for certificate
      * validation.
      * Timestamp (and archive-timestamps) are taken from the unsigned
@@ -447,25 +447,24 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                 X509_ATTRIBUTE *attr = CMS_unsigned_get_attr(si, j);
                 const ASN1_OBJECT *obj = X509_ATTRIBUTE_get0_object(attr);
                 switch (OBJ_obj2nid(obj)) {
-                    case NID_id_smime_aa_timeStampToken:
-                        /*
-                         * Perform evaluation of timestamp. The value
-                         * timestamped is the original signature
-                         * If successful, a valid signing time is available
-                         */
-                        if (!ossl_cms_handle_CAdES_SignatureTimestampToken(attr,
-                                 store, si->signature, &verification_time))
-                            goto err;
-                        vt = &verification_time;
-                        break;
-                    case NID_id_aa_ets_archiveTimestampV3:
-                        /*
-                         * Evaluate archiveTimestampV3 attribute
-                         */
-                        /* prepared for future use with Baseline-LT(A) */
-                        break;
-                    default:
-                        ; /* Other information not covered */
+                case NID_id_smime_aa_timeStampToken:
+                    /*
+                     * Perform evaluation of timestamp. The value
+                     * timestamped is the original signature
+                     * If successful, a valid signing time is available
+                     */
+                    if (!ossl_cms_handle_CAdES_SignatureTimestampToken(attr,
+                            store, si->signature, &verification_time))
+                        goto err;
+                    vt = &verification_time;
+                    break;
+                case NID_id_aa_ets_archiveTimestampV3:
+                    /*
+                     * Evaluate archiveTimestampV3 attribute
+                     */
+                    /* prepared for future use with Baseline-LT(A) */
+                    break;
+                default:; /* Other information not covered */
                 }
             }
         }

@@ -25,7 +25,8 @@
 /* CAdES services */
 
 /* extract the time of stamping from the timestamp token */
-static int ossl_cms_cades_extract_timestamp(PKCS7 *token, time_t *stamp_time) {
+static int ossl_cms_cades_extract_timestamp(PKCS7 *token, time_t *stamp_time)
+{
     int ret = 0;
 
     TS_TST_INFO *tst_info = PKCS7_to_TS_TST_INFO(token);
@@ -39,7 +40,8 @@ static int ossl_cms_cades_extract_timestamp(PKCS7 *token, time_t *stamp_time) {
     return ret;
 }
 
-static EVP_MD *ossl_cms_cades_get_md(PKCS7 *token, X509_ALGOR **md_alg) {
+static EVP_MD *ossl_cms_cades_get_md(PKCS7 *token, X509_ALGOR **md_alg)
+{
     TS_TST_INFO *tst_info;
     TS_MSG_IMPRINT *msg_imprint;
     X509_ALGOR *alg;
@@ -63,7 +65,7 @@ static EVP_MD *ossl_cms_cades_get_md(PKCS7 *token, X509_ALGOR **md_alg) {
     md = EVP_MD_fetch(NULL, name, NULL);
 
     if (md == NULL)
-	md = (EVP_MD *)EVP_get_digestbyname(name);
+        md = (EVP_MD *)EVP_get_digestbyname(name);
     *md_alg = X509_ALGOR_dup(alg); /* alg being freed in TS_TST_INFO_free() */
 err:
     TS_TST_INFO_free(tst_info);
@@ -79,7 +81,8 @@ err:
  * of the timestamp. The signature is provided as "os".
  */
 int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr,
-               X509_STORE *store, ASN1_OCTET_STRING *os, time_t *stamp_time) {
+    X509_STORE *store, ASN1_OCTET_STRING *os, time_t *stamp_time)
+{
     int ret = 0, f = 0;
     TS_VERIFY_CTX *verify_ctx = NULL;
     const ASN1_TYPE *type = X509_ATTRIBUTE_get0_type(tsattr, 0);
@@ -93,7 +96,7 @@ int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr,
     unsigned int imprint_len;
 
     if (token == NULL) {
-	goto err;
+        goto err;
     }
 
     f = TS_VFY_VERSION | TS_VFY_SIGNER;
@@ -127,13 +130,13 @@ int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr,
     }
 
     if (!EVP_DigestUpdate(md_ctx, os->data, os->length))
-	goto err;
+        goto err;
 
     if (!EVP_DigestFinal(md_ctx, imprint, NULL))
         goto err;
 
     TS_VERIFY_CTX_set0_imprint(verify_ctx, imprint, imprint_len);
-    imprint = NULL;	/* freed by TS_VERIFY_CTX_free() */
+    imprint = NULL; /* freed by TS_VERIFY_CTX_free() */
 
     TS_VERIFY_CTX_add_flags(verify_ctx, f | TS_VFY_SIGNATURE);
 
@@ -142,7 +145,7 @@ int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr,
      */
     X509_STORE_up_ref(store);
     if (!TS_VERIFY_CTX_set0_store(verify_ctx, store)) {
-	goto err;
+        goto err;
     };
 
     ret = TS_RESP_verify_token(verify_ctx, token);

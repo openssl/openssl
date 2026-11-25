@@ -1386,7 +1386,7 @@ int cms_main(int argc, char **argv)
         /* Supporting multiple signatures would be very complex */
         if (sk_CMS_SignerInfo_num(sinfos) != 1) {
             BIO_printf(bio_err,
-                      "Only one signature in CMS supported in export");
+                "Only one signature in CMS supported in export");
             ret = 6;
             goto end;
         }
@@ -1409,7 +1409,7 @@ int cms_main(int argc, char **argv)
             str = ASN1_item_pack(token, ASN1_ITEM_rptr(PKCS7), &str);
             if (str != NULL) {
                 if (!CMS_unsigned_add1_attr_by_NID(si,
-                    NID_id_smime_aa_timeStampToken, V_ASN1_SEQUENCE, str, -1)) {
+                        NID_id_smime_aa_timeStampToken, V_ASN1_SEQUENCE, str, -1)) {
                     BIO_printf(bio_err, "Failed to extend signature\n");
                     ret = 6;
                 }
@@ -1597,7 +1597,7 @@ int cms_main(int argc, char **argv)
 
         if ((flags & CMS_CADES) == 0) {
             BIO_printf(bio_err,
-                       "Signature export only supported in CAdES mode");
+                "Signature export only supported in CAdES mode");
             ret = 7;
             goto end;
         }
@@ -1605,7 +1605,7 @@ int cms_main(int argc, char **argv)
         /* Supporting multiple signatures would be very complex */
         if (sk_CMS_SignerInfo_num(sinfos) != 1) {
             BIO_printf(bio_err,
-                      "Only one signature in CMS supported in export");
+                "Only one signature in CMS supported in export");
             ret = 7;
             goto end;
         }
