@@ -941,11 +941,11 @@ static int digest_test_run(EVP_TEST *t)
 
     t->err = NULL;
 
-    /* Test the EVP_Q_digest interface as well */
+    /* EVP_Q_digest uses default digest parameters. */
     if (sk_EVP_TEST_BUFFER_num(expected->input) == 1
-        && !xof
+        && !xof && params[0].key == NULL
         /* This should never fail but we need the returned pointer now */
-        && !TEST_ptr(inbuf = sk_EVP_TEST_BUFFER_value(expected->input, 0))
+        && TEST_ptr(inbuf = sk_EVP_TEST_BUFFER_value(expected->input, 0))
         && !inbuf->count_set) {
         OPENSSL_cleanse(got, got_len);
         if (!TEST_true(EVP_Q_digest(libctx,
