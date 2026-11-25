@@ -1602,16 +1602,25 @@ The tag length is often referred to as B<M>. If not set a default value is
 used (12 for AES). When decrypting, the tag needs to be set before passing
 in data to be decrypted, but as in GCM and OCB mode, it can be set after
 passing additional authenticated data (see L</AEAD INTERFACE>).
+The tag length can be set before or after the key. As it is authenticated
+together with the message, it must be set before the total plaintext or
+ciphertext length is passed. A tag value that is set later, after passing the
+additional authenticated data, must have that length. If it is not the default
+one, set it first by a call with the C<tag> parameter set to NULL. If the tag
+length is changed after the total length was passed, processing the message
+fails.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL)
 
 Sets the CCM B<L> value. If not set a default is used (8 for AES).
+The same rules apply as for B<EVP_CTRL_AEAD_SET_IVLEN>.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length. This call can only be made before specifying a
-nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
-AES.
+Sets the CCM nonce (IV) length. This call can be made before or after the key
+is set. Changing the nonce length discards a nonce that was already set and
+any message in progress, so the nonce has to be set again afterwards. The
+nonce length is given by B<15 - L> so it is 7 by default for AES.
 
 =back
 

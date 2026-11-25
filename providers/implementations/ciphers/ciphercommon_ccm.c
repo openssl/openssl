@@ -116,6 +116,7 @@ int ossl_ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (ctx->l != ivlen) {
             ctx->l = ivlen;
             ctx->iv_set = 0;
+            ctx->len_set = 0;
         }
     }
 
@@ -339,6 +340,7 @@ static int ccm_set_iv(PROV_CCM_CTX *ctx, size_t mlen)
     if (!hw->setiv(ctx, ctx->iv, ccm_get_ivlen(ctx), mlen))
         return 0;
     ctx->len_set = 1;
+    ctx->msg_m = ctx->m;
     return 1;
 }
 
@@ -426,6 +428,16 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
         /* If not set length yet do it */
         if (!ctx->len_set && !ccm_set_iv(ctx, len))
             goto err;
+
+        /*
+         * The tag length is authenticated together with the message. It was
+         * encoded when the message length was passed and it cannot be changed
+         * for this message any more.
+         */
+        if (ctx->m != ctx->msg_m) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+            goto err;
+        }
 
         if (ctx->enc) {
             if (!hw->auth_encrypt(ctx, in, out, len, NULL, 0))
