@@ -132,37 +132,53 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     static const struct pem_name_map_st {
         const char *pem_name;
         int object_type;
+        /* key parts this sort of object can serve, 0 if not a key object */
+        int selection;
         const char *data_type;
         const char *data_structure;
     } pem_name_map[] = {
         /* PKCS#8 and SubjectPublicKeyInfo */
-        { PEM_STRING_PKCS8, OSSL_OBJECT_PKEY, NULL, "EncryptedPrivateKeyInfo" },
-        { PEM_STRING_PKCS8INF, OSSL_OBJECT_PKEY, NULL, "PrivateKeyInfo" },
+        { PEM_STRING_PKCS8, OSSL_OBJECT_PKEY, OSSL_KEYMGMT_SELECT_KEYPAIR,
+            NULL, "EncryptedPrivateKeyInfo" },
+        { PEM_STRING_PKCS8INF, OSSL_OBJECT_PKEY, OSSL_KEYMGMT_SELECT_KEYPAIR,
+            NULL, "PrivateKeyInfo" },
 #define PKCS8_LAST_IDX 1
-        { PEM_STRING_PUBLIC, OSSL_OBJECT_PKEY, NULL, "SubjectPublicKeyInfo" },
+        { PEM_STRING_PUBLIC, OSSL_OBJECT_PKEY, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+            NULL, "SubjectPublicKeyInfo" },
 #define SPKI_LAST_IDX 2
         /* Our set of type specific PEM types */
-        { PEM_STRING_DHPARAMS, OSSL_OBJECT_PKEY, "DH", "type-specific" },
-        { PEM_STRING_DHXPARAMS, OSSL_OBJECT_PKEY, "X9.42 DH", "type-specific" },
-        { PEM_STRING_DSA, OSSL_OBJECT_PKEY, "DSA", "type-specific" },
-        { PEM_STRING_DSA_PUBLIC, OSSL_OBJECT_PKEY, "DSA", "type-specific" },
-        { PEM_STRING_DSAPARAMS, OSSL_OBJECT_PKEY, "DSA", "type-specific" },
-        { PEM_STRING_ECPRIVATEKEY, OSSL_OBJECT_PKEY, "EC", "type-specific" },
-        { PEM_STRING_ECPARAMETERS, OSSL_OBJECT_PKEY, "EC", "type-specific" },
-        { PEM_STRING_SM2PRIVATEKEY, OSSL_OBJECT_PKEY, "SM2", "type-specific" },
-        { PEM_STRING_SM2PARAMETERS, OSSL_OBJECT_PKEY, "SM2", "type-specific" },
-        { PEM_STRING_RSA, OSSL_OBJECT_PKEY, "RSA", "type-specific" },
-        { PEM_STRING_RSA_PUBLIC, OSSL_OBJECT_PKEY, "RSA", "type-specific" },
+        { PEM_STRING_DHPARAMS, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, "DH", "type-specific" },
+        { PEM_STRING_DHXPARAMS, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, "X9.42 DH", "type-specific" },
+        { PEM_STRING_DSA, OSSL_OBJECT_PKEY, OSSL_KEYMGMT_SELECT_KEYPAIR,
+            "DSA", "type-specific" },
+        { PEM_STRING_DSA_PUBLIC, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, "DSA", "type-specific" },
+        { PEM_STRING_DSAPARAMS, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, "DSA", "type-specific" },
+        { PEM_STRING_ECPRIVATEKEY, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_KEYPAIR, "EC", "type-specific" },
+        { PEM_STRING_ECPARAMETERS, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, "EC", "type-specific" },
+        { PEM_STRING_SM2PRIVATEKEY, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_KEYPAIR, "SM2", "type-specific" },
+        { PEM_STRING_SM2PARAMETERS, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, "SM2", "type-specific" },
+        { PEM_STRING_RSA, OSSL_OBJECT_PKEY, OSSL_KEYMGMT_SELECT_KEYPAIR,
+            "RSA", "type-specific" },
+        { PEM_STRING_RSA_PUBLIC, OSSL_OBJECT_PKEY,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY, "RSA", "type-specific" },
 
         /*
          * A few others that there is at least have an object type for, even
          * though there is no provider interface to handle such objects, yet.
          * However, this is beneficial for the OSSL_STORE result handler.
          */
-        { PEM_STRING_X509, OSSL_OBJECT_CERT, NULL, "Certificate" },
-        { PEM_STRING_X509_TRUSTED, OSSL_OBJECT_CERT, NULL, "Certificate" },
-        { PEM_STRING_X509_OLD, OSSL_OBJECT_CERT, NULL, "Certificate" },
-        { PEM_STRING_X509_CRL, OSSL_OBJECT_CRL, NULL, "CertificateList" }
+        { PEM_STRING_X509, OSSL_OBJECT_CERT, 0, NULL, "Certificate" },
+        { PEM_STRING_X509_TRUSTED, OSSL_OBJECT_CERT, 0, NULL, "Certificate" },
+        { PEM_STRING_X509_OLD, OSSL_OBJECT_CERT, 0, NULL, "Certificate" },
+        { PEM_STRING_X509_CRL, OSSL_OBJECT_CRL, 0, NULL, "CertificateList" }
     };
     struct pem2der_ctx_st *ctx = vctx;
     char *pem_name = NULL, *pem_header = NULL;
@@ -178,6 +194,52 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     /* We return "empty handed".  This is not an error. */
     if (!ok)
         return 1;
+
+    /* Have a look to see if we recognise anything */
+    for (i = 0; i < OSSL_NELEM(pem_name_map); i++)
+        if (strcmp(pem_name, pem_name_map[i].pem_name) == 0)
+            break;
+
+    /*
+     * Check if the PEM object at hand is of interest at all, given the
+     * selection criteria.  If it isn't, we return early, "empty handed"
+     * (not an error), saving a potential pass phrase prompt further down.
+     * This is a best effort match:  when there's a selection, it's matched
+     * against the sort of object at hand;  otherwise, the requested data
+     * structure is translated to an approximate selection.  When there's
+     * neither a selection nor a requested data structure, anything is
+     * acceptable, historically.
+     */
+    if (i < OSSL_NELEM(pem_name_map) && pem_name_map[i].selection != 0) {
+        int sel = selection;
+
+        if (sel == 0) {
+            if (*ctx->data_structure == '\0'
+                || OPENSSL_strcasecmp(ctx->data_structure,
+                       "EncryptedPrivateKeyInfo")
+                    == 0
+                || OPENSSL_strcasecmp(ctx->data_structure,
+                       "PrivateKeyInfo")
+                    == 0)
+                sel = OSSL_KEYMGMT_SELECT_ALL;
+            else if (OPENSSL_strcasecmp(ctx->data_structure,
+                         "SubjectPublicKeyInfo")
+                == 0)
+                sel = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+                    | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+            else if (OPENSSL_strcasecmp(ctx->data_structure,
+                         "Certificate")
+                    == 0
+                || OPENSSL_strcasecmp(ctx->data_structure,
+                       "CertificateList")
+                    == 0)
+                sel = 0;
+            else
+                sel = OSSL_KEYMGMT_SELECT_ALL;
+        }
+        if ((sel & pem_name_map[i].selection) == 0)
+            goto end;
+    }
 
     /*
      * 10 is the number of characters in "Proc-Type:", which
@@ -203,11 +265,6 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
      * Ending up "empty handed" is not an error.
      */
     ok = 1;
-
-    /* Have a look to see if we recognise anything */
-    for (i = 0; i < OSSL_NELEM(pem_name_map); i++)
-        if (strcmp(pem_name, pem_name_map[i].pem_name) == 0)
-            break;
 
     if (i < OSSL_NELEM(pem_name_map)) {
         OSSL_PARAM params[5], *p = params;
