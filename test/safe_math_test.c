@@ -712,6 +712,154 @@ static int test_ushort_ops(void)
     return TEST_int_eq(err, 1) && TEST_uint_eq(r, 1);
 }
 
+/*
+ * Test the internal API. Use the same cases at each width, without narrowing
+ * the expected result.
+ */
+#define MULDIV_SIGNED_TEST_TYPE(name, type)                              \
+    OSSL_SAFE_MATH_SIGNED(name, type)                                    \
+    static ossl_intmax_t muldiv_##name(ossl_intmax_t a, ossl_intmax_t b, \
+        ossl_intmax_t c, int *err)                                       \
+    {                                                                    \
+        return safe_muldiv_##name((type)a, (type)b, (type)c, err);       \
+    }
+
+#define MULDIV_UNSIGNED_TEST_TYPE(name, type)                               \
+    OSSL_SAFE_MATH_UNSIGNED(name, type)                                     \
+    static ossl_uintmax_t muldiv_##name(ossl_uintmax_t a, ossl_uintmax_t b, \
+        ossl_uintmax_t c, int *err)                                         \
+    {                                                                       \
+        return safe_muldiv_##name((type)a, (type)b, (type)c, err);          \
+    }
+
+MULDIV_SIGNED_TEST_TYPE(i8, int8_t)
+MULDIV_SIGNED_TEST_TYPE(i16, int16_t)
+MULDIV_SIGNED_TEST_TYPE(i32, int32_t)
+MULDIV_SIGNED_TEST_TYPE(i64, int64_t)
+MULDIV_UNSIGNED_TEST_TYPE(u8, uint8_t)
+MULDIV_UNSIGNED_TEST_TYPE(u16, uint16_t)
+MULDIV_UNSIGNED_TEST_TYPE(u32, uint32_t)
+MULDIV_UNSIGNED_TEST_TYPE(u64, uint64_t)
+
+static int test_signed_muldiv_width(int n)
+{
+    static const struct {
+        ossl_intmax_t (*muldiv)(ossl_intmax_t, ossl_intmax_t, ossl_intmax_t, int *);
+        size_t size;
+        ossl_intmax_t min, max;
+    } types[] = {
+        { muldiv_i8, sizeof(int8_t), INT8_MIN, INT8_MAX },
+        { muldiv_i16, sizeof(int16_t), INT16_MIN, INT16_MAX },
+        { muldiv_i32, sizeof(int32_t), INT32_MIN, INT32_MAX },
+        { muldiv_i64, sizeof(int64_t), INT64_MIN, INT64_MAX },
+    };
+    const ossl_intmax_t min = types[n].min, max = types[n].max;
+    const struct {
+        ossl_intmax_t a, b, c, result;
+        int err;
+    } cases[] = {
+        { 3, 1, -2, -1, 0 },
+        { max, max, max, max, 0 },
+        { max, max, max - 1, 0, 1 },
+        { max, 2, 4, max / 2, 0 },
+        { min, 2, 4, min / 2, 0 },
+        { 2, min, 4, min / 2, 0 },
+        { min, min, min, min, 0 },
+        { min, min, max, 0, 1 },
+        { min, -1, -1, min, 0 },
+        { min, 1, -1, 0, 1 },
+        { min, 2, -1, 0, 1 },
+        { max, 2, -1, 0, 1 },
+        { 0, max, 1, 0, 0 },
+        { 0, max, 0, 0, 1 },
+        { max, 0, 0, 0, 1 },
+        { max, max, 0, max, 1 },
+    };
+    size_t i;
+    int initial_err, err;
+    ossl_intmax_t result;
+
+    for (i = 0; i < OSSL_NELEM(cases); i++) {
+        for (initial_err = 0; initial_err <= 2; initial_err += 2) {
+            err = initial_err;
+            result = types[n].muldiv(cases[i].a, cases[i].b, cases[i].c, &err);
+            if (!TEST_int_eq(err, initial_err | cases[i].err)
+                || (!cases[i].err && !TEST_true(result == cases[i].result))) {
+                TEST_info("signed width %zu, case %zu", types[n].size, i);
+                return 0;
+            }
+            if (cases[i].c != 0) {
+                err = initial_err;
+                result = ossl_safe_muldiv_signed(cases[i].a, cases[i].b,
+                    cases[i].c, types[n].size, min, max, &err);
+                if (!TEST_int_eq(err, initial_err | cases[i].err)
+                    || (!cases[i].err && !TEST_true(result == cases[i].result))) {
+                    TEST_info("signed helper width %zu, case %zu", types[n].size, i);
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+static int test_unsigned_muldiv_width(int n)
+{
+    static const struct {
+        ossl_uintmax_t (*muldiv)(ossl_uintmax_t, ossl_uintmax_t, ossl_uintmax_t, int *);
+        size_t size;
+        ossl_uintmax_t max;
+    } types[] = {
+        { muldiv_u8, sizeof(uint8_t), UINT8_MAX },
+        { muldiv_u16, sizeof(uint16_t), UINT16_MAX },
+        { muldiv_u32, sizeof(uint32_t), UINT32_MAX },
+        { muldiv_u64, sizeof(uint64_t), UINT64_MAX },
+    };
+    const ossl_uintmax_t max = types[n].max;
+    const struct {
+        ossl_uintmax_t a, b, c, result;
+        int err;
+    } cases[] = {
+        { 3, 1, 2, 1, 0 },
+        { max, max, max, max, 0 },
+        { max, max, max - 1, 0, 1 },
+        { max, 2, 4, max / 2, 0 },
+        { 2, max, 4, max / 2, 0 },
+        { max - 1, max - 1, max, max - 2, 0 },
+        { max, max, 1, 0, 1 },
+        { 0, max, 1, 0, 0 },
+        { 0, max, 0, 0, 1 },
+        { max, 0, 0, 0, 1 },
+        { max, max, 0, max, 1 },
+    };
+    size_t i;
+    int initial_err, err;
+    ossl_uintmax_t result;
+
+    for (i = 0; i < OSSL_NELEM(cases); i++) {
+        for (initial_err = 0; initial_err <= 2; initial_err += 2) {
+            err = initial_err;
+            result = types[n].muldiv(cases[i].a, cases[i].b, cases[i].c, &err);
+            if (!TEST_int_eq(err, initial_err | cases[i].err)
+                || (!cases[i].err && !TEST_true(result == cases[i].result))) {
+                TEST_info("unsigned width %zu, case %zu", types[n].size, i);
+                return 0;
+            }
+            if (cases[i].c != 0) {
+                err = initial_err;
+                result = ossl_safe_muldiv_unsigned(cases[i].a, cases[i].b,
+                    cases[i].c, types[n].size, max, &err);
+                if (!TEST_int_eq(err, initial_err | cases[i].err)
+                    || (!cases[i].err && !TEST_true(result == cases[i].result))) {
+                    TEST_info("unsigned helper width %zu, case %zu", types[n].size, i);
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_limits);
@@ -726,5 +874,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_uint_muldiv, OSSL_NELEM(test_muldiv_uints));
     ADD_ALL_TESTS(test_int64_t_muldiv, OSSL_NELEM(test_muldiv_int64_ts));
     ADD_ALL_TESTS(test_uint64_t_muldiv, OSSL_NELEM(test_muldiv_uint64_ts));
+    ADD_ALL_TESTS(test_signed_muldiv_width, 4);
+    ADD_ALL_TESTS(test_unsigned_muldiv_width, 4);
     return 1;
 }
