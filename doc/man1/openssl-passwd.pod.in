@@ -43,14 +43,18 @@ Print out a usage message.
 =item B<-1>
 
 Use the MD5 based BSD password algorithm B<1> (default).
+This option exists only if OpenSSL was built with MD5 support; without it
+there is no default and one of the other algorithm options must be given.
 
 =item B<-apr1>
 
 Use the B<apr1> algorithm (Apache variant of the BSD algorithm).
+This option exists only if OpenSSL was built with MD5 support.
 
 =item B<-aixmd5>
 
 Use the B<AIX MD5> algorithm (AIX variant of the BSD algorithm).
+This option exists only if OpenSSL was built with MD5 support.
 
 =item B<-5>
 
