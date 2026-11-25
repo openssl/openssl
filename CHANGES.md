@@ -254,6 +254,14 @@ OpenSSL 4.2
 
    *Daiki Ueno and Clemens Lang*
 
+ * Improved AES-GCM performance on `x86_64` processors with AVX512 and VAES
+   support.  The encryption and decryption loop width is now selected from the
+   message length, and GHASH uses Karatsuba multiplication with prefolded hash
+   keys.
+   <!-- https://github.com/openssl/openssl/pull/31633 -->
+
+   *Madan Mohan Manokar*
+
 OpenSSL 4.1
 -----------
 
