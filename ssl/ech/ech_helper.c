@@ -119,9 +119,7 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
          * found.
          */
         return 1;
-    /* no extensions is theoretically ok, if uninteresting */
-    if (*exts_len == 0)
-        return 1;
+    
     /* find what we want from extensions */
     estart = PACKET_data(&pkt);
     while (PACKET_remaining(&pkt) > 0
