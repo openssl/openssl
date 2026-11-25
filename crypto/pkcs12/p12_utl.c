@@ -94,12 +94,23 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
 unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
     unsigned char **uni, int *unilen)
 {
-    int ulen, i, j;
+    int ulen, i, j, err = 0;
     unsigned char *unitmp, *ret;
     uint32_t utf32chr = 0;
 
-    if (asclen == -1)
-        asclen = (int)strlen(asc);
+    if (asclen == -1) {
+        size_t len = strlen(asc);
+
+        if (len > INT_MAX)
+            return NULL;
+        asclen = (int)len;
+    }
+    if (asclen < 0)
+        return NULL;
+    /* The resulting length is discarded: this is only an overflow check. */
+    (void)safe_add_int(safe_mul_int(asclen, 2, &err), 2, &err);
+    if (err)
+        return NULL;
 
     for (ulen = 0, i = 0; i < asclen; i += j) {
         j = ossl_utf8_getc_internal((const unsigned char *)asc + i, asclen - i,

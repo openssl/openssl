@@ -933,6 +933,93 @@ static int test_safe_math_asc2uni_boundary(void)
     return TEST_true(err);
 }
 
+static int test_utf82uni_overflow(void)
+{
+    unsigned char *result = NULL;
+    unsigned char *out = (unsigned char *)0x1;
+    int unilen = -12345;
+    int ret = 0;
+
+    result = OPENSSL_utf82uni("A", (INT_MAX - 2) / 2 + 1, &out, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    result = OPENSSL_utf82uni("A", INT_MAX, &out, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    result = OPENSSL_utf82uni("A", -2, &out, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    if (!TEST_ptr_eq(out, (unsigned char *)0x1)
+        || !TEST_int_eq(unilen, -12345))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
+static int test_utf82uni_outputs(void)
+{
+    static const unsigned char expected_empty[] = { 0x00, 0x00 };
+    static const unsigned char expected_ascii[] = {
+        0x00, 0x41, 0x00, 0x42, 0x00, 0x00
+    };
+    static const unsigned char expected_surrogate[] = {
+        0x00, 0x41, 0xD8, 0x3D, 0xDE, 0x00, 0x00, 0x00
+    };
+    static const unsigned char expected_latin1[] = {
+        0x00, 0xE9, 0x00, 0x00
+    };
+    static const char utf8_emoji[] = "A\xF0\x9F\x98\x80";
+    unsigned char *result = NULL;
+    int unilen = 0;
+    int ret = 0;
+
+    result = OPENSSL_utf82uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result)
+        || !TEST_int_eq(unilen, 2)
+        || !TEST_mem_eq(result, 2, expected_empty, sizeof(expected_empty)))
+        goto err;
+    OPENSSL_free(result);
+    result = NULL;
+
+    result = OPENSSL_utf82uni("AB", -1, &result, &unilen);
+    if (!TEST_ptr(result)
+        || !TEST_int_eq(unilen, 6)
+        || !TEST_mem_eq(result, (size_t)unilen,
+            expected_ascii, sizeof(expected_ascii)))
+        goto err;
+    OPENSSL_free(result);
+    result = NULL;
+
+    result = OPENSSL_utf82uni(utf8_emoji, (int)sizeof(utf8_emoji) - 1,
+        &result, &unilen);
+    if (!TEST_ptr(result)
+        || !TEST_int_eq(unilen, 8)
+        || !TEST_mem_eq(result, (size_t)unilen,
+            expected_surrogate, sizeof(expected_surrogate)))
+        goto err;
+    OPENSSL_free(result);
+    result = NULL;
+
+    /* Invalid UTF-8 falls back to OPENSSL_asc2uni(). */
+    result = OPENSSL_utf82uni("\xE9", 1, &result, &unilen);
+    if (!TEST_ptr(result)
+        || !TEST_int_eq(unilen, 4)
+        || !TEST_mem_eq(result, (size_t)unilen,
+            expected_latin1, sizeof(expected_latin1)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -1009,6 +1096,8 @@ int setup_tests(void)
         ADD_TEST(test_asc2uni_outputs);
         ADD_TEST(test_asc2uni_strlen);
         ADD_TEST(test_safe_math_asc2uni_boundary);
+        ADD_TEST(test_utf82uni_overflow);
+        ADD_TEST(test_utf82uni_outputs);
     }
     return 1;
 }
