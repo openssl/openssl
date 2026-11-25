@@ -703,6 +703,76 @@ static void test_conn_state_blocked_ok(void **state)
     reset_for_teardown(bio);
 }
 
+static void test_conn_state_blocked_retry(void **state)
+{
+    /* Pre-set BLOCKED_CONNECT: socket is not yet writable -> retry */
+    BIO *bio = *state;
+    BIO_CONNECT *data = get_data(bio);
+
+    data->state = BIO_CONN_S_BLOCKED_CONNECT;
+    data->addr_iter = &g_addrinfo1;
+    bio->num = FAKE_SOCKET;
+
+    expect_BIO_socket_wait(FAKE_SOCKET, 0, 0);
+
+    assert_int_equal(BIO_ctrl(bio, BIO_C_DO_STATE_MACHINE, 0, NULL), 0);
+    assert_int_equal(data->state, BIO_CONN_S_BLOCKED_CONNECT);
+    assert_true(BIO_should_retry(bio));
+    assert_true(BIO_should_io_special(bio));
+    assert_int_equal(bio->retry_reason, BIO_RR_CONNECT);
+
+    reset_for_teardown(bio);
+}
+
+static void test_conn_state_blocked_wait_retry(void **state)
+{
+    /* Pre-set BLOCKED_CONNECT: the readiness check is interrupted -> retry */
+    BIO *bio = *state;
+    BIO_CONNECT *data = get_data(bio);
+
+    data->state = BIO_CONN_S_BLOCKED_CONNECT;
+    data->addr_iter = &g_addrinfo1;
+    bio->num = FAKE_SOCKET;
+
+    expect_BIO_socket_wait(FAKE_SOCKET, 0, -1);
+    expect_BIO_sock_should_retry(-1, 1);
+
+    assert_int_equal(BIO_ctrl(bio, BIO_C_DO_STATE_MACHINE, 0, NULL), 0);
+    assert_int_equal(data->state, BIO_CONN_S_BLOCKED_CONNECT);
+    assert_true(BIO_should_retry(bio));
+    assert_true(BIO_should_io_special(bio));
+    assert_int_equal(bio->retry_reason, BIO_RR_CONNECT);
+
+    reset_for_teardown(bio);
+}
+
+static void test_conn_state_blocked_wait_error(void **state)
+{
+    /* Pre-set BLOCKED_CONNECT: a permanent readiness error is fatal */
+    BIO *bio = *state;
+    BIO_CONNECT *data = get_data(bio);
+
+    data->state = BIO_CONN_S_BLOCKED_CONNECT;
+    data->addr_iter = &g_addrinfo1;
+    bio->num = FAKE_SOCKET;
+    BIO_set_retry_special(bio);
+    bio->retry_reason = BIO_RR_CONNECT;
+
+    expect_BIO_socket_wait(FAKE_SOCKET, 0, -1);
+    expect_BIO_sock_should_retry(-1, 0);
+    errno = EIO;
+
+    assert_int_equal(BIO_ctrl(bio, BIO_C_DO_STATE_MACHINE, 0, NULL), -1);
+    assert_int_equal(data->state, BIO_CONN_S_BLOCKED_CONNECT);
+    assert_false(BIO_should_retry(bio));
+    assert_int_equal(bio->retry_reason, 0);
+    assert_int_equal(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_SYS);
+    assert_int_equal(ERR_GET_REASON(ERR_peek_last_error()), EIO);
+    ERR_clear_error();
+
+    reset_for_teardown(bio);
+}
+
 static void test_conn_state_blocked_error(void **state)
 {
     /* Pre-set BLOCKED_CONNECT: socket error, no more addresses -> error */
@@ -1512,6 +1582,9 @@ int main(void)
         CONN_TEST(test_conn_state_connect_error),
         CONN_TEST(test_conn_state_connect_next_addr),
         CONN_TEST(test_conn_state_blocked_ok),
+        CONN_TEST(test_conn_state_blocked_retry),
+        CONN_TEST(test_conn_state_blocked_wait_retry),
+        CONN_TEST(test_conn_state_blocked_wait_error),
         CONN_TEST(test_conn_state_blocked_error),
 #ifndef OPENSSL_NO_DGRAM
         CONN_TEST(test_conn_state_connect_dgram_ok),
