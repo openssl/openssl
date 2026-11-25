@@ -499,7 +499,8 @@ static int test_xwing_copy_parameters(void)
     if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "X-Wing"))
         || !TEST_ptr(original = EVP_PKEY2PKCS8(key))
         || !TEST_int_gt(original_len = i2d_PKCS8_PRIV_KEY_INFO(original,
-                           &original_der), 0)
+                            &original_der),
+            0)
         || !TEST_ptr(params = EVP_PKEY_new())
         || !TEST_true(EVP_PKEY_copy_parameters(params, key)))
         goto end;
@@ -513,7 +514,8 @@ static int test_xwing_copy_parameters(void)
         || !TEST_int_eq(EVP_PKEY_eq(key, dup), 1)
         || !TEST_ptr(copied = EVP_PKEY2PKCS8(dup))
         || !TEST_int_gt(copied_len = i2d_PKCS8_PRIV_KEY_INFO(copied,
-                           &copied_der), 0)
+                            &copied_der),
+            0)
         || !TEST_mem_eq(original_der, original_len, copied_der, copied_len))
         goto end;
 
