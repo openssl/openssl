@@ -28,8 +28,20 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, in
 
 void ossl_sha3_reset(KECCAK1600_CTX *ctx)
 {
-#if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
-    if (!(OPENSSL_s390xcap_P.stfle[1] & S390X_CAPBIT(S390X_MSA12)))
+#if defined(S390_SHA3)
+    /*
+     * With MSA12, KIMD/KLMD ignore A in the initial state (NIP modifier), so
+     * clearing it can be skipped, but only if the context really uses CPACF.
+     * Those contexts keep the KIMD/KLMD function code in ctx->pad. Contexts
+     * that use the software code (e.g. CPACF masked off by OPENSSL_s390xcap)
+     * need A cleared, as they have no such modifier.
+     * ctx->pad is still 0 when the context is initialized for the first time.
+     * It is zero-allocated then, so A does not need to be cleared either.
+     */
+    if (!(OPENSSL_s390xcap_P.stfle[1] & S390X_CAPBIT(S390X_MSA12))
+        || (ctx->pad != 0
+            && (ctx->pad < S390X_SHA3_224 || ctx->pad > S390X_SHAKE_256
+                || !S390_SHA3_CAPABLE(ctx->pad))))
 #endif
         memset(ctx->A, 0, sizeof(ctx->A));
     ctx->bufsz = 0;
