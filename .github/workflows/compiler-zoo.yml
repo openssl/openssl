@@ -8,6 +8,7 @@
 name: Compiler Zoo CI
 
 on:
+  pull_request:
   schedule:
     - cron: '45 02 * * *'
   workflow_dispatch:
