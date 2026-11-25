@@ -726,7 +726,8 @@ int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
  * @see X509_STORE_CTX_set_trust_ex(3)
  */
 int X509_STORE_CTX_set_trust_ex(X509_STORE_CTX *ctx, int trust, int override);
-int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose, int purpose, int trust);
+int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
+    int purpose, int trust);
 /**
  * @brief Set the purpose and trust id values for ctx, overriding any
  * purpose or trust id that was already set.
