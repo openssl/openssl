@@ -18,17 +18,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#if !defined(OPENSSL_SYS_WINDOWS)
-#include <unistd.h>
-#else
-#include <windows.h>
-#define sleep(x) Sleep(x * 1000)
-#endif
 
 #define HOSTPORT "localhost:4433"
 #define CAFILE "root.pem"
+/* Maximum number of seconds to wait for the socket before giving up */
+#define TIMEOUT 10
+
+/* Wait until the socket is ready for the operation that is to be retried */
+static int wait_for_retry(BIO *bio)
+{
+    /* Waits for reading if BIO_should_read(), else (e.g. connect) for writing */
+    return BIO_wait(bio, time(NULL) + TIMEOUT, 100) > 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -97,12 +101,15 @@ int main(int argc, char *argv[])
         i = BIO_write(out, &(p[off]), len);
         if (i <= 0) {
             if (BIO_should_retry(out)) {
-                fprintf(stderr, "write DELAY\n");
-                sleep(1);
-                continue;
-            } else {
-                goto err;
+                if (BIO_should_io_special(out)
+                    && BIO_get_retry_reason(out) == BIO_RR_CONNECT)
+                    fprintf(stderr, "connect DELAY\n");
+                else
+                    fprintf(stderr, "write DELAY\n");
+                if (wait_for_retry(out))
+                    continue;
             }
+            goto err;
         }
         off += i;
         len -= i;
@@ -117,8 +124,8 @@ int main(int argc, char *argv[])
         if (i < 0) {
             if (BIO_should_retry(out)) {
                 fprintf(stderr, "read DELAY\n");
-                sleep(1);
-                continue;
+                if (wait_for_retry(out))
+                    continue;
             }
             goto err;
         }
