@@ -2120,7 +2120,10 @@ int s_server_main(int argc, char *argv[])
             if (tlscstatp.sk_resp_in == NULL
                 && (tlscstatp.sk_resp_in = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(tlscstatp.sk_resp_in, opt_arg());
+            if (sk_OPENSSL_STRING_push(tlscstatp.sk_resp_in, opt_arg()) <= 0) {
+                BIO_puts(bio_err, "Error adding -status_file argument\n");
+                goto end;
+            }
 #endif
             break;
         case OPT_MSG:
