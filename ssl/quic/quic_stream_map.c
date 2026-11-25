@@ -853,13 +853,24 @@ size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm)
         + ossl_quic_stream_map_get_accept_queue_len(qsm, /*is_uni=*/1);
 }
 
-void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm)
+int ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm, OSSL_TIME rtt)
 {
     QUIC_STREAM *qs;
+    uint64_t final_size, retired;
 
     while ((qs = ready_for_gc_head(&qsm->ready_for_gc_list)) != NULL) {
+        if (ossl_quic_stream_recv_get_final_size(qs, &final_size)) {
+            retired = ossl_quic_rxfc_get_rwm(&qs->rxfc);
+            if (retired > final_size
+                || (retired != final_size
+                    && !ossl_quic_rxfc_on_retire(&qs->rxfc, final_size - retired, rtt)))
+                return 0;
+        }
+
         ossl_quic_stream_map_release(qsm, qs);
     }
+
+    return 1;
 }
 
 static int eligible_for_shutdown_flush(QUIC_STREAM *qs)
