@@ -232,6 +232,8 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         }
         if (offset && !OPENSSL_gmtime_adj(&tmp, 0, offset * offsign))
             goto err;
+        if (offset)
+            determine_days(&tmp);
     } else {
         /* not Z, or not +/- */
         goto err;
@@ -429,9 +431,10 @@ int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 
         time(&now_t);
         memset(tm, 0, sizeof(*tm));
-        if (OPENSSL_gmtime(&now_t, tm) != NULL)
-            return 1;
-        return 0;
+        if (OPENSSL_gmtime(&now_t, tm) == NULL)
+            return 0;
+        determine_days(tm);
+        return 1;
     }
 
     return ossl_asn1_time_to_tm(tm, s);

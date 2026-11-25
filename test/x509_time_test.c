@@ -644,6 +644,67 @@ static int test_days(int n)
     return r;
 }
 
+static const struct {
+    const char *time;
+    int yday;
+    int wday;
+} offset_day_tests[] = {
+    /* The offset keeps the same UTC date. */
+    { "20240615120000-0500", 166, 6 },
+    /* The offset moves the time into the next UTC date. */
+    { "20240614230000-0500", 166, 6 },
+    /* The offset moves the time into the previous UTC date. */
+    { "20240615010000+0200", 165, 5 },
+    /* The offset moves the time into the next UTC year. */
+    { "20241231230000-0200", 0, 3 },
+    /* The offset moves the time into the previous UTC year. */
+    { "20240101010000+0200", 364, 0 }
+};
+
+static int test_offset_days(int n)
+{
+    ASN1_TIME *a = NULL;
+    struct tm t;
+    int r;
+
+    if (!TEST_ptr(a = ASN1_TIME_new()))
+        return 0;
+
+    r = TEST_true(ASN1_TIME_set_string(a, offset_day_tests[n].time))
+        && TEST_true(ASN1_TIME_to_tm(a, &t))
+        && TEST_int_eq(t.tm_yday, offset_day_tests[n].yday)
+        && TEST_int_eq(t.tm_wday, offset_day_tests[n].wday);
+
+    ASN1_TIME_free(a);
+    return r;
+}
+
+static int test_current_time_days(void)
+{
+    ASN1_TIME *a = NULL;
+    struct tm current, parsed;
+    char buf[16];
+    int r = 0;
+
+    if (!TEST_true(ASN1_TIME_to_tm(NULL, &current))
+        || !TEST_ptr(a = ASN1_TIME_new()))
+        goto err;
+
+    /* Parse the same calendar date to check the derived fields. */
+    if (!TEST_int_eq(strftime(buf, sizeof(buf), "%Y%m%d000000Z",
+                         &current),
+            15))
+        goto err;
+    r = TEST_true(ASN1_TIME_set_string(a, buf))
+        && TEST_true(ASN1_TIME_to_tm(a, &parsed))
+        && TEST_int_eq(current.tm_yday, parsed.tm_yday)
+        && TEST_int_eq(current.tm_wday, parsed.tm_wday);
+
+err:
+    ASN1_TIME_free(a);
+    return r;
+}
+
 #define construct_asn1_time(s, t, e) \
     { { sizeof(s) - 1, t, (unsigned char *)s, 0 }, e }
 
@@ -766,6 +827,8 @@ int setup_tests(void)
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
     ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
     ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
+    ADD_ALL_TESTS(test_offset_days, OSSL_NELEM(offset_day_tests));
+    ADD_TEST(test_current_time_days);
     ADD_ALL_TESTS(test_x509_time_print_rfc_822, OSSL_NELEM(x509_print_tests_rfc_822));
     ADD_ALL_TESTS(test_x509_time_print_iso_8601, OSSL_NELEM(x509_print_tests_iso_8601));
     return 1;
