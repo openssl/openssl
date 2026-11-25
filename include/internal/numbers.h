@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,11 @@
 #if (-1 & 3) == 0x03 /* Two's complement */
 
 #define __MAXUINT__(T) ((T) - 1)
-#define __MAXINT__(T) ((T)((((T)1) << ((sizeof(T) * CHAR_BIT) - 1)) ^ __MAXUINT__(T)))
+/*
+ * Avoid shifting into the sign bit: form half the maximum, then double it
+ * and add one.
+ */
+#define __MAXINT__(T) ((T)((((T)1 << (sizeof(T) * CHAR_BIT - 2)) - 1) * 2 + 1))
 #define __MININT__(T) (-__MAXINT__(T) - 1)
 
 #elif (-1 & 3) == 0x02 /* Ones' complement */
