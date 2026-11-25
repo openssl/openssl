@@ -170,6 +170,10 @@ static int test_bio_dgram_impl(int af, int use_local)
     BIO_MSG tx_msg[128], rx_msg[128];
     char tx_buf[128];
     size_t num_processed = 0;
+#if defined(SO_RCVBUF)
+    int rcvbuf = 0;
+    socklen_t rcvbuf_len = sizeof(rcvbuf);
+#endif
 
     if (af == AF_INET) {
         TEST_info("# Testing with AF_INET, local=%d\n", use_local);
@@ -230,6 +234,24 @@ static int test_bio_dgram_impl(int af, int use_local)
     fd2 = BIO_socket(af, SOCK_DGRAM, IPPROTO_UDP, 0);
     if (!TEST_int_ge(fd2, 0))
         goto err;
+
+#if defined(SO_RCVBUF)
+    /*
+     * The messages below are all sent before any is received.  The default
+     * buffer on NetBSD does not hold them, and the rest is dropped.
+     */
+    if (!TEST_int_eq(getsockopt(fd2, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf,
+                         &rcvbuf_len),
+            0))
+        goto err;
+    if (rcvbuf < 128 * 1024) {
+        rcvbuf = 128 * 1024;
+        if (!TEST_int_eq(setsockopt(fd2, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf,
+                             sizeof(rcvbuf)),
+                0))
+            goto err;
+    }
+#endif
 
     if (BIO_bind(fd1, addr1, 0) <= 0
         || BIO_bind(fd2, addr2, 0) <= 0) {
