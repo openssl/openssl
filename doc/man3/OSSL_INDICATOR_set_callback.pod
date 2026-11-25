@@ -20,14 +20,23 @@ typedef int (OSSL_INDICATOR_CALLBACK)(const char *type, const char *desc,
 =head1 DESCRIPTION
 
 OSSL_INDICATOR_set_callback() sets a user callback I<cb> associated with a
-I<libctx> that will be called when a non approved FIPS operation is detected.
+I<libctx> that can be called when a non approved FIPS operation is detected.
 
 The user's callback may be triggered multiple times during an algorithm operation
 to indicate different approved mode checks have failed.
 
-Non approved operations may only occur if the user has deliberately chosen to do
-so (either by setting a global FIPS configuration option or via an option in an
-algorithm's operation context).
+Except for the operations described below, non approved operations may only
+occur if the user has deliberately chosen to do so (either by setting a global
+FIPS configuration option or via an option in an algorithm's operation context).
+
+Some operations do not trigger the callback because their approval depends on
+how they are used. In particular, AES-ECB encryption can succeed without a
+callback even when the cipher was fetched with C<fips=yes>. After a successful
+AES-ECB operation, callers must query
+B<OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR> using
+L<EVP_CIPHER_CTX_get_params(3)>. The indicator returns 0 for encryption and 1 for
+decryption. Fetching a cipher with C<fips=yes> does not by itself establish that
+every operation using that cipher is approved.
 
 The user's callback B<OSSL_INDICATOR_CALLBACK> I<type> and I<desc>
 contain the algorithm type and operation that is not approved.

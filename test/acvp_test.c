@@ -25,6 +25,7 @@
 #include <openssl/param_build.h>
 #include <openssl/provider.h>
 #include <openssl/self_test.h>
+#include <openssl/indicator.h>
 #include "testutil.h"
 #include "testutil/output.h"
 #include "acvp_test.inc"
@@ -872,6 +873,42 @@ err:
 }
 #endif /* OPENSSL_NO_DSA */
 
+static int test_cipher(EVP_CIPHER_CTX *ctx, EVP_CIPHER *cipher,
+    const unsigned char *pt, size_t pt_len,
+    const unsigned char *key,
+    const unsigned char *iv,
+    const unsigned char *ct, size_t ct_len, int enc, int expect_approved,
+    EVP_SKEY *skey)
+{
+    int ret = 0, out_len = 0, len = 0;
+    unsigned char out[256] = { 0 };
+    int approved = -1;
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_int(
+        OSSL_CIPHER_PARAM_FIPS_APPROVED_INDICATOR, &approved);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (skey != NULL) {
+        if (!TEST_true(EVP_CipherInit_SKEY(ctx, cipher, skey, iv, 0, enc, NULL)))
+            goto err;
+    } else if (!TEST_true(EVP_CipherInit_ex2(ctx, cipher, key, iv, enc, NULL))) {
+        goto err;
+    }
+    if (!TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
+        || !TEST_true(EVP_CipherUpdate(ctx, out, &len, pt, (int)pt_len))
+        || !TEST_true(EVP_CipherFinal_ex(ctx, out + len, &out_len)))
+        goto err;
+    out_len += len;
+    if (!TEST_mem_eq(out, out_len, ct, ct_len)
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_int_eq(approved, expect_approved))
+        goto err;
+    ret = 1;
+err:
+    return ret;
+}
+
 /* cipher encrypt/decrypt */
 static int cipher_enc(const char *alg,
     const unsigned char *pt, size_t pt_len,
@@ -880,21 +917,14 @@ static int cipher_enc(const char *alg,
     const unsigned char *ct, size_t ct_len,
     int enc)
 {
-    int ret = 0, out_len = 0, len = 0;
+    int ret = 0;
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
-    unsigned char out[256] = { 0 };
 
     TEST_note("%s : %s", alg, enc ? "encrypt" : "decrypt");
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
         || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, alg, ""))
-        || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc))
-        || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
-        || !TEST_true(EVP_CipherUpdate(ctx, out, &len, pt, (int)pt_len))
-        || !TEST_true(EVP_CipherFinal_ex(ctx, out + len, &out_len)))
-        goto err;
-    out_len += len;
-    if (!TEST_mem_eq(out, out_len, ct, ct_len))
+        || !test_cipher(ctx, cipher, pt, pt_len, key, iv, ct, ct_len, enc, 1, NULL))
         goto err;
     ret = 1;
 err:
@@ -916,6 +946,49 @@ static int cipher_enc_dec_test(int id)
             tst->key, tst->key_len,
             tst->iv, tst->iv_len,
             tst->pt, tst->pt_len, !enc));
+}
+
+/* ECB must not invoke the callback, even when the callback rejects operations. */
+static int cipher_ecb_indicator_cb(const char *type, const char *desc,
+    const OSSL_PARAM params[])
+{
+    return 0;
+}
+
+static int cipher_ecb_reinit_test(int use_skey)
+{
+    const struct cipher_st *tst = &cipher_ecb_data[0];
+    int ret = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_SKEY *skey = NULL;
+    OSSL_INDICATOR_CALLBACK *saved_cb = NULL;
+
+    OSSL_INDICATOR_get_callback(libctx, &saved_cb);
+    OSSL_INDICATOR_set_callback(libctx, cipher_ecb_indicator_cb);
+
+    if (use_skey
+        && !TEST_ptr(skey = EVP_SKEY_import_raw_key(libctx, OSSL_SKEY_TYPE_AES,
+                         (unsigned char *)tst->key, tst->key_len, NULL)))
+        goto err;
+
+    /* Keep the provider context when changing direction in both directions. */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, tst->alg, "fips=yes"))
+        || !test_cipher(ctx, cipher, tst->pt, tst->pt_len, tst->key, tst->iv,
+            tst->ct, tst->ct_len, 1, 0, skey)
+        || !test_cipher(ctx, NULL, tst->ct, tst->ct_len, tst->key, tst->iv,
+            tst->pt, tst->pt_len, 0, 1, skey)
+        || !test_cipher(ctx, NULL, tst->pt, tst->pt_len, tst->key, tst->iv,
+            tst->ct, tst->ct_len, 1, 0, skey))
+        goto err;
+    ret = 1;
+err:
+    OSSL_INDICATOR_set_callback(libctx, saved_cb);
+    EVP_SKEY_free(skey);
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
 }
 
 static int aes_ccm_enc_dec(const char *alg,
@@ -1829,6 +1902,8 @@ int setup_tests(void)
 
     ADD_TEST(aes_cfb1_bits_test);
     ADD_ALL_TESTS(cipher_enc_dec_test, OSSL_NELEM(cipher_enc_data));
+    if (fips_provider_version_ge(libctx, 4, 2, 0))
+        ADD_ALL_TESTS(cipher_ecb_reinit_test, 2);
     ADD_ALL_TESTS(aes_ccm_enc_dec_test, OSSL_NELEM(aes_ccm_enc_data));
     ADD_ALL_TESTS(aes_gcm_enc_dec_test, OSSL_NELEM(aes_gcm_enc_data));
     if (fips_provider_version_ge(libctx, 3, 4, 0))

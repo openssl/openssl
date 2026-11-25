@@ -127,6 +127,26 @@ OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_aead_settable_ctx_params;
 OSSL_FUNC_cipher_encrypt_skey_init_fn ossl_cipher_generic_skey_einit;
 OSSL_FUNC_cipher_decrypt_skey_init_fn ossl_cipher_generic_skey_dinit;
 
+/**
+ * @brief Initialize a generic provider cipher operation.
+ *
+ * Reset per-operation state, optionally install a key and IV, and apply the
+ * generic context parameters. Callers with mode-specific parameter handling
+ * should pass NULL for params and apply their own setter after initialization.
+ *
+ * @param ctx Cipher context with its algorithm and hardware methods configured.
+ * @param key Key bytes, or NULL to leave the existing key unchanged.
+ * @param keylen Length of key in bytes.
+ * @param iv IV bytes, or NULL to follow the cipher mode's IV reuse rules.
+ * @param ivlen Length of iv in bytes.
+ * @param params Generic context parameters to apply, or NULL for none.
+ * @param enc Nonzero for encryption, zero for decryption.
+ * @returns 1 on success, or 0 on failure.
+ */
+int ossl_cipher_generic_init(PROV_CIPHER_CTX *ctx, const unsigned char *key,
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[], int enc);
+
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
     uint64_t flags,
     size_t kbits, size_t blkbits, size_t ivbits);
