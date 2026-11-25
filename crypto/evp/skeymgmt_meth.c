@@ -76,7 +76,13 @@ static void *skeymgmt_from_algorithm(int name_id,
         evp_skeymgmt_free(skeymgmt);
         return NULL;
     }
-    skeymgmt->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        skeymgmt->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (skeymgmt->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        evp_skeymgmt_free(skeymgmt);
+        return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -158,6 +164,8 @@ static void evp_skeymgmt_free(void *s)
     if (ref > 0)
         return;
     OPENSSL_free(skeymgmt->type_name);
+    if (skeymgmt->no_store != 0)
+        OPENSSL_free((char *)skeymgmt->description);
     ossl_provider_free(skeymgmt->prov);
     CRYPTO_FREE_REF(&skeymgmt->refcnt);
     OPENSSL_free(skeymgmt);
