@@ -1408,7 +1408,6 @@ ___
 }}}
 $code.=<<___;
 .section .rodata
-.align 64
 .asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 .align	16

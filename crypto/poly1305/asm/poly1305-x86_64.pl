@@ -3827,8 +3827,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.section .rodata
-.align 64
+.section .rodata align=64
 .asciz	"Poly1305 for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 .align	16

@@ -157,63 +157,33 @@ _____
 
 my $current_segment;
 #
-# I could not find equivalent of .previous directive for MASM (Microsoft
-# assembler ML). Using of .previous got introduced to .pl files with
-# placing of various constants into .rodata sections (segments).
-# Each .rodata section is terminated by .previous directive which
-# restores the preceding section to .rodata:
+# For NASM and MASM, emulate the perlasm convention of using .previous to
+# return to .text after a .section .rodata block. This does not implement
+# the general GNU as semantics of .previous for arbitrary section switches.
+# MASM needs ENDS for the current segment and SEGMENT for the restored one;
+# NASM only needs a section directive naming the restored section.
 #
-# .text
-# 	; this is is the text section/segment
-# .rodata
-#	; constant definitions go here
-# .previous
-#	; the .text section which precedes .rodata got restored here
+# In these paths, segment_stack holds a .text fallback below the current
+# section. The first .text or .section directive creates that fallback,
+# including when the input starts with constants rather than an explicit
+# .text directive. Section switches replace the top entry, keeping the
+# fallback below it. The names are .text/.rdata for NASM and .text$/.rdata
+# for MASM.
 #
-# The equivalent form for masm reads as follows:
+# For example, the NASM stack contents (bottom to top) are:
 #
-# .text$	SEGMENT ALIGN(256) 'CODE'
-# 	; this is is the text section/segment
-# .text$	ENDS
-# .rdata	SEGMENT READONLY ALIGN(64)
-#	; constant definitions go here
-# .rdata$	ENDS
-# .text$	SEGMENT ALIGN(256) 'CODE'
-#	; text section follows
-# .text$	ENDS
+# Input directive           Stack after the directive
+# .text                     ('.text', '.text')
+# .section .rodata          ('.text', '.rdata')
+# .previous                 ('.text', '.text')
+# .section .rodata          ('.text', '.rdata')
+# .previous                 ('.text', '.text')
 #
-# The .previous directive typically terminates .roadata segments/sections which
-# hold definitions of constants. In order to place constants into .rdata
-# segments when using masm we need to introduce a segment_stack array so we can
-# emit proper ENDS directive whenever we see .previous.
-#
-# The code is tailored to work current set of .pl/asm files. There are some
-# inconsistencies. For example .text section is the first section in all those
-# files except ecp_nistz256. So we need to take that into account.
-#
-#	; stack is empty
-# .text
-#	; push '.text ' section twice, the stack looks as
-#	; follows:
-#	;	('.text', '.text')
-# .rodata
-#	; pop() so we can generate proper 'ENDS' for masm.
-#	; stack looks like:
-#	; 	('.text')
-#	; push '.rodata', so we can create corresponding ENDS for masm.
-#	; stack looks like:
-#	;	('.rodata', '.text')
-# .previous
-#	; pop() '.rodata' from stack, so we create '.rodata ENDS'
-#	; in masm flavour. For nasm flavour we just pop() because
-#	; nasm does not use .rodata ENDS to close the current section
-#	; the stack content is like this:
-#	;	('.text', '.text')
-#	; pop() again to find a previous section we need to restore.
-#	; Depending on flavour we either generate .section .text
-#	; or .text SEGMENT. The stack looks like:
-#	; ('.text')
-#
+# The two .text entries have different roles: the bottom one is the fallback
+# and the top one is the current section. In .previous, pop the current
+# section, read the fallback without removing it, then push the restored
+# section as current.
+
 my @segment_stack = ();
 my $current_function;
 my %globals;
@@ -1160,20 +1130,15 @@ my %globals;
 				    my $v=undef;
 				    if ($nasm) {
 					pop(@segment_stack); # pop ourselves, we don't need to emit END directive
-					# pop section so we can emit proper .section name.
-					$current_segment = pop(@segment_stack);
+					# Preserve the previous section for subsequent switches.
+					$current_segment = $segment_stack[-1];
 					$v="section $current_segment";
-					# Hack again:
-					# push section/segment to stack. The .previous is currently paired
-					# with .rodata only. We have to keep extra '.text' on stack for
-					# situation where there is for example .pdata section 'terminated'
-					# by new '.text' section.
-					#
+					# Track the restored section as current above the fallback.
 					push(@segment_stack, $current_segment);
 				    } else {
 					$current_segment = pop(@segment_stack);
 					$v="$current_segment\tENDS\n" if ($current_segment);
-					$current_segment = pop(@segment_stack);
+					$current_segment = $segment_stack[-1];
 					if ($current_segment =~ /\.text\$/) {
 					    $v.="$current_segment\tSEGMENT ";
 					    $v.=$masm>=$masmref ? "ALIGN(256)" : "PAGE";

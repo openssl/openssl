@@ -1857,8 +1857,7 @@ K_XX_XX:
 ___
 }}}
 $code.=<<___;
-.section .rodata
-.align 64
+.section .rodata align=64
 .asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 .align	64
