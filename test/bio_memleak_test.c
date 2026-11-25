@@ -103,6 +103,39 @@ finish:
     return ok;
 }
 
+/* BIO_gets() with size 0 must not write to the buffer */
+static int test_bio_gets_zero_size(int idx)
+{
+    int ok = 0;
+    BIO *bio;
+    char data[16];
+
+    if (idx == 0) {
+        bio = BIO_new(BIO_s_mem());
+        if (!TEST_ptr(bio) || !TEST_int_eq(BIO_puts(bio, "Hello World\n"), 12))
+            goto finish;
+    } else {
+        bio = BIO_new_mem_buf("Hello World\n", 12);
+        if (!TEST_ptr(bio))
+            goto finish;
+    }
+    data[0] = 'x';
+    if (!TEST_int_eq(BIO_gets(bio, data, 0), 0)
+        || !TEST_char_eq(data[0], 'x'))
+        goto finish;
+    if (!TEST_int_eq(BIO_gets(bio, data, 1), 0)
+        || !TEST_char_eq(data[0], '\0'))
+        goto finish;
+    if (!TEST_int_eq(BIO_gets(bio, data, sizeof(data)), 12)
+        || !TEST_str_eq(data, "Hello World\n"))
+        goto finish;
+    ok = 1;
+
+finish:
+    BIO_free(bio);
+    return ok;
+}
+
 static int test_bio_rdonly_mem_buf(void)
 {
     int ok = 0;
@@ -283,6 +316,7 @@ int setup_tests(void)
     ADD_TEST(test_bio_memleak);
     ADD_TEST(test_bio_get_mem);
     ADD_TEST(test_bio_new_mem_buf);
+    ADD_ALL_TESTS(test_bio_gets_zero_size, 2);
     ADD_TEST(test_bio_rdonly_mem_buf);
     ADD_TEST(test_bio_rdwr_rdonly);
     ADD_TEST(test_bio_nonclear_rst);

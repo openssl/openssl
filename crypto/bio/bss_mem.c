@@ -353,6 +353,9 @@ static int mem_gets(BIO *bp, char *buf, int size)
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)bp->ptr;
     BUF_MEM *bm = bbm->readp;
 
+    /* A zero-size buffer has no room for the terminating NUL */
+    if (size <= 0)
+        return 0;
     if (bp->flags & BIO_FLAGS_MEM_RDONLY)
         bm = bbm->buf;
     BIO_clear_retry_flags(bp);
