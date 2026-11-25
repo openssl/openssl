@@ -158,7 +158,7 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
-if ($output =~ /512/) {
+if ($output && $output =~ m{(^|[\\/])sha512[^\\/]*$}) {
 	$func="sha512_block_data_order";
 	$TABLE="K512";
 	$SZ=8;
