@@ -33,6 +33,40 @@ static int test_null_args(void)
     return TEST_false(PKCS12_parse(NULL, NULL, NULL, NULL, NULL));
 }
 
+/*
+ * A read error in d2i_PKCS12_bio() happens before ASN.1 decoding starts, so
+ * the object the caller supplied via |a| must still be released.  An empty
+ * memory BIO reliably triggers this path on every platform.
+ */
+static int test_pkcs12_d2i_bio_read_error(void)
+{
+    int ok = 0;
+    BIO *bio = NULL;
+    PKCS12 *p12 = NULL;
+
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
+        goto finish;
+    if (!TEST_ptr(p12 = PKCS12_init_ex(NID_pkcs7_data, testctx,
+                                       "provider=default")))
+        goto finish;
+
+    /* An empty BIO makes asn1_d2i_read_bio() fail before decoding. */
+    if (!TEST_ptr_null(d2i_PKCS12_bio(bio, &p12)))
+        goto finish;
+    /* The library must have consumed and NULLed the caller's object. */
+    if (!TEST_ptr_null(p12))
+        goto finish;
+
+    ok = 1;
+ finish:
+    /* On failure paths this frees any object the library did not consume,
+     * so the test itself never leaks and an unfreed object is caught by the
+     * TEST_ptr_null(p12) assertion above. */
+    PKCS12_free(p12);
+    BIO_free(bio);
+    return ok;
+}
+
 static PKCS12 *PKCS12_load(const char *fpath)
 {
     BIO *bio = NULL;
@@ -991,6 +1025,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(pkcs12_check_version_test);
+    ADD_TEST(test_pkcs12_d2i_bio_read_error);
     if (version_pass) {
         ADD_TEST(test_null_args);
         ADD_TEST(pkcs12_parse_test);
