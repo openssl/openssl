@@ -415,8 +415,13 @@ int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
      * Since this code is called only internally by openssl, those are just
      * sanity checks
      */
-    if (num != flen || tlen <= 0 || flen <= 0 || num < RSA_PKCS1_PADDING_SIZE) {
+    if (num != flen || tlen <= 0 || flen <= 0) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    if (num < RSA_PKCS1_PADDING_SIZE) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
         return -1;
     }
 
