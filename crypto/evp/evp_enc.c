@@ -1141,6 +1141,22 @@ int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[])
     return 0;
 }
 
+/* Like OSSL_PARAM_locate_const(), but tries the shared name pointer first */
+static ossl_inline const OSSL_PARAM *evp_param_locate_shared(
+    const OSSL_PARAM *p, const char *key)
+{
+    if (p == NULL)
+        return NULL;
+
+    for (; p->key != NULL; p++) {
+        if (p->key == key
+            || (p->key[0] == key[0] && strcmp(p->key, key) == 0))
+            return p;
+    }
+
+    return NULL;
+}
+
 int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 {
     int r = 0;
@@ -1149,14 +1165,14 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
     if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL) {
         r = ctx->cipher->set_ctx_params(ctx->algctx, params);
         if (r > 0) {
-            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+            p = evp_param_locate_shared(params, OSSL_CIPHER_PARAM_keylen);
             if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->key_len)) {
                 r = 0;
                 ctx->key_len = -1;
             }
         }
         if (r > 0) {
-            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
+            p = evp_param_locate_shared(params, OSSL_CIPHER_PARAM_ivlen);
             if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len)) {
                 r = 0;
                 ctx->iv_len = -1;

@@ -178,14 +178,14 @@ uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
 uint64_t dtls1_get_record_sequence_number(SSL_CONNECTION *s);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
-#define HANDLE_RLAYER_READ_RETURN(s, ret) \
-    ossl_tls_handle_rlayer_return(s, 0, ret, OPENSSL_FILE, OPENSSL_LINE)
-
-#define HANDLE_RLAYER_WRITE_RETURN(s, ret) \
-    ossl_tls_handle_rlayer_return(s, 1, ret, OPENSSL_FILE, OPENSSL_LINE)
-
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
     char *file, int line);
+
+#define HANDLE_RLAYER_READ_RETURN(s, ret) \
+    ossl_tls_handle_rlayer_return_inl(s, 0, ret, OPENSSL_FILE, OPENSSL_LINE)
+
+#define HANDLE_RLAYER_WRITE_RETURN(s, ret) \
+    ossl_tls_handle_rlayer_return_inl(s, 1, ret, OPENSSL_FILE, OPENSSL_LINE)
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int direction, int level,

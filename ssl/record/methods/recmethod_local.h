@@ -290,6 +290,11 @@ struct ossl_record_layer_st {
 
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
+    /* Cached cipher properties */
+    unsigned long enc_flags;
+    int enc_mode;
+    int enc_bs;
+    int has_mac;
     /* cryptographic state for DTLS 1.3 encrypted sequence numbers */
     EVP_CIPHER_CTX *sn_enc_ctx;
 
@@ -475,6 +480,8 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type);
 
+int dtls_write_record_direct(OSSL_RECORD_LAYER *rl,
+    OSSL_RECORD_TEMPLATE *templ);
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
     WPACKET *thispkt,
     OSSL_RECORD_TEMPLATE *templ,

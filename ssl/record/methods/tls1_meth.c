@@ -128,6 +128,11 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             return OSSL_RECORD_RETURN_FATAL;
         }
     }
+    rl->enc_flags = EVP_CIPHER_get_flags(ciph);
+    rl->enc_mode = EVP_CIPHER_get_mode(ciph);
+    rl->enc_bs = EVP_CIPHER_get_block_size(ciph);
+    rl->has_mac = rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL;
+
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
     if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
         && mackeylen != 0
@@ -223,7 +228,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 0;
     }
 
-    if (EVP_MD_CTX_get0_md(rl->md_ctx)) {
+    if (rl->has_mac) {
         int n = EVP_MD_CTX_get_size(rl->md_ctx);
 
         if (!ossl_assert(n >= 0)) {
@@ -244,7 +249,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
         /* For TLSv1.1 and later explicit IV */
         if (RLAYER_USE_EXPLICIT_IV(rl)
-            && EVP_CIPHER_get_mode(enc) == EVP_CIPH_CBC_MODE)
+            && rl->enc_mode == EVP_CIPH_CBC_MODE)
             ivlen = EVP_CIPHER_get_iv_length(enc);
         else
             ivlen = 0;
@@ -267,7 +272,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         return 0;
     }
 
-    bs = EVP_CIPHER_get_block_size(EVP_CIPHER_CTX_get0_cipher(ds));
+    bs = rl->enc_bs;
 
     if (bs == 0) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_CIPHER);
@@ -275,9 +280,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     }
 
     if (n_recs > 1) {
-        if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
-                & EVP_CIPH_FLAG_PIPELINE)
-            == 0) {
+        if ((rl->enc_flags & EVP_CIPH_FLAG_PIPELINE) == 0) {
             /*
              * We shouldn't have been called with pipeline data if the
              * cipher doesn't support pipelining
@@ -289,9 +292,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     for (ctr = 0; ctr < n_recs; ctr++) {
         reclen[ctr] = recs[ctr].length;
 
-        if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ds))
-                & EVP_CIPH_FLAG_AEAD_CIPHER)
-            != 0) {
+        if ((rl->enc_flags & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
             /*
              * Publicly invalid: the record is shorter than the mandatory
              * AEAD overhead (explicit IV plus authentication tag). Leave
@@ -311,8 +312,21 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                 return 0;
             }
 
-            pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD,
-                EVP_AEAD_TLS1_AAD_LEN, buf[ctr]);
+            /* For GCM the pad is the tag length */
+            if (rl->enc_mode == EVP_CIPH_GCM_MODE) {
+                OSSL_PARAM params[2];
+
+                params[0] = OSSL_PARAM_construct_octet_string(
+                    OSSL_CIPHER_PARAM_aead_tls1_aad, buf[ctr],
+                    EVP_AEAD_TLS1_AAD_LEN);
+                params[1] = OSSL_PARAM_construct_end();
+                pad = 0;
+                if (EVP_CIPHER_CTX_set_params(ds, params) > 0)
+                    pad = (int)rl->taglen;
+            } else {
+                pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD,
+                    EVP_AEAD_TLS1_AAD_LEN, buf[ctr]);
+            }
             if (pad <= 0) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -394,10 +408,10 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
      * any explicit IV
      */
     if (!sending) {
-        if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_GCM_MODE) {
+        if (rl->enc_mode == EVP_CIPH_GCM_MODE) {
             recs[0].data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
             recs[0].input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-        } else if (EVP_CIPHER_get_mode(enc) == EVP_CIPH_CCM_MODE) {
+        } else if (rl->enc_mode == EVP_CIPH_CCM_MODE) {
             recs[0].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
             recs[0].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
         } else if (bs != 1 && RLAYER_USE_EXPLICIT_IV(rl)) {
@@ -407,7 +421,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         }
 
         /* Now get a pointer to the MAC (if applicable) */
-        if (mac != NULL) {
+        if (mac != NULL && rl->enc_mode != EVP_CIPH_GCM_MODE) {
             OSSL_PARAM params[2], *p = params;
 
             /* Get the MAC */

@@ -173,7 +173,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     rr->data = rr->input;
     rr->orig_len = rr->length;
 
-    if (rl->md_ctx != NULL) {
+    if (rl->has_mac) {
         const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(rl->md_ctx);
 
         if (tmpmd != NULL) {
@@ -208,12 +208,6 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         mac_size = 0;
     }
 
-    /*
-     * Set a mark around the packet decryption attempt.  This is DTLS, so
-     * bad packets are just ignored, and we don't want to leave stray
-     * errors in the queue from processing bogus junk that we ignored.
-     */
-    ERR_set_mark();
     enc_err = rl->funcs->cipher(rl, rr, 1, 0, &macbuf, mac_size);
 
     /*-
@@ -223,17 +217,16 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
      *    1: Success or MTE decryption failed (MAC will be randomised)
      */
     if (enc_err == 0) {
-        ERR_pop_to_mark();
         if (rl->alert != SSL_AD_NO_ALERT) {
             /* RLAYERfatal() already called */
             goto end;
         }
         /* For DTLS we simply ignore bad packets. */
+        ERR_clear_error();
         rr->length = 0;
         rl->packet_length = 0;
         goto end;
     }
-    ERR_clear_last_mark();
     OSSL_TRACE_BEGIN(TLS)
     {
         BIO_printf(trc_out, "dec %zd\n", rr->length);
@@ -244,7 +237,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     /* r->length is now the compressed data plus mac */
     if (!rl->use_etm
         && (rl->enc_ctx != NULL)
-        && (EVP_MD_CTX_get0_md(rl->md_ctx) != NULL)) {
+        && rl->has_mac) {
         /* rl->md_ctx != NULL => mac_size != -1 */
 
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
@@ -1079,6 +1072,96 @@ err:
         *retrl = NULL;
     }
     return ret;
+}
+
+/* Can this record be written without a WPACKET? */
+static int dtls_is_direct_write_capable(const OSSL_RECORD_LAYER *rl,
+    const OSSL_RECORD_TEMPLATE *templ)
+{
+    return rl->version != DTLS1_3_VERSION
+        && rl->enc_ctx != NULL
+        && rl->compctx == NULL
+        && rl->msg_callback == NULL
+        && !rl->has_mac
+        && (rl->enc_flags & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+        && templ->buflen > 0
+        && templ->buflen <= SSL3_RT_MAX_PLAIN_LENGTH;
+}
+
+/* Returns 1 on success, 0 if not suitable, or -1 on fatal error */
+int dtls_write_record_direct(OSSL_RECORD_LAYER *rl,
+    OSSL_RECORD_TEMPLATE *templ)
+{
+    TLS_BUFFER *wb = &rl->wbuf[0];
+    TLS_RL_RECORD wr;
+    unsigned char *recordstart, *lenbytes, *data, *p;
+    size_t align, datalen;
+
+    if (!dtls_is_direct_write_capable(rl, templ))
+        return 0;
+
+    if ((rl->numwpipes != 1 || TLS_BUFFER_get_buf(wb) == NULL)
+        && !tls_setup_write_buffer(rl, 1, 0, 0)) {
+        /* RLAYERfatal() already called */
+        return -1;
+    }
+
+    /* Too small: the standard write resizes the buffer */
+    align = tls_get_record_body_alignment_offset(rl, TLS_BUFFER_get_buf(wb));
+    datalen = rl->eivlen + templ->buflen;
+    if (align + DTLS1_RT_HEADER_LENGTH + datalen
+            + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+        > TLS_BUFFER_get_len(wb))
+        return 0;
+
+    wb->type = templ->type;
+    TLS_BUFFER_set_offset(wb, align);
+    recordstart = TLS_BUFFER_get_buf(wb) + align;
+
+    templ->sequence_number = rl->sequence;
+    templ->epoch = rl->epoch;
+
+    /* type(1) || version(2) || epoch(2) || seq_num(6) || length(2) */
+    p = recordstart;
+    *(p++) = templ->type;
+    s2n(templ->version, p);
+    l2n8((rl->epoch << 48) | rl->sequence, p);
+    /* The length is set after encryption */
+    lenbytes = p;
+    data = lenbytes + 2;
+
+    memcpy(data + rl->eivlen, templ->buf, templ->buflen);
+
+    memset(&wr, 0, sizeof(wr));
+    TLS_RL_RECORD_set_type(&wr, templ->type);
+    TLS_RL_RECORD_set_rec_version(&wr, templ->version);
+    TLS_RL_RECORD_set_data(&wr, data);
+    TLS_RL_RECORD_reset_input(&wr);
+    TLS_RL_RECORD_set_length(&wr, datalen);
+
+    if (rl->funcs->cipher(rl, &wr, 1, 1, NULL, 0) < 1) {
+        if (rl->alert == SSL_AD_NO_ALERT)
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    /* Encryption should never shrink the data */
+    if (!ossl_assert(wr.length >= datalen
+            && wr.length <= datalen + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+            && wr.length <= 0xffff)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    s2n(wr.length, lenbytes);
+    TLS_BUFFER_set_left(wb, DTLS1_RT_HEADER_LENGTH + wr.length);
+
+    if (!dtls_increment_sequence_ctr(rl)) {
+        /* RLAYERfatal() already called */
+        return -1;
+    }
+
+    return 1;
 }
 
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,

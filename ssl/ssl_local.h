@@ -3670,4 +3670,15 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 #define OSSL_QUIC_SUPPORTED_DOMAIN_FLAGS \
     (SSL_DOMAIN_FLAG_SINGLE_THREAD | SSL_DOMAIN_FLAG_MULTI_THREAD | SSL_DOMAIN_FLAG_THREAD_ASSISTED | SSL_DOMAIN_FLAG_BLOCKING | SSL_DOMAIN_FLAG_LEGACY_BLOCKING)
 
+/* Inline fast path for success */
+static ossl_inline int ossl_tls_handle_rlayer_return_inl(SSL_CONNECTION *s,
+    int writing, int ret, char *file, int line)
+{
+    if (ret == OSSL_RECORD_RETURN_SUCCESS) {
+        s->rwstate = SSL_NOTHING;
+        return ret;
+    }
+    return ossl_tls_handle_rlayer_return(s, writing, ret, file, line);
+}
+
 #endif
