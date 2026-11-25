@@ -8,6 +8,7 @@
 name: OS Zoo CI
 
 on:
+  pull_request:
   schedule:
     - cron: '50 02 * * *'
   workflow_dispatch:
