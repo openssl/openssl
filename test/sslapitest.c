@@ -2809,6 +2809,166 @@ static int test_ktls_sendfile(int test)
     return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher,
         test & 1);
 }
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * Drain the error queue and report whether it held SSL_R_KTLS_KEY_UPDATE_FAILED,
+ * i.e. the running kernel cannot rekey a KTLS socket (pre Linux 6.14).
+ */
+static int ktls_key_update_unsupported(void)
+{
+    unsigned long e;
+    int found = 0;
+    char errbuf[256];
+
+    while ((e = ERR_get_error()) != 0) {
+        if (ERR_GET_LIB(e) == ERR_LIB_SSL
+            && ERR_GET_REASON(e) == SSL_R_KTLS_KEY_UPDATE_FAILED)
+            found = 1;
+        ERR_error_string_n(e, errbuf, sizeof(errbuf));
+        TEST_note("%s", errbuf);
+    }
+    return found;
+}
+
+/*
+ * Send |msg| from |writer| to |reader|, processing any pending KeyUpdate on
+ * the way. Returns 1 on success, 0 on failure and -1 if the kernel does not
+ * support KTLS key updates.
+ */
+static int ktls_key_update_transfer(SSL *writer, SSL *reader, const char *msg)
+{
+    char buf[64];
+    size_t written, readbytes, msglen = strlen(msg);
+
+    if (!SSL_write_ex(writer, msg, msglen, &written))
+        return ktls_key_update_unsupported() ? -1 : 0;
+
+    while (!SSL_read_ex(reader, buf, sizeof(buf), &readbytes)) {
+        if (SSL_get_error(reader, 0) != SSL_ERROR_WANT_READ)
+            return ktls_key_update_unsupported() ? -1 : 0;
+    }
+
+    return TEST_mem_eq(buf, readbytes, msg, msglen);
+}
+
+/*
+ * Test TLSv1.3 KeyUpdate with KTLS on both peers.
+ * Test 0: Client initiates, SSL_KEY_UPDATE_NOT_REQUESTED
+ * Test 1: Client initiates, SSL_KEY_UPDATE_REQUESTED
+ * Test 2: Server initiates, SSL_KEY_UPDATE_NOT_REQUESTED
+ * Test 3: Server initiates, SSL_KEY_UPDATE_REQUESTED
+ * ...repeated for each TLSv1.3 cipher in ktls_test_ciphers
+ */
+static int test_ktls_key_update(int test)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL *initiator, *peer;
+    struct ktls_test_cipher *cipher;
+    int testresult = 0, cfd = -1, sfd = -1, i, ret;
+    int updatetype = (test & 1) != 0 ? SSL_KEY_UPDATE_REQUESTED
+                                     : SSL_KEY_UPDATE_NOT_REQUESTED;
+    int server_initiates = (test & 2) != 0;
+
+    OPENSSL_assert(test / 4 < (int)NUM_KTLS_TEST_CIPHERS);
+    cipher = &ktls_test_ciphers[test / 4];
+
+    if (cipher->tls_version != TLS1_3_VERSION)
+        return TEST_skip("KeyUpdate is TLSv1.3 only");
+
+    if (is_fips && strstr(cipher->cipher, "CHACHA") != NULL)
+        return TEST_skip("CHACHA is not supported in FIPS");
+
+    if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
+        goto end;
+
+    if (!ktls_chk_platform(cfd)) {
+        testresult = TEST_skip("Kernel does not support KTLS");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, cipher->cipher))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx, cipher->cipher))
+        || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+            &clientssl, sfd, cfd))
+        || !TEST_true(SSL_set_options(clientssl, SSL_OP_ENABLE_KTLS))
+        || !TEST_true(SSL_set_options(serverssl, SSL_OP_ENABLE_KTLS))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    if (!BIO_get_ktls_send(SSL_get_wbio(clientssl))
+        && !BIO_get_ktls_send(SSL_get_wbio(serverssl))) {
+        testresult = TEST_skip("KTLS not supported for TLS 1.3 cipher %s",
+            cipher->cipher);
+        goto end;
+    }
+
+    initiator = server_initiates ? serverssl : clientssl;
+    peer = server_initiates ? clientssl : serverssl;
+
+    /* Rekey several times to check the kernel sequence numbers reset */
+    for (i = 0; i < 3; i++) {
+        if (!TEST_true(SSL_key_update(initiator, updatetype)))
+            goto end;
+
+        if (!SSL_do_handshake(initiator)) {
+            if (ktls_key_update_unsupported())
+                testresult = TEST_skip("Kernel does not support KTLS key update");
+            else
+                TEST_error("SSL_do_handshake() failed sending KeyUpdate");
+            goto end;
+        }
+
+        /*
+         * The peer installs new read keys when reading the KeyUpdate, and if
+         * requested, sends its own KeyUpdate ahead of the reply.
+         */
+        ret = ktls_key_update_transfer(initiator, peer, "after key update");
+        if (ret > 0)
+            ret = ktls_key_update_transfer(peer, initiator, "reply");
+        if (ret < 0) {
+            testresult = TEST_skip("Kernel does not support KTLS key update");
+            goto end;
+        }
+        if (!TEST_int_eq(ret, 1))
+            goto end;
+
+        if (!TEST_int_eq(SSL_get_key_update_type(initiator),
+                SSL_KEY_UPDATE_NONE)
+            || !TEST_int_eq(SSL_get_key_update_type(peer),
+                SSL_KEY_UPDATE_NONE))
+            goto end;
+
+        /* Bulk data must still flow through KTLS with the new keys */
+        if (!TEST_true(ping_pong_query(clientssl, serverssl)))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    if (clientssl != NULL) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl != NULL) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    if (cfd != -1)
+        close(cfd);
+    if (sfd != -1)
+        close(sfd);
+    return testresult;
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif
 
 static int test_large_message_tls(void)
@@ -20424,6 +20584,7 @@ int setup_tests(void)
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_ktls_moving_write_buffer);
+    ADD_ALL_TESTS(test_ktls_key_update, NUM_KTLS_TEST_CIPHERS * 4);
 #endif
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
