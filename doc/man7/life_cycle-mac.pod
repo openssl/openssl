@@ -99,6 +99,7 @@ This is the canonical list.
  EVP_MAC_update                                     updated     updated
  EVP_MAC_final                                                  finaled
  EVP_MAC_finalXOF                                               finaled
+ EVP_MAC_cleanse                         newed       newed       newed       newed
  EVP_MAC_CTX_free                freed   freed       freed       freed       freed
  EVP_MAC_CTX_get_params                  newed    initialised   updated
  EVP_MAC_CTX_set_params                  newed    initialised   updated
@@ -154,6 +155,13 @@ This is the canonical list.
     <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MAC_cleanse</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_free</th>
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
@@ -195,6 +203,11 @@ This is the canonical list.
 
 =head1 NOTES
 
+A successful EVP_MAC_cleanse() call returns a context in the newed,
+initialised, updated or finaled state to the newed state. The context retains
+non-secret algorithm settings as described in L<EVP_MAC(3)>, and requires a
+new key before another operation.
+
 At some point the EVP layer will begin enforcing the transitions described
 herein.
 
@@ -208,7 +221,7 @@ The provider MAC interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

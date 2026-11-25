@@ -70,7 +70,10 @@ static void *siphash_new(void *provctx)
 
 static void siphash_free(void *vmacctx)
 {
-    OPENSSL_free(vmacctx);
+    if (vmacctx != NULL) {
+        siphash_cleanse(vmacctx);
+        OPENSSL_free(vmacctx);
+    }
 }
 
 static void *siphash_dup(void *vsrc)
@@ -206,12 +209,15 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
-static void siphash_cleanse(void *vmacctx)
+static int siphash_cleanse(void *vmacctx)
 {
     struct siphash_data_st *macctx = vmacctx;
+    size_t size = SipHash_hash_size(&macctx->siphash);
 
     OPENSSL_cleanse(&macctx->siphash, sizeof(macctx->siphash));
-    OPENSSL_cleanse(&macctx->sipcopy, sizeof(macctx->siphash));
+    OPENSSL_cleanse(&macctx->sipcopy, sizeof(macctx->sipcopy));
+    return SipHash_set_hash_size(&macctx->siphash, size)
+        && SipHash_set_hash_size(&macctx->sipcopy, size);
 }
 
 const OSSL_DISPATCH ossl_siphash_functions[] = {

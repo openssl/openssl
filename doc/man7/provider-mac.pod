@@ -28,7 +28,7 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
  int OSSL_FUNC_mac_init_skey(void *mctx, const void *key, const OSSL_PARAM params[]);
  int OSSL_FUNC_mac_update(void *mctx, const unsigned char *in, size_t inl);
  int OSSL_FUNC_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
- void OSSL_FUNC_mac_cleanse(void *mctx);
+ int OSSL_FUNC_mac_cleanse(void *mctx);
 
  /* MAC parameter descriptors */
  const OSSL_PARAM *OSSL_FUNC_mac_gettable_params(void *provctx);
@@ -134,13 +134,18 @@ to I<*outl>, which should not exceed I<outsize> bytes.
 The same expectations apply to I<outsize> as documented for
 L<EVP_MAC_final(3)>.
 
-OSSL_FUNC_mac_cleanse() clears any sensitive data for an existing provider side
-mac context in the I<mctx> parameter. This can be used if the user intends to
-maintain a pool of existing provider side mac contexts that can be used for
-multiple operations by calling OSSL_FUNC_mac_init() with a new MAC I<key>.
-If there is a delay before reuse, OSSL_FUNC_mac_cleanse() should been called to
-clear out any sensitive data related to the last operation.
-OSSL_FUNC_mac_cleanse() is not needed when OSSL_FUNC_mac_freectx() is called,
+OSSL_FUNC_mac_cleanse() clears sensitive data, including the key and all working
+state derived from it, from the provider side MAC context I<mctx>. This optional
+function allows contexts to be pooled between operations. It must support
+contexts before, during and after an operation, including repeated calls.
+After success a new key must be supplied before another MAC operation, using
+OSSL_FUNC_mac_init() or OSSL_FUNC_mac_set_ctx_params().
+Non-secret algorithm settings should be retained. The OpenSSL providers retain
+the cipher or digest and output size, but clear the key, IV and operation-specific
+state. KMAC and BLAKE2 also clear their customisation strings, and BLAKE2 clears
+its salt.
+OSSL_FUNC_mac_freectx() must clear sensitive data when releasing a context,
+whether or not OSSL_FUNC_mac_cleanse() has been called.
 
 =head2 Mac Parameters
 
@@ -251,7 +256,8 @@ OSSL_FUNC_mac_newctx() and OSSL_FUNC_mac_dupctx() should return the newly create
 provider side mac context, or NULL on failure.
 
 OSSL_FUNC_mac_init(), OSSL_FUNC_mac_init_skey(),
-OSSL_FUNC_mac_update(), OSSL_FUNC_mac_final(), OSSL_FUNC_mac_get_params(),
+OSSL_FUNC_mac_update(), OSSL_FUNC_mac_final(), OSSL_FUNC_mac_cleanse(),
+OSSL_FUNC_mac_get_params(),
 OSSL_FUNC_mac_get_ctx_params() and OSSL_FUNC_mac_set_ctx_params() should return 1 for
 success or 0 on error.
 

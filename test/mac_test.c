@@ -8,8 +8,14 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/provider.h>
 #include "testutil.h"
 #include "internal/nelem.h"
+#ifndef OPENSSL_NO_SIPHASH
+#include "crypto/siphash.h"
+#endif
 
 typedef struct mac_data_st {
     const char *digest;
@@ -351,62 +357,362 @@ static const MAC_TEST_DATA mac_tests[] = {
         } }
 };
 
-/* Perform a MAC KAT and then cleanse the ctx */
+/* Set only operation-specific parameters when reusing a cleansed context. */
+static void mac_params(const MAC_DATA *data, OSSL_PARAM *params, int reuse)
+{
+    OSSL_PARAM *p = params;
+
+    if (!reuse) {
+        if (data->digest != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                (char *)data->digest, 0);
+        if (data->cipher != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                (char *)data->cipher, 0);
+    }
+    if (data->iv != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+            (void *)data->iv, data->ivlen);
+    if (data->custom != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+            (void *)data->custom, data->customlen);
+    *p = OSSL_PARAM_construct_end();
+}
+
 static int do_mac(EVP_MAC_CTX *ctx, const MAC_DATA *data)
 {
-    int ret = 0;
     size_t len;
-    uint8_t out[256];
-    OSSL_PARAM params[3], *p = params;
+    unsigned char out[256];
+    OSSL_PARAM params[4];
 
-    if (data->digest != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)data->digest, 0);
-    else if (data->cipher != NULL) {
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER, (char *)data->cipher, 0);
+    mac_params(data, params, 0);
+    return TEST_true(EVP_MAC_init(ctx, data->key, data->keylen, params))
+        && TEST_true(EVP_MAC_update(ctx, data->msg, data->msglen))
+        && TEST_true(EVP_MAC_final(ctx, out, &len, sizeof(out)))
+        && TEST_mem_eq(data->out, data->outlen, out, len)
+        && TEST_true(EVP_MAC_cleanse(ctx));
+}
+
+/* Initialise a MAC and advance it to the requested cleansing stage. */
+static int mac_prepare_cleanse(EVP_MAC_CTX *ctx, const MAC_DATA *data, int stage)
+{
+    OSSL_PARAM params[4];
+    unsigned char out[256];
+    size_t len;
+
+    mac_params(data, params, 0);
+    return TEST_true(EVP_MAC_init(ctx, data->key, data->keylen, params))
+        && (stage < 1
+            || TEST_true(EVP_MAC_update(ctx, data->msg, data->msglen)))
+        && (stage < 2
+            || TEST_true(EVP_MAC_final(ctx, out, &len, sizeof(out))));
+}
+
+/* A cleansed MAC must require a new key before producing another tag. */
+static int mac_check_cleanse_key(EVP_MAC_CTX *ctx, EVP_MAC *mac,
+    const MAC_DATA *data)
+{
+    unsigned char out[256];
+    size_t len;
+    int ret;
+
+    if (EVP_MAC_is_a(mac, "POLY1305")
+        || EVP_MAC_is_a(mac, "SIPHASH") || EVP_MAC_is_a(mac, "GMAC")) {
+        OSSL_PARAM keyparams[] = {
+            OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY,
+                (void *)data->key, data->keylen),
+            OSSL_PARAM_END,
+            OSSL_PARAM_END
+        };
+
         if (data->iv != NULL)
-            *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV, (uint8_t *)data->iv, data->ivlen);
-    } else {
-        if (data->custom != NULL)
-            *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM, (uint8_t *)data->custom, data->customlen);
+            keyparams[1] = OSSL_PARAM_construct_octet_string(
+                OSSL_MAC_PARAM_IV, (void *)data->iv, data->ivlen);
+        /* The key may be supplied using set_params() after init(). */
+        if (!TEST_true(EVP_MAC_init(ctx, NULL, 0, NULL)))
+            return 0;
+        /* Input may be buffered, but a MAC requires a new key. */
+        EVP_MAC_update(ctx, data->msg, data->msglen);
+        if (!TEST_false(EVP_MAC_final(ctx, out, &len, sizeof(out))))
+            return 0;
+        ERR_clear_error();
+        return TEST_true(EVP_MAC_CTX_set_params(ctx, keyparams))
+            && TEST_true(EVP_MAC_update(ctx, data->msg, data->msglen))
+            && TEST_true(EVP_MAC_final(ctx, out, &len, sizeof(out)))
+            && TEST_mem_eq(data->out, data->outlen, out, len);
     }
-
-    *p = OSSL_PARAM_construct_end();
-
-    ret = EVP_MAC_init(ctx, data->key, data->keylen, params)
-        && EVP_MAC_update(ctx, data->msg, data->msglen)
-        && EVP_MAC_final(ctx, out, &len, data->outlen)
-        && TEST_mem_eq(data->out, data->outlen, out, len);
-
-    EVP_MAC_cleanse(ctx);
+    ret = TEST_false(EVP_MAC_init(ctx, NULL, 0, NULL));
+    ERR_clear_error();
     return ret;
 }
 
-/*
- * Perform 2 MAC KAT tests using the same CTX.
- * This checks that calling EVP_MAC_cleanse() between the tests
- * does not have any side effects.
- */
-static int test_mac_cleanse(int tstid)
+static int test_mac_cleanse(int tstid, int stage)
 {
     int ret = 0;
     const MAC_TEST_DATA *td = &mac_tests[tstid];
-    EVP_MAC *mac = NULL;
+    const MAC_DATA *data = &td->data[0];
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, td->macalg, propq);
     EVP_MAC_CTX *ctx = NULL;
 
-    mac = EVP_MAC_fetch(libctx, td->macalg, propq);
-    TEST_note("%s: %s", td->macalg, mac == NULL ? "skipped" : "");
-    if (mac != NULL) {
-        if (!TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
-            || !do_mac(ctx, &td->data[0])
-            || !do_mac(ctx, &td->data[1]))
-            goto err;
-    }
+    if (mac == NULL)
+        return TEST_skip("%s is unavailable", td->macalg);
+    TEST_info("Testing %s", td->macalg);
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        || !TEST_true(EVP_MAC_cleanse(ctx))
+        || !mac_prepare_cleanse(ctx, data, stage)
+        || !TEST_true(EVP_MAC_cleanse(ctx))
+        || !TEST_true(EVP_MAC_cleanse(ctx))
+        || !mac_check_cleanse_key(ctx, mac, data)
+        || !do_mac(ctx, &td->data[0])
+        || !do_mac(ctx, &td->data[1]))
+        goto err;
     ret = 1;
 err:
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(mac);
     return ret;
 }
+
+static int test_mac_cleanse_before_input(int tstid)
+{
+    return test_mac_cleanse(tstid, 0);
+}
+
+static int test_mac_cleanse_after_update(int tstid)
+{
+    return test_mac_cleanse(tstid, 1);
+}
+
+static int test_mac_cleanse_after_final(int tstid)
+{
+    return test_mac_cleanse(tstid, 2);
+}
+
+/* A pooled context needs only a new key and per-operation IV/custom string. */
+static int test_mac_cleanse_config(int tstid)
+{
+    int ret = 0, configurable_size;
+    const MAC_TEST_DATA *td = &mac_tests[tstid];
+    const MAC_DATA *data = &td->data[0];
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, td->macalg, propq);
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM params[4], sizeparams[2];
+    unsigned char before[256], after[256];
+    size_t beforelen, afterlen, size = 8;
+
+    if (mac == NULL)
+        return TEST_skip("%s is unavailable", td->macalg);
+    configurable_size = EVP_MAC_is_a(mac, "SIPHASH")
+        || EVP_MAC_is_a(mac, "BLAKE2BMAC") || EVP_MAC_is_a(mac, "KMAC-256");
+    sizeparams[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &size);
+    sizeparams[1] = OSSL_PARAM_construct_end();
+    mac_params(data, params, 0);
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        || (configurable_size
+            && !TEST_true(EVP_MAC_CTX_set_params(ctx, sizeparams)))
+        || !TEST_true(EVP_MAC_init(ctx, data->key, data->keylen, params))
+        || !TEST_true(EVP_MAC_update(ctx, data->msg, data->msglen))
+        || !TEST_true(EVP_MAC_final(ctx, before, &beforelen, sizeof(before)))
+        || !TEST_true(EVP_MAC_cleanse(ctx))
+        || !TEST_size_t_eq(EVP_MAC_CTX_get_mac_size(ctx), beforelen))
+        goto err;
+    mac_params(data, params, 1);
+    if (!TEST_true(EVP_MAC_init(ctx, data->key, data->keylen, params))
+        || !TEST_true(EVP_MAC_update(ctx, data->msg, data->msglen))
+        || !TEST_true(EVP_MAC_final(ctx, after, &afterlen, sizeof(after)))
+        || !TEST_mem_eq(before, beforelen, after, afterlen))
+        goto err;
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_BLAKE2
+/* Salt and personalisation are erased, while the output size is retained. */
+static int test_blake2_cleanse_params(int idx)
+{
+    const char *name = idx < 3 ? "BLAKE2BMAC" : "BLAKE2SMAC";
+    int fields = idx % 3 + 1, ret = 0, stage;
+    size_t paramlen = idx < 3 ? 16 : 8, size = 16, len, expectedlen;
+    unsigned char key[32], custom[16], salt[16], out[64], expected[64];
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, name, propq);
+    EVP_MAC_CTX *ctx = NULL, *ref = NULL;
+    OSSL_PARAM params[4], *p;
+    OSSL_PARAM sizeparams[] = {
+        OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, &size),
+        OSSL_PARAM_END
+    };
+
+    if (mac == NULL)
+        return TEST_skip("%s is unavailable", name);
+    memset(key, 0xa5, sizeof(key));
+    memset(custom, 0x5a, sizeof(custom));
+    memset(salt, 0x3c, sizeof(salt));
+    if (!TEST_ptr(ref = EVP_MAC_CTX_new(mac))
+        || !TEST_true(EVP_MAC_init(ref, key, sizeof(key), sizeparams))
+        || !TEST_true(EVP_MAC_update(ref, key, sizeof(key)))
+        || !TEST_true(EVP_MAC_final(ref, expected, &expectedlen, sizeof(expected))))
+        goto err;
+#ifdef MFAIL_watch_secret
+    if (((fields & 1) != 0 && !TEST_true(MFAIL_watch_secret(custom, 8)))
+        || ((fields & 2) != 0 && !TEST_true(MFAIL_watch_secret(salt, 8))))
+        goto err;
+#endif
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new(mac)))
+        goto err;
+    p = params;
+    *p++ = sizeparams[0];
+    if ((fields & 1) != 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+            custom, paramlen);
+    if ((fields & 2) != 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_SALT,
+            salt, paramlen);
+    *p = OSSL_PARAM_construct_end();
+    for (stage = 0; stage < 2; stage++) {
+        if (!TEST_true(EVP_MAC_init(ctx, key, sizeof(key), params)))
+            goto err;
+        if (stage == 1) {
+            for (p = params + 1; p->key != NULL; p++)
+                p->data_size = 3;
+            if (!TEST_true(EVP_MAC_CTX_set_params(ctx, params)))
+                goto err;
+        }
+        if (!TEST_true(EVP_MAC_cleanse(ctx))
+            || !TEST_size_t_eq(EVP_MAC_CTX_get_mac_size(ctx), size)
+            || !TEST_true(EVP_MAC_init(ctx, key, sizeof(key), NULL))
+            || !TEST_true(EVP_MAC_update(ctx, key, sizeof(key)))
+            || !TEST_true(EVP_MAC_final(ctx, out, &len, sizeof(out)))
+            || !TEST_mem_eq(out, len, expected, expectedlen))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_CTX_free(ref);
+    EVP_MAC_free(mac);
+#ifdef MFAIL_watch_secret
+    if (!TEST_true(MFAIL_watch_end()))
+        ret = 0;
+#endif
+    return ret;
+}
+#endif
+
+static int test_mac_cleanse_null(void)
+{
+    return TEST_false(EVP_MAC_cleanse(NULL));
+}
+
+/* FIPS providers before 4.2 have no MAC cleanse callback. */
+static int test_mac_cleanse_unsupported(void)
+{
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(mac = EVP_MAC_fetch(libctx, "HMAC", "provider=fips"))
+        || !TEST_ptr(ctx = EVP_MAC_CTX_new(mac)))
+        goto err;
+    ret = TEST_false(EVP_MAC_cleanse(ctx));
+err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return ret;
+}
+
+/* TLS operation state must not affect the next ordinary HMAC operation. */
+static int test_hmac_cleanse_tls(void)
+{
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, "HMAC", propq);
+    EVP_MAC_CTX *ctx = NULL;
+    size_t tls_size = 64, len;
+    unsigned char header[13] = { 0 }, out[EVP_MAX_MD_SIZE];
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA256", 0),
+        OSSL_PARAM_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE, &tls_size),
+        OSSL_PARAM_END
+    };
+    int ret = 0;
+
+    if (!TEST_ptr(mac)
+        || !TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        || !TEST_true(EVP_MAC_init(ctx, hmac_key1, sizeof(hmac_key1), params))
+        || !TEST_true(EVP_MAC_update(ctx, header, sizeof(header)))
+        || !TEST_true(EVP_MAC_cleanse(ctx))
+        || !TEST_true(EVP_MAC_init(ctx, hmac_key1, sizeof(hmac_key1), NULL))
+        || !TEST_true(EVP_MAC_update(ctx, hmac_msg1, sizeof(hmac_msg1) - 1))
+        || !TEST_true(EVP_MAC_final(ctx, out, &len, sizeof(out)))
+        || !TEST_mem_eq(out, len, hmac_out1, sizeof(hmac_out1)))
+        goto err;
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return ret;
+}
+
+#ifdef MFAIL_watch_secret
+/*
+ * Watch a suffix so shortening a key/custom string cannot hide its old tail.
+ * Include unfinalised contexts: finalisation may itself erase working state.
+ */
+static int test_mac_cleanse_memory(int idx)
+{
+    const MAC_TEST_DATA *td = &mac_tests[idx / 2];
+    MAC_DATA data = td->data[0];
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, td->macalg, propq);
+    EVP_MAC_CTX *ctx = NULL;
+    unsigned char key[512], custom[512];
+    OSSL_PARAM params[4];
+    int ret = 0, kmac;
+#ifndef OPENSSL_NO_SIPHASH
+    SIPHASH sip = { 0 };
+#endif
+
+    if (mac == NULL)
+        return TEST_skip("%s is unavailable", td->macalg);
+    memset(key, 0xa5, sizeof(key));
+    memset(custom, 0x5a, sizeof(custom));
+    kmac = EVP_MAC_is_a(mac, "KMAC-256");
+    data.key = key;
+    if (kmac) {
+        data.keylen = sizeof(key);
+        data.custom = custom;
+        data.customlen = sizeof(custom);
+    }
+    if (!TEST_true(MFAIL_watch_secret(key, 16))
+        || (kmac && !TEST_true(MFAIL_watch_secret(custom, 16))))
+        goto err;
+#ifndef OPENSSL_NO_SIPHASH
+    if (EVP_MAC_is_a(mac, "SIPHASH")
+        && (!TEST_true(SipHash_Init(&sip, key, 0, 0))
+            || !TEST_true(MFAIL_watch_secret(&sip.v0, 2 * sizeof(sip.v0)))))
+        goto err;
+#endif
+    mac_params(&data, params, 0);
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        || !TEST_true(EVP_MAC_init(ctx, key, data.keylen, params)))
+        goto err;
+    if (kmac) {
+        data.customlen = 4;
+        mac_params(&data, params, 1);
+        if (!TEST_true(EVP_MAC_init(ctx, key, 16, params)))
+            goto err;
+    }
+    if ((idx % 2) != 0 && !TEST_true(EVP_MAC_cleanse(ctx)))
+        goto err;
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    if (!TEST_true(MFAIL_watch_end()))
+        ret = 0;
+    return ret;
+}
+#endif
 
 const OPTIONS *test_get_options(void)
 {
@@ -423,6 +729,7 @@ int setup_tests(void)
 {
     OPTION_CHOICE o;
     char *config_file = NULL;
+    int is_fips, fips_cleanse;
 
     /* Swap the libctx to test non-default context only */
     propq = "provider=default";
@@ -443,7 +750,31 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, NULL))
         return 0;
 
-    ADD_ALL_TESTS(test_mac_cleanse, OSSL_NELEM(mac_tests));
+    ADD_TEST(test_mac_cleanse_null);
+    is_fips = OSSL_PROVIDER_available(libctx, "fips");
+    if (is_fips) {
+        fips_cleanse = fips_provider_version_match(libctx, ">=4.2.0");
+        if (fips_cleanse < 0) {
+            TEST_error("Failed to query FIPS provider version");
+            return 0;
+        }
+        if (fips_cleanse == 0) {
+            TEST_note("Skipping MAC cleansing feature tests for FIPS providers before 4.2.0");
+            ADD_TEST(test_mac_cleanse_unsupported);
+            return 1;
+        }
+    }
+    ADD_ALL_TESTS(test_mac_cleanse_before_input, OSSL_NELEM(mac_tests));
+    ADD_ALL_TESTS(test_mac_cleanse_after_update, OSSL_NELEM(mac_tests));
+    ADD_ALL_TESTS(test_mac_cleanse_after_final, OSSL_NELEM(mac_tests));
+    ADD_ALL_TESTS(test_mac_cleanse_config, OSSL_NELEM(mac_tests));
+#ifndef OPENSSL_NO_BLAKE2
+    ADD_ALL_TESTS(test_blake2_cleanse_params, 6);
+#endif
+    ADD_TEST(test_hmac_cleanse_tls);
+#ifdef MFAIL_watch_secret
+    ADD_ALL_TESTS(test_mac_cleanse_memory, 2 * OSSL_NELEM(mac_tests));
+#endif
     return 1;
 }
 

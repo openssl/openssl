@@ -111,8 +111,11 @@ static size_t cmac_size(void *vmacctx)
     struct cmac_data_st *macctx = vmacctx;
     const EVP_CIPHER_CTX *cipherctx = CMAC_CTX_get0_cipher_ctx(macctx->ctx);
 
-    if (EVP_CIPHER_CTX_get0_cipher(cipherctx) == NULL)
-        return 0;
+    if (EVP_CIPHER_CTX_get0_cipher(cipherctx) == NULL) {
+        const EVP_CIPHER *cipher = ossl_prov_cipher_cipher(&macctx->cipher);
+
+        return cipher != NULL ? EVP_CIPHER_get_block_size(cipher) : 0;
+    }
 
     return EVP_CIPHER_CTX_get_block_size(cipherctx);
 }
@@ -152,7 +155,6 @@ static int tdes_check_param(struct cmac_data_st *macctx, OSSL_PARAM *p,
 static int cmac_setkey(struct cmac_data_st *macctx,
     const unsigned char *key, size_t keylen)
 {
-    int rv;
     OSSL_PARAM *p = NULL;
 #ifdef FIPS_MODULE
     int state = OSSL_FIPS_IND_STATE_UNKNOWN;
@@ -163,10 +165,8 @@ static int cmac_setkey(struct cmac_data_st *macctx,
     if (state != OSSL_FIPS_IND_STATE_UNKNOWN)
         p = prms;
 #endif
-    rv = ossl_cmac_init(macctx->ctx, key, keylen,
+    return ossl_cmac_init(macctx->ctx, key, keylen,
         ossl_prov_cipher_cipher(&macctx->cipher), p);
-    ossl_prov_cipher_reset(&macctx->cipher);
-    return rv;
 }
 
 static int cmac_init(void *vmacctx, const unsigned char *key,
@@ -282,12 +282,13 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static void cmac_cleanse(void *vmacctx)
+static int cmac_cleanse(void *vmacctx)
 {
     struct cmac_data_st *macctx = vmacctx;
 
     if (macctx->ctx != NULL)
         CMAC_CTX_cleanup(macctx->ctx);
+    return 1;
 }
 
 const OSSL_DISPATCH ossl_cmac_functions[] = {

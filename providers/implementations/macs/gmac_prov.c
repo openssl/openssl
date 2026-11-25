@@ -241,6 +241,9 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
             return 0;
         }
+    }
+    if ((p.cipher != NULL || EVP_CIPHER_CTX_get0_cipher(ctx) == NULL)
+        && ossl_prov_cipher_cipher(&macctx->cipher) != NULL) {
         if (!EVP_EncryptInit_ex(ctx, ossl_prov_cipher_cipher(&macctx->cipher),
                 NULL, NULL, NULL))
             return 0;
@@ -264,12 +267,11 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static void gmac_cleanse(void *vmacctx)
+static int gmac_cleanse(void *vmacctx)
 {
     struct gmac_data_st *gctx = vmacctx;
 
-    if (gctx != NULL && gctx->ctx != NULL)
-        EVP_CIPHER_CTX_reset(gctx->ctx);
+    return EVP_CIPHER_CTX_reset(gctx->ctx);
 }
 
 const OSSL_DISPATCH ossl_gmac_functions[] = {

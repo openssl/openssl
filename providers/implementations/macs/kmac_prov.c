@@ -149,10 +149,9 @@ static void kmac_free(void *vmacctx)
     struct kmac_data_st *kctx = vmacctx;
 
     if (kctx != NULL) {
+        kmac_cleanse(kctx);
         EVP_MD_CTX_free(kctx->ctx);
         ossl_prov_digest_reset(&kctx->digest);
-        OPENSSL_cleanse(kctx->key, kctx->key_len);
-        OPENSSL_cleanse(kctx->custom, kctx->custom_len);
         OPENSSL_free(kctx);
     }
 }
@@ -353,7 +352,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
               kctx->custom, kctx->custom_len, block_len)
         && EVP_DigestUpdate(ctx, out, out_len)
         && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
-    OPENSSL_free(out);
+    OPENSSL_clear_free(out, out_len);
     return res;
 }
 
@@ -387,16 +386,15 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return ok;
 }
 
-static void kmac_cleanse(void *vmacctx)
+static int kmac_cleanse(void *vmacctx)
 {
     struct kmac_data_st *kctx = vmacctx;
 
-    if (kctx->key_len != 0) {
-        OPENSSL_cleanse(kctx->key, kctx->key_len);
-        kctx->key_len = 0;
-    }
-    if (kctx->ctx != NULL)
-        EVP_MD_CTX_reset(kctx->ctx);
+    OPENSSL_cleanse(kctx->key, sizeof(kctx->key));
+    kctx->key_len = 0;
+    OPENSSL_cleanse(kctx->custom, sizeof(kctx->custom));
+    kctx->custom_len = 0;
+    return kctx->ctx == NULL || EVP_MD_CTX_reset(kctx->ctx);
 }
 
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,

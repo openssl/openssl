@@ -61,7 +61,10 @@ static void *poly1305_new(void *provctx)
 
 static void poly1305_free(void *vmacctx)
 {
-    OPENSSL_free(vmacctx);
+    if (vmacctx != NULL) {
+        poly1305_cleanse(vmacctx);
+        OPENSSL_free(vmacctx);
+    }
 }
 
 static void *poly1305_dup(void *vsrc)
@@ -185,13 +188,14 @@ static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
-static void poly1305_cleanse(void *vmacctx)
+static int poly1305_cleanse(void *vmacctx)
 {
     struct poly1305_data_st *ctx = vmacctx;
 
     OPENSSL_cleanse(&ctx->poly1305, sizeof(ctx->poly1305));
     ctx->updated = 0;
     ctx->key_set = 0;
+    return 1;
 }
 
 const OSSL_DISPATCH ossl_poly1305_functions[] = {
@@ -201,7 +205,7 @@ const OSSL_DISPATCH ossl_poly1305_functions[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))poly1305_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))poly1305_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))poly1305_final },
-    { OSSL_FUNC_MAC_FINAL, (void (*)(void))poly1305_cleanse },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))poly1305_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_PARAMS, (void (*)(void))poly1305_gettable_params },
     { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))poly1305_get_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,

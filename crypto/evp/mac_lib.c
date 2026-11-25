@@ -194,11 +194,11 @@ int EVP_MAC_finalXOF(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize)
     return evp_mac_final(ctx, 1, out, NULL, outsize);
 }
 
-void EVP_MAC_cleanse(EVP_MAC_CTX *ctx)
+int EVP_MAC_cleanse(EVP_MAC_CTX *ctx)
 {
     if (ctx == NULL || ctx->meth->cleanse == NULL)
-        return;
-    ctx->meth->cleanse(ctx->algctx);
+        return 0;
+    return ctx->meth->cleanse(ctx->algctx);
 }
 
 /*

@@ -99,9 +99,9 @@ static void hmac_free(void *vmacctx)
     struct hmac_data_st *macctx = vmacctx;
 
     if (macctx != NULL) {
+        hmac_cleanse(macctx);
         HMAC_CTX_free(macctx->ctx);
         ossl_prov_digest_reset(&macctx->digest);
-        OPENSSL_clear_free(macctx->key, macctx->keylen);
         OPENSSL_free(macctx);
     }
 }
@@ -143,7 +143,10 @@ static void *hmac_dup(void *vsrc)
 
 static size_t hmac_size(struct hmac_data_st *macctx)
 {
-    return HMAC_size(macctx->ctx);
+    const EVP_MD *md = ossl_prov_digest_md(&macctx->digest);
+    size_t size = HMAC_size(macctx->ctx);
+
+    return size != 0 || md == NULL ? size : EVP_MD_get_size(md);
 }
 
 static int hmac_block_size(struct hmac_data_st *macctx)
@@ -342,16 +345,19 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static void hmac_cleanse(void *vmacctx)
+static int hmac_cleanse(void *vmacctx)
 {
     struct hmac_data_st *ctx = vmacctx;
 
-    if (ctx->key != NULL) {
-        /* Should this clear the HMAC_CTX here? */
-        OPENSSL_clear_free(ctx->key, ctx->keylen);
-        ctx->key = NULL;
-        ctx->keylen = 0;
-    }
+    OPENSSL_clear_free(ctx->key, ctx->keylen);
+    ctx->key = NULL;
+    ctx->keylen = 0;
+    ctx->tls_data_size = 0;
+    OPENSSL_cleanse(ctx->tls_header, sizeof(ctx->tls_header));
+    ctx->tls_header_set = 0;
+    OPENSSL_cleanse(ctx->tls_mac_out, sizeof(ctx->tls_mac_out));
+    ctx->tls_mac_out_size = 0;
+    return HMAC_CTX_reset(ctx->ctx);
 }
 
 const OSSL_DISPATCH ossl_hmac_functions[] = {
