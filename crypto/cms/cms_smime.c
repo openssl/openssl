@@ -418,65 +418,6 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     }
 
     /*
-     * Performance optimization: if the content is a memory BIO then store
-     * its contents in a temporary read only memory BIO. This avoids
-     * potentially large numbers of slow copies of data which will occur when
-     * reading from a read write memory BIO when signatures are calculated.
-     */
-
-    if (dcont != NULL && (BIO_method_type(dcont) == BIO_TYPE_MEM)) {
-        char *ptr;
-        long len;
-
-        len = BIO_get_mem_data(dcont, &ptr);
-        tmpin = (len == 0) ? dcont : BIO_new_mem_buf(ptr, len);
-        if (tmpin == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
-            goto err;
-        }
-    } else {
-        tmpin = dcont;
-    }
-    /*
-     * If not binary mode and detached generate digests by *writing* through
-     * the BIO. That makes it possible to canonicalise the input.
-     */
-    if (!(flags & SMIME_BINARY) && dcont) {
-        /*
-         * Create output BIO so we can either handle text or to ensure
-         * included content doesn't override detached content.
-         */
-        tmpout = cms_get_text_bio(out, flags);
-        if (tmpout == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
-            goto err;
-        }
-        cmsbio = CMS_dataInit(cms, tmpout);
-        if (cmsbio == NULL)
-            goto err;
-        /*
-         * Don't use SMIME_TEXT for verify: it adds headers and we want to
-         * remove them.
-         */
-        if (!SMIME_crlf_copy(dcont, cmsbio, flags & ~SMIME_TEXT))
-            goto err;
-
-        if (flags & CMS_TEXT) {
-            if (!SMIME_text(tmpout, out)) {
-                ERR_raise(ERR_LIB_CMS, CMS_R_SMIME_TEXT_ERROR);
-                goto err;
-            }
-        }
-    } else {
-        cmsbio = CMS_dataInit(cms, tmpin);
-        if (cmsbio == NULL)
-            goto err;
-
-        if (!cms_copy_content(out, cmsbio, flags))
-            goto err;
-    }
-
-    /*
      * Handle CAdES signatures of higher levels (Baseline-T, -LT, and -LTA)
      * that include additional information packed into the unsigned attributes
      * of the signerInfo elements.
@@ -512,6 +453,10 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
                          * timestamped is the original signature
                          * If successful, a valid signing time is available
                          */
+                        if (!ossl_cms_handle_CAdES_SignatureTimestampToken(attr,
+                                 store, si->signature, &verification_time))
+                            goto err;
+                        vt = &verification_time;
                         break;
                     case NID_id_aa_ets_archiveTimestampV3:
                         /*
@@ -598,6 +543,65 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             }
             si->attr_verified = 1;
         }
+    }
+
+    /*
+     * Performance optimization: if the content is a memory BIO then store
+     * its contents in a temporary read only memory BIO. This avoids
+     * potentially large numbers of slow copies of data which will occur when
+     * reading from a read write memory BIO when signatures are calculated.
+     */
+
+    if (dcont != NULL && (BIO_method_type(dcont) == BIO_TYPE_MEM)) {
+        char *ptr;
+        long len;
+
+        len = BIO_get_mem_data(dcont, &ptr);
+        tmpin = (len == 0) ? dcont : BIO_new_mem_buf(ptr, len);
+        if (tmpin == NULL) {
+            ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
+            goto err;
+        }
+    } else {
+        tmpin = dcont;
+    }
+    /*
+     * If not binary mode and detached generate digests by *writing* through
+     * the BIO. That makes it possible to canonicalise the input.
+     */
+    if (!(flags & SMIME_BINARY) && dcont) {
+        /*
+         * Create output BIO so we can either handle text or to ensure
+         * included content doesn't override detached content.
+         */
+        tmpout = cms_get_text_bio(out, flags);
+        if (tmpout == NULL) {
+            ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
+            goto err;
+        }
+        cmsbio = CMS_dataInit(cms, tmpout);
+        if (cmsbio == NULL)
+            goto err;
+        /*
+         * Don't use SMIME_TEXT for verify: it adds headers and we want to
+         * remove them.
+         */
+        if (!SMIME_crlf_copy(dcont, cmsbio, flags & ~SMIME_TEXT))
+            goto err;
+
+        if (flags & CMS_TEXT) {
+            if (!SMIME_text(tmpout, out)) {
+                ERR_raise(ERR_LIB_CMS, CMS_R_SMIME_TEXT_ERROR);
+                goto err;
+            }
+        }
+    } else {
+        cmsbio = CMS_dataInit(cms, tmpin);
+        if (cmsbio == NULL)
+            goto err;
+
+        if (!cms_copy_content(out, cmsbio, flags))
+            goto err;
     }
 
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
