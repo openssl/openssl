@@ -23,12 +23,18 @@ jobs:
           repository: 'quic-interop/quic-interop-runner'
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          path: .openssl
+          sparse-checkout: .github/retry
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          sudo add-apt-repository ppa:wireshark-dev/stable
-          sudo apt-get update
-          sudo apt-get install -y tshark
+          .openssl/.github/retry pip install -r requirements.txt
+          .openssl/.github/retry sudo add-apt-repository ppa:wireshark-dev/stable
+          .openssl/.github/retry sudo apt-get update
+          .openssl/.github/retry sudo apt-get install -y tshark
       - name: Patch implementations file
         run: |
           jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
@@ -55,12 +61,18 @@ jobs:
           repository: 'quic-interop/quic-interop-runner'
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          path: .openssl
+          sparse-checkout: .github/retry
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          sudo add-apt-repository ppa:wireshark-dev/stable
-          sudo apt-get update
-          sudo apt-get install -y tshark
+          .openssl/.github/retry pip install -r requirements.txt
+          .openssl/.github/retry sudo add-apt-repository ppa:wireshark-dev/stable
+          .openssl/.github/retry sudo apt-get update
+          .openssl/.github/retry sudo apt-get install -y tshark
       - name: Patch implementations file
         run: |
           jq '.openssl = { image: "quay.io/openssl-ci/openssl-quic-interop"
