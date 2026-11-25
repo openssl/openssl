@@ -420,6 +420,11 @@ int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
         return -1;
     }
 
+    if (num < RSA_PKCS1_PADDING_SIZE) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
+        return -1;
+    }
+
     /* Generate a random message to return in case the padding checks fail */
     synthetic = OPENSSL_malloc(flen);
     if (synthetic == NULL) {
