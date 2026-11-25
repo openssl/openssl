@@ -107,6 +107,7 @@ my @data = run(app([@common, data_file("beermug.pem")], stderr => undef), captur
 my @match = grep /a0:3a:21:14:5d:cd:b6:d5:a0:3e:49:23:c1:3a:/, @data;
 ok(scalar @match > 0 ? 1 : 0);
 my $certkeycert = srctop_file("test", "certs", "cert-key-cert.pem");
+my $trustedcert = srctop_file("test", "certs", "server-trusted.pem");
 @data = run(app([@common, $certkeycert], stderr => "outerr.txt"), capture => 1);
 open DATA, "outerr.txt";
 @match = grep /:error:/, <DATA>;
@@ -115,4 +116,4 @@ ok(scalar @match > 0 ? 0 : 1);
 @match = grep /70:40:4c:20:6a:16:ba:38:b5:c9:b1:4c:b6:b8:db:/, @data;
 ok(scalar @match > 0 ? 1 : 0);
 
-ok(run(test(["pemtest", $certkeycert])), "running pemtest");
+ok(run(test(["pemtest", $certkeycert, $trustedcert])), "running pemtest");
