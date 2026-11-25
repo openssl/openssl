@@ -608,9 +608,19 @@ jobs:
         name: "ci@solaris-sparc"
         path: test-runs
 
-  freebsd-x86_64:
+  bsd-x86_64:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [
+          { os: "freebsd", version: "15.1", depinstcmd: "sudo pkg install -y gcc perl5" },
+          { os: "freebsd", version: "14.5", depinstcmd: "sudo pkg install -y gcc perl5" },
+          { os: "openbsd", version: "8.0" },
+          { os: "netbsd",  version: "11.1", depinstcmd: "sudo sh -c 'export PKG_PATH=\"https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/x86_64/11.1/All/\"; pkg_add perl'" },
+          { os: "netbsd",  version: "10.2", depinstcmd: "sudo sh -c 'export PKG_PATH=\"https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/x86_64/10.2/All/\"; pkg_add perl'" },
+        ]
     if: |
       (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
@@ -623,80 +633,31 @@ jobs:
     - name: config
       uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 #v1.8.0
       with:
-        operating_system: freebsd
-        version: "14.4"
+        operating_system: ${{ matrix.platform.os }}
+        version: ${{ matrix.platform.version }}
         shutdown_vm: false
         run: |
-          sudo pkg install -y gcc perl5
+          ${{ matrix.platform.depinstcmd || ':' }}
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 #v1.8.0
       with:
-        operating_system: freebsd
-        version: "14.4"
+        operating_system: ${{ matrix.platform.os }}
+        version: ${{ matrix.platform.version }}
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
       uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 #v1.8.0
       with:
-        operating_system: freebsd
-        version: "14.4"
+        operating_system: ${{ matrix.platform.os }}
+        version: ${{ matrix.platform.version }}
         shutdown_vm: false
         run: make -j4
     - name: make test
       uses: cross-platform-actions/action@30cde56b87a128507bebea9531205087890ee360 #v1.8.0
       with:
-        operating_system: freebsd
-        version: "14.4"
-        run: |
-          ./util/opensslwrap.sh version -c
-          .github/workflows/make-test
-
-  openbsd-x86_64:
-    runs-on: ubuntu-latest
-    needs: [validate-dispatch-inputs]
-    if: |
-      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
-      !cancelled() &&
-      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ github.event.inputs.head_sha || github.sha }}
-    - name: config
-      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
-      with:
-        operating_system: openbsd
-        architecture: x86-64
-        version: '7.9'
-        shutdown_vm: false
-        run: |
-          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
-    - name: config dump
-      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
-      with:
-        operating_system: openbsd
-        architecture: x86-64
-        version: '7.9'
-        shutdown_vm: false
-        run: |
-          ./configdata.pm --dump
-    - name: make
-      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
-      with:
-        operating_system: openbsd
-        architecture: x86-64
-        version: '7.9'
-        shutdown_vm: false
-        run: |
-          make -j4
-    - name: make test
-      uses: cross-platform-actions/action@82668f1fbd89d9c99487604f822cbf6716f124d3 #v1.7.0
-      with:
-        operating_system: openbsd
-        architecture: x86-64
-        version: '7.9'
+        operating_system: ${{ matrix.platform.os }}
+        version: ${{ matrix.platform.version }}
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
