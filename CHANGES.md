@@ -30,6 +30,88 @@ OpenSSL 3.5
 
 ### Changes between 3.5.9 and 3.5.10 [xx XXX xxxx]
 
+ * Fixed unbounded out-of-order fragment reassembly in QUIC streams.
+
+   Severity: Low
+
+   Issue summary: A QUIC peer that sends many small out-of-order STREAM
+   fragments while withholding the first byte of the stream may cause OpenSSL
+   to buffer a large number of reassembly nodes occupying much larger memory
+   than the actual data sent.
+
+   Impact summary: A remote peer can pin large amounts of memory on a server
+   that accepts incoming QUIC streams, potentially exhausting memory and
+   causing Denial of Service.
+
+   A receiver now buffers at most 1024 disjoint ranges of out-of-order
+   data per stream. A peer that exceeds the limit is treated as violating
+   flow control and the connection is closed with FLOW_CONTROL_ERROR.
+
+   Reported by: Duc Anh Luu (University of Melbourne) and Jiwoo Kim (Arpe).
+
+   ([CVE-2026-84785])
+   <!-- https://github.com/openssl/openssl/pull/33346 -->
+
+   *Duc Anh Luu*
+
+ * Fixed possible NULL dereference in non-SMTP DANE clients.
+
+   Severity: Low
+
+   Issue summary: A DANE-enabled TLS client may crash by dereferencing a NULL
+   pointer when processing an unusual combination of certificate and TLSA
+   records.
+
+   Impact summary: The impact is limited to a client crash (potential Denial of
+   Service).
+
+   Reported by: Sanjay Rawat and Mohammed Alquraini (HUMAIN).
+
+   ([CVE-2026-84786])
+   <!-- https://github.com/openssl/openssl/pull/33634 -->
+
+   *Viktor Dukhovni*
+
+ * Fixed unbounded QUIC RETIRE_CONNECTION_ID frame sending queue.
+
+   Severity: Low
+
+   Issue summary: The QUIC stack queues a RETIRE_CONNECTION_ID frame also for
+   retransmitted NEW_CONNECTION_ID frames. This allows a remote malicious QUIC
+   stack to queue an unlimited number of RETIRE_CONNECTION_ID frames.
+
+   Impact summary: A malicious remote QUIC peer can trigger an out-of-memory
+   condition causing a Denial of Service.
+
+   Reported by: moltenbit, Duc Anh Luu (University of Melbourne) and hataehoon.
+
+   ([CVE-2026-107494])
+   <!-- https://github.com/openssl/openssl/pull/33544 -->
+
+   *Alexandr Nedvědický*
+
+ * Fixed relative CRL distribution point names rebuilt per CRL in X.509
+   verification.
+
+   Severity: Low
+
+   Issue summary: Verifying a maliciously crafted CMS or PKCS#7 SignedData
+   message with CRL checking enabled may consume excessive CPU time, growing
+   with the square of the message size.
+
+   Impact summary: An attacker who can submit a CMS or PKCS#7 SignedData
+   message to an application that verifies it with CRL checking enabled can
+   occupy a CPU core for seconds to minutes, causing Denial of Service.
+   Applications that leave CRL checking disabled are not affected.
+
+   Reported by: Alex Gaynor (Anthropic).
+
+   ([CVE-2026-121482])
+   <!-- https://github.com/openssl/openssl/pull/33546 -->
+   <!-- https://github.com/openssl/openssl/pull/33843 -->
+
+   *Neil Horman*
+
  * Fixed out-of-bounds read in TLS 1.3 key-share processing with Suite B flag.
 
    Severity: Low
@@ -23019,6 +23101,10 @@ ndif
 [CVE-2026-35190]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35190
 [CVE-2026-107493]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107493
 [CVE-2026-124709]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-124709
+[CVE-2026-84785]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84785
+[CVE-2026-84786]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84786
+[CVE-2026-107494]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107494
+[CVE-2026-121482]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-121482
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
