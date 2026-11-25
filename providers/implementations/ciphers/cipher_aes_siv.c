@@ -219,7 +219,9 @@ static int aes_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (ctx->enc)
             return 1;
         if (p.tag->data_type != OSSL_PARAM_OCTET_STRING
-            || !ctx->hw->settag(ctx, p.tag->data, p.tag->data_size)) {
+            || p.tag->data_size != ctx->taglen
+            || (p.tag->data != NULL
+                && !ctx->hw->settag(ctx, p.tag->data, p.tag->data_size))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
