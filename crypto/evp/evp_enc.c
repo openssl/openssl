@@ -23,6 +23,8 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+#include "crypto/evp/evp_enc.inc"
+
 OSSL_SAFE_MATH_SIGNED(int, int)
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
@@ -175,19 +177,18 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         OSSL_PARAM param_lens[3] = { OSSL_PARAM_END, OSSL_PARAM_END,
             OSSL_PARAM_END };
         OSSL_PARAM *q = param_lens;
-        const OSSL_PARAM *p;
-
-        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-        if (p != NULL)
-            memcpy(q++, p, sizeof(*q));
+        struct evp_cipher_len_params_st p;
 
         /*
          * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for
          * OSSL_CIPHER_PARAM_IVLEN so both are covered here.
          */
-        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
-        if (p != NULL)
-            memcpy(q++, p, sizeof(*q));
+        if (!evp_cipher_len_params_decoder(params, &p))
+            return 0;
+        if (p.keylen != NULL)
+            *q++ = *p.keylen;
+        if (p.ivlen != NULL)
+            *q++ = *p.ivlen;
 
         if (q != param_lens) {
             if (!EVP_CIPHER_CTX_set_params(ctx, param_lens)) {
@@ -1144,23 +1145,21 @@ int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[])
 int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 {
     int r = 0;
-    const OSSL_PARAM *p;
+    struct evp_cipher_len_params_st p;
 
     if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL) {
         r = ctx->cipher->set_ctx_params(ctx->algctx, params);
-        if (r > 0) {
-            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->key_len)) {
-                r = 0;
-                ctx->key_len = -1;
-            }
+        if (r > 0 && !evp_cipher_len_params_decoder(params, &p))
+            r = 0;
+        if (r > 0 && p.keylen != NULL
+            && !OSSL_PARAM_get_int(p.keylen, &ctx->key_len)) {
+            r = 0;
+            ctx->key_len = -1;
         }
-        if (r > 0) {
-            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
-            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len)) {
-                r = 0;
-                ctx->iv_len = -1;
-            }
+        if (r > 0 && p.ivlen != NULL
+            && !OSSL_PARAM_get_int(p.ivlen, &ctx->iv_len)) {
+            r = 0;
+            ctx->iv_len = -1;
         }
     }
     return r;

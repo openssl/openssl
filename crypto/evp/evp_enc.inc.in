@@ -1,0 +1,38 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+
+sub produce_evp_param_decoder {
+    my $decoder = produce_param_decoder(@_);
+
+    # Remove the unavailable header inclusion.
+    $decoder =~ s|#include "prov/proverr.h"||;
+    return $decoder;
+}
+-}
+
+/*
+ * The EVP layer only peeks at the length parameters, the provider remains
+ * responsible for validating the complete set.  A gettable/settable list is
+ * not needed.
+ *
+ * OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for OSSL_CIPHER_PARAM_IVLEN, so
+ * both are covered by the single "ivlen" entry.
+ *
+ * Duplicates resolve to the first occurrence to match the behaviour of
+ * OSSL_PARAM_locate_const().
+ */
+#define evp_cipher_len_params_list
+
+{- produce_evp_param_decoder('evp_cipher_len_params',
+                         (['OSSL_CIPHER_PARAM_KEYLEN', 'keylen', 'size_t', 'duplicate: first'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',  'ivlen',  'size_t', 'duplicate: first'],
+                         )); -}

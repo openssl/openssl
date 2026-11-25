@@ -81,6 +81,7 @@ DEPEND[]=crypto/core_names.c \
          include/crypto/dso_conf.h \
          include/crypto/ec_params.h \
          include/crypto/rsa_params.h \
+         crypto/evp/evp_enc.inc \
          ssl/t1_lib.inc \
          ssl/record/methods/tls_common.inc \
          providers/implementations/asymciphers/rsa_enc.inc \
@@ -227,6 +228,7 @@ GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 DEPEND[crypto/core_names.c \
+       crypto/evp/evp_enc.inc \
        ssl/t1_lib.inc \
        ssl/record/methods/tls_common.inc \
        providers/implementations/asymciphers/rsa_enc.inc \
@@ -340,6 +342,7 @@ GENERATE[include/crypto/ec_params.h]=\
     include/crypto/ec_params.h.in
 GENERATE[include/crypto/rsa_params.h]=\
     include/crypto/rsa_params.h.in
+GENERATE[crypto/evp/evp_enc.inc]=crypto/evp/evp_enc.inc.in
 GENERATE[ssl/t1_lib.inc]=ssl/t1_lib.inc.in
 GENERATE[ssl/record/methods/tls_common.inc]=\
     ssl/record/methods/tls_common.inc.in
