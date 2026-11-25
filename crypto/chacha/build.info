@@ -3,7 +3,7 @@ LIBS=../../libcrypto
 $CHACHAASM=chacha_enc.c
 IF[{- !$disabled{asm} -}]
   $CHACHAASM_x86=chacha-x86.S
-  $CHACHAASM_x86_64=chacha-x86_64.s
+  $CHACHAASM_x86_64=chacha-x86_64.s chacha_poly1305_avx512.c
 
   $CHACHAASM_ia64=chacha-ia64.s
 
