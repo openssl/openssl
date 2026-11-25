@@ -57,7 +57,8 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
         return -1;
     nid = OBJ_obj2nid(cmsalg->algorithm);
     if (nid == NID_rsaEncryption)
-        return 1;
+        /* Do not rely on the provider's default RSA padding. */
+        return EVP_PKEY_CTX_set_rsa_padding(pkctx, RSA_PKCS1_PADDING) > 0;
     if (nid != NID_rsaesOaep) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_ENCRYPTION_TYPE);
         return -1;

@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -147,6 +148,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     int ret = 0;
     size_t eklen;
     const PKCS7_CTX *ctx = ri->ctx;
+    X509_ALGOR *alg = NULL;
 
     pkey = X509_get0_pubkey(ri->cert);
     if (pkey == NULL)
@@ -158,6 +160,14 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
         return 0;
 
     if (EVP_PKEY_encrypt_init(pctx) <= 0)
+        goto err;
+
+    PKCS7_RECIP_INFO_get0_alg(ri, &alg);
+    if (alg == NULL)
+        goto err;
+
+    if (OBJ_obj2nid(alg->algorithm) == NID_rsaEncryption
+        && EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING) <= 0)
         goto err;
 
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, key, keylen) <= 0)
@@ -190,6 +200,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
     size_t eklen;
     int ret = -1;
     const PKCS7_CTX *ctx = ri->ctx;
+    X509_ALGOR *alg = NULL;
 
     pctx = EVP_PKEY_CTX_new_from_pkey(ossl_pkcs7_ctx_get0_libctx(ctx), pkey,
         ossl_pkcs7_ctx_get0_propq(ctx));
@@ -197,6 +208,14 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
         return -1;
 
     if (EVP_PKEY_decrypt_init(pctx) <= 0)
+        goto err;
+
+    PKCS7_RECIP_INFO_get0_alg(ri, &alg);
+    if (alg == NULL)
+        goto err;
+
+    if (OBJ_obj2nid(alg->algorithm) == NID_rsaEncryption
+        && EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING) <= 0)
         goto err;
 
     ret = evp_pkey_decrypt_alloc(pctx, &ek, &eklen, fixlen,
