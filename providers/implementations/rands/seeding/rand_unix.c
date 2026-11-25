@@ -19,6 +19,7 @@
 #include "crypto/rand.h"
 #include "internal/dso.h"
 #include "internal/nelem.h"
+#include "internal/thread_once.h"
 #include "prov/seeding.h"
 
 #ifndef OPENSSL_SYS_UEFI
@@ -417,6 +418,23 @@ static struct random_device {
     dev_t rdev;
 } random_devices[OSSL_NELEM(random_device_paths)];
 static int keep_random_devices_open = 1;
+static CRYPTO_ONCE random_devices_once = CRYPTO_ONCE_STATIC_INIT;
+
+/*
+ * The zero-initialised random_devices[] would have every fd set to 0 (stdin),
+ * so mark them all as closed before first use.  This is run from
+ * ossl_rand_pool_init() and from get_random_device(), because the seed
+ * source can be used before libcrypto has called ossl_rand_pool_init().
+ */
+DEFINE_RUN_ONCE_STATIC(do_random_devices_init)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(random_devices); i++)
+        random_devices[i].fd = -1;
+
+    return 1;
+}
 
 #if defined(__linux) && defined(DEVRANDOM_WAIT) \
     && defined(OPENSSL_RAND_SEED_GETRANDOM)
@@ -538,6 +556,9 @@ static int get_random_device(size_t n)
     struct stat st;
     struct random_device *rd = &random_devices[n];
 
+    if (!RUN_ONCE(&random_devices_once, do_random_devices_init))
+        return -1;
+
     /* reuse existing file descriptor if it is (still) valid */
     if (check_random_device(rd))
         return rd->fd;
@@ -574,12 +595,7 @@ static void close_random_device(size_t n)
 
 int ossl_rand_pool_init(void)
 {
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(random_devices); i++)
-        random_devices[i].fd = -1;
-
-    return 1;
+    return RUN_ONCE(&random_devices_once, do_random_devices_init);
 }
 
 void ossl_rand_pool_cleanup(void)
