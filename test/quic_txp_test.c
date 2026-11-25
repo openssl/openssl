@@ -2079,21 +2079,21 @@ static const struct script_op pto_script_9[] = {
 };
 
 /* Initial PTO with the Handshake keys available and Handshake data queued */
-static int check_handshake_12(struct helper *h)
+static int check_handshake_10(struct helper *h)
 {
     return TEST_uint64_t_eq(h->frame.crypto.offset, 0)
         && TEST_uint64_t_eq(h->frame.crypto.len, sizeof(pto_crypto_4))
         && check_crypto_data(h);
 }
 
-static int check_no_probe_12(struct helper *h)
+static int check_no_probe_10(struct helper *h)
 {
     OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
 
     return TEST_uint_eq(probe->pto[QUIC_PN_SPACE_INITIAL], 0);
 }
 
-static const struct script_op pto_script_12[] = {
+static const struct script_op pto_script_10[] = {
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
         secret_1, sizeof(secret_1) },
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
@@ -2115,10 +2115,10 @@ static const struct script_op pto_script_12[] = {
     { OPK_RX_PKT },
     { OPK_NEXT_FRAME },
     { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
-    { OPK_CHECK, 0, 0, NULL, 0, check_handshake_12 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_handshake_10 },
     { OPK_EXPECT_NO_FRAME },
     /* a single probe, as the Handshake keys are available */
-    { OPK_CHECK, 0, 0, NULL, 0, check_no_probe_12 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_no_probe_10 },
     { OPK_END }
 };
 
@@ -2134,7 +2134,7 @@ static int discard_handshake(struct helper *h)
         && TEST_uint_eq(probe->anti_deadlock_handshake, 0);
 }
 
-static const struct script_op pto_script_13[] = {
+static const struct script_op pto_script_11[] = {
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
         secret_1, sizeof(secret_1) },
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM,
@@ -2148,10 +2148,42 @@ static const struct script_op pto_script_13[] = {
     { OPK_END }
 };
 
+/* A second Initial PTO resends from the start again */
+static const struct script_op pto_script_12[] = {
+    { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
+        secret_1, sizeof(secret_1) },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_2,
+        sizeof(pto_crypto_2) },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_first_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_TXP_GENERATE },
+    { OPK_RX_PKT },
+    { OPK_NEXT_FRAME },
+    { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
+    { OPK_CHECK, 0, 0, NULL, 0, check_next_probe },
+    { OPK_EXPECT_NO_FRAME },
+    { OPK_CHECK, 0, 0, NULL, 0, check_all_sent_2 },
+    { OPK_END }
+};
+
 /* Scripts that need an unvalidated path, set up by OPK_NO_VALIDATION */
 #ifdef OPK_NO_VALIDATION
 /* Initial PTO probes when anti-amplification credit runs out */
-static int rx_initial_10(struct helper *h)
+static int rx_initial_13(struct helper *h)
 {
     OSSL_ACKM_RX_PKT pkt = { 0 };
 
@@ -2161,7 +2193,7 @@ static int rx_initial_10(struct helper *h)
     return TEST_true(ossl_ackm_on_rx_packet(h->args.ackm, &pkt));
 }
 
-static const struct script_op pto_script_10[] = {
+static const struct script_op pto_script_13[] = {
     { OPK_NO_VALIDATION },
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
         secret_1, sizeof(secret_1) },
@@ -2190,7 +2222,7 @@ static const struct script_op pto_script_10[] = {
     { OPK_CHECK, 0, 0, NULL, 0, flush_qtx },
     { OPK_RX_PKT_NONE },
     /* receiving an Initial packet adds credit and an ACK to send */
-    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_10 },
+    { OPK_CHECK, 0, 0, NULL, 0, rx_initial_13 },
     { OPK_ADD_CREDIT, 1000 },
     { OPK_TXP_GENERATE },
     { OPK_RX_PKT },
@@ -2208,7 +2240,7 @@ static const struct script_op pto_script_10[] = {
 };
 
 /* Two Initial PTOs while anti-amplification credit runs out */
-static const struct script_op pto_script_11[] = {
+static const struct script_op pto_script_14[] = {
     { OPK_NO_VALIDATION },
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
         secret_1, sizeof(secret_1) },
@@ -2266,11 +2298,12 @@ static const struct script_op *const pto_scripts[] = {
     pto_script_7,
     pto_script_8,
     pto_script_9,
-    pto_script_12,
-    pto_script_13,
-#ifdef OPK_NO_VALIDATION
     pto_script_10,
     pto_script_11,
+    pto_script_12,
+#ifdef OPK_NO_VALIDATION
+    pto_script_13,
+    pto_script_14,
 #endif
 };
 
