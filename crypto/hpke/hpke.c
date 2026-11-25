@@ -959,6 +959,8 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         return 0;
     }
     if (ikmelen == 0
+        || (ctx->kem_info->Nrandom != 0
+            && ikmelen != ctx->kem_info->Nrandom)
         || ikmelen > (size_t)(ctx->kem_info->one_stage_kdf
                    ? OSSL_HPKE_MAX_PQIKMLEN
                    : OSSL_HPKE_MAX_PARMLEN)) {
@@ -1526,5 +1528,5 @@ size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite)
     if (kem_info == NULL)
         return 0;
 
-    return kem_info->Nsk;
+    return kem_info->Nrandom != 0 ? kem_info->Nrandom : kem_info->Nsk;
 }

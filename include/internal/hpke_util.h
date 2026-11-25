@@ -42,6 +42,7 @@ typedef struct {
     size_t Nenc; /* length of encapsulated key */
     size_t Npk; /* length of public key */
     size_t Nsk; /* length of raw private key */
+    size_t Nrandom; /* exact encapsulation randomness length, or 0 if variable */
     uint8_t bitmask;
     unsigned int auth : 1;
     unsigned int one_stage_kdf : 1;
