@@ -33,7 +33,7 @@ typedef struct test_fixture {
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 
-static unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
+static unsigned char ref[] = CMP_TEST_REFVALUE;
 
 static void tear_down(CMP_MSG_TEST_FIXTURE *fixture)
 {
@@ -556,8 +556,7 @@ int setup_tests(void)
         return 0;
 
     if (!TEST_ptr(newkey = load_pkey_pem(newkey_f, libctx))
-        || !TEST_ptr(cert = load_cert_pem(server_cert_f, libctx))
-        || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref), 0))) {
+        || !TEST_ptr(cert = load_cert_pem(server_cert_f, libctx))) {
         cleanup_tests();
         return 0;
     }
