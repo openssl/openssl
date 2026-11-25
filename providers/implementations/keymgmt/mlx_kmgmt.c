@@ -715,8 +715,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
 
     memset(&sub_arg, 0, sizeof(sub_arg));
     pub = p.encpub != NULL ? p.encpub : p.pub;
-    if (mlx_kem_uses_hybrid_seed(key)
-        && p.encpub != NULL && p.encpub->data == NULL) {
+    if (p.encpub != NULL && p.encpub->data == NULL) {
         /* A size probe must not hide a separate public-key output. */
         if (p.encpub->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
@@ -766,6 +765,12 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     if (pub == NULL && prv == NULL)
         return 1;
 
+    selection = prv == NULL ? 0 : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+    selection |= pub == NULL ? 0 : OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    if (key->xinfo->group_name != NULL)
+        selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+
+    /* Extract sub-component key material, or the canonical hybrid seed. */
     if (mlx_kem_uses_hybrid_seed(key)) {
         if (sub_arg.pubenc != NULL
             && !ossl_mlx_encode_public_key(key, sub_arg.pubenc,
@@ -775,19 +780,7 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
             && !ossl_mlx_encode_seed(key, sub_arg.prvenc,
                 key->xinfo->seed_bytes))
             return 0;
-        if (p.encpub != NULL && p.pub != NULL && p.encpub->data != NULL)
-            return OSSL_PARAM_set_octet_string(p.pub, p.encpub->data,
-                p.encpub->return_size);
-        return 1;
-    }
-
-    selection = prv == NULL ? 0 : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
-    selection |= pub == NULL ? 0 : OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
-    if (key->xinfo->group_name != NULL)
-        selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
-
-    /* Extract sub-component key material */
-    if (!export_sub(&sub_arg, selection, key)
+    } else if (!export_sub(&sub_arg, selection, key)
         || (pub != NULL && sub_arg.pubcount != 2)
         || (prv != NULL && sub_arg.prvcount != 2)) {
         /* Erase any partial key material on failure */
@@ -800,6 +793,9 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
         return 0;
     }
 
+    if (p.encpub != NULL && p.pub != NULL && p.encpub->data != NULL)
+        return OSSL_PARAM_set_octet_string(p.pub, p.encpub->data,
+            p.encpub->return_size);
     return 1;
 }
 
