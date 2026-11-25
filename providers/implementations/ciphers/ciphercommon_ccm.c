@@ -441,8 +441,10 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                 goto err;
             }
 
-            if (!hw->auth_decrypt(ctx, in, out, len, ctx->buf, ctx->m))
+            if (!hw->auth_decrypt(ctx, in, out, len, ctx->buf, ctx->m)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
                 goto err;
+            }
             /* Finished - reset flags so calling this method again will fail */
             ctx->iv_set = 0;
             ctx->tag_set = 0;
