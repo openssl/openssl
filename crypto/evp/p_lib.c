@@ -2193,7 +2193,7 @@ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
     if (ret2 && out_len != NULL)
         *out_len = params[0].return_size;
 
-    if (ret2 && params[0].return_size == max_buf_sz)
+    if (ret2 && str != NULL && params[0].return_size == max_buf_sz)
         /* There was no space for a NUL byte */
         return 0;
     /* Add a terminating NUL byte for good measure */
