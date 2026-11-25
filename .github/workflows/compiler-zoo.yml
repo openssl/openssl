@@ -58,20 +58,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gcc: [gcc-9, gcc-10, gcc-11, gcc-12, gcc-13, gcc-14]
-    runs-on: ubuntu-24.04
+        platform: [
+          { gcc: gcc-9,  image: ubuntu-24.04 },
+          { gcc: gcc-10, image: ubuntu-24.04 },
+          { gcc: gcc-11, image: ubuntu-24.04 },
+          { gcc: gcc-12, image: ubuntu-24.04 },
+          { gcc: gcc-13, image: ubuntu-24.04 },
+          { gcc: gcc-14, image: ubuntu-24.04 },
+          { gcc: gcc-15, image: ubuntu-26.04 },
+          { gcc: gcc-16, image: ubuntu-26.04 }
+        ]
+    runs-on: ${{ matrix.platform.image }}
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: install packages
-      run: .github/retry sh -c "sudo apt-get update && sudo apt-get -y install ${{ matrix.gcc }}"
+      run: .github/retry sh -c "sudo apt-get update && sudo apt-get -y install ${{ matrix.platform.gcc }}"
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
       env:
-        CC: ${{ matrix.gcc }}
+        CC: ${{ matrix.platform.gcc }}
       run: |
         ./config --strict-warnings --banner=Configured no-shared enable-fips
     - name: config dump
@@ -155,7 +164,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang: [clang-11, clang-12, clang-13, clang-14, clang-15, clang-16, clang-17, clang-18, clang-19, clang-20, clang-21]
+        clang: [clang-11, clang-12, clang-13, clang-14, clang-15, clang-16, clang-17, clang-18, clang-19, clang-20, clang-21, clang-22, clang-23]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v6
