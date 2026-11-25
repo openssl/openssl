@@ -163,7 +163,8 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
             return 0;
         }
         time_left = (int)(ctx->end_time - now);
-        if (ctx->msg_timeout == 0 || time_left < ctx->msg_timeout)
+        /* msg_timeout <= 0, which includes the default -1, means no limit */
+        if (ctx->msg_timeout <= 0 || time_left < ctx->msg_timeout)
             ctx->msg_timeout = time_left;
     }
 
