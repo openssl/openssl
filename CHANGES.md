@@ -246,6 +246,12 @@ OpenSSL 4.2
 
    *Alex Gaynor*
 
+ * A self-issued [RFC 9925] unsigned certificate in the trust store is
+   now a trust anchor, in the same way as a self-signed certificate.
+   With `X509_V_FLAG_CHECK_SS_SIGNATURE` its signature check fails.
+
+   *Bob Beck*
+
  * `libcrypto` and `libssl` are instrumented with eBPF probes to trace
    TLS and crypto usage, in a compatible manner with the
    [crypto-auditing](https://github.com/latchset/crypto-auditing)
@@ -24752,6 +24758,7 @@ ndif
 [RFC 9846 Section 4.3.10]: https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.10
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
+[RFC 9925]: https://datatracker.ietf.org/doc/html/rfc9925
 [SECG SEC 1 Section 2.3.4]: https://www.secg.org/sec1-v2.pdf#subsubsection.2.3.4
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final

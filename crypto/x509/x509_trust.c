@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include "x509_local.h"
 
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b);
 static void trtable_free(X509_TRUST *p);
@@ -242,7 +243,9 @@ static int trust_compat(X509_TRUST *trust, const X509 *x, int flags)
     /* Call for side-effect of setting EXFLAG_SS for self-signed-certs */
     if (X509_check_purpose(x, -1, 0) != 1)
         return X509_TRUST_UNTRUSTED;
-    if ((flags & X509_TRUST_NO_SS_COMPAT) == 0 && (x->ex_flags & EXFLAG_SS))
+    if ((flags & X509_TRUST_NO_SS_COMPAT) == 0
+        && ((x->ex_flags & EXFLAG_SS) != 0
+            || ossl_x509_unsigned_self_issued(x)))
         return X509_TRUST_TRUSTED;
     else
         return X509_TRUST_UNTRUSTED;
