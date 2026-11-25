@@ -372,10 +372,12 @@ static int hpke_random_suite(OSSL_LIB_CTX *libctx,
     const OSSL_HPKE_KDF_INFO *kdf_info = NULL;
     const OSSL_HPKE_AEAD_INFO *aead_info = NULL;
 
-    /* random kem, kdf and aead */
-    kem_info = ossl_HPKE_KEM_INFO_find_random(libctx);
-    if (kem_info == NULL)
-        return 0;
+    /* Choose a random suite, excluding X-Wing until GREASE supports it. */
+    do {
+        kem_info = ossl_HPKE_KEM_INFO_find_random(libctx);
+        if (kem_info == NULL)
+            return 0;
+    } while (kem_info->kem_id == OSSL_HPKE_KEM_ID_XWING);
     suite->kem_id = kem_info->kem_id;
     kdf_info = ossl_HPKE_KDF_INFO_find_random(libctx);
     if (kdf_info == NULL)
@@ -1448,6 +1450,10 @@ int OSSL_HPKE_get_grease_value(const OSSL_HPKE_SUITE *suite_in,
     }
     if (hpke_suite_check(chosen, &kem_info, NULL, &aead_info) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (chosen.kem_id == OSSL_HPKE_KEM_ID_XWING) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_UNSUPPORTED);
         goto err;
     }
     *suite = chosen;
