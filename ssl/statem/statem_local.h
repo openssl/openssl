@@ -515,32 +515,61 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
     unsigned int context,
     X509 *x, size_t chainidx);
 /**
- * @brief Construct the client's trust_anchors extension: the identifiers of
- * the configured Merkle Tree Certificate CAs, sent in the TLS 1.3 ClientHello.
- * @param s the SSL connection
- * @param pkt the WPACKET the extension is written to
- * @param context the extension context (the message being constructed)
- * @param x the certificate for per-certificate extensions; unused here
- * @param chainidx the certificate chain index; unused here
- * @returns EXT_RETURN_SENT when written, EXT_RETURN_NOT_SENT when no MTC CAs
- * are configured, EXT_RETURN_FAIL on error.
- */
-/*
- * Whether a trust anchor list holds only well-formed identifiers: a series of
- * non-empty u8-length-prefixed strings filling it exactly.  An empty list is
- * well formed; whether it is allowed depends on the message it came in.
+ * @brief Whether a trust anchor list holds only well-formed identifiers.
+ * A well-formed list is a series of u8-length-prefixed identifiers, each
+ * 1 to TLSEXT_TRUST_ANCHOR_ID_MAX_LEN bytes long, filling it exactly.  An
+ * empty list is well formed; whether it is allowed depends on the message
+ * it came in.
+ * @param list the list contents, without its u16 length prefix
+ * @returns 1 if the list is well formed, 0 otherwise.
  */
 int ossl_tls_valid_trust_anchor_list(const PACKET *list);
 
-/*
- * Write a trust_anchors extension holding the trust anchors this end requests
- * of its peer, as the ClientHello and CertificateRequest forms both do.
+/**
+ * @brief Write a trust_anchors extension requesting trust anchors of the peer.
+ * The extension holds the RequestedTrustAnchorList, the form the ClientHello
+ * and CertificateRequest share.
+ * @param s the SSL connection
+ * @param pkt the WPACKET the extension is written to
+ * @returns EXT_RETURN_SENT when written, EXT_RETURN_NOT_SENT when no list is
+ *          configured and the default list has no source, EXT_RETURN_FAIL on
+ *          error (a fatal alert has been scheduled).
  */
 EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
     WPACKET *pkt);
 
+/**
+ * @brief Parse the server's trust_anchors extension.
+ * In the CertificateRequest it is the server's RequestedTrustAnchorList,
+ * saved for choosing the client certificate.  In EncryptedExtensions it is
+ * the non-empty AvailableTrustAnchorList, saved for the application.  In the
+ * Certificate message it is the empty marker, in the first entry only, that
+ * the server's certificate matched a requested trust anchor.
+ * @param s the SSL connection
+ * @param pkt the PACKET holding the extension contents
+ * @param context the extension context (the message being parsed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; the Certificate form is
+ *        accepted only when this is zero
+ * @returns 1 on success, 0 on error (a fatal alert has been scheduled).
+ */
 int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx);
+/**
+ * @brief Construct the client's trust_anchors extension.
+ * In the ClientHello it is the RequestedTrustAnchorList (see
+ * ossl_tls_construct_requested_trust_anchors()).  In the client's Certificate
+ * message it is the empty marker, in the first entry only, that a negotiated
+ * credential was served.
+ * @param s the SSL connection
+ * @param pkt the WPACKET the extension is written to
+ * @param context the extension context (the message being constructed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; the marker is sent only when
+ *        this is zero
+ * @returns EXT_RETURN_SENT when written, EXT_RETURN_NOT_SENT when there is
+ *          nothing to send, EXT_RETURN_FAIL on error.
+ */
 EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);

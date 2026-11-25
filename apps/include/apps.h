@@ -164,10 +164,13 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
     const char *keytype, const char *desc,
     int suppress_decode_errors);
 char *next_item(char *opt); /* in list separated by comma and/or space */
-/*
- * Decode a relative OID, as trust anchor identifiers are carried on the wire,
- * into dotted decimal.  Returns a string the caller frees, or NULL if the
- * bytes are not a well-formed relative OID.
+/**
+ * @brief Decode a relative OID into dotted decimal.
+ * Trust anchor identifiers are carried on the wire in this form.
+ * @param id the content octets of the relative OID
+ * @param id_len the number of bytes at id
+ * @returns a NUL-terminated string the caller frees, or NULL if the bytes
+ *          are not a well-formed relative OID or on allocation failure.
  */
 char *app_reloid_to_text(const unsigned char *id, size_t id_len);
 
@@ -209,21 +212,80 @@ int app_reloid_from_text(BUF_MEM *buf, const char *text, size_t text_len);
  */
 int add_requested_tais(SSL_CTX *ctx, const char *list);
 
-/* Install trust anchor decorated chains from a file or directory. */
+/**
+ * @brief Install trust anchor decorated certificate chains as credentials.
+ * Each chain becomes a credential served only when the peer requests its
+ * trust anchor.  Each chain's key is matched by public key among the keys in
+ * its own file and in keys_path.  Chains from a file keep their file order;
+ * chains from a directory are installed in ascending on-the-wire size.
+ * Prints an error to bio_err on failure.
+ * @param ssl_ctx the context to add the credentials to
+ * @param chains_path a PEM file, or a directory of PEM files, of chains
+ * @param keys_path a PEM file or directory of additional private keys, or
+ *        NULL
+ * @returns 1 on success, 0 on failure.
+ * @see SSL_CTX_add1_credential(3)
+ */
 int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
     const char *keys_path);
 
-/* Trust the Merkle Tree Certificate CAs in a file; the caller frees them. */
+/**
+ * @brief Trust the Merkle Tree Certificate CAs in a file.
+ * Each CA is added to ctx's verify store, which verifies the certificates it
+ * issues and requests its trust anchor ID of the peer.  The store borrows the
+ * CAs, so the returned stack must outlive ctx.  Prints an error to bio_err on
+ * failure.
+ * @param ctx the context whose verify store trusts the CAs
+ * @param file the PEM file holding the CA certificates
+ * @returns the CAs, freed with sk_OSSL_MTC_CA_pop_free(stack,
+ *          OSSL_MTC_CA_free), or NULL on failure.
+ * @see X509_STORE_trust_mtc_ca(3)
+ */
 STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file);
 
-/* Trust the Merkle Tree Certificate cosigners in a file; the caller frees them. */
+/**
+ * @brief Trust the Merkle Tree Certificate cosigners in a file.
+ * Each cosigner is added to ctx's verify store, where it counts toward the
+ * cosigner quorum of a standalone Merkle Tree Certificate.  The store borrows
+ * the cosigners, so the returned stack must outlive ctx.  Prints an error to
+ * bio_err on failure.
+ * @param ctx the context whose verify store trusts the cosigners
+ * @param file the PEM file holding the cosigner certificates
+ * @returns the cosigners, freed with sk_OSSL_MTC_COSIGNER_pop_free(stack,
+ *          OSSL_MTC_COSIGNER_free), or NULL on failure.
+ * @see X509_STORE_trust_mtc_cosigner(3)
+ */
 STACK_OF(OSSL_MTC_COSIGNER) *load_mtc_cosigners(SSL_CTX *ctx, const char *file);
 
-/* Set one log's active landmarks, given as "id:log:file". */
+/**
+ * @brief Load one Merkle Tree Certificate log's active landmarks.
+ * spec is "id:log:file": id is the CA's trust anchor ID in dotted decimal,
+ * log the decimal log number, and file the landmark description the CA
+ * publishes for that log (section 6.4.3 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ * Landmarks that expired before vpm's verification time, when one is set,
+ * are not loaded.  Prints an error to bio_err on failure.
+ * @param cas the trusted MTC CAs, one of which has trust anchor ID id
+ * @param spec the "id:log:file" specification, NUL terminated
+ * @param vpm the verification parameters supplying the verification time
+ * @returns 1 on success, 0 on failure.
+ * @see OSSL_MTC_CA_load_landmarks(3)
+ */
 int load_mtc_landmarks(STACK_OF(OSSL_MTC_CA) *cas, const char *spec,
     const X509_VERIFY_PARAM *vpm);
 
-/* Read vetted subtree hashes, one per line as "id log start end hash". */
+/**
+ * @brief Read vetted subtree hashes for the trusted MTC CAs from a file.
+ * Each line is "id log start end hash": id is the CA's trust anchor ID in
+ * dotted decimal, log, start and end are decimal, and hash is the base64
+ * SHA-256 subtree hash.  The subtree must be active at the CA whose trust
+ * anchor ID is id, so its landmarks are loaded first.  Prints an error to
+ * bio_err on failure.
+ * @param cas the trusted MTC CAs
+ * @param file the file of subtree hash lines
+ * @returns 1 on success, 0 on failure.
+ * @see OSSL_MTC_CA_add_subtree_hash(3)
+ */
 int load_mtc_subtrees(STACK_OF(OSSL_MTC_CA) *cas, const char *file);
 char *process_additional_mac_key_arguments(const char *arg);
 char *get_str_from_file(const char *filename);

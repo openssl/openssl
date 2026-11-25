@@ -2900,6 +2900,15 @@ int ossl_ssl_trust_anchor_pattern_contains(const uint8_t *pattern,
     size_t pattern_len, const uint8_t *id, size_t id_len);
 
 /**
+ * @brief Whether a credential can be used on this connection.
+ * @param s the connection, whose shared signature algorithms are consulted
+ * @param cred the credential
+ * @returns 1 if some shared signature algorithm works with the credential's
+ *          key, 0 otherwise.
+ */
+int ossl_tls_credential_usable(SSL_CONNECTION *s, const SSL_CREDENTIAL *cred);
+
+/**
  * @brief Check whether a credential matches a requested trust anchor list.
  *
  * The credential matches when its trust anchor ID equals a requested ID, or
@@ -2911,15 +2920,6 @@ int ossl_ssl_trust_anchor_pattern_contains(const uint8_t *pattern,
  * @param ids_len the length of ids in bytes
  * @return 1 if the credential matches a requested ID, 0 otherwise
  */
-/**
- * @brief Whether a credential can be used on this connection.
- * @param s the connection, whose shared signature algorithms are consulted
- * @param cred the credential
- * @returns 1 if some shared signature algorithm works with the credential's
- *          key, 0 otherwise.
- */
-int ossl_tls_credential_usable(SSL_CONNECTION *s, const SSL_CREDENTIAL *cred);
-
 int ossl_ssl_credential_matches_request(const SSL_CREDENTIAL *cred,
     const uint8_t *ids, size_t ids_len);
 

@@ -132,10 +132,20 @@ void CRYPTO_BUFFER_free(CRYPTO_BUFFER *buf);
  */
 int CRYPTO_BUFFER_up_ref(CRYPTO_BUFFER *buf);
 
-/** @brief Return a pointer to the bytes contained in the buffer. */
+/**
+ * @brief Return a pointer to the bytes contained in the buffer.
+ *
+ * @param buf the buffer
+ * @return a pointer, valid for the life of buf, to its contents
+ */
 const uint8_t *CRYPTO_BUFFER_data(const CRYPTO_BUFFER *buf);
 
-/** @brief Return the length, in bytes, of the buffer's contents. */
+/**
+ * @brief Return the length, in bytes, of the buffer's contents.
+ *
+ * @param buf the buffer
+ * @return the number of bytes at CRYPTO_BUFFER_data(buf)
+ */
 size_t CRYPTO_BUFFER_len(const CRYPTO_BUFFER *buf);
 
 #if defined(__cplusplus)
