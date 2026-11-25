@@ -29,6 +29,19 @@ OpenSSL 4.2
 
 ### Major changes between OpenSSL 4.1 and OpenSSL 4.2 [under development]
 
+  * Fixed unbounded out-of-order fragment reassembly in QUIC streams.
+    ([CVE-2026-84785])
+
+  * Fixed possible NULL dereference in non-SMTP DANE clients.
+    ([CVE-2026-84786])
+
+  * Fixed unbounded QUIC RETIRE_CONNECTION_ID frame sending queue.
+    ([CVE-2026-107494])
+
+  * Fixed relative CRL distribution point names rebuilt per CRL in X.509
+    verification.
+    ([CVE-2026-121482])
+
   * Fixed out-of-bounds read in TLS 1.3 key-share processing with Suite B flag.
     ([CVE-2026-35190])
 
@@ -2717,6 +2730,10 @@ OpenSSL 0.9.x
 [CVE-2026-35190]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35190
 [CVE-2026-107493]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107493
 [CVE-2026-124709]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-124709
+[CVE-2026-84785]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84785
+[CVE-2026-84786]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-84786
+[CVE-2026-107494]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-107494
+[CVE-2026-121482]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-121482
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
