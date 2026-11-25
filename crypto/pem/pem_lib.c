@@ -977,8 +977,10 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     len = (int)buf_mem->length;
 
     /* There was no data in the PEM file */
-    if (len == 0)
+    if (len == 0) {
+        ERR_raise(ERR_LIB_PEM, PEM_R_NO_CONTENT);
         goto end;
+    }
 
     ctx = EVP_ENCODE_CTX_new();
     if (ctx == NULL) {
