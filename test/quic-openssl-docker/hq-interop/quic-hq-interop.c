@@ -936,12 +936,23 @@ int main(int argc, char *argv[])
      * Now poll all our descriptors for events
      */
     while (this_poll_count != 0 && poll_done < this_poll_count) {
+        int closed;
+        SSL_CONN_CLOSE_INFO cinfo;
+
+        /* A closed connection can still have unread data. */
+        closed = SSL_get_conn_close_info(ssl, &cinfo, sizeof(cinfo)) > 0;
+
         result_count = 0;
         poll_timeout.tv_sec = 0;
         poll_timeout.tv_usec = 0;
         if (!SSL_poll(poll_list, this_poll_count, sizeof(SSL_POLL_ITEM),
                 &poll_timeout, 0, &result_count)) {
             fprintf(stderr, "Failed to poll\n");
+            goto end;
+        }
+
+        if (closed && result_count == 0) {
+            fprintf(stderr, "Connection closed before all responses were received\n");
             goto end;
         }
 
