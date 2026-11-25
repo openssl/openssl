@@ -1,0 +1,1292 @@
+#
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# https://github.com/bleichenbacher-daniel/Rooterberg/tree/d446fbab
+
+# b5bfe6f425547dfc00e31a29f18533aadbe83b13de1c7be0924975cdff4f9f2b  aria_gcm_192_96_128.json
+Title = ARIA-192-GCM Rooterberg test vectors from aria_gcm_192_96_128.json
+
+# tcId 1: basic [Basic]
+Cipher = ARIA-192-GCM
+Key = 000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = d53236b0cde20c26f57675a7405a9f98
+Plaintext =
+Ciphertext =
+
+# tcId 2: basic [Basic]
+Cipher = ARIA-192-GCM
+Key = 000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD =
+Tag = 4f281cfb1ecefeb5a02af0b70ccd7c46
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 328dd0899f34fd1aa965a3630acca38f
+
+# tcId 3: basic [Basic]
+Cipher = ARIA-192-GCM
+Key = 000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 69945455bbc7ae558358c385d21e4534
+Plaintext =
+Ciphertext =
+
+# tcId 4: basic [Basic]
+Cipher = ARIA-192-GCM
+Key = 000000000000000000000000000000000000000000000000
+IV = 000000000000000000000000
+AAD = 303132333435363738393a3b3c3d3e3f
+Tag = 75165f1ad78933647caf239edc1fb527
+Plaintext = 202122232425262728292a2b2c2d2e2f
+Ciphertext = 328dd0899f34fd1aa965a3630acca38f
+
+# tcId 5: message size = 0 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 2b02f0f64f80c34d6ca758127c8854ae
+Plaintext =
+Ciphertext =
+
+# tcId 6: message size = 0 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 6dfe6a885aecdf6328db7792cd25704c
+Plaintext =
+Ciphertext =
+
+# tcId 7: message size = 0 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = d9702d4154af16ad27f4fb6cf9a86dfd
+Plaintext =
+Ciphertext =
+
+# tcId 8: message size = 1 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 99451cea93f3b7c34c7328ecb97339d7
+Plaintext = e8
+Ciphertext = 87
+
+# tcId 9: message size = 1 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 60bfc3aee340962a39be323e78d4184a
+Plaintext = 0e
+Ciphertext = 50
+
+# tcId 10: message size = 1 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = cb3afb450ef970a6d5c74b5c47aeeae9
+Plaintext = 01
+Ciphertext = 16
+
+# tcId 11: message size = 2 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 377bc77c2c2f97c873c0871772fc2b2b
+Plaintext = e8f5
+Ciphertext = 875b
+
+# tcId 12: message size = 2 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 575332a5bffa65054a4d4214820dadc7
+Plaintext = 0eec
+Ciphertext = 50ba
+
+# tcId 13: message size = 2 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 05858d1d9d2af76ea22370552238fe77
+Plaintext = 01aa
+Ciphertext = 16ba
+
+# tcId 14: message size = 3 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 422cdd7f2ef03f022c14507d300e85d8
+Plaintext = e8f5cc
+Ciphertext = 875ba7
+
+# tcId 15: message size = 3 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = c9ef6971ebf026986ef0f2429373cadc
+Plaintext = 0eec58
+Ciphertext = 50ba1d
+
+# tcId 16: message size = 3 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = d761029948a7307a8205b9aa6d049352
+Plaintext = 01aa0b
+Ciphertext = 16badd
+
+# tcId 17: message size = 7 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 32a20600e9ac1afa8549f747fa087804
+Plaintext = e8f5cccc86c817
+Ciphertext = 875ba7b3f4f08d
+
+# tcId 18: message size = 7 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 30e7898b539b7cd7a8e312c40c66b3a4
+Plaintext = 0eec585a20631c
+Ciphertext = 50ba1dcf33cb61
+
+# tcId 19: message size = 7 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 14cdec9e020b665799fca2cd2492ffaf
+Plaintext = 01aa0be14bea85
+Ciphertext = 16badd106f8a4d
+
+# tcId 20: message size = 8 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 9bcb0af626c4890d13c90149e7a386f2
+Plaintext = e8f5cccc86c817e7
+Ciphertext = 875ba7b3f4f08de6
+
+# tcId 21: message size = 8 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = ecd6274344368d09fba48f5c576ec83f
+Plaintext = 0eec585a20631cc1
+Ciphertext = 50ba1dcf33cb6132
+
+# tcId 22: message size = 8 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 45aed9a3be3cb5064057f84fd89196c6
+Plaintext = 01aa0be14bea85a5
+Ciphertext = 16badd106f8a4d63
+
+# tcId 23: message size = 12 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 2b76fee214fa927083ac810f8ae0504b
+Plaintext = e8f5cccc86c817e7a0174050
+Ciphertext = 875ba7b3f4f08de6a0ce43bc
+
+# tcId 24: message size = 12 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = a760801b2b881620e4c542f91eb2d9f0
+Plaintext = 0eec585a20631cc165c7956f
+Ciphertext = 50ba1dcf33cb6132a38967d9
+
+# tcId 25: message size = 12 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 9f2d03d492d52c474b5800006d0f1889
+Plaintext = 01aa0be14bea85a53eae638d
+Ciphertext = 16badd106f8a4d63b132636d
+
+# tcId 26: message size = 15 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 5bd9c24c93319db3217672633e19d4e1
+Plaintext = e8f5cccc86c817e7a01740509445da
+Ciphertext = 875ba7b3f4f08de6a0ce43bc090268
+
+# tcId 27: message size = 15 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 2b6e9f2d31f3e5e1b2d554b17901c9f5
+Plaintext = 0eec585a20631cc165c7956f28bf1c
+Ciphertext = 50ba1dcf33cb6132a38967d99580c9
+
+# tcId 28: message size = 15 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 02628e862596de168b039537f1bc9121
+Plaintext = 01aa0be14bea85a53eae638d7f8b2b
+Ciphertext = 16badd106f8a4d63b132636d280791
+
+# tcId 29: message size = 16 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = faaaed2c53681193156d392f57082698
+Plaintext = e8f5cccc86c817e7a01740509445daa0
+Ciphertext = 875ba7b3f4f08de6a0ce43bc09026864
+
+# tcId 30: message size = 16 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = d7d9cbaf8b511a7f3b9442b99eb179e2
+Plaintext = 0eec585a20631cc165c7956f28bf1c7e
+Ciphertext = 50ba1dcf33cb6132a38967d99580c937
+
+# tcId 31: message size = 16 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = ffc486519da375d0cbc6ae3de855f5f6
+Plaintext = 01aa0be14bea85a53eae638d7f8b2ba2
+Ciphertext = 16badd106f8a4d63b132636d280791fd
+
+# tcId 32: message size = 17 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = f7619155e10c25b474356acd7c23b62b
+Plaintext = e8f5cccc86c817e7a01740509445daa0d5
+Ciphertext = 875ba7b3f4f08de6a0ce43bc09026864f8
+
+# tcId 33: message size = 17 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 9c6d4978d05d5c9946debddd8f3669a0
+Plaintext = 0eec585a20631cc165c7956f28bf1c7e68
+Ciphertext = 50ba1dcf33cb6132a38967d99580c93727
+
+# tcId 34: message size = 17 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 4b2420e434cee14c6a6a48cd25cc69dd
+Plaintext = 01aa0be14bea85a53eae638d7f8b2ba20f
+Ciphertext = 16badd106f8a4d63b132636d280791fdb2
+
+# tcId 35: message size = 31 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = e5ca3e07bbf4b9b63987a1c588b63295
+Plaintext = e8f5cccc86c817e7a01740509445daa0d5ee82783814b47ebaac549b807126
+Ciphertext = 875ba7b3f4f08de6a0ce43bc09026864f88b36ace93547decebeb04fedbe6a
+
+# tcId 36: message size = 31 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 5c68218cd9acaca8fb221f75e3ae819c
+Plaintext = 0eec585a20631cc165c7956f28bf1c7e6883b9628071d079805b7449ec627c
+Ciphertext = 50ba1dcf33cb6132a38967d99580c93727745e57969ed79af9470f5c546095
+
+# tcId 37: message size = 31 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 3691409364be20dce503548248892d1e
+Plaintext = 01aa0be14bea85a53eae638d7f8b2ba20faf5b37e17d0dbd9eae3750119b39
+Ciphertext = 16badd106f8a4d63b132636d280791fdb2e5ffafa17d37724e316c135985d9
+
+# tcId 38: message size = 32 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 9f77cb7cf578de6f37fec9453ede3b4f
+Plaintext = e8f5cccc86c817e7a01740509445daa0d5ee82783814b47ebaac549b807126b2
+Ciphertext = 875ba7b3f4f08de6a0ce43bc09026864f88b36ace93547decebeb04fedbe6abf
+
+# tcId 39: message size = 32 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 3295a5966d21da83ebf65467dabde790
+Plaintext = 0eec585a20631cc165c7956f28bf1c7e6883b9628071d079805b7449ec627c68
+Ciphertext = 50ba1dcf33cb6132a38967d99580c93727745e57969ed79af9470f5c54609510
+
+# tcId 40: message size = 32 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = f9aac757af827b5358e2dd6195e6f1a6
+Plaintext = 01aa0be14bea85a53eae638d7f8b2ba20faf5b37e17d0dbd9eae3750119b3946
+Ciphertext = 16badd106f8a4d63b132636d280791fdb2e5ffafa17d37724e316c135985d965
+
+# tcId 41: message size = 80 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = ac017fe258e1fa5fa3ae797d49c86f7c
+Plaintext = e8f5cccc86c817e7a01740509445daa0d5ee82783814b47ebaac549b807126b22932cc335eae8152d2722548fcb78b353497dcf027c1f8c9cf7f7d80def700382e128067e1294ee9872618253b595bc8
+Ciphertext = 875ba7b3f4f08de6a0ce43bc09026864f88b36ace93547decebeb04fedbe6abf6e2f800be84c1194ee239e8282ecd29b7f05a219d1e1c84fa46de7f8c9499385494ce81cd5f5cbacf18d16ccb33c70ee
+
+# tcId 42: message size = 80 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 9fe683a826ca3122cb5e5c3b66f7f673
+Plaintext = 0eec585a20631cc165c7956f28bf1c7e6883b9628071d079805b7449ec627c686f1442981ca2fe8482c59bec05d2c3d03891b7b032d31c0c45be937da432e69194296fdfd4f02c6690a2c3bf0af9c14b
+Ciphertext = 50ba1dcf33cb6132a38967d99580c93727745e57969ed79af9470f5c54609510e91bd4ab4f02c2c02ef5c39dd8321e263f4ab8d8a6494a8ffd16f3792b96a583b9255926e937cb38f61784b8dc4a056e
+
+# tcId 43: message size = 80 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = f669038a6b05b14bd83edbb315d9c820
+Plaintext = 01aa0be14bea85a53eae638d7f8b2ba20faf5b37e17d0dbd9eae3750119b3946518203b98e6ace06f0ef4a657c76381f6152efc107cae86810678c16ce51b5f61419656259151399e9a131ba6e9487bf
+Ciphertext = 16badd106f8a4d63b132636d280791fdb2e5ffafa17d37724e316c135985d965d90d70f2fc70e0053b22b43b9f4955d150e1d4f2f348e57e9cad84e885215dc444a0e879c908470ce7072148388f829c
+
+# tcId 44: message size = 129 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = a0c3094be7465c4d07220733ce4b449a5426941d7bca15e7
+IV = d794c666546a573c5a65529b
+AAD =
+Tag = 65e4d12c498d409e12474dc8281edf17
+Plaintext = e8f5cccc86c817e7a01740509445daa0d5ee82783814b47ebaac549b807126b22932cc335eae8152d2722548fcb78b353497dcf027c1f8c9cf7f7d80def700382e128067e1294ee9872618253b595bc823b8cbf2c5afd3a5bba87143425a1abb24c82a5e389c098dd2def4efb5c53a6031dd754b69dee5a0e38ed153e0e188e80d
+Ciphertext = 875ba7b3f4f08de6a0ce43bc09026864f88b36ace93547decebeb04fedbe6abf6e2f800be84c1194ee239e8282ecd29b7f05a219d1e1c84fa46de7f8c9499385494ce81cd5f5cbacf18d16ccb33c70ee8eccddf101803069327f1e48e155bb0751604eb357cd1dd9e0b79be80a12e8147e7c017b07a92fa6605169c3674ee14450
+
+# tcId 45: message size = 129 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = df0eb67547f2ac292e610e9e9d3c8dc7fa173fed71be960a
+IV = 34fd99cabfe0bdfdab68ad2f
+AAD = 2d404771adbaacd2406da92186706d8f
+Tag = 3aae99c086c522f11a15a4febd4f95f6
+Plaintext = 0eec585a20631cc165c7956f28bf1c7e6883b9628071d079805b7449ec627c686f1442981ca2fe8482c59bec05d2c3d03891b7b032d31c0c45be937da432e69194296fdfd4f02c6690a2c3bf0af9c14bbfaab345f08ec37c1766c6eb25c60d54f3a05cc2775acf19da23a40ded7c1b872245df82557c373cc7e581279255d39312
+Ciphertext = 50ba1dcf33cb6132a38967d99580c93727745e57969ed79af9470f5c54609510e91bd4ab4f02c2c02ef5c39dd8321e263f4ab8d8a6494a8ffd16f3792b96a583b9255926e937cb38f61784b8dc4a056e4132f1c660d0e61fd686fa37042abcb78a2175b0ad16363e0516db4ba40ff271f0807e2901b1afd0f5ab884a01a55b6958
+
+# tcId 46: message size = 129 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 0312d82df99d7675aade98e6b0553bc670dd27bbdf353977
+IV = b588b467e1e4477236062b57
+AAD = 0bf4e16609da5032cd84201712251b6844668a8b125cd8dcb482dcd2b5b7
+Tag = 6285d05df60e9d0e864719aa930f41df
+Plaintext = 01aa0be14bea85a53eae638d7f8b2ba20faf5b37e17d0dbd9eae3750119b3946518203b98e6ace06f0ef4a657c76381f6152efc107cae86810678c16ce51b5f61419656259151399e9a131ba6e9487bf0da70dbc46c2280b0af11f3d4f03f38eb753668f8c056956ef554db897249bf5b3900549834d3a1c86d58c86b4a3725983
+Ciphertext = 16badd106f8a4d63b132636d280791fdb2e5ffafa17d37724e316c135985d965d90d70f2fc70e0053b22b43b9f4955d150e1d4f2f348e57e9cad84e885215dc444a0e879c908470ce7072148388f829cb926ceba2d569179d54557f1b27c1932cbbcb62301916fb0765abf4d6fd32524ac7cc8a1a8454dde133a896edb3109e51a
+
+# tcId 47: aad size = 0 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 400cba6410923eb6db4cd43aee407d5e9d70f3b4129bd287
+IV = 9fdcfe44388e046c713cef8c
+AAD =
+Tag = 4079a11fbde0813a90a6e882a61adb0c
+Plaintext = 773b2dd99598311749509b68744ebdbc
+Ciphertext = b736d8489e15c208436da364b390031c
+
+# tcId 48: aad size = 1 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = b730c98dc049f1f11fad5782ccd7f33ed41a13812bf2791f
+IV = 4f35417bb027695751f1e70d
+AAD = d8
+Tag = dcf12b53e1176a450e41a2c578e29c4f
+Plaintext = 99f8d3e6542b84cc4daacbac4b52bba9
+Ciphertext = 39da5e55f4ee693d278729a98facfdb1
+
+# tcId 49: aad size = 15 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 74ee2c35b62eca1a218af5f78639b278990589c9661801eb
+IV = 4ca84c70b37fcfeb8cc987fb
+AAD = 91aae620145a118ca811d418dee4ac
+Tag = 382be7dc794e159749df43c0e88a183f
+Plaintext = fce3b8329e7a0a9b14030a0db1a8437d
+Ciphertext = f496352cbc6975249a64c026b2c06d5f
+
+# tcId 50: aad size = 16 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 665f297d5a13562914d8ab9e03871f6b448be41b1baf1c0f
+IV = 1e2d3ba33317c44bec27dfa5
+AAD = 57fc96ad14f80ef09ab8e704bdc5daa4
+Tag = d44b59b8fb6901e858a1a6d22e84efec
+Plaintext = 8295b82e9b74f341ffd8f43ba4107f4e
+Ciphertext = 21637f7e04c407d422926cf6f06fe4a3
+
+# tcId 51: aad size = 17 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 273e04bf68493fd8548ce09bc187af5b44baa46420cdce0b
+IV = 4467d489c7f90155292cf3d0
+AAD = 57b2f2bed99057b5bf79ff686abb85aaac
+Tag = 37d9f37dd161d74cd3896dab0fec6ad5
+Plaintext = ef614c136ab2aca0cb7bdd1f5210b3ac
+Ciphertext = 3a0ba5b29721fb9fceef8e29d6e3ff3a
+
+# tcId 52: aad size = 31 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 81b26c98ad93acc6da36b96a1ecd310e8d4aeba024f220a2
+IV = 96cd7ea596efaee8f23ae2e0
+AAD = 6cb56ffe3efd3ebe062bd7eb1930a1dd6dea3b45869b3e00764deb8ff4ab81
+Tag = 1801780825be6902decc2b0bd4aa29d3
+Plaintext = efc27ba0af5b2df6516ced771db426b0
+Ciphertext = 84e734407ebccb097607d6b1e25f1ee9
+
+# tcId 53: aad size = 32 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = cd902833448f2a2f94a6cda9b2c911b15efec1109f570be7
+IV = 72aa4bc333d08fa2622c0b73
+AAD = a419e8b46d1f4025d5866390150761180ed4e3d688fd9d68ccc0949d3dccb2da
+Tag = 02487c2c8beb378f7c01fdddfa976491
+Plaintext = 5503bfa41358214a5a3b11d1f1da03b5
+Ciphertext = c41364921b252e546b63d09d93f38e22
+
+# tcId 54: aad size = 33 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 956b077b14a4a0925b4d4c17f753c1830667eb6dcee4312c
+IV = 701a9cdddcf4bd792c520878
+AAD = 608e6ff66b3cae647d6cc25f15fc36271698671d4eeef59d48ae9a50c0204f69e8
+Tag = 6cab81f2ec3bc259666b0fd403626f8b
+Plaintext = 93d6d2784275198deaae2d4afbea959e
+Ciphertext = c1831dd2dcd72a518d70f5f2be16ea8a
+
+# tcId 55: aad size = 65 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 7af6497076604bf2e1ff9810e0b2e7d8265abcb67d0b363e
+IV = 1a8fb4c7ec5207e26b3615db
+AAD = bde3c2a2b748e41b7be039572839e4ffd5d59acee3e43580ec9ef8f0f10e1eeeef9caeafca3a966f752b1d008c5d470708345e5f092d97341d3dec1b2f890a275c
+Tag = 3c86abcb5709346a21284e9af6148d66
+Plaintext = 4e853df810184257728d59154955df32
+Ciphertext = 421f586744af8c65edd07ee9e83c8ad4
+
+# tcId 56: aad size = 129 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 930c941377235af6e272f6fb261dbb6f3603ca632b8fd073
+IV = 0c7d091bc0153ae56ba14667
+AAD = e014169f436282618528a03610e65462fbe56d9ce25459c03e806ac8ecd792a1b6e5b23019d2fbcfc20bbe7743b12b339bef9819f6f08e3e48b13a8fabaf4b72299f653b8ac6309decaa40e11b0b57bdb6beb4b2adfc990723057bd547b138995528ae9a5b070156ed58d94f59d6dd6f3de253de9f658634872b329f98ed39c135
+Tag = cc1990eb005fcf02ffa8bc0488504748
+Plaintext = 7a36ed91dd9f2c439ba2bf61a7552147
+Ciphertext = 50051e1539636071794f68a1bb69a230
+
+# tcId 57: aad size = 257 [Pseudorandom]
+Cipher = ARIA-192-GCM
+Key = 407adbb959b7c5b45568d8a658f67660d63f59171c603c66
+IV = 9b54d744b4107b397788db47
+AAD = 3cd97072723b7757105e8b2a6e8488178f22286f9f938eca6dd289078480bae0cf9b61936dd382788202a62e749ef7416880cf7ebc6800e37314dd1f8a707ef556270ce81d3814e5d9ebe5c01db98cc19ac51403f304e24cab06ac841911bac38a2cdb752a3a96638da0640ad0b7169055e78a93d9fd9d5bad767f6213206394494efd4a06521a8361afc15ac7a4519237e315c5b3c4b8abce310b07dc0696f0293a791d5a761dd20cb1beb81c8a3c87ab5a27b7e299cd50d250a692eee06ec9f941f9cb0b32ea6d13c2bdf148c2b994e67affdf12b7d87d67dbaa3048d658239346c5431fc7924fff163f6ac92fc7574c8b52b74ec041751e2cb1839c26390a2b
+Tag = 10d4ccca4ec290b23f7d075b3a1602e4
+Plaintext = 5098377c8ff3fab0cf33369e4d984c1b
+Ciphertext = baecfddb6ee0d1fbb29954ed3bf38af1
+
+# tcId 58: tag changed to all 0 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 59: tag changed to all 1 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 60: all lsbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6473548a4417b6317c4c9c6e0a0fb294
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 61: all msbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = e5f2d50bc59637b0fdcd1def8b8e3315
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 62: Bit 0 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6472558b4516b7307d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 63: Bit 7 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = e572558b4516b7307d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 64: Bit 8 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6573558b4516b7307d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 65: Bit 24 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558a4516b7307d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 66: Bit 31 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572550b4516b7307d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 67: Bit 56 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7317d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 68: Bit 63 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7b07d4d9d6f0b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 69: Bit 96 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7307d4d9d6f0a0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 70: Bit 103 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7307d4d9d6f8b0eb395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 71: Bit 119 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7307d4d9d6f0b0e3395
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 72: Bit 120 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7307d4d9d6f0b0eb394
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 73: Bit 127 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ccd7d8ee0e07775ddc3084a5f567602ff395315986cca915
+IV = a9a662fb88e5ebdc59fe6dd5
+AAD =
+Tag = 6572558b4516b7307d4d9d6f0b0eb315
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 74: tag changed to all 0 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 75: tag changed to all 1 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 76: all lsbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 47bab302af66e1cb84e96698191ef901
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 77: all msbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = c63b32832ee7604a0568e719989f7880
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 78: Bit 0 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 47bbb203ae67e0ca85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 79: Bit 7 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = c6bbb203ae67e0ca85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 80: Bit 8 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bab203ae67e0ca85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 81: Bit 24 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb202ae67e0ca85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 82: Bit 31 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb283ae67e0ca85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 83: Bit 56 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e0cb85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 84: Bit 63 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e04a85e86799181ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 85: Bit 96 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e0ca85e86799191ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 86: Bit 103 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e0ca85e86799981ff800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 87: Bit 119 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e0ca85e86799181f7800
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 88: Bit 120 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e0ca85e86799181ff801
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 89: Bit 127 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = e9470a3b0fddfacdf62846334c239967a5cb52a341a6462d
+IV = b2bfd7c57747ce9d9942b250
+AAD =
+Tag = 46bbb203ae67e0ca85e86799181ff880
+Plaintext =
+Ciphertext = 14e9cd14273eea0df1d67cc9800bc2ae
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 90: tag changed to all 0 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 91: tag changed to all 1 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 92: all lsbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2eda8614d5e650285e16f4f2f42d78f0
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 93: all msbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = af5b07955467d1a9df97757375acf971
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 94: Bit 0 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2edb8715d4e751295f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 95: Bit 7 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = afdb8715d4e751295f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 96: Bit 8 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fda8715d4e751295f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 97: Bit 24 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8714d4e751295f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 98: Bit 31 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8795d4e751295f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 99: Bit 56 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751285f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 100: Bit 63 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751a95f17f5f3f52c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 101: Bit 96 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751295f17f5f3f42c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 102: Bit 103 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751295f17f5f3752c79f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 103: Bit 119 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751295f17f5f3f52cf9f1
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 104: Bit 120 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751295f17f5f3f52c79f0
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 105: Bit 127 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = ce4d69402df4f59916d9b270f09104c962a1b86c33230245
+IV = 7a6f5fbd98628c2c8aec32fe
+AAD = 781b8d4ee720c1ec4004adf8b4559623
+Tag = 2fdb8715d4e751295f17f5f3f52c7971
+Plaintext =
+Ciphertext =
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 106: tag changed to all 0 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 00000000000000000000000000000000
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 107: tag changed to all 1 [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 108: all lsbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 18b517b2062a5fca9b386c500cbc46af
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 109: all msbs changed in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 9934963387abde4b1ab9edd18d3dc72e
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 110: Bit 0 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 18b416b3072b5ecb9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 111: Bit 7 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 99b416b3072b5ecb9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 112: Bit 8 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b516b3072b5ecb9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 113: Bit 24 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b2072b5ecb9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 114: Bit 31 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b41633072b5ecb9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 115: Bit 56 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5eca9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 116: Bit 63 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5e4b9a396d510dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 117: Bit 96 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5ecb9a396d510cbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 118: Bit 103 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5ecb9a396d518dbd47ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 119: Bit 119 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5ecb9a396d510dbdc7ae
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 120: Bit 120 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5ecb9a396d510dbd47af
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 121: Bit 127 modified in tag [ModifiedTag]
+Cipher = ARIA-192-GCM
+Key = 82ef829714993f8405c265f0057165d0a3eabf2e94f96b4e
+IV = 77130137bffd6c3c09c26a7d
+AAD = c63274ecddb2a76527a262e6883262dd
+Tag = 19b416b3072b5ecb9a396d510dbd472e
+Plaintext =
+Ciphertext = f98ceba878c3436f01f0cafb19566234
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+
+# tcId 122: special case ciphertext [EdgeCaseCt]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD =
+Tag = 4add43886f18bf5900309778e233b168
+Plaintext = ea618ef7b3d2e479c50a0f7b6eb82ef0
+Ciphertext = ffffffffffffffffffffffffffffffff
+
+# tcId 123: special case ciphertext [EdgeCaseCt]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD = ffffffffffffffffffffffffffffffff
+Tag = 97168e6b0969afd3fee143de51e0dc9d
+Plaintext = ea618ef7b3d2e479c50a0f7b6eb82ef0892d8513e56da9fa2fba2d0cf3138a67
+Ciphertext = ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+# tcId 124: special case ciphertext [EdgeCaseCt]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD = 00000000000000000000000000000000
+Tag = 5255e3171112b81f4ce2e1340f154153
+Plaintext = 159e71084c2d1b863af5f0849147d10f76d27aec1a925605d045d2f30cec7598
+Ciphertext = 0000000000000000000000000000000000000000000000000000000000000000
+
+# tcId 125: special case tag [EdgeCaseTag]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD = 9dc1dfa0070410623d2ffc78c15ce016
+Tag = 00000000000000000000000000000000
+Plaintext = 159e71084c2d1b863af5f0849147d10f
+Ciphertext = 00000000000000000000000000000000
+
+# tcId 126: special case tag [EdgeCaseTag]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD = 00000000000000000000000000000000
+Tag = 00000000000000000000000000000000
+Plaintext = 10a1474ae5cd26d0d438060578f60216
+Ciphertext = 053f3642a9e03d56eecdf681e9b1d319
+
+# tcId 127: special case tag [EdgeCaseTag]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD = fe3599e50e2f7c42cf27f00f6499b9fb
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext = 159e71084c2d1b863af5f0849147d10f
+Ciphertext = 00000000000000000000000000000000
+
+# tcId 128: special case tag [EdgeCaseTag]
+Cipher = ARIA-192-GCM
+Key = 000102030405060708090a0b0c0d0e0f1011121314151617
+IV = 000102030405060708090a0b
+AAD = 00000000000000000000000000000000
+Tag = ffffffffffffffffffffffffffffffff
+Plaintext = 4e479d7ad28ddb3cc4db17e332cdd078
+Ciphertext = 5bd9ec729ea0c0bafe2ee767a38a0177

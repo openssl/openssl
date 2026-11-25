@@ -156,6 +156,10 @@ push @files, qw(
 # (i.e. The algorithms are not present in the fips provider)
 my @defltfiles = qw(
                      evpciph_aes_ocb.txt
+                     evpciph_aes_192_ocb_rooterberg.txt
+                     evpciph_aes_256_ocb_rooterberg.txt
+                     evpciph_aria_192_ccm_rooterberg.txt
+                     evpciph_aria_192_gcm_rooterberg.txt
                      evpciph_aria.txt 
                      evpciph_bf.txt
                      evpciph_camellia.txt
@@ -196,6 +200,7 @@ push @defltfiles, qw(evppkey_ecx_kem.txt) unless $no_ecx;
 push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless ($no_dsa || $no_determinstic_nonce);
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
+push @defltfiles, qw(evpciph_aes_192_gcm_siv_rooterberg.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_ascon_aead128.txt) unless $no_ascon128;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
