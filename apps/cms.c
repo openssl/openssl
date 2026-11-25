@@ -1617,7 +1617,7 @@ int cms_main(int argc, char **argv)
             ret = 7;
             goto end;
         }
-        tmp = BIO_new_file(sigoutfile, "w");
+        tmp = BIO_new_file(sigoutfile, "wb");
         if (tmp == NULL) {
             ret = 7;
             goto end;
