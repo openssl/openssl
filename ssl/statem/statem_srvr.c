@@ -2080,7 +2080,7 @@ err:
     return MSG_PROCESS_ERROR;
 }
 
-static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
+static int early_post_process_client_hello(SSL_CONNECTION *s)
 {
     unsigned int j;
     int i, al = SSL_AD_INTERNAL_ERROR;
@@ -2088,6 +2088,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     unsigned long id;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
+    const STACK_OF(SSL_COMP) *comp_methods;
 #endif
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
@@ -2477,8 +2478,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 
     /*
      * Worst case, we will use the NULL compression, but if we have other
-     * options, we will now look for them.  We have complen-1 compression
-     * algorithms from the client, starting at q.
+     * options, we will now look for them. Fetch the current context's methods
+     * after ssl_allow_compression(), which can invoke the security callback.
      */
     s->s3.tmp.new_compression = NULL;
     if (SSL_CONNECTION_IS_VERSION13(s)) {
@@ -2505,9 +2506,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
                 SSL_R_INCONSISTENT_COMPRESSION);
             goto err;
         }
-        /* Look for resumed compression method */
-        for (m = 0; m < sk_SSL_COMP_num(sctx->comp_methods); m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
+        /* Look for the resumed compression method in the current SSL_CTX. */
+        comp_methods = SSL_CONNECTION_GET_CTX(s)->comp_methods;
+        for (m = 0; m < sk_SSL_COMP_num(comp_methods); m++) {
+            comp = sk_SSL_COMP_value(comp_methods, m);
             if (comp_id == comp->id) {
                 s->s3.tmp.new_compression = comp;
                 break;
@@ -2530,14 +2532,15 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     } else if (s->hit) {
         comp = NULL;
-    } else if (ssl_allow_compression(s) && sctx->comp_methods) {
+    } else if (ssl_allow_compression(s)
+        && (comp_methods = SSL_CONNECTION_GET_CTX(s)->comp_methods) != NULL) {
         /* See if we have a match */
         int m, nn, v, done = 0;
         unsigned int o;
 
-        nn = sk_SSL_COMP_num(sctx->comp_methods);
+        nn = sk_SSL_COMP_num(comp_methods);
         for (m = 0; m < nn; m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
+            comp = sk_SSL_COMP_value(comp_methods, m);
             v = comp->id;
             for (o = 0; o < clienthello->compressions_len; o++) {
                 if (v == clienthello->compressions[o]) {
@@ -2601,6 +2604,25 @@ err:
     s->clienthello = NULL;
 
     return 0;
+}
+
+/*
+ * The callbacks run while the ClientHello is processed can replace the SSL_CTX
+ * with SSL_set_SSL_CTX(). Hold a reference to the one in use on entry, which
+ * is used until its cookie verifier has run, so that the switch can't free it.
+ */
+static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    int ret;
+
+    if (!SSL_CTX_up_ref(sctx)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    ret = early_post_process_client_hello(s);
+    SSL_CTX_free(sctx);
+    return ret;
 }
 
 /*

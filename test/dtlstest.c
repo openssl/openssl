@@ -654,6 +654,95 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
+static int old_cookie_verify_count, new_cookie_verify_count;
+
+static int verify_old_ctx_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len)
+{
+    old_cookie_verify_count++;
+    return verify_cookie_cb(ssl, cookie, cookie_len);
+}
+
+static int verify_new_ctx_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len)
+{
+    new_cookie_verify_count++;
+    return verify_cookie_cb(ssl, cookie, cookie_len);
+}
+
+static int switch_cookie_ctx_cb(SSL *ssl, int *al, void *arg)
+{
+    if (SSL_set_SSL_CTX(ssl, arg) == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/*
+ * With the server restricted to DTLS 1.2, the ClientHello callback runs on
+ * the ClientHello carrying the cookie. A context switch must not change
+ * which callback verifies it during the handshake.
+ * Test 0: Switch away from the session context before SSL_accept(), then
+ * switch back in the callback. Both contexts have verifiers.
+ * Test 1: DTLSv1_listen() then SSL_accept() with no verifier on the replacement.
+ */
+static int test_cookie_ctx_switch(int listen)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL, *newsctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_SOCK
+    if (listen)
+        return TEST_skip("DTLSv1_listen() requires socket support");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(), NULL,
+            DTLS1_2_VERSION, DTLS1_2_VERSION, &newsctx, NULL, cert, privkey)))
+        goto end;
+
+    if (!listen)
+        SSL_CTX_set_cookie_verify_cb(newsctx, verify_new_ctx_cookie_cb);
+    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+    SSL_CTX_set_cookie_verify_cb(sctx, verify_old_ctx_cookie_cb);
+    SSL_CTX_set_client_hello_cb(sctx, switch_cookie_ctx_cb, newsctx);
+
+    old_cookie_verify_count = new_cookie_verify_count = 0;
+    if (!TEST_true(create_ssl_objects(listen ? sctx : newsctx, cctx,
+            &serverssl, &clientssl, NULL, NULL)))
+        goto end;
+    if (!listen) {
+        if (!TEST_ptr_eq(SSL_set_SSL_CTX(serverssl, sctx), sctx))
+            goto end;
+        SSL_set_options(serverssl, SSL_OP_COOKIE_EXCHANGE);
+        /* Leave the connection holding the only reference to sctx */
+        SSL_CTX_free(sctx);
+        sctx = NULL;
+    }
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 1, listen))
+        || !TEST_ptr_eq(SSL_get_SSL_CTX(serverssl), newsctx)
+        /* DTLSv1_listen() verifies the cookie before SSL_accept() checks it. */
+        || !TEST_int_eq(old_cookie_verify_count, listen ? 2 : 1)
+        || !TEST_int_eq(new_cookie_verify_count, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(newsctx);
+    return testresult;
+}
+#endif
+
 /*
  * Test just sending a Finished message as the first message. Should fail due
  * to an unexpected message.
@@ -2882,6 +2971,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_cookie_exchange, 5);
 #endif
     ADD_TEST(test_dtls_duplicate_records);
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_ALL_TESTS(test_cookie_ctx_switch, 2);
+#endif
     ADD_TEST(test_just_finished);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_swap_records_dtls1, 4);
