@@ -1593,6 +1593,7 @@ int cms_main(int argc, char **argv)
         CMS_SignerInfo *si;
         STACK_OF(CMS_SignerInfo) *sinfos;
         ASN1_OCTET_STRING *os;
+        size_t siglen;
 
         if ((flags & CMS_CADES) == 0) {
             BIO_printf(bio_err,
@@ -1610,12 +1611,18 @@ int cms_main(int argc, char **argv)
         }
         si = sk_CMS_SignerInfo_value(sinfos, 0);
         os = CMS_SignerInfo_get0_signature(si);
+        siglen = ASN1_STRING_get_length(os);
+        if (siglen > INT_MAX) {
+            BIO_printf(bio_err, "Signature too long\n");
+            ret = 7;
+            goto end;
+        }
         tmp = BIO_new_file(sigoutfile, "w");
         if (tmp == NULL) {
             ret = 7;
             goto end;
         }
-        ret = BIO_write(tmp, ASN1_STRING_get0_data(os), ASN1_STRING_get_length(os));
+        ret = BIO_write(tmp, ASN1_STRING_get0_data(os), (int)siglen);
         BIO_free(tmp);
         if (ret <= 0) {
             ret = 7;
