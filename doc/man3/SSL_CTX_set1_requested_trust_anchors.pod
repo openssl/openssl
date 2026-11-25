@@ -111,7 +111,7 @@ L<X509_STORE_trust_mtc_ca(3)>, L<SSL_CTX_add1_credential(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 4.1.
+These functions were added in OpenSSL 4.2.
 SSL_CTX_set1_requested_trust_anchors() and SSL_set1_requested_trust_anchors()
 originate in BoringSSL.
 

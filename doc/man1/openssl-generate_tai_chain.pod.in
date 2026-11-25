@@ -85,7 +85,7 @@ L<openssl-s_client(1)>
 
 =head1 HISTORY
 
-This command was added in OpenSSL 4.1.
+This command was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
