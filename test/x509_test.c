@@ -104,6 +104,111 @@ static int test_x509_tbs_cache(void)
     return ret;
 }
 
+/* Encodes x and decodes it into a new certificate */
+static X509 *reencode_x509(const X509 *x)
+{
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    X509 *ret = NULL;
+    int der_len = i2d_X509(x, &der);
+
+    if (der_len > 0) {
+        p = der;
+        ret = d2i_X509(NULL, &p, der_len);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+/* The NID of the TBSCertificate signature algorithm of x */
+static int tbs_sigalg_nid(const X509 *x)
+{
+    const ASN1_OBJECT *obj;
+
+    X509_ALGOR_get0(&obj, NULL, NULL, X509_get0_tbs_sigalg(x));
+    return OBJ_obj2nid(obj);
+}
+
+/*
+ * X509_set1_signature_algo() and X509_set1_signature_value() replace the
+ * signature of a parsed certificate, including the TBSCertificate copy of the
+ * algorithm, and the result survives re-encoding.
+ */
+static int test_x509_set_signature(void)
+{
+    static const uint8_t zeros[16] = { 0 };
+    const unsigned char *p = certdata;
+    const ASN1_BIT_STRING *sig;
+    const X509_ALGOR *alg;
+    X509_ALGOR *signed_alg = NULL, *unsigned_alg = NULL;
+    uint8_t *sig_bytes = NULL;
+    size_t sig_len;
+    X509 *x = NULL, *copy = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0))
+        goto end;
+    X509_get0_signature(&sig, &alg, x);
+    sig_len = ASN1_STRING_get_length(sig);
+    if (!TEST_ptr(signed_alg = X509_ALGOR_dup(alg))
+        || !TEST_ptr(sig_bytes = OPENSSL_memdup(ASN1_STRING_get0_data(sig),
+                         sig_len))
+        || !TEST_ptr(unsigned_alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set0(unsigned_alg,
+            OBJ_nid2obj(NID_id_alg_unsigned), V_ASN1_UNDEF, NULL)))
+        goto end;
+
+    /* A different signature value fails, restoring it verifies again */
+    if (!TEST_true(X509_set1_signature_value(x, zeros, sizeof(zeros)))
+        || !TEST_int_le(X509_verify(x, pubkey), 0)
+        || !TEST_true(X509_set1_signature_value(x, sig_bytes, sig_len))
+        || !TEST_int_eq(X509_verify(x, pubkey), 1))
+        goto end;
+
+    /* Both algorithm fields change, restoring them verifies again */
+    if (!TEST_true(X509_set1_signature_algo(x, unsigned_alg))
+        || !TEST_int_eq(X509_get_signature_nid(x), NID_id_alg_unsigned)
+        || !TEST_int_eq(tbs_sigalg_nid(x),
+            NID_id_alg_unsigned)
+        || !TEST_int_le(X509_verify(x, pubkey), 0)
+        || !TEST_true(X509_set1_signature_algo(x, signed_alg))
+        || !TEST_int_eq(X509_verify(x, pubkey), 1)
+        || !TEST_ptr(copy = reencode_x509(x))
+        || !TEST_int_eq(X509_verify(copy, pubkey), 1))
+        goto end;
+    X509_free(copy);
+    copy = NULL;
+
+    /* An RFC 9925 unsigned certificate survives re-encoding */
+    if (!TEST_true(X509_set1_signature_algo(x, unsigned_alg))
+        || !TEST_true(X509_set1_signature_value(x, NULL, 0))
+        || !TEST_ptr(copy = reencode_x509(x))
+        || !TEST_int_eq(X509_get_signature_nid(copy), NID_id_alg_unsigned)
+        || !TEST_int_eq(tbs_sigalg_nid(copy),
+            NID_id_alg_unsigned))
+        goto end;
+    X509_get0_signature(&sig, NULL, copy);
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(sig), 0))
+        goto end;
+
+    /* Invalid arguments */
+    if (!TEST_false(X509_set1_signature_algo(NULL, signed_alg))
+        || !TEST_false(X509_set1_signature_algo(x, NULL))
+        || !TEST_false(X509_set1_signature_value(NULL, sig_bytes, sig_len))
+        || !TEST_false(X509_set1_signature_value(x, NULL, 1)))
+        goto end;
+
+    ret = 1;
+end:
+    X509_ALGOR_free(signed_alg);
+    X509_ALGOR_free(unsigned_alg);
+    OPENSSL_free(sig_bytes);
+    X509_free(copy);
+    X509_free(x);
+    return ret;
+}
+
 static int test_x509_store_object_count(X509_STORE *store, int expected)
 {
     STACK_OF(X509_OBJECT) *objs = X509_STORE_get1_objects(store);
@@ -1180,6 +1285,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_x509_tbs_cache);
+    ADD_TEST(test_x509_set_signature);
     ADD_TEST(test_x509_crl_tbs_cache);
     ADD_ALL_TESTS(test_x509_store_duplicates, 6);
     ADD_TEST(test_asn1_item_verify);

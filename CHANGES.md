@@ -61,6 +61,12 @@ OpenSSL 4.2
 
    *Shane Lontis*
 
+ * Added the BoringSSL `X509_set1_signature_algo()` and
+   `X509_set1_signature_value()` functions to set the signature algorithm
+   and signature value of a certificate.
+
+   *Bob Beck*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build

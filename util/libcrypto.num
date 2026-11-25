@@ -6245,3 +6245,5 @@ OSSL_KDF_PURPOSE_server_cipher_key      ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_iv              ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_key             ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_mac_key         ?	4_2_0	EXIST::VARIABLE:
+X509_set1_signature_algo                ?	4_2_0	EXIST::FUNCTION:
+X509_set1_signature_value               ?	4_2_0	EXIST::FUNCTION:
