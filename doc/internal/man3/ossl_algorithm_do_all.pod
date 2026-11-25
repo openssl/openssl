@@ -8,9 +8,17 @@ ossl_algorithm_do_all - generic algorithm implementation iterator
 
  void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                             OSSL_PROVIDER *provider,
+                            int (*pre)(OSSL_PROVIDER *provider,
+                                       int operation_id, int no_store,
+                                       void *data, int *result),
+                            int (*reserve_store)(int no_store, void *data),
                             void (*fn)(OSSL_PROVIDER *provider,
                                        const OSSL_ALGORITHM *algo,
                                        int no_store, void *data),
+                            int (*unreserve_store)(void *data),
+                            int (*post)(OSSL_PROVIDER *provider,
+                                        int operation_id, int no_store,
+                                        void *data, int *result),
                             void *data);
 
 =head1 DESCRIPTION
@@ -25,11 +33,52 @@ will be looked up.
 I<provider> may be NULL to signify that all loaded providers will be
 queried.
 
-For each implementation found, the function I<fn> is called with the
-I<provider> for the implementation, the algorithm descriptor I<algo>,
-the flag I<no_store> indicating whether the algorithm descriptor may
-be remembered or not, and the caller I<data> that was passed to
-ossl_algorithm_do_all().
+For each applicable provider and operation, the provider is queried
+for the operation's B<OSSL_ALGORITHM> array, and the resulting set of
+implementations is processed as a unit, with the callbacks called in
+this order:
+
+=over 4
+
+=item I<reserve_store>(I<no_store>, I<data>)
+
+Reserves the method store the implementations are about to be added
+to, to avoid races with other threads doing the same.  Returning 0 is
+an error; the iteration stops immediately.
+
+=item I<pre>(I<provider>, I<operation_id>, I<no_store>, I<data>, I<result>)
+
+Checks the pre-conditions for processing this set of implementations.
+It may be NULL, in which case the pre-conditions are assumed fulfilled.
+Returning 0 is an error; the iteration stops immediately.  Otherwise,
+I<*result> must be set to nonzero if the pre-conditions are fulfilled,
+or zero to skip this set of implementations and continue with the next
+(this simply means that another thread got to it first).
+
+=item I<fn>(I<provider>, I<algo>, I<no_store>, I<data>)
+
+Called for each implementation in the set, with the I<provider> for
+the implementation, the algorithm descriptor I<algo>, the flag
+I<no_store> indicating whether the algorithm descriptor may be
+remembered in a permanent store or not, and the caller I<data> that
+was passed to ossl_algorithm_do_all().
+
+=item I<post>(I<provider>, I<operation_id>, I<no_store>, I<data>, I<result>)
+
+Checks the post-conditions after the set has been processed.  It may
+be NULL, in which case the post-conditions are assumed fulfilled.
+Returning 0 is an error; the iteration stops immediately.  Otherwise,
+I<*result> must be set to indicate whether the post-conditions are
+fulfilled; a zero I<*result> marks the overall operation failed, but
+the iteration continues.
+
+=item I<unreserve_store>(I<data>)
+
+Undoes the reservation made by I<reserve_store>.  It's called whenever
+I<reserve_store> succeeded, regardless of what the other callbacks
+did.
+
+=back
 
 =head1 RETURN VALUES
 
@@ -49,11 +98,13 @@ L<ossl_method_construct(3)>, L<EVP_MAC_do_all_provided(3)>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.
+ossl_algorithm_do_all() was added in OpenSSL 3.0.  The
+I<reserve_store> and I<unreserve_store> callbacks were added in
+OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this
 file except in compliance with the License.  You can obtain a copy in the file
