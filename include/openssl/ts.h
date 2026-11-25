@@ -434,9 +434,6 @@ OSSL_DEPRECATEDIN_3_4_FOR("unclear semantics, replace with TS_VERIFY_CTX_set0_st
 X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s);
 #endif
 int TS_VERIFY_CTX_set0_store(TS_VERIFY_CTX *ctx, X509_STORE *s);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#define TS_VERIFY_CTS_set_certs(ctx, cert) TS_VERIFY_CTX_set_certs(ctx, cert)
-#endif
 #ifndef OPENSSL_NO_DEPRECATED_3_4
 OSSL_DEPRECATEDIN_3_4_FOR("unclear semantics, replace with TS_VERIFY_CTX_set0_certs()")
 STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs);
