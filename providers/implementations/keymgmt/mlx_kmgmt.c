@@ -1008,20 +1008,26 @@ static void *mlx_kem_dup(const void *vkey, int selection)
 
     ret->mkey = ret->xkey = NULL;
 
-    if (key->propq != NULL
-        && (ret->propq = OPENSSL_strdup(key->propq)) == NULL) {
-        OPENSSL_free(ret);
-        return NULL;
+    /*
+     * EVP_PKEY_copy_parameters() can call dup directly, bypassing export.
+     * The seed is private key material and must not survive a copy that
+     * does not select private key material.
+     */
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0) {
+        OPENSSL_cleanse(ret->seed, sizeof(ret->seed));
+        ret->has_seed = 0;
     }
+
+    if (key->propq != NULL
+        && (ret->propq = OPENSSL_strdup(key->propq)) == NULL)
+        goto err;
 
     /* Absent key material, nothing left to do */
     if (key->mkey == NULL) {
         if (key->xkey == NULL)
             return ret;
         /* Fail if the source key is an inconsistent state */
-        OPENSSL_free(ret->propq);
-        OPENSSL_free(ret);
-        return NULL;
+        goto err;
     }
 
     switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
@@ -1040,6 +1046,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         break;
     }
 
+err:
     ossl_mlx_key_free(ret);
     return NULL;
 }

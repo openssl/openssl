@@ -20,6 +20,7 @@
 #include <openssl/params.h>
 #include <openssl/param_build.h>
 #include <openssl/rand.h>
+#include <openssl/x509.h>
 #include <crypto/ml_kem.h>
 #include "crypto/evp.h"
 #include "testutil.h"
@@ -486,8 +487,52 @@ end:
     return ret;
 }
 
+/* Parameter copies must not retain the seed used by the PKCS#8 encoder. */
+static int test_xwing_copy_parameters(void)
+{
+    EVP_PKEY *key = NULL, *params = NULL, *dup = NULL;
+    PKCS8_PRIV_KEY_INFO *original = NULL, *copied = NULL, *unexpected = NULL;
+    unsigned char *original_der = NULL, *copied_der = NULL;
+    int original_len = 0, copied_len = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "X-Wing"))
+        || !TEST_ptr(original = EVP_PKEY2PKCS8(key))
+        || !TEST_int_gt(original_len = i2d_PKCS8_PRIV_KEY_INFO(original,
+                           &original_der), 0)
+        || !TEST_ptr(params = EVP_PKEY_new())
+        || !TEST_true(EVP_PKEY_copy_parameters(params, key)))
+        goto end;
+
+    if (!TEST_ptr_null(unexpected = EVP_PKEY2PKCS8(params)))
+        goto end;
+    ERR_clear_error();
+
+    /* Full duplication must still preserve the private key and its seed. */
+    if (!TEST_ptr(dup = EVP_PKEY_dup(key))
+        || !TEST_int_eq(EVP_PKEY_eq(key, dup), 1)
+        || !TEST_ptr(copied = EVP_PKEY2PKCS8(dup))
+        || !TEST_int_gt(copied_len = i2d_PKCS8_PRIV_KEY_INFO(copied,
+                           &copied_der), 0)
+        || !TEST_mem_eq(original_der, original_len, copied_der, copied_len))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_clear_free(original_der, original_len > 0 ? original_len : 0);
+    OPENSSL_clear_free(copied_der, copied_len > 0 ? copied_len : 0);
+    PKCS8_PRIV_KEY_INFO_free(original);
+    PKCS8_PRIV_KEY_INFO_free(copied);
+    PKCS8_PRIV_KEY_INFO_free(unexpected);
+    EVP_PKEY_free(dup);
+    EVP_PKEY_free(params);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_xwing_copy_parameters);
     ADD_TEST(test_xwing_kat);
     ADD_TEST(test_xwing);
     ADD_TEST(test_xwing_hpke);
