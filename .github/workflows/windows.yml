@@ -373,6 +373,10 @@ jobs:
             cc: gcc
             pkgs:  mingw-w64-ucrt-x86_64-gcc
             config: mingw64 enable-demos
+          - arch: CLANGARM64
+            cc: clang
+            pkgs: mingw-w64-clang-aarch64-clang
+            config: mingwarm64
     runs-on: windows-latest
     env:
       CC: ${{ matrix.platform.cc }}
