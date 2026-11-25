@@ -11,6 +11,11 @@
 #define OSSL_INTERNAL_SSL3_CBC_H
 
 #include <openssl/evp.h>
+/*
+ * Each lane needs enough payload to finish the 64-byte SHA-1 or SHA-256
+ * block started by the TLS AAD and supply a full block for bulk hashing.
+ */
+#define TLS_MULTIBLOCK_MIN_LANE_LEN (2 * 64 - EVP_AEAD_TLS1_AAD_LEN)
 
 /* ssl3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
