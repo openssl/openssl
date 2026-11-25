@@ -108,6 +108,7 @@ jobs:
             #   crypto/aes/asm/aes-riscv64-zkn.pl
             #   crypto/modes/gcm128.c
             # The following paths only use ZBB
+            #   crypto/sha/asm/sha1-riscv64-zbb.pl
             #   crypto/sha/asm/sha256-riscv64-zbb.pl
             #   crypto/sha/asm/sha512-riscv64-zbb.pl
             #   crypto/sm3/asm/sm3-riscv64-zbb.pl
