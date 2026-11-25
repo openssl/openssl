@@ -11,14 +11,6 @@
 #define OSSL_INTERNAL_COMMON_H
 #pragma once
 
-#include <stdlib.h>
-#include <string.h>
-#include "crypto/ctype.h"
-#include "openssl/configuration.h"
-
-#include "internal/e_os.h" /* ossl_inline in many files */
-#include "internal/nelem.h"
-
 #if defined(__GNUC__) || defined(__clang__)
 #define ossl_likely(x) __builtin_expect(!!(x), 1)
 #define ossl_unlikely(x) __builtin_expect(!!(x), 0)
@@ -26,6 +18,14 @@
 #define ossl_likely(x) (x)
 #define ossl_unlikely(x) (x)
 #endif
+
+#include <stdlib.h>
+#include <string.h>
+#include "crypto/ctype.h"
+#include "openssl/configuration.h"
+
+#include "internal/e_os.h" /* ossl_inline in many files */
+#include "internal/nelem.h"
 
 #if defined(__GNUC__) || defined(__clang__)
 #define ALIGN16 __attribute((aligned(16)))
