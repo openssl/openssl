@@ -106,6 +106,10 @@ int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct)
         ERR_raise(ERR_LIB_CT, CT_R_SCT_UNSUPPORTED_VERSION);
         return 0;
     }
+    if (SCT_get_signature_nid(sct) == NID_undef) {
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID_SIGNATURE);
+        return 0;
+    }
     if (sct->log_id_len != sctx->pkeyhashlen || memcmp(sct->log_id, sctx->pkeyhash, sctx->pkeyhashlen) != 0) {
         ERR_raise(ERR_LIB_CT, CT_R_SCT_LOG_ID_MISMATCH);
         return 0;
