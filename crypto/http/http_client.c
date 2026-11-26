@@ -617,7 +617,7 @@ static int read_error_content(OSSL_HTTP_REQ_CTX *rctx)
             if (BIO_should_retry(in))
                 return -1;
             /* Only EOF establishes that a declared body ended early. */
-            if (n != 0 || !BIO_eof(in))
+            if (n != 0 || BIO_eof(in) <= 0)
                 reason = HTTP_R_FAILED_READING_DATA;
             break;
         }
