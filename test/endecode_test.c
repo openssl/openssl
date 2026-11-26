@@ -1059,6 +1059,62 @@ end:
 }
 
 /*
+ * MSBLOB and PVK with a private key selection on a key that has no private
+ * part is not a valid request, but it must fail cleanly and write nothing.
+ */
+static int test_public_only_via_MS(const char *type, EVP_PKEY *key)
+{
+    static const char *const output_types[] = { "MSBLOB", "PVK" };
+    int enc_level = 0; /* Unencrypted PVK, so no passphrase is needed */
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_int(OSSL_ENCODER_PARAM_ENCRYPT_LEVEL, &enc_level),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY *pub = NULL;
+    OSSL_ENCODER_CTX *ectx = NULL;
+    BIO *mem_ser = NULL;
+    size_t i;
+    int ok = 0;
+
+    if (!TEST_ptr(pub = make_public_only_copy(key))
+        || !TEST_ptr(mem_ser = BIO_new(BIO_s_mem())))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(output_types); i++) {
+        TEST_info("%s public key to %s", type, output_types[i]);
+        ERR_clear_error();
+        if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(pub,
+                          OSSL_KEYMGMT_SELECT_KEYPAIR,
+                          output_types[i], NULL,
+                          testpropq))
+            || !TEST_int_gt(OSSL_ENCODER_CTX_get_num_encoders(ectx), 0)
+            || !TEST_true(OSSL_ENCODER_CTX_set_params(ectx, params))
+            || !TEST_false(OSSL_ENCODER_to_bio(ectx, mem_ser))
+            || !TEST_ulong_ne(ERR_peek_error(), 0)
+            || !TEST_size_t_eq(BIO_ctrl_pending(mem_ser), 0))
+            goto end;
+        OSSL_ENCODER_CTX_free(ectx);
+        ectx = NULL;
+    }
+
+    /* The legacy functions reach the same code */
+    ERR_clear_error();
+    if (!TEST_int_lt(i2b_PrivateKey_bio(mem_ser, pub), 0)
+        || !TEST_int_lt(i2b_PVK_bio_ex(mem_ser, pub, 0, NULL, NULL,
+                            testctx, testpropq),
+            0)
+        || !TEST_ulong_ne(ERR_peek_error(), 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(mem_ser), 0))
+        goto end;
+    ok = 1;
+end:
+    OSSL_ENCODER_CTX_free(ectx);
+    BIO_free(mem_ser);
+    EVP_PKEY_free(pub);
+    return ok;
+}
+
+/*
  * Drive EVP_PKEY_fromdata with the supplied OSSL_PARAM[] (NULL =
  * empty array) for the given selection.  Either outcome is accepted:
  * fromdata may reject the input, or it may succeed and yield a key
@@ -1424,6 +1480,10 @@ static int test_fromdata_no_keygen(void)
     static int test_public_##KEYTYPE##_via_MSBLOB(void)                \
     {                                                                  \
         return test_public_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);      \
+    }                                                                  \
+    static int test_public_only_##KEYTYPE##_via_MS(void)               \
+    {                                                                  \
+        return test_public_only_via_MS(KEYTYPEstr, key_##KEYTYPE);     \
     }
 
 #define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                         \
@@ -1431,6 +1491,7 @@ static int test_fromdata_no_keygen(void)
         if (key_##KEYTYPE != NULL) {                           \
             ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB); \
             ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB);      \
+            ADD_TEST(test_public_only_##KEYTYPE##_via_MS);     \
         }                                                      \
     } while (0)
 
