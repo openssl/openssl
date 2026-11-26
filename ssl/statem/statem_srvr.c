@@ -893,7 +893,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          */
         if (s->num_tickets <= s->sent_tickets
             || ((s->options & SSL_OP_NO_TICKET) != 0
-                && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
+                && (s->session_ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
             || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
             || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0))
@@ -2291,6 +2291,62 @@ err:
     return MSG_PROCESS_ERROR;
 }
 
+/*
+ * Collect the ClientHello extensions again, after a callback that may have
+ * switched the connection to another SSL_CTX.
+ *
+ * The collected extensions are indexed by the custom extensions of the SSL_CTX
+ * in use when they were collected, and the new SSL_CTX may have a different
+ * set.  Nothing is done when neither set has any custom extensions.
+ *
+ * The built-in extensions keep their positions.  Those already parsed stay
+ * marked as parsed, so that they are not parsed a second time.
+ *
+ * Custom extensions do not keep their positions, and their parsed state is
+ * not carried over.  This must therefore not be called once any custom
+ * extension has been parsed, which first happens in
+ * tls_parse_all_extensions().
+ *
+ * It is called twice for each ClientHello: after the ClientHello callback,
+ * and again after the session lookup, immediately before
+ * tls_parse_all_extensions().  The collected extensions are freed when
+ * processing of the ClientHello ends, so it is not called after that.
+ *
+ * Returns 1 on success, or 0 on error with SSLfatal() already called.
+ */
+static int recollect_client_hello_exts(SSL_CONNECTION *s,
+    CLIENTHELLO_MSG *clienthello)
+{
+    PACKET extensions = clienthello->extensions;
+    void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
+        = s->ext.debug_cb;
+    RAW_EXTENSION *old = clienthello->pre_proc_exts;
+    size_t i;
+    int ret;
+
+    if (clienthello->pre_proc_exts_len == TLSEXT_IDX_num_builtins
+        && s->cert->custext.meths_count == 0)
+        return 1;
+
+    clienthello->pre_proc_exts = NULL;
+    clienthello->pre_proc_exts_len = 0;
+    /*
+     * The first collection has already initialised the built-in extensions
+     * and passed the extensions to the debug callback.
+     */
+    s->ext.debug_cb = NULL;
+    ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
+        &clienthello->pre_proc_exts,
+        &clienthello->pre_proc_exts_len, 0);
+    s->ext.debug_cb = debug_cb;
+    if (ret) {
+        for (i = 0; i < TLSEXT_IDX_num_builtins; i++)
+            clienthello->pre_proc_exts[i].parsed = old[i].parsed;
+    }
+    OPENSSL_free(old);
+    return ret;
+}
+
 static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 {
     unsigned int j;
@@ -2299,22 +2355,55 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     unsigned long id;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
+    STACK_OF(SSL_COMP) *comp_methods;
 #endif
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
     CLIENTHELLO_MSG *clienthello = s->clienthello;
     DOWNGRADE dgrd = DOWNGRADE_NONE;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
     unsigned char *snonce = s->s3.server_random;
+    /*
+     * The callbacks called below are given the SSL and may switch it to
+     * another SSL_CTX.  When the connection holds the last reference to the
+     * SSL_CTX it had, the switch frees it.  So this function does not keep
+     * the connection's SSL_CTX in a local variable, it looks it up again
+     * wherever it is needed.
+     *
+     * NOTE: the DTLS cookie verification callback is deliberately handled
+     * differently.  The cookie is checked after the ClientHello callback has
+     * run, but the callback we use to check it is that of the SSL_CTX in use
+     * before the ClientHello callback ran, which we save here.  A function
+     * pointer stays valid after the SSL_CTX it was copied from has been
+     * freed.
+     *
+     * The alternative would be to treat it like everything else, and call the
+     * callback of whichever SSL_CTX is in use when the cookie is checked.  We
+     * do not, in order to keep existing applications working.  An application
+     * that switches SSL_CTX in its ClientHello callback may have set its
+     * cookie callbacks only on the original SSL_CTX.  That has always worked:
+     * the original SSL_CTX is normally still alive after the switch, and it
+     * was its callback that we called.  If we called the callback of the new
+     * SSL_CTX instead, and it had none, we would have to compare the cookie
+     * with the copy kept in the connection.  After DTLSv1_listen() there is
+     * no such copy, so the handshake would fail.
+     *
+     * When DTLSv1_listen() is not used, the original SSL_CTX is also the one
+     * whose callback generated the cookie, so the cookie is generated and
+     * verified by callbacks from the same SSL_CTX.
+     */
+    int (*verify_cookie_cb)(SSL *ssl, const unsigned char *cookie,
+        unsigned int cookie_len)
+        = SSL_CONNECTION_GET_CTX(s)->app_verify_cookie_cb;
 
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
-    if (sctx->client_hello_cb != NULL) {
+    if (SSL_CONNECTION_GET_CTX(s)->client_hello_cb != NULL) {
         /* A failure in the ClientHello callback terminates the connection. */
-        switch (sctx->client_hello_cb(ussl, &al, sctx->client_hello_cb_arg)) {
+        switch (SSL_CONNECTION_GET_CTX(s)->client_hello_cb(ussl, &al,
+            SSL_CONNECTION_GET_CTX(s)->client_hello_cb_arg)) {
         case SSL_CLIENT_HELLO_SUCCESS:
             break;
         case SSL_CLIENT_HELLO_RETRY:
@@ -2330,33 +2419,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     /*
      * The callback may have switched to an SSL_CTX with a different set of
      * custom extensions, possibly in an earlier call that returned
-     * SSL_CLIENT_HELLO_RETRY. The collected extensions are indexed by the
-     * custom extensions in use when they were collected, so collect them
-     * again unless neither set has any.
+     * SSL_CLIENT_HELLO_RETRY.
      */
-    if (clienthello->pre_proc_exts_len != TLSEXT_IDX_num_builtins
-        || s->cert->custext.meths_count != 0) {
-        PACKET extensions = clienthello->extensions;
-        void (*debug_cb)(SSL *, int, int, const unsigned char *, int, void *)
-            = s->ext.debug_cb;
-        int ret;
-
-        OPENSSL_free(clienthello->pre_proc_exts);
-        clienthello->pre_proc_exts = NULL;
-        clienthello->pre_proc_exts_len = 0;
-        /*
-         * The first collection has already initialised the built-in
-         * extensions and passed the extensions to the debug callback.
-         */
-        s->ext.debug_cb = NULL;
-        ret = tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
-            &clienthello->pre_proc_exts,
-            &clienthello->pre_proc_exts_len, 0);
-        s->ext.debug_cb = debug_cb;
-        if (!ret) {
-            /* SSLfatal already been called */
-            goto err;
-        }
+    if (!recollect_client_hello_exts(s, clienthello)) {
+        /* SSLfatal() already called */
+        goto err;
     }
 
     /* Set up the client_random */
@@ -2391,17 +2458,22 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         if ((SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) && clienthello->dtls_cookie_len != 0) {
             int verify_ret = 0;
 
+            /*
+             * NOTE: verify_cookie_cb is deliberately the callback saved before
+             * the ClientHello callback ran, and not that of the SSL_CTX now in
+             * use.  The comment at the top of this function explains why.
+             */
 #if !defined(OPENSSL_NO_DTLS)
             DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
-            if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
+            if (dl != NULL && dl->require_hvr_cookie && verify_cookie_cb == NULL) {
                 verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
                     clienthello->dtls_cookie,
                     (unsigned int)clienthello->dtls_cookie_len);
             } else
 #endif
-                if (sctx->app_verify_cookie_cb != NULL) {
-                verify_ret = sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
+                if (verify_cookie_cb != NULL) {
+                verify_ret = verify_cookie_cb(ussl, clienthello->dtls_cookie,
                     (unsigned int)clienthello->dtls_cookie_len);
             } else if (s->d1->cookie_len == clienthello->dtls_cookie_len
                 && memcmp(clienthello->dtls_cookie, s->d1->cookie,
@@ -2610,6 +2682,16 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
         ssl_check_for_safari(s, clienthello);
 
+    /*
+     * The callbacks called since the extensions were last collected, such as
+     * the PSK and session ticket callbacks, may also have switched to another
+     * SSL_CTX.  No custom extension has been parsed yet.
+     */
+    if (!recollect_client_hello_exts(s, clienthello)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
+
     /* TLS extensions */
     if (!tls_parse_all_extensions(s, SSL_EXT_CLIENT_HELLO,
             clienthello->pre_proc_exts, NULL, 0, 1)) {
@@ -2696,6 +2778,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * algorithms from the client, starting at q.
      */
     s->s3.tmp.new_compression = NULL;
+#ifndef OPENSSL_NO_COMP
+    /* No callbacks run from here to the end of the compression checks */
+    comp_methods = SSL_CONNECTION_GET_CTX(s)->comp_methods;
+#endif
     if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
          * We already checked above that the NULL compression method appears in
@@ -2721,8 +2807,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             goto err;
         }
         /* Look for resumed compression method */
-        for (m = 0; m < sk_SSL_COMP_num(sctx->comp_methods); m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
+        for (m = 0; m < sk_SSL_COMP_num(comp_methods); m++) {
+            comp = sk_SSL_COMP_value(comp_methods, m);
             if (comp_id == comp->id) {
                 s->s3.tmp.new_compression = comp;
                 break;
@@ -2745,14 +2831,14 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     } else if (s->hit) {
         comp = NULL;
-    } else if (ssl_allow_compression(s) && sctx->comp_methods) {
+    } else if (ssl_allow_compression(s) && comp_methods != NULL) {
         /* See if we have a match */
         int m, nn, v, done = 0;
         unsigned int o;
 
-        nn = sk_SSL_COMP_num(sctx->comp_methods);
+        nn = sk_SSL_COMP_num(comp_methods);
         for (m = 0; m < nn; m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
+            comp = sk_SSL_COMP_value(comp_methods, m);
             v = comp->id;
             for (o = 0; o < clienthello->compressions_len; o++) {
                 if (v == clienthello->compressions[o]) {
@@ -2979,7 +3065,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 int rv = s->cert->cert_cb(ussl, s->cert->cert_cb_arg);
 
                 if (rv == 0) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR);
+                    /*
+                     * A callback failure is normally an internal error.  If
+                     * the client offered only unknown PSK identities and there
+                     * is no certificate to fall back on, use decrypt_error as
+                     * if a binder had failed.  See tls_parse_ctos_psk().  The
+                     * reason stays SSL_R_CERT_CB_ERROR.
+                     */
+                    if (s->ext.psk_unknown_identity && !ssl_has_any_cert(s))
+                        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_CERT_CB_ERROR);
+                    else
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR);
                     goto err;
                 }
                 if (rv < 0) {
@@ -3004,6 +3100,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                 OSSL_USDT_data(s, { "tls::ciphersuite", OSSL_USDT_WORD(SSL_CIPHER_get_protocol_id(s->s3.tmp.new_cipher)) });
             }
             if (!s->hit) {
+                if (s->ext.psk_unknown_identity && !ssl_has_any_cert(s)) {
+                    /*
+                     * No certificate to fall back on: use decrypt_error to
+                     * keep the alert the same as if the binder failed.
+                     * See RFC9846 Appendix F.6.  Note we make no attempt to
+                     * do this in constant time compared to verifying the
+                     * binder.  None of this code is constant time anyway.
+                     */
+                    SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_NO_CERTIFICATE_SET);
+                    goto err;
+                }
                 if (!tls_choose_sigalg(s, 1)) {
                     /* SSLfatal already called */
                     goto err;

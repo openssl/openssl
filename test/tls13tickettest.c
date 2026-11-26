@@ -2053,6 +2053,689 @@ static int test_tls13_external_psk_digest_not_offered(void)
     return test;
 }
 
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+/*
+ * TLS 1.3 0-RTT suppressed while the ClientHello is still being flushed.
+ *
+ * The external PSK is bound to TLS_AES_128_GCM_SHA256 but only ChaCha20 is
+ * offered, so 0-RTT is suppressed while the PSK (same digest) is still used for
+ * resumption.  A client BIO that holds only 64 bytes makes the first
+ * SSL_write_early_data() stop with WANT_WRITE part way through the ClientHello.
+ * The later calls must finish the handshake without trying to send early data,
+ * with and without middlebox compatibility mode.
+ */
+static int test_tls13_suppress_early_data_want_write(int idx)
+{
+    const unsigned char m[] = "message";
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    BIO *cbio = NULL, *sbio = NULL;
+    size_t w = 0;
+    int i, early_done = 0, test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_CHACHA20_POLY1305_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_CHACHA20_POLY1305_SHA256"))
+        && TEST_true(tls_channel_init(c, s, &conn))
+        && TEST_true(enable_external_psk(conn.c.ssl, conn.s.ssl))
+        && TEST_true(BIO_new_bio_pair(&cbio, 64, &sbio, 16384));
+    if (test == 0)
+        goto end;
+    SSL_set_bio(conn.c.ssl, cbio, cbio);
+    SSL_set_bio(conn.s.ssl, sbio, sbio);
+    if (idx == 0)
+        SSL_clear_options(conn.c.ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+
+    for (i = 0; i < 100; i++) {
+        /*
+         * Client: keep calling SSL_write_early_data() until it succeeds.  With
+         * early data suppressed, success means the application can stop
+         * writing early data, not that the handshake is complete.  After that,
+         * finish the handshake with SSL_connect().
+         */
+        if (!early_done) {
+            if (SSL_write_early_data(conn.c.ssl, m, sizeof(m), &w) > 0)
+                early_done = 1;
+            else if (!is_retryable(conn.c.ssl, 0))
+                break;
+        } else if (!SSL_is_init_finished(conn.c.ssl)
+            && SSL_connect(conn.c.ssl) <= 0
+            && !is_retryable(conn.c.ssl, 0)) {
+            break;
+        }
+        /* Server: run the handshake, which also reads from the client's small buffer. */
+        if (!SSL_is_init_finished(conn.s.ssl)
+            && SSL_accept(conn.s.ssl) <= 0
+            && !is_retryable(conn.s.ssl, 0))
+            break;
+        /* Stop once both sides are done; any failure is caught below. */
+        if (early_done && SSL_is_init_finished(conn.c.ssl)
+            && SSL_is_init_finished(conn.s.ssl))
+            break;
+    }
+
+    /*
+     * An error from SSL_write_early_data() leaves early_done unset; an error
+     * from SSL_connect() or SSL_accept() leaves a handshake unfinished.
+     */
+    test = TEST_true(early_done)
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_true(SSL_is_init_finished(conn.c.ssl))
+        && TEST_true(SSL_is_init_finished(conn.s.ssl))
+        && TEST_int_eq(SSL_get_early_data_status(conn.c.ssl),
+            SSL_EARLY_DATA_REJECTED)
+        && TEST_true(SSL_session_reused(conn.c.ssl))
+        && TEST_uint_eq(conn.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(conn.c.stats.ch_has_early_data, 0);
+
+end:
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+#endif /* !OPENSSL_NO_CHACHA && !OPENSSL_NO_POLY1305 */
+
+static int sni_switch_cb(SSL *ssl, int *alert, void *arg)
+{
+    (void)alert;
+    return SSL_set_SSL_CTX(ssl, (SSL_CTX *)arg) != NULL
+        ? SSL_TLSEXT_ERR_OK
+        : SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+static int late_cert_calls;
+
+static int late_cert_cb(SSL *ssl, void *arg)
+{
+    late_cert_calls++;
+    return SSL_use_certificate_file(ssl, cert, SSL_FILETYPE_PEM) > 0
+        && SSL_use_PrivateKey_file(ssl, pkey, SSL_FILETYPE_PEM) > 0;
+}
+
+static int late_sni_cb(SSL *ssl, int *alert, void *arg)
+{
+    late_cert_calls++;
+    return sni_switch_cb(ssl, alert, arg);
+}
+
+/*
+ * A ticket is offered to a server that cannot decrypt it (a new context, so
+ * new ticket keys) and that has no certificate of its own when the ClientHello
+ * is parsed.  The certificate arrives later, from the certificate callback
+ * (idx 0) or by an SNI callback switching to a context that has one (idx 1).
+ * The unknown ticket must not fail the handshake: it falls back to a full
+ * handshake once the callback has supplied the certificate.
+ */
+static int test_tls13_ticket_unknown_late_cert(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL, *fresh = NULL, *vhost = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    late_cert_calls = 0;
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &fresh, NULL, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &vhost, NULL, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl));
+    if (test == 0)
+        goto end;
+
+    if (idx == 0) {
+        SSL_CTX_set_cert_cb(fresh, late_cert_cb, NULL);
+    } else {
+        if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(fresh, late_sni_cb))
+            || !TEST_true(SSL_CTX_set_tlsext_servername_arg(fresh, vhost)))
+            goto end;
+    }
+
+    test = TEST_true(tls_channel_init(c, fresh, &resumed))
+        && TEST_true(SSL_set_tlsext_host_name(resumed.c.ssl, "review.example"))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(late_cert_calls, 1)
+        && TEST_false(SSL_session_reused(resumed.c.ssl));
+
+end:
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(fresh);
+    SSL_CTX_free(vhost);
+    return test;
+}
+
+static int probe_alert, probe_reason;
+static int probe_known, probe_wrong_key;
+
+/*
+ * Record the alert the server sends, and the reason for it.  The reason is
+ * taken from the server's own error queue, which already holds the error that
+ * led to the alert.  It never goes on the wire.
+ */
+static void probe_alert_cb(const SSL *ssl, int where, int ret)
+{
+    if ((where & SSL_CB_ALERT) != 0 && (where & SSL_CB_WRITE) != 0) {
+        probe_alert = ret & 0xff;
+        probe_reason = ERR_GET_REASON(ERR_peek_last_error());
+    }
+}
+
+static int probe_psk_use_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
+    size_t *idlen, SSL_SESSION **sess)
+{
+    static const unsigned char absent_id[] = "absent";
+    static const unsigned char wrong_key[32] = { 0x42 };
+
+    if ((*sess = ext_psk_session(ssl)) == NULL)
+        return 0;
+    if (probe_wrong_key
+        && !SSL_SESSION_set1_master_key(*sess, wrong_key, sizeof(wrong_key))) {
+        SSL_SESSION_free(*sess);
+        *sess = NULL;
+        return 0;
+    }
+    *id = probe_known ? ext_psk_id : absent_id;
+    *idlen = probe_known ? sizeof(ext_psk_id) : sizeof(absent_id) - 1;
+    return 1;
+}
+
+static int probe_cb_calls;
+
+static int probe_no_cert_cb(SSL *ssl, void *arg)
+{
+    probe_cb_calls++;
+    return 0;
+}
+
+static int probe_ok_cert_cb(SSL *ssl, void *arg)
+{
+    probe_cb_calls++;
+    return 1;
+}
+
+static int probe_ok_sni_cb(SSL *ssl, int *alert, void *arg)
+{
+    probe_cb_calls++;
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int probe_reject_alpn(SSL *ssl, const unsigned char **out,
+    unsigned char *outlen, const unsigned char *in, unsigned int inlen,
+    void *arg)
+{
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+/*
+ * Run a handshake that is bound to fail, and return the alert the server sent.
+ * The client offers a PSK that is either known to the server (with the wrong
+ * key, so the binder fails) or not known.  Both sides are limited to the PSK's
+ * ciphersuite.  Otherwise the server may select one with a different hash and
+ * drop the known PSK without verifying its binder.
+ *
+ * The server has no certificate, except in case 6.  The case selects an
+ * additional failure the handshake would also hit if it got past the PSK:
+ * 0 none, 1 no shared signature algorithms, 2 ALPN rejected, 3 a certificate
+ * callback that fails.  In cases 4 and 5 a certificate callback or an SNI
+ * callback succeeds, but supplies no certificate.  In case 6 the server has a
+ * certificate, and its certificate callback fails.
+ *
+ * Returns the alert, or -1 if the handshake did not fail, and sets *reason to
+ * the server's local error reason.
+ */
+static int psk_failure_alert(int variant, int known, int *reason)
+{
+    static const unsigned char alpn[] = { 2, 'h', '2' };
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    int alert = -1;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION, &s, &c,
+            variant == 6 ? cert : NULL, variant == 6 ? pkey : NULL))
+        || !TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(set_ctx_callbacks(c, s)))
+        goto end;
+    if (variant == 1
+        && (!TEST_true(SSL_CTX_set1_sigalgs_list(c, "ed25519"))
+            || !TEST_true(SSL_CTX_set1_sigalgs_list(s, "rsa_pss_rsae_sha256"))))
+        goto end;
+    if (variant == 2) {
+        if (!TEST_int_eq(SSL_CTX_set_alpn_protos(c, alpn, sizeof(alpn)), 0))
+            goto end;
+        SSL_CTX_set_alpn_select_cb(s, probe_reject_alpn, NULL);
+    }
+    if (variant == 3 || variant == 6)
+        SSL_CTX_set_cert_cb(s, probe_no_cert_cb, NULL);
+    if (variant == 4)
+        SSL_CTX_set_cert_cb(s, probe_ok_cert_cb, NULL);
+    if (variant == 5
+        && !TEST_true(SSL_CTX_set_tlsext_servername_callback(s, probe_ok_sni_cb)))
+        goto end;
+    probe_cb_calls = 0;
+    probe_known = known;
+    probe_wrong_key = 1;
+    probe_alert = -1;
+    probe_reason = 0;
+    if (!TEST_true(tls_channel_init(c, s, &conn)))
+        goto end;
+    SSL_set_psk_use_session_callback(conn.c.ssl, probe_psk_use_cb);
+    SSL_set_psk_find_session_callback(conn.s.ssl, ext_psk_find_cb);
+    SSL_set_info_callback(conn.s.ssl, probe_alert_cb);
+    if (TEST_false(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0)))
+        alert = probe_alert;
+    *reason = probe_reason;
+end:
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return alert;
+}
+
+/*
+ * A server with no certificate gives an unknown PSK identity the same
+ * decrypt_error alert as a known identity with a bad binder.  This is best
+ * effort.  It covers the cases where the server ends up with no certificate
+ * and nothing else fails first.  Installing a certificate or SNI callback
+ * defers the check, since the callback may supply a certificate, and checks
+ * that run before the callback, such as a missing signature_algorithms
+ * extension, can still give a different alert.
+ *
+ * The alerts are the same, but the server's local error reasons differ.  They
+ * are checked to make sure the known identity gets as far as its binder, and
+ * the unknown one does not.
+ */
+static int test_tls13_psk_unknown_identity_alert(int idx)
+{
+    int unknown_reason = 0, bad_binder_reason = 0;
+    int unknown = psk_failure_alert(idx, 0, &unknown_reason);
+    int bad_binder = psk_failure_alert(idx, 1, &bad_binder_reason);
+
+    return TEST_int_eq(bad_binder, SSL_AD_DECRYPT_ERROR)
+        && TEST_int_eq(unknown, bad_binder)
+        && TEST_int_eq(bad_binder_reason, SSL_R_BINDER_DOES_NOT_VERIFY)
+        && TEST_int_ne(unknown_reason, SSL_R_BINDER_DOES_NOT_VERIFY);
+}
+
+/*
+ * The alert and the server's error reason when the client offers an unknown
+ * PSK identity, and a callback that could have supplied a certificate has run.
+ *
+ * With idx 0 the server has no certificate, and its certificate callback
+ * succeeds without supplying one.  With idx 1 its SNI callback does the same.
+ * Both fail with decrypt_error, as a bad binder would.
+ *
+ * With idx 2 the server has a certificate and its certificate callback fails.
+ * That is a plain callback failure, with internal_error.
+ */
+static int test_tls13_psk_unknown_identity_callbacks(int idx)
+{
+    static const struct {
+        int variant, alert, reason;
+    } expect[] = {
+        { 4, SSL_AD_DECRYPT_ERROR, SSL_R_NO_CERTIFICATE_SET },
+        { 5, SSL_AD_DECRYPT_ERROR, SSL_R_NO_CERTIFICATE_SET },
+        { 6, SSL_AD_INTERNAL_ERROR, SSL_R_CERT_CB_ERROR },
+    };
+    int reason = 0;
+    int alert = psk_failure_alert(expect[idx].variant, 0, &reason);
+
+    return TEST_int_eq(alert, expect[idx].alert)
+        && TEST_int_eq(reason, expect[idx].reason)
+        && TEST_int_eq(probe_cb_calls, 1);
+}
+
+static int hrr_ch_count, hrr_ch_psk[2], hrr_cert_calls;
+
+/* Record whether each ClientHello the client sends has a pre_shared_key */
+static void hrr_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    struct stats st = { 0 };
+
+    if (!write_p || content_type != SSL3_RT_HANDSHAKE || len == 0
+        || ((const unsigned char *)buf)[0] != SSL3_MT_CLIENT_HELLO)
+        return;
+    parse_ch_exts(buf, len, &st);
+    if (hrr_ch_count < (int)OSSL_NELEM(hrr_ch_psk))
+        hrr_ch_psk[hrr_ch_count] = st.ch_has_psk;
+    hrr_ch_count++;
+}
+
+/* Succeed for the first ClientHello, then remove the certificate and fail */
+static int hrr_cert_cb(SSL *ssl, void *arg)
+{
+    if (++hrr_cert_calls == 1)
+        return 1;
+    SSL_certs_clear(ssl);
+    return 0;
+}
+
+/*
+ * An unknown PSK identity in the first ClientHello must not affect how the
+ * server handles a second ClientHello that offers no PSK.
+ *
+ * The client offers a ticket the server cannot decrypt (a new context, so new
+ * ticket keys).  The server selects a ciphersuite whose hash differs from the
+ * ticket's, and a group the client sent no key share for.  The client's reply
+ * to the HelloRetryRequest therefore has no pre_shared_key extension.  The
+ * certificate callback succeeds for the first ClientHello.  For the second it
+ * removes the certificate and fails.
+ *
+ * That is a plain certificate callback failure, so the alert is
+ * internal_error.  It is not decrypt_error, which is for an unknown identity
+ * with no certificate to fall back on.
+ */
+static int test_tls13_psk_dropped_after_hrr(void)
+{
+    SSL_CTX *c = NULL, *s = NULL, *fresh = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    hrr_ch_count = hrr_cert_calls = 0;
+    hrr_ch_psk[0] = hrr_ch_psk[1] = -1;
+    probe_alert = -1;
+    probe_reason = 0;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &fresh, NULL, cert, pkey))
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(fresh, "TLS_AES_256_GCM_SHA384"))
+        && TEST_true(SSL_CTX_set1_groups_list(c, "P-256:P-384"))
+        && TEST_true(SSL_CTX_set1_groups_list(fresh, "P-384"))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl));
+    if (test == 0)
+        goto end;
+
+    SSL_CTX_set_cert_cb(fresh, hrr_cert_cb, NULL);
+    test = TEST_true(tls_channel_init(c, fresh, &resumed));
+    if (test == 0)
+        goto end;
+    SSL_set_msg_callback(resumed.c.ssl, hrr_msg_cb);
+    SSL_set_info_callback(resumed.s.ssl, probe_alert_cb);
+
+    test = TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_false(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(hrr_ch_count, 2)
+        && TEST_int_eq(hrr_ch_psk[0], 1)
+        && TEST_int_eq(hrr_ch_psk[1], 0)
+        && TEST_int_eq(hrr_cert_calls, 2)
+        && TEST_int_eq(probe_alert, SSL_AD_INTERNAL_ERROR)
+        && TEST_int_eq(probe_reason, SSL_R_CERT_CB_ERROR);
+
+end:
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(fresh);
+    return test;
+}
+
+static SSL_CTX *switch_target;
+static int switch_find_calls;
+
+static int switch_ctx_find_cb(SSL *ssl, const unsigned char *id, size_t idlen,
+    SSL_SESSION **sess)
+{
+    switch_find_calls++;
+    *sess = NULL;
+    return SSL_set_SSL_CTX(ssl, switch_target) != NULL;
+}
+
+#ifndef OPENSSL_NO_PSK
+static unsigned int switch_ctx_psk_server_cb(SSL *ssl, const char *identity,
+    unsigned char *psk, unsigned int max_psk_len)
+{
+    (void)SSL_set_SSL_CTX(ssl, switch_target);
+    return 0;
+}
+#endif
+
+/*
+ * A server PSK callback switches the connection to another context and
+ * reports that it has no PSK.  That context has an SNI callback that
+ * supplies the certificate, so the handshake must fall back to a full one.
+ * The check for a callback must look at the context the connection has now,
+ * not the one it had before the PSK callback ran.
+ *
+ * The server is first switched to an intermediate context.  With an odd idx
+ * the application drops its own reference, so the callback's switch frees
+ * that context.  With idx 0 and 1 the switch is made by the PSK find session
+ * callback, with idx 2 and 3 by the legacy PSK server callback.
+ */
+static int test_tls13_psk_cb_switches_ctx(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL, *mid = NULL, *target = NULL, *vhost = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    int test;
+
+    late_cert_calls = 0;
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &mid, NULL, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &target, NULL, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &vhost, NULL, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_tlsext_servername_callback(target, late_sni_cb))
+        && TEST_true(SSL_CTX_set_tlsext_servername_arg(target, vhost))
+        && TEST_true(tls_channel_init(c, s, &conn))
+        && TEST_ptr(SSL_set_SSL_CTX(conn.s.ssl, mid));
+    if (test == 0)
+        goto end;
+
+    if ((idx & 1) != 0) {
+        SSL_CTX_free(mid);
+        mid = NULL;
+    }
+
+    switch_target = target;
+    probe_known = 0;
+    probe_wrong_key = 0;
+    SSL_set_psk_use_session_callback(conn.c.ssl, probe_psk_use_cb);
+#ifndef OPENSSL_NO_PSK
+    if ((idx & 2) != 0)
+        SSL_set_psk_server_callback(conn.s.ssl, switch_ctx_psk_server_cb);
+    else
+#endif
+        SSL_set_psk_find_session_callback(conn.s.ssl, switch_ctx_find_cb);
+    test = TEST_true(SSL_set_tlsext_host_name(conn.c.ssl, "review.example"))
+        && TEST_true(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0))
+        && TEST_int_eq(late_cert_calls, 1)
+        && TEST_false(SSL_session_reused(conn.c.ssl));
+
+end:
+    switch_target = NULL;
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(mid);
+    SSL_CTX_free(target);
+    SSL_CTX_free(vhost);
+    return test;
+}
+
+#define SWITCH_EXT_BASE 0xff10
+#define SWITCH_EXT_OTHER 0xff80
+#define SWITCH_EXT_COUNT 8
+
+static int switch_ext_parse_calls;
+
+static int switch_ext_parse_cb(SSL *ssl, unsigned int ext_type,
+    unsigned int context, const unsigned char *in, size_t inlen, X509 *x,
+    size_t chainidx, int *al, void *arg)
+{
+    switch_ext_parse_calls++;
+    return 1;
+}
+
+/* Add |count| custom ClientHello extensions, with types starting at |base| */
+static int add_switch_exts(SSL_CTX *ctx, unsigned int base, int count)
+{
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (!TEST_true(SSL_CTX_add_custom_ext(ctx, base + i,
+                SSL_EXT_CLIENT_HELLO, NULL, NULL, NULL,
+                switch_ext_parse_cb, NULL)))
+            return 0;
+    }
+    return 1;
+}
+
+/*
+ * A PSK find session callback switches the connection to a context with a
+ * different set of custom extensions, and reports that it has no PSK.  The
+ * client sends one custom extension, which only the new context knows.  That
+ * extension must be parsed, once, and the PSK callback must not be called a
+ * second time.
+ *
+ * With idx 0 the original context has no custom extensions and the new one
+ * has several.  With idx 1 the original context has several and the new one
+ * has only the one the client sends.
+ */
+static int test_tls13_psk_cb_switches_custom_exts(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL, *target = NULL, *vhost = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    int ntarget = idx == 0 ? SWITCH_EXT_COUNT : 1;
+    int test;
+
+    late_cert_calls = switch_find_calls = switch_ext_parse_calls = 0;
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &target, NULL, NULL, NULL))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &vhost, NULL, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_tlsext_servername_callback(target, late_sni_cb))
+        && TEST_true(SSL_CTX_set_tlsext_servername_arg(target, vhost))
+        && TEST_true(add_switch_exts(target, SWITCH_EXT_BASE, ntarget))
+        && TEST_true(SSL_CTX_add_custom_ext(c, SWITCH_EXT_BASE + ntarget - 1,
+            SSL_EXT_CLIENT_HELLO, NULL, NULL, NULL, NULL, NULL));
+    if (test == 0)
+        goto end;
+    if (idx != 0
+        && !TEST_true(add_switch_exts(s, SWITCH_EXT_OTHER, SWITCH_EXT_COUNT))) {
+        test = 0;
+        goto end;
+    }
+
+    test = TEST_true(tls_channel_init(c, s, &conn));
+    if (test == 0)
+        goto end;
+
+    switch_target = target;
+    probe_known = 0;
+    probe_wrong_key = 0;
+    SSL_set_psk_use_session_callback(conn.c.ssl, probe_psk_use_cb);
+    SSL_set_psk_find_session_callback(conn.s.ssl, switch_ctx_find_cb);
+    test = TEST_true(SSL_set_tlsext_host_name(conn.c.ssl, "review.example"))
+        && TEST_true(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0))
+        && TEST_int_eq(switch_find_calls, 1)
+        && TEST_int_eq(switch_ext_parse_calls, 1)
+        && TEST_int_eq(late_cert_calls, 1)
+        && TEST_false(SSL_session_reused(conn.c.ssl));
+
+end:
+    switch_target = NULL;
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(target);
+    SSL_CTX_free(vhost);
+    return test;
+}
+
+static int sni_session_ctx_setup(SSL_CTX *c, SSL_CTX *s, SSL_CTX *vhost)
+{
+    SSL_CTX_set_options(s, SSL_OP_NO_TICKET);
+    SSL_CTX_set_options(vhost, SSL_OP_NO_TICKET);
+    SSL_CTX_set_session_cache_mode(s, SSL_SESS_CACHE_SERVER);
+    SSL_CTX_set_session_cache_mode(vhost, SSL_SESS_CACHE_OFF);
+    SSL_CTX_set_session_cache_mode(c,
+        SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    return 1;
+}
+
+/*
+ * The server runs with SSL_OP_NO_TICKET and a server session cache on its
+ * original context, and an SNI callback switches the connection to a context
+ * whose session cache is off.  The cache that matters is the one that stores
+ * and looks up sessions, which belongs to the original context, so stateful
+ * tickets must still be issued and the next connection must resume.
+ */
+static int test_tls13_ticket_sni_session_ctx(void)
+{
+    SSL_CTX *c = NULL, *s = NULL, *vhost = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), NULL,
+            TLS1_3_VERSION, TLS1_3_VERSION, &vhost, NULL, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(sni_session_ctx_setup(c, s, vhost))
+        && TEST_true(SSL_CTX_set_tlsext_servername_callback(s, sni_switch_cb))
+        && TEST_true(SSL_CTX_set_tlsext_servername_arg(s, vhost))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(SSL_set_tlsext_host_name(initial.c.ssl, "review.example"))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_ptr_eq(SSL_get_SSL_CTX(initial.s.ssl), vhost)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_tlsext_host_name(resumed.c.ssl, "review.example"))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_true(SSL_session_reused(resumed.c.ssl));
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    SSL_CTX_free(vhost);
+    return test;
+}
+
 /*
  * A client psk_use_session callback that returns a session with no master key
  * must be rejected (SSL_ERROR_SSL), not used to build a binder from an empty
@@ -2538,6 +3221,20 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_cipher_retire_full_handshake);
     ADD_TEST(test_tls13_external_psk_digest_not_offered);
     ADD_TEST(test_tls13_external_psk_no_master_key);
+    ADD_TEST(test_tls13_ticket_sni_session_ctx);
+    ADD_ALL_TESTS(test_tls13_ticket_unknown_late_cert, 2);
+    ADD_ALL_TESTS(test_tls13_psk_unknown_identity_alert, 4);
+    ADD_ALL_TESTS(test_tls13_psk_unknown_identity_callbacks, 3);
+    ADD_TEST(test_tls13_psk_dropped_after_hrr);
+#ifndef OPENSSL_NO_PSK
+    ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 4);
+#else
+    ADD_ALL_TESTS(test_tls13_psk_cb_switches_ctx, 2);
+#endif
+    ADD_ALL_TESTS(test_tls13_psk_cb_switches_custom_exts, 2);
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    ADD_ALL_TESTS(test_tls13_suppress_early_data_want_write, 2);
+#endif
     ADD_ALL_TESTS(test_tls13_psk_bad_server_session, 4);
     ADD_ALL_TESTS(test_tls13_ticket_lifetime_cap, 3);
     ADD_ALL_TESTS(test_tls13_ticket_lifetime_bound_offer, 2);
