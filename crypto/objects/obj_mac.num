@@ -1502,3 +1502,13 @@ id_alg_hss_lms_hashsig		1501
 id_rdna_unsigned		1502
 id_alg_unsigned		1503
 id_aes		1504
+id_ct_privateKeyInfo		1505
+id_ct_encrPrivateKeyInfo		1506
+id_ct_rpkiCanonicalCacheRepresentation		1507
+id_ct_rpkiErikIndex		1508
+id_ct_rpkiErikPartition		1509
+id_ct_prefixlenCSVwithCRLF		1510
+id_ct_CDR		1511
+id_ct_rpkiErikSegmentIndex		1512
+stirTNList		1513
+communityDefinition		1514
