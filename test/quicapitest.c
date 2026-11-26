@@ -6039,6 +6039,210 @@ end:
     return testresult;
 }
 
+static int stream_has_ew(SSL *s)
+{
+    SSL_POLL_ITEM item;
+    struct timeval timeout = { 0, 0 };
+    size_t result_count = 0;
+
+    item.desc = SSL_as_poll_descriptor(s);
+    item.events = SSL_POLL_EVENT_EW;
+    item.revents = 0;
+    if (!SSL_poll(&item, 1, sizeof(item), &timeout,
+            SSL_POLL_FLAG_NO_HANDLE_EVENTS, &result_count))
+        return -1;
+    return (item.revents & SSL_POLL_EVENT_EW) != 0;
+}
+
+/*
+ * Verify documented idempotency of SSL_stream_conclude() across SEND/DATA_SENT,
+ * DATA_RECVD, and after SSL_WRITE_FLAG_CONCLUDE, and of SSL_stream_reset()
+ * across RESET_SENT and RESET_RECVD while preserving the first error code.
+ * With idx == 2 it checks that a send part reset by the peer via STOP_SENDING
+ * is not treated as an application reset.
+ */
+static int test_stream_conclude_reset_idempotent(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    SSL *cstream = NULL, *cstream2 = NULL, *sstream = NULL;
+    QUIC_CHANNEL *ch;
+    QUIC_STREAM_MAP *qsm;
+    QUIC_STREAM *qs;
+    SSL_STREAM_RESET_ARGS args1 = { 42 }, args2 = { 99 };
+    unsigned char buf[16];
+    size_t written = 0, readbytes = 0;
+    uint64_t sid, aec = 0;
+    int testresult = 0, ret, i;
+    int policy = SSL_INCOMING_STREAM_POLICY_ACCEPT;
+
+    /* With idx == 2 the server rejects the stream, sending STOP_SENDING. */
+    if (idx == 2)
+        policy = SSL_INCOMING_STREAM_POLICY_REJECT;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx())
+        || !create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret),
+                SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0))
+        || !TEST_true(SSL_set_incoming_stream_policy(serverssl, policy, 77))
+        || !TEST_ptr(ch = ossl_quic_conn_get_channel(clientssl)))
+        goto err;
+
+    qsm = ossl_quic_channel_get_qsm(ch);
+
+    if (idx == 0) {
+        /* Idempotent SSL_stream_conclude() in SEND/DATA_SENT and DATA_RECVD. */
+        if (!TEST_ptr(cstream = SSL_new_stream(clientssl, 0))
+            || !TEST_true(SSL_write_ex(cstream, "hello", 5, &written))
+            || !TEST_size_t_eq(written, 5)
+            || !TEST_true(SSL_stream_conclude(cstream, 0))
+            || !TEST_true(SSL_stream_conclude(cstream, 0))
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            goto err;
+
+        sid = SSL_get_stream_id(cstream);
+
+        if (!TEST_int_eq(SSL_handle_events(clientssl), 1)
+            || !TEST_int_eq(SSL_handle_events(serverssl), 1)
+            || !TEST_ptr(sstream = SSL_accept_stream(serverssl,
+                             SSL_ACCEPT_STREAM_NO_BLOCK)))
+            goto err;
+
+        for (i = 0;; i++) {
+            if (!TEST_int_lt(i, 10))
+                goto err;
+            if (SSL_read_ex(sstream, buf, sizeof(buf), &readbytes))
+                continue;
+            if (SSL_get_error(sstream, 0) == SSL_ERROR_ZERO_RETURN)
+                break;
+            if (!TEST_int_eq(SSL_get_error(sstream, 0), SSL_ERROR_WANT_READ)
+                || !TEST_int_eq(SSL_handle_events(clientssl), 1)
+                || !TEST_int_eq(SSL_handle_events(serverssl), 1))
+                goto err;
+        }
+
+        for (i = 0; i < 10; i++) {
+            if (!TEST_int_eq(SSL_handle_events(serverssl), 1)
+                || !TEST_int_eq(SSL_handle_events(clientssl), 1))
+                goto err;
+            qs = ossl_quic_stream_map_get_by_id(qsm, sid);
+            if (qs != NULL && qs->send_state == QUIC_SSTREAM_STATE_DATA_RECVD)
+                break;
+        }
+
+        if (!TEST_ptr(qs = ossl_quic_stream_map_get_by_id(qsm, sid))
+            || !TEST_int_eq(qs->send_state, QUIC_SSTREAM_STATE_DATA_RECVD)
+            || !TEST_true(SSL_stream_conclude(cstream, 0))
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            goto err;
+
+        /* Resetting a stream already in DATA_RECVD must still fail. */
+        if (!TEST_false(SSL_stream_reset(cstream, &args1, sizeof(args1))))
+            goto err;
+        ERR_clear_error();
+
+        /* SSL_stream_conclude() after SSL_WRITE_FLAG_CONCLUDE must succeed. */
+        if (!TEST_ptr(cstream2 = SSL_new_stream(clientssl, 0))
+            || !TEST_true(SSL_write_ex2(cstream2, "world", 5,
+                SSL_WRITE_FLAG_CONCLUDE, &written))
+            || !TEST_size_t_eq(written, 5)
+            || !TEST_true(SSL_stream_conclude(cstream2, 0))
+            || !TEST_ulong_eq(ERR_peek_error(), 0))
+            goto err;
+    } else if (idx == 1) {
+        /* Idempotent SSL_stream_reset() in RESET_SENT and RESET_RECVD. */
+        if (!TEST_ptr(cstream = SSL_new_stream(clientssl, 0))
+            || !TEST_true(SSL_stream_reset(cstream, &args1, sizeof(args1)))
+            || !TEST_true(SSL_stream_reset(cstream, &args2, sizeof(args2)))
+            || !TEST_ulong_eq(ERR_peek_error(), 0)
+            || !TEST_int_eq(SSL_get_stream_write_error_code(cstream, &aec), 1)
+            || !TEST_uint64_t_eq(aec, 42))
+            goto err;
+
+        sid = SSL_get_stream_id(cstream);
+
+        for (i = 0; i < 10; i++) {
+            if (!TEST_int_eq(SSL_handle_events(clientssl), 1)
+                || !TEST_int_eq(SSL_handle_events(serverssl), 1))
+                goto err;
+            qs = ossl_quic_stream_map_get_by_id(qsm, sid);
+            if (qs != NULL && qs->send_state == QUIC_SSTREAM_STATE_RESET_RECVD)
+                break;
+        }
+
+        if (!TEST_ptr(qs = ossl_quic_stream_map_get_by_id(qsm, sid))
+            || !TEST_int_eq(qs->send_state, QUIC_SSTREAM_STATE_RESET_RECVD)
+            || !TEST_true(SSL_stream_reset(cstream, &args2, sizeof(args2)))
+            || !TEST_ulong_eq(ERR_peek_error(), 0)
+            || !TEST_int_eq(SSL_get_stream_write_error_code(cstream, &aec), 1)
+            || !TEST_uint64_t_eq(aec, 42))
+            goto err;
+
+        /* Concluding an already-reset stream must still fail. */
+        if (!TEST_false(SSL_stream_conclude(cstream, 0)))
+            goto err;
+        ERR_clear_error();
+    } else {
+        /*
+         * STOP_SENDING (77) from the peer resets our send part, but the
+         * application never reset it: SSL_stream_reset() still fails, the
+         * peer's error code is kept and SSL_POLL_EVENT_EW stays raised.
+         */
+        if (!TEST_ptr(cstream = SSL_new_stream(clientssl, 0))
+            || !TEST_true(SSL_write_ex(cstream, "hello", 5, &written)))
+            goto err;
+
+        sid = SSL_get_stream_id(cstream);
+
+        for (i = 0; i < 10; i++) {
+            if (!TEST_int_eq(SSL_handle_events(clientssl), 1)
+                || !TEST_int_eq(SSL_handle_events(serverssl), 1))
+                goto err;
+            qs = ossl_quic_stream_map_get_by_id(qsm, sid);
+            if (qs != NULL && qs->peer_stop_sending)
+                break;
+        }
+
+        if (!TEST_ptr(qs = ossl_quic_stream_map_get_by_id(qsm, sid))
+            || !TEST_true(qs->peer_stop_sending)
+            || !TEST_true(ossl_quic_stream_send_is_reset(qs))
+            || !TEST_int_eq(stream_has_ew(cstream), 1)
+            || !TEST_false(SSL_stream_reset(cstream, &args1, sizeof(args1)))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_STREAM_RESET)
+            || !TEST_int_eq(SSL_get_stream_write_error_code(cstream, &aec), 1)
+            || !TEST_uint64_t_eq(aec, 77)
+            || !TEST_int_eq(stream_has_ew(cstream), 1))
+            goto err;
+        ERR_clear_error();
+    }
+
+    testresult = 1;
+err:
+    SSL_free(sstream);
+    SSL_free(cstream2);
+    SSL_free(cstream);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int test_quic_set0_bio_leak(void)
 {
     int testresult = 0;
@@ -6289,6 +6493,7 @@ int setup_tests(void)
     ADD_TEST(test_pending_limit);
     ADD_TEST(test_reject_pending_conn);
     ADD_TEST(test_quic_set0_bio_leak);
+    ADD_ALL_TESTS(test_stream_conclude_reset_idempotent, 3);
 
     return 1;
 err:

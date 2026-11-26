@@ -3308,14 +3308,16 @@ int ossl_quic_conn_stream_conclude(SSL *s)
     }
 
     if (!quic_validate_for_write(ctx.xso, &err)) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
+        /*
+         * Only the first call has any effect; concluding an already concluded
+         * stream is a no-op success. See SSL_stream_conclude(3).
+         */
+        if (err == SSL_R_STREAM_FINISHED)
+            ret = 1;
+        else
+            ret = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
         qctx_unlock(&ctx);
         return ret;
-    }
-
-    if (ossl_quic_sstream_get_final_size(qs->sstream, NULL)) {
-        qctx_unlock(&ctx);
-        return 1;
     }
 
     ossl_quic_sstream_fin(qs->sstream);
@@ -4446,7 +4448,17 @@ int ossl_quic_stream_reset(SSL *ssl,
     error_code = (args != NULL ? args->quic_error_code : 0);
 
     if (!quic_validate_for_write(ctx.xso, &err)) {
-        ok = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
+        /*
+         * After the first successful call, subsequent calls succeed but are
+         * ignored, keeping the original error code. See SSL_stream_reset(3).
+         * This applies only to a reset the application requested itself, and
+         * not once the connection is shutting down or terminating.
+         */
+        if (err == SSL_R_STREAM_RESET && ctx.xso->requested_reset
+            && quic_mutation_allowed(ctx.qc, /*req_active=*/0))
+            ok = 1;
+        else
+            ok = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
         goto err;
     }
 
