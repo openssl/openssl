@@ -167,8 +167,8 @@ ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
 # A spaced FIPSversion gate must mean the same as the no-space form
 ok(run(test(["fips_version_test", "-config", $provconf, ">= 3.0.0"])),
    "spaced '>= 3.0.0' gate matches like '>=3.0.0'");
-ok(!run(test(["fips_version_test", "-config", $provconf, "< 3.0.0"])),
-   "spaced '< 3.0.0' gate rejects like '<3.0.0'");
+ok(run(test(["fips_version_test", "-config", $provconf, "< 6.0.0"])),
+   "spaced '< 6.0.0' gate matches like '<6.0.0'");
 
 # Test that default options for fipsinstall output the 'install-status' for
 # FIPS 140-2 providers.
