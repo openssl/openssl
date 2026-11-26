@@ -11377,6 +11377,79 @@ end:
     return testresult;
 }
 
+/*
+ * Test that SSL_clear() on a client drops the session of a handshake that did
+ * not complete, and that the next handshake succeeds. The client uses the max
+ * fragment length extension, because the negotiated value is stored in the
+ * session.
+ * Test 0: TLSv1.3
+ * Test 1: TLSv1.2
+ */
+static int test_ssl_clear_failed_handshake(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+#ifdef OSSL_NO_USABLE_TLS1_3
+    if (idx == 0)
+        return TEST_skip("No TLSv1.3 in this build");
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (idx == 1)
+        return TEST_skip("No TLSv1.2 in this build");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION,
+            idx == 0 ? TLS1_3_VERSION : TLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_max_fragment_length(clientssl,
+            TLSEXT_max_fragment_length_512)))
+        goto end;
+
+    /* The client does not trust the server certificate: the handshake fails */
+    SSL_set_verify(clientssl, SSL_VERIFY_PEER, NULL);
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl, SSL_ERROR_SSL))
+        || !TEST_long_ne(SSL_get_verify_result(clientssl), X509_V_OK)
+        || !TEST_ptr(SSL_get_session(clientssl)))
+        goto end;
+
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    if (!TEST_true(SSL_clear(clientssl))
+        || !TEST_ptr_null(SSL_get_session(clientssl)))
+        goto end;
+
+    /* The next handshake with the same client object must succeed */
+    SSL_set_verify(clientssl, SSL_VERIFY_NONE, NULL);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_false(SSL_session_reused(clientssl))
+        || !TEST_uint_eq(SSL_SESSION_get_max_fragment_length(
+                             SSL_get_session(clientssl)),
+            TLSEXT_max_fragment_length_512))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /* Parse CH and retrieve any MFL extension value if present */
 static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
 {
@@ -20580,6 +20653,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
+    ADD_ALL_TESTS(test_ssl_clear_failed_handshake, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
 #if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
     ADD_ALL_TESTS(test_srp, 6);

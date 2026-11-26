@@ -631,6 +631,17 @@ int ossl_ssl_connection_reset(SSL *s)
         return 0;
     }
 
+    /*
+     * Also drop the session of a handshake that was started but did not
+     * complete, so that nothing it negotiated carries over to the next
+     * connection. A session set for a handshake that has not been started yet
+     * is kept.
+     */
+    if (SSL_in_init(s) && !SSL_in_before(s)) {
+        SSL_SESSION_free(sc->session);
+        sc->session = NULL;
+    }
+
     ossl_statem_clear(sc);
 
     sc->version = s->method->version;
