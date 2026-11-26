@@ -1513,6 +1513,79 @@ end:
 }
 
 /* Test roundtrip with ECH for any suite */
+#ifndef OPENSSL_NO_ML_KEM
+/*
+ * X-Wing is supported by HPKE, but not yet by ECH. It must not prevent
+ * selection of a later X25519 config, even when its public name is preferred.
+ * idx 0: X25519 control; idx 1: X-Wing first; idx 2: prefer X-Wing's name.
+ */
+static int test_ech_skip_xwing(int idx)
+{
+    OSSL_ECHSTORE *es = NULL;
+    OSSL_HPKE_SUITE suite = {
+        OSSL_HPKE_KEM_ID_XWING,
+        OSSL_HPKE_KDF_ID_HKDF_SHA256,
+        OSSL_HPKE_AEAD_ID_AES_GCM_128
+    };
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
+    const char *public_name = "example.com";
+    const char *xwing_name = "xwing.example.com";
+    const char *expected_outer = idx == 2 ? xwing_name : public_name;
+    int ret = 0;
+
+    if (!TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq)))
+        goto end;
+    if (idx != 0
+        && (!TEST_true(OSSL_HPKE_suite_check(suite))
+            || !TEST_true(OSSL_ECHSTORE_new_config(es,
+                OSSL_ECH_CURRENT_VERSION, 0, xwing_name, suite))))
+        goto end;
+    suite.kem_id = OSSL_HPKE_KEM_ID_X25519;
+    if (!TEST_true(OSSL_ECHSTORE_new_config(es, OSSL_ECH_CURRENT_VERSION,
+            0, public_name, suite))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set1_echstore(cctx, es))
+        /* Load only X25519 on the server to avoid random config ID collisions. */
+        || !TEST_true(OSSL_ECHSTORE_downselect(es, OSSL_ECHSTORE_LAST))
+        || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
+        goto end;
+    if (idx == 2
+        && !TEST_true(SSL_ech_set1_outer_server_name(clientssl,
+            xwing_name, 0)))
+        goto end;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    if (!TEST_int_eq(SSL_ech_get1_status(clientssl, &cinner, &couter),
+            SSL_ECH_STATUS_SUCCESS)
+        || !TEST_int_eq(SSL_ech_get1_status(serverssl, &sinner, &souter),
+            SSL_ECH_STATUS_SUCCESS)
+        || !TEST_str_eq(couter, expected_outer)
+        || !TEST_str_eq(souter, expected_outer))
+        goto end;
+    ret = 1;
+end:
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    OSSL_ECHSTORE_free(es);
+    return ret;
+}
+#endif
+
 static int test_ech_suites(int idx)
 {
     if (verbose)
@@ -2729,6 +2802,9 @@ int setup_tests(void)
     ADD_TEST(ech_bad_public_names);
     suite_combos = OSSL_NELEM(kem_str_list) * OSSL_NELEM(kdf_str_list)
         * OSSL_NELEM(aead_str_list);
+#ifndef OPENSSL_NO_ML_KEM
+    ADD_ALL_TESTS(test_ech_skip_xwing, 3);
+#endif
     ADD_ALL_TESTS(test_ech_suites, suite_combos);
     ADD_ALL_TESTS(test_ech_hrr, suite_combos);
     ADD_ALL_TESTS(test_ech_early, suite_combos);

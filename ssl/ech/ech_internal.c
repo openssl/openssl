@@ -421,6 +421,9 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
         }
         suitematch = 0;
         for (csuite = 0; csuite != lee->nsuites && suitematch == 0; csuite++) {
+            /* X-Wing exceeds the current ECH HPKE info and enc size limits. */
+            if (lee->suites[csuite].kem_id == OSSL_HPKE_KEM_ID_XWING)
+                continue;
             if (OSSL_HPKE_suite_check(lee->suites[csuite]) == 1) {
                 if (tee == NULL) { /* remember 1st suite match for override */
                     tee = lee;
