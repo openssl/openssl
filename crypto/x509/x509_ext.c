@@ -106,7 +106,7 @@ X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 
     ret = X509v3_delete_extension(&x->cert_info.extensions, loc);
     if (ret != NULL)
-        x->cert_info.enc.modified = 1;
+        ossl_x509_set_modified(x);
     return ret;
 }
 
@@ -127,7 +127,7 @@ int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
         sk_X509_EXTENSION_free(*exts);
         *exts = NULL;
     }
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return 1;
 }
 
@@ -143,7 +143,7 @@ int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
      * Assume modified, sadly the underlying function does not tell us whether
      * changes were made, or not.
      */
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return X509V3_add1_i2d(&x->cert_info.extensions, nid, value, crit,
         flags);
 }

@@ -29,7 +29,7 @@ int X509_set_version(X509 *x, long version)
     if (version == X509_VERSION_1) {
         ASN1_INTEGER_free(x->cert_info.version);
         x->cert_info.version = NULL;
-        x->cert_info.enc.modified = 1;
+        ossl_x509_set_modified(x);
         return 1;
     }
     if (x->cert_info.version == NULL) {
@@ -38,7 +38,7 @@ int X509_set_version(X509 *x, long version)
     }
     if (!ASN1_INTEGER_set(x->cert_info.version, version))
         return 0;
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return 1;
 }
 
@@ -51,7 +51,7 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
     in = &x->cert_info.serialNumber;
     if (in != serial && !ASN1_STRING_copy(in, serial))
         return 0;
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return 1;
 }
 
@@ -59,7 +59,7 @@ int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 {
     if (x == NULL || !X509_NAME_set(&x->cert_info.issuer, name))
         return 0;
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return 1;
 }
 
@@ -67,7 +67,7 @@ int X509_set_subject_name(X509 *x, const X509_NAME *name)
 {
     if (x == NULL || !X509_NAME_set(&x->cert_info.subject, name))
         return 0;
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return 1;
 }
 
@@ -89,18 +89,28 @@ int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm)
 
 int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
+    int modified = 0;
+
     if (x == NULL || tm == NULL)
         return 0;
-    return ossl_x509_set1_time(&x->cert_info.enc.modified,
-        &x->cert_info.validity.notBefore, tm);
+    if (!ossl_x509_set1_time(&modified, &x->cert_info.validity.notBefore, tm))
+        return 0;
+    if (modified)
+        ossl_x509_set_modified(x);
+    return 1;
 }
 
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
+    int modified = 0;
+
     if (x == NULL || tm == NULL)
         return 0;
-    return ossl_x509_set1_time(&x->cert_info.enc.modified,
-        &x->cert_info.validity.notAfter, tm);
+    if (!ossl_x509_set1_time(&modified, &x->cert_info.validity.notAfter, tm))
+        return 0;
+    if (modified)
+        ossl_x509_set_modified(x);
+    return 1;
 }
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
@@ -109,7 +119,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
         return 0;
     if (!X509_PUBKEY_set(&(x->cert_info.key), pkey))
         return 0;
-    x->cert_info.enc.modified = 1;
+    ossl_x509_set_modified(x);
     return 1;
 }
 
