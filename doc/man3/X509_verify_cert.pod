@@ -235,7 +235,30 @@ L<X509_STORE_CTX_get_error_depth(3)>) describe the certificate that has just
 been accepted. The callback may use this to log progress, but B<must> return
 a nonzero value, otherwise verification is aborted.
 
+=item B<Policy notification> (I<ok> = 2)
+
+When both B<X509_V_FLAG_POLICY_CHECK> and B<X509_V_FLAG_NOTIFY_POLICY> are
+set, the callback is called once with I<ok> set to 2 after certificate policy
+validation has succeeded. L<X509_STORE_CTX_get_current_cert(3)> returns NULL
+during this call, and L<X509_STORE_CTX_get_error(3)> returns the last error
+recorded, which may be one the callback waived earlier (see L</Sticky errors>).
+As with a success notification, a zero return aborts verification.
+
 =back
+
+When the target is a raw public key (see L</Raw public key targets>), the
+callback is called exactly once, with I<ok> set to 1 if no error has been
+recorded on I<ctx> and 0 otherwise; with DANE enabled, a key that matches no
+TLSA record is reported as B<X509_V_ERR_DANE_NO_MATCH>.
+
+When B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> is set and the issuer of a CRL is
+not in the chain being verified, the path of the CRL issuer is validated by a nested call to X509_verify_cert() on a separate
+B<X509_STORE_CTX>. The nested call uses the same callback, so the callback
+can be invoked with a I<ctx> other than the one the application passed in.
+That context has the same trust store, untrusted stack and verification
+parameters, but none of the application's B<ex_data>: a callback that
+retrieves application data with L<X509_STORE_CTX_get_ex_data(3)> must
+handle a NULL result.
 
 The callback's return value controls subsequent verification:
 
