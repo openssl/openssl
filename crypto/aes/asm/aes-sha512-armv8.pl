@@ -1822,9 +1822,11 @@ ___
 	&sha512_block(1);
 $code.=<<___;
 	mov		x7, x12
+	cbz		x11, 1f				/* no aes block left: do not read past the input */
 	ld1		{v0.16b}, [x0], #16		/* load plaintext */
 	ldr		q1, [x14, #48]			/* load the last output of aes block */
 	eor		v0.16b, v0.16b, v1.16b
+1:
 
 	ldp		q8, q9, [x7], #32		/* rk0, rk1 */
 	ldp		q10, q11, [x7], #32		/* rk2, rk3 */
