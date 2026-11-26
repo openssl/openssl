@@ -19,6 +19,9 @@
 #include "../ssl/record/methods/recmethod_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
+#ifdef OSSL_USE_SOCKETS
+#include "internal/sockets.h"
+#endif
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -3073,6 +3076,282 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DGRAM
+/* Replace the handshake BIOs with ones able to carry empty datagrams. */
+static int dtls_empty_datagram_bios(SSL *sssl, SSL *cssl, int transport,
+    int *cfd, int *sfd)
+{
+    BIO *cbio = NULL, *sbio = NULL;
+    int ret = 0;
+#ifdef OSSL_USE_SOCKETS
+    BIO_ADDR *caddr = NULL, *saddr = NULL;
+    union BIO_sock_info_u info;
+#endif
+
+    if (transport == 0) {
+        if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
+            goto end;
+    } else if (transport == 1) {
+        if (!TEST_ptr(cbio = BIO_new(BIO_s_dgram_mem()))
+            || !TEST_ptr(sbio = BIO_new(BIO_s_dgram_mem()))
+            || !TEST_true(BIO_up_ref(cbio)))
+            goto end;
+        if (!TEST_true(BIO_up_ref(sbio))) {
+            BIO_free(cbio);
+            goto end;
+        }
+        SSL_set_bio(cssl, cbio, sbio);
+        SSL_set_bio(sssl, sbio, cbio);
+        return 1;
+    } else {
+#ifdef OSSL_USE_SOCKETS
+        if (!TEST_ptr(caddr = BIO_ADDR_new())
+            || !TEST_ptr(saddr = BIO_ADDR_new())
+            || !TEST_true(create_test_sockets(cfd, sfd, SOCK_DGRAM, saddr))
+            || !TEST_true(BIO_connect(*cfd, saddr, BIO_SOCK_NONBLOCK)))
+            goto end;
+        info.addr = caddr;
+        if (!TEST_true(BIO_sock_info(*cfd, BIO_SOCK_INFO_ADDRESS, &info))
+            || !TEST_true(BIO_connect(*sfd, caddr, BIO_SOCK_NONBLOCK)))
+            goto end;
+        if (transport == 3) {
+            ret = TEST_true(SSL_set_fd(cssl, *cfd))
+                && TEST_true(SSL_set_fd(sssl, *sfd));
+            goto end;
+        }
+        if (transport == 4) {
+            if (!TEST_ptr(cbio = BIO_new_fd(*cfd, BIO_NOCLOSE))
+                || !TEST_ptr(sbio = BIO_new_fd(*sfd, BIO_NOCLOSE)))
+                goto end;
+        } else if (!TEST_ptr(cbio = BIO_new_dgram(*cfd, BIO_NOCLOSE))
+            || !TEST_ptr(sbio = BIO_new_dgram(*sfd, BIO_NOCLOSE))
+            || !TEST_int_gt(BIO_ctrl_set_connected(cbio, saddr), 0)
+            || !TEST_int_gt(BIO_ctrl_set_connected(sbio, caddr), 0))
+            goto end;
+#else
+        goto end;
+#endif
+    }
+    SSL_set_bio(cssl, cbio, cbio);
+    SSL_set_bio(sssl, sbio, sbio);
+    cbio = sbio = NULL;
+    ret = 1;
+end:
+    BIO_free(cbio);
+    BIO_free(sbio);
+#ifdef OSSL_USE_SOCKETS
+    BIO_ADDR_free(caddr);
+    BIO_ADDR_free(saddr);
+#endif
+    return ret;
+}
+
+static int dtls_send_empty_datagram(SSL *sender, int fd)
+{
+    BIO_MSG msg = { 0 };
+    size_t processed = 0;
+    char dummy = 0;
+
+#ifdef OSSL_USE_SOCKETS
+    if (fd != -1)
+        return TEST_int_eq(send(fd, &dummy, 0, 0), 0);
+#endif
+    msg.data = &dummy;
+    return TEST_true(BIO_sendmmsg(SSL_get_wbio(sender), &msg, sizeof(msg),
+               1, 0, &processed))
+        && TEST_size_t_eq(processed, 1);
+}
+
+static int test_dtls_empty_datagram(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL, *sender, *receiver;
+    const char msg[] = "Hello World";
+    char buf[sizeof(msg)];
+    size_t len;
+    int transport = idx / 8, version = (idx & 1) ? DTLS1_3_VERSION : DTLS1_2_VERSION;
+    int cfd = -1, sfd = -1, fd, rfd, i, ret, testresult = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (version == DTLS1_2_VERSION)
+        return TEST_skip("DTLS 1.2 is disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (version == DTLS1_3_VERSION)
+        return TEST_skip("DTLS 1.3 is disabled");
+#endif
+#ifndef OSSL_USE_SOCKETS
+    if (transport >= 2)
+        return TEST_skip("Test sockets are not available");
+#endif
+#ifdef OPENSSL_SYS_WINDOWS
+    if (transport == 4)
+        return TEST_skip("An fd BIO cannot wrap a socket");
+#endif
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE))
+        || !dtls_empty_datagram_bios(sssl, cssl, transport, &cfd, &sfd))
+        goto end;
+
+    sender = (idx & 2) ? sssl : cssl;
+    receiver = (idx & 2) ? cssl : sssl;
+    fd = (idx & 2) ? sfd : cfd;
+    rfd = (idx & 2) ? cfd : sfd;
+    if ((idx & 4) != 0)
+        SSL_set_options(receiver, SSL_OP_IGNORE_UNEXPECTED_EOF);
+
+    /* With no record following, a nonblocking reader must ask for a retry. */
+    if (!dtls_send_empty_datagram(sender, fd)
+        || (rfd != -1 && !TEST_true(wait_until_sock_readable(rfd))))
+        goto end;
+    ret = SSL_read_ex(receiver, buf, sizeof(buf), &len);
+    if (!TEST_false(ret)
+        || !TEST_int_eq(SSL_get_error(receiver, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_shutdown(receiver), 0))
+        goto end;
+
+    /* Socket delivery may be delayed so read the records in blocking mode. */
+#ifdef OSSL_USE_SOCKETS
+    if (rfd != -1 && !TEST_true(BIO_socket_nbio(rfd, 0)))
+        goto end;
+#endif
+
+    /* An empty datagram before a valid record must be discarded. */
+    if (!dtls_send_empty_datagram(sender, fd)
+        || !TEST_true(SSL_write_ex(sender, msg, sizeof(msg), &len))
+        || !TEST_true(SSL_read_ex(receiver, buf, sizeof(buf), &len))
+        || !TEST_mem_eq(buf, len, msg, sizeof(msg)))
+        goto end;
+
+    /* A run of empty datagrams must not interrupt the reader either. */
+    for (i = 0; i < 64; i++)
+        if (!dtls_send_empty_datagram(sender, fd))
+            goto end;
+    if (!TEST_true(SSL_write_ex(sender, msg, sizeof(msg), &len))
+        || !TEST_true(SSL_read_ex(receiver, buf, sizeof(buf), &len))
+        || !TEST_mem_eq(buf, len, msg, sizeof(msg)))
+        goto end;
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+#ifdef OSSL_USE_SOCKETS
+    if (cfd != -1)
+        BIO_closesocket(cfd);
+    if (sfd != -1)
+        BIO_closesocket(sfd);
+#endif
+    return testresult;
+}
+#endif
+
+#ifndef OPENSSL_NO_DTLS1_2
+typedef struct {
+    int reads;
+    int eof;
+} EMPTY_READ_DATA;
+
+static int empty_read(BIO *bio, char *buf, int len)
+{
+    EMPTY_READ_DATA *data = BIO_get_data(bio);
+
+    BIO_clear_retry_flags(bio);
+    /* Fail after 100 reads so that a spinning record layer ends the test. */
+    return ++data->reads < 100 ? 0 : -1;
+}
+
+static long empty_read_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    EMPTY_READ_DATA *data = BIO_get_data(bio);
+
+    return cmd == BIO_CTRL_EOF ? data->eof : 0;
+}
+
+static int test_dtls_empty_read(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    BIO_METHOD *meth = NULL;
+    BIO *bio = NULL;
+    EMPTY_READ_DATA data = { 0, idx == 1 };
+    char buf[16];
+    size_t len;
+    int ret, testresult = 0;
+#if defined(OSSL_USE_SOCKETS) && !defined(OPENSSL_SYS_WINDOWS)
+    int cfd = -1, sfd = -1;
+#else
+    if (idx >= 3)
+        return TEST_skip("TCP test sockets are not available");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+    if (idx == 2) {
+        if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
+            goto end;
+        BIO_set_mem_eof_return(bio, 0);
+#if defined(OSSL_USE_SOCKETS) && !defined(OPENSSL_SYS_WINDOWS)
+    } else if (idx >= 3) {
+        if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL))
+            || !TEST_ptr(bio = idx == 3 ? BIO_new_socket(sfd, BIO_NOCLOSE)
+                                        : BIO_new_fd(sfd, BIO_NOCLOSE)))
+            goto end;
+        BIO_closesocket(cfd);
+        cfd = -1;
+        if (!TEST_true(wait_until_sock_readable(sfd)))
+            goto end;
+#endif
+    } else {
+        if (!TEST_ptr(meth = BIO_meth_new(BIO_TYPE_SOURCE_SINK, "empty read"))
+            || !TEST_true(BIO_meth_set_read(meth, empty_read))
+            || !TEST_true(BIO_meth_set_ctrl(meth, empty_read_ctrl))
+            || !TEST_ptr(bio = BIO_new(meth)))
+            goto end;
+        BIO_set_data(bio, &data);
+        BIO_set_init(bio, 1);
+    }
+    SSL_set0_rbio(sssl, bio);
+    bio = NULL;
+    ret = SSL_read_ex(sssl, buf, sizeof(buf), &len);
+    if (!TEST_false(ret)
+        || !TEST_int_eq(SSL_get_error(sssl, ret),
+            idx == 0 ? SSL_ERROR_WANT_READ : SSL_ERROR_SSL)
+        || !TEST_int_lt(data.reads, 100))
+        goto end;
+    if (idx == 0) {
+        if (!TEST_int_gt(data.reads, 0)
+            || !TEST_int_eq(SSL_get_shutdown(sssl), 0))
+            goto end;
+    } else if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                   SSL_R_UNEXPECTED_EOF_WHILE_READING)) {
+        goto end;
+    }
+    testresult = 1;
+end:
+    BIO_free(bio);
+    SSL_free(cssl);
+    SSL_free(sssl);
+    BIO_meth_free(meth);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+#if defined(OSSL_USE_SOCKETS) && !defined(OPENSSL_SYS_WINDOWS)
+    if (cfd != -1)
+        BIO_closesocket(cfd);
+    if (sfd != -1)
+        BIO_closesocket(sfd);
+#endif
+    return testresult;
+}
+#endif
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -3133,6 +3412,12 @@ int setup_tests(void)
     ADD_TEST(test_dtls_server_retransmit_dtls13);
 #endif
     ADD_ALL_TESTS(test_dtls_connect_state_after_client_hello, 2);
+#ifndef OPENSSL_NO_DGRAM
+    ADD_ALL_TESTS(test_dtls_empty_datagram, 40);
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_ALL_TESTS(test_dtls_empty_read, 5);
+#endif
 #if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
     ADD_ALL_TESTS(test_dtls_fragment_write_retry, 8);
 #endif

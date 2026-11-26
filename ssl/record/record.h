@@ -178,6 +178,19 @@ uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
 uint64_t dtls1_get_record_sequence_number(SSL_CONNECTION *s);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
+/* Results of ossl_dtls_classify_zero_read() */
+#define DTLS_ZERO_READ_EOF 0
+#define DTLS_ZERO_READ_DATAGRAM 1
+#define DTLS_ZERO_READ_UNKNOWN 2
+
+/**
+ * @brief Classify a zero-length BIO read which did not request a retry.
+ *
+ * @param bio the BIO that was read
+ * @returns one of the DTLS_ZERO_READ_* values
+ */
+int ossl_dtls_classify_zero_read(BIO *bio);
+
 #define HANDLE_RLAYER_READ_RETURN(s, ret) \
     ossl_tls_handle_rlayer_return(s, 0, ret, OPENSSL_FILE, OPENSSL_LINE)
 

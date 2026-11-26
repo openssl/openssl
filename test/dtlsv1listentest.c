@@ -621,6 +621,52 @@ err:
 }
 
 #ifndef OPENSSL_NO_DTLS1_2
+static int dtls_listen_empty_datagram_test(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *inbio = NULL, *outbio = NULL;
+    BIO_ADDR *peer = NULL;
+    BIO_MSG msg = { 0 };
+    size_t processed = 0;
+    char dummy = 0;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(peer = BIO_ADDR_new())
+        || !TEST_ptr(inbio = BIO_new(BIO_s_dgram_mem()))
+        || !TEST_ptr(outbio = BIO_new(BIO_s_mem())))
+        goto end;
+    SSL_set_bio(ssl, inbio, outbio);
+    inbio = outbio = NULL;
+    SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
+
+    msg.data = &dummy;
+    if (!TEST_true(BIO_sendmmsg(SSL_get_rbio(ssl), &msg, sizeof(msg),
+            1, 0, &processed))
+        || !TEST_size_t_eq(processed, 1)
+        || !TEST_int_eq(BIO_write(SSL_get_rbio(ssl), clienthello_cookie,
+                            sizeof(clienthello_cookie)),
+            sizeof(clienthello_cookie))
+        || !TEST_int_eq(DTLSv1_listen(ssl, peer), 0)
+        || !TEST_size_t_eq(BIO_ctrl_pending(SSL_get_wbio(ssl)), 0)
+        || !TEST_int_eq(DTLSv1_listen(ssl, peer), 1))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free(inbio);
+    BIO_free(outbio);
+    BIO_ADDR_free(peer);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+#endif
+
+#ifndef OPENSSL_NO_DTLS1_2
 static unsigned char *create_cookie_clienthello(int *outlen,
     unsigned char *out_seq)
 {
@@ -942,6 +988,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(dtls_listen_test,
         (int)OSSL_NELEM(testpackets) + (int)OSSL_NELEM(testpackets13));
 #ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(dtls_listen_empty_datagram_test);
     ADD_ALL_TESTS(dtls_listen_write_seq_test, 2);
 #endif
 #ifndef OPENSSL_NO_DTLS1_3
