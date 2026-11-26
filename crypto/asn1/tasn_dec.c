@@ -1211,14 +1211,6 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
             ctx->ptag = ptag;
             ctx->hdrlen = (int)(p - q);
             ctx->valid = 1;
-            /*
-             * If definite length, and no error, length + header can't exceed
-             * total amount of data available.
-             */
-            if ((i & 0x81) == 0 && (plen + ctx->hdrlen) > len) {
-                ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
-                goto err;
-            }
         }
     }
 
