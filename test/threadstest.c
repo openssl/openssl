@@ -28,6 +28,8 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/decoder.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/provider.h>
 #include "internal/tsan_assist.h"
 #include "internal/nelem.h"
 #include "internal/time.h"
@@ -1589,6 +1591,104 @@ err:
 }
 #endif
 
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+static OSSL_LIB_CTX *unload_fetch_ctx = NULL;
+static int blocker_armed = 0;
+static int blocker_in_query = 0;
+static int blocker_release = 0;
+
+static const OSSL_ALGORITHM *blocker_query(void *provctx, int id,
+    int *no_cache)
+{
+    int armed = 0, release = 0;
+
+    *no_cache = 0;
+    if (id == OSSL_OP_DIGEST
+        && CRYPTO_atomic_load_int(&blocker_armed, &armed, global_lock)
+        && armed
+        && CRYPTO_atomic_store_int(&blocker_armed, 0, global_lock)
+        && CRYPTO_atomic_store_int(&blocker_in_query, 1, global_lock)) {
+        while (CRYPTO_atomic_load_int(&blocker_release, &release, global_lock)
+            && !release)
+            OSSL_sleep(1);
+    }
+    return NULL;
+}
+
+static const OSSL_DISPATCH blocker_dispatch[] = {
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))blocker_query },
+    OSSL_DISPATCH_END
+};
+
+static int blocker_init(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in,
+    const OSSL_DISPATCH **out, void **provctx)
+{
+    *out = blocker_dispatch;
+    *provctx = (void *)handle;
+    return 1;
+}
+
+static void unload_fetch_fn(void)
+{
+    EVP_MD_free(EVP_MD_fetch(unload_fetch_ctx, "SHA2-256", NULL));
+}
+
+static int test_unload_during_fetch(void)
+{
+    OSSL_PROVIDER *blocker = NULL, *def = NULL;
+    EVP_MD *md = NULL;
+    thread_t t;
+    int in_query = 0, started = 0, ret = 0;
+
+    blocker_armed = 1;
+    blocker_in_query = 0;
+    blocker_release = 0;
+
+    if (!TEST_ptr(unload_fetch_ctx = OSSL_LIB_CTX_new())
+        || !TEST_true(OSSL_PROVIDER_add_builtin(unload_fetch_ctx, "blocker",
+            blocker_init))
+        || !TEST_ptr(blocker = OSSL_PROVIDER_load(unload_fetch_ctx, "blocker"))
+        || !TEST_ptr(def = OSSL_PROVIDER_load(unload_fetch_ctx, "default"))
+        || !TEST_true(started = run_thread(&t, unload_fetch_fn)))
+        goto err;
+
+    while (CRYPTO_atomic_load_int(&blocker_in_query, &in_query, global_lock)
+        && !in_query)
+        OSSL_sleep(1);
+
+    if (!TEST_true(OSSL_PROVIDER_unload(def)))
+        goto err;
+    def = NULL;
+
+    CRYPTO_atomic_store_int(&blocker_release, 1, global_lock);
+    started = 0;
+    if (!TEST_true(wait_for_thread(t)))
+        goto err;
+
+    if (!TEST_false(OSSL_PROVIDER_available(unload_fetch_ctx, "default")))
+        goto err;
+    ERR_set_mark();
+    md = EVP_MD_fetch(unload_fetch_ctx, "SHA2-256", NULL);
+    ERR_pop_to_mark();
+    if (!TEST_ptr_null(md))
+        goto err;
+
+    ret = 1;
+err:
+    if (started) {
+        CRYPTO_atomic_store_int(&blocker_release, 1, global_lock);
+        wait_for_thread(t);
+    }
+    EVP_MD_free(md);
+    OSSL_PROVIDER_unload(def);
+    OSSL_PROVIDER_unload(blocker);
+    OSSL_LIB_CTX_free(unload_fetch_ctx);
+    unload_fetch_ctx = NULL;
+    return ret;
+}
+#endif
+
 static int test_obj_stress(void)
 {
     return thread_run_test(&test_obj_create_worker, MAXIMUM_THREADS,
@@ -1665,6 +1765,9 @@ int setup_tests(void)
     ADD_TEST(torture_rcu_high);
     ADD_TEST(torture_rcu_high2);
     ADD_TEST(test_do_all_stress);
+#endif
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    ADD_TEST(test_unload_during_fetch);
 #endif
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
