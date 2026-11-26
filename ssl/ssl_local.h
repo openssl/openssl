@@ -367,6 +367,19 @@ typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
     || (s)->s3.tmp.peer_finish_md_len == 0)
 
 /*
+ * Check whether RFC 9973 "tls_cert_with_extern_psk" was negotiated. Such a
+ * handshake sets s->hit as it uses a PSK, but still exchanges certificates.
+ */
+#define SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s) \
+    ((s)->hit && (s)->ext.cert_with_extern_psk)
+
+/*
+ * RFC 9973 Section 7: for protection against a CRQC, the external PSK needs to
+ * be at least 128 bits
+ */
+#define SSL_CERT_WITH_EXTERN_PSK_MIN_LEN 16
+
+/*
  * See if we use signature algorithms extension and signature algorithm
  * before signatures.
  */
@@ -637,6 +650,11 @@ struct ssl_session_st {
 
 /* Extended master secret support */
 #define SSL_SESS_FLAG_EXTMS 0x1
+/*
+ * The session stems from an RFC 9973 "tls_cert_with_extern_psk" handshake, so
+ * its resumption PSKs are derived from the external PSK
+ */
+#define SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK 0x2
 
 #ifndef OPENSSL_NO_SRP
 
@@ -759,6 +777,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_ech,
     TLSEXT_IDX_outer_extensions,
+    TLSEXT_IDX_cert_with_extern_psk,
     TLSEXT_IDX_grease1,
     TLSEXT_IDX_grease2,
     TLSEXT_IDX_psk,
@@ -1918,6 +1937,9 @@ struct ssl_connection_st {
          * secret underived.
          */
         bool psk_resumption_offered;
+
+        /* RFC 9973, see SSL_CONNECTION_CERT_WITH_EXTERN_PSK() */
+        bool cert_with_extern_psk;
 
         /*
          * Client-only. Set in tls_psk_do_binder() when the first-offered PSK's
@@ -3147,6 +3169,21 @@ __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
     STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
+/**
+ * @brief Choose a cipher from those offered by the client, like
+ * ssl3_choose_cipher(), optionally restricted to a handshake digest.
+ *
+ * @param s the server connection
+ * @param clnt the ciphers offered by the client
+ * @param srvr the ciphers enabled on the server
+ * @param md if not NULL, only choose a (D)TLSv1.3 ciphersuite with this
+ *           handshake digest, e.g. to match a PSK
+ * @returns the selected cipher, or NULL if there is no common cipher
+ */
+__owur const SSL_CIPHER *ssl3_choose_cipher_md(SSL_CONNECTION *s,
+    STACK_OF(SSL_CIPHER) *clnt,
+    STACK_OF(SSL_CIPHER) *srvr,
+    const EVP_MD *md);
 __owur int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
@@ -3656,7 +3693,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 
 /* Total mask of connection-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_CONN \
-    (OSSL_LEGACY_SSL_OPTIONS | OSSL_TLS1_2_OPTIONS | SSL_OP_SERVER_PREFERENCE | SSL_OP_DISABLE_TLSEXT_CA_NAMES | SSL_OP_NO_TX_CERTIFICATE_COMPRESSION | SSL_OP_NO_RX_CERTIFICATE_COMPRESSION | SSL_OP_PRIORITIZE_CHACHA | SSL_OP_NO_QUERY_MTU | SSL_OP_NO_TICKET | SSL_OP_NO_ANTI_REPLAY)
+    (OSSL_LEGACY_SSL_OPTIONS | OSSL_TLS1_2_OPTIONS | SSL_OP_SERVER_PREFERENCE | SSL_OP_DISABLE_TLSEXT_CA_NAMES | SSL_OP_NO_TX_CERTIFICATE_COMPRESSION | SSL_OP_NO_RX_CERTIFICATE_COMPRESSION | SSL_OP_PRIORITIZE_CHACHA | SSL_OP_NO_QUERY_MTU | SSL_OP_NO_TICKET | SSL_OP_NO_ANTI_REPLAY | SSL_OP_CERT_WITH_EXTERN_PSK)
 
 /* Total mask of stream-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_STREAM \

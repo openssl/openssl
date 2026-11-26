@@ -776,6 +776,7 @@ static const STRINT_PAIR tlsext_types[] = {
     { "extended master secret", TLSEXT_TYPE_extended_master_secret },
 #endif
     { "compress certificate", TLSEXT_TYPE_compress_certificate },
+    { "cert with extern psk", TLSEXT_TYPE_cert_with_extern_psk },
     { "key share", TLSEXT_TYPE_key_share },
     { "supported versions", TLSEXT_TYPE_supported_versions },
     { "psk", TLSEXT_TYPE_psk },

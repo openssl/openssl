@@ -163,6 +163,7 @@
     OPT_S_LEGACYCONN,                                                 \
     OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN,                               \
     OPT_S_ALLOW_NO_DHE_KEX, OPT_S_PREFER_NO_DHE_KEX,                  \
+    OPT_S_CERT_WITH_EXTERN_PSK,                                       \
     OPT_S_PRIORITIZE_CHACHA,                                          \
     OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS,   \
     OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
@@ -205,6 +206,8 @@
             "In TLSv1.3 allow non-(ec)dhe based key exchange on resumption" },                                  \
         { "prefer_no_dhe_kex", OPT_S_PREFER_NO_DHE_KEX, '-',                                                    \
             "In TLSv1.3 prefer non-(ec)dhe over (ec)dhe-based key exchange on resumption" },                    \
+        { "cert_with_extern_psk", OPT_S_CERT_WITH_EXTERN_PSK, '-',                                              \
+            "Combine a TLSv1.3 external PSK with certificates (RFC 9973)" },                                    \
         { "prioritize_chacha", OPT_S_PRIORITIZE_CHACHA, '-',                                                    \
             "Prioritize ChaCha ciphers when preferred by clients" },                                            \
         { "strict", OPT_S_STRICT, '-',                                                                          \
@@ -235,45 +238,46 @@
         { "no_ems", OPT_S_NO_EMS, '-',                                                                          \
             "Disable Extended master secret extension" }
 
-#define OPT_S_CASES               \
-    OPT_S__FIRST:                 \
-    case OPT_S__LAST:             \
-    break;                        \
-    case OPT_S_NOSSL3:            \
-    case OPT_S_NOTLS1:            \
-    case OPT_S_NOTLS1_1:          \
-    case OPT_S_NOTLS1_2:          \
-    case OPT_S_NOTLS1_3:          \
-    case OPT_S_BUGS:              \
-    case OPT_S_NO_COMP:           \
-    case OPT_S_COMP:              \
-    case OPT_S_NO_TX_CERT_COMP:   \
-    case OPT_S_NO_RX_CERT_COMP:   \
-    case OPT_S_NOTICKET:          \
-    case OPT_S_SERVERPREF:        \
-    case OPT_S_LEGACYRENEG:       \
-    case OPT_S_CLIENTRENEG:       \
-    case OPT_S_LEGACYCONN:        \
-    case OPT_S_ONRESUMP:          \
-    case OPT_S_NOLEGACYCONN:      \
-    case OPT_S_ALLOW_NO_DHE_KEX:  \
-    case OPT_S_PREFER_NO_DHE_KEX: \
-    case OPT_S_PRIORITIZE_CHACHA: \
-    case OPT_S_STRICT:            \
-    case OPT_S_SIGALGS:           \
-    case OPT_S_CLIENTSIGALGS:     \
-    case OPT_S_GROUPS:            \
-    case OPT_S_CURVES:            \
-    case OPT_S_NAMEDCURVE:        \
-    case OPT_S_CIPHER:            \
-    case OPT_S_CIPHERSUITES:      \
-    case OPT_S_RECORD_PADDING:    \
-    case OPT_S_NO_RENEGOTIATION:  \
-    case OPT_S_MINPROTO:          \
-    case OPT_S_MAXPROTO:          \
-    case OPT_S_DEBUGBROKE:        \
-    case OPT_S_NO_MIDDLEBOX:      \
-    case OPT_S_NO_ETM:            \
+#define OPT_S_CASES                  \
+    OPT_S__FIRST:                    \
+    case OPT_S__LAST:                \
+    break;                           \
+    case OPT_S_NOSSL3:               \
+    case OPT_S_NOTLS1:               \
+    case OPT_S_NOTLS1_1:             \
+    case OPT_S_NOTLS1_2:             \
+    case OPT_S_NOTLS1_3:             \
+    case OPT_S_BUGS:                 \
+    case OPT_S_NO_COMP:              \
+    case OPT_S_COMP:                 \
+    case OPT_S_NO_TX_CERT_COMP:      \
+    case OPT_S_NO_RX_CERT_COMP:      \
+    case OPT_S_NOTICKET:             \
+    case OPT_S_SERVERPREF:           \
+    case OPT_S_LEGACYRENEG:          \
+    case OPT_S_CLIENTRENEG:          \
+    case OPT_S_LEGACYCONN:           \
+    case OPT_S_ONRESUMP:             \
+    case OPT_S_NOLEGACYCONN:         \
+    case OPT_S_ALLOW_NO_DHE_KEX:     \
+    case OPT_S_PREFER_NO_DHE_KEX:    \
+    case OPT_S_CERT_WITH_EXTERN_PSK: \
+    case OPT_S_PRIORITIZE_CHACHA:    \
+    case OPT_S_STRICT:               \
+    case OPT_S_SIGALGS:              \
+    case OPT_S_CLIENTSIGALGS:        \
+    case OPT_S_GROUPS:               \
+    case OPT_S_CURVES:               \
+    case OPT_S_NAMEDCURVE:           \
+    case OPT_S_CIPHER:               \
+    case OPT_S_CIPHERSUITES:         \
+    case OPT_S_RECORD_PADDING:       \
+    case OPT_S_NO_RENEGOTIATION:     \
+    case OPT_S_MINPROTO:             \
+    case OPT_S_MAXPROTO:             \
+    case OPT_S_DEBUGBROKE:           \
+    case OPT_S_NO_MIDDLEBOX:         \
+    case OPT_S_NO_ETM:               \
     case OPT_S_NO_EMS
 
 #define IS_NO_PROT_FLAG(o)                                         \

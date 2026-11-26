@@ -1475,6 +1475,63 @@ end:
     return testresult;
 }
 
+/*
+ * RFC 9973 over QUIC: with SSL_OP_CERT_WITH_EXTERN_PSK on both peers, the
+ * external PSK is combined with certificate-based authentication rather than
+ * used as the sole means of authentication.
+ */
+static int test_quic_cert_with_extern_psk(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
+    SSL *c = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
+        goto end;
+
+    SSL_CTX_set_options(cctx, SSL_OP_CERT_WITH_EXTERN_PSK);
+    SSL_CTX_set_options(sctx, SSL_OP_CERT_WITH_EXTERN_PSK);
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, sctx, cert, privkey,
+            0, &qtserv, &c, NULL, NULL)))
+        goto end;
+
+    SSL_set_psk_use_session_callback(c, use_session_cb);
+    ossl_quic_tserver_set_psk_find_session_cb(qtserv, find_session_cb);
+    use_session_cb_cnt = 0;
+    find_session_cb_cnt = 0;
+
+    clientpsk = serverpsk = create_a_psk(c, SHA384_DIGEST_LENGTH);
+    /* We already had one ref. Add another one */
+    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+        goto end;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, c))
+        || !TEST_int_eq(1, find_session_cb_cnt)
+        || !TEST_int_eq(1, use_session_cb_cnt)
+        /* The external PSK was used... */
+        || !TEST_true(SSL_session_reused(c))
+        /* ...together with the server certificate */
+        || !TEST_true(SSL_cert_with_extern_psk_negotiated(c))
+        || !TEST_ptr(SSL_get0_peer_certificate(c)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(c);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+
+    return testresult;
+}
+
 static int test_client_auth(int idx)
 {
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
@@ -6249,6 +6306,7 @@ int setup_tests(void)
     ADD_TEST(test_multiple_dgrams);
     ADD_ALL_TESTS(test_non_io_retry, 2);
     ADD_TEST(test_quic_psk);
+    ADD_TEST(test_quic_cert_with_extern_psk);
     ADD_ALL_TESTS(test_client_auth, 3);
     ADD_ALL_TESTS(test_alpn, 2);
     ADD_ALL_TESTS(test_noisy_dgram, 2);

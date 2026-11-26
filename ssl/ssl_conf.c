@@ -410,6 +410,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL("KTLSTxZerocopySendfile", SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE),
         SSL_FLAG_TBL("IgnoreUnexpectedEOF", SSL_OP_IGNORE_UNEXPECTED_EOF),
         SSL_FLAG_TBL("LegacyECPointFormats", SSL_OP_LEGACY_EC_POINT_FORMATS),
+        SSL_FLAG_TBL("CertWithExternPSK", SSL_OP_CERT_WITH_EXTERN_PSK),
     };
     if (value == NULL)
         return -3;
@@ -792,6 +793,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_etm", 0),
     SSL_CONF_CMD_SWITCH("no_ems", 0),
     SSL_CONF_CMD_SWITCH("legacy_ec_point_formats", 0),
+    SSL_CONF_CMD_SWITCH("cert_with_extern_psk", 0),
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs", 0),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
@@ -892,7 +894,9 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     /* no Extended master secret */
     { SSL_OP_NO_EXTENDED_MASTER_SECRET, 0 },
     /* enable legacy EC point formats */
-    { SSL_OP_LEGACY_EC_POINT_FORMATS, 0 }
+    { SSL_OP_LEGACY_EC_POINT_FORMATS, 0 },
+    /* RFC 9973 external PSK with certificate-based authentication */
+    { SSL_OP_CERT_WITH_EXTERN_PSK, 0 }
 };
 
 static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)

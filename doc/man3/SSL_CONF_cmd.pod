@@ -105,6 +105,13 @@ In TLSv1.3, on resumption let the server prefer a non-(ec)dhe based key
 exchange mode over an (ec)dhe based one. Requires B<-allow_no_dhe_kex>.
 Equivalent to B<SSL_OP_PREFER_NO_DHE_KEX>. Only used by servers.
 
+=item B<-cert_with_extern_psk>
+
+In TLSv1.3, combine external PSKs with certificate-based authentication by
+means of the RFC 9973 "tls_cert_with_extern_psk" extension: both clients and
+servers use external PSKs only together with the extension. Equivalent to
+B<SSL_OP_CERT_WITH_EXTERN_PSK>.
+
 =item B<-strict>
 
 Enables strict certificate chain checking. Equivalent to setting
@@ -642,6 +649,12 @@ non-(ec)dhe based key exchange mode over an (ec)dhe based one. Requires
 B<AllowNoDHEKEX>. Equivalent to B<SSL_OP_PREFER_NO_DHE_KEX>. Only used by
 servers.
 
+B<CertWithExternPSK>: In TLSv1.3, combine external PSKs with
+certificate-based authentication by means of the RFC 9973
+"tls_cert_with_extern_psk" extension: both clients and servers use external
+PSKs only together with the extension. Equivalent to
+B<SSL_OP_CERT_WITH_EXTERN_PSK>.
+
 B<MiddleboxCompat>: If set then dummy Change Cipher Spec (CCS) messages are sent
 in TLSv1.3. This has the effect of making TLSv1.3 look more like TLSv1.2 so that
 middleboxes that do not understand TLSv1.3 will not drop the connection. This
@@ -902,6 +915,8 @@ The B<TxCertificateCompression> and B<RxCertificateCompression> options were
 added in OpenSSL 3.2.
 
 B<PreferNoDHEKEX> was added in OpenSSL 3.3.
+
+B<CertWithExternPSK> and B<-cert_with_extern_psk> were added in OpenSSL 4.2.
 
 OpenSSL 3.5 introduced support for post-quantum (PQ) TLS key exchange via the
 B<MLKEM512>, B<MLKEM768> and B<MLKEM1024> TLS groups.

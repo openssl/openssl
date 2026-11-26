@@ -1352,6 +1352,17 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         psksess = NULL;
     }
 
+    /*
+     * RFC 9973 Section 7: with the option, the external PSK is only offered
+     * with the extension, which needs a PSK of at least 128 bits to protect
+     * against a CRQC. Drop a shorter one too.
+     */
+    if (psksess != NULL && (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+        && psksess->master_key_length < SSL_CERT_WITH_EXTERN_PSK_MIN_LEN) {
+        SSL_SESSION_free(psksess);
+        psksess = NULL;
+    }
+
     SSL_SESSION_free(s->psksession);
     s->psksession = psksess;
     if (psksess != NULL) {
@@ -1389,9 +1400,46 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
      * s->ext.psk_resumption_offered.
      */
     s->ext.psk_resumption_offered = tls13_check_resumption_psk(s, handmd);
+
+    /*
+     * RFC 9973: rather than resume a session without the external PSK's
+     * protection, for instance one from a full handshake with a server that
+     * didn't use the PSK, offer the PSK again. A session from an RFC 9973
+     * handshake keeps the protection, as its resumption PSKs are derived from
+     * the external PSK.
+     */
+    if ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0 && psksess != NULL
+        && s->ext.psk_resumption_offered
+        && (s->session->flags & SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK) == 0)
+        s->ext.psk_resumption_offered = 0;
+
+    /*
+     * RFC 9973: the external PSK is only offered with the extension, which
+     * excludes resumption PSKs and early data, and can't be added after a
+     * HelloRetryRequest. Otherwise don't offer the PSK at all, or a server
+     * could accept it as the sole authentication. After a HelloRetryRequest,
+     * also drop a PSK that doesn't match the hash of its ciphersuite, as
+     * psk_client_callback() can't know it. Then
+     * tls_construct_ctos_cert_with_extern_psk() aborts.
+     */
+    if ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0 && psksess != NULL
+        && (s->ext.psk_resumption_offered
+            || (s->hello_retry_request == SSL_HRR_PENDING
+                && ((s->ext.extflags[TLSEXT_IDX_cert_with_extern_psk]
+                        & SSL_EXT_FLAG_SENT)
+                        == 0
+                    || ssl_md(SSL_CONNECTION_GET_CTX(s),
+                           psksess->cipher->algorithm2)
+                        != handmd)))) {
+        SSL_SESSION_free(s->psksession);
+        s->psksession = psksess = NULL;
+    }
+
     edsess = s->ext.psk_resumption_offered ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || edsess == NULL
+        || ((s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+            && edsess == s->psksession)
         || edsess->ext.max_early_data == 0
         || !tls13_early_cipher_offered(s, edsess)
         || !tls13_early_alpn_offered(s, edsess)) {
@@ -1738,6 +1786,56 @@ dopsksess:
 #endif
 }
 
+EXT_RETURN tls_construct_ctos_cert_with_extern_psk(SSL_CONNECTION *s,
+    WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx)
+{
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    int offer = (s->options & SSL_OP_CERT_WITH_EXTERN_PSK) != 0
+        && s->psksession != NULL
+        && s->session->ssl_version == version1_3;
+
+#ifndef OPENSSL_NO_ECH
+    /* Don't reveal the use of the extension in the outer ClientHello */
+    if (s->ext.ech.es != NULL && s->ext.ech.ch_depth == 0)
+        return EXT_RETURN_NOT_SENT;
+#endif
+
+    if (s->hello_retry_request == SSL_HRR_PENDING) {
+        int sent = (s->ext.extflags[TLSEXT_IDX_cert_with_extern_psk]
+                       & SSL_EXT_FLAG_SENT)
+            != 0;
+
+        /*
+         * RFC 9973 Section 5: after a HelloRetryRequest, repeat the extension
+         * or abort. Like pre_shared_key, it can't be added then either. This
+         * happens if the HelloRetryRequest selects a ciphersuite that doesn't
+         * match the PSK's hash, which the RFC gives no alert for.
+         */
+        if (sent && !offer) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_PSK);
+            return EXT_RETURN_FAIL;
+        }
+        offer = sent;
+    }
+
+    if (!offer)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cert_with_extern_psk)
+        || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
+}
+
 EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pkt,
     ossl_unused unsigned int context,
     ossl_unused X509 *x,
@@ -1884,7 +1982,7 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
-    if (!s->hit) {
+    if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
         if (s->session->ext.hostname != NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -2178,7 +2276,7 @@ int tls_parse_stoc_alpn(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         /* ALPN not consistent with the old session so cannot use early_data */
         s->ext.early_data_ok = 0;
     }
-    if (!s->hit) {
+    if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
         /*
          * This is a new session and so alpn_selected should have been
          * initialised to NULL. We should update it with the selected ALPN.
@@ -2418,7 +2516,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
     /* Retain this group in the SSL_SESSION */
-    if (!s->hit) {
+    if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
         s->session->kex_group = group_id;
     } else if (group_id != s->session->kex_group) {
         /*
@@ -2641,6 +2739,26 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
 #endif
 
     return 1;
+}
+
+int tls_parse_stoc_cert_with_extern_psk(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    /* RFC 9973 Section 4: the server must also select the external PSK */
+    if (!s->hit) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    s->ext.cert_with_extern_psk = 1;
+
+    return tls_cert_with_extern_psk_new_session(s);
 }
 
 EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,

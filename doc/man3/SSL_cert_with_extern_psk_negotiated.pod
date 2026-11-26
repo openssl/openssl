@@ -1,0 +1,163 @@
+=pod
+
+=head1 NAME
+
+SSL_cert_with_extern_psk_negotiated - use a TLSv1.3 external PSK together
+with certificate-based authentication
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_cert_with_extern_psk_negotiated(const SSL *ssl);
+
+=head1 DESCRIPTION
+
+RFC 9973 defines the TLSv1.3 "tls_cert_with_extern_psk" extension, which
+combines an external pre-shared key (PSK) with the usual certificate-based
+authentication. The external PSK is mixed into the key schedule together with
+the (EC)DHE shared secret, while the server, and optionally the client, still
+authenticate by sending Certificate and CertificateVerify messages. This
+protects the confidentiality of the connection against an attacker that is able
+to break the key exchange, for instance with a cryptographically relevant
+quantum computer, as long as the attacker doesn't also know the PSK.
+
+Support is enabled by setting the B<SSL_OP_CERT_WITH_EXTERN_PSK> option, see
+L<SSL_CTX_set_options(3)>, on both the client and the server. External PSKs are
+configured as for any other TLSv1.3 PSK, see
+L<SSL_CTX_set_psk_use_session_callback(3)> and
+L<SSL_CTX_set_psk_find_session_callback(3)>, and certificates as for a full
+handshake. This works with DTLSv1.3 and QUIC as well.
+
+When B<SSL_OP_CERT_WITH_EXTERN_PSK> is set, a client offers its external PSK
+only along with the "tls_cert_with_extern_psk" extension:
+
+=over 4
+
+=item *
+
+An external PSK shorter than 128 bits isn't offered at all, see L</NOTES>.
+
+=item *
+
+The external PSK is the only PSK offered, and no early data is sent with it.
+
+=item *
+
+A session set with L<SSL_set_session(3)> is resumed instead, without offering
+the external PSK at all, if the session stems from a handshake with the
+extension, or from resuming such a session. Its resumption PSK is derived from
+the external PSK, so the resumption keeps the external PSK's protection. Any
+other session lacks this protection, such as one from a full handshake with a
+server that didn't use the external PSK, and so the client offers the external
+PSK with the extension rather than resume it.
+
+=item *
+
+If the server selects the external PSK without acknowledging the extension,
+which would make the PSK the sole basis for authentication, the client aborts
+the handshake.
+
+=item *
+
+If the server doesn't select the external PSK, a full handshake takes place,
+which no longer gets the protection that the external PSK offers.
+
+=item *
+
+After a HelloRetryRequest the client repeats the extension, as RFC 9973
+requires, or aborts the handshake with a handshake_failure alert if it can no
+longer offer the external PSK, for instance because the HelloRetryRequest
+selected a ciphersuite of a different hash.
+
+=back
+
+When B<SSL_OP_CERT_WITH_EXTERN_PSK> is set, a server likewise uses an external
+PSK only along with the extension, so that the PSK is never the sole basis for
+authentication. It ignores an external PSK that a client offers without the
+extension, as well as one shorter than 128 bits, so a full handshake takes
+place instead, in which the server may require a client certificate as usual.
+Resumption with session tickets isn't affected. A server that still has to
+accept the external PSK on its own from some clients can clear the option for
+these connections in its client hello callback, see
+L<SSL_CTX_set_client_hello_cb(3)>, for instance when
+L<SSL_client_hello_get0_ext(3)> doesn't find the extension.
+
+A server that receives the extension accepts only an external PSK, and only
+with the psk_dhe_ke key exchange mode, even if B<SSL_OP_PREFER_NO_DHE_KEX> is
+set. It aborts the handshake with an illegal_parameter alert if the client also
+offers a resumption PSK or early data, or if the binder of the selected PSK
+doesn't verify. As the server examines at most 16 PSKs, it also aborts the
+handshake if the client offers more. As a TLSv1.3 PSK can only be used with a
+ciphersuite of its hash, the server selects a ciphersuite of the external PSK's
+hash if necessary, from those that both peers support, rather than ignore the
+PSK. A server that doesn't set the option ignores the extension.
+
+SSL_cert_with_extern_psk_negotiated() can be called after the handshake to
+check whether the extension was negotiated.
+
+=head1 NOTES
+
+When the extension is negotiated the external PSK is used in the handshake, so
+L<SSL_session_reused(3)> returns 1 as for any other PSK handshake. Session
+tickets issued afterwards can be used to resume the connection as usual, in
+which case the extension isn't negotiated again, and
+SSL_cert_with_extern_psk_negotiated() returns 0, although the resumption keeps
+the external PSK's protection. The handshake is still an
+initial handshake rather than a resumption though, so custom extensions with
+B<SSL_EXT_IGNORE_ON_RESUMPTION> are processed as usual, see
+L<SSL_CTX_add_custom_ext(3)>.
+
+Likewise, the handshake starts a new session as a full handshake does, which
+L<SSL_get_session(3)> then returns, rather than continuing the external PSK's
+session. This session, and the tickets issued from it, record the peer
+certificate, the server name and the ALPN protocol negotiated in this handshake,
+see L<SSL_SESSION_get0_hostname(3)>, and get the session timeout configured with
+L<SSL_CTX_set_timeout(3)>. Nothing else carries over from the external PSK's
+session, including any application data attached to it with
+L<SSL_SESSION_set_ex_data(3)>. An application that needs to know which external
+PSK was used can record this with the B<SSL> object in its callback instead, for
+example with L<SSL_set_ex_data(3)>.
+
+The external PSK doesn't take part in authentication, which depends solely on
+the certificates. Applications should therefore verify the peer certificate as
+in a full handshake, see L<SSL_CTX_set_verify(3)>. A server may request a client
+certificate as usual, which TLSv1.3 otherwise doesn't permit in a PSK handshake.
+
+For protection against a cryptographically relevant quantum computer RFC 9973
+requires external PSKs of at least 128 bits and a ciphersuite with a symmetric
+key of at least 128 bits. When B<SSL_OP_CERT_WITH_EXTERN_PSK> is set, neither
+peer uses a shorter external PSK, including those from
+L<SSL_CTX_set_psk_client_callback(3)> and
+L<SSL_CTX_set_psk_server_callback(3)>, so a full handshake takes place instead.
+The length is all that libssl can check: the protection also depends on the PSK
+being random and kept secret.
+
+=head1 RETURN VALUES
+
+SSL_cert_with_extern_psk_negotiated() returns 1 if the
+"tls_cert_with_extern_psk" extension was negotiated in the handshake, and 0
+otherwise.
+
+=head1 SEE ALSO
+
+L<ssl(7)>, L<SSL_CTX_set_options(3)>,
+L<SSL_CTX_set_psk_use_session_callback(3)>,
+L<SSL_CTX_set_psk_find_session_callback(3)>, L<SSL_session_reused(3)>,
+L<SSL_CTX_set_client_hello_cb(3)>
+
+=head1 HISTORY
+
+SSL_cert_with_extern_psk_negotiated() and B<SSL_OP_CERT_WITH_EXTERN_PSK> were
+added in OpenSSL 4.2.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

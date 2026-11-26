@@ -655,6 +655,7 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_compress_certificate:
     case TLSEXT_TYPE_client_cert_type:
     case TLSEXT_TYPE_server_cert_type:
+    case TLSEXT_TYPE_cert_with_extern_psk:
 #ifndef OPENSSL_NO_ECH
     case TLSEXT_TYPE_ech:
     case TLSEXT_TYPE_outer_extensions:

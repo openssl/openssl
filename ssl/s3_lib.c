@@ -4804,6 +4804,14 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
 const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr)
 {
+    return ssl3_choose_cipher_md(s, clnt, srvr, NULL);
+}
+
+const SSL_CIPHER *ssl3_choose_cipher_md(SSL_CONNECTION *s,
+    STACK_OF(SSL_CIPHER) *clnt,
+    STACK_OF(SSL_CIPHER) *srvr,
+    const EVP_MD *md)
+{
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok, prefer_sha256 = 0;
@@ -4977,6 +4985,18 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
                     c->strength_bits, 0, (void *)c))
                 continue;
 
+            if (md != NULL) {
+                const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
+                const EVP_MD *tmpmd = ssl_md(SSL_CONNECTION_GET_CTX(s),
+                    tmp->algorithm2);
+
+                if (tmpmd == NULL
+                    || !EVP_MD_is_a(tmpmd, EVP_MD_get0_name(md)))
+                    continue;
+                ret = tmp;
+                break;
+            }
+
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
                 && s->s3.is_probably_safari) {
                 if (!ret)
@@ -4986,11 +5006,11 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
 
             if (prefer_sha256) {
                 const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
-                const EVP_MD *md = ssl_md(SSL_CONNECTION_GET_CTX(s),
+                const EVP_MD *tmpmd = ssl_md(SSL_CONNECTION_GET_CTX(s),
                     tmp->algorithm2);
 
-                if (md != NULL
-                    && EVP_MD_is_a(md, OSSL_DIGEST_NAME_SHA2_256)) {
+                if (tmpmd != NULL
+                    && EVP_MD_is_a(tmpmd, OSSL_DIGEST_NAME_SHA2_256)) {
                     ret = tmp;
                     break;
                 }

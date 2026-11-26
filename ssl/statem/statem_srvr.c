@@ -777,7 +777,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
-        if (s->hit)
+        if (s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
             st->hand_state = TLS_ST_SW_FINISHED;
         else if (send_certificate_request(s))
             st->hand_state = TLS_ST_SW_CERT_REQ;
@@ -994,7 +994,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * been configured for.
          */
         if ((SSL_IS_FIRST_HANDSHAKE(s) || s->ext.extra_tickets_expected <= 0)
-            && (s->hit || s->num_tickets <= s->sent_tickets)) {
+            && ((s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
+                || s->num_tickets <= s->sent_tickets)) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
         }
@@ -1536,7 +1537,8 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
-        if (!s->hit && !send_certificate_request(s)) {
+        if ((!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
+            && !send_certificate_request(s)) {
             if (!SSL_CONNECTION_IS_VERSION13(s)
                 || (s->options & SSL_OP_NO_TX_CERTIFICATE_COMPRESSION) != 0)
                 s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
@@ -2420,6 +2422,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     s->hit = 0;
+    s->ext.cert_with_extern_psk = 0;
 
     if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites)
         || !ossl_bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers, &scsvs, 1)) {
@@ -2455,10 +2458,24 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     }
 
+    /* RFC 9973: the ciphersuite and PSK selection depend on this extension */
+    if (SSL_CONNECTION_IS_VERSION13(s)
+        && !tls_parse_extension(s, TLSEXT_IDX_cert_with_extern_psk,
+            SSL_EXT_CLIENT_HELLO, clienthello->pre_proc_exts, NULL, 0)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
+
     /* For TLSv1.3 we must select the ciphersuite *before* session resumption */
     if (SSL_CONNECTION_IS_VERSION13(s)) {
-        const SSL_CIPHER *cipher = ssl3_choose_cipher(s, ciphers, SSL_get_ciphers(ssl));
+        const SSL_CIPHER *cipher;
 
+        /* RFC 9973 needs them for the PSK selection too */
+        sk_SSL_CIPHER_free(s->peer_ciphers);
+        s->peer_ciphers = ciphers;
+        ciphers = NULL;
+
+        cipher = ssl3_choose_cipher(s, s->peer_ciphers, SSL_get_ciphers(ssl));
         if (cipher == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_NO_SHARED_CIPHER);
             goto err;
@@ -2467,11 +2484,25 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             && (s->s3.tmp.new_cipher == NULL
                 || s->s3.tmp.new_cipher->id != cipher->id)) {
             /*
-             * A previous HRR picked a different ciphersuite to the one we
-             * just selected. Something must have changed.
+             * RFC 9973: the HRR may use a ciphersuite of the external PSK's
+             * hash, see tls_parse_ctos_psk(). Keep it if that hash still
+             * selects it.
              */
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
-            goto err;
+            if (s->s3.tmp.new_cipher != NULL
+                && tls_cert_with_extern_psk_offered(s)
+                && tls_cert_with_extern_psk_cipher(s,
+                       ssl_md(SSL_CONNECTION_GET_CTX(s),
+                           s->s3.tmp.new_cipher->algorithm2))
+                    == s->s3.tmp.new_cipher) {
+                cipher = s->s3.tmp.new_cipher;
+            } else {
+                /*
+                 * A previous HRR picked a different ciphersuite to the one we
+                 * just selected. Something must have changed.
+                 */
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_CIPHER);
+                goto err;
+            }
         }
         s->s3.tmp.new_cipher = cipher;
 
@@ -2545,11 +2576,17 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         if (i == 1) {
             /* previous session */
             s->hit = 1;
+            if (SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)
+                && !tls_cert_with_extern_psk_new_session(s)) {
+                /* SSLfatal() already called */
+                goto err;
+            }
         } else if (i == -1) {
             /* SSLfatal() already called */
             goto err;
         } else {
-            /* i == 0 */
+            /* i == 0, the selected PSK's session might have been rejected */
+            s->ext.cert_with_extern_psk = 0;
             if (!ssl_get_new_session(s, 1)) {
                 /* SSLfatal() already called */
                 goto err;
@@ -2617,7 +2654,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
-    if (!s->hit && !tls1_set_server_sigalgs(s)) {
+    if ((!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
+        && !tls1_set_server_sigalgs(s)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -2780,10 +2818,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 #endif
 
     /*
-     * Given s->peer_ciphers and SSL_get_ciphers, we must pick a cipher
+     * Given s->peer_ciphers and SSL_get_ciphers, we must pick a cipher. For
+     * TLSv1.3 they were set before selecting it above.
      */
 
-    if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
+    if (!s->hit && !SSL_CONNECTION_IS_VERSION13(s)) {
         sk_SSL_CIPHER_free(s->peer_ciphers);
         s->peer_ciphers = ciphers;
         if (ciphers == NULL) {
@@ -2912,7 +2951,7 @@ int tls_handle_alpn(SSL_CONNECTION *s)
                 /* Not consistent so can't be used for early_data */
                 s->ext.early_data_ok = 0;
 
-                if (!s->hit) {
+                if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
                     /*
                      * This is a new session and so alpn_selected should have
                      * been initialised to NULL. We should update it with the
@@ -2975,7 +3014,8 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
     if (wst == WORK_MORE_B) {
         if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
             /* Let cert callback update server certificates if required */
-            if (!s->hit && s->cert->cert_cb != NULL) {
+            if ((!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))
+                && s->cert->cert_cb != NULL) {
                 int rv = s->cert->cert_cb(ussl, s->cert->cert_cb_arg);
 
                 if (rv == 0) {
@@ -3003,7 +3043,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
 
                 OSSL_USDT_data(s, { "tls::ciphersuite", OSSL_USDT_WORD(SSL_CIPHER_get_protocol_id(s->s3.tmp.new_cipher)) });
             }
-            if (!s->hit) {
+            if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
                 if (!tls_choose_sigalg(s, 1)) {
                     /* SSLfatal already called */
                     goto err;
@@ -3169,6 +3209,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         SSL_SESSION_free(s->session);
         s->session = NULL;
         s->hit = 0;
+        s->ext.cert_with_extern_psk = 0;
 
         /*
          * Re-initialise the Transcript Hash. We're going to prepopulate it with

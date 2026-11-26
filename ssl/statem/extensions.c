@@ -102,6 +102,8 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
     int sent);
 static int init_post_handshake_auth(SSL_CONNECTION *s, unsigned int context);
 static int final_psk(SSL_CONNECTION *s, unsigned int context, int sent);
+static int final_cert_with_extern_psk(SSL_CONNECTION *s, unsigned int context,
+    int sent);
 static int tls_init_compress_certificate(SSL_CONNECTION *sc, unsigned int context);
 static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
     unsigned int context,
@@ -465,6 +467,16 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     INVALID_EXTENSION,
     INVALID_EXTENSION,
 #endif /* END_OPENSSL_NO_ECH */
+    { /* RFC 9973. Must be after early_data, which picks the PSKs to offer */
+        TLSEXT_TYPE_cert_with_extern_psk,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
+            | SSL_EXT_TLS1_3_ONLY,
+        OSSL_ECH_HANDLING_CALL_BOTH,
+        NULL, tls_parse_ctos_cert_with_extern_psk,
+        tls_parse_stoc_cert_with_extern_psk,
+        tls_construct_stoc_cert_with_extern_psk,
+        tls_construct_ctos_cert_with_extern_psk,
+        final_cert_with_extern_psk },
     { /* RFC 8701 GREASE extension 1 - type is dynamic */
         TLSEXT_TYPE_grease1,
         SSL_EXT_CLIENT_HELLO,
@@ -879,7 +891,8 @@ int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
         || (!is_version13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) == 0)
         || (s->server && !is_version13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0)
-        || (s->hit && (extctx & SSL_EXT_IGNORE_ON_RESUMPTION) != 0))
+        || (s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)
+            && (extctx & SSL_EXT_IGNORE_ON_RESUMPTION) != 0))
         return 0;
     return 1;
 }
@@ -1398,7 +1411,8 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
      * was successful.
      */
     if (s->server) {
-        if (sent && ret == SSL_TLSEXT_ERR_OK && !s->hit) {
+        if (sent && ret == SSL_TLSEXT_ERR_OK
+            && (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
             s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
@@ -1685,7 +1699,8 @@ static int init_srtp(SSL_CONNECTION *s, unsigned int context)
 
 static int final_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-    if (!sent && SSL_CONNECTION_IS_VERSION13(s) && !s->hit) {
+    if (!sent && SSL_CONNECTION_IS_VERSION13(s)
+        && (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s))) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
             SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
@@ -1743,9 +1758,10 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
          * In a full handshake the ServerHello must carry a key_share, so its
          * absence is a missing_extension alert (RFC 8446, sections 4.2.8
          * and 6.2). Only when resuming may the server legitimately omit it,
-         * and then only if we offered psk_ke.
+         * and then only if we offered psk_ke. RFC 9973 requires it with
+         * "tls_cert_with_extern_psk" too.
          */
-        if (!s->hit) {
+        if (!s->hit || SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
             SSLfatal(s, SSL_AD_MISSING_EXTENSION, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
@@ -2125,8 +2141,12 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     } else {
         /* HMAC keys can't do EVP_DigestVerify* - use CRYPTO_memcmp instead */
         ret = (CRYPTO_memcmp(binderin, binderout, hashsize) == 0);
+        /* RFC 9973 Section 5.1 requires illegal_parameter instead */
         if (!ret)
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BINDER_DOES_NOT_VERIFY);
+            SSLfatal(s,
+                tls_cert_with_extern_psk_offered(s) ? SSL_AD_ILLEGAL_PARAMETER
+                                                    : SSL_AD_DECRYPT_ERROR,
+                SSL_R_BINDER_DOES_NOT_VERIFY);
     }
 
 err:
@@ -2218,6 +2238,26 @@ static int final_psk(SSL_CONNECTION *s, unsigned int context, int sent)
         && !s->clienthello->pre_proc_exts[TLSEXT_IDX_psk_kex_modes].present) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
             SSL_R_MISSING_PSK_KEX_MODES_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
+ * RFC 9973 Section 7: abort if the server selects the external PSK offered with
+ * "tls_cert_with_extern_psk" without acknowledging the extension, as the PSK
+ * would then be the sole authentication.
+ */
+static int final_cert_with_extern_psk(SSL_CONNECTION *s, unsigned int context,
+    int sent)
+{
+    if (!s->server && !sent && s->hit
+        && (s->ext.extflags[TLSEXT_IDX_cert_with_extern_psk]
+               & SSL_EXT_FLAG_SENT)
+            != 0) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+            SSL_R_MISSING_CERT_WITH_EXTERN_PSK_EXTENSION);
         return 0;
     }
 
@@ -2375,5 +2415,16 @@ static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context)
         sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.client_cert_type = TLSEXT_cert_type_x509;
     }
+    return 1;
+}
+
+int tls_cert_with_extern_psk_new_session(SSL_CONNECTION *s)
+{
+    if (!ssl_get_new_session(s, s->server))
+        return 0;
+
+    s->session->cipher = s->s3.tmp.new_cipher;
+    s->session->flags |= SSL_SESS_FLAG_CERT_WITH_EXTERN_PSK;
+    s->verify_result = s->session->verify_result;
     return 1;
 }

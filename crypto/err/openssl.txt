@@ -1501,6 +1501,8 @@ SSL_R_LIBRARY_BUG:274:library bug
 SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
 SSL_R_LISTENER_USE_ONLY:421:listener use only
 SSL_R_MAXIMUM_ENCRYPTED_PKTS_REACHED:395:maximum encrypted pkts reached
+SSL_R_MISSING_CERT_WITH_EXTERN_PSK_EXTENSION:427:\
+	missing cert with extern psk extension
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
 SSL_R_MISSING_FATAL:256:missing fatal

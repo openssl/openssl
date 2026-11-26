@@ -618,6 +618,7 @@ int ossl_ssl_connection_reset(SSL *s)
 
     sc->error = 0;
     sc->hit = 0;
+    sc->ext.cert_with_extern_psk = 0;
     sc->shutdown = 0;
     sc->ext.early_data_suppressed = 0;
     sc->ext.early_exporter_ready = 0;
@@ -6948,6 +6949,16 @@ int SSL_session_reused(const SSL *s)
         return 0;
 
     return sc->hit;
+}
+
+int SSL_cert_with_extern_psk_negotiated(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return SSL_CONNECTION_CERT_WITH_EXTERN_PSK(sc);
 }
 
 int SSL_is_server(const SSL *s)

@@ -131,7 +131,7 @@ static int ossl_statem_client13_read_transition(SSL_CONNECTION *s, int mt)
         break;
 
     case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
-        if (s->hit) {
+        if (s->hit && !SSL_CONNECTION_CERT_WITH_EXTERN_PSK(s)) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_CR_FINISHED;
                 return 1;
@@ -2192,6 +2192,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
 
     s->hit = 0;
+    s->ext.cert_with_extern_psk = 0;
 
     if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
@@ -2351,6 +2352,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         s->s3.tmp.new_compression = comp;
     }
 #endif
+
+    /* RFC 9973: it starts the session that the other extensions record into */
+    if (SSL_CONNECTION_IS_VERSION13(s)
+        && !tls_parse_extension(s, TLSEXT_IDX_cert_with_extern_psk, context,
+            extensions, NULL, 0)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
 
     if (!tls_parse_all_extensions(s, context, extensions, NULL, 0, 1)) {
         /* SSLfatal() already called */

@@ -3792,6 +3792,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
     const int version1_3 = SSL_is_dtls(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    /* An RFC 9973 handshake uses a PSK too, but starts a new session */
+    const int reused = SSL_session_reused(s)
+        && !SSL_cert_with_extern_psk_negotiated(s);
     int i;
     long verify_result;
 #ifndef OPENSSL_NO_COMP
@@ -3877,7 +3880,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
          * attempt to display SCTs from a resumed session's certificate, and of
          * course none are associated with an anonymous peer.
          */
-        if (peer != NULL && !SSL_session_reused(s) && SSL_ct_is_enabled(s)) {
+        if (peer != NULL && !reused && SSL_ct_is_enabled(s)) {
             const STACK_OF(SCT) *scts = SSL_get0_peer_scts(s);
             int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
 
@@ -3907,7 +3910,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             BIO_number_written(SSL_get_wbio(s)));
     }
     print_verify_detail(s, bio);
-    BIO_printf(bio, (SSL_session_reused(s) ? "---\nReused, " : "---\nNew, "));
+    BIO_printf(bio, (reused ? "---\nReused, " : "---\nNew, "));
     c = SSL_get_current_cipher(s);
     BIO_printf(bio, "%s, Cipher is %s\n",
         SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
@@ -3997,6 +4000,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             BIO_puts(bio, "Early data was accepted\n");
             break;
         }
+
+        if (SSL_cert_with_extern_psk_negotiated(s))
+            BIO_puts(bio, "Certificate with external PSK negotiated\n");
 
         /*
          * We also print the verify results when we dump session information,
