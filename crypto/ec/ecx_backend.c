@@ -92,8 +92,17 @@ int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM *param_pub_key,
     if ((param_pub_key != NULL && pubkeylen != ecx->keylen))
         return 0;
 
-    if (param_pub_key == NULL && !ossl_ecx_public_from_private(ecx))
-        return 0;
+    if (param_pub_key == NULL) {
+        /*
+         * Without a public key we can only derive one if a private key was
+         * actually imported.  When the selection excludes the private key,
+         * ecx->privkey is still NULL and deriving from it would crash.
+         */
+        if (ecx->privkey == NULL)
+            return 0;
+        if (!ossl_ecx_public_from_private(ecx))
+            return 0;
+    }
 
     ecx->haspubkey = 1;
 
