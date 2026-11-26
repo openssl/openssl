@@ -1684,10 +1684,12 @@ finish:
              * we avoid it. We up the count again and do a full deactivation
              */
             if (CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
-                    prov->activatecnt_lock))
-                provider_deactivate(prov, 0, 1);
-            else
+                    prov->activatecnt_lock)) {
+                if (provider_deactivate(prov, 0, 1) == 0)
+                    provider_remove_store_methods(prov);
+            } else {
                 ret = 0;
+            }
         }
         /*
          * As above where we did the up-ref, we don't call ossl_provider_free
