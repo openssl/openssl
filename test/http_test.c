@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <string.h>
 
+#include "internal/time.h"
 #include "testutil.h"
 
 #define HTTP_STATUS_CODE_OK 200
@@ -108,8 +109,12 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
             <= 0)
             return 0;
 
-    if (strcmp(status, "399") == 0) /* HTTP_STATUS_CODES_FATAL_ERROR */
-        return BIO_puts(out, "\r\n") == 2; /* empty content */
+    if (strcmp(status, "399") == 0) { /* HTTP_STATUS_CODES_FATAL_ERROR */
+        static const char empty_content_header[] = "Content-Length: 0\r\n\r\n";
+
+        /* The mock keeps the response BIO open after the empty body. */
+        return BIO_puts(out, empty_content_header) == (int)sizeof(empty_content_header) - 1;
+    }
 
     if (is_get) { /* construct new header and body */
         if (txt != NULL)
@@ -737,6 +742,7 @@ typedef struct resp_test_fixture_st {
     int exp_reason; /**< Expected HTTP error reason code if exp_ret == 0 */
     size_t expected_body_len; /**< Expected ASN.1 body length on success */
     int expect_alive; /**< Expected connection persistence on success */
+    int close_response; /**< Signal EOF after supplying this response */
 } RESP_TEST_FIXTURE;
 
 /**
@@ -759,7 +765,7 @@ typedef struct resp_test_fixture_st {
  * @param rctx context created by new_nbio_ctx()
  * @param wbio request BIO of |rctx|
  * @param rbio response BIO chain of |rctx|
- * @param fixture response to receive and expected outcome
+ * @param fixture response and expected outcome, including whether to signal EOF
  * @param piecemeal if nonzero, provide the response one byte per call
  * of OSSL_HTTP_REQ_CTX_nbio(), else all at once
  * @returns 1 if all checks pass, else 0
@@ -774,6 +780,7 @@ static int exchange(OSSL_HTTP_REQ_CTX *rctx, BIO *wbio, BIO *rbio,
     int ret = -1, found_ka = 0, chunk;
 
     (void)BIO_reset(wbio);
+    BIO_set_mem_eof_return(BIO_next(rbio), -1);
     if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
             NULL, NULL, RPATH))
         || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, fixture->expected_ct,
@@ -803,6 +810,8 @@ static int exchange(OSSL_HTTP_REQ_CTX *rctx, BIO *wbio, BIO *rbio,
         /* provide to the buffer part/all of the response */
         if (!TEST_int_eq(BIO_write(BIO_next(rbio), fixture->resp + i, chunk), chunk))
             return 0;
+        if (fixture->close_response && i + (size_t)chunk == fixture->resp_len)
+            BIO_set_mem_eof_return(BIO_next(rbio), 0);
         ret = OSSL_HTTP_REQ_CTX_nbio(rctx);
     }
 
@@ -846,6 +855,52 @@ static OSSL_HTTP_REQ_CTX *new_nbio_ctx(BIO **wbio, BIO **rbio)
     return OSSL_HTTP_REQ_CTX_new(*wbio, *rbio, 1024);
 }
 
+/* Make the first read of the response status line request a retry. */
+static long retry_once(BIO *bio, int oper, const char *argp, size_t len,
+    int cmd, long argl, int ret, size_t *processed)
+{
+    if (oper == BIO_CB_GETS) {
+        OSSL_TIME *start = (OSSL_TIME *)BIO_get_callback_arg(bio);
+
+        *start = ossl_time_now();
+        BIO_set_callback_ex(bio, NULL);
+        BIO_set_retry_read(bio);
+        return -1;
+    }
+    return ret;
+}
+
+/**
+ * @brief Check that the synchronous exchange waits before retrying a read.
+ * @param idx Zero for the default timeout, one for a finite timeout.
+ * @returns 1 on success, else 0.
+ */
+static int test_http_exchange_retry(int idx)
+{
+    static const char resp[] = "HTTP/1.0 200 OK\r\n\r\n";
+    BIO *wbio = NULL, *rbio = NULL;
+    OSSL_HTTP_REQ_CTX *rctx = new_nbio_ctx(&wbio, &rbio);
+    OSSL_TIME start = ossl_time_zero();
+    int ok = 0;
+
+    if (!TEST_ptr(rctx)
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0, NULL, NULL, RPATH))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, NULL, 0, idx == 0 ? 0 : 60, 0))
+        || !TEST_int_eq(BIO_puts(BIO_next(rbio), resp), (int)sizeof(resp) - 1))
+        goto end;
+    BIO_set_callback_arg(rbio, (char *)&start);
+    BIO_set_callback_ex(rbio, retry_once);
+    ok = TEST_ptr_eq(OSSL_HTTP_REQ_CTX_exchange(rctx), rbio)
+        && TEST_false(ossl_time_is_zero(start))
+        /* Allow for clock resolution when checking the 100 ms polling interval. */
+        && TEST_uint64_t_ge(ossl_time2ms(ossl_time_subtract(ossl_time_now(), start)), 50);
+end:
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free_all(rbio);
+    return ok;
+}
+
 /**
  * Responses whose outcome must not depend on how they are split across
  * calls to OSSL_HTTP_REQ_CTX_nbio() that return -1.
@@ -864,13 +919,15 @@ static const RESP_TEST_FIXTURE split_resp_tests[] = {
      * The piecemeal case checks preservation of the status code across calls.
      * If it were reset to 0, the expected Content-Type mismatch would not
      * be reported and the test would fail.
+     * EOF delimits the empty error body when HTTP tracing is enabled.
      */
     { RESP("HTTP/1.1 200 OK\r\n"
            "Content-Type: text/plain\r\n"
            "\r\n"),
         .expect_asn1 = 1,
         .exp_ret = 0,
-        .exp_reason = HTTP_R_CONTENT_TYPE_MISMATCH },
+        .exp_reason = HTTP_R_CONTENT_TYPE_MISMATCH,
+        .close_response = 1 },
     /* expected Content-Type was given before end of headers */
     { RESP("HTTP/1.0 200 OK\r\n"
            "Content-Type: text/plain\r\n"
@@ -1075,6 +1132,7 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
+    ADD_ALL_TESTS(test_http_exchange_retry, 2);
     ADD_ALL_TESTS(test_http_split_resp, 2 * OSSL_NELEM(split_resp_tests));
     ADD_ALL_TESTS(test_http_reuse_resp, 2 * OSSL_NELEM(reuse_resp_tests));
     ADD_TEST(test_http_adapt_proxy_empty_server);

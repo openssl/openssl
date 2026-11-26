@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,7 @@ plan skip_all => "HTTP protocol is not supported by this OpenSSL build"
     if disabled('http');
 plan skip_all => "not supported by no-sock build" if disabled('sock');
 
-plan tests => 2;
+plan tests => 3;
 
 SKIP: {
     skip "sockets disabled", 1 if disabled("sock");
@@ -31,3 +31,9 @@ SKIP: {
 }
 
 ok(run(test(["http_test", srctop_file("test", "certs", "ca-cert.pem")])));
+
+{
+    # The test enables and disables the HTTP trace channel itself.
+    local $ENV{OPENSSL_TRACE} = "";
+    ok(run(test(["http_error_trace_test"])));
+}

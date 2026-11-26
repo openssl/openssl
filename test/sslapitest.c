@@ -21,7 +21,10 @@
 #include <openssl/opensslconf.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/http.h>
+#include <openssl/httperr.h>
 #include <openssl/ssl.h>
+#include <openssl/trace.h>
 #include <openssl/ocsp.h>
 #include <openssl/srp.h>
 #include <openssl/txt_db.h>
@@ -11180,6 +11183,74 @@ end:
 #endif /* OSSL_NO_USABLE_TLS1_3 | OSSL_NO_USABLE_DTLS1_3 */
 
 #if !defined(OSSL_NO_USABLE_TLS1_3)
+#if !defined(OPENSSL_NO_HTTP) && !defined(OPENSSL_NO_TRACE)
+static int test_http_error_key_update(void)
+{
+    static const char response[] = "HTTP/1.1 500 Server Error\r\n"
+                                   "Content-Type: text/plain\r\n"
+                                   "Content-Length: 2\r\n\r\na";
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *clientbio = NULL, *trace = NULL;
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    const char *data = NULL;
+    unsigned long err;
+    int ok = 0;
+
+    if (!OSSL_trace_enabled(OSSL_TRACE_CATEGORY_HTTP)) {
+        if (!TEST_ptr(trace = BIO_new(BIO_s_null())))
+            return 0;
+        if (!TEST_true(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, trace))) {
+            BIO_free(trace);
+            return 0;
+        }
+    }
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_ptr(clientbio = BIO_new(BIO_f_ssl()))
+        || !TEST_int_eq(BIO_set_ssl(clientbio, clientssl, BIO_NOCLOSE), 1)
+        || !TEST_ptr(rctx = OSSL_HTTP_REQ_CTX_new(clientbio, clientbio, 0))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0, NULL, NULL, "/"))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx, NULL, 1, 0, 0)))
+        goto end;
+
+    /*
+     * Queue the KeyUpdate before the client reads the headers so that it is
+     * the client's TLS state machine that runs between the two body bytes.
+     */
+    if (!TEST_int_eq(SSL_write(serverssl, response, sizeof(response) - 1),
+            (int)sizeof(response) - 1)
+        || !TEST_true(SSL_key_update(serverssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+        || !TEST_int_eq(SSL_do_handshake(serverssl), 1))
+        goto end;
+    ERR_clear_error();
+    if (!TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(rctx), -1)
+        || !TEST_true(BIO_should_read(clientbio))
+        || !TEST_int_eq(SSL_write(serverssl, "b", 1), 1)
+        || !TEST_int_eq(OSSL_HTTP_REQ_CTX_nbio(rctx), 0))
+        goto end;
+    err = ERR_get_error_all(NULL, NULL, NULL, &data, NULL);
+    ok = TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_HTTP)
+        && TEST_int_eq(ERR_GET_REASON(err), HTTP_R_CONTENT_TYPE_MISMATCH)
+        && TEST_str_eq(data, "expected ASN.1 content but got http code 500 with Content-Type: text/plain")
+        && TEST_ulong_eq(ERR_peek_error(), 0);
+end:
+    if (trace != NULL && !TEST_true(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL)))
+        ok = 0;
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free_all(clientbio);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return ok;
+}
+#endif
+
 /*
  * Test we can handle a KeyUpdate (update requested) message while
  * local read data is pending(the msg header had been read 5 bytes).
@@ -20578,6 +20649,9 @@ int setup_tests(void)
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
+#if !defined(OPENSSL_NO_HTTP) && !defined(OPENSSL_NO_TRACE)
+    ADD_TEST(test_http_error_key_update);
+#endif
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
