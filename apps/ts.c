@@ -777,13 +777,16 @@ static ASN1_INTEGER *serial_cb(TS_RESP_CTX *ctx, void *data)
     const char *serial_file = (const char *)data;
     ASN1_INTEGER *serial = next_serial(serial_file);
 
+    /* Do not issue the serial number again if it cannot be saved */
+    if (serial != NULL && !save_ts_serial(serial_file, serial)) {
+        ASN1_INTEGER_free(serial);
+        serial = NULL;
+    }
     if (serial == NULL) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
             "Error during serial number "
             "generation.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_ADD_INFO_NOT_AVAILABLE);
-    } else {
-        save_ts_serial(serial_file, serial);
     }
 
     return serial;

@@ -85,7 +85,7 @@ sub verify_fail {
 
 # main functions
 
-plan tests => 27;
+plan tests => 28;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -138,6 +138,16 @@ indir "tsa" => sub
 
      ok(run(app([@REPLY, "-in", "resp1.tsr", "-text"])),
         'printing response');
+
+     subtest 'rejecting the request when the serial number cannot be saved' => sub {
+         plan tests => 2;
+
+         ok(run(app([@REPLY, "-section", "tsa_config_bad_serial",
+                     "-queryfile", "req1.tsq", "-out", "resp_bad_serial.tsr"])));
+         my @out = run(app([@REPLY, "-in", "resp_bad_serial.tsr", "-text"]),
+                       capture => 1);
+         ok(grep(/Status: Rejected/, @out), "the request is rejected");
+     };
 
      subtest 'verifying valid response' => sub {
          verify_ok($testtsa, "req1.tsq", "resp1.tsr", "tsa_cert1.pem")
