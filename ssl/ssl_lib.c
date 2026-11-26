@@ -3039,14 +3039,13 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
             /*
              * 0-RTT was suppressed. Complete the handshake behind the scenes
              * and report success so the application's early data write loop
-             * finishes. Run the internal SSL_connect() in the CONNECTING state,
-             * as the non-suppressed path does, so ossl_statem_check_finish_init()
-             * does not mistake it for the application leaving the early data
-             * write sequence.
+             * finishes. The ClientHello carried no early_data, so the rest of
+             * the handshake runs in SSL_EARLY_DATA_NONE whichever call drives
+             * it. ossl_statem_check_finish_init() clears the suppressed flag
+             * during SSL_connect(); set it again for the next call.
              */
-            sc->early_data_state = SSL_EARLY_DATA_CONNECTING;
             ret = SSL_connect(s);
-            sc->early_data_state = SSL_EARLY_DATA_NONE;
+            sc->ext.early_data_suppressed = 1;
             if (ret <= 0)
                 return 0;
             *written = num;

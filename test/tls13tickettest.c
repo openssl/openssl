@@ -1649,6 +1649,151 @@ static int test_tls13_ticket_client_age_mismatch_reject_early_data_outer(void)
     return test;
 }
 
+/*
+ * Retry SSL_write_early_data() on the client while only the first record of
+ * the server's flight, the ServerHello, is there to be read.
+ */
+static int tls_early_data_retry_server_hello(struct tls13_channel *x)
+{
+    const unsigned char m[] = "message";
+    unsigned char rec[SSL3_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH];
+    BIO *s_to_c = SSL_get_wbio(x->s.ssl), *first;
+    size_t w;
+    int len;
+
+    if (!TEST_int_eq(BIO_read(s_to_c, rec, SSL3_RT_HEADER_LENGTH),
+            SSL3_RT_HEADER_LENGTH)
+        || !TEST_int_eq(rec[0], SSL3_RT_HANDSHAKE)
+        || !TEST_int_le(len = ((unsigned int)rec[3] << 8) | rec[4], SSL3_RT_MAX_PLAIN_LENGTH)
+        || !TEST_int_eq(BIO_read(s_to_c, rec + SSL3_RT_HEADER_LENGTH, len), len)
+        || !TEST_ptr(first = BIO_new(BIO_s_mem())))
+        return 0;
+    BIO_set_mem_eof_return(first, -1);
+    SSL_set0_rbio(x->c.ssl, first);
+    len += SSL3_RT_HEADER_LENGTH;
+
+    if (!TEST_int_eq(BIO_write(first, rec, len), len)
+        || !TEST_false(SSL_write_early_data(x->c.ssl, m, sizeof(m), &w))
+        || !TEST_int_eq(SSL_get_error(x->c.ssl, 0), SSL_ERROR_WANT_READ)
+        || !TEST_true(BIO_up_ref(s_to_c)))
+        return 0;
+    SSL_set0_rbio(x->c.ssl, s_to_c);
+    return 1;
+}
+
+/*
+ * TLS 1.3 suppressed 0-RTT, early data write sequence left mid-handshake
+ *
+ * Without middlebox compatibility mode a client that sends no early data
+ * installs its handshake write keys when it processes the ServerHello. Here a
+ * retried SSL_write_early_data() processes the ServerHello and SSL_connect()
+ * the rest of the server's flight. The client's own flight must still be
+ * encrypted.
+ */
+static int test_tls13_suppressed_early_data_leave_write_sequence(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256], *flight = NULL;
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t r = 0, w = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_false(SSL_CTX_clear_options(c, SSL_OP_ENABLE_MIDDLEBOX_COMPAT)
+            & SSL_OP_ENABLE_MIDDLEBOX_COMPAT)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_time_t_gt(SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_false(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_int_eq(SSL_get_error(resumed.c.ssl, 0), SSL_ERROR_WANT_READ)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_true(tls_early_data_retry_server_hello(&resumed))
+        && TEST_int_gt(SSL_connect(resumed.c.ssl), 0)
+        && TEST_long_gt(BIO_get_mem_data(SSL_get_wbio(resumed.c.ssl), &flight), 0)
+        && TEST_int_eq(flight[0], SSL3_RT_APPLICATION_DATA)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * TLS 1.3 suppressed 0-RTT, server negotiates TLS 1.2
+ *
+ * The client repeats SSL_write_early_data() until it succeeds, by which time
+ * the handshake must be complete.
+ */
+static int test_tls13_suppressed_early_data_tls12_server(void)
+{
+    const unsigned char m[] = "message";
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t w = 0;
+    int test, done = 0;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_2_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_time_t_gt(SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(SSL_set_max_proto_version(resumed.s.ssl, TLS1_2_VERSION));
+
+    for (int i = 0; test && !done && i < 100; i++) {
+        if (SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w) > 0)
+            done = 1;
+        else if (!is_retryable(resumed.c.ssl, 0))
+            break;
+        if (SSL_accept(resumed.s.ssl) <= 0 && !is_retryable(resumed.s.ssl, 0))
+            break;
+    }
+
+    test = test
+        && TEST_true(done)
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_true(SSL_is_init_finished(resumed.c.ssl))
+        && TEST_true(SSL_is_init_finished(resumed.s.ssl))
+        && TEST_int_eq(SSL_version(resumed.c.ssl), TLS1_2_VERSION)
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 OPT_TEST_DECLARE_USAGE("\n")
 
 /*
@@ -2529,6 +2674,8 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_early_data_accepted);
     ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_retry);
     ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_outer);
+    ADD_TEST(test_tls13_suppressed_early_data_leave_write_sequence);
+    ADD_TEST(test_tls13_suppressed_early_data_tls12_server);
     ADD_TEST(test_tls13_ticket_server_age_mismatch_reject_early_data);
     ADD_TEST(test_tls13_aged_ticket_external_psk_early_data);
     ADD_TEST(test_tls13_external_psk_sid_ctx_not_shared);

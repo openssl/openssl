@@ -254,8 +254,8 @@ int ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
      * write, or handshake call waits for the handshake to complete and so ends
      * that sequence: clear the suppressed flag, after which a further
      * SSL_write_early_data() returns the normal error instead of masking a
-     * state-machine mistake. The internal SSL_connect() issued from
-     * SSL_write_early_data() runs in the CONNECTING state and is excluded.
+     * state-machine mistake. SSL_write_early_data() sets the flag again after
+     * its own internal SSL_connect().
      */
     if (!s->server
         && s->ext.early_data_suppressed
