@@ -916,7 +916,9 @@ x25519_fe64_tobytes:
 ___
 }
 $code.=<<___;
+.section .rodata
 .asciz	"X25519 primitives for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
+.previous
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
