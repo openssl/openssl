@@ -12,6 +12,7 @@
 #pragma once
 
 #include <openssl/e_os2.h> /* For 'ossl_inline' */
+#include "internal/common.h" /* For ossl_likely and ossl_unlikely */
 
 #ifndef OPENSSL_NO_BUILTIN_OVERFLOW_CHECKING
 #ifdef __has_builtin
@@ -38,7 +39,7 @@
     {                                                                \
         type r;                                                      \
                                                                      \
-        if (!__builtin_add_overflow(a, b, &r))                       \
+        if (ossl_likely(!__builtin_add_overflow(a, b, &r)))          \
             return r;                                                \
         *err |= 1;                                                   \
         return a < 0 ? min : max;                                    \
@@ -51,7 +52,7 @@
     {                                                                \
         type r;                                                      \
                                                                      \
-        if (!__builtin_add_overflow(a, b, &r))                       \
+        if (ossl_likely(!__builtin_add_overflow(a, b, &r)))          \
             return r;                                                \
         *err |= 1;                                                   \
         return a + b;                                                \
@@ -63,10 +64,10 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if ((a < 0) ^ (b < 0)                                        \
-            || (a > 0 && b <= max - a)                               \
-            || (a < 0 && b >= min - a)                               \
-            || a == 0)                                               \
+        if (ossl_likely((a < 0) ^ (b < 0)                            \
+                || (a > 0 && b <= max - a)                           \
+                || (a < 0 && b >= min - a)                           \
+                || a == 0))                                          \
             return a + b;                                            \
         *err |= 1;                                                   \
         return a < 0 ? min : max;                                    \
@@ -77,7 +78,7 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b > max - a)                                             \
+        if (ossl_unlikely(b > max - a))                              \
             *err |= 1;                                               \
         return a + b;                                                \
     }
@@ -94,7 +95,7 @@
     {                                                                \
         type r;                                                      \
                                                                      \
-        if (!__builtin_sub_overflow(a, b, &r))                       \
+        if (ossl_likely(!__builtin_sub_overflow(a, b, &r)))          \
             return r;                                                \
         *err |= 1;                                                   \
         return a < 0 ? min : max;                                    \
@@ -106,10 +107,10 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (!((a < 0) ^ (b < 0))                                     \
-            || (b > 0 && a >= min + b)                               \
-            || (b < 0 && a <= max + b)                               \
-            || b == 0)                                               \
+        if (ossl_likely(!((a < 0) ^ (b < 0))                         \
+                || (b > 0 && a >= min + b)                           \
+                || (b < 0 && a <= max + b)                           \
+                || b == 0))                                          \
             return a - b;                                            \
         *err |= 1;                                                   \
         return a < 0 ? min : max;                                    \
@@ -122,7 +123,7 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b > a)                                                   \
+        if (ossl_unlikely(b > a))                                    \
             *err |= 1;                                               \
         return a - b;                                                \
     }
@@ -138,7 +139,7 @@
     {                                                                \
         type r;                                                      \
                                                                      \
-        if (!__builtin_mul_overflow(a, b, &r))                       \
+        if (ossl_likely(!__builtin_mul_overflow(a, b, &r)))          \
             return r;                                                \
         *err |= 1;                                                   \
         return (a < 0) ^ (b < 0) ? min : max;                        \
@@ -151,7 +152,7 @@
     {                                                                \
         type r;                                                      \
                                                                      \
-        if (!__builtin_mul_overflow(a, b, &r))                       \
+        if (ossl_likely(!__builtin_mul_overflow(a, b, &r)))          \
             return r;                                                \
         *err |= 1;                                                   \
         return r;                                                    \
@@ -169,11 +170,11 @@
             return b;                                                \
         if (b == 1)                                                  \
             return a;                                                \
-        if (a != min && b != min) {                                  \
+        if (ossl_likely(a != min && b != min)) {                     \
             const type x = a < 0 ? -a : a;                           \
             const type y = b < 0 ? -b : b;                           \
                                                                      \
-            if (x <= max / y)                                        \
+            if (ossl_likely(x <= max / y))                           \
                 return a * b;                                        \
             /* A negative product can also equal the minimum. */     \
             if (((a < 0) ^ (b < 0)) && -x == min / y)                \
@@ -188,7 +189,7 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b != 0 && a > max / b)                                   \
+        if (ossl_unlikely(b != 0 && a > max / b))                    \
             *err |= 1;                                               \
         /*                                                           \
          * With 16-bit short and 32-bit int, unsigned short          \
@@ -207,11 +208,11 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b == 0) {                                                \
+        if (ossl_unlikely(b == 0)) {                                 \
             *err |= 1;                                               \
             return a < 0 ? min : max;                                \
         }                                                            \
-        if (b == -1 && a == min) {                                   \
+        if (ossl_unlikely(b == -1 && a == min)) {                    \
             *err |= 1;                                               \
             return max;                                              \
         }                                                            \
@@ -223,7 +224,7 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b != 0)                                                  \
+        if (ossl_likely(b != 0))                                     \
             return a / b;                                            \
         *err |= 1;                                                   \
         return max;                                                  \
@@ -237,11 +238,11 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b == 0) {                                                \
+        if (ossl_unlikely(b == 0)) {                                 \
             *err |= 1;                                               \
             return 0;                                                \
         }                                                            \
-        if (b == -1 && a == min) {                                   \
+        if (ossl_unlikely(b == -1 && a == min)) {                    \
             *err |= 1;                                               \
             return max;                                              \
         }                                                            \
@@ -253,7 +254,7 @@
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
-        if (b != 0)                                                  \
+        if (ossl_likely(b != 0))                                     \
             return a % b;                                            \
         *err |= 1;                                                   \
         return 0;                                                    \
@@ -266,7 +267,7 @@
     static ossl_inline ossl_unused type safe_neg_##type_name(type a, \
         int *err)                                                    \
     {                                                                \
-        if (a != min)                                                \
+        if (ossl_likely(a != min))                                   \
             return -a;                                               \
         *err |= 1;                                                   \
         return min;                                                  \
@@ -289,7 +290,7 @@
     static ossl_inline ossl_unused type safe_abs_##type_name(type a, \
         int *err)                                                    \
     {                                                                \
-        if (a != min)                                                \
+        if (ossl_likely(a != min))                                   \
             return a < 0 ? -a : a;                                   \
         *err |= 1;                                                   \
         return min;                                                  \
@@ -302,82 +303,58 @@
         return a;                                                    \
     }
 
-/*
- * Safe fused multiply divide helpers
+/**
+ * @brief Compute a signed product and quotient with result limits.
  *
- * First try the multiplication directly.  If it overflows, add and double
- * quotient/remainder pairs while consuming the bits of b.  For unsigned
- * inputs, (x, y) describes the current term as x * c + y, and (q, r)
- * describes the accumulated sum.  Remainders stay below c: test against
- * c - y before adding y so that the remainder addition cannot overflow.
- *
- * Signed inputs use negative magnitudes so that the minimum value remains
- * representable.  The quotient and remainder bounds are reversed, and the
- * result sign is restored at the end.
- *
- * Quotient magnitudes only increase, and a term is doubled only if a higher
- * bit of b is still needed.  Thus an intermediate quotient overflow implies
- * that the final quotient cannot fit.  No wider integer type is needed.
+ * The operands must fit a signed integer type of size bytes.
+ * @param a First factor in the numerator.
+ * @param b Second factor in the numerator.
+ * @param c Nonzero divisor.
+ * @param size Size of the input integer type, in bytes.
+ * @param min Minimum allowed result.
+ * @param max Maximum allowed result.
+ * @param[in,out] err Error flags. Overflow sets bit 0 and preserves other bits.
+ * @returns The quotient truncated toward zero, or an arbitrary value on overflow.
  */
+ossl_intmax_t ossl_safe_muldiv_signed(ossl_intmax_t a, ossl_intmax_t b,
+    ossl_intmax_t c, size_t size, ossl_intmax_t min, ossl_intmax_t max,
+    int *err);
 
+/**
+ * @brief Compute an unsigned product and quotient with a result limit.
+ *
+ * The operands must fit an unsigned integer type of size bytes.
+ * @param a First factor in the numerator.
+ * @param b Second factor in the numerator.
+ * @param c Nonzero divisor.
+ * @param size Size of the input integer type, in bytes.
+ * @param max Maximum allowed result. The minimum is zero.
+ * @param[in,out] err Error flags. Overflow sets bit 0 and preserves other bits.
+ * @returns The quotient, or an arbitrary value on overflow.
+ */
+ossl_uintmax_t ossl_safe_muldiv_unsigned(ossl_uintmax_t a, ossl_uintmax_t b,
+    ossl_uintmax_t c, size_t size, ossl_uintmax_t max, int *err);
+
+/*
+ * Safe fused multiply-divide helpers. Try multiplication in the original
+ * type first, then use a wider type or the checked slow algorithm.
+ */
 #define OSSL_SAFE_MATH_MULDIVS(type_name, type, min, max)               \
     static ossl_inline ossl_unused type safe_muldiv_##type_name(type a, \
         type b, type c, int *err)                                       \
     {                                                                   \
-        int e2 = 0, negative;                                           \
-        type q, r, x, y;                                                \
+        int e2 = 0;                                                     \
+        type x;                                                         \
                                                                         \
-        if (c == 0) {                                                   \
+        if (ossl_unlikely(c == 0)) {                                    \
             *err |= 1;                                                  \
             return a == 0 || b == 0 ? 0 : max;                          \
         }                                                               \
         x = safe_mul_##type_name(a, b, &e2);                            \
-        if (!e2)                                                        \
+        if (ossl_likely(!e2))                                           \
             return safe_div_##type_name(x, c, err);                     \
-                                                                        \
-        /* Use negative magnitudes: MIN need never be negated. */       \
-        negative = (a < 0) ^ (b < 0) ^ (c < 0);                         \
-        if (a > 0)                                                      \
-            a = -a;                                                     \
-        if (b > 0)                                                      \
-            b = -b;                                                     \
-        if (c > 0)                                                      \
-            c = -c;                                                     \
-        x = c == -1 ? a : -(a / c);                                     \
-        y = c == -1 ? 0 : a % c;                                        \
-        q = r = 0;                                                      \
-        e2 = 0;                                                         \
-        while (b != 0) {                                                \
-            if (b % 2 != 0) {                                           \
-                q = safe_add_##type_name(q, x, &e2);                    \
-                if (r <= c - y) {                                       \
-                    r -= c - y;                                         \
-                    q = safe_add_##type_name(q, -1, &e2);               \
-                } else {                                                \
-                    r += y;                                             \
-                }                                                       \
-                if (e2)                                                 \
-                    goto overflow;                                      \
-            }                                                           \
-            b /= 2;                                                     \
-            if (b == 0)                                                 \
-                break;                                                  \
-            /* Double the current quotient/remainder pair. */           \
-            x = safe_add_##type_name(x, x, &e2);                        \
-            if (y <= c - y) {                                           \
-                y -= c - y;                                             \
-                x = safe_add_##type_name(x, -1, &e2);                   \
-            } else {                                                    \
-                y += y;                                                 \
-            }                                                           \
-            if (e2)                                                     \
-                goto overflow;                                          \
-        }                                                               \
-        return negative ? q : safe_neg_##type_name(q, err);             \
-                                                                        \
-    overflow:                                                           \
-        *err |= 1;                                                      \
-        return negative ? min : max;                                    \
+        return (type)ossl_safe_muldiv_signed(a, b, c, sizeof(type),     \
+            min, max, err);                                             \
     }
 
 #define OSSL_SAFE_MATH_MULDIVU(type_name, type, max)                    \
@@ -385,51 +362,17 @@
         type b, type c, int *err)                                       \
     {                                                                   \
         int e2 = 0;                                                     \
-        type q, r, x, y;                                                \
+        type x;                                                         \
                                                                         \
-        if (c == 0) {                                                   \
+        if (ossl_unlikely(c == 0)) {                                    \
             *err |= 1;                                                  \
             return a == 0 || b == 0 ? 0 : max;                          \
         }                                                               \
         x = safe_mul_##type_name(a, b, &e2);                            \
-        if (!e2)                                                        \
+        if (ossl_likely(!e2))                                           \
             return x / c;                                               \
-                                                                        \
-        x = a / c;                                                      \
-        y = a % c;                                                      \
-        q = r = 0;                                                      \
-        e2 = 0;                                                         \
-        while (b != 0) {                                                \
-            if (b % 2 != 0) {                                           \
-                q = safe_add_##type_name(q, x, &e2);                    \
-                if (r >= c - y) {                                       \
-                    r -= c - y;                                         \
-                    q = safe_add_##type_name(q, 1, &e2);                \
-                } else {                                                \
-                    r += y;                                             \
-                }                                                       \
-                if (e2)                                                 \
-                    goto overflow;                                      \
-            }                                                           \
-            b /= 2;                                                     \
-            if (b == 0)                                                 \
-                break;                                                  \
-            /* Double the current quotient/remainder pair. */           \
-            x = safe_add_##type_name(x, x, &e2);                        \
-            if (y >= c - y) {                                           \
-                y -= c - y;                                             \
-                x = safe_add_##type_name(x, 1, &e2);                    \
-            } else {                                                    \
-                y += y;                                                 \
-            }                                                           \
-            if (e2)                                                     \
-                goto overflow;                                          \
-        }                                                               \
-        return q;                                                       \
-                                                                        \
-    overflow:                                                           \
-        *err |= 1;                                                      \
-        return max;                                                     \
+        return (type)ossl_safe_muldiv_unsigned(a, b, c, sizeof(type),   \
+            max, err);                                                  \
     }
 
 /*
@@ -447,13 +390,13 @@
         /* Allow errors to be ignored by callers */                                              \
         err = errp != NULL ? errp : &err_local;                                                  \
         /* Fast path, both positive */                                                           \
-        if (b > 0 && a > 0) {                                                                    \
+        if (ossl_likely(b > 0 && a > 0)) {                                                       \
             /* Faster path: no overflow concerns */                                              \
-            if (a < max - b)                                                                     \
+            if (ossl_likely(a < max - b))                                                        \
                 return (a + b - 1) / b;                                                          \
             return a / b + (a % b != 0);                                                         \
         }                                                                                        \
-        if (b == 0) {                                                                            \
+        if (ossl_unlikely(b == 0)) {                                                             \
             *err |= 1;                                                                           \
             return a == 0 ? 0 : max;                                                             \
         }                                                                                        \
