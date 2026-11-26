@@ -1682,7 +1682,12 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
         QUIC_STREAM *s
             = ossl_quic_stream_map_get_by_id(txp->args.qsm, stream_id);
 
-        if (s == NULL)
+        /*
+         * MAX_STREAM_DATA notifies remote sender our local rstream
+         * can receive more data, therefore it is applicable to
+         * to streams that have receiving part.
+         */
+        if (s == NULL || !ossl_quic_stream_has_recv(s))
             return;
 
         s->want_max_stream_data = 1;
@@ -3038,10 +3043,14 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
     txpkt.pn = txp->next_pn[pn_space];
     txpkt.flags = OSSL_QTX_PKT_FLAG_COALESCE; /* always try to coalesce */
 
-    /* Generate TXPIM chunks representing STOP_SENDING and RESET_STREAM frames. */
+    /*
+     *Generate TXPIM chunks representing STOP_SENDING, RESET_STREAM and
+     * MAX_STREAM_DATA frames.
+     */
     for (stream = pkt->stream_head; stream != NULL; stream = stream->txp_next)
-        if (stream->txp_sent_stop_sending || stream->txp_sent_reset_stream) {
-            /* Log STOP_SENDING/RESET_STREAM chunk to TXPIM. */
+        if (stream->txp_sent_stop_sending || stream->txp_sent_reset_stream
+            || stream->txp_sent_fc) {
+            /* Log STOP_SENDING/RESET_STREAM/MAX_STREAM_DATA chunk to TXPIM. */
             QUIC_TXPIM_CHUNK chunk;
 
             chunk.stream_id = stream->id;

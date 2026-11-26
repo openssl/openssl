@@ -278,6 +278,7 @@ err:
 #define OPK_NOP 23 /* No-op */
 #define OPK_NO_VALIDATION 24 /* Run with an unvalidated TXP (must be first op) */
 #define OPK_ADD_CREDIT 25 /* Add unvalidated path credit */
+#define OPK_MAX_STREAM_DATA 26 /* schedule max stream data frame */
 
 struct script_op {
     uint32_t opcode;
@@ -339,6 +340,8 @@ struct script_op {
     { OPK_NO_VALIDATION }
 #define OP_ADD_CREDIT(credit) \
     { OPK_ADD_CREDIT, (credit) }
+#define OP_MAX_STREAM_DATA(id) \
+    { OPK_MAX_STREAM_DATA, (id) }
 
 static int schedule_handshake_done(struct helper *h)
 {
@@ -1325,6 +1328,136 @@ static const struct script_op script_19[] = {
     OP_END
 };
 
+#define MY_STREAM_ID 42
+static uint64_t rxfc_credit;
+static int read_rxfc_credit(struct helper *h)
+{
+    QUIC_STREAM *s = ossl_quic_stream_map_get_by_id(h->args.qsm, MY_STREAM_ID);
+
+    if (!TEST_ptr(s))
+        return 0;
+
+    rxfc_credit = ossl_quic_rxfc_get_cwm(&s->rxfc);
+
+    return 1;
+}
+
+static void skip_padding(struct helper *h);
+
+static int check_MAX_STREAM_DATA_frame(struct helper *h)
+{
+    uint64_t type, id, value;
+    int ok = 0;
+
+    skip_padding(h);
+
+    if (!TEST_true(ossl_quic_wire_peek_frame_header(&h->pkt, &type, NULL)))
+        goto err;
+
+    if (!TEST_uint64_t_eq(type, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA))
+        goto err;
+
+    if (!TEST_true(ossl_quic_wire_decode_frame_max_stream_data(&h->pkt, &id, &value)))
+        goto err;
+
+    if (!TEST_uint64_t_eq(id, MY_STREAM_ID))
+        goto err;
+
+    if (!TEST_uint64_t_eq(value, rxfc_credit))
+        goto err;
+
+    ok = 1;
+
+err:
+    return ok;
+}
+
+static int force_pkt_loss(struct helper *h)
+{
+    QUIC_STREAM *s = ossl_quic_stream_map_get_by_id(h->args.qsm, MY_STREAM_ID);
+    OSSL_QUIC_ACK_RANGE rng = { 3, 3 }; /* ACK 4th packet only (packet No 3) */
+    OSSL_QUIC_FRAME_ACK ack = { 0 };
+    int ok = 0;
+
+    ack.ack_ranges = &rng;
+    ack.num_ack_ranges = 1;
+
+    if (!TEST_ptr(s))
+        goto err;
+
+    /*
+     * want_max_stream_data should not be set,
+     * because it got reset when MAX_STREAM_DATA
+     * frame is put to wire during execution of
+     * OP_TXP_GENERATE().
+     */
+    if (!TEST_false(s->want_max_stream_data))
+        goto err;
+
+    /*
+     * receive the ACK frame. The ACK frame acks the third packet only,
+     * we expect QUIC stack to detect the packet loss.
+     */
+    if (!TEST_true(ossl_ackm_on_rx_ack_frame(h->args.ackm, &ack,
+            QUIC_PN_SPACE_APP, ossl_time_now())))
+        goto err;
+
+    /*
+     * when packet loss is detected, the on_lost() callback
+     * calls on_regen_notify() where want_max_stream_data()
+     * should be set to ask for MAX_STREAM_DATA frame
+     * retransmission.
+     */
+    if (!TEST_true(s->want_max_stream_data))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+/*
+ * test verifies MAX_STREAM_DATA frame is retransmitted
+ */
+static const struct script_op script_20[] = {
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1),
+    OP_HANDSHAKE_COMPLETE(),
+    OP_STREAM_NEW(MY_STREAM_ID),
+    OP_CHECK(read_rxfc_credit),
+    OP_MAX_STREAM_DATA(MY_STREAM_ID),
+    OP_TXP_GENERATE(),
+    OP_RX_PKT(),
+    OP_CHECK(check_MAX_STREAM_DATA_frame),
+
+    /*
+     * transmit 3 ACK eliciting packets
+     */
+    OP_CHECK(schedule_ack_eliciting_app),
+    OP_TXP_GENERATE(),
+    OP_RX_PKT(),
+    OP_CHECK(schedule_ack_eliciting_app),
+    OP_TXP_GENERATE(),
+    OP_RX_PKT(),
+    OP_CHECK(schedule_ack_eliciting_app),
+    OP_TXP_GENERATE(),
+    OP_RX_PKT(),
+
+    /*
+     * pretend the first two ACK eliciting packets
+     * sent earlier got lost and re transmit MAX_STREAM_DATA darame
+     */
+    OP_CHECK(force_pkt_loss),
+    OP_TXP_GENERATE(),
+
+    /*
+     * verify MAX_STREAM_DATA frame got retransmitted.
+     */
+    OP_RX_PKT(),
+    OP_CHECK(check_MAX_STREAM_DATA_frame),
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1344,7 +1477,8 @@ static const struct script_op *const scripts[] = {
     script_16,
     script_17,
     script_18,
-    script_19
+    script_19,
+    script_20,
 };
 
 static void skip_padding(struct helper *h)
@@ -1663,6 +1797,15 @@ static int run_script(int script_idx, const struct script_op *script)
             ossl_quic_tx_packetiser_add_unvalidated_credit(h.txp,
                 (size_t)op->arg0);
             break;
+        case OPK_MAX_STREAM_DATA: {
+            QUIC_STREAM *s = ossl_quic_stream_map_get_by_id(h.args.qsm, op->arg0);
+
+            if (!TEST_ptr(s))
+                goto err;
+
+            s->want_max_stream_data = 1;
+            ossl_quic_stream_map_update_state(h.args.qsm, s);
+        } break;
         default:
             TEST_error("bad opcode");
             goto err;
