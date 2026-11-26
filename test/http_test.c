@@ -706,6 +706,45 @@ err:
     return res;
 }
 
+/*
+ * A persistent connection on which reading a response failed part way
+ * (here: unexpected Content-Type) may still hold the rest of that response,
+ * so OSSL_HTTP_is_alive() must no longer report it as usable.
+ */
+static int test_http_keep_alive_after_error(void)
+{
+    BIO *wbio = BIO_new(BIO_s_mem());
+    BIO *rbio = BIO_new(BIO_s_mem());
+    server_args mock_args = { NULL, NULL, NULL, '1', 0 };
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(wbio) || !TEST_ptr(rbio))
+        goto err;
+    mock_args.out = rbio;
+    mock_args.content_type = "text/plain";
+    mock_args.txt = text1;
+    BIO_set_callback_ex(wbio, http_bio_cb_ex);
+    BIO_set_callback_arg(wbio, (char *)&mock_args);
+
+    if (!TEST_ptr(rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            NULL, NULL, RPATH))
+        || !TEST_true(OSSL_HTTP_REQ_CTX_set_expected(rctx,
+            "application/x-x509-ca-cert", 0 /* asn1 */,
+            0 /* timeout */, 1 /* keep_alive */)))
+        goto err;
+
+    res = TEST_ptr_null(OSSL_HTTP_REQ_CTX_exchange(rctx))
+        && TEST_int_eq(OSSL_HTTP_is_alive(rctx), 0);
+
+err:
+    BIO_free(wbio);
+    BIO_free(rbio);
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    return res;
+}
+
 static int test_hdr_resp_hdr_limit_none(void)
 {
     return test_http_resp_hdr_limit(0);
@@ -1071,6 +1110,7 @@ int setup_tests(void)
     ADD_TEST(test_http_keep_alive_1_require_yes);
     ADD_TEST(test_http_keep_alive_0_require_no);
     ADD_TEST(test_http_keep_alive_1_require_no);
+    ADD_TEST(test_http_keep_alive_after_error);
 
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
