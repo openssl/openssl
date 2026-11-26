@@ -249,7 +249,7 @@ static void poly_ntt_inverse_armv8_wrapper(POLY *p)
 /*
  * PPC64le wrapper functions.
  */
-#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && (defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
+#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && !defined(_AIX) && (defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 #define MLDSA_NTT_PPC_ASM
 #include "arch/ppc_arch.h"
 #endif
@@ -271,6 +271,34 @@ extern void mldsa_poly_ntt_inverse_ppc(uint32_t *p);
 static void poly_ntt_inverse_ppc64le_wrapper(POLY *p)
 {
     mldsa_poly_ntt_inverse_ppc(p->coeff);
+}
+#endif
+
+/*
+ * PPC big-endian (AIX, 32-bit and 64-bit) wrapper functions.
+ */
+#if !defined(OPENSSL_NO_ASM) && defined(_AIX)
+#define MLDSA_NTT_PPCBE_ASM
+#include "arch/ppc_arch.h"
+#endif
+
+#if defined(MLDSA_NTT_PPCBE_ASM)
+extern void mldsa_poly_ntt_mult_ppcbe(POLY *out, const POLY *lhs, const POLY *rhs);
+static void poly_ntt_mult_ppcbe_wrapper(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    mldsa_poly_ntt_mult_ppcbe(out, lhs, rhs);
+}
+
+extern void mldsa_poly_ntt_ppcbe(uint32_t *p);
+static void poly_ntt_ppcbe_wrapper(POLY *p)
+{
+    mldsa_poly_ntt_ppcbe(p->coeff);
+}
+
+extern void mldsa_poly_ntt_inverse_ppcbe(uint32_t *p);
+static void poly_ntt_inverse_ppcbe_wrapper(POLY *p)
+{
+    mldsa_poly_ntt_inverse_ppcbe(p->coeff);
 }
 #endif
 
@@ -300,6 +328,14 @@ static void ml_dsa_ntt_init(void)
         poly_ntt_impl = poly_ntt_ppc64le_wrapper;
         poly_ntt_inverse_impl = poly_ntt_inverse_ppc64le_wrapper;
         poly_ntt_mult_impl = poly_ntt_mult_ppc64le_wrapper;
+    }
+#endif
+
+#if defined(MLDSA_NTT_PPCBE_ASM)
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+        poly_ntt_impl = poly_ntt_ppcbe_wrapper;
+        poly_ntt_inverse_impl = poly_ntt_inverse_ppcbe_wrapper;
+        poly_ntt_mult_impl = poly_ntt_mult_ppcbe_wrapper;
     }
 #endif
 
