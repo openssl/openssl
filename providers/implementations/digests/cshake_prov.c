@@ -55,7 +55,7 @@ typedef struct cshake_ctx_st {
     size_t customlen;
     size_t bitlen;
     size_t xoflen;
-    int inited;
+    MD_STATE state; /* initialised until the strings have been absorbed */
 } CSHAKE_CTX;
 
 static OSSL_FUNC_digest_freectx_fn cshake_freectx;
@@ -158,8 +158,8 @@ static int cshake_set_encode_string(const char *in,
 }
 
 /*
- * Set the xof length, note that if the digest has not been fetched yet then
- * it is just set into a variable and deferred to later.
+ * Set the xof length. Until the inner digest has been set up it is only
+ * recorded, and passed on when that happens.
  */
 static int cshake_set_xoflen(CSHAKE_CTX *ctx, size_t xoflen)
 {
@@ -169,7 +169,7 @@ static int cshake_set_xoflen(CSHAKE_CTX *ctx, size_t xoflen)
     params[1] = OSSL_PARAM_construct_end();
 
     ctx->xoflen = xoflen;
-    if (ctx->md != NULL)
+    if (ctx->state == MD_STATE_UPDATED)
         return EVP_MD_CTX_set_params(ctx->mdctx, params);
     return 1;
 }
@@ -268,7 +268,7 @@ static int cshake_init(void *vctx, const OSSL_PARAM params[])
 
     if (ossl_unlikely(!ossl_prov_is_running()))
         return 0;
-    ctx->inited = 0;
+    ctx->state = MD_STATE_INITIALISED;
     ctx->xoflen = (ctx->bitlen == 128) ? 32 : 64; /* Set default values here */
     if (!cshake_set_func_encode_string(NULL, &ctx->func, &ctx->funclen)
         || !cshake_set_encode_string(NULL, ctx->custom, sizeof(ctx->custom),
@@ -277,9 +277,20 @@ static int cshake_init(void *vctx, const OSSL_PARAM params[])
     return cshake_set_ctx_params(vctx, params);
 }
 
-static const OSSL_PARAM *cshake_settable_ctx_params(ossl_unused void *ctx,
+/* Once the strings have been absorbed only the output length can change */
+static const OSSL_PARAM cshake_set_ctx_params_absorbed_list[] = {
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_XOFLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_SIZE, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *cshake_settable_ctx_params(void *vctx,
     ossl_unused void *provctx)
 {
+    CSHAKE_CTX *ctx = (CSHAKE_CTX *)vctx;
+
+    if (ctx != NULL && ctx->state == MD_STATE_UPDATED)
+        return cshake_set_ctx_params_absorbed_list;
     return cshake_set_ctx_params_list;
 }
 
@@ -303,6 +314,11 @@ static int cshake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !cshake_set_ctx_params_decoder(params, &p))
         return 0;
 
+    if (ctx->state == MD_STATE_UPDATED
+        && (p.func != NULL || p.custom != NULL || p.propq != NULL)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
+        return 0;
+    }
     if (p.xoflen != NULL) {
         size_t xoflen;
 
@@ -377,19 +393,13 @@ static int cshake_absorb_bytepad_strings(CSHAKE_CTX *ctx)
 }
 
 /*
- * The setup of the EVP_MD gets deferred until after the set_ctx_params
- * which means that we need to defer to the functions that may be called
- * afterwards (i.e. The update(), final() or squeeze()).
- *
+ * The strings can be set at any time before the first update(), final() or
+ * squeeze(), so choosing the inner EVP_MD (SHAKE or KECCAK) and absorbing
+ * them is deferred until then.
  */
 static int check_init(CSHAKE_CTX *ctx)
 {
-    /*
-     * We have to defer choosing the mode EVP_MD object (SHAKE or KECCAK)
-     * until the first call to either update(), final() or squeeze()
-     * since the strings can be set at any time before this point.
-     */
-    if (ctx->inited == 0) {
+    if (ctx->state == MD_STATE_INITIALISED) {
         if (ctx->funclen != 0 || ctx->customlen != 0) {
             if (!cshake_set_shake_mode(ctx, 0)
                 || !cshake_absorb_bytepad_strings(ctx))
@@ -399,7 +409,7 @@ static int check_init(CSHAKE_CTX *ctx)
             if (!cshake_set_shake_mode(ctx, 1))
                 return 0;
         }
-        ctx->inited = 1;
+        ctx->state = MD_STATE_UPDATED;
     }
     return 1;
 }
@@ -460,7 +470,7 @@ static int cshake_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.xoflen != NULL || p.size != NULL) {
         size_t xoflen = ctx->xoflen;
 
-        if (ctx->md != NULL)
+        if (ctx->state == MD_STATE_UPDATED)
             xoflen = EVP_MD_CTX_get_size_ex(ctx->mdctx);
 
         if (p.size != NULL && !OSSL_PARAM_set_size_t(p.size, xoflen)) {

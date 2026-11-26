@@ -223,7 +223,10 @@ See L</PARAMETERS> below for more information.
 
 =item EVP_MD_CTX_set_params()
 
-Sets the list of I<params> into a MD context I<ctx>.
+Sets the list of I<params> into a MD context I<ctx>. Parameters can only be
+set before the context has produced output, see L<life_cycle-digest(7)>, and
+which of them can be set in the context's current state is reported by
+EVP_MD_CTX_settable_params().
 See L</PARAMETERS> below for more information.
 
 =item EVP_MD_gettable_params()
@@ -296,7 +299,8 @@ EVP_MD_CTX_reset().
 
 Hashes I<cnt> bytes of data at I<d> into the digest context I<ctx>. This
 function can be called several times on the same I<ctx> to hash additional
-data.
+data, but not once I<ctx> has produced output through EVP_DigestFinal_ex(),
+EVP_DigestFinalXOF() or EVP_DigestSqueeze(). A I<cnt> of zero hashes nothing.
 
 =item EVP_DigestFinal_ex()
 
@@ -315,13 +319,16 @@ Interfaces to extendable-output functions, XOFs, such as SHAKE128 and SHAKE256.
 It retrieves the digest value from I<ctx> and places it in I<outlen>-sized I<out>.
 After calling this function no additional calls to EVP_DigestUpdate() can be
 made, but EVP_DigestInit_ex2() can be called to initialize a new operation.
-EVP_DigestFinalXOF() may only be called once
+EVP_DigestFinalXOF() may only be called once, and not after
+EVP_DigestSqueeze().
 
 =item EVP_DigestSqueeze()
 
 Similar to EVP_DigestFinalXOF() but allows multiple calls to be made to
-squeeze variable length output data.
-EVP_DigestFinalXOF() should not be called after this.
+squeeze variable length output data. An I<outlen> of zero produces nothing.
+Once output has been squeezed, EVP_DigestUpdate(), EVP_DigestFinal_ex() and
+EVP_DigestFinalXOF() cannot be called until I<ctx> is initialized again, and
+EVP_DigestSqueeze() cannot be called after any of them.
 
 =item EVP_MD_CTX_serialize() and EVP_MD_CTX_deserialize()
 
@@ -339,7 +346,9 @@ into the digest context I<ctx>.
 These functions do not guarantee importability of state exported by a
 different OpenSSL version and does not guarantee interoperability between
 different providers. Some providers may not allow export/import across
-process boundaries.
+process boundaries. The serialized data records where the context is in its
+life-cycle, and EVP_MD_CTX_deserialize() restores that; it can only be called
+on a context that has been initialized and has not yet processed data.
 
 NOTE: Applications must guarantee that only trusted data is used during
 deserialization. The deserialization operation is not built to address
@@ -906,6 +915,11 @@ digests since they do not have a fixed size.
 
 The EVP_MD_CTX_serialize() and EVP_MD_CTX_deserialize() functions were added in
 OpenSSL 4.0.
+
+The transitions of L<life_cycle-digest(7)> are enforced since OpenSSL 4.2:
+a call made in a state that does not allow it fails with
+B<EVP_R_INVALID_STATE>, and a context whose implementation fails an operation
+cannot be used until it is initialized or reset again.
 
 =head1 COPYRIGHT
 

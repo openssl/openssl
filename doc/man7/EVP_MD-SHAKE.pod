@@ -139,6 +139,12 @@ SHAKE or KECCAK algorithms.
 
 =back
 
+Parameters can be set at any time before output is produced. As a restriction
+of this implementation, CSHAKE cannot apply its "function-name",
+"customization" and "properties" parameters once data has been hashed: setting
+them after that fails, and they are no longer reported by
+EVP_MD_CTX_settable_params(3).
+
 See L<EVP_DigestInit(3)/PARAMETERS> for further information related to parameters
 
 =head1 NOTES

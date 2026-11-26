@@ -13,6 +13,7 @@
 #pragma once
 
 #include <openssl/e_os2.h>
+#include "crypto/md_lifecycle.h"
 #include <stddef.h>
 
 #define KECCAK1600_WIDTH 1600
@@ -36,10 +37,11 @@ typedef struct prov_sha3_meth_st {
     sha3_squeeze_fn *squeeze;
 } PROV_SHA3_METHOD;
 
-#define XOF_STATE_INIT 0
-#define XOF_STATE_ABSORB 1
-#define XOF_STATE_FINAL 2
-#define XOF_STATE_SQUEEZE 3
+/* The states of life_cycle-digest(7) under the names the core uses */
+#define XOF_STATE_INIT MD_STATE_INITIALISED
+#define XOF_STATE_ABSORB MD_STATE_UPDATED
+#define XOF_STATE_FINAL MD_STATE_FINALED
+#define XOF_STATE_SQUEEZE MD_STATE_SQUEEZED
 
 struct keccak_st {
     uint64_t A[5][5];
