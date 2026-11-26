@@ -34,7 +34,8 @@
 #include <sys/sysctl.h>
 #include <sys/param.h>
 #endif
-#if defined(__FreeBSD__) && __FreeBSD_version >= 1200061
+#if (defined(__FreeBSD__) && __FreeBSD_version >= 1200061) \
+    || (defined(__NetBSD__) && __NetBSD_Version__ >= 1000000000)
 #include <sys/random.h>
 #endif
 #if defined(__OpenBSD__)
@@ -210,8 +211,8 @@ void ossl_rand_pool_keep_random_devices_open(int keep)
 #define OPENSSL_RAND_SEED_DEVRANDOM
 #endif
 
-#if ((defined(__FreeBSD__) && __FreeBSD_version < 1200061)     \
-    || (defined(__NetBSD__) && __NetBSD_Version < 1000000000)) \
+#if ((defined(__FreeBSD__) && __FreeBSD_version < 1200061)       \
+    || (defined(__NetBSD__) && __NetBSD_Version__ < 1000000000)) \
     && defined(KERN_ARND)
 /*
  * sysctl_random(): Use sysctl() to read a random number from the kernel
@@ -390,8 +391,8 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     /* Linux supports this since version 3.17 */
 #if defined(__linux) && defined(__NR_getrandom)
     return syscall(__NR_getrandom, buf, buflen, 0);
-#elif (defined(__DragonFly__) && __DragonFly_version >= 500700) \
-    || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)  \
+#elif (defined(__DragonFly__) && __DragonFly_version >= 500700)  \
+    || (defined(__NetBSD__) && __NetBSD_Version__ >= 1000000000) \
     || (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
     return getrandom(buf, buflen, 0);
 #elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
