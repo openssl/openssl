@@ -795,7 +795,7 @@ build reconfigure reconf: run_console
                      .$cppflags.$defs.' '.$config{processor}.' '
                      .cmd_quote($args{src});
           } elsif ($gen0 =~ /\.m4$/) {
-              $cmd = 'm4 -B 8192'.$gen_incs.' '.cmd_quote($gen0).$gen_args
+              $cmd = 'm4'.$gen_incs.' '.cmd_quote($gen0).$gen_args
                      .' > '.cmd_quote($args{src});
           } elsif ($gen0 =~ /\.S$/) {
               $cmd = $cc.' '.$incs.' '.$cppflags.$defs.' -E '

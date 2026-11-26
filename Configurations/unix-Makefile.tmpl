@@ -1755,7 +1755,7 @@ EOF
               $generator = 'CC="$(CC)" $(PERL)'.$gen_incs.' '.$gen0.$gen_args
                   .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSOR)';
           } elsif ($gen0 =~ /\.m4$/) {
-              $generator = 'm4 -B 8192'.$gen_incs.' '.$gen0.$gen_args;
+              $generator = 'm4'.$gen_incs.' '.$gen0.$gen_args;
               $to_stdout = 1;
           } elsif ($gen0 =~ /\.S$/) {
               $generator = undef;
