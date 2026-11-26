@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include "x509_local.h"
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
     ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
@@ -31,8 +32,6 @@ ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
 
-extern void ossl_policy_cache_free(X509_POLICY_CACHE *cache);
-
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
 {
@@ -40,25 +39,33 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     switch (operation) {
 
+    case ASN1_OP_I2D_PRE:
+        /*
+         * A certificate that was never signed is encoded as an unsigned
+         * certificate (RFC 9925): id-alg-unsigned with no parameters in both
+         * signature algorithm fields and an empty signature.
+         */
+        if (OBJ_obj2nid(ret->sig_alg.algorithm) == NID_undef
+            && ret->signature.length == 0) {
+            if (!X509_ALGOR_set0(&ret->sig_alg, OBJ_nid2obj(NID_id_alg_unsigned),
+                    V_ASN1_UNDEF, NULL)
+                || !X509_ALGOR_set0(&ret->cert_info.signature,
+                    OBJ_nid2obj(NID_id_alg_unsigned), V_ASN1_UNDEF, NULL))
+                return 0;
+            ret->cert_info.enc.modified = 1;
+        }
+        break;
+
     case ASN1_OP_D2I_PRE:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
         X509_CERT_AUX_free(ret->aux);
         ASN1_OCTET_STRING_free(ret->skid);
         AUTHORITY_KEYID_free(ret->akid);
-        CRL_DIST_POINTS_free(ret->crldp);
-        ossl_policy_cache_free(ret->policy_cache);
-        GENERAL_NAMES_free(ret->altname);
-        NAME_CONSTRAINTS_free(ret->nc);
-#ifndef OPENSSL_NO_RFC3779
-        sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
-        ASIdentifiers_free(ret->rfc3779_asid);
-#endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
 
         /* fall through */
 
     case ASN1_OP_NEW_POST:
-        ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
         ret->ex_nscert = 0;
@@ -67,18 +74,14 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->ex_pcpathlen = -1;
         ret->skid = NULL;
         ret->akid = NULL;
-        ret->policy_cache = NULL;
-        ret->altname = NULL;
-        ret->nc = NULL;
-#ifndef OPENSSL_NO_RFC3779
-        ret->rfc3779_addr = NULL;
-        ret->rfc3779_asid = NULL;
-#endif
         ret->distinguishing_id = NULL;
         ret->aux = NULL;
-        ret->crldp = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
             return 0;
+        break;
+
+    case ASN1_OP_D2I_POST:
+        ossl_x509_finalize(ret);
         break;
 
     case ASN1_OP_FREE_POST:
@@ -86,14 +89,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         X509_CERT_AUX_free(ret->aux);
         ASN1_OCTET_STRING_free(ret->skid);
         AUTHORITY_KEYID_free(ret->akid);
-        CRL_DIST_POINTS_free(ret->crldp);
-        ossl_policy_cache_free(ret->policy_cache);
-        GENERAL_NAMES_free(ret->altname);
-        NAME_CONSTRAINTS_free(ret->nc);
-#ifndef OPENSSL_NO_RFC3779
-        sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
-        ASIdentifiers_free(ret->rfc3779_asid);
-#endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
 
@@ -112,7 +107,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 1;
 }
 
-ASN1_SEQUENCE_ref(X509, x509_cb) = {
+ASN1_SEQUENCE_ref_nolock(X509, x509_cb) = {
     ASN1_EMBED(X509, cert_info, X509_CINF),
     ASN1_EMBED(X509, sig_alg, X509_ALGOR),
     ASN1_EMBED(X509, signature, ASN1_BIT_STRING)

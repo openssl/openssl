@@ -30,6 +30,7 @@
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
+#include "pcy_local.h"
 
 /*
  * Defines the maximum number of relative dist points
@@ -106,9 +107,9 @@ static int null_callback(int ok, X509_STORE_CTX *e)
 /*-
  * Return 1 if given cert is considered self-signed, 0 if not, or -1 on error.
  * This actually verifies self-signedness only if requested.
- * It calls ossl_x509v3_cache_extensions()
- * to match issuer and subject names (i.e., the cert being self-issued) and any
- * present authority key identifier to match the subject key identifier, etc.
+ * It uses the cached extension data to match issuer and subject names (i.e.,
+ * the cert being self-issued) and any present authority key identifier to
+ * match the subject key identifier, etc.
  */
 int X509_self_signed(const X509 *cert, int verify_signature)
 {
@@ -118,7 +119,7 @@ int X509_self_signed(const X509 *cert, int verify_signature)
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
-    if (!ossl_x509v3_cache_extensions((X509 *)cert))
+    if (X509_check_purpose(cert, -1, 0) != 1)
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
@@ -371,6 +372,13 @@ static int x509_verify_x509(X509_STORE_CTX *ctx)
          * This X509_STORE_CTX has already been used to verify a cert. We
          * cannot do another one.
          */
+        ERR_raise(ERR_LIB_X509, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ctx->error = X509_V_ERR_INVALID_CALL;
+        return -1;
+    }
+
+    /* The certificate must be finalized; see x509(7) */
+    if ((ctx->cert->ex_flags & EXFLAG_SET) == 0) {
         ERR_raise(ERR_LIB_X509, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
@@ -635,10 +643,21 @@ static int check_extensions(X509_STORE_CTX *ctx)
     }
 
     for (i = 0; i < num; i++) {
+        GENERAL_NAMES *san;
+        void *ext;
+        int san_absent, san_empty;
+
         x = sk_X509_value(ctx->chain, i);
         /* RFC 5280, 4.2: a given extension MUST NOT appear more than once */
         CB_FAIL_IF((x->ex_flags & EXFLAG_DUPLICATE) != 0,
             ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
+        /* A subjectAltName that cannot be decoded is invalid */
+        CB_FAIL_IF(!ossl_x509_decode_ext(x, NID_subject_alt_name, &ext),
+            ctx, x, i, X509_V_ERR_INVALID_EXTENSION);
+        san = ext;
+        san_absent = san == NULL;
+        san_empty = san != NULL && sk_GENERAL_NAME_num(san) <= 0;
+        GENERAL_NAMES_free(san);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
@@ -701,13 +720,11 @@ static int check_extensions(X509_STORE_CTX *ctx)
             /* Check subject is non-empty acc. to RFC 5280 section 4.1.2.6 */
             CB_FAIL_IF(((x->ex_flags & EXFLAG_CA) != 0
                            || (x->ex_kusage & KU_CRL_SIGN) != 0
-                           || x->altname == NULL)
+                           || san_absent)
                     && X509_NAME_entry_count(X509_get_subject_name(x)) == 0,
                 ctx, x, i, X509_V_ERR_SUBJECT_NAME_EMPTY);
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
-            CB_FAIL_IF(x->altname != NULL
-                    && sk_GENERAL_NAME_num(x->altname) <= 0,
-                ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
+            CB_FAIL_IF(san_empty, ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             CB_FAIL_IF(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
                 ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
@@ -790,7 +807,8 @@ static int check_extensions(X509_STORE_CTX *ctx)
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
-static int check_name_constraints(X509_STORE_CTX *ctx)
+static int do_check_name_constraints(X509_STORE_CTX *ctx,
+    NAME_CONSTRAINTS **ncs)
 {
     int i;
 
@@ -878,7 +896,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
          * to be obeyed.
          */
         for (j = sk_X509_num(ctx->chain) - 1; j > i; j--) {
-            NAME_CONSTRAINTS *nc = sk_X509_value(ctx->chain, j)->nc;
+            NAME_CONSTRAINTS *nc = ncs[j];
 
             if (nc) {
                 int rv = NAME_CONSTRAINTS_check(x, nc);
@@ -912,6 +930,31 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
         }
     }
     return 1;
+}
+
+static int check_name_constraints(X509_STORE_CTX *ctx)
+{
+    NAME_CONSTRAINTS **ncs; /* the nameConstraints of each chain certificate */
+    int n = sk_X509_num(ctx->chain);
+    int i, ret = 0;
+
+    if ((ncs = OPENSSL_calloc(n, sizeof(*ncs))) == NULL)
+        return -1;
+    for (i = 0; i < n; i++) {
+        X509 *x = sk_X509_value(ctx->chain, i);
+        void *nc;
+
+        if (!ossl_x509_decode_ext(x, NID_name_constraints, &nc)
+            && !verify_cb_cert(ctx, x, i, X509_V_ERR_INVALID_EXTENSION))
+            goto out;
+        ncs[i] = nc;
+    }
+    ret = do_check_name_constraints(ctx, ncs);
+out:
+    for (i = 0; i < n; i++)
+        NAME_CONSTRAINTS_free(ncs[i]);
+    OPENSSL_free(ncs);
+    return ret;
 }
 
 static int check_id_error(X509_STORE_CTX *ctx, int errcode)
@@ -1400,11 +1443,13 @@ end:
 /**
  * @brief builds a stack of crldp full names from relative distribution points
  * @param cert - The certificate to build full crldp names for
- * @returns - a stack of X509_NAME structs, indexed in parallel with cert->crldp
+ * @param crldp - The decoded CRL distribution points of cert
+ * @returns - a stack of X509_NAME structs, indexed in parallel with crldp
  * @returns NULL if an error occurred, such as trying to build more than MAX_DP_NAMES
  * full names from relative distribution points
  */
-static STACK_OF(X509_NAME) *get_crldp_full_names(const X509 *cert)
+static STACK_OF(X509_NAME) *get_crldp_full_names(const X509 *cert,
+    const STACK_OF(DIST_POINT) *crldp)
 {
     int i;
     STACK_OF(X509_NAME) *crldp_names = NULL;
@@ -1412,12 +1457,12 @@ static STACK_OF(X509_NAME) *get_crldp_full_names(const X509 *cert)
     X509_NAME *dp_name;
     int full_names = 0;
 
-    crldp_names = sk_X509_NAME_new_reserve(NULL, sk_DIST_POINT_num(cert->crldp));
+    crldp_names = sk_X509_NAME_new_reserve(NULL, sk_DIST_POINT_num(crldp));
     if (crldp_names == NULL)
         return NULL;
 
-    for (i = 0; i < sk_DIST_POINT_num(cert->crldp); i++) {
-        dp = sk_DIST_POINT_value(cert->crldp, i);
+    for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
+        dp = sk_DIST_POINT_value(crldp, i);
         if (dp->distpoint != NULL && dp->distpoint->type == 1) {
             if (full_names >= MAX_DP_NAMES) {
                 ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT, "Too many relative dist points in certificate");
@@ -1977,13 +2022,8 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
  * distpoint is a nameRelativeToCRLIssuer fragment: the CRL issuer name with
  * the fragment appended.  The CRL issuer is the directoryName in
  * dp->CRLissuer if there is one, else the issuer of the certificate.
- *
- * The result is a fresh X509_NAME owned by the caller.  It is deliberately
- * not stored in dp->distpoint->dpname: once its extension cache has been
- * published a certificate is shared between threads without locking, and
- * computing the name here rather than when the certificate is parsed keeps
- * a certificate with many relative distribution points from costing a copy
- * of the issuer name per entry on every parse.  Returns NULL on error.
+ * The result is a fresh X509_NAME owned by the caller.  Returns NULL on
+ * error.
  */
 static X509_NAME *crldp_full_name(const X509 *x, const DIST_POINT *dp)
 {
@@ -2147,7 +2187,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
     int *vfy_cb_err)
 {
-    int i;
+    STACK_OF(DIST_POINT) *crldp = NULL;
+    int i, ret = 0;
 
     if ((crl->idp_flags & IDP_ONLYATTR) != 0)
         return 0;
@@ -2158,10 +2199,12 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         if ((crl->idp_flags & IDP_ONLYCA) != 0)
             return 0;
     }
+    if (ossl_x509_decode_crldp(x, &crldp) != 1)
+        goto out;
     *preasons = crl->idp_reasons;
-    for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
-        DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
-        X509_NAME *dpname;
+    for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
+        DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
+        X509_NAME *dpname = NULL;
         int match;
 
         if (!crldp_check_crlissuer(dp, crl, crl_score))
@@ -2171,10 +2214,10 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         } else {
             if (dp->distpoint != NULL && dp->distpoint->type == 1) {
                 if (*crldp_names == NULL) {
-                    *crldp_names = get_crldp_full_names(x);
+                    *crldp_names = get_crldp_full_names(x, crldp);
                     if (*crldp_names == NULL) {
                         *vfy_cb_err = X509_V_ERR_UNSPECIFIED;
-                        return 0;
+                        goto out;
                     }
                 }
             }
@@ -2184,7 +2227,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         }
         if (match) {
             *preasons &= dp->dp_reasons;
-            return 1;
+            ret = 1;
+            goto out;
         }
     }
     /*
@@ -2194,9 +2238,12 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
      * cRLIssuer fields omitted and a distribution point name consisting of
      * the certificate issuer name and any issuerAltName entries.
      */
-    return (crl_score & CRL_SCORE_ISSUER_NAME) != 0
+    ret = (crl_score & CRL_SCORE_ISSUER_NAME) != 0
         && (crl->idp == NULL || crl->idp->distpoint == NULL
             || idp_check_issuer(crl->idp->distpoint, x));
+out:
+    sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
+    return ret;
 }
 
 /*
@@ -2386,14 +2433,21 @@ static int check_policy(X509_STORE_CTX *ctx)
     if (ret == X509_PCY_TREE_INVALID) {
         int i, cbcalled = 0;
 
-        /* Locate certificates with bad extensions and notify callback. */
-        for (i = 0; i < sk_X509_num(ctx->chain); i++) {
+        /* Locate the non-TA certificates with bad extensions, notify callback */
+        for (i = 0; i < sk_X509_num(ctx->chain) - 1; i++) {
             X509 *x = sk_X509_value(ctx->chain, i);
+            X509_POLICY_CACHE *cache = ossl_policy_cache_new(x);
+            int invalid;
 
-            if ((x->ex_flags & EXFLAG_INVALID_POLICY) != 0)
+            if (cache == NULL) {
+                ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+                goto memerr;
+            }
+            invalid = cache->invalid;
+            ossl_policy_cache_free(cache);
+            if (invalid)
                 cbcalled = 1;
-            CB_FAIL_IF((x->ex_flags & EXFLAG_INVALID_POLICY) != 0,
-                ctx, x, i, X509_V_ERR_INVALID_POLICY_EXTENSION);
+            CB_FAIL_IF(invalid, ctx, x, i, X509_V_ERR_INVALID_POLICY_EXTENSION);
         }
         if (!cbcalled) {
             /* Should not be able to get here */

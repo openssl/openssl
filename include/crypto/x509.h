@@ -102,7 +102,6 @@ struct X509_req_st {
     X509_ALGOR sig_alg; /* signature algorithm */
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
-    CRYPTO_RWLOCK *lock;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
@@ -147,7 +146,6 @@ struct X509_crl_st {
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
-    CRYPTO_RWLOCK *lock;
 
     OSSL_LIB_CTX *libctx;
     char *propq;
@@ -212,14 +210,6 @@ struct x509_st {
     uint32_t ex_nscert;
     ASN1_OCTET_STRING *skid;
     AUTHORITY_KEYID *akid;
-    X509_POLICY_CACHE *policy_cache;
-    STACK_OF(DIST_POINT) *crldp;
-    STACK_OF(GENERAL_NAME) *altname;
-    NAME_CONSTRAINTS *nc;
-#ifndef OPENSSL_NO_RFC3779
-    STACK_OF(IPAddressFamily) *rfc3779_addr;
-    struct ASIdentifiers_st *rfc3779_asid;
-#endif
     /*
      * Internal-use fingerprint for X509_cmp(), see
      * ossl_x509_internal_fingerprint(). Not cryptographically secure and
@@ -227,8 +217,6 @@ struct x509_st {
      */
     unsigned char fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     X509_CERT_AUX *aux;
-    CRYPTO_RWLOCK *lock;
-    volatile int ex_cached;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
@@ -348,7 +336,6 @@ struct x509_object_st {
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
-int ossl_x509v3_cache_extensions(const X509 *x);
 
 /**
  * @brief Compute the internal-use fingerprint of a DER-encodable object.

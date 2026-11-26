@@ -620,6 +620,35 @@ static int add_typical(X509 *x)
 }
 
 /*
+ * Give |x| the fields i2d_X509() requires, with a placeholder public key, and
+ * return a decoded copy.
+ */
+static X509 *decoded_copy(X509 *x)
+{
+    unsigned char *penc, *der = NULL;
+    const unsigned char *p;
+    X509 *ret = NULL;
+    int len;
+
+    if (!TEST_ptr(penc = OPENSSL_zalloc(32)))
+        return NULL;
+    if (!TEST_true(X509_PUBKEY_set0_param(x->cert_info.key,
+            OBJ_nid2obj(NID_X25519), V_ASN1_UNDEF, NULL, penc, 32))) {
+        OPENSSL_free(penc);
+        return NULL;
+    }
+    if (TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x), 1))
+        && TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        && TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 0))
+        && TEST_int_gt(len = i2d_X509(x, &der), 0)) {
+        p = der;
+        ret = d2i_X509(NULL, &p, len);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+/*
  * Run the scan on |x| and check it sets exactly |expect|; then run the
  * library's cache on the same certificate and check its scan-owned flags
  * agree, EXFLAG_INVALID excepted where the cache sets it for a reason the
@@ -630,15 +659,23 @@ static int add_typical(X509 *x)
 static int check_scan(X509 *x, uint32_t expect)
 {
     uint32_t flags = 0, lib, mask = SCAN_FLAGS;
+    X509 *parsed = NULL;
+    int ret;
 
     scan_ext_flags(x, &flags);
     if (!TEST_uint_eq(flags, expect))
         return 0;
-    lib = X509_get_extension_flags(x);
+    if ((expect & EXFLAG_INVALID) != 0)
+        return 1;
+    if (!TEST_ptr(parsed = decoded_copy(x)))
+        return 0;
+    lib = X509_get_extension_flags(parsed);
     ERR_clear_error();
     if ((expect & EXFLAG_DUPLICATE) != 0)
         mask &= ~EXFLAG_INVALID;
-    return TEST_uint_eq(lib & mask, expect & mask);
+    ret = TEST_uint_eq(lib & mask, expect & mask);
+    X509_free(parsed);
+    return ret;
 }
 
 /* Build a fresh certificate with |build|(x, variant) and check its scan. */
