@@ -89,7 +89,7 @@ err:
 static int test_zero_len_fragment(void)
 {
     static const unsigned char rec[] = {
-        0x16, 0xfe, 0xff, /* handshake, DTLS 1.2 */
+        0x16, 0xfe, 0xfd, /* handshake, DTLS 1.2 */
         0x00, 0x00, /* epoch 0 */
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* sequence number 0 */
         0x00, 0x0c, /* length 12 = header only */
@@ -114,7 +114,7 @@ static int test_zero_len_fragment(void)
 static int test_partial_fragment(void)
 {
     static const unsigned char rec[] = {
-        0x16, 0xfe, 0xff,
+        0x16, 0xfe, 0xfd,
         0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x11, /* length 17 = header + 5 */
@@ -134,13 +134,15 @@ static int test_partial_fragment(void)
     return TEST_int_eq(e, SSL_ERROR_WANT_READ);
 }
 
-/* frag_len = 0, msg_len = 100, frag_off = 101: fragment extends past the
+/*
+ * frag_len = 0, msg_len = 100, frag_off = 101: fragment extends past the
  * claimed message length, so the server must fail the handshake with
- * SSL_R_EXCESSIVE_MESSAGE_SIZE instead of a bare SSL_ERROR_SYSCALL */
+ * SSL_R_EXCESSIVE_MESSAGE_SIZE instead of a bare SSL_ERROR_SYSCALL
+ */
 static int test_bad_fragment_offset(void)
 {
     static const unsigned char rec[] = {
-        0x16, 0xfe, 0xff, /* handshake, DTLS 1.2 */
+        0x16, 0xfe, 0xfd, /* handshake, DTLS 1.2 */
         0x00, 0x00, /* epoch 0 */
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* sequence number 0 */
         0x00, 0x0c, /* length 12 = header only */
@@ -165,13 +167,15 @@ static int test_bad_fragment_offset(void)
     return 1;
 }
 
-/* frag_len = 0, msg_len = 102401: claimed length above the 102400 default
+/*
+ * frag_len = 0, msg_len = 102401: claimed length above the 102400 default
  * maximum, so the server must fail the handshake with
- * SSL_R_EXCESSIVE_MESSAGE_SIZE */
+ * SSL_R_EXCESSIVE_MESSAGE_SIZE
+ */
 static int test_excessive_message_length(void)
 {
     static const unsigned char rec[] = {
-        0x16, 0xfe, 0xff, /* handshake, DTLS 1.2 */
+        0x16, 0xfe, 0xfd, /* handshake, DTLS 1.2 */
         0x00, 0x00, /* epoch 0 */
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* sequence number 0 */
         0x00, 0x0c, /* length 12 = header only */
