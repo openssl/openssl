@@ -643,7 +643,13 @@ int BIO_get_line(BIO *bio, char *buf, int size)
         if (*ptr++ == '\n')
             break;
     *ptr = '\0';
-    return ret > 0 || BIO_eof(bio) ? (int)(ptr - buf) : ret;
+    /*
+     * If the last read needs to be retried, bytes already consumed from |bio|
+     * must still be reported to the caller, else they are lost.
+     */
+    if (ret > 0 || BIO_eof(bio) || (ptr > buf && BIO_should_retry(bio)))
+        return (int)(ptr - buf);
+    return ret;
 }
 
 int BIO_indent(BIO *b, int indent, int max)
