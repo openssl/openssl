@@ -197,11 +197,59 @@ err:
     return ret;
 }
 
+/*
+ * getivgen() increments the last 8 bytes of the IV as the invocation
+ * field.  An IV shorter than 8 bytes has no such field, so IV generation
+ * must be refused instead of incrementing bytes in front of the IV.
+ */
+static int ivgen_short_iv_test(void)
+{
+    int ret = 0, ivlen;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[32] = { 0 };
+    unsigned char iv[12], out[12];
+
+    memset(iv, 0xff, sizeof(iv));
+    for (ivlen = 1; ivlen <= (int)sizeof(iv); ivlen++) {
+        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL,
+                key, NULL))
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                                ivlen, NULL),
+                0)
+            || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IV_FIXED,
+                                -1, iv),
+                0))
+            goto err;
+        if (ivlen < 8) {
+            if (!TEST_int_le(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_IV_GEN,
+                                 ivlen, out),
+                    0))
+                goto err;
+        } else {
+            if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_IV_GEN,
+                                 ivlen, out),
+                    0)
+                || !TEST_mem_eq(out, ivlen, iv, ivlen))
+                goto err;
+        }
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = NULL;
+    }
+    ret = 1;
+err:
+    if (!ret)
+        TEST_info("ivlen %d", ivlen);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(kat_test);
     ADD_TEST(badkeylen_test);
     ADD_TEST(ivgen_test);
     ADD_TEST(setivinv_bounds_test);
+    ADD_TEST(ivgen_short_iv_test);
     return 1;
 }

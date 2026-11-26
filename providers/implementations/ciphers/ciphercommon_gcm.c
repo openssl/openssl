@@ -123,7 +123,12 @@ static void ctr64_inc(unsigned char *counter)
 
 static int getivgen(PROV_GCM_CTX *ctx, unsigned char *out, size_t olen)
 {
+    /*
+     * The invocation field is the last 8 bytes of the IV, so an IV
+     * shorter than that cannot be used for IV generation.
+     */
     if (!ctx->iv_gen
+        || ctx->ivlen < 8
         || !ctx->key_set
         || !ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
         return 0;
