@@ -4707,7 +4707,15 @@ static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
              * have a chain here that lets us look at the key OID in the
              * signing certificate.
              */
-            if (mdnid == lu->hash && pknid == lu->sig)
+            /*
+             * sm2sig_sm3 uses an intrinsic digest in the provider, so its
+             * lookup entry has no separate hash. X.509 reports SM3 for an
+             * SM2-with-SM3 certificate signature (RFC 8998, section 3.3.3).
+             */
+            if (pknid == lu->sig
+                && (mdnid == lu->hash
+                    || (lu->sigalg == TLSEXT_SIGALG_sm2sig_sm3
+                        && mdnid == NID_sm3)))
                 return 1;
         }
         return 0;
