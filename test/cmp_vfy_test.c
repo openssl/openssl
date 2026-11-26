@@ -656,6 +656,33 @@ static int test_msg_check_extracerts_limit_sender_cert_dropped(void)
 }
 #endif
 
+static int execute_own_chain_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+
+    if (!TEST_int_eq(ossl_cmp_msg_check_update(ctx, fixture->msg, NULL, 0), 1))
+        return 0;
+    ossl_cmp_set_own_chain(ctx); /* as done when protecting our next msg via ossl_cmp_msg_protect() */
+    /* the intermediate CA cert received in extraCerts must not be included */
+    return TEST_int_eq(sk_X509_num(ctx->chain), 1)
+        && TEST_int_eq(X509_cmp(sk_X509_value(ctx->chain, 0), endentity2), 0);
+}
+
+static int test_msg_check_own_chain_not_using_extracerts(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_extracerts_msg(&fixture, 1);
+    if (fixture == NULL
+        || !TEST_true(OSSL_CMP_CTX_set1_cert(fixture->cmp_ctx, endentity2))
+        || !TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, X509_get0_pubkey(endentity2)))
+        || !TEST_true(add_extracert(fixture->msg, intermediate, 0))) {
+        tear_down(fixture);
+        return 0;
+    }
+    EXECUTE_TEST(execute_own_chain_test, tear_down);
+    return result;
+}
+
 /*
  * The functions below use the normal OpenSSL test certs from test/certs/,
  * forming a 2-level and mostly 3-level chains,
@@ -871,6 +898,7 @@ int setup_tests(void)
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_extracerts_limit_sender_cert_dropped);
 #endif
+    ADD_TEST(test_msg_check_own_chain_not_using_extracerts);
 
     /* Cert path validation tests, using normal OpenSSL test certs */
     ADD_TEST(test_validate_cert_path_2_level_ok);

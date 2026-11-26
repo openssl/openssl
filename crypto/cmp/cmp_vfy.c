@@ -789,6 +789,15 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
     /*
+     * Unless done already, build the chain of the own CMP signer cert (if any)
+     * before any received extraCerts get added to ctx->untrusted below.
+     * The extraCerts are not authenticated, so the peer could otherwise
+     * inject a bogus CA cert into the chain we send with our own messages.
+     */
+    if (ctx->cert != NULL && ctx->pkey != NULL)
+        ossl_cmp_set_own_chain(ctx);
+
+    /*
      * The extraCerts are not covered by any CMP message protection,
      * so they are not safe and their number could be painfully high.
      * Therefore we use at most the first OSSL_CMP_MAX_EXTRACERTS of them,
