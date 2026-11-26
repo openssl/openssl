@@ -229,6 +229,17 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 {
     int wrap_cnt = 0;
 
+    /*
+     * Base64 expands 3 input bytes to 4 output bytes, therefore
+     * 4 * ceil(dlen / 3) fits in an int if and only if
+     * dlen <= 3 * floor(INT_MAX / 4). See #33812 for moving the check
+     * into the internal functions and returning success/failure there.
+     */
+    if (dlen <= 0 || dlen > (INT_MAX / 4) * 3) {
+        *t = '\0';
+        return 0;
+    }
+
 #ifdef HAVE_AVX2
     if (HAVE_AVX2())
         return (int)encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
@@ -484,6 +495,9 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
 
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 {
+    if (n <= 0)
+        return n == 0 ? 0 : -1;
+
 #ifdef HAVE_AVX2
     if (HAVE_AVX2() && n >= 64) {
         const unsigned char *fx = f;
