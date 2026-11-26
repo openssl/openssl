@@ -327,6 +327,8 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
+    if (num < 0)
+        return 0;
     if (meth != NULL && meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
     ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);

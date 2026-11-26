@@ -42,12 +42,15 @@ static int drbg_status(void)
 /* Implements the default OpenSSL RAND_bytes() method */
 static int drbg_bytes(unsigned char *out, int count)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_public(NULL);
+    EVP_RAND_CTX *drbg;
 
+    if (count < 0)
+        return 0;
+    drbg = RAND_get0_public(NULL);
     if (drbg == NULL)
         return 0;
 
-    return EVP_RAND_generate(drbg, out, count, 0, 0, NULL, 0);
+    return EVP_RAND_generate(drbg, out, (size_t)count, 0, 0, NULL, 0);
 }
 
 RAND_METHOD ossl_rand_meth = {
