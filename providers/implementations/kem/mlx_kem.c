@@ -353,7 +353,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
 #endif
     } else {
         ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->xkey, key->propq);
-	OSSL_USDT_new_child(vctx, ctx);
+        OSSL_USDT_new_child(vctx, ctx);
         if (ctx == NULL || EVP_PKEY_keygen_init(ctx) <= 0
             || EVP_PKEY_keygen(ctx, &xkey) <= 0)
             goto end;
