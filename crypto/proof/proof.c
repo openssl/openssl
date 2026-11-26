@@ -350,6 +350,11 @@ static int proof_verify_mtc(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
         && !X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(ctx),
             params->x509_param))
         goto err;
+    /* OCSP and Suite B do not apply. */
+    if (!X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(ctx),
+            X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL
+                | X509_V_FLAG_SUITEB_128_LOS))
+        goto err;
     X509_STORE_CTX_set_verify_cb(ctx, proof_verify_cb);
     ret = ossl_x509_verify_mtc(ctx,
         params != NULL ? params->mtc_cosigner_quorum : 0);
@@ -364,18 +369,18 @@ err:
 
 /*
  * The X.509 verification flags that request a check an X.509-based proof
- * verification does not perform: OCSP, CRLs beyond the complete CRL of the
- * issuer, certificate policy processing, and the Suite B checks.
+ * verification does not perform: CRLs beyond the complete CRL of the issuer,
+ * and certificate policy processing.
  */
-#define PROOF_X509_FLAGS_UNSUPPORTED                                 \
-    (X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL   \
-        | X509_V_FLAG_EXTENDED_CRL_SUPPORT | X509_V_FLAG_POLICY_MASK \
-        | X509_V_FLAG_SUITEB_128_LOS)
+#define PROOF_X509_FLAGS_UNSUPPORTED                           \
+    (X509_V_FLAG_EXTENDED_CRL_SUPPORT | X509_V_FLAG_USE_DELTAS \
+        | X509_V_FLAG_POLICY_MASK)
 
 int OSSL_PROOF_verify(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
     const OSSL_PROOF_PARAMS *params, OSSL_PROOF_OUTPUT **out_output)
 {
     OSSL_PROOF_OUTPUT *output;
+    unsigned long flags = 0;
     int ret = 0;
 
     if (out_output != NULL)
@@ -384,10 +389,12 @@ int OSSL_PROOF_verify(OSSL_PROOF_TRUST *trust, OSSL_PROOF *proof,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (params != NULL && proof_type_is_x509(proof->type)
-        && (X509_VERIFY_PARAM_get_flags(params->x509_param)
-               & PROOF_X509_FLAGS_UNSUPPORTED)
-            != 0) {
+    if (trust != NULL && trust->store != NULL)
+        flags = X509_VERIFY_PARAM_get_flags(X509_STORE_get0_param(trust->store));
+    if (params != NULL)
+        flags |= X509_VERIFY_PARAM_get_flags(params->x509_param);
+    if (proof_type_is_x509(proof->type)
+        && (flags & PROOF_X509_FLAGS_UNSUPPORTED) != 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }

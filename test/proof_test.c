@@ -517,22 +517,45 @@ static int test_crl_shard_not_covering(void)
         X509_V_ERR_UNABLE_TO_GET_CRL);
 }
 
-/* Parameters with flags set are refused: no verification, no output. */
-static int check_flags_refused(unsigned long flags)
+/*
+ * Verify the standalone MTC with flags set on the parameters, or on the trust
+ * store when on_store is set; when no_params is set the parameters are NULL
+ * (on_store must then be set).  When refused is set, confirm OSSL_PROOF_verify()
+ * fails with no output; otherwise confirm it verifies.
+ */
+static int check_flags(unsigned long flags, int on_store, int no_params,
+    int refused)
 {
     OSSL_MTC_CA *ca = make_ca(ca_id, sizeof(ca_id), 0);
     OSSL_PROOF_TRUST *trust = build_trust(ca, NULL, 0);
-    OSSL_PROOF_PARAMS *params = build_params(NULL, valid_time, 0);
+    OSSL_PROOF_PARAMS *params = no_params ? NULL
+                                          : build_params(NULL, valid_time, 0);
     OSSL_PROOF *proof = load_proof("mtc-leaf-standalone.pem");
     OSSL_PROOF_OUTPUT *output = NULL;
-    int ret = 0;
+    int code = X509_V_ERR_UNSPECIFIED, ret = 0;
 
-    if (TEST_ptr(trust) && TEST_ptr(params) && TEST_ptr(proof)
-        && TEST_true(X509_VERIFY_PARAM_set_flags(
-            OSSL_PROOF_PARAMS_get0_x509_param(params), flags))
-        && TEST_int_eq(OSSL_PROOF_verify(trust, proof, params, &output), 0)
-        && TEST_ptr_null(output))
-        ret = 1;
+    if (!TEST_ptr(trust) || (!no_params && !TEST_ptr(params))
+        || !TEST_ptr(proof))
+        goto err;
+    if (on_store) {
+        if (!TEST_true(X509_STORE_set_flags(
+                OSSL_PROOF_TRUST_get0_x509_store(trust), flags)))
+            goto err;
+    } else if (!TEST_true(X509_VERIFY_PARAM_set_flags(
+                   OSSL_PROOF_PARAMS_get0_x509_param(params), flags))) {
+        goto err;
+    }
+    if (refused) {
+        if (!TEST_int_eq(OSSL_PROOF_verify(trust, proof, params, &output), 0)
+            || !TEST_ptr_null(output))
+            goto err;
+    } else if (!TEST_int_eq(OSSL_PROOF_verify(trust, proof, params, &output), 1)
+        || !TEST_true(OSSL_PROOF_OUTPUT_get_x509_error(output, &code))
+        || !TEST_int_eq(code, X509_V_OK)) {
+        goto err;
+    }
+    ret = 1;
+err:
     OSSL_PROOF_OUTPUT_free(output);
     OSSL_PROOF_free(proof);
     OSSL_PROOF_PARAMS_free(params);
@@ -541,27 +564,48 @@ static int check_flags_refused(unsigned long flags)
     return ret;
 }
 
-/* Parameters requesting OCSP checking are refused. */
-static int test_ocsp_flag_refused(void)
+/* OCSP checking requested by the parameters or the store is ignored. */
+static int test_ocsp_flags_ignored(void)
 {
-    return check_flags_refused(X509_V_FLAG_OCSP_RESP_CHECK);
+    return check_flags(X509_V_FLAG_OCSP_RESP_CHECK, 0, 0, 0)
+        && check_flags(X509_V_FLAG_OCSP_RESP_CHECK_ALL, 0, 0, 0)
+        && check_flags(X509_V_FLAG_OCSP_RESP_CHECK, 1, 0, 0)
+        && check_flags(X509_V_FLAG_OCSP_RESP_CHECK_ALL, 1, 0, 0);
 }
 
-/* Parameters requesting certificate policy processing are refused. */
+/* The Suite B checks requested by the parameters or the store are ignored. */
+static int test_suiteb_flags_ignored(void)
+{
+    return check_flags(X509_V_FLAG_SUITEB_128_LOS_ONLY, 0, 0, 0)
+        && check_flags(X509_V_FLAG_SUITEB_192_LOS, 0, 0, 0)
+        && check_flags(X509_V_FLAG_SUITEB_128_LOS, 0, 0, 0)
+        && check_flags(X509_V_FLAG_SUITEB_128_LOS, 1, 0, 0);
+}
+
+/*
+ * Certificate policy processing requested by the parameters or the store is
+ * refused, including from the store when the parameters are NULL.
+ */
 static int test_policy_flags_refused(void)
 {
-    return check_flags_refused(X509_V_FLAG_POLICY_CHECK)
-        && check_flags_refused(X509_V_FLAG_EXPLICIT_POLICY)
-        && check_flags_refused(X509_V_FLAG_INHIBIT_ANY)
-        && check_flags_refused(X509_V_FLAG_INHIBIT_MAP);
+    return check_flags(X509_V_FLAG_POLICY_CHECK, 0, 0, 1)
+        && check_flags(X509_V_FLAG_EXPLICIT_POLICY, 0, 0, 1)
+        && check_flags(X509_V_FLAG_INHIBIT_ANY, 0, 0, 1)
+        && check_flags(X509_V_FLAG_INHIBIT_MAP, 0, 0, 1)
+        && check_flags(X509_V_FLAG_POLICY_CHECK, 1, 0, 1)
+        && check_flags(X509_V_FLAG_POLICY_CHECK, 1, 1, 1);
 }
 
-/* Parameters requesting the Suite B checks are refused. */
-static int test_suiteb_flags_refused(void)
+/*
+ * Extended CRL support or delta CRLs requested by the parameters or the store
+ * are refused.
+ */
+static int test_extended_crl_flags_refused(void)
 {
-    return check_flags_refused(X509_V_FLAG_SUITEB_128_LOS_ONLY)
-        && check_flags_refused(X509_V_FLAG_SUITEB_192_LOS)
-        && check_flags_refused(X509_V_FLAG_SUITEB_128_LOS);
+    return check_flags(X509_V_FLAG_EXTENDED_CRL_SUPPORT, 0, 0, 1)
+        && check_flags(X509_V_FLAG_EXTENDED_CRL_SUPPORT, 1, 0, 1)
+        && check_flags(X509_V_FLAG_USE_DELTAS, 0, 0, 1)
+        && check_flags(X509_V_FLAG_USE_DELTAS, 1, 0, 1);
 }
 
 /* A store CRL is not consulted without CRL checking enabled. */
@@ -650,9 +694,10 @@ int setup_tests(void)
     ADD_TEST(test_crl_indirect_not_used);
     ADD_TEST(test_crl_shard_not_covering);
     ADD_TEST(test_crl_not_checked);
-    ADD_TEST(test_ocsp_flag_refused);
+    ADD_TEST(test_ocsp_flags_ignored);
+    ADD_TEST(test_suiteb_flags_ignored);
     ADD_TEST(test_policy_flags_refused);
-    ADD_TEST(test_suiteb_flags_refused);
+    ADD_TEST(test_extended_crl_flags_refused);
     ADD_TEST(test_null_output_out);
     ADD_TEST(test_null_proof);
     ADD_TEST(test_null_trust);

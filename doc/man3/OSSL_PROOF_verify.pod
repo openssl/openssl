@@ -123,21 +123,9 @@ The issuer's complete CRL covers every certificate it issued; a partitioned
 CRL covers a certificate whose CRL distribution points name its issuing
 distribution point.
 
-OCSP is not supported.  Verification parameters with
-B<X509_V_FLAG_OCSP_RESP_CHECK>, B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> or
-B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> set are an invalid argument to
-OSSL_PROOF_verify().
-
-Certificate policy processing is not supported.  Verification parameters with
-B<X509_V_FLAG_POLICY_CHECK>, B<X509_V_FLAG_EXPLICIT_POLICY>,
-B<X509_V_FLAG_INHIBIT_ANY> or B<X509_V_FLAG_INHIBIT_MAP> set are an invalid
-argument to OSSL_PROOF_verify().  Adding a policy to the parameters (see
-L<X509_VERIFY_PARAM_add0_policy(3)>) sets B<X509_V_FLAG_POLICY_CHECK>.
-
-The Suite B checks are not supported.  Verification parameters with
-B<X509_V_FLAG_SUITEB_128_LOS_ONLY>, B<X509_V_FLAG_SUITEB_192_LOS> or
-B<X509_V_FLAG_SUITEB_128_LOS> set are an invalid argument to
-OSSL_PROOF_verify().
+The OCSP and Suite B verification flags are ignored.  The policy, extended
+CRL and delta CRL flags, set on the trust store or in I<params>, are an
+invalid argument to OSSL_PROOF_verify().
 
 =head2 Merkle Tree Certificate proofs
 
