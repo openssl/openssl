@@ -254,6 +254,10 @@ OpenSSL 4.2
 
    *Daiki Ueno and Clemens Lang*
 
+ * Added several new commands to the SSL_CONF API.
+
+   *Stephen Wall*
+
 OpenSSL 4.1
 -----------
 
