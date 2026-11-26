@@ -56,7 +56,7 @@ static const OSSL_PARAM *sha1_settable_ctx_params(ossl_unused void *ctx,
     return sha1_set_ctx_params_list;
 }
 
-static const unsigned char sha256magic[] = "SHA256v1";
+static const unsigned char sha256magic[] = "SHA256v2";
 #define SHA256MAGIC_LEN (sizeof(sha256magic) - 1)
 #define SHA256_SERIALIZATION_LEN                      \
     (                                                 \
@@ -106,8 +106,8 @@ static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
     p = OPENSSL_store_u32_le(p, c->Nh);
 
     /* data */
-    for (i = 0; i < SHA_LBLOCK; i++)
-        p = OPENSSL_store_u32_le(p, c->data[i]);
+    memcpy(p, c->data, SHA256_CBLOCK);
+    p += SHA256_CBLOCK;
 
     if (outlen != NULL)
         *outlen = SHA256_SERIALIZATION_LEN;
@@ -161,10 +161,8 @@ static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
     c->Nh = (SHA_LONG)val;
 
     /* data */
-    for (i = 0; i < SHA_LBLOCK; i++) {
-        p = OPENSSL_load_u32_le(&val, p);
-        c->data[i] = (SHA_LONG)val;
-    }
+    memcpy(c->data, p, SHA256_CBLOCK);
+    p += SHA256_CBLOCK;
 
     return 1;
 }

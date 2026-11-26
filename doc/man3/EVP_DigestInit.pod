@@ -341,6 +341,10 @@ different OpenSSL version and does not guarantee interoperability between
 different providers. Some providers may not allow export/import across
 process boundaries.
 
+The state of the SHA-3 family of digests (SHA3-*, SHAKE-*, KECCAK-*) of the
+default provider is not interchangeable between builds for 32-bit and 64-bit
+platforms.
+
 NOTE: Applications must guarantee that only trusted data is used during
 deserialization. The deserialization operation is not built to address
 adversarial data compromise, and only basic checks to protect from simple

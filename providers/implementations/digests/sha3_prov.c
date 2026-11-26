@@ -533,7 +533,53 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-static const unsigned char keccakmagic[] = "KECCAKv1";
+#define KECCAK_SER_ID 0x010000
+#define SHAKE_SER_ID 0x020000
+#define SHA3_SER_ID 0x040000
+#define CSHAKE_KECCAK_SER_ID 0x080000
+
+#if defined(S390_SHA3)
+static uint64_t keccak_canonical_pad(int impl_id)
+{
+    switch (impl_id & 0xff0000) {
+    case SHA3_SER_ID:
+        return SHA3_PADDING;
+    case SHAKE_SER_ID:
+        return SHAKE_PADDING;
+    case KECCAK_SER_ID:
+        return KECCAK_PADDING;
+    case CSHAKE_KECCAK_SER_ID:
+        return CSHAKE_KECCAK_PADDING;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * With CPACF, the state array A is used by KIMD/KLMD as a plain byte string
+ * (byte 0 holds state bits 0..7, etc.), i.e. already in the canonical
+ * little-endian lane layout. The generic code keeps numeric lane values in A.
+ */
+static int keccak_uses_cpacf(const KECCAK1600_CTX *c)
+{
+    return c->meth.absorb == s390x_sha3_absorb;
+}
+
+/*
+ * Once squeezing has started, a partially consumed output block is tracked
+ * differently: the generic code keeps a copy of the block in c->buf and
+ * c->bufsz is the number of bytes still unread, whereas CPACF reads the block
+ * from A and c->bufsz is the number of bytes already read. The serialized form
+ * uses the generic representation.
+ */
+static int keccak_cpacf_squeezing(const KECCAK1600_CTX *c)
+{
+    return keccak_uses_cpacf(c) && c->xof_state == XOF_STATE_SQUEEZE
+        && c->bufsz != 0;
+}
+#endif
+
+static const unsigned char keccakmagic[] = "KECCAKv2";
 #define KECCAKMAGIC_LEN (sizeof(keccakmagic) - 1)
 #define KECCAK_SERIALIZATION_LEN                                                     \
     (                                                                                \
@@ -550,6 +596,13 @@ static int KECCAK_Serialize(KECCAK1600_CTX *c, int impl_id,
 {
     unsigned char *p;
     int i, j;
+    size_t bufsz = c->bufsz;
+#if defined(S390_SHA3)
+    int cpacf_squeezing = keccak_cpacf_squeezing(c);
+
+    if (cpacf_squeezing)
+        bufsz = c->block_size - c->bufsz;
+#endif
 
     if (output == NULL) {
         if (outlen == NULL)
@@ -573,14 +626,33 @@ static int KECCAK_Serialize(KECCAK1600_CTX *c, int impl_id,
     p = OPENSSL_store_u64_le(p, c->md_size);
 
     p = OPENSSL_store_u64_le(p, c->block_size);
-    p = OPENSSL_store_u64_le(p, c->bufsz);
+    p = OPENSSL_store_u64_le(p, bufsz);
+#if defined(S390_SHA3)
+    p = OPENSSL_store_u64_le(p, keccak_canonical_pad(impl_id));
+#else
     p = OPENSSL_store_u64_le(p, c->pad);
+#endif
     p = OPENSSL_store_u64_le(p, c->xof_state);
 
     /* A matrix */
-    for (i = 0; i < 5; i++) {
-        for (j = 0; j < 5; j++)
-            p = OPENSSL_store_u64_le(p, c->A[i][j]);
+#if defined(S390_SHA3)
+    if (keccak_uses_cpacf(c)) {
+        /*
+         * In the INIT state CPACF ignores A (NIP flag) and a reused context
+         * may still hold stale data. The canonical state is all zero.
+         */
+        if (c->xof_state == XOF_STATE_INIT)
+            memset(p, 0, sizeof(c->A));
+        else
+            memcpy(p, c->A, sizeof(c->A));
+        p += sizeof(c->A);
+    } else
+#endif
+    {
+        for (i = 0; i < 5; i++) {
+            for (j = 0; j < 5; j++)
+                p = OPENSSL_store_u64_le(p, c->A[i][j]);
+        }
     }
 
     if (outlen != NULL)
@@ -588,6 +660,10 @@ static int KECCAK_Serialize(KECCAK1600_CTX *c, int impl_id,
 
     /* buf */
     memcpy(p, c->buf, sizeof(c->buf));
+#if defined(S390_SHA3)
+    if (cpacf_squeezing)
+        memcpy(p, c->A, c->block_size);
+#endif
 
     return 1;
 }
@@ -603,6 +679,9 @@ static int KECCAK_Deserialize(KECCAK1600_CTX *c, int impl_id,
     const unsigned char *p;
     uint64_t val;
     int i, j;
+#if defined(S390_SHA3)
+    int cpacf = 0;
+#endif
 
     if (c == NULL || input == NULL || len != KECCAK_SERIALIZATION_LEN)
         return 0;
@@ -633,16 +712,37 @@ static int KECCAK_Deserialize(KECCAK1600_CTX *c, int impl_id,
         return 0;
     c->bufsz = (size_t)val;
     p = OPENSSL_load_u64_le(&val, p);
+#if defined(S390_SHA3)
+    /* The blob carries the canonical padding byte, not the CPACF function code */
+    if (val != keccak_canonical_pad(impl_id))
+        return 0;
+    /* A is in canonical byte order, which CPACF consumes as is */
+    cpacf = keccak_uses_cpacf(c);
+#else
     if (val != c->pad)
         return 0;
+#endif
     p = OPENSSL_load_u64_le(&val, p);
     c->xof_state = (int)val;
+#if defined(S390_SHA3)
+    /* Convert the generic representation of a partially read block */
+    if (cpacf && c->xof_state == XOF_STATE_SQUEEZE && c->bufsz != 0)
+        c->bufsz = c->block_size - c->bufsz;
+#endif
 
     /* A matrix */
-    for (i = 0; i < 5; i++) {
-        for (j = 0; j < 5; j++) {
-            p = OPENSSL_load_u64_le(&val, p);
-            c->A[i][j] = val;
+#if defined(S390_SHA3)
+    if (cpacf) {
+        memcpy(c->A, p, sizeof(c->A));
+        p += sizeof(c->A);
+    } else
+#endif
+    {
+        for (i = 0; i < 5; i++) {
+            for (j = 0; j < 5; j++) {
+                p = OPENSSL_load_u64_le(&val, p);
+                c->A[i][j] = val;
+            }
         }
     }
 
@@ -711,11 +811,6 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
     return 1;
 }
-
-#define KECCAK_SER_ID 0x010000
-#define SHAKE_SER_ID 0x020000
-#define SHA3_SER_ID 0x040000
-#define CSHAKE_KECCAK_SER_ID 0x080000
 
 #define IMPLEMENT_SHA3_functions(bitlen)                                           \
     SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, (uint8_t)SHA3_PADDING) \
