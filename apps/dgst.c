@@ -8,6 +8,7 @@
  */
 
 #include "apps.h"
+#include "names.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,12 +33,10 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
     EVP_PKEY *key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *md_name,
     const char *file);
-static void show_digests(const OBJ_NAME *name, void *bio_);
-
-struct doall_dgst_digests {
-    BIO *bio;
-    int n;
-};
+static void collect_obj_md_name(const OBJ_NAME *name, void *arg);
+static void collect_prov_digests(EVP_MD *md, void *arg);
+static void print_md_names(BIO *bio, STACK_OF(OPENSSL_CSTRING) *names);
+static void free_md_name(OPENSSL_STRING name);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -129,7 +128,7 @@ int dgst_main(int argc, char **argv)
     int i, ret = EXIT_FAILURE, out_bin = -1, want_pub = 0, do_verify = 0;
     int xoflen = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
-    struct doall_dgst_digests dec;
+    STACK_OF(OPENSSL_CSTRING) *names = NULL;
     EVP_MD_CTX *signctx = NULL;
     int oneshot_sign = 0;
 
@@ -153,10 +152,17 @@ int dgst_main(int argc, char **argv)
             goto end;
         case OPT_LIST:
             BIO_puts(bio_out, "Supported digests:\n");
-            dec.bio = bio_out;
-            dec.n = 0;
-            OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
-                show_digests, &dec);
+            names = sk_OPENSSL_CSTRING_new(name_cmp);
+            if (names == NULL) {
+                BIO_printf(bio_err, "%s: Out of memory\n", prog);
+                goto end;
+            }
+            OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
+                collect_obj_md_name, names);
+            EVP_MD_do_all_provided(app_get0_libctx(),
+                collect_prov_digests, names);
+            print_md_names(bio_out, names);
+            sk_OPENSSL_CSTRING_pop_free(names, free_md_name);
             BIO_puts(bio_out, "\n");
             ret = EXIT_SUCCESS;
             goto end;
@@ -538,32 +544,115 @@ end:
     return ret;
 }
 
-static void show_digests(const OBJ_NAME *name, void *arg)
+/* Filter out signed digests (a.k.a signature algorithms) */
+static int dgst_name_ok(const char *name)
 {
-    struct doall_dgst_digests *dec = (struct doall_dgst_digests *)arg;
-    EVP_MD *md = NULL;
+    return strstr(name, "rsa") == NULL && strstr(name, "RSA") == NULL;
+}
 
-    /* Filter out signed digests (a.k.a signature algorithms) */
-    if (strstr(name->name, "rsa") != NULL || strstr(name->name, "RSA") != NULL)
+/*
+ * Fetch a message digest by name.  Returns the fetched digest, or NULL
+ * if it's not fetchable.  Fetch failures are expected here (e.g.
+ * algorithms from providers that aren't loaded), so the error stack is
+ * silenced around the fetch.
+ */
+static EVP_MD *fetch_usable_md(const char *name)
+{
+    EVP_MD *md;
+
+    ERR_set_mark();
+    md = EVP_MD_fetch(app_get0_libctx(), name, app_get0_propq());
+    ERR_pop_to_mark();
+    return md;
+}
+
+static void add_md_name(STACK_OF(OPENSSL_CSTRING) *names, const char *name,
+    int lowercase)
+{
+    char *copy = OPENSSL_strdup(name);
+    char *p;
+
+    if (copy == NULL)
         return;
+    if (lowercase)
+        for (p = copy; *p != '\0'; p++)
+            *p = tolower((unsigned char)*p);
+    if (sk_OPENSSL_CSTRING_push(names, copy) <= 0)
+        OPENSSL_free(copy);
+}
 
-    if (!islower((unsigned char)*name->name))
+static void collect_obj_md_name(const OBJ_NAME *name, void *arg)
+{
+    STACK_OF(OPENSSL_CSTRING) *names = arg;
+    EVP_MD *md;
+
+    if (!islower((unsigned char)*name->name) || !dgst_name_ok(name->name))
         return;
 
     /* Filter out message digests that we cannot use */
-    md = EVP_MD_fetch(app_get0_libctx(), name->name, app_get0_propq());
+    md = fetch_usable_md(name->name);
     if (md == NULL)
         return;
-
-    BIO_printf(dec->bio, "-%-25s", name->name);
-    if (++dec->n == 3) {
-        BIO_puts(dec->bio, "\n");
-        dec->n = 0;
-    } else {
-        BIO_puts(dec->bio, " ");
-    }
-
     EVP_MD_free(md);
+
+    add_md_name(names, name->name, 0);
+}
+
+static void collect_prov_md_name(const char *name, void *arg)
+{
+    STACK_OF(OPENSSL_CSTRING) *names = arg;
+
+    /* Skip non-alphabetic names, such as numeric OID aliases */
+    if (!isalpha((unsigned char)*name) || !dgst_name_ok(name))
+        return;
+
+    /*
+     * Provider names are conventionally upper case; display them in
+     * lower case, consistent with the OBJ derived names.
+     */
+    add_md_name(names, name, 1);
+}
+
+static void collect_prov_digests(EVP_MD *md, void *arg)
+{
+    EVP_MD *fetched;
+
+    /* Filter out message digests that we cannot use */
+    fetched = fetch_usable_md(EVP_MD_get0_name(md));
+    if (fetched == NULL)
+        return;
+    EVP_MD_free(fetched);
+
+    EVP_MD_names_do_all(md, collect_prov_md_name, arg);
+}
+
+static void print_md_names(BIO *bio, STACK_OF(OPENSSL_CSTRING) *names)
+{
+    const char *prev = NULL;
+    int i, n = 0;
+
+    sk_OPENSSL_CSTRING_sort(names);
+    for (i = 0; i < sk_OPENSSL_CSTRING_num(names); i++) {
+        const char *name = sk_OPENSSL_CSTRING_value(names, i);
+
+        /* Drop duplicates (the case-insensitive sort groups them together) */
+        if (prev != NULL && OPENSSL_strcasecmp(prev, name) == 0)
+            continue;
+        prev = name;
+
+        BIO_printf(bio, "-%-25s", name);
+        if (++n == 3) {
+            BIO_puts(bio, "\n");
+            n = 0;
+        } else {
+            BIO_puts(bio, " ");
+        }
+    }
+}
+
+static void free_md_name(OPENSSL_STRING name)
+{
+    OPENSSL_free(name);
 }
 
 /*
