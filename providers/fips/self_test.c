@@ -10,7 +10,7 @@
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/fipskey.h>

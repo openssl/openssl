@@ -9,7 +9,7 @@
 
 #include <openssl/err.h>
 #include <openssl/ui.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
 #include <openssl/provider.h>

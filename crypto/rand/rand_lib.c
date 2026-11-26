@@ -10,6 +10,7 @@
 /* We need to use some RAND deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "internal/params.h"
 #ifndef FIPS_MODULE
 #include <openssl/async.h>
 #endif

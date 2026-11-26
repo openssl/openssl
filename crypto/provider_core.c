@@ -13,7 +13,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/provider.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
 #ifndef FIPS_MODULE

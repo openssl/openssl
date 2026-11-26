@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/ec.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>

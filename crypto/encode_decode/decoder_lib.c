@@ -9,7 +9,7 @@
 
 #include <openssl/core_names.h>
 #include <openssl/bio.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/provider.h>
 #include <openssl/evperr.h>
 #include <openssl/ecerr.h>

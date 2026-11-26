@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "internal/params.h"
 #include <stdlib.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>

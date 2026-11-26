@@ -10,6 +10,7 @@
 /* An OpenSSL-based HPKE implementation of RFC9180 */
 
 #include <string.h>
+#include "internal/params.h"
 #include <openssl/rand.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>

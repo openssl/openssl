@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include "internal/params.h"
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>

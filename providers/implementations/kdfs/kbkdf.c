@@ -32,7 +32,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/kdf.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"
@@ -46,7 +46,6 @@
 #include "prov/securitycheck.h"
 #include "internal/e_os.h"
 #include "internal/fips.h"
-#include "internal/params.h"
 
 #define ossl_min(a, b) ((a) < (b)) ? (a) : (b)
 

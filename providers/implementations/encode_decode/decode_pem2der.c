@@ -20,7 +20,7 @@
 #include <openssl/core_object.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/pem.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"

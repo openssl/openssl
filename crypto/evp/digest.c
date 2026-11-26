@@ -11,7 +11,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"

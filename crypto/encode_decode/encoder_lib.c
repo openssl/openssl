@@ -13,7 +13,7 @@
 #include <openssl/bio.h>
 #include <openssl/encoder.h>
 #include <openssl/buffer.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/provider.h>
 #include <openssl/trace.h>
 #include <crypto/bn.h>

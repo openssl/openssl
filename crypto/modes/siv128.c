@@ -12,7 +12,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "internal/endian.h"
 #include "crypto/modes.h"
 #include "crypto/siv.h"

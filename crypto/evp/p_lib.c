@@ -27,7 +27,7 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/cmac.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>

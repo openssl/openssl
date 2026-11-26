@@ -14,7 +14,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/self_test.h>
 #include <openssl/proverr.h>
 #include "prov/providercommon.h"

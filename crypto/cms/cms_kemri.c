@@ -8,6 +8,7 @@
  */
 
 #include <openssl/cms.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>

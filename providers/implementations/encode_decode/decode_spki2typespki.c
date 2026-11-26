@@ -11,7 +11,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/proverr.h>
 #include <openssl/x509.h>
 #include "internal/cryptlib.h"

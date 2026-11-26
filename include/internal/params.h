@@ -11,7 +11,156 @@
 #define OSSL_INTERNAL_PARAMS_H
 
 #include <stddef.h>
+#include <string.h>
 #include <openssl/params.h>
+
+/* Basic parameter type run-time construction */
+#ifndef OSSL_PARAM_CONSTRUCT_INLINE
+#define OSSL_PARAM_CONSTRUCT_INLINE static ossl_unused ossl_inline
+
+#define OSSL_PARAM_construct_int ossl_param_construct_int
+#define OSSL_PARAM_construct_uint ossl_param_construct_uint
+#define OSSL_PARAM_construct_long ossl_param_construct_long
+#define OSSL_PARAM_construct_ulong ossl_param_construct_ulong
+#define OSSL_PARAM_construct_int32 ossl_param_construct_int32
+#define OSSL_PARAM_construct_uint32 ossl_param_construct_uint32
+#define OSSL_PARAM_construct_int64 ossl_param_construct_int64
+#define OSSL_PARAM_construct_uint64 ossl_param_construct_uint64
+#define OSSL_PARAM_construct_size_t ossl_param_construct_size_t
+#define OSSL_PARAM_construct_time_t ossl_param_construct_time_t
+#define OSSL_PARAM_construct_BN ossl_param_construct_BN
+#define OSSL_PARAM_construct_double ossl_param_construct_double
+#define OSSL_PARAM_construct_utf8_string ossl_param_construct_utf8_string
+#define OSSL_PARAM_construct_octet_string ossl_param_construct_octet_string
+#define OSSL_PARAM_construct_utf8_ptr ossl_param_construct_utf8_ptr
+#define OSSL_PARAM_construct_octet_ptr ossl_param_construct_octet_ptr
+#define OSSL_PARAM_construct_end ossl_param_construct_end
+#endif
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_int(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_uint(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_long(const char *key, long int *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_long(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_ulong(const char *key, unsigned long int *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_ulong(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, int32_t *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_int32(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, uint32_t *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_uint32(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_int64(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_uint64(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_size_t(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_time_t(const char *key, time_t *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_time_t(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
+    size_t bsize)
+{
+    OSSL_PARAM res = OSSL_PARAM_BN(key, buf, bsize);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf)
+{
+    OSSL_PARAM res = OSSL_PARAM_double(key, buf);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
+    size_t bsize)
+{
+    const size_t length = buf != NULL && bsize == 0 ? strlen(buf) : bsize;
+    OSSL_PARAM res = OSSL_PARAM_utf8_string(key, buf, length);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
+    size_t bsize)
+{
+    OSSL_PARAM res = OSSL_PARAM_octet_string(key, buf, bsize);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
+    size_t bsize)
+{
+    OSSL_PARAM res = OSSL_PARAM_utf8_ptr(key, buf, bsize);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
+    size_t bsize)
+{
+    OSSL_PARAM res = OSSL_PARAM_octet_ptr(key, buf, bsize);
+
+    return res;
+}
+
+OSSL_PARAM_CONSTRUCT_INLINE OSSL_PARAM OSSL_PARAM_construct_end(void)
+{
+    OSSL_PARAM res = OSSL_PARAM_END;
+
+    return res;
+}
 
 /*
  * Extract the parameter into an allocated buffer.

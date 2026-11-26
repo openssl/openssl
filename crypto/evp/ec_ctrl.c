@@ -8,6 +8,7 @@
  */
 
 #include "internal/deprecated.h"
+#include "internal/params.h"
 
 #include <openssl/core_names.h>
 #include <openssl/err.h>

@@ -20,7 +20,7 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
 #include "prov/providercommon.h"

@@ -17,6 +17,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 
 #include <openssl/pem.h>
 #include <openssl/rand.h>

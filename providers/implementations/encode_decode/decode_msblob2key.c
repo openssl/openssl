@@ -19,7 +19,7 @@
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 #include <openssl/crypto.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/pem.h> /* For public PVK functions */
 #include <openssl/x509.h>
 #include <openssl/err.h>

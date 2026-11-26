@@ -8,6 +8,7 @@
  */
 
 #include "internal/quic_record_util.h"
+#include "internal/params.h"
 #include "internal/quic_record_rx.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_wire_pkt.h"

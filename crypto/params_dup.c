@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/param_build.h>
 #include "internal/mem_alloc_utils.h"
 #include "internal/param_build_set.h"

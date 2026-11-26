@@ -16,7 +16,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/core_names.h>
 #include "prov/md5_sha1.h"
 #include "prov/digestcommon.h"

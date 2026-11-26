@@ -23,6 +23,7 @@
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include <openssl/store.h>
+#include "internal/params.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 #include "internal/provider.h"

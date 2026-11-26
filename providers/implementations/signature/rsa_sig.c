@@ -21,7 +21,7 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/rsa.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"

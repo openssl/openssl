@@ -8,6 +8,7 @@
  */
 
 #include "internal/deprecated.h" /* PKCS1_MGF1() */
+#include "internal/params.h"
 
 #include <string.h>
 #include <openssl/evp.h>

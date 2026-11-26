@@ -18,7 +18,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/rsa.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 /* Just for SSL_MAX_MASTER_KEY_LENGTH */

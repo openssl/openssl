@@ -10,7 +10,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include "internal/params.h"
 #include <openssl/err.h>
 #include <openssl/dh.h>
 #include "crypto/dh.h"
