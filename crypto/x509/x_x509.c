@@ -271,6 +271,26 @@ int X509_get_signature_nid(const X509 *x)
     return OBJ_obj2nid(x->sig_alg.algorithm);
 }
 
+int X509_set1_signature_algo(X509 *x509, const X509_ALGOR *algo)
+{
+    if (x509 == NULL || algo == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    x509->cert_info.enc.modified = 1;
+    return X509_ALGOR_copy(&x509->sig_alg, algo)
+        && X509_ALGOR_copy(&x509->cert_info.signature, algo);
+}
+
+int X509_set1_signature_value(X509 *x509, const uint8_t *sig, size_t sig_len)
+{
+    if (x509 == NULL || (sig == NULL && sig_len != 0)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ASN1_BIT_STRING_set1(&x509->signature, sig, sig_len, 0);
+}
+
 void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *d_id)
 {
     ASN1_OCTET_STRING_free(x->distinguishing_id);
