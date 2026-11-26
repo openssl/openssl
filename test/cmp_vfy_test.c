@@ -377,9 +377,29 @@ static int test_validate_msg_signature_sender_cert_absent(void)
     EXECUTE_TEST(execute_validate_msg_test, tear_down);
     return result;
 }
-#endif
 
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int execute_validate_msg_signature_path_error_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    const char *data = NULL;
+    unsigned long err;
+
+    return TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))
+        && add_trusted(fixture->cmp_ctx, insta_cert) /* an unsuitable trust anchor cert */
+        && TEST_int_eq(ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg, NULL, 0), 0)
+        && TEST_int_ne((err = ERR_peek_error_all(NULL, NULL, NULL, &data, NULL)), 0)
+        && TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_CMP)
+        && TEST_int_eq(ERR_GET_REASON(err), CMP_R_NO_SUITABLE_SENDER_CERT)
+        && TEST_ptr(data)
+        && TEST_ptr(strstr(data, X509_verify_cert_error_string(X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)));
+}
+
+static int test_validate_msg_signature_path_error(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    EXECUTE_TEST(execute_validate_msg_signature_path_error_test, tear_down);
+    return result;
+}
+
 static int test_validate_msg_unprotected_request(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
@@ -780,6 +800,7 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_signature_sender_cert_trusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_extracert);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_validate_msg_signature_path_error);
     ADD_TEST(test_validate_msg_signature_sender_cert_absent);
     ADD_TEST(test_validate_msg_unprotected_request);
 #endif
