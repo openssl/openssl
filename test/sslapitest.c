@@ -6280,6 +6280,21 @@ static const char *ciphersuites[] = {
 };
 
 /*
+ * Complete a DTLS 1.3 handshake once the server has sent its flight. The
+ * client sends its Finished and then waits for the server's ACK, so
+ * SSL_connect() must return -1 with SSL_ERROR_WANT_READ. The server then
+ * reads the Finished, sends the ACK and must complete.
+ */
+static int dtls13_finish_handshake(SSL *clientssl, SSL *serverssl)
+{
+    int ret = SSL_connect(clientssl);
+
+    return TEST_int_eq(ret, -1)
+        && TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ)
+        && TEST_int_eq(SSL_accept(serverssl), 1);
+}
+
+/*
  * Helper function to test that a server attempting to read early data can
  * handle a connection from a client where the early data should be skipped.
  * testtype: 0 == No HRR
@@ -6488,22 +6503,8 @@ static int early_data_skip_helper(int testdtls, int testtype, int cipher, int id
         goto end;
     }
 
-    /*
-     * To finish the DTLS1.3 handshake the client needs to
-     * process the ack message from the server before it
-     * can write data.
-     *
-     * The SSL_write_ex from the client will fail since
-     * the client needs to send a finish message and will
-     * wait for the server to send the ACK response.
-     */
-    if (testdtls) {
-        if (!TEST_true(SSL_connect(clientssl)))
-            goto end;
-
-        if (!TEST_true(SSL_accept(serverssl)))
-            goto end;
-    }
+    if (testdtls && !dtls13_finish_handshake(clientssl, serverssl))
+        goto end;
 
     ERR_clear_error();
     /*
@@ -6684,19 +6685,8 @@ static int test_early_data_not_sent(int idx)
             SSL_EARLY_DATA_NOT_SENT))
         goto end;
 
-    if (testdtls) {
-        /*
-         * We need to move the state machine along for DTLS1.3
-         * The client needs to read the server hello and send its
-         * finish message and the server needs to ACK the finish
-         * message
-         */
-        if (!TEST_true(SSL_connect(clientssl)))
-            goto end;
-
-        if (!TEST_true(SSL_accept(serverssl)))
-            goto end;
-    }
+    if (testdtls && !dtls13_finish_handshake(clientssl, serverssl))
+        goto end;
 
     /* Continue writing the message we started earlier */
     if (!TEST_true(SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written))
@@ -6951,17 +6941,22 @@ static int test_early_data_psk(int idx)
         }
 
         if (testdtls) {
-            /*
-             * We need to move the state machine along for DTLS1.3
-             * The client needs to read the server hello and send its
-             * finish message and the server needs to ACK the finish
-             * message
-             */
-            if (!TEST_true(SSL_connect(clientssl)))
-                goto end;
+            if (connectres == 1) {
+                if (!dtls13_finish_handshake(clientssl, serverssl))
+                    goto end;
+            } else {
+                /*
+                 * The client detects the ALPN mismatch and aborts, so the
+                 * server fails on the client's alert.
+                 */
+                int ret = SSL_connect(clientssl);
 
-            if (!TEST_true(SSL_accept(serverssl)))
-                goto end;
+                if (!TEST_int_eq(ret, -1)
+                    || !TEST_int_eq(SSL_get_error(clientssl, ret),
+                        SSL_ERROR_SSL)
+                    || !TEST_int_eq(SSL_accept(serverssl), -1))
+                    goto end;
+            }
         }
 
         if ((readearlyres == SSL_READ_EARLY_DATA_SUCCESS
@@ -7117,19 +7112,8 @@ static int test_early_data_psk_with_all_ciphers(int idx)
         goto end;
     }
 
-    if (testdtls) {
-        /*
-         * We need to move the state machine along for DTLS1.3
-         * The client needs to read the server hello and send its
-         * finish message and the server needs to ACK the finish
-         * message
-         */
-        if (!TEST_true(SSL_connect(clientssl)))
-            goto end;
-
-        if (!TEST_true(SSL_accept(serverssl)))
-            goto end;
-    }
+    if (testdtls && !dtls13_finish_handshake(clientssl, serverssl))
+        goto end;
 
     if (!TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1))
         || !TEST_int_eq(SSL_get_early_data_status(serverssl),
