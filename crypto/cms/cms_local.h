@@ -119,6 +119,7 @@ struct CMS_SignerInfo_st {
     int cert_verified; /* the certificate was verified successfully */
     int attr_verified; /* any given signed attributes were verified successfully */
     int content_verified; /* the signature over the content was verified successfully */
+    int verify_attempted; /* CMS_verify() has been called on this SignerInfo */
 };
 
 struct CMS_SignerIdentifier_st {

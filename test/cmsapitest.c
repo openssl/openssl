@@ -986,6 +986,112 @@ end:
     return ret;
 }
 
+/*
+ * CMS_get0_signers() must return all the associated signers as long as
+ * CMS_verify() was not called and only the verified ones afterwards.
+ */
+static int test_CMS_get0_signers_unverified(void)
+{
+    CMS_ContentInfo *cms = NULL, *cms2 = NULL;
+    BIO *in = NULL, *out = NULL, *der = NULL;
+    X509_STORE *store = NULL;
+    EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
+    X509 *cert1 = NULL, *local_cert2 = NULL;
+    STACK_OF(CMS_SignerInfo) *sinfos;
+    STACK_OF(X509) *signers = NULL;
+    ASN1_OCTET_STRING *sig;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf("Hello World\n", -1))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(der = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(pkey1 = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert1 = make_self_signed_cert(pkey1, "first-unverified-signer"))
+        || !TEST_ptr(pkey2 = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(local_cert2 = make_self_signed_cert(pkey2, "second-unverified-signer"))
+        || !TEST_true(X509_STORE_add_cert(store, cert1))
+        || !TEST_true(X509_STORE_add_cert(store, local_cert2)))
+        goto end;
+
+    /* signers added for signing are reported before CMS_final() */
+    if (!TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, in, CMS_BINARY | CMS_PARTIAL))
+        || !TEST_ptr_null(CMS_get0_signers(cms))
+        || !TEST_ptr(CMS_add1_signer(cms, cert1, pkey1, NULL, 0))
+        || !TEST_ptr(CMS_add1_signer(cms, local_cert2, pkey2, NULL, 0))
+        || !TEST_ptr(signers = CMS_get0_signers(cms))
+        || !TEST_int_eq(sk_X509_num(signers), 2)
+        || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
+        goto end;
+    sk_X509_free(signers);
+    signers = NULL;
+
+    /* a parsed message reports the signers once they are associated */
+    if (!TEST_true(i2d_CMS_bio(der, cms))
+        || !TEST_ptr(cms2 = d2i_CMS_bio(der, NULL))
+        || !TEST_ptr_null(CMS_get0_signers(cms2))
+        || !TEST_int_eq(CMS_set1_signers_certs(cms2, NULL, 0), 2)
+        || !TEST_ptr(signers = CMS_get0_signers(cms2))
+        || !TEST_int_eq(sk_X509_num(signers), 2))
+        goto end;
+    sk_X509_free(signers);
+    signers = NULL;
+
+    /* break signer 1's signature */
+    sinfos = CMS_get0_SignerInfos(cms2);
+    if (!TEST_int_eq(sk_CMS_SignerInfo_num(sinfos), 2)
+        || !TEST_ptr(sig = CMS_SignerInfo_get0_signature(sk_CMS_SignerInfo_value(sinfos, 0)))
+        || !TEST_size_t_gt(ASN1_STRING_get_length(sig), 0))
+        goto end;
+    ((uint8_t *)ASN1_STRING_get0_data(sig))[0] ^= 0xff;
+
+    /* a failed verification reports no signers */
+    ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms2, NULL, store, NULL, out, CMS_BINARY), 0)
+        || !TEST_ptr_null(CMS_get0_signers(cms2)))
+        goto end;
+
+    /* a successful partial verification leaves out the failed signer */
+    ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms2, NULL, store, NULL, out,
+                         CMS_BINARY | CMS_VERIFY_PARTIAL),
+            1)
+        || !TEST_ptr(signers = CMS_get0_signers(cms2))
+        || !TEST_int_eq(sk_X509_num(signers), 1)
+        || !TEST_int_eq(X509_cmp(sk_X509_value(signers, 0), local_cert2), 0))
+        goto end;
+    sk_X509_free(signers);
+    signers = NULL;
+
+    /* also break signer 2's signature: the failed partial call reports none */
+    if (!TEST_ptr(sig = CMS_SignerInfo_get0_signature(sk_CMS_SignerInfo_value(sinfos, 1)))
+        || !TEST_size_t_gt(ASN1_STRING_get_length(sig), 0))
+        goto end;
+    ((uint8_t *)ASN1_STRING_get0_data(sig))[0] ^= 0xff;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms2, NULL, store, NULL, out,
+                         CMS_BINARY | CMS_VERIFY_PARTIAL),
+            0)
+        || !TEST_ptr_null(CMS_get0_signers(cms2)))
+        goto end;
+
+    ret = 1;
+end:
+    sk_X509_free(signers);
+    CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms2);
+    X509_STORE_free(store);
+    X509_free(cert1);
+    EVP_PKEY_free(pkey1);
+    X509_free(local_cert2);
+    EVP_PKEY_free(pkey2);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(der);
+    return ret;
+}
+
 static int test_CMS_add1_signer_ed448(const EVP_MD *md, unsigned int flags,
     int expect_success)
 {
@@ -2057,6 +2163,7 @@ int setup_tests(void)
     ADD_TEST(test_CMS_verify_result_partial_signer_cert);
     ADD_TEST(test_CMS_verify_reused_after_check_content_failure);
     ADD_TEST(test_CMS_verify_result_partial_independence);
+    ADD_TEST(test_CMS_get0_signers_unverified);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
     ADD_TEST(test_encrypted_data);

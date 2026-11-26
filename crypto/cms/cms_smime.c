@@ -368,6 +368,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         sinfos = CMS_get0_SignerInfos(cms);
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
+            si->verify_attempted = 1;
             si->verify_result = 0;
             si->cert_verified = 0;
             si->attr_verified = 0;
@@ -399,6 +400,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         if (signer != NULL)
             scount++;
         /* Reset verification results */
+        si->verify_attempted = 1;
         si->verify_result = 1; /* so far, fine */
         si->cert_verified = 0;
         si->attr_verified = 0;
