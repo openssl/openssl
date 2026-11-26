@@ -47,6 +47,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     if (!evp_md_ctx_free_algctx(ctx))
         return 0;
+    /* The context is now a signing handle, no digest operation is in flight */
+    ctx->state = MD_STATE_NEWED;
 
     if (ctx->pctx == NULL) {
         reinit = 0;

@@ -33,8 +33,8 @@ additional input or generating output.
 
 =item finaled
 
-This state represents the MD when it has generated output.
-For an XOF digest, this state represents the MD when it has generated a
+This state represents the MD when it has generated its output, which is
+valid. For an XOF digest, this state represents the MD when it has generated a
 single-shot output.
 
 =item squeezed
@@ -42,6 +42,12 @@ single-shot output.
 For an XOF digest, this state represents the MD when it has generated output.
 It can be called multiple times to generate more output. The output length is
 variable for each call.
+
+=item failed
+
+This state represents the MD after the underlying implementation has failed an
+operation. Any output produced by that operation is not valid, and the MD
+cannot be used until it has been initialised or reset.
 
 =item freed
 
@@ -119,21 +125,23 @@ This is the canonical list.
 
 =begin man
 
- Function Call                --------------------- Current State -----------------------------------
-                              start   newed    initialised   updated     finaled     squeezed   freed
+ Function Call                --------------------- Current State ---------------------------------------------
+                              start   newed        initialised  updated      finaled      squeezed     failed       freed
  EVP_MD_CTX_new               newed
- EVP_DigestInit                    initialised initialised initialised initialised  initialised
- EVP_DigestUpdate                                updated     updated
- EVP_DigestFinal                                             finaled
- EVP_DigestFinalXOF                                          finaled
- EVP_DigestSqueeze                                           squeezed                squeezed
- EVP_MD_CTX_free              freed   freed       freed       freed       freed
- EVP_MD_CTX_reset                     newed       newed       newed       newed
- EVP_MD_CTX_get_params                newed    initialised   updated
- EVP_MD_CTX_set_params                newed    initialised   updated
- EVP_MD_CTX_gettable_params           newed    initialised   updated
- EVP_MD_CTX_settable_params           newed    initialised   updated
- EVP_MD_CTX_copy_ex                   newed    initialised   updated                 squeezed
+ EVP_DigestInit                       initialised  initialised  initialised  initialised  initialised  initialised
+ EVP_DigestUpdate                                  updated      updated
+ EVP_DigestFinal                                   finaled      finaled
+ EVP_DigestFinalXOF                                finaled      finaled
+ EVP_DigestSqueeze                                 squeezed     squeezed                  squeezed
+ EVP_MD_CTX_serialize                              initialised  updated                   squeezed
+ EVP_MD_CTX_deserialize                            serialized
+ EVP_MD_CTX_free              freed   freed        freed        freed        freed        freed        freed
+ EVP_MD_CTX_reset                     newed        newed        newed        newed        newed        newed
+ EVP_MD_CTX_get_params                newed        initialised  updated      finaled      squeezed
+ EVP_MD_CTX_set_params                newed        initialised  updated
+ EVP_MD_CTX_gettable_params           newed        initialised  updated
+ EVP_MD_CTX_settable_params           newed        initialised  updated
+ EVP_MD_CTX_copy_ex                   newed        initialised  updated      finaled      squeezed
 
 =end man
 
@@ -141,7 +149,7 @@ This is the canonical list.
 
 <table style="border:1px solid; border-collapse:collapse">
 <tr><th style="border:1px solid" align="left">Function Call</th>
-    <th style="border:1px solid" colspan="6">Current State</th></tr>
+    <th style="border:1px solid" colspan="7">Current State</th></tr>
 <tr><th style="border:1px solid"></th>
     <th style="border:1px solid" align="center">start</th>
     <th style="border:1px solid" align="center">newed</th>
@@ -149,9 +157,11 @@ This is the canonical list.
     <th style="border:1px solid" align="center">updated</th>
     <th style="border:1px solid" align="center">finaled</th>
     <th style="border:1px solid" align="center">squeezed</th>
+    <th style="border:1px solid" align="center">failed</th>
     <th style="border:1px solid" align="center">freed</th></tr>
 <tr><th style="border:1px solid" align="left">EVP_MD_CTX_new</th>
     <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
@@ -165,6 +175,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_DigestUpdate</th>
     <td style="border:1px solid" align="center"></td>
@@ -173,28 +184,50 @@ This is the canonical list.
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_DigestFinal</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_DigestFinalXOF</th>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_DigestSqueeze</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">squeezed</td>
     <td style="border:1px solid" align="center">squeezed</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">squeezed</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_DigestFinalXOF</th>
+<tr><th style="border:1px solid" align="left">EVP_MD_CTX_serialize</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center">squeezed</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MD_CTX_deserialize</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">serialized</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
@@ -204,7 +237,8 @@ This is the canonical list.
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">freed</td>
+    <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MD_CTX_reset</th>
     <td style="border:1px solid" align="center"></td>
@@ -212,14 +246,16 @@ This is the canonical list.
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">newed</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MD_CTX_get_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
+    <td style="border:1px solid" align="center">squeezed</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MD_CTX_set_params</th>
@@ -227,6 +263,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
@@ -237,6 +274,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MD_CTX_settable_params</th>
     <td style="border:1px solid" align="center"></td>
@@ -245,23 +283,31 @@ This is the canonical list.
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MD_CTX_copy_ex</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
     <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">finaled</td>
     <td style="border:1px solid" align="center">squeezed</td>
+    <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 </table>
 
 =end html
 
+EVP_MD_CTX_deserialize() leaves the MD in the state it was in when it was
+serialized.
+
 =head1 NOTES
 
-At some point the EVP layer will begin enforcing the transitions described
-herein.
+The EVP layer enforces the transitions described herein: a call made from a
+state not listed for it fails with the reason B<EVP_R_INVALID_STATE>, and the
+error data names the call and the state. Which parameters a legal
+EVP_MD_CTX_set_params() call may carry is given by EVP_MD_CTX_settable_params()
+and is up to the implementation.
 
 =head1 SEE ALSO
 
@@ -269,7 +315,7 @@ L<provider-digest(7)>, L<EVP_DigestInit(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

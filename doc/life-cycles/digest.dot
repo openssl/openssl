@@ -7,16 +7,27 @@ digraph digest {
     updated [label=updated, fontcolor="#c94c4c"];
     finaled [label="finaled", fontcolor="#c94c4c"];
     squeezed [label="squeezed", fontcolor="#c94c4c"];
+    failed [label="failed", fontcolor="#c94c4c"];
     end [label="freed", color="#deeaee", style="filled"];
 
     begin -> newed [label="EVP_MD_CTX_new"];
     newed -> initialised [label="EVP_DigestInit", weight=100];
     initialised -> updated [label="EVP_DigestUpdate", weight=100];
     updated -> updated [label="EVP_DigestUpdate"];
+    initialised -> finaled [label="EVP_DigestFinal",
+                            fontcolor="#808080", color="#808080"];
     updated -> finaled [label="EVP_DigestFinal", weight=2];
     updated -> finaled [label="EVP_DigestFinalXOF",
                         fontcolor="#808080", color="#808080"];
+    initialised -> squeezed [label="EVP_DigestSqueeze",
+                             fontcolor="#808080", color="#808080"];
     updated -> squeezed [label="EVP_DigestSqueeze", weight=3];
+    updated -> failed [label="failure", style=dotted];
+    failed -> initialised [label="EVP_DigestInit", style=dashed,
+                           color="#034f84", fontcolor="#034f84"];
+    failed -> newed [label="EVP_MD_CTX_reset", style=dashed,
+                     color="#034f84", fontcolor="#034f84"];
+    failed -> end [label="EVP_MD_CTX_free"];
     finaled -> end [label="EVP_MD_CTX_free"];
     finaled -> newed [label="EVP_MD_CTX_reset", style=dashed,
                       color="#034f84", fontcolor="#034f84"];

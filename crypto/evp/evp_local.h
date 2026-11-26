@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 
 #include <crypto/evp.h>
+#include "crypto/md_lifecycle.h"
 
 #include "internal/refcount.h"
 
@@ -39,6 +40,8 @@ struct evp_md_ctx_st {
      */
     void *algctx;
     EVP_MD *fetched_digest;
+    /* Position in the digest life-cycle, see life_cycle-digest(7) */
+    MD_STATE state;
 } /* EVP_MD_CTX */;
 
 struct evp_cipher_ctx_st {

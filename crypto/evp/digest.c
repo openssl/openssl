@@ -25,6 +25,59 @@
 
 static void evp_md_free(void *m);
 
+/*
+ * The canonical transitions of life_cycle-digest(7). Rows are the current
+ * state, columns the event, an entry is the next state or X for a miss.
+ * Deserialize restores the state that was serialized.
+ */
+enum {
+    MD_EV_INIT,
+    MD_EV_UPDATE,
+    MD_EV_FINAL,
+    MD_EV_FINALXOF,
+    MD_EV_SQUEEZE,
+    MD_EV_SET_PARAMS,
+    MD_EV_GET_PARAMS,
+    MD_EV_SERIALIZE,
+    MD_EV_DESERIALIZE,
+    MD_EV_COPY,
+    MD_EV_COUNT
+};
+
+static const char *const md_state_name[MD_STATE_COUNT] = {
+    "newed", "initialised", "updated", "finaled", "squeezed", "failed"
+};
+
+#define N MD_STATE_NEWED
+#define I MD_STATE_INITIALISED
+#define U MD_STATE_UPDATED
+#define F MD_STATE_FINALED
+#define S MD_STATE_SQUEEZED
+#define X (-1)
+
+/* clang-format off */
+static const signed char md_lifecycle[MD_STATE_COUNT][MD_EV_COUNT] = {
+    /*                  init update final finalxof squeeze set get ser deser copy */
+    /* newed       */ {    I,     X,    X,       X,      X,   N,  N,  X,    X,   N },
+    /* initialised */ {    I,     U,    F,       F,      S,   I,  I,  I,    I,   I },
+    /* updated     */ {    I,     U,    F,       F,      S,   U,  U,  U,    X,   U },
+    /* finaled     */ {    I,     X,    X,       X,      X,   X,  F,  X,    X,   F },
+    /* squeezed    */ {    I,     X,    X,       X,      S,   X,  S,  S,    X,   S },
+    /* failed      */ {    I,     X,    X,       X,      X,   X,  X,  X,    X,   X },
+};
+/* clang-format on */
+
+#undef N
+#undef I
+#undef U
+#undef F
+#undef S
+#undef X
+
+/* The serialized form is a version byte and the state, then the provider's */
+#define MD_SERIAL_VERSION 1
+#define MD_SERIAL_HDR_LEN 2
+
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {
@@ -135,6 +188,8 @@ int evp_md_ctx_free_algctx(EVP_MD_CTX *ctx)
 static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     const OSSL_PARAM params[])
 {
+    int next;
+
 #if !defined(FIPS_MODULE)
     if (ctx->pctx != NULL
         && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
@@ -154,7 +209,8 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     }
 #endif
 
-    EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED | EVP_MD_CTX_FLAG_FINALISED);
+    EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+    next = md_lifecycle[ctx->state][MD_EV_INIT];
 
     if (type != NULL) {
         ctx->reqdigest = type;
@@ -207,6 +263,8 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         ctx->fetched_digest = (EVP_MD *)type;
     }
     ctx->digest = type;
+    /* From here on a failure is the provider's and the context is unusable */
+    ctx->state = MD_STATE_FAILED;
     if (ctx->algctx == NULL) {
         ctx->algctx = ctx->digest->newctx(ossl_provider_ctx(type->prov));
         if (ctx->algctx == NULL) {
@@ -220,7 +278,10 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         return 0;
     }
 
-    return ctx->digest->dinit(ctx->algctx, params);
+    if (!ctx->digest->dinit(ctx->algctx, params))
+        return 0;
+    ctx->state = next;
+    return 1;
 }
 
 int EVP_DigestInit_ex2(EVP_MD_CTX *ctx, const EVP_MD *type,
@@ -244,13 +305,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    if (ossl_unlikely(count == 0))
-        return 1;
-
-    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
-        return 0;
-    }
+    int next, ret;
 
     if (ossl_unlikely(ctx->pctx != NULL)
         && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
@@ -282,7 +337,20 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    return ctx->digest->dupdate(ctx->algctx, data, count);
+
+    next = md_lifecycle[ctx->state][MD_EV_UPDATE];
+    if (ossl_unlikely(next < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
+        return 0;
+    }
+
+    if (ossl_unlikely(count == 0))
+        return 1;
+
+    ret = ctx->digest->dupdate(ctx->algctx, data, count);
+    ctx->state = ret ? next : MD_STATE_FAILED;
+    return ret;
 }
 
 /* The caller can assume that this removes any secret data from the context */
@@ -297,17 +365,13 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 /* The caller can assume that this removes any secret data from the context */
 int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 {
-    int ret, sz;
+    int ret, sz, next;
     size_t size = 0;
     size_t mdsize = 0;
 
     if (ossl_unlikely(ctx->digest == NULL))
         return 0;
 
-    sz = EVP_MD_CTX_get_size(ctx);
-    if (ossl_unlikely(sz < 0))
-        return 0;
-    mdsize = sz;
     if (ossl_unlikely(ctx->digest->prov == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
@@ -318,14 +382,20 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         return 0;
     }
 
-    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+    next = md_lifecycle[ctx->state][MD_EV_FINAL];
+    if (ossl_unlikely(next < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
         return 0;
     }
 
-    ret = ctx->digest->dfinal(ctx->algctx, md, &size, mdsize);
+    sz = EVP_MD_CTX_get_size(ctx);
+    if (ossl_unlikely(sz < 0))
+        return 0;
+    mdsize = sz;
 
-    ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
+    ret = ctx->digest->dfinal(ctx->algctx, md, &size, mdsize);
+    ctx->state = ret ? next : MD_STATE_FAILED;
 
     if (isize != NULL) {
         if (ossl_likely(size <= UINT_MAX)) {
@@ -342,7 +412,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 /* This is a one shot operation */
 int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 {
-    int ret = 0;
+    int ret = 0, next;
     OSSL_PARAM params[2];
     size_t i = 0;
 
@@ -361,8 +431,10 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
-    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+    next = md_lifecycle[ctx->state][MD_EV_FINALXOF];
+    if (ossl_unlikely(next < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
         return 0;
     }
 
@@ -376,8 +448,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 
     if (ossl_likely(EVP_MD_CTX_set_params(ctx, params) >= 0))
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
-
-    ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
+    ctx->state = ret ? next : MD_STATE_FAILED;
 
     return ret;
 }
@@ -385,6 +456,8 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 /* EVP_DigestSqueeze() can be called multiple times */
 int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 {
+    int next, ret;
+
     if (ctx->digest == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
         return 0;
@@ -400,11 +473,25 @@ int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
-    return ctx->digest->dsqueeze(ctx->algctx, md, &size, size);
+    next = md_lifecycle[ctx->state][MD_EV_SQUEEZE];
+    if (ossl_unlikely(next < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
+        return 0;
+    }
+
+    if (ossl_unlikely(size == 0))
+        return 1;
+
+    ret = ctx->digest->dsqueeze(ctx->algctx, md, &size, size);
+    ctx->state = ret ? next : MD_STATE_FAILED;
+    return ret;
 }
 
 int EVP_MD_CTX_serialize(EVP_MD_CTX *ctx, unsigned char *out, size_t *outlen)
 {
+    size_t len;
+
     if (ctx->digest == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
         return 0;
@@ -420,12 +507,35 @@ int EVP_MD_CTX_serialize(EVP_MD_CTX *ctx, unsigned char *out, size_t *outlen)
         return 0;
     }
 
-    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_CONTEXT_FINALIZED);
+    if (outlen == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    return ctx->digest->serialize(ctx->algctx, out, outlen);
+    if (ossl_unlikely(md_lifecycle[ctx->state][MD_EV_SERIALIZE] < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
+        return 0;
+    }
+
+    if (out == NULL) {
+        if (!ctx->digest->serialize(ctx->algctx, NULL, &len))
+            return 0;
+        *outlen = len + MD_SERIAL_HDR_LEN;
+        return 1;
+    }
+
+    if (*outlen < MD_SERIAL_HDR_LEN) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL);
+        return 0;
+    }
+    len = *outlen - MD_SERIAL_HDR_LEN;
+    if (!ctx->digest->serialize(ctx->algctx, out + MD_SERIAL_HDR_LEN, &len))
+        return 0;
+    out[0] = MD_SERIAL_VERSION;
+    out[1] = (unsigned char)ctx->state;
+    *outlen = len + MD_SERIAL_HDR_LEN;
+    return 1;
 }
 
 int EVP_MD_CTX_deserialize(EVP_MD_CTX *ctx, const unsigned char *in,
@@ -446,12 +556,27 @@ int EVP_MD_CTX_deserialize(EVP_MD_CTX *ctx, const unsigned char *in,
         return 0;
     }
 
-    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_CONTEXT_FINALIZED);
+    if (ossl_unlikely(md_lifecycle[ctx->state][MD_EV_DESERIALIZE] < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
         return 0;
     }
 
-    return ctx->digest->deserialize(ctx->algctx, in, inlen);
+    /* Only a state that can be serialized can have been serialized */
+    if (in == NULL || inlen < MD_SERIAL_HDR_LEN || in[0] != MD_SERIAL_VERSION
+        || in[1] >= MD_STATE_COUNT
+        || md_lifecycle[in[1]][MD_EV_SERIALIZE] < 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
+        return 0;
+    }
+
+    if (!ctx->digest->deserialize(ctx->algctx, in + MD_SERIAL_HDR_LEN,
+            inlen - MD_SERIAL_HDR_LEN)) {
+        ctx->state = MD_STATE_FAILED;
+        return 0;
+    }
+    ctx->state = in[1];
+    return 1;
 }
 
 EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in)
@@ -480,6 +605,12 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         return 0;
     }
 
+    if (ossl_unlikely(md_lifecycle[in->state][MD_EV_COPY] < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[in->state]);
+        return 0;
+    }
+
     if (in->digest == NULL) {
         /* copying uninitialized digest context */
         EVP_MD_CTX_reset(out);
@@ -503,6 +634,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         out->pctx = NULL;
 
         out->flags = in->flags;
+        out->state = in->state;
     } else {
         evp_md_ctx_reset_ex(out, 1);
         digest_change = (out->fetched_digest != in->fetched_digest);
@@ -610,10 +742,20 @@ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
         return pctx->op.sig.signature->set_ctx_md_params(pctx->op.sig.algctx,
             params);
 
-    if (ossl_likely(ctx->digest != NULL && ctx->digest->set_ctx_params != NULL))
-        return ctx->digest->set_ctx_params(ctx->algctx, params);
+    if (ossl_unlikely(md_lifecycle[ctx->state][MD_EV_SET_PARAMS] < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
+        return 0;
+    }
 
-    return 0;
+    if (ossl_unlikely(ctx->digest == NULL || ctx->digest->set_ctx_params == NULL))
+        return 0;
+
+    if (!ctx->digest->set_ctx_params(ctx->algctx, params)) {
+        ctx->state = MD_STATE_FAILED;
+        return 0;
+    }
+    return 1;
 }
 
 const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
@@ -665,6 +807,12 @@ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
         && pctx->op.sig.signature->get_ctx_md_params != NULL)
         return pctx->op.sig.signature->get_ctx_md_params(pctx->op.sig.algctx,
             params);
+
+    if (ossl_unlikely(md_lifecycle[ctx->state][MD_EV_GET_PARAMS] < 0)) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_INVALID_STATE, "in state %s",
+            md_state_name[ctx->state]);
+        return 0;
+    }
 
     if (ctx->digest != NULL && ctx->digest->get_ctx_params != NULL)
         return ctx->digest->get_ctx_params(ctx->algctx, params);
