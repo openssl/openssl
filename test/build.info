@@ -69,7 +69,7 @@ IF[{- !$disabled{tests} -}]
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
-          recordlentest drbgtest rand_status_test sslbuffertest \
+          recordlentest drbgtest vmclock_test rand_status_test sslbuffertest \
           time_offset_test pemtest dtls13_internal_test ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest ocsptest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
@@ -825,6 +825,14 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[drbgtest]=../include ../apps/include ../providers/common/include \
                     ../providers/fips/include
   DEPEND[drbgtest]=../libcrypto libtestutil.a
+
+  # The VMClock tests build their own copy of the reader, with a regular file
+  # in place of the device, and link libcrypto statically so that the default
+  # provider's DRBGs use that copy.
+  SOURCE[vmclock_test]=vmclock_test.c
+  INCLUDE[vmclock_test]=../include ../apps/include ../providers/common/include \
+                        ../providers/fips/include ../providers/implementations/include
+  DEPEND[vmclock_test]=../libcrypto.a libtestutil.a
 
   SOURCE[rand_status_test]=rand_status_test.c
   INCLUDE[rand_status_test]=../include ../apps/include

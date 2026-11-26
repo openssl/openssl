@@ -13,7 +13,7 @@ use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 use Cwd qw(abs_path);
 
-plan tests => 6;
+plan tests => 7;
 setup("test_rand");
 
 ok(run(test(["rand_test", srctop_file("test", "default.cnf"),
@@ -27,6 +27,7 @@ SKIP: {
 }
 
 ok(run(test(["drbgtest"])));
+ok(run(test(["vmclock_test"])));
 ok(run(test(["rand_status_test"])));
 
 SKIP: {
