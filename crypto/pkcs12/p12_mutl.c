@@ -82,15 +82,26 @@ static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
     return 1;
 }
 
+PBMAC1PARAM *PBMAC1_get1_param(const X509_ALGOR *macalg)
+{
+    PBMAC1PARAM *param = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBMAC1PARAM),
+        macalg->parameter);
+    if (param == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_INVALID_ARGUMENT);
+        return NULL;
+    }
+
+    return param;
+}
+
 PBKDF2PARAM *PBMAC1_get1_pbkdf2_param(const X509_ALGOR *macalg)
 {
     PBMAC1PARAM *param = NULL;
     PBKDF2PARAM *pbkdf2_param = NULL;
     const ASN1_OBJECT *kdf_oid;
 
-    param = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBMAC1PARAM), macalg->parameter);
+    param = PBMAC1_get1_param(macalg);
     if (param == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 

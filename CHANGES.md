@@ -33,6 +33,11 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * Added PBMAC1 Message Authentication Scheme in PKCS #12 info, and
+   `PBMAC1_get1_param()` as a supporting function.
+
+   *Lumi Yamori*
+
  * Added parameter name pointers for faster `OSSL_PARAM` decoding.
 
    *Dr Paul Dale*
