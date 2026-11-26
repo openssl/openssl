@@ -228,6 +228,12 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
 
     ctx->enc = enc;
 
+    /* a new key or iv starts a new message */
+    if (key != NULL || iv != NULL) {
+        ctx->len_set = 0;
+        ctx->aad_set = 0;
+    }
+
     if (iv != NULL) {
         if (ivlen != ccm_get_ivlen(ctx)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -339,6 +345,11 @@ static int ccm_set_iv(PROV_CCM_CTX *ctx, size_t mlen)
     if (!hw->setiv(ctx, ctx->iv, ccm_get_ivlen(ctx), mlen))
         return 0;
     ctx->len_set = 1;
+    ctx->aad_set = 0;
+
+    /* a new message starts here: no tag yet when encrypting */
+    if (ctx->enc)
+        ctx->tag_set = 0;
     return 1;
 }
 
@@ -413,14 +424,25 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
 
     if (out == NULL) {
         if (in == NULL) {
+            /* the message length is set once per message */
+            if (ctx->len_set) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+                goto err;
+            }
             if (!ccm_set_iv(ctx, len))
                 goto err;
-        } else {
-            /* If we have AAD, we need a message length */
-            if (!ctx->len_set && len)
+        } else if (len > 0) {
+            /* If we have AAD, we need the message length */
+            if (!ctx->len_set)
                 goto err;
+            /* the AAD is taken in one call, before the payload */
+            if (ctx->aad_set || (ctx->enc && ctx->tag_set)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+                goto err;
+            }
             if (!hw->setaad(ctx, in, len))
                 goto err;
+            ctx->aad_set = 1;
         }
     } else {
         /* If not set length yet do it */
@@ -428,6 +450,11 @@ static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
             goto err;
 
         if (ctx->enc) {
+            /* the payload is taken in one call */
+            if (ctx->tag_set) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+                goto err;
+            }
             if (!hw->auth_encrypt(ctx, in, out, len, NULL, 0))
                 goto err;
             /* Finished - tag stays readable, but reset other flags */
@@ -464,6 +491,7 @@ void ossl_ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
     ctx->iv_set = 0;
     ctx->tag_set = 0;
     ctx->len_set = 0;
+    ctx->aad_set = 0;
     ctx->l = 8;
     ctx->m = 12;
     ctx->tls_aad_len = UNINITIALISED_SIZET;

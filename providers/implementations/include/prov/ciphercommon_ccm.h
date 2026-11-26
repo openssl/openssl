@@ -41,6 +41,7 @@ typedef struct prov_ccm_st {
     unsigned int iv_set : 1; /* Set if an iv is set */
     unsigned int tag_set : 1; /* Set if tag is valid */
     unsigned int len_set : 1; /* Set if message length set */
+    unsigned int aad_set : 1; /* Set if AAD has been passed */
     size_t l, m; /* L and M parameters from RFC3610 */
     size_t keylen;
     size_t tls_aad_len; /* TLS AAD length */
