@@ -2242,6 +2242,55 @@ out:
     return ret;
 }
 
+static int test_EVP_DigestFinalXOF_xoflen(void)
+{
+    int ret = 0;
+    EVP_MD_CTX *md_ctx = NULL;
+    EVP_MD *shake256 = NULL;
+    unsigned char md[64];
+    unsigned int len = 0;
+    size_t xoflen = 20;
+    OSSL_PARAM params[2];
+
+    if (!TEST_ptr(md_ctx = EVP_MD_CTX_new())
+        || !TEST_ptr(shake256 = EVP_MD_fetch(testctx, "shake256", testpropq)))
+        goto out;
+
+    /* Without explicit xoflen, EVP_DigestFinalXOF must not leave xoflen set */
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, shake256, NULL))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+        || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, 40))
+        || !TEST_true(EVP_DigestInit_ex2(md_ctx, NULL, NULL))
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), -1)
+        || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+        || !TEST_false(EVP_DigestFinal_ex(md_ctx, md, &len)))
+        goto out;
+
+    /* Re-initializing with the same EVP_MD must also keep xoflen unset */
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, shake256, NULL))
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), -1))
+        goto out;
+
+    /* Explicit xoflen set by caller must be preserved across EVP_DigestFinalXOF */
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, shake256, params))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+        || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, 40))
+        || !TEST_true(EVP_DigestInit_ex2(md_ctx, NULL, NULL))
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), 20)
+        || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+        || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, &len))
+        || !TEST_uint_eq(len, 20))
+        goto out;
+
+    ret = 1;
+out:
+    EVP_MD_CTX_free(md_ctx);
+    EVP_MD_free(shake256);
+    return ret;
+}
+
 static int test_EVP_md_null(void)
 {
     int ret = 0;
@@ -9632,6 +9681,7 @@ int setup_tests(void)
     ADD_TEST(test_siphash_digestsign);
 #endif
     ADD_TEST(test_EVP_Digest);
+    ADD_TEST(test_EVP_DigestFinalXOF_xoflen);
     ADD_TEST(test_EVP_md_null);
 #ifndef OPENSSL_NO_POLY1305
     ADD_TEST(test_evp_mac_poly1305_no_key);
