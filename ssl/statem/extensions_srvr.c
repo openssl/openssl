@@ -825,18 +825,22 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     int ret = 0;
 
     s->s3.group_id_candidate = 0;
-    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
-        return 1;
 
     /*
      * If prior Client Hello in HRR set the peer_temp clear it out to process
-     * the key share in the second client hello
+     * the key share in the second client hello. Do this also when that key
+     * share is not used: a PSK that is accepted only on the second client
+     * hello, with a PSK-only key exchange, must not leave the first key share
+     * behind, or the handshake secret is never generated.
      */
     if (s->s3.peer_tmp != NULL) {
         EVP_PKEY_free(s->s3.peer_tmp);
         s->s3.peer_tmp = NULL;
         s->s3.group_id = 0;
     }
+
+    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
+        return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
@@ -1357,7 +1361,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 {
     PACKET identities, binders, binder;
     size_t binderoffset;
-    int hashsize;
+    int hashsize, binder_ok;
+    unsigned char binderbuf[EVP_MAX_MD_SIZE];
     SSL_SESSION *sess = NULL;
     unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
@@ -1611,6 +1616,18 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (sess == NULL) {
         size_t j;
 
+        /*
+         * A PSK-only server that validates the client's address statelessly
+         * may not be able to look the identity up before the cookie is
+         * valid. Defer the decision to the retried ClientHello, which is
+         * subject to the same checks below. This comes after the lookup on
+         * purpose: a PSK that is found and whose binder verifies is used as
+         * before, and that decides how the key_share of this ClientHello is
+         * handled.
+         */
+        if (tls_hrr_cookie_pending(s))
+            goto defer;
+
         for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
             ;
         if (j < s->ssl_pkey_num) {
@@ -1632,24 +1649,39 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (hashsize <= 0)
         goto err;
 
-    if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
-    }
+    if (!PACKET_get_length_prefixed_2(pkt, &binders))
+        goto bad_binder;
 
     for (i = 0; i <= id; i++) {
-        if (!PACKET_get_length_prefixed_1(&binders, &binder)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-            goto err;
-        }
+        if (!PACKET_get_length_prefixed_1(&binders, &binder))
+            goto bad_binder;
     }
 
-    if (PACKET_remaining(&binder) != (size_t)hashsize) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        goto err;
-    }
-    if (tls_psk_do_binder(s, md, PACKET_msg_start(pkt), binderoffset,
-            PACKET_data(&binder), NULL, sess, 0, ext)
+    if (PACKET_remaining(&binder) != (size_t)hashsize)
+        goto bad_binder;
+
+    if (tls_hrr_cookie_pending(s)) {
+        /*
+         * Without a valid cookie, an unknown identity is deferred above. A
+         * known identity whose binder fails must get the same reply, or the
+         * reply tells an unauthenticated peer which identities exist. So
+         * compute the binder here and compare it without failing. As for the
+         * alert above, this is not done in constant time.
+         */
+        if (tls_psk_do_binder(s, md, PACKET_msg_start(pkt), binderoffset,
+                NULL, binderbuf, sess, 1, ext)
+            != 1) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+        binder_ok = CRYPTO_memcmp(PACKET_data(&binder), binderbuf,
+                        (size_t)hashsize)
+            == 0;
+        OPENSSL_cleanse(binderbuf, sizeof(binderbuf));
+        if (!binder_ok)
+            goto defer;
+    } else if (tls_psk_do_binder(s, md, PACKET_msg_start(pkt), binderoffset,
+                   PACKET_data(&binder), NULL, sess, 0, ext)
         != 1) {
         /* SSLfatal() already called */
         goto err;
@@ -1659,6 +1691,16 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 
     SSL_SESSION_free(s->session);
     s->session = sess;
+    return 1;
+bad_binder:
+    if (!tls_hrr_cookie_pending(s)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
+    /* Same reply as for an unknown identity, see above */
+defer:
+    SSL_SESSION_free(sess);
+    s->ext.early_data_ok = 0;
     return 1;
 err:
     SSL_SESSION_free(sess);
