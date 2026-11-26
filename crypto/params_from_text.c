@@ -218,12 +218,15 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
 {
     int64_t i;
     uint64_t u;
-    BIGNUM *bn;
+    BIGNUM *bn = NULL;
 #ifndef OPENSSL_SYS_UEFI
     double d;
     int dok;
 #endif
     int ok = -1;
+
+    if (p == NULL)
+        return 0;
 
     /*
      * Iterate through each key in the array printing its key and value
@@ -301,6 +304,7 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
     }
 
 end:
+    BN_free(bn);
     return ok == -1 ? 0 : 1;
 }
 #endif /* FIPS_MODULE */
