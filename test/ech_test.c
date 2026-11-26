@@ -1549,6 +1549,8 @@ static int test_ech_skip_xwing(int idx)
             TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
             &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set1_echstore(cctx, es))
+        /* Load only X25519 on the server to avoid random config ID collisions. */
+        || !TEST_true(OSSL_ECHSTORE_downselect(es, OSSL_ECHSTORE_LAST))
         || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL))
