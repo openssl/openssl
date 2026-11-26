@@ -2912,6 +2912,37 @@ static int test_kdf_kbkdf_zero_output_size(void)
     return ret;
 }
 
+/*
+ * SP800-108 limits the number of PRF invocations in counter mode to 2^r - 1.
+ * With r = 8 and HMAC-SHA1 (h = 20) at most 255 * 20 = 5100 bytes can be
+ * derived.
+ */
+static int test_kdf_kbkdf_counter_limit(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM *params;
+
+    static unsigned char key[] = { 0x01 };
+    static unsigned char result[5120];
+    int r = 8;
+
+    params = construct_kbkdf_params("sha1", "HMAC", key, 1, "prf", "test", &r);
+    if (!TEST_ptr(params))
+        return 0;
+
+    kctx = get_kdfbyname("KBKDF");
+    ret = TEST_ptr(kctx)
+        && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        && TEST_int_eq(EVP_KDF_derive(kctx, result, 5100, NULL), 1)
+        && TEST_int_eq(EVP_KDF_derive(kctx, result, 5101, NULL), 0)
+        && TEST_int_eq(EVP_KDF_derive(kctx, result, 5120, NULL), 0);
+
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
 /* Two test vectors from RFC 8009 (AES Encryption with HMAC-SHA2 for Kerberos
  * 5) appendix A. */
 static int test_kdf_kbkdf_8009_prf1(void)
@@ -3854,6 +3885,7 @@ int setup_tests(void)
     ADD_TEST(test_kdf_kbkdf_invalid_mac);
     ADD_TEST(test_kdf_kbkdf_invalid_r);
     ADD_TEST(test_kdf_kbkdf_zero_output_size);
+    ADD_TEST(test_kdf_kbkdf_counter_limit);
     ADD_TEST(test_kdf_kbkdf_empty_key);
     ADD_TEST(test_kdf_kbkdf_1byte_key);
     ADD_TEST(test_kdf_kbkdf_8009_prf1);

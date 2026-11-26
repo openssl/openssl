@@ -349,9 +349,13 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     if (ctx->mode == COUNTER) {
-        /* Fail if keylen is too large for r */
+        /*
+         * Fail if keylen is too large for r: SP800-108 requires that the
+         * number of PRF invocations n = ceil(keylen / h) does not exceed
+         * 2^r - 1 in counter mode. keylen is known to be non-zero here.
+         */
         counter_max = (uint64_t)1 << (uint64_t)ctx->r;
-        if ((uint64_t)(keylen / h) >= counter_max) {
+        if ((uint64_t)((keylen - 1) / h) + 1 >= counter_max) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             goto done;
         }
