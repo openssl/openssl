@@ -668,7 +668,8 @@ OSSL_CMP_certConf_cb() is the default certificate confirmation callback function
 If the callback argument is not NULL it must point to a trust store.
 In this case the function checks that the newly enrolled certificate can be
 verified using this trust store and untrusted certificates from the I<ctx>,
-which have been augmented by the list of extraCerts received.
+which during the callback have been augmented by the list of extraCerts
+received in the message containing the newly enrolled certificate.
 During this verification, any certificate status checking is disabled.
 If the callback argument is NULL the function tries building an approximate
 chain as far as possible using the same untrusted certificates from the I<ctx>,
@@ -696,6 +697,13 @@ Typically, the callback will check at least that the certificate can be verified
 using a set of trusted certificates.
 It also could compare the subject DN and other fields of the newly
 enrolled certificate with the certificate template of the request.
+The callback must not modify the list of untrusted certificates in the I<ctx>,
+neither by calling OSSL_CMP_CTX_set1_untrusted() nor by changing the list
+obtained via OSSL_CMP_CTX_get0_untrusted().
+This is because before calling the callback, the library temporarily adds
+to the front of this list the extraCerts of the message containing the newly
+enrolled certificate, and after the callback returns, the library removes them
+again from the front of the list, assuming that the list has not been changed.
 
 OSSL_CMP_CTX_set_certConf_cb_arg() sets an argument, respectively a pointer to a
 structure containing arguments, optionally to be used by the certConf callback.

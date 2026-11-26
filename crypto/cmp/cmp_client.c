@@ -584,7 +584,7 @@ err:
 /*-
  * Callback fn validating that the new certificate can be verified, using
  * ctx->certConf_cb_arg, which has been initialized using opt_out_trusted, and
- * ctx->untrusted, which at this point already contains msg->extraCerts.
+ * ctx->untrusted, which at this point temporarily contains msg->extraCerts.
  * Returns 0 on acceptance, else a bit field reflecting PKIFailureInfo.
  * Quoting from RFC 9810 section 5.1. Overall PKI Message:
  *     The extraCerts field can contain certificates that may be useful to
@@ -685,7 +685,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     X509 *cert;
     char *subj = NULL;
     int ret = 1;
-    int rcvd_type;
+    int rcvd_type, num_added;
     OSSL_CMP_PKISI *si;
 
     if (!ossl_assert(ctx != NULL))
@@ -751,14 +751,24 @@ retry:
         return 0;
     }
 
+    /*
+     * Temporarily make the received extraCerts available in ctx->untrusted,
+     * as they may be needed for verifying the signer of any centrally
+     * generated private key and for validating the newly enrolled cert.
+     */
+    num_added = ossl_x509_prepend_certs(&ctx->untrusted, (*resp)->extraCerts,
+        OSSL_CMP_MAX_EXTRACERTS);
+    if (num_added < 0)
+        return 0;
+
     cert = get1_cert_status(ctx, (*resp)->body->type, crep);
     if (cert == NULL) {
         ERR_add_error_data(1, "; cannot extract certificate from response");
-        return 0;
+        goto err;
     }
     if (!ossl_cmp_ctx_set0_newCert(ctx, cert)) {
         X509_free(cert);
-        return 0;
+        goto err;
     }
 
     /*
@@ -767,7 +777,7 @@ retry:
      */
     if (crepmsg != NULL && crepmsg->caPubs != NULL
         && !ossl_cmp_ctx_set1_caPubs(ctx, crepmsg->caPubs))
-        return 0;
+        goto err;
 
     subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
     rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
@@ -797,6 +807,8 @@ retry:
     if (fail_info != 0) /* immediately log error before any certConf exchange */
         ossl_cmp_log1(ERROR, ctx,
             "rejecting newly enrolled cert with subject: %s", subj);
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(ctx->untrusted));
     /*
      * certConf exchange should better be moved to do_certreq_seq() such that
      * also more low-level errors with CertReqMessages get reported to server
@@ -817,6 +829,11 @@ retry:
     }
     OPENSSL_free(subj);
     return ret;
+
+err:
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(ctx->untrusted));
+    return 0;
 }
 
 static int initial_certreq(OSSL_CMP_CTX *ctx,
