@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,12 @@
 #include "pcy_local.h"
 
 /* Policy Node routines */
+
+static int policy_oid_cmp(const ASN1_OBJECT *const *a,
+    const ASN1_OBJECT *const *b)
+{
+    return OBJ_cmp(*a, *b);
+}
 
 void ossl_policy_data_free(X509_POLICY_DATA *data)
 {
@@ -54,7 +60,7 @@ X509_POLICY_DATA *ossl_policy_data_new(POLICYINFO *policy,
         ASN1_OBJECT_free(id);
         return NULL;
     }
-    ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
+    ret->expected_policy_set = sk_ASN1_OBJECT_new(policy_oid_cmp);
     if (ret->expected_policy_set == NULL) {
         OPENSSL_free(ret);
         ASN1_OBJECT_free(id);
