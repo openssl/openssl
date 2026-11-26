@@ -71,6 +71,9 @@ static unsigned int timer_cb(SSL *s, unsigned int timer_us)
         return 2 * timer_us;
 }
 
+#if (!defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_DTLS1_3)) || !defined(OPENSSL_NO_DTLS1_2)
+
 static OSSL_TIME fake_now_base;
 static OSSL_TIME fake_now_advanced;
 
@@ -78,6 +81,8 @@ static OSSL_TIME fake_now_cb(void)
 {
     return ossl_time_add(fake_now_base, fake_now_advanced);
 }
+
+#endif
 
 static int test_dtls_unprocessed(int testidx)
 {

@@ -3137,7 +3137,20 @@ __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
+
+/**
+ * Set the callback on @p s used to get the current time.
+ *
+ * This override is intended for testing (such as fake time) and should not
+ * be combined with real socket BIOs whose timeouts rely on real wall-clock time.
+ *
+ * @param s A DTLS SSL object.
+ * @param now_cb Callback returning the current time, or NULL to restore the
+ *               default time provider.
+ * @return 1 on success, or 0 on failure.
+ */
 int dtls1_set_now_cb(SSL *s, OSSL_TIME (*now_cb)(void));
+
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
