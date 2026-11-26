@@ -99,6 +99,7 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
     struct chacha20_poly1305_get_ctx_params_st p;
+    size_t sz;
 
     if (ctx == NULL || !chacha20_poly1305_get_ctx_params_decoder(params, &p))
         return 0;
@@ -138,11 +139,19 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        if (p.tag->data_size == 0 || p.tag->data_size > POLY1305_BLOCK_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+        if (p.tag->data == NULL) {
+            sz = POLY1305_BLOCK_SIZE;
+        } else {
+            sz = p.tag->data_size;
+            if (sz == 0 || sz > POLY1305_BLOCK_SIZE) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+                return 0;
+            }
+        }
+        if (!OSSL_PARAM_set_octet_string(p.tag, ctx->tag, sz)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
-        memcpy(p.tag->data, ctx->tag, p.tag->data_size);
     }
     return 1;
 }

@@ -205,6 +205,9 @@ err:
  *   match EVP_CIPHER_get_key_length() / get_iv_length() / get_mode()
  * - OSSL_CIPHER_PARAM_AEAD_TAGLEN on a fresh ctx is non-zero and matches
  *   EVP_CIPHER_CTX_get_tag_length()
+ * - OSSL_CIPHER_PARAM_AEAD_TAG after an encryption returns the tag with
+ *   return_size set, a size query (data NULL) reports the tag length, and
+ *   an oversized buffer returns the full tag for OCB and SIV ciphers
  * - all fit the fixed-size buffers used by the other tests
  *
  * Resolved values are written back into aead_list[idx].
@@ -216,6 +219,13 @@ static int test_evp_aead_params(int idx)
     OSSL_PARAM params[4];
     size_t keylen = 0, ivlen = 0, taglen = 0;
     unsigned int mode = 0;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_ctrl[EVPTEST_TAG_LEN_MAX] = { 0 };
+    static const unsigned char msg[] = "aead params tag";
+    unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    int i = 0, len = 0;
     int testresult = 0;
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN,
@@ -266,6 +276,74 @@ static int test_evp_aead_params(int idx)
     info->ivlen = (int)ivlen;
     info->mode = (int)mode;
     info->taglen = (int)taglen;
+
+    for (i = 0; i < info->keylen; i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen; i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    EVP_CIPHER_CTX_free(ctx);
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, iv, NULL))
+        || (info->mode == EVP_CIPH_CCM_MODE
+            && !TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, NULL,
+                (int)sizeof(msg) - 1)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out, &len, msg,
+            (int)sizeof(msg) - 1))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, out + len, &len))) {
+        TEST_info("%s: tag encrypt", info->name);
+        goto err;
+    }
+
+    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+            (int)taglen, tag_ctrl))) {
+        TEST_info("%s: ctrl tag read", info->name);
+        goto err;
+    }
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, taglen);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_true(OSSL_PARAM_modified(params))
+        || !TEST_size_t_eq(params[0].return_size, taglen)
+        || !TEST_mem_eq(tag, taglen, tag_ctrl, taglen)) {
+        TEST_info("%s: tag param query", info->name);
+        goto err;
+    }
+
+    if (strstr(info->name, "OCB") != NULL
+        || strstr(info->name, "SIV") != NULL) {
+        memset(tag, 0, sizeof(tag));
+        params[0] = OSSL_PARAM_construct_octet_string(
+            OSSL_CIPHER_PARAM_AEAD_TAG, tag, EVPTEST_TAG_LEN_MAX);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+            || !TEST_size_t_eq(params[0].return_size, taglen)
+            || !TEST_mem_eq(tag, taglen, tag_ctrl, taglen)) {
+            TEST_info("%s: tag oversized buffer", info->name);
+            goto err;
+        }
+    }
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        NULL, taglen);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_size_t_eq(params[0].return_size, taglen)) {
+        TEST_info("%s: tag size query", info->name);
+        goto err;
+    }
+
+    params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_size_t_eq(params[0].return_size, taglen)) {
+        TEST_info("%s: tag size query, data_size 0", info->name);
+        goto err;
+    }
+
     testresult = 1;
 err:
     EVP_CIPHER_CTX_free(ctx);
