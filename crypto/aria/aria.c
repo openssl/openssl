@@ -32,7 +32,7 @@
 #define rotl32(v, r) (((uint32_t)(v) << (r)) | ((uint32_t)(v) >> (32 - r)))
 #define rotr32(v, r) (((uint32_t)(v) >> (r)) | ((uint32_t)(v) << (32 - r)))
 
-#define bswap32(v) \
+#define aria_bswap32(v) \
     (((v) << 24) ^ ((v) >> 24) ^ (((v) & 0x0000ff00) << 8) ^ (((v) & 0x00ff0000) >> 8))
 
 #define GET_U8_BE(X, Y) ((uint8_t)((X) >> ((3 - Y) * 8)))
@@ -378,7 +378,7 @@ static const uint32_t X2[256] = {
     do {                                                                \
         (T1) = (((T1) << 8) & 0xff00ff00) ^ (((T1) >> 8) & 0x00ff00ff); \
         (T2) = rotr32(T2, 16);                                          \
-        (T3) = bswap32(T3);                                             \
+        (T3) = aria_bswap32(T3);                                        \
     } while (0)
 
 /* Odd round Substitution & Diffusion */
