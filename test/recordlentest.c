@@ -236,17 +236,19 @@ typedef struct {
 
 #if !defined(OPENSSL_NO_TLS1_2)
 static const SHORT_AEAD_RECORD_TEST short_aead_record_tests[] = {
-    { TLS1_TXT_RSA_WITH_AES_128_CCM, 0, SHORT_AEAD_RECORD_AES },
-    { TLS1_TXT_RSA_WITH_AES_128_CCM,
+#ifndef OPENSSL_NO_DH
+    { TLS1_TXT_DHE_RSA_WITH_AES_128_CCM, 0, SHORT_AEAD_RECORD_AES },
+    { TLS1_TXT_DHE_RSA_WITH_AES_128_CCM,
         EVP_CCM_TLS_EXPLICIT_IV_LEN + EVP_CCM_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_AES },
-    { TLS1_TXT_RSA_WITH_AES_128_CCM_8,
+    { TLS1_TXT_DHE_RSA_WITH_AES_128_CCM_8,
         EVP_CCM_TLS_EXPLICIT_IV_LEN + EVP_CCM8_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_AES },
-    { TLS1_TXT_RSA_WITH_AES_128_GCM_SHA256,
+#endif
+    { TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
         EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_AES },
-    { TLS1_TXT_RSA_WITH_ARIA_128_GCM_SHA256,
+    { TLS1_TXT_ECDHE_RSA_WITH_ARIA_128_GCM_SHA256,
         EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN - 1,
         SHORT_AEAD_RECORD_ARIA },
     { TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -267,9 +269,24 @@ static void alert_cb(int write_p, int version, int content_type,
 }
 
 #ifndef OPENSSL_NO_TLS1_2
+/* Returns 1 if a loaded provider offers the named cipher, 0 otherwise. */
+static int cipher_is_available(const char *cipher_name)
+{
+    EVP_CIPHER *cipher;
+    int ret;
+
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, cipher_name, NULL);
+    ERR_pop_to_mark();
+    ret = cipher != NULL;
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 static int test_tls12_short_aead_record(int idx)
 {
     const SHORT_AEAD_RECORD_TEST *test = &short_aead_record_tests[idx];
+    const char *cipher_name = NULL;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
@@ -289,6 +306,12 @@ static int test_tls12_short_aead_record(int idx)
     if (test->cipher_type == SHORT_AEAD_RECORD_CHACHA)
         return TEST_skip("ChaCha20-Poly1305 or EC is disabled");
 #endif
+    if (test->cipher_type == SHORT_AEAD_RECORD_ARIA)
+        cipher_name = "ARIA-128-GCM";
+    else if (test->cipher_type == SHORT_AEAD_RECORD_CHACHA)
+        cipher_name = "ChaCha20-Poly1305";
+    if (cipher_name != NULL && !cipher_is_available(cipher_name))
+        return TEST_skip("cipher is not available from the loaded providers");
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
             TLS_client_method(), TLS1_2_VERSION, TLS1_2_VERSION,
@@ -350,9 +373,9 @@ static int test_dtls12_short_aead_record(void)
     SSL_CTX_set_security_level(cctx, 0);
 
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx,
-            TLS1_TXT_RSA_WITH_AES_128_GCM_SHA256))
+            TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256))
         || !TEST_true(SSL_CTX_set_cipher_list(cctx,
-            TLS1_TXT_RSA_WITH_AES_128_GCM_SHA256))
+            TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256))
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL)))
         goto end;
