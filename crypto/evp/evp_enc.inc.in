@@ -13,26 +13,15 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 sub produce_evp_param_decoder {
     my $decoder = produce_param_decoder(@_);
 
-    # Remove the unavailable header inclusion.
-    $decoder =~ s|#include "prov/proverr.h"||;
+    $decoder =~ s|#include "prov/proverr.h"|#include <openssl/err.h>|;
+    $decoder =~ s/ERR_LIB_PROV/ERR_LIB_EVP/g;
+    $decoder =~ s/PROV_R_REPEATED_PARAMETER/ERR_R_PASSED_INVALID_ARGUMENT/g;
     return $decoder;
 }
 -}
 
-/*
- * The EVP layer only peeks at the length parameters, the provider remains
- * responsible for validating the complete set.  A gettable/settable list is
- * not needed.
- *
- * OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for OSSL_CIPHER_PARAM_IVLEN, so
- * both are covered by the single "ivlen" entry.
- *
- * Duplicates resolve to the first occurrence to match the behaviour of
- * OSSL_PARAM_locate_const().
- */
 #define evp_cipher_len_params_list
-
 {- produce_evp_param_decoder('evp_cipher_len_params',
-                         (['OSSL_CIPHER_PARAM_KEYLEN', 'keylen', 'size_t', 'duplicate: first'],
-                          ['OSSL_CIPHER_PARAM_IVLEN',  'ivlen',  'size_t', 'duplicate: first'],
+                         (['OSSL_CIPHER_PARAM_KEYLEN', 'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',  'ivlen',  'size_t'],
                          )); -}
