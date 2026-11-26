@@ -27,6 +27,13 @@ NON_EMPTY_TRANSLATION_UNIT
 #define ALIGN_OF(ptr, boundary) \
     ((unsigned char *)(ptr) + (boundary - (((size_t)(ptr)) & (boundary - 1))))
 
+/*
+ * Square-and-multiply while BN_num_bits(exp) <= 80. Wider exponents use a
+ * 5-bit window. Generic BN_mod_exp_mont already uses window 4 for exponents
+ * longer than 79 bits (BN_window_bits_for_exponent_size).
+ */
+#define RSAZ_MOD_EXP_X1_SQM_MAX_BITS 80
+
 /* Internal radix */
 #define DIGIT_SIZE (52)
 /* 52-bit mask */
@@ -168,6 +175,9 @@ static int RSAZ_mod_exp_x2_ifma256(BN_ULONG *res, const BN_ULONG *base,
     const BN_ULONG *exp[2], const BN_ULONG *m,
     const BN_ULONG *rr, const BN_ULONG k0[2],
     int modulus_bitsize);
+static int RSAZ_mod_exp_x1_ifma256(BN_ULONG *out, const BN_ULONG *base,
+    const BN_ULONG *exp, const BN_ULONG *m, const BN_ULONG *rr,
+    BN_ULONG k0, int modulus_bitsize, int exp_bits);
 
 /*
  * Dual Montgomery modular exponentiation using prime moduli of the
@@ -320,6 +330,244 @@ err:
         OPENSSL_cleanse(storage, storage_len_bytes);
         OPENSSL_free(storage);
     }
+    return ret;
+}
+
+static void rsaz_extract_multiplier_x1(BN_ULONG *dst, const BN_ULONG *red_table,
+    int red_digits, int idx)
+{
+    OPENSSL_assert(idx >= 0 && idx < (1 << 5));
+    /*
+     * Public / non-const-time callers only (see BN_mod_exp_mont hook). Window
+     * index is not secret; use a direct copy instead of scanning all rows.
+     */
+    memcpy(dst, red_table + (size_t)idx * (size_t)red_digits,
+        (size_t)red_digits * sizeof(BN_ULONG));
+}
+
+/*
+ * Single {2048}-bit w-ary modular exponentiation using Almost Montgomery
+ * Multiplication, optimized with AVX512_IFMA256 ISA.
+ *
+ * The parameter w (window size) = 5 when |exp_bits| is greater than
+ * RSAZ_MOD_EXP_X1_SQM_MAX_BITS; otherwise binary square-and-multiply is used.
+ *
+ *  [out] out      - result of modular exponentiation: {40} qword
+ *                   values in 2^52 radix.
+ *  [in]  base     - base ({40} qword values in 2^52 radix)
+ *  [in]  exp      - {32} qword values in 2^64 radix.
+ *                   Exponent is not converted to redundant representation.
+ *  [in]  m        - modulus ({40} qword values in 2^52 radix)
+ *  [in]  rr       - Montgomery parameter:
+ *                     RR(2048) = 2^4160 mod m.
+ *                   ({40} qword values in 2^52 radix)
+ *  [in]  k0       - Montgomery parameter: k0 = -1/m mod 2^64
+ *  [in]  modulus_bitsize - modulus bit size (must be 2048)
+ *  [in]  exp_bits  - BN_num_bits(exp); controls exponentiation loop length
+ *
+ * \return 0 in case of failure,
+ *         1 in case of success.
+ */
+static int RSAZ_mod_exp_x1_ifma256(BN_ULONG *out,
+    const BN_ULONG *base,
+    const BN_ULONG *exp,
+    const BN_ULONG *m,
+    const BN_ULONG *rr,
+    BN_ULONG k0,
+    int modulus_bitsize,
+    int exp_bits)
+{
+    int ret = 0;
+    /* Exponent window size */
+    int exp_win_size = 5;
+    int exp_win_mask = (1U << exp_win_size) - 1;
+
+    /* Number of digits (64-bit words) in redundant representation to handle
+     * modulus bits
+     */
+    int red_digits = 0;
+    int exp_digits = 0;
+
+    BN_ULONG *storage = NULL;
+    BN_ULONG *storage_aligned = NULL;
+    int storage_len_bytes = 0;
+
+    /* Redundant representation of modulus and exponent */
+    BN_ULONG *red_Y = NULL;
+    BN_ULONG *red_X = NULL;
+    /* Precomputed table of multipliers for the exponent */
+    BN_ULONG *red_table = NULL;
+    /* Exponent in redundant representation */
+    BN_ULONG *expz = NULL;
+
+    /* Single-lane AMM */
+    AMM amm = NULL;
+    int avx512ifma = !!ossl_rsaz_avx512ifma_eligible();
+
+#define AMS1(r, a, m, k) amm((r), (a), (a), (m), (k))
+
+    if (modulus_bitsize != 2048)
+        goto err;
+
+    if (exp_bits < 1)
+        exp_bits = 1;
+    else if (exp_bits > modulus_bitsize)
+        exp_bits = modulus_bitsize;
+
+    red_digits = 40;
+    exp_digits = 32;
+    amm = ossl_rsaz_amm52_x1[(modulus_bitsize / 512 - 2) * 2 + avx512ifma];
+
+    if (exp_bits <= RSAZ_MOD_EXP_X1_SQM_MAX_BITS) {
+        /* red_Y, red_X, red_table[0..1], expz */
+        storage_len_bytes = (red_digits + red_digits + 2 * red_digits
+                                + (exp_digits + 1))
+                * sizeof(BN_ULONG)
+            + 64;
+    } else {
+        storage_len_bytes = (red_digits + red_digits
+                                + red_digits * (1U << exp_win_size)
+                                + (exp_digits + 1))
+                * sizeof(BN_ULONG)
+            + 64;
+    }
+
+    storage = (BN_ULONG *)OPENSSL_zalloc(storage_len_bytes);
+    if (storage == NULL)
+        goto err;
+    storage_aligned = (BN_ULONG *)ALIGN_OF(storage, 64);
+
+    red_Y = storage_aligned;
+    red_X = red_Y + red_digits;
+    red_table = red_X + red_digits;
+    if (exp_bits <= RSAZ_MOD_EXP_X1_SQM_MAX_BITS)
+        expz = red_table + 2 * red_digits;
+    else
+        expz = red_table + red_digits * (1U << exp_win_size);
+
+    memset(red_X, 0, (size_t)red_digits * sizeof(BN_ULONG));
+    red_X[0] = 1;
+    amm(&red_table[0 * red_digits], (const BN_ULONG *)red_X, rr, m, k0);
+    amm(&red_table[1 * red_digits], base, rr, m, k0);
+
+    memcpy(expz, exp, (size_t)exp_digits * sizeof(BN_ULONG));
+    expz[exp_digits] = 0;
+
+    if (exp_bits <= RSAZ_MOD_EXP_X1_SQM_MAX_BITS) {
+        int i;
+
+        memcpy(red_Y, &red_table[0 * red_digits],
+            (size_t)red_digits * sizeof(BN_ULONG));
+        for (i = exp_bits - 1; i >= 0; i--) {
+            const BN_ULONG limb = expz[(unsigned)i / BN_BITS2];
+            const unsigned shift = (unsigned)i % BN_BITS2;
+
+            AMS1(red_Y, red_Y, m, k0);
+            if (((limb >> shift) & (BN_ULONG)1) != 0)
+                amm(red_Y, (const BN_ULONG *)red_Y,
+                    &red_table[1 * red_digits], m, k0);
+        }
+    } else {
+        int idx;
+
+        for (idx = 1; idx < (int)((1U << exp_win_size) / 2); idx++) {
+            AMS1(&red_table[(2 * idx + 0) * red_digits],
+                &red_table[(1 * idx) * red_digits], m, k0);
+            amm(&red_table[(2 * idx + 1) * red_digits],
+                &red_table[(2 * idx) * red_digits],
+                &red_table[1 * red_digits], m, k0);
+        }
+
+        {
+            /*
+             * Round exponent bit-length up to a multiple of the window size so
+             * the first 5-bit window aligns with BN_num_bits(exp); high bits
+             * are zero when exp_bits < modulus_bitsize (e.g. public RSA e).
+             * Same starting index as the full-width case when exp_bits ==
+             * modulus_bitsize.
+             */
+            const int exp_eb = ((exp_bits + exp_win_size - 1) / exp_win_size)
+                * exp_win_size;
+            const BN_ULONG table_idx_mask = exp_win_mask;
+            int exp_bit_no = exp_eb - exp_win_size;
+            int exp_chunk_no = exp_bit_no / 64;
+            int exp_chunk_shift = exp_bit_no % 64;
+
+            BN_ULONG red_table_idx;
+
+            /* Process 1-st exp window - just init result */
+            {
+                BN_ULONG T;
+
+                red_table_idx = expz[exp_chunk_no];
+                T = expz[exp_chunk_no + 1];
+                red_table_idx >>= exp_chunk_shift;
+                /*
+                 * Get additional bits from the next quadword
+                 * when 64-bit boundaries are crossed.
+                 */
+                if (exp_chunk_shift > 64 - exp_win_size) {
+                    T <<= (64 - exp_chunk_shift);
+                    red_table_idx ^= T;
+                }
+                red_table_idx &= table_idx_mask;
+            }
+            rsaz_extract_multiplier_x1(red_Y, red_table, red_digits,
+                (int)red_table_idx);
+
+            /* Process other exp windows */
+            for (exp_bit_no -= exp_win_size; exp_bit_no >= 0;
+                exp_bit_no -= exp_win_size) {
+                /* Extract pre-computed multiplier from the table */
+                {
+                    BN_ULONG T;
+
+                    exp_chunk_no = exp_bit_no / 64;
+                    exp_chunk_shift = exp_bit_no % 64;
+                    {
+                        red_table_idx = expz[exp_chunk_no];
+                        T = expz[exp_chunk_no + 1];
+
+                        red_table_idx >>= exp_chunk_shift;
+                        /*
+                         * Get additional bits from the next quadword
+                         * when 64-bit boundaries are crossed.
+                         */
+                        if (exp_chunk_shift > 64 - exp_win_size) {
+                            T <<= (64 - exp_chunk_shift);
+                            red_table_idx ^= T;
+                        }
+                        red_table_idx &= table_idx_mask;
+                    }
+
+                    rsaz_extract_multiplier_x1(red_X, red_table, red_digits,
+                        (int)red_table_idx);
+                }
+
+                /* Series of squaring */
+                AMS1(red_Y, red_Y, m, k0);
+                AMS1(red_Y, red_Y, m, k0);
+                AMS1(red_Y, red_Y, m, k0);
+                AMS1(red_Y, red_Y, m, k0);
+                AMS1(red_Y, red_Y, m, k0);
+                amm(red_Y, (const BN_ULONG *)red_Y, (const BN_ULONG *)red_X, m, k0);
+            }
+        }
+    }
+
+    memset(red_X, 0, (size_t)red_digits * sizeof(BN_ULONG));
+    red_X[0] = 1;
+    amm(out, (const BN_ULONG *)red_Y, (const BN_ULONG *)red_X, m, k0);
+
+    ret = 1;
+
+err:
+    if (storage != NULL) {
+        OPENSSL_cleanse(storage, storage_len_bytes);
+        OPENSSL_free(storage);
+    }
+
+#undef AMS1
     return ret;
 }
 
@@ -570,6 +818,115 @@ err:
     }
 
 #undef DAMS
+    return ret;
+}
+
+/*
+ * Single Montgomery modular exponentiation, optimized with AVX512 ISA or
+ * AVXIFMA ISA.
+ *
+ * Input and output are all in regular 2^64 radix.
+ *
+ * Modulus shall be |factor_size| bit size.
+ *
+ * Supported case:
+ *   - 2048
+ *
+ *  [out] res       - result of modular exponentiation: array of qword values
+ *                    in regular (2^64) radix. Size of array shall be enough
+ *                    to hold |factor_size| bits.
+ *  [in]  base      - base
+ *  [in]  exp       - exponent
+ *  [in]  m         - modulus
+ *  [in]  rr        - Montgomery parameter RR = R^2 mod m
+ *  [in]  k0        - Montgomery parameter k0 = -1/m mod 2^64
+ *  [in]  factor_size - modulus bit size
+ *  [in]  exp_bits  - BN_num_bits(exp); controls exponentiation loop length
+ *
+ * \return 0 in case of failure,
+ *         1 in case of success.
+ */
+int ossl_rsaz_mod_exp_avx512_x1(BN_ULONG *res,
+    const BN_ULONG *base,
+    const BN_ULONG *exp,
+    const BN_ULONG *m,
+    const BN_ULONG *rr,
+    BN_ULONG k0,
+    int factor_size,
+    int exp_bits)
+{
+    int ret = 0;
+
+    /*
+     * Exponent limb count, Montgomery bump exponent, and YMM scratch capacity
+     * for radix-52 temporaries (filled per supported |factor_size|).
+     */
+    int exp_digits = number_of_digits(factor_size + 2, DIGIT_SIZE);
+    int coeff_pow = 4 * (DIGIT_SIZE * exp_digits - factor_size);
+
+    /* Number of YMM registers required to store exponent's digits */
+    int ymm_regs_num = NUMBER_OF_REGISTERS(exp_digits, 256);
+    /* Capacity of the register set (in qwords) to store exponent */
+    int regs_capacity = ymm_regs_num * 4;
+
+    /* Scratch layout: base_red, m_red, rr_red, coeff_red (reused as RR'). */
+    BN_ULONG *base_red, *m_red, *rr_red;
+    BN_ULONG *coeff_red;
+    BN_ULONG *storage = NULL;
+    BN_ULONG *storage_aligned = NULL;
+    int storage_len_bytes = 4 * regs_capacity * (int)sizeof(BN_ULONG)
+        + 64; /* alignment */
+
+    /* Single-lane AMM */
+    AMM amm = NULL;
+    int avx512ifma = !!ossl_rsaz_avx512ifma_eligible();
+
+    if (factor_size != 2048)
+        goto err;
+
+    amm = ossl_rsaz_amm52_x1[(factor_size / 512 - 2) * 2 + avx512ifma];
+
+    storage = (BN_ULONG *)OPENSSL_zalloc((size_t)storage_len_bytes);
+    if (storage == NULL)
+        goto err;
+    storage_aligned = (BN_ULONG *)ALIGN_OF(storage, 64);
+
+    base_red = storage_aligned;
+    m_red = base_red + regs_capacity;
+    rr_red = m_red + regs_capacity;
+    coeff_red = rr_red + regs_capacity;
+
+    to_words52(base_red, regs_capacity, base, factor_size);
+    to_words52(m_red, regs_capacity, m, factor_size);
+    to_words52(rr_red, regs_capacity, rr, factor_size);
+
+    memset(coeff_red, 0, (size_t)exp_digits * sizeof(BN_ULONG));
+    set_bit(coeff_red, 64 * (int)(coeff_pow / 52) + coeff_pow % 52);
+
+    amm(rr_red, rr_red, rr_red, m_red, k0);
+    amm(rr_red, rr_red, coeff_red, m_red, k0);
+    memcpy(coeff_red, rr_red, (size_t)regs_capacity * sizeof(BN_ULONG));
+
+    /* Exponentiation */
+    ret = RSAZ_mod_exp_x1_ifma256(rr_red, base_red, exp, m_red,
+        coeff_red, k0, factor_size, exp_bits);
+    if (!ret)
+        goto err;
+
+    /* Convert result back in regular 2^64 domain */
+    from_words52(res, factor_size, rr_red);
+
+    factor_size /= (int)(sizeof(BN_ULONG) * 8);
+    bn_reduce_once_in_place(res, /*carry=*/0, m, storage, factor_size);
+
+    ret = 1;
+
+err:
+    if (storage != NULL) {
+        /* Clear whole storage */
+        OPENSSL_cleanse(storage, storage_len_bytes);
+        OPENSSL_free(storage);
+    }
     return ret;
 }
 

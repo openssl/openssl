@@ -53,6 +53,32 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
     BN_ULONG k0_2,
     int factor_size);
 
+/**
+ * @brief Single-lane Montgomery modular exponentiation, res = base^exp mod m,
+ * using AVX512_IFMA or AVX_IFMA.  This is the public (non-constant-time)
+ * BN_mod_exp_mont fast path and must not be used with secret exponents.
+ * All arrays are in regular 2^64 radix.
+ * @param res receives the result; must hold factor_size bits
+ * @param base the base, less than m, padded with zero words to factor_size
+ *        bits
+ * @param exp the exponent, padded with zero words to factor_size bits
+ * @param m the modulus
+ * @param RR the Montgomery parameter R^2 mod m, padded to factor_size bits
+ * @param k0 the Montgomery parameter -1/m mod 2^64
+ * @param factor_size the modulus size in bits; only 2048 is supported
+ * @param exp_bits BN_num_bits() of the exponent; sets the loop length and
+ *        the window strategy
+ * @returns 1 on success, 0 if factor_size is unsupported or allocation fails
+ */
+int ossl_rsaz_mod_exp_avx512_x1(BN_ULONG *res,
+    const BN_ULONG *base,
+    const BN_ULONG *exp,
+    const BN_ULONG *m,
+    const BN_ULONG *RR,
+    BN_ULONG k0,
+    int factor_size,
+    int exp_bits);
+
 static ossl_inline void bn_select_words(BN_ULONG *r, BN_ULONG mask,
     const BN_ULONG *a,
     const BN_ULONG *b, size_t num)
