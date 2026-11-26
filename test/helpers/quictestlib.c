@@ -638,6 +638,11 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     return wait_for_timeout(s, qtserv, NULL);
 }
 
+int qtest_wait_for_timeout_ssl(SSL *s, SSL *listener)
+{
+    return wait_for_timeout(s, NULL, listener);
+}
+
 static void tick_server(QUIC_TSERVER *qtserv, SSL *listener)
 {
     if (qtserv != NULL)
@@ -847,12 +852,13 @@ static void run_server_shutdown_thread(void)
      * fast
      */
     do {
-        ossl_quic_tserver_tick(globtserv);
+        tick_server(globtserv, globlistener);
     } while (!tsan_load(&shutdowndone));
 }
 #endif
 
-int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
+/* Exactly one of |qtserv| or |listener| must be non-NULL */
+static int shutdown_client(QUIC_TSERVER *qtserv, SSL *listener, SSL *clientssl)
 {
     int tickserver = 1;
     int ret = 0;
@@ -876,6 +882,7 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
          * connection
          */
         globtserv = qtserv;
+        globlistener = listener;
         shutdowndone = 0;
         if (!TEST_true(run_thread(&t, run_server_shutdown_thread)))
             return 0;
@@ -900,7 +907,7 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
             break;
 
         if (tickserver)
-            ossl_quic_tserver_tick(qtserv);
+            tick_server(qtserv, listener);
     }
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
@@ -912,6 +919,22 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
 #endif
 
     return ret;
+}
+
+int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
+{
+    if (!TEST_ptr(qtserv))
+        return 0;
+
+    return shutdown_client(qtserv, NULL, clientssl);
+}
+
+int qtest_shutdown_ssl(SSL *listener, SSL *clientssl)
+{
+    if (!TEST_ptr(listener))
+        return 0;
+
+    return shutdown_client(NULL, listener, clientssl);
 }
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
