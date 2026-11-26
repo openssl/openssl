@@ -1226,7 +1226,20 @@ static int rlayer_dtls_block_for_write(void *cbarg)
         || !ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s)))
         return 0;
 
-    return ossl_dtls_conn_wait_for_write(SSL_CONNECTION_GET_SSL(s));
+    if (ossl_dtls_conn_wait_for_write(SSL_CONNECTION_GET_SSL(s)))
+        return 1;
+
+    /*
+     * The wait could not be performed, so the listener has failed and a retry
+     * would never succeed. Report a permanent error, as statem_flush() does.
+     * Without this, a retry flag left on the write BIO by the buffering BIO,
+     * which sends a message too big for it from inside the write, would be
+     * reported as SSL_ERROR_WANT_WRITE.
+     */
+    if (s->wbio != NULL)
+        BIO_clear_retry_flags(s->wbio);
+    s->statem.error_state = ERROR_STATE_SYSCALL;
+    return 0;
 }
 #endif
 
