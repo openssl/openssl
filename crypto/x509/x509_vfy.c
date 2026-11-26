@@ -37,6 +37,13 @@
  */
 #define MAX_DP_NAMES 16
 
+/*
+ * Maximum number of name comparisons the CRL scope checks of one
+ * certificate may perform, over all candidate CRLs.  The product of two
+ * counts clamped to CRL_SCOPE_CHECK_MAX + 1 must fit in an unsigned int.
+ */
+#define CRL_SCOPE_CHECK_MAX 65534
+
 /* CRL score values */
 #define CRL_SCORE_NOCRITICAL 0x100 /* No unhandled critical extensions */
 #define CRL_SCORE_SCOPE 0x080 /* certificate is within CRL scope */
@@ -77,7 +84,7 @@ static int check_curve(X509 *cert);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     unsigned int *preasons, X509_CRL *crl, X509 *x, STACK_OF(X509_NAME) **crldp_names,
-    int *vfy_cb_err);
+    GENERAL_NAMES **issuer_names, int *vfy_cb_err);
 static int get_crl_delta(X509_STORE_CTX *ctx,
     X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x, int *vfy_cb_err);
 static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
@@ -87,9 +94,9 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
 static int matching_crl_issuer_and_akid(const X509_CRL *crl,
     const X509 *issuer, const X509_NAME *crl_issuer_name);
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-    unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
-    int *vfy_cb_err);
+static int crl_crldp_check(X509_STORE_CTX *ctx, X509 *x, X509_CRL *crl,
+    int crl_score, unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
+    GENERAL_NAMES **issuer_names, int *vfy_cb_err);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
     STACK_OF(X509) *cert_path,
@@ -1448,12 +1455,14 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     int cnum = ctx->error_depth;
     X509 *x = sk_X509_value(ctx->chain, cnum);
     STACK_OF(X509_NAME) *crldp_names = NULL;
+    GENERAL_NAMES *issuer_names = NULL;
     int vfy_cb_err = X509_V_OK;
 
     ctx->current_cert = x;
     ctx->current_issuer = NULL;
     ctx->current_crl_score = 0;
     ctx->current_reasons = 0;
+    ctx->current_crl_scope_checks = 0;
 
     /* skip if cert is apparently self-signed */
     if (ctx->current_cert->ex_flags & EXFLAG_SS)
@@ -1472,7 +1481,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
             ok = ctx->get_crl(ctx, &crl, x);
             if (crl != NULL) {
                 ctx->current_crl_score = get_crl_score(ctx, &crl_issuer,
-                    &reasons, crl, x, &crldp_names, &vfy_cb_err);
+                    &reasons, crl, x, &crldp_names, &issuer_names, &vfy_cb_err);
                 if (vfy_cb_err != X509_V_OK) {
                     ok = verify_cb_crl(ctx, vfy_cb_err);
                     goto done;
@@ -1532,6 +1541,7 @@ done:
     X509_CRL_free(crl);
     X509_CRL_free(dcrl);
     sk_X509_NAME_pop_free(crldp_names, X509_NAME_free);
+    GENERAL_NAMES_free(issuer_names);
     ctx->current_crl = NULL;
     return ok;
 }
@@ -1592,7 +1602,7 @@ int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
     X509 **pissuer, int *pscore, unsigned int *preasons,
     STACK_OF(X509_CRL) *crls, STACK_OF(X509_NAME) **crldp_names,
-    int *vfy_cb_err)
+    GENERAL_NAMES **issuer_names, int *vfy_cb_err)
 {
     int i, crl_score, best_score = *pscore;
     unsigned int reasons, best_reasons = 0;
@@ -1604,7 +1614,8 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
         crl = sk_X509_CRL_value(crls, i);
         reasons = *preasons;
 
-        crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x, crldp_names, vfy_cb_err);
+        crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x,
+            crldp_names, issuer_names, vfy_cb_err);
         if (*vfy_cb_err != X509_V_OK)
             return 0;
 
@@ -1791,6 +1802,11 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
  *                            can reuse the constructed stack of crldp names for
  *                            multiple CRL's without having to rebuild it multiple
  *                            times.
+ * @param[in, out] issuer_names Receives the issuer name and issuerAltName
+ *                            entries of @p x when a CRL needs the default
+ *                            distribution point of RFC 5280, section 6.3.3.
+ *                            Like @p crldp_names it is built once and reused
+ *                            for the other CRLs.
  * @param[out]    vfy_cb_err  Receives an X509_V_ERR_* code to report through
  *                            the verify callback when scoring fails for a
  *                            reportable reason.
@@ -1800,7 +1816,7 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
  */
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     unsigned int *preasons, X509_CRL *crl, X509 *x, STACK_OF(X509_NAME) **crldp_names,
-    int *vfy_cb_err)
+    GENERAL_NAMES **issuer_names, int *vfy_cb_err)
 {
     int crl_score = 0;
     unsigned int tmp_reasons = *preasons, crl_reasons;
@@ -1848,7 +1864,8 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
         return 0;
 
     /* Check cert for matching CRL distribution points */
-    if (crl_crldp_check(x, crl, crl_score, &crl_reasons, crldp_names, vfy_cb_err)) {
+    if (crl_crldp_check(ctx, x, crl, crl_score, &crl_reasons, crldp_names,
+            issuer_names, vfy_cb_err)) {
         /* If no new reasons reject */
         if ((crl_reasons & ~tmp_reasons) == 0)
             return 0;
@@ -2097,55 +2114,128 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 }
 
 /*
- * Check whether the distribution point name |idpname| of a CRL's IDP extension
- * matches the default distribution point that RFC 5280, section 6.3.3, assumes
- * for CRLs not specified in any of the certificate's distribution points: one
- * whose fullName consists of the certificate issuer name and the names in the
- * certificate's issuerAltName extension.  The assumed distribution point is
- * constructed and matched with idp_check_dp().
+ * Return the number of items |n| for use in a CRL scope check cost, with a
+ * negative count (from sk_*_num(NULL)) taken as 0.  Any count above
+ * CRL_SCOPE_CHECK_MAX exceeds the budget by itself, so it is clamped to
+ * CRL_SCOPE_CHECK_MAX + 1: the costs computed from such counts then cannot
+ * overflow.
  */
-static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
+static unsigned int crl_scope_count(int n)
 {
-    DIST_POINT_NAME dpname;
+    if (n <= 0)
+        return 0;
+    return n > CRL_SCOPE_CHECK_MAX ? CRL_SCOPE_CHECK_MAX + 1 : (unsigned int)n;
+}
+
+/*
+ * Number of names idp_check_dp() may compare on behalf of the distribution
+ * point name |dpn|: a relative name, like an absent one, counts as one.
+ * Any count above CRL_SCOPE_CHECK_MAX exceeds the budget by itself, so it
+ * is clamped to CRL_SCOPE_CHECK_MAX + 1: the costs computed from such counts
+ * then cannot overflow.
+ */
+static unsigned int dp_name_count(const DIST_POINT_NAME *dpn)
+{
+    unsigned int n;
+
+    if (dpn == NULL || dpn->type == 1)
+        return 1;
+    n = crl_scope_count(sk_GENERAL_NAME_num(dpn->name.fullname));
+    return n > 0 ? n : 1;
+}
+
+/*
+ * Account for |cost| more name comparisons in the CRL scope check of the
+ * current certificate.  Both the certificate's distribution points and the
+ * candidate CRLs can come from an unauthenticated source, such as a CMS
+ * message, and every distribution point is matched against every CRL before
+ * any signature has been checked, so the total is bounded much as
+ * NAME_CHECK_MAX bounds the name constraints check.  On failure sets
+ * |*vfy_cb_err| and returns 0.
+ */
+static int crl_scope_charge(X509_STORE_CTX *ctx, unsigned int cost,
+    int *vfy_cb_err)
+{
+    if (cost > CRL_SCOPE_CHECK_MAX - ctx->current_crl_scope_checks) {
+        ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT,
+            "Too many names to compare in CRL scope check");
+        *vfy_cb_err = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+    ctx->current_crl_scope_checks += cost;
+    return 1;
+}
+
+/*
+ * Return the fullName of the default distribution point that RFC 5280,
+ * section 6.3.3, assumes for CRLs not specified in any of the distribution
+ * points of the certificate |x|: the names in its issuerAltName extension
+ * followed by its issuer name.  An undecodable issuerAltName extension is
+ * treated as an absent one.  Returns NULL on error.
+ */
+static GENERAL_NAMES *get_issuer_names(const X509 *x)
+{
     GENERAL_NAMES *gens;
     GENERAL_NAME *gen = NULL;
     X509_NAME *iname = NULL;
-    int ret = 0;
 
-    /*
-     * An undecodable issuerAltName extension is treated as an absent one;
-     * any decoding errors are not left in the error queue.
-     */
+    /* Any decoding errors are not left in the error queue */
     ERR_set_mark();
     gens = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
     ERR_pop_to_mark();
     if (gens == NULL && (gens = sk_GENERAL_NAME_new_null()) == NULL)
-        return 0;
+        return NULL;
     if ((gen = GENERAL_NAME_new()) == NULL
         || (iname = X509_NAME_dup(X509_get_issuer_name(x))) == NULL)
-        goto end;
+        goto err;
     GENERAL_NAME_set0_value(gen, GEN_DIRNAME, iname);
     iname = NULL; /* now owned by |gen| */
     if (!sk_GENERAL_NAME_push(gens, gen))
-        goto end;
-    gen = NULL; /* now owned by |gens| */
+        goto err;
+    return gens;
 
-    dpname.type = 0; /* fullName */
-    dpname.name.fullname = gens;
-    dpname.dpname = NULL;
-    ret = idp_check_dp(&dpname, NULL, idpname);
-
-end:
+err:
     GENERAL_NAME_free(gen);
     X509_NAME_free(iname);
     GENERAL_NAMES_free(gens);
-    return ret;
+    return NULL;
+}
+
+/*
+ * Check whether the distribution point name |idpname| of a CRL's IDP extension
+ * matches the default distribution point that RFC 5280, section 6.3.3, assumes
+ * for CRLs not specified in any of the distribution points of the certificate
+ * |x|.  The fullName of that distribution point is built by get_issuer_names()
+ * when first needed and kept in |*issuer_names| for the other candidate CRLs,
+ * so that decoding the certificate's extensions is not repeated for each of
+ * them and only the comparisons have to be paid for.
+ */
+static int idp_check_issuer(X509_STORE_CTX *ctx, DIST_POINT_NAME *idpname,
+    X509 *x, GENERAL_NAMES **issuer_names, int *vfy_cb_err)
+{
+    DIST_POINT_NAME dpname;
+    unsigned int cost;
+
+    if (*issuer_names == NULL
+        && (*issuer_names = get_issuer_names(x)) == NULL) {
+        *vfy_cb_err = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+    cost = crl_scope_count(sk_GENERAL_NAME_num(*issuer_names))
+        * dp_name_count(idpname);
+    if (!crl_scope_charge(ctx, cost, vfy_cb_err))
+        return 0;
+
+    dpname.type = 0; /* fullName */
+    dpname.name.fullname = *issuer_names;
+    dpname.dpname = NULL;
+    return idp_check_dp(&dpname, NULL, idpname);
 }
 
 /* Check CRLDP and IDP */
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
-    unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
-    int *vfy_cb_err)
+static int crl_crldp_check(X509_STORE_CTX *ctx, X509 *x, X509_CRL *crl,
+    int crl_score, unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
+    GENERAL_NAMES **issuer_names, int *vfy_cb_err)
 {
     int i;
 
@@ -2162,14 +2252,26 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
         X509_NAME *dpname;
+        unsigned int cost;
         int match;
 
+        /* The pair itself and the comparisons of crldp_check_crlissuer() */
+        cost = 1 + crl_scope_count(sk_GENERAL_NAME_num(dp->CRLissuer));
+        if (!crl_scope_charge(ctx, cost, vfy_cb_err))
+            return 0;
         if (!crldp_check_crlissuer(dp, crl, crl_score))
             continue;
-        if (crl->idp == NULL) {
+        if (crl->idp == NULL || crl->idp->distpoint == NULL
+            || dp->distpoint == NULL) {
+            /* idp_check_dp() would match without comparing any names */
             match = 1;
         } else {
-            if (dp->distpoint != NULL && dp->distpoint->type == 1) {
+            /* The comparisons of idp_check_dp() */
+            cost = dp_name_count(dp->distpoint)
+                * dp_name_count(crl->idp->distpoint);
+            if (!crl_scope_charge(ctx, cost, vfy_cb_err))
+                return 0;
+            if (dp->distpoint->type == 1) {
                 if (*crldp_names == NULL) {
                     *crldp_names = get_crldp_full_names(x);
                     if (*crldp_names == NULL) {
@@ -2196,7 +2298,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
      */
     return (crl_score & CRL_SCORE_ISSUER_NAME) != 0
         && (crl->idp == NULL || crl->idp->distpoint == NULL
-            || idp_check_issuer(crl->idp->distpoint, x));
+            || idp_check_issuer(ctx, crl->idp->distpoint, x, issuer_names,
+                vfy_cb_err));
 }
 
 /*
@@ -2215,10 +2318,11 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     STACK_OF(X509_CRL) *skcrl = NULL;
     const X509_NAME *nm = X509_get_issuer_name(x);
     STACK_OF(X509_NAME) *crldp_names = NULL;
+    GENERAL_NAMES *issuer_names = NULL;
 
     reasons = ctx->current_reasons;
-    ok = get_crl_sk(ctx, &crl, &dcrl,
-        &issuer, &crl_score, &reasons, ctx->crls, &crldp_names, vfy_cb_err);
+    ok = get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons,
+        ctx->crls, &crldp_names, &issuer_names, vfy_cb_err);
     if (ok)
         goto done;
     if (*vfy_cb_err != X509_V_OK)
@@ -2231,11 +2335,13 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     if (skcrl == NULL && crl != NULL)
         goto done;
 
-    ok = get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl, &crldp_names, vfy_cb_err);
+    ok = get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl,
+        &crldp_names, &issuer_names, vfy_cb_err);
 
 done:
     sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
     sk_X509_NAME_pop_free(crldp_names, X509_NAME_free);
+    GENERAL_NAMES_free(issuer_names);
     if (*vfy_cb_err != X509_V_OK) {
         X509_CRL_free(crl);
         X509_CRL_free(dcrl);
