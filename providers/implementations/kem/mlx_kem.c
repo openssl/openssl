@@ -184,7 +184,7 @@ static int mlx_c2pri_combine(unsigned char *out, const MLX_KEY *key,
     pk_t = OPENSSL_malloc(pk_t_len);
     if (pk_t == NULL
         || EVP_PKEY_get_octet_string_param(key->xkey,
-               OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, pk_t, pk_t_len, &pk_t_len)
+               OSSL_PKEY_PARAM_encoded_public_key, pk_t, pk_t_len, &pk_t_len)
             <= 0
         || pk_t_len != key->xinfo->pubkey_bytes)
         goto end;
@@ -278,7 +278,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
 
     /* ML-KEM encapsulation */
     if (mlxctx->entropy_len != 0) {
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_ikme,
             mlxctx->entropy, ML_KEM_RANDOM_BYTES);
         params[1] = OSSL_PARAM_construct_end();
         prms = params;

@@ -506,7 +506,7 @@ int ossl_mlx_set_seed(MLX_KEY *key, const unsigned char *seed,
         goto end;
 
     params[0] = OSSL_PARAM_construct_octet_string(
-        OSSL_PKEY_PARAM_ML_KEM_SEED, expanded, ML_KEM_SEED_BYTES);
+        OSSL_PKEY_PARAM_ml_kem_seed, expanded, ML_KEM_SEED_BYTES);
     params[1] = OSSL_PARAM_construct_end();
     mctx = EVP_PKEY_CTX_new_from_name(key->libctx,
         key->minfo->algorithm_name, key->propq);
@@ -521,9 +521,9 @@ int ossl_mlx_set_seed(MLX_KEY *key, const unsigned char *seed,
             expanded + ML_KEM_SEED_BYTES,
             key->xinfo->traditional_seed_bytes);
     } else {
-        *xp++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+        *xp++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_group_name,
             (char *)key->xinfo->group_name, 0);
-        *xp++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
+        *xp++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_dhkem_ikm,
             expanded + ML_KEM_SEED_BYTES,
             key->xinfo->traditional_seed_bytes);
         *xp = OSSL_PARAM_construct_end();
