@@ -261,7 +261,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 end:
     OPENSSL_free(pem_name);
     OPENSSL_free(pem_header);
-    OPENSSL_free(der);
+    OPENSSL_clear_free(der, der_len);
     return ok;
 }
 

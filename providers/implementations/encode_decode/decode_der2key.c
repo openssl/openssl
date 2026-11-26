@@ -338,7 +338,7 @@ next:
      * we know the process is recursive and the allocated chunks of memory
      * add up.
      */
-    OPENSSL_free(der);
+    OPENSSL_clear_free(der, der_len);
     der = NULL;
 
     if (key != NULL) {
@@ -367,7 +367,7 @@ next:
 
 end:
     ctx->desc->free_key(key);
-    OPENSSL_free(der);
+    OPENSSL_clear_free(der, der_len);
 
     return ok;
 }
