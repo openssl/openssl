@@ -423,6 +423,9 @@ The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
 
+X509_VERIFY_PARAM_get_inh_flags() and X509_VERIFY_PARAM_set_inh_flags() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2009-2026 The OpenSSL Project Authors. All Rights Reserved.

@@ -47,26 +47,31 @@ void ASN1_PCTX_free(ASN1_PCTX *p)
     OPENSSL_free(p);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p)
 {
     return p->flags;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags)
 {
     p->flags = flags;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p)
 {
     return p->nm_flags;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags)
 {
     p->nm_flags = flags;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p)
 {
     return p->cert_flags;
@@ -91,6 +96,7 @@ unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p)
 {
     return p->str_flags;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags)
 {

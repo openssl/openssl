@@ -509,6 +509,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Square a, reduce the result mod p, and store it in a.  r could be a. This
  * function calls down to the BN_GF2m_mod_sqr_arr implementation; this
@@ -538,6 +539,7 @@ err:
     OPENSSL_free(arr);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Invert a, reduce modulo p, and store the result in r. r could be a. Uses
@@ -758,6 +760,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Invert xx, reduce modulo p, and store the result in r. r could be xx.
  * This function calls down to the BN_GF2m_mod_inv implementation; this
@@ -784,6 +787,7 @@ err:
     BN_CTX_end(ctx);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Divide y by x, reduce modulo p, and store the result in r. r could be x
@@ -816,6 +820,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Divide yy by xx, reduce modulo p, and store the result in r. r could be xx
  * * or yy, xx could equal yy. This function calls down to the
@@ -844,6 +849,7 @@ err:
     BN_CTX_end(ctx);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Compute the bth power of a, reduce modulo p, and store the result in r.  r
@@ -890,6 +896,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Compute the bth power of a, reduce modulo p, and store the result in r.  r
  * could be a. This function calls down to the BN_GF2m_mod_exp_arr
@@ -921,6 +928,7 @@ err:
     OPENSSL_free(arr);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Compute the square root of a, reduce modulo p, and store the result in r.
@@ -954,6 +962,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Compute the square root of a, reduce modulo p, and store the result in r.
  * r could be a. This function calls down to the BN_GF2m_mod_sqrt_arr
@@ -983,6 +992,7 @@ err:
     OPENSSL_free(arr);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Find r such that r^2 + r = a mod p.  r could be a. If no r exists returns
@@ -1087,6 +1097,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 /*
  * Find r such that r^2 + r = a mod p.  r could be a. If no r exists returns
  * 0. This function calls down to the BN_GF2m_mod_solve_quad_arr
@@ -1117,6 +1128,7 @@ err:
     OPENSSL_free(arr);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Convert the bit-string representation of a polynomial ( \sum_{i=0}^n a_i *

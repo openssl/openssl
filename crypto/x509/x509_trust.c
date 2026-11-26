@@ -12,7 +12,9 @@
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 static void trtable_free(X509_TRUST *p);
 
 static int trust_1oidany(X509_TRUST *trust, const X509 *x, int flags);
@@ -49,11 +51,14 @@ static X509_TRUST trstandard[] = {
 
 static STACK_OF(X509_TRUST) *trtable = NULL;
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b)
 {
     return (*a)->trust - (*b)->trust;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int (*X509_TRUST_set_default(int (*trust)(int, const X509 *, int)))(int, const X509 *,
     int)
 {
@@ -62,6 +67,7 @@ int (*X509_TRUST_set_default(int (*trust)(int, const X509 *, int)))(int, const X
     default_trust = trust;
     return oldtrust;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Returns X509_TRUST_TRUSTED, X509_TRUST_REJECTED, or X509_TRUST_UNTRUSTED */
 int X509_check_trust(const X509 *x, int id, int flags)
@@ -80,12 +86,14 @@ int X509_check_trust(const X509 *x, int id, int flags)
     return pt->check_trust(pt, x, flags);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_TRUST_get_count(void)
 {
     if (!trtable)
         return X509_TRUST_COUNT;
     return sk_X509_TRUST_num(trtable) + X509_TRUST_COUNT;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 X509_TRUST *X509_TRUST_get0(int idx)
 {
@@ -124,6 +132,7 @@ int X509_TRUST_set(int *t, int trust)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, const X509 *, int),
     const char *name, int arg1, void *arg2)
 {
@@ -181,6 +190,7 @@ err:
     }
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static void trtable_free(X509_TRUST *p)
 {
@@ -199,6 +209,7 @@ void X509_TRUST_cleanup(void)
     trtable = NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_TRUST_get_flags(const X509_TRUST *xp)
 {
     return xp->flags;
@@ -213,6 +224,7 @@ int X509_TRUST_get_trust(const X509_TRUST *xp)
 {
     return xp->trust;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int trust_1oidany(X509_TRUST *trust, const X509 *x, int flags)
 {

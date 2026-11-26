@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
@@ -193,7 +195,7 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-#ifndef OPENSSL_NO_ARIA
+#if !defined(OPENSSL_NO_ARIA) && !defined(OPENSSL_NO_DEPRECATED_4_2)
     EVP_add_cipher(EVP_aria_128_ecb());
     EVP_add_cipher(EVP_aria_128_cbc());
     EVP_add_cipher(EVP_aria_128_cfb());
@@ -227,7 +229,7 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aria_256_ccm());
     EVP_add_cipher_alias(SN_aria_256_cbc, "ARIA256");
     EVP_add_cipher_alias(SN_aria_256_cbc, "aria256");
-#endif
+#endif /* !defined(OPENSSL_NO_ARIA) && !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_ecb());

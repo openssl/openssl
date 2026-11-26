@@ -106,7 +106,10 @@ OSSL_DEPRECATEDIN_1_1_0 const ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *b
     int attr_nid);
 #endif
 
-const ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PKCS12_mac_present(const PKCS12 *p12);
 void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
     const X509_ALGOR **pmacalg,
@@ -200,14 +203,21 @@ STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
 
 int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, const unsigned char *name,
     int namelen);
-int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_add_friendlyname_asc(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
     int namelen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
     int namelen);
-int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_add_CSPName_asc(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name,
     int namelen);
-int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
+/** @see PKCS12_add_friendlyname_uni(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
     const unsigned char *name, int namelen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PKCS12_add1_attr_by_NID(PKCS12_SAFEBAG *bag, int nid, int type,
     const unsigned char *bytes, int len);
 int PKCS12_add1_attr_by_txt(PKCS12_SAFEBAG *bag, const char *attrname, int type,
@@ -230,18 +240,24 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     unsigned char **data, int *datalen,
     int en_de, OSSL_LIB_CTX *libctx,
     const char *propq);
-void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_item_decrypt_d2i(3) */
+OSSL_DEPRECATEDIN_4_2 void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
     const char *pass, int passlen,
     const ASN1_OCTET_STRING *oct, int zbuf);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void *PKCS12_item_decrypt_d2i_ex(const X509_ALGOR *algor, const ASN1_ITEM *it,
     const char *pass, int passlen,
     const ASN1_OCTET_STRING *oct, int zbuf,
     OSSL_LIB_CTX *libctx,
     const char *propq);
-ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_item_i2d_encrypt(3) */
+OSSL_DEPRECATEDIN_4_2 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     const ASN1_ITEM *it,
     const char *pass, int passlen,
     void *obj, int zbuf);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
     const ASN1_ITEM *it,
     const char *pass, int passlen,
@@ -251,9 +267,12 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
 PKCS12 *PKCS12_init(int mode);
 PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq);
 
-int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_key_gen_asc(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n,
     unsigned char *out, const EVP_MD *md_type);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PKCS12_key_gen_asc_ex(const char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n,
     unsigned char *out, const EVP_MD *md_type,
@@ -299,9 +318,17 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
 char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen);
 
 DECLARE_ASN1_FUNCTIONS(PKCS12)
-DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)
+DECLARE_ASN1_ALLOC_FUNCTIONS(PKCS12_MAC_DATA)
+DECLARE_ASN1_ITEM(PKCS12_MAC_DATA)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, PKCS12_MAC_DATA, PKCS12_MAC_DATA)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(PKCS12_SAFEBAG)
-DECLARE_ASN1_FUNCTIONS(PKCS12_BAGS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(PKCS12_BAGS)
+DECLARE_ASN1_ITEM(PKCS12_BAGS)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, PKCS12_BAGS, PKCS12_BAGS)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_ASN1_ITEM(PKCS12_SAFEBAGS)
 DECLARE_ASN1_ITEM(PKCS12_AUTHSAFES)
@@ -338,9 +365,12 @@ PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
     PKCS12_create_cb *cb, void *cbarg);
 
 PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert);
-PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_add_key(3) */
+OSSL_DEPRECATEDIN_4_2 PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     EVP_PKEY *key, int key_usage, int iter,
     int key_nid, const char *pass);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 PKCS12_SAFEBAG *PKCS12_add_key_ex(STACK_OF(PKCS12_SAFEBAG) **pbags,
     EVP_PKEY *key, int key_usage, int iter,
     int key_nid, const char *pass,
@@ -366,7 +396,10 @@ PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);
 #ifndef OPENSSL_NO_STDIO
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12);
 #endif
-int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS12_newpass(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #ifdef __cplusplus
 }

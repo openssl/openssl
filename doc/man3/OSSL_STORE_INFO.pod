@@ -235,6 +235,9 @@ The OSSL_STORE_INFO_PUBKEY object type was added in OpenSSL 3.0.
 OSSL_STORE_INFO_get0_SKEY(), OSSL_STORE_INFO_get1_SKEY() and
 OSSL_STORE_INFO_new_SKEY() were added in OpenSSL 4.0.
 
+OSSL_STORE_INFO_get1_NAME() and OSSL_STORE_INFO_get1_NAME_description() were
+deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.

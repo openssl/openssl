@@ -77,13 +77,19 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 #define CONF_MFLAGS_IGNORE_MISSING_FILE 0x10
 #define CONF_MFLAGS_DEFAULT_SECTION 0x20
 
-int CONF_set_default_method(CONF_METHOD *meth);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int CONF_set_default_method(CONF_METHOD *meth);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
 LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
     long *eline);
 #ifndef OPENSSL_NO_STDIO
-LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
     long *eline);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp,
     long *eline);
@@ -91,11 +97,17 @@ STACK_OF(CONF_VALUE) *CONF_get_section(LHASH_OF(CONF_VALUE) *conf,
     const char *section);
 char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
     const char *name);
-long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
     const char *name);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 #ifndef OPENSSL_NO_STDIO
-int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -134,7 +146,10 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
 int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
     long *result);
 #ifndef OPENSSL_NO_STDIO
-int NCONF_dump_fp(const CONF *conf, FILE *out);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int NCONF_dump_fp(const CONF *conf, FILE *out);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 int NCONF_dump_bio(const CONF *conf, BIO *out);
 
@@ -162,11 +177,18 @@ const char *CONF_imodule_get_name(const CONF_IMODULE *md);
 const char *CONF_imodule_get_value(const CONF_IMODULE *md);
 void *CONF_imodule_get_usr_data(const CONF_IMODULE *md);
 void CONF_imodule_set_usr_data(CONF_IMODULE *md, void *usr_data);
-CONF_MODULE *CONF_imodule_get_module(const CONF_IMODULE *md);
-unsigned long CONF_imodule_get_flags(const CONF_IMODULE *md);
-void CONF_imodule_set_flags(CONF_IMODULE *md, unsigned long flags);
-void *CONF_module_get_usr_data(CONF_MODULE *pmod);
-void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 CONF_MODULE *CONF_imodule_get_module(const CONF_IMODULE *md);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 unsigned long CONF_imodule_get_flags(const CONF_IMODULE *md);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void CONF_imodule_set_flags(CONF_IMODULE *md, unsigned long flags);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *CONF_module_get_usr_data(CONF_MODULE *pmod);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 char *CONF_get1_default_config_file(void);
 

@@ -92,7 +92,9 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int COMP_CTX_get_type(const COMP_CTX *comp)
 {
     return comp->meth ? comp->meth->type : NID_undef;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

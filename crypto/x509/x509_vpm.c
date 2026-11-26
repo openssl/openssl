@@ -554,6 +554,7 @@ unsigned long X509_VERIFY_PARAM_get_flags(const X509_VERIFY_PARAM *param)
     return param->flags;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param)
 {
     return param->inh_flags;
@@ -564,6 +565,7 @@ int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param, uint32_t flags)
     param->inh_flags = flags;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* resets to default (any) purpose if |purpose| == X509_PURPOSE_DEFAULT_ANY */
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)

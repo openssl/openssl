@@ -144,6 +144,8 @@ were present but undocumented in all versions of OpenSSL as public
 API.  They are unused by the library. They were documented and then
 deprecated in OpenSSL 4.1.
 
+ASN1_BIT_STRING_check() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.

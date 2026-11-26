@@ -29,10 +29,12 @@ const ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag,
     return PKCS12_get_attr_gen(bag->attrib, attr_nid);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 const ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid)
 {
     return PKCS12_get_attr_gen(PKCS8_pkey_get0_attrs(p8), attr_nid);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag)
 {

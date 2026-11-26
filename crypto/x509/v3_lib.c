@@ -79,6 +79,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get(const X509_EXTENSION *ext)
     return X509V3_EXT_get_nid(nid);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
 {
     for (; extlist->ext_nid != -1; extlist++)
@@ -86,6 +87,7 @@ int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
             return 0;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509V3_EXT_add_alias(int nid_to, int nid_from)
 {

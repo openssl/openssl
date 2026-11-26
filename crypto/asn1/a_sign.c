@@ -111,6 +111,7 @@ err:
 
 #endif
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
     ASN1_BIT_STRING *signature, const void *data,
     EVP_PKEY *pkey, const EVP_MD *md)
@@ -118,6 +119,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
     return ASN1_item_sign_ex(it, algor1, algor2, signature, data, NULL, pkey,
         md, NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
     X509_ALGOR *algor2, ASN1_BIT_STRING *signature,

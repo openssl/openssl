@@ -38,12 +38,14 @@ static int do_pk8pkey_fp(FILE *bp, const EVP_PKEY *x, int isder,
  * uses PKCS#5 v1.5 PBE algorithms whereas the others use PKCS#5 v2.0.
  */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u)
 {
     return do_pk8pkey(bp, x, 0, nid, NULL, kstr, klen, cb, u, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PEM_write_bio_PKCS8PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     const char *kstr, int klen,
@@ -59,12 +61,14 @@ int i2d_PKCS8PrivateKey_bio(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     return do_pk8pkey(bp, x, 1, -1, enc, kstr, klen, cb, u, NULL);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u)
 {
     return do_pk8pkey(bp, x, 1, nid, NULL, kstr, klen, cb, u, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
     const EVP_CIPHER *enc, const char *kstr, int klen,
@@ -204,6 +208,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
 
 #ifndef OPENSSL_NO_STDIO
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int i2d_PKCS8PrivateKey_fp(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     const char *kstr, int klen,
     pem_password_cb *cb, void *u)
@@ -217,6 +222,7 @@ int i2d_PKCS8PrivateKey_nid_fp(FILE *fp, const EVP_PKEY *x, int nid,
 {
     return do_pk8pkey_fp(fp, x, 1, nid, NULL, kstr, klen, cb, u, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PEM_write_PKCS8PrivateKey_nid(FILE *fp, const EVP_PKEY *x, int nid,
     const char *kstr, int klen,
@@ -248,6 +254,7 @@ static int do_pk8pkey_fp(FILE *fp, const EVP_PKEY *x, int isder, int nid,
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
     void *u)
 {
@@ -262,6 +269,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
     BIO_free(bp);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #endif
 

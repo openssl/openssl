@@ -558,6 +558,7 @@ static int def_crl_lookup(X509_CRL *crl,
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void X509_CRL_set_default_method(const X509_CRL_METHOD *meth)
 {
     if (meth == NULL)
@@ -603,6 +604,7 @@ void *X509_CRL_get_meth_data(X509_CRL *crl)
 {
     return crl->meth_data;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq)

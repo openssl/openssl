@@ -70,6 +70,10 @@ L<passphrase-encoding(7)>
 
 L<i2d_PKCS8PrivateKey(3)> was added in OpenSSL 3.6.
 
+d2i_PKCS8PrivateKey_fp(), i2d_PKCS8PrivateKey_fp(),
+i2d_PKCS8PrivateKey_nid_bio() and i2d_PKCS8PrivateKey_nid_fp() were deprecated
+in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.

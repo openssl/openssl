@@ -693,7 +693,10 @@ __owur int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     unsigned char *key, unsigned char *iv);
 
 void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags);
-void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_CIPHER_CTX_clear_flags(3) */
+OSSL_DEPRECATEDIN_4_2 void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags);
 
 __owur int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -826,7 +829,10 @@ __owur int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
 void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
-int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, const EVP_ENCODE_CTX *sctx);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_ENCODE_CTX_copy(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, const EVP_ENCODE_CTX *sctx);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
 int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -1038,36 +1044,65 @@ const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
 #ifndef OPENSSL_NO_ARIA
-const EVP_CIPHER *EVP_aria_128_ecb(void);
-const EVP_CIPHER *EVP_aria_128_cbc(void);
-const EVP_CIPHER *EVP_aria_128_cfb1(void);
-const EVP_CIPHER *EVP_aria_128_cfb8(void);
-const EVP_CIPHER *EVP_aria_128_cfb128(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_aria_128_ecb(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_ecb(void);
+/** @see EVP_aria_128_cbc(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_cbc(void);
+/** @see EVP_aria_128_cfb1(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_cfb1(void);
+/** @see EVP_aria_128_cfb8(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_cfb8(void);
+/** @see EVP_aria_128_cfb128(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_cfb128(void);
 #define EVP_aria_128_cfb EVP_aria_128_cfb128
-const EVP_CIPHER *EVP_aria_128_ctr(void);
-const EVP_CIPHER *EVP_aria_128_ofb(void);
-const EVP_CIPHER *EVP_aria_128_gcm(void);
-const EVP_CIPHER *EVP_aria_128_ccm(void);
-const EVP_CIPHER *EVP_aria_192_ecb(void);
-const EVP_CIPHER *EVP_aria_192_cbc(void);
-const EVP_CIPHER *EVP_aria_192_cfb1(void);
-const EVP_CIPHER *EVP_aria_192_cfb8(void);
-const EVP_CIPHER *EVP_aria_192_cfb128(void);
+/** @see EVP_aria_128_ctr(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_ctr(void);
+/** @see EVP_aria_128_ofb(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_ofb(void);
+/** @see EVP_aria_128_gcm(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_gcm(void);
+/** @see EVP_aria_128_ccm(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_128_ccm(void);
+/** @see EVP_aria_192_ecb(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_ecb(void);
+/** @see EVP_aria_192_cbc(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_cbc(void);
+/** @see EVP_aria_192_cfb1(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_cfb1(void);
+/** @see EVP_aria_192_cfb8(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_cfb8(void);
+/** @see EVP_aria_192_cfb128(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_cfb128(void);
 #define EVP_aria_192_cfb EVP_aria_192_cfb128
-const EVP_CIPHER *EVP_aria_192_ctr(void);
-const EVP_CIPHER *EVP_aria_192_ofb(void);
-const EVP_CIPHER *EVP_aria_192_gcm(void);
-const EVP_CIPHER *EVP_aria_192_ccm(void);
-const EVP_CIPHER *EVP_aria_256_ecb(void);
-const EVP_CIPHER *EVP_aria_256_cbc(void);
-const EVP_CIPHER *EVP_aria_256_cfb1(void);
-const EVP_CIPHER *EVP_aria_256_cfb8(void);
-const EVP_CIPHER *EVP_aria_256_cfb128(void);
+/** @see EVP_aria_192_ctr(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_ctr(void);
+/** @see EVP_aria_192_ofb(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_ofb(void);
+/** @see EVP_aria_192_gcm(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_gcm(void);
+/** @see EVP_aria_192_ccm(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_192_ccm(void);
+/** @see EVP_aria_256_ecb(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_ecb(void);
+/** @see EVP_aria_256_cbc(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_cbc(void);
+/** @see EVP_aria_256_cfb1(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_cfb1(void);
+/** @see EVP_aria_256_cfb8(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_cfb8(void);
+/** @see EVP_aria_256_cfb128(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_cfb128(void);
 #define EVP_aria_256_cfb EVP_aria_256_cfb128
-const EVP_CIPHER *EVP_aria_256_ctr(void);
-const EVP_CIPHER *EVP_aria_256_ofb(void);
-const EVP_CIPHER *EVP_aria_256_gcm(void);
-const EVP_CIPHER *EVP_aria_256_ccm(void);
+/** @see EVP_aria_256_ctr(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_ctr(void);
+/** @see EVP_aria_256_ofb(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_ofb(void);
+/** @see EVP_aria_256_gcm(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_gcm(void);
+/** @see EVP_aria_256_ccm(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_CIPHER *EVP_aria_256_ccm(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
@@ -1385,7 +1420,10 @@ EVP_PKEY *d2i_KeyParams_bio(int type, EVP_PKEY **a, BIO *in);
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
-int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b);
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b);
 
@@ -1490,10 +1528,14 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     OSSL_LIB_CTX *libctx, const char *propq);
 #endif
 
-void PKCS5_PBE_add(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void PKCS5_PBE_add(void);
 
-int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
+/** @see EVP_PBE_CipherInit(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de,
@@ -1510,14 +1552,20 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 
 int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     int md_nid, EVP_PBE_KEYGEN *keygen);
-int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_PBE_alg_add(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
     EVP_PBE_KEYGEN *keygen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int EVP_PBE_find(int type, int pbe_nid, int *pcnid, int *pmnid,
     EVP_PBE_KEYGEN **pkeygen);
 int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
     EVP_PBE_KEYGEN **pkeygen, EVP_PBE_KEYGEN_EX **pkeygen_ex);
 void EVP_PBE_cleanup(void);
-int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 #define ASN1_PKEY_ALIAS 0x1
 #define ASN1_PKEY_DYNAMIC 0x2
@@ -1683,13 +1731,20 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
     int cmd, uint64_t value);
 
-int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str);
-int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex);
 
-int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md);
+/** @see EVP_PKEY_CTX_md(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md);
 
-int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx);
-void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e /* must be NULL */,
     const unsigned char *key, int keylen);
@@ -1909,7 +1964,10 @@ int EVP_PKEY_set_ex_data(EVP_PKEY *key, int idx, void *arg);
 void *EVP_PKEY_get_ex_data(const EVP_PKEY *key, int idx);
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
-EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_PKEY_CTX_get_cb(3) */
+OSSL_DEPRECATEDIN_4_2 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx);
 

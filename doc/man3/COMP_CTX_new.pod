@@ -172,6 +172,8 @@ L<BIO_new(3)>, L<SSL_CTX_set_options(3)>, L<SSL_set_options(3)>
 
 Brotli and Zstandard functions were added in OpenSSL 3.2.
 
+COMP_CTX_get_type() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.

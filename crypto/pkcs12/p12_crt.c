@@ -270,6 +270,7 @@ err:
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     EVP_PKEY *key, int key_usage, int iter,
     int nid_key, const char *pass)
@@ -277,6 +278,7 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     return PKCS12_add_key_ex(pbags, key, key_usage, iter, nid_key, pass,
         NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 PKCS12_SAFEBAG *PKCS12_add_secret(STACK_OF(PKCS12_SAFEBAG) **pbags,
     int nid_type, const unsigned char *value, int len)

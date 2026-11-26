@@ -468,6 +468,7 @@ int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 
 /* Config database functions */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
 {
     if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_string) {
@@ -476,6 +477,7 @@ char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
     }
     return ctx->db_meth->get_string(ctx->db, name, section);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section)
 {
@@ -486,6 +488,7 @@ STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section)
     return ctx->db_meth->get_section(ctx->db, section);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void X509V3_string_free(X509V3_CTX *ctx, char *str)
 {
     if (!str)
@@ -493,6 +496,7 @@ void X509V3_string_free(X509V3_CTX *ctx, char *str)
     if (ctx->db_meth->free_string)
         ctx->db_meth->free_string(ctx->db, str);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section)
 {
@@ -633,6 +637,7 @@ int X509V3_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
 
 /* Same as above but for a CRL */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509_CRL *crl)
 {
@@ -647,9 +652,11 @@ int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     NCONF_free(ctmp);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Add extensions to certificate request */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     const char *section, X509_REQ *req)
 {
@@ -664,3 +671,4 @@ int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
     NCONF_free(ctmp);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

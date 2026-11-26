@@ -158,6 +158,7 @@ int X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos)
     return X509v3_get_ext_by_NID(x->extensions, nid, lastpos);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, const ASN1_OBJECT *obj,
     int lastpos)
 {
@@ -168,6 +169,7 @@ int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpo
 {
     return X509v3_get_ext_by_critical(x->extensions, crit, lastpos);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc)
 {

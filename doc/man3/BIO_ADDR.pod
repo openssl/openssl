@@ -129,6 +129,8 @@ L<BIO_connect(3)>, L<BIO_s_connect(3)>
 
 BIO_ADDR_copy() and BIO_ADDR_dup() were added in OpenSSL 3.2.
 
+BIO_ADDR_path_string() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.

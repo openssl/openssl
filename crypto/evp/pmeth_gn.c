@@ -220,10 +220,12 @@ void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)
     ctx->pkey_gencb = cb;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx)
 {
     return ctx->pkey_gencb;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * "translation callback" to call EVP_PKEY_CTX callbacks using BN_GENCB style

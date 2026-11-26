@@ -44,7 +44,9 @@ static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
 static int check_name_constraints(const NAME_CONSTRAINTS *nc);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static void xptable_free(X509_PURPOSE *p);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* note that the id must be unique and for the standard entries == idx + 1 */
 static X509_PURPOSE xstandard[] = {
@@ -261,6 +263,7 @@ err:
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static void xptable_free(X509_PURPOSE *p)
 {
     if (p == NULL)
@@ -273,12 +276,15 @@ static void xptable_free(X509_PURPOSE *p)
         OPENSSL_free(p);
     }
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void X509_PURPOSE_cleanup(void)
 {
     sk_X509_PURPOSE_pop_free(xptable, xptable_free);
     xptable = NULL;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_PURPOSE_get_id(const X509_PURPOSE *xp)
 {

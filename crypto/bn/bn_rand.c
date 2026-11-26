@@ -394,6 +394,7 @@ end:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     const BIGNUM *priv, const unsigned char *message,
     size_t message_len, BN_CTX *ctx)
@@ -410,3 +411,4 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     bn_correct_top(out);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

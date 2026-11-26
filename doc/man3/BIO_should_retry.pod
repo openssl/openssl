@@ -135,6 +135,8 @@ L<bio(7)>
 The BIO_get_retry_reason() and BIO_set_retry_reason() functions were added in
 OpenSSL 1.1.0.
 
+BIO_get_retry_BIO() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.

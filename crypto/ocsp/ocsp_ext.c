@@ -20,16 +20,19 @@
 
 /* OCSP request extensions */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_REQUEST_get_ext_count(OCSP_REQUEST *x)
 {
     return X509v3_get_ext_count(x->tbsRequest.requestExtensions);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos)
 {
     return (X509v3_get_ext_by_NID(x->tbsRequest.requestExtensions, nid, lastpos));
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
     int lastpos)
 {
@@ -40,12 +43,14 @@ int OCSP_REQUEST_get_ext_by_critical(OCSP_REQUEST *x, int crit, int lastpos)
 {
     return (X509v3_get_ext_by_critical(x->tbsRequest.requestExtensions, crit, lastpos));
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const X509_EXTENSION *OCSP_REQUEST_get_ext(OCSP_REQUEST *x, int loc)
 {
     return X509v3_get_ext(x->tbsRequest.requestExtensions, loc);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_EXTENSION *OCSP_REQUEST_delete_ext(OCSP_REQUEST *x, int loc)
 {
     return X509v3_delete_extension(&x->tbsRequest.requestExtensions, loc);
@@ -62,6 +67,7 @@ int OCSP_REQUEST_add1_ext_i2d(OCSP_REQUEST *x, int nid, void *value, int crit,
     return X509V3_add1_i2d(&x->tbsRequest.requestExtensions, nid, value,
         crit, flags);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int OCSP_REQUEST_add_ext(OCSP_REQUEST *x, const X509_EXTENSION *ex, int loc)
 {
@@ -70,6 +76,7 @@ int OCSP_REQUEST_add_ext(OCSP_REQUEST *x, const X509_EXTENSION *ex, int loc)
 
 /* Single extensions */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_ONEREQ_get_ext_count(OCSP_ONEREQ *x)
 {
     return X509v3_get_ext_count(x->singleRequestExtensions);
@@ -117,6 +124,7 @@ int OCSP_ONEREQ_add_ext(OCSP_ONEREQ *x, const X509_EXTENSION *ex, int loc)
 {
     return (X509v3_add_ext(&(x->singleRequestExtensions), ex, loc) != NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* OCSP Basic response */
 
@@ -130,6 +138,7 @@ int OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos)
     return (X509v3_get_ext_by_NID(x->tbsResponseData.responseExtensions, nid, lastpos));
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
     int lastpos)
 {
@@ -141,12 +150,14 @@ int OCSP_BASICRESP_get_ext_by_critical(OCSP_BASICRESP *x, int crit,
 {
     return (X509v3_get_ext_by_critical(x->tbsResponseData.responseExtensions, crit, lastpos));
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const X509_EXTENSION *OCSP_BASICRESP_get_ext(OCSP_BASICRESP *x, int loc)
 {
     return X509v3_get_ext(x->tbsResponseData.responseExtensions, loc);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_EXTENSION *OCSP_BASICRESP_delete_ext(OCSP_BASICRESP *x, int loc)
 {
     return X509v3_delete_extension(&x->tbsResponseData.responseExtensions, loc);
@@ -165,6 +176,7 @@ int OCSP_BASICRESP_add1_ext_i2d(OCSP_BASICRESP *x, int nid, void *value,
     return X509V3_add1_i2d(&x->tbsResponseData.responseExtensions, nid,
         value, crit, flags);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int OCSP_BASICRESP_add_ext(OCSP_BASICRESP *x, const X509_EXTENSION *ex, int loc)
 {
@@ -179,6 +191,7 @@ int OCSP_SINGLERESP_get_ext_count(OCSP_SINGLERESP *x)
     return X509v3_get_ext_count(x->singleExtensions);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos)
 {
     return X509v3_get_ext_by_NID(x->singleExtensions, nid, lastpos);
@@ -195,16 +208,19 @@ int OCSP_SINGLERESP_get_ext_by_critical(OCSP_SINGLERESP *x, int crit,
 {
     return X509v3_get_ext_by_critical(x->singleExtensions, crit, lastpos);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const X509_EXTENSION *OCSP_SINGLERESP_get_ext(OCSP_SINGLERESP *x, int loc)
 {
     return X509v3_get_ext(x->singleExtensions, loc);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_EXTENSION *OCSP_SINGLERESP_delete_ext(OCSP_SINGLERESP *x, int loc)
 {
     return X509v3_delete_extension(&x->singleExtensions, loc);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void *OCSP_SINGLERESP_get1_ext_d2i(OCSP_SINGLERESP *x, int nid, int *crit,
     int *idx)
@@ -350,6 +366,7 @@ int OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req)
     return OCSP_BASICRESP_add_ext(resp, req_ext, -1);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim)
 {
     X509_EXTENSION *x = NULL;
@@ -464,3 +481,4 @@ err:
     OCSP_SERVICELOC_free(sloc);
     return x;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

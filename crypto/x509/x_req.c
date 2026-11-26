@@ -103,7 +103,27 @@ ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
     ASN1_IMP_SET_OF_OPT(X509_REQ_INFO, attributes, X509_ATTRIBUTE, 0)
 } ASN1_SEQUENCE_END_enc(X509_REQ_INFO, X509_REQ_INFO)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_REQ_INFO)
+int i2d_X509_REQ_INFO(const X509_REQ_INFO *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(X509_REQ_INFO));
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+X509_REQ_INFO *d2i_X509_REQ_INFO(X509_REQ_INFO **a, const unsigned char **in, long len)
+{
+    return (X509_REQ_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(X509_REQ_INFO));
+}
+
+X509_REQ_INFO *X509_REQ_INFO_new(void)
+{
+    return (X509_REQ_INFO *)ASN1_item_new(ASN1_ITEM_rptr(X509_REQ_INFO));
+}
+
+void X509_REQ_INFO_free(X509_REQ_INFO *a)
+{
+    ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(X509_REQ_INFO));
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 ASN1_SEQUENCE_ref(X509_REQ, req_cb) = {
     ASN1_EMBED(X509_REQ, req_info, X509_REQ_INFO),

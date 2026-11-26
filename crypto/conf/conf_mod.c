@@ -616,6 +616,7 @@ void CONF_imodule_set_usr_data(CONF_IMODULE *md, void *usr_data)
     md->usr_data = usr_data;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 CONF_MODULE *CONF_imodule_get_module(const CONF_IMODULE *md)
 {
     return md->pmod;
@@ -640,6 +641,7 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 {
     pmod->usr_data = usr_data;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Return default config file name */
 char *CONF_get1_default_config_file(void)

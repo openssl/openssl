@@ -21,9 +21,11 @@
  * Doesn't do anything now: Builtin PBE algorithms in static table.
  */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void PKCS5_PBE_add(void)
 {
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     ASN1_TYPE *param, const EVP_CIPHER *cipher,

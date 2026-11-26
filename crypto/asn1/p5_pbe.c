@@ -21,7 +21,10 @@ ASN1_SEQUENCE(PBEPARAM) = {
     ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
 } ASN1_SEQUENCE_END(PBEPARAM)
 
-IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(PBEPARAM, PBEPARAM, PBEPARAM)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(PBEPARAM, PBEPARAM, PBEPARAM)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Set an algorithm identifier for a PKCS#5 PBE algorithm */
 
@@ -79,11 +82,13 @@ err:
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     const unsigned char *salt, int saltlen)
 {
     return PKCS5_pbe_set0_algor_ex(algor, alg, iter, salt, saltlen, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
 

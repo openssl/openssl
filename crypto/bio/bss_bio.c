@@ -732,10 +732,12 @@ size_t BIO_ctrl_get_read_request(BIO *bio)
     return BIO_ctrl(bio, BIO_C_GET_READ_REQUEST, 0, NULL);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BIO_ctrl_reset_read_request(BIO *bio)
 {
     return (BIO_ctrl(bio, BIO_C_RESET_READ_REQUEST, 0, NULL) != 0);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * BIO_nread0/nread/nwrite0/nwrite are available only for BIO pairs for now

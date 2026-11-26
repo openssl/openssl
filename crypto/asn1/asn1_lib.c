@@ -43,6 +43,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);
 static void asn1_put_length(unsigned char **pp, int length);
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int _asn1_check_infinite_end(const unsigned char **p, long len)
 {
     /*
@@ -58,7 +59,9 @@ static int _asn1_check_infinite_end(const unsigned char **p, long len)
     }
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int ASN1_check_infinite_end(unsigned char **p, long len)
 {
     return _asn1_check_infinite_end((const unsigned char **)p, len);
@@ -68,6 +71,7 @@ int ASN1_const_check_infinite_end(const unsigned char **p, long len)
 {
     return _asn1_check_infinite_end(p, len);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int *pclass, long omax)

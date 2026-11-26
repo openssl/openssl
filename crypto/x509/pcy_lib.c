@@ -17,6 +17,7 @@
 
 /* X509_POLICY_TREE stuff */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_policy_tree_level_count(const X509_POLICY_TREE *tree)
 {
     if (!tree)
@@ -31,6 +32,7 @@ X509_POLICY_LEVEL *X509_policy_tree_get0_level(const X509_POLICY_TREE *tree,
         return NULL;
     return tree->levels + i;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 STACK_OF(X509_POLICY_NODE) *X509_policy_tree_get0_policies(const X509_POLICY_TREE
         *tree)
@@ -53,6 +55,7 @@ STACK_OF(X509_POLICY_NODE) *X509_policy_tree_get0_user_policies(const X509_POLIC
 
 /* X509_POLICY_LEVEL stuff */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_policy_level_node_count(X509_POLICY_LEVEL *level)
 {
     int n;
@@ -78,9 +81,11 @@ X509_POLICY_NODE *X509_policy_level_get0_node(const X509_POLICY_LEVEL *level, in
     }
     return sk_X509_POLICY_NODE_value(level->nodes, i);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* X509_POLICY_NODE stuff */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 const ASN1_OBJECT *X509_policy_node_get0_policy(const X509_POLICY_NODE *node)
 {
     if (!node)
@@ -103,3 +108,4 @@ const X509_POLICY_NODE *X509_policy_node_get0_parent(const X509_POLICY_NODE
         return NULL;
     return node->parent;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

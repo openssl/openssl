@@ -249,6 +249,10 @@ respectively.
 
 The UI_dup_user_data() function was added in OpenSSL 1.1.1.
 
+UI_dup_verify_string(), UI_add_input_boolean(), UI_dup_input_boolean(),
+UI_dup_info_string(), UI_add_error_string(), UI_dup_error_string(),
+UI_dup_user_data() and UI_get0_result() were deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.

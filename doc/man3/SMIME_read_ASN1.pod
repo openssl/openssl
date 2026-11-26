@@ -74,6 +74,8 @@ L<SMIME_write_ASN1_ex(3)>
 
 The function SMIME_read_ASN1_ex() was added in OpenSSL 3.0.
 
+SMIME_read_ASN1() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.

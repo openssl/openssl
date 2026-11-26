@@ -112,12 +112,14 @@ void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, const EVP_ENCODE_CTX *sctx)
 {
     memcpy(dctx, sctx, sizeof(EVP_ENCODE_CTX));
 
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx)
 {

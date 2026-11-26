@@ -208,6 +208,11 @@ L<OCSP_response_status(3)>,
 L<OCSP_sendreq_new(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>
 
+=head1 HISTORY
+
+OCSP_resp_get0_tbs_sigalg(), OCSP_resp_get0_respdata() and OCSP_resp_get1_id()
+were deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.

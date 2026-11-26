@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 {
     return EVP_DigestInit_ex(ctx, type, NULL);
@@ -47,3 +48,4 @@ err:
     OPENSSL_free(m);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

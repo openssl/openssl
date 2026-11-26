@@ -180,6 +180,8 @@ X509_PURPOSE_get_unused_id() was added in OpensSL 3.5.
 
 X509_check_purpose() had its B<X509> parameter converted to const in OpenSSL 4.0.0.
 
+X509_PURPOSE_cleanup() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.

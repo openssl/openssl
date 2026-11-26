@@ -185,9 +185,15 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_SKEY(EVP_SKEY *skey);
 int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *info);
 void *OSSL_STORE_INFO_get0_data(int type, const OSSL_STORE_INFO *info);
 const char *OSSL_STORE_INFO_get0_NAME(const OSSL_STORE_INFO *info);
-char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see OSSL_STORE_INFO_get1_NAME(3) */
+OSSL_DEPRECATEDIN_4_2 char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const char *OSSL_STORE_INFO_get0_NAME_description(const OSSL_STORE_INFO *info);
-char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see OSSL_STORE_INFO_get1_NAME_description(3) */
+OSSL_DEPRECATEDIN_4_2 char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 EVP_PKEY *OSSL_STORE_INFO_get0_PARAMS(const OSSL_STORE_INFO *info);
 EVP_PKEY *OSSL_STORE_INFO_get1_PARAMS(const OSSL_STORE_INFO *info);
 EVP_PKEY *OSSL_STORE_INFO_get0_PUBKEY(const OSSL_STORE_INFO *info);
@@ -241,15 +247,23 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_alias(const char *alias);
 void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search);
 
 /* Search term accessors */
-int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion);
-const X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion);
-const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see OSSL_STORE_SEARCH_get_type(3) */
+OSSL_DEPRECATEDIN_4_2 int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion);
+/** @see OSSL_STORE_SEARCH_get0_name(3) */
+OSSL_DEPRECATEDIN_4_2 const X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion);
+/** @see OSSL_STORE_SEARCH_get0_serial(3) */
+OSSL_DEPRECATEDIN_4_2 const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
         *criterion);
-const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
-                                                      *criterion,
+/** @see OSSL_STORE_SEARCH_get0_bytes(3) */
+OSSL_DEPRECATEDIN_4_2 const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
+                                                                            *criterion,
     size_t *length);
-const char *OSSL_STORE_SEARCH_get0_string(const OSSL_STORE_SEARCH *criterion);
-const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion);
+/** @see OSSL_STORE_SEARCH_get0_string(3) */
+OSSL_DEPRECATEDIN_4_2 const char *OSSL_STORE_SEARCH_get0_string(const OSSL_STORE_SEARCH *criterion);
+/** @see OSSL_STORE_SEARCH_get0_digest(3) */
+OSSL_DEPRECATEDIN_4_2 const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Add search criterion and expected return type (which can be unspecified)

@@ -2000,6 +2000,8 @@ Prior to OpenSSL 3.5, passing a NULL I<ctx> to
 B<EVP_CIPHER_CTX_get_block_size()> would result in a NULL pointer dereference,
 rather than a 0 return value indicating an error.
 
+EVP_CIPHER_CTX_clear_flags() was deprecated in OpenSSL 4.2.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.

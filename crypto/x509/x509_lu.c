@@ -54,6 +54,7 @@ int X509_STORE_unlock(X509_STORE *xs)
     return CRYPTO_THREAD_unlock(xs->lock);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_LOOKUP_init(X509_LOOKUP *ctx)
 {
     if (ctx->method == NULL)
@@ -63,6 +64,7 @@ int X509_LOOKUP_init(X509_LOOKUP *ctx)
     else
         return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
 {
@@ -108,6 +110,7 @@ int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
         return ctx->method->get_by_subject(ctx, type, name, ret);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret)
 {
@@ -140,6 +143,7 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
         return 0;
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data)
 {
@@ -1170,10 +1174,12 @@ void X509_STORE_set_verify(X509_STORE *xs, X509_STORE_CTX_verify_fn verify)
     xs->verify = verify;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_STORE_CTX_verify_fn X509_STORE_get_verify(const X509_STORE *xs)
 {
     return xs->verify;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void X509_STORE_set_verify_cb(X509_STORE *xs,
     X509_STORE_CTX_verify_cb verify_cb)
@@ -1186,6 +1192,7 @@ X509_STORE_CTX_verify_cb X509_STORE_get_verify_cb(const X509_STORE *xs)
     return xs->verify_cb;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 void X509_STORE_set_get_issuer(X509_STORE *xs,
     X509_STORE_CTX_get_issuer_fn get_issuer)
 {
@@ -1196,6 +1203,7 @@ X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE *xs)
 {
     return xs->get_issuer;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void X509_STORE_set_check_issued(X509_STORE *xs,
     X509_STORE_CTX_check_issued_fn check_issued)
@@ -1203,6 +1211,7 @@ void X509_STORE_set_check_issued(X509_STORE *xs,
     xs->check_issued = check_issued;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(const X509_STORE *xs)
 {
     return xs->check_issued;
@@ -1273,6 +1282,7 @@ X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const X509_STORE *xs)
 {
     return xs->lookup_certs;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void X509_STORE_set_lookup_crls(X509_STORE *xs,
     X509_STORE_CTX_lookup_crls_fn lookup_crls)
@@ -1280,6 +1290,7 @@ void X509_STORE_set_lookup_crls(X509_STORE *xs,
     xs->lookup_crls = lookup_crls;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_STORE_CTX_lookup_crls_fn X509_STORE_get_lookup_crls(const X509_STORE *xs)
 {
     return xs->lookup_crls;
@@ -1295,6 +1306,7 @@ X509_STORE_CTX_cleanup_fn X509_STORE_get_cleanup(const X509_STORE *xs)
 {
     return xs->cleanup;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int X509_STORE_set_ex_data(X509_STORE *xs, int idx, void *data)
 {

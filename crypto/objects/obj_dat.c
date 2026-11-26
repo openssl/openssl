@@ -847,10 +847,12 @@ err2:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int OBJ_add_object(const ASN1_OBJECT *obj)
 {
     return add_object(obj, 0);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
 {

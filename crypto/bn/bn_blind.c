@@ -123,10 +123,12 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 {
     return BN_BLINDING_convert_ex(n, NULL, b, ctx);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 {
@@ -156,10 +158,12 @@ int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 {
     return BN_BLINDING_invert_ex(n, NULL, b, ctx);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
     BN_CTX *ctx)
@@ -198,16 +202,19 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_BLINDING_is_current_thread(BN_BLINDING *b)
 {
     return CRYPTO_THREAD_compare_id(CRYPTO_THREAD_get_current_id(), b->tid);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 void BN_BLINDING_set_current_thread(BN_BLINDING *b)
 {
     b->tid = CRYPTO_THREAD_get_current_id();
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BN_BLINDING_lock(BN_BLINDING *b)
 {
     return CRYPTO_THREAD_write_lock(b->lock);
@@ -227,6 +234,7 @@ void BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)
 {
     b->flags = flags;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
     const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,

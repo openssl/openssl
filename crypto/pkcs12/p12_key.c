@@ -38,6 +38,7 @@ int PKCS12_key_gen_asc_ex(const char *pass, int passlen, unsigned char *salt,
     return ret > 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n,
     unsigned char *out, const EVP_MD *md_type)
@@ -45,6 +46,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     return PKCS12_key_gen_asc_ex(pass, passlen, salt, saltlen, id, iter, n,
         out, md_type, NULL, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int PKCS12_key_gen_utf8_ex(const char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n,

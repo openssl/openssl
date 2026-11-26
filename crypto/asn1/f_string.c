@@ -45,6 +45,7 @@ err:
     return -1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 {
     int i, j, k, m, n, again, bufsize;
@@ -132,3 +133,4 @@ err:
     OPENSSL_free(s);
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

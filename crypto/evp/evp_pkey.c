@@ -182,27 +182,32 @@ end:
 
 /* EVP_PKEY attribute functions */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_PKEY_get_attr_count(const EVP_PKEY *key)
 {
     return X509at_get_attr_count(key->attributes);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid, int lastpos)
 {
     return X509at_get_attr_by_NID(key->attributes, nid, lastpos);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
     int lastpos)
 {
     return X509at_get_attr_by_OBJ(key->attributes, obj, lastpos);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 X509_ATTRIBUTE *EVP_PKEY_get_attr(const EVP_PKEY *key, int loc)
 {
     return X509at_get_attr(key->attributes, loc);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_ATTRIBUTE *EVP_PKEY_delete_attr(EVP_PKEY *key, int loc)
 {
     return X509at_delete_attr(key->attributes, loc);
@@ -223,6 +228,7 @@ int EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key,
         return 1;
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key,
     int nid, int type,
@@ -233,6 +239,7 @@ int EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key,
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
     const char *attrname, int type,
     const unsigned char *bytes, int len)
@@ -241,6 +248,7 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
         return 1;
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key)
 {

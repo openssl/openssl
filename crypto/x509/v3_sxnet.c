@@ -45,14 +45,20 @@ ASN1_SEQUENCE(SXNETID) = {
     ASN1_SIMPLE(SXNETID, user, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(SXNETID)
 
-IMPLEMENT_ASN1_FUNCTIONS(SXNETID)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(SXNETID, SXNETID, SXNETID)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(SXNETID, SXNETID, SXNETID)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 ASN1_SEQUENCE(SXNET) = {
     ASN1_SIMPLE(SXNET, version, ASN1_INTEGER),
     ASN1_SEQUENCE_OF(SXNET, ids, SXNETID)
 } ASN1_SEQUENCE_END(SXNET)
 
-IMPLEMENT_ASN1_FUNCTIONS(SXNET)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(SXNET, SXNET, SXNET)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(SXNET, SXNET, SXNET)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
     int indent)
@@ -134,6 +140,7 @@ int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userle
 
 /* Add an id given the zone as an unsigned long */
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
     int userlen)
 {
@@ -151,6 +158,7 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
     }
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /*
  * Add an id given the zone as an ASN1_INTEGER. Note this version uses the
@@ -216,6 +224,7 @@ err:
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone)
 {
     ASN1_INTEGER *izone;
@@ -245,6 +254,7 @@ ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
     ASN1_INTEGER_free(izone);
     return oct;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 {

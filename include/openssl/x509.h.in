@@ -311,8 +311,11 @@ extern "C" {
 #define X509_REQ_extract_key(a) X509_REQ_get_pubkey(a)
 #define X509_name_cmp(a, b) X509_NAME_cmp((a), (b))
 
-void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
-X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init)(X509_CRL *crl),
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init)(X509_CRL *crl),
     int (*crl_free)(X509_CRL *crl),
     int (*crl_lookup)(X509_CRL *crl,
         X509_REVOKED **ret,
@@ -320,10 +323,14 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init)(X509_CRL *crl),
         const X509_NAME *issuer),
     int (*crl_verify)(X509_CRL *crl,
         EVP_PKEY *pk));
-void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
 
-void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
-void *X509_CRL_get_meth_data(X509_CRL *crl);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void *X509_CRL_get_meth_data(X509_CRL *crl);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const char *X509_verify_cert_error_string(long n);
 
@@ -363,8 +370,11 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
     EVP_MD **md_used, int *md_is_fallback);
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len);
-int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_REQ_digest(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len);
 
@@ -381,8 +391,12 @@ X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
 #ifndef OPENSSL_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
 int i2d_X509_fp(FILE *fp, const X509 *x509);
-X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl);
-int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see d2i_X509_CRL_fp(3) */
+OSSL_DEPRECATEDIN_4_2 X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl);
+/** @see i2d_X509_CRL_fp(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req);
 int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -413,10 +427,16 @@ X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8);
 int i2d_PKCS8_fp(FILE *fp, const X509_SIG *p8);
 X509_PUBKEY *d2i_X509_PUBKEY_fp(FILE *fp, X509_PUBKEY **xpk);
 int i2d_X509_PUBKEY_fp(FILE *fp, const X509_PUBKEY *xpk);
-PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see d2i_PKCS8_PRIV_KEY_INFO_fp(3) */
+OSSL_DEPRECATEDIN_4_2 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
     PKCS8_PRIV_KEY_INFO **p8inf);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, const PKCS8_PRIV_KEY_INFO *p8inf);
-int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see i2d_PKCS8PrivateKeyInfo_fp(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int i2d_PrivateKey_fp(FILE *fp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
     const char *propq);
@@ -466,7 +486,10 @@ int i2d_X509_PUBKEY_bio(BIO *bp, const X509_PUBKEY *xpk);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
     PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, const PKCS8_PRIV_KEY_INFO *p8inf);
-int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see i2d_PKCS8PrivateKeyInfo_bio(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
     const char *propq);
@@ -520,8 +543,16 @@ X509_REQ *X509_to_X509_REQ(const X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 X509 *X509_REQ_to_X509(const X509_REQ *r, int days, EVP_PKEY *pkey);
 
 DECLARE_ASN1_FUNCTIONS(X509_ALGOR)
-DECLARE_ASN1_ENCODE_FUNCTIONS(X509_ALGORS, X509_ALGORS, X509_ALGORS)
-DECLARE_ASN1_FUNCTIONS(X509_VAL)
+DECLARE_ASN1_ITEM(X509_ALGORS)
+/** @see i2d_X509_ALGORS(3) */
+int i2d_X509_ALGORS(const X509_ALGORS *a, unsigned char **out);
+DECLARE_ASN1_ITEM(X509_VAL)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see d2i_X509_ALGORS(3) */
+OSSL_DEPRECATEDIN_4_2 X509_ALGORS *d2i_X509_ALGORS(X509_ALGORS **a, const unsigned char **in, long len);
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, X509_VAL)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, X509_VAL, X509_VAL)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 DECLARE_ASN1_FUNCTIONS(X509_PUBKEY)
 
@@ -554,7 +585,14 @@ void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
 void X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg,
     ASN1_OCTET_STRING **pdigest);
 
-DECLARE_ASN1_FUNCTIONS(X509_REQ_INFO)
+DECLARE_ASN1_ITEM(X509_REQ_INFO)
+/** @see i2d_X509_REQ_INFO(3) */
+int i2d_X509_REQ_INFO(const X509_REQ_INFO *a, unsigned char **out);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, X509_REQ_INFO)
+/** @see d2i_X509_REQ_INFO(3) */
+OSSL_DEPRECATEDIN_4_2 X509_REQ_INFO *d2i_X509_REQ_INFO(X509_REQ_INFO **a, const unsigned char **in, long len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(X509_REQ)
 X509_REQ *X509_REQ_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 
@@ -619,7 +657,11 @@ X509_PKEY *X509_PKEY_new(void);
 void X509_PKEY_free(X509_PKEY *a);
 
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKI)
-DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKAC)
+DECLARE_ASN1_ITEM(NETSCAPE_SPKAC)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ALLOC_FUNCTIONS_attr(OSSL_DEPRECATEDIN_4_2, NETSCAPE_SPKAC)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, NETSCAPE_SPKAC, NETSCAPE_SPKAC)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_CERT_SEQUENCE)
 
 X509_INFO *X509_INFO_new(void);
@@ -646,9 +688,12 @@ int ASN1_item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
 int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     const ASN1_BIT_STRING *signature, const void *data,
     EVP_MD_CTX *ctx);
-int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see ASN1_item_sign(3) */
+OSSL_DEPRECATEDIN_4_2 int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
     ASN1_BIT_STRING *signature, const void *data,
     EVP_PKEY *pkey, const EVP_MD *md);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
     const void *data, EVP_MD_CTX *ctx);
@@ -715,21 +760,30 @@ EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req);
 X509_PUBKEY *X509_REQ_get_X509_PUBKEY(const X509_REQ *req);
 int X509_REQ_extension_nid(int nid);
 int *X509_REQ_get_extension_nids(void);
-void X509_REQ_set_extension_nids(int *nids);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 void X509_REQ_set_extension_nids(int *nids);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(const X509_REQ *req);
 int X509_REQ_add_extensions_nid(X509_REQ *req,
     const STACK_OF(X509_EXTENSION) *exts, int nid);
 int X509_REQ_add_extensions(X509_REQ *req, const STACK_OF(X509_EXTENSION) *ext);
 int X509_REQ_get_attr_count(const X509_REQ *req);
 int X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid, int lastpos);
-int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_REQ_get_attr_by_OBJ(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
     int lastpos);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc);
 X509_ATTRIBUTE *X509_REQ_delete_attr(X509_REQ *req, int loc);
 int X509_REQ_add1_attr(X509_REQ *req, X509_ATTRIBUTE *attr);
-int X509_REQ_add1_attr_by_OBJ(X509_REQ *req,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_REQ_add1_attr_by_OBJ(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_REQ_add1_attr_by_OBJ(X509_REQ *req,
     const ASN1_OBJECT *obj, int type,
     const unsigned char *bytes, int len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509_REQ_add1_attr_by_NID(X509_REQ *req,
     int nid, int type,
     const unsigned char *bytes, int len);
@@ -766,7 +820,10 @@ const X509_ALGOR *X509_CRL_get0_tbs_sigalg(const X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg);
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
-int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see i2d_re_X509_CRL_tbs(3) */
+OSSL_DEPRECATEDIN_4_2 int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *x);
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
@@ -827,7 +884,10 @@ int X509_aux_print(BIO *out, const X509 *x, int indent);
 #ifndef OPENSSL_NO_STDIO
 int X509_print_ex_fp(FILE *bp, const X509 *x, unsigned long nmflag, unsigned long cflag);
 int X509_print_fp(FILE *bp, const X509 *x);
-int X509_CRL_print_fp(FILE *bp, X509_CRL *x);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int X509_CRL_print_fp(FILE *bp, X509_CRL *x);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int X509_REQ_print_fp(FILE *bp, const X509_REQ *req);
 int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent, unsigned long flags);
 #endif
@@ -932,10 +992,14 @@ int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
 
 int X509_REVOKED_get_ext_count(const X509_REVOKED *x);
 int X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos);
-int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, const ASN1_OBJECT *obj,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see X509_REVOKED_get_ext_by_OBJ(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, const ASN1_OBJECT *obj,
     int lastpos);
-int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit,
+/** @see X509_REVOKED_get_ext_by_critical(3) */
+OSSL_DEPRECATEDIN_4_2 int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit,
     int lastpos);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
@@ -1005,38 +1069,67 @@ int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr);
 const ASN1_OBJECT *X509_ATTRIBUTE_get0_object(const X509_ATTRIBUTE *attr);
 const ASN1_TYPE *X509_ATTRIBUTE_get0_type(const X509_ATTRIBUTE *attr, int idx);
 
-int EVP_PKEY_get_attr_count(const EVP_PKEY *key);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_PKEY_get_attr_count(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_get_attr_count(const EVP_PKEY *key);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid, int lastpos);
-int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_PKEY_get_attr_by_OBJ(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
     int lastpos);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 X509_ATTRIBUTE *EVP_PKEY_get_attr(const EVP_PKEY *key, int loc);
-X509_ATTRIBUTE *EVP_PKEY_delete_attr(EVP_PKEY *key, int loc);
-int EVP_PKEY_add1_attr(EVP_PKEY *key, X509_ATTRIBUTE *attr);
-int EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_PKEY_delete_attr(3) */
+OSSL_DEPRECATEDIN_4_2 X509_ATTRIBUTE *EVP_PKEY_delete_attr(EVP_PKEY *key, int loc);
+/** @see EVP_PKEY_add1_attr(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_add1_attr(EVP_PKEY *key, X509_ATTRIBUTE *attr);
+/** @see EVP_PKEY_add1_attr_by_OBJ(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key,
     const ASN1_OBJECT *obj, int type,
     const unsigned char *bytes, int len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key,
     int nid, int type,
     const unsigned char *bytes, int len);
-int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see EVP_PKEY_add1_attr_by_txt(3) */
+OSSL_DEPRECATEDIN_4_2 int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
     const char *attrname, int type,
     const unsigned char *bytes, int len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* lookup a cert from a X509 STACK */
 X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *name,
     const ASN1_INTEGER *serial);
 X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name);
 
-DECLARE_ASN1_FUNCTIONS(PBEPARAM)
-DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
-DECLARE_ASN1_FUNCTIONS(PBKDF2PARAM)
+DECLARE_ASN1_ALLOC_FUNCTIONS(PBEPARAM)
+DECLARE_ASN1_ITEM(PBEPARAM)
+DECLARE_ASN1_ALLOC_FUNCTIONS(PBE2PARAM)
+DECLARE_ASN1_ITEM(PBE2PARAM)
+DECLARE_ASN1_ALLOC_FUNCTIONS(PBKDF2PARAM)
+DECLARE_ASN1_ITEM(PBKDF2PARAM)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, PBEPARAM, PBEPARAM)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, PBE2PARAM, PBE2PARAM)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, PBKDF2PARAM, PBKDF2PARAM)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 DECLARE_ASN1_FUNCTIONS(PBMAC1PARAM)
 #ifndef OPENSSL_NO_SCRYPT
-DECLARE_ASN1_FUNCTIONS(SCRYPT_PARAMS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(SCRYPT_PARAMS)
+DECLARE_ASN1_ITEM(SCRYPT_PARAMS)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_4_2, SCRYPT_PARAMS, SCRYPT_PARAMS)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 #endif
 
-int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS5_pbe_set0_algor(3) */
+OSSL_DEPRECATEDIN_4_2 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     const unsigned char *salt, int saltlen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
     const unsigned char *salt, int saltlen,
     OSSL_LIB_CTX *libctx);
@@ -1047,8 +1140,11 @@ X509_ALGOR *PKCS5_pbe_set_ex(int alg, int iter,
     const unsigned char *salt, int saltlen,
     OSSL_LIB_CTX *libctx);
 
-X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS5_pbe2_set(3) */
+OSSL_DEPRECATEDIN_4_2 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
     unsigned char *salt, int saltlen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
     unsigned char *salt, int saltlen,
     unsigned char *aiv, int prf_nid);
@@ -1064,8 +1160,11 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     uint64_t p);
 #endif
 
-X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see PKCS5_pbkdf2_set(3) */
+OSSL_DEPRECATEDIN_4_2 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     int prf_nid, int keylen);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
     int prf_nid, int keylen,
     OSSL_LIB_CTX *libctx);

@@ -443,6 +443,7 @@ static int asn1_bio_set_ex(BIO *b, int cmd,
     return BIO_ctrl(b, cmd, 0, &extmp);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 static int asn1_bio_get_ex(BIO *b, int cmd,
     asn1_ps_func **ex_func,
     asn1_ps_func **ex_free_func)
@@ -456,6 +457,7 @@ static int asn1_bio_get_ex(BIO *b, int cmd,
     }
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
     asn1_ps_func *prefix_free)
@@ -463,11 +465,13 @@ int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
     return asn1_bio_set_ex(b, BIO_C_SET_PREFIX, prefix, prefix_free);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
     asn1_ps_func **pprefix_free)
 {
     return asn1_bio_get_ex(b, BIO_C_GET_PREFIX, pprefix, pprefix_free);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
     asn1_ps_func *suffix_free)
@@ -475,8 +479,10 @@ int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
     return asn1_bio_set_ex(b, BIO_C_SET_SUFFIX, suffix, suffix_free);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
     asn1_ps_func **psuffix_free)
 {
     return asn1_bio_get_ex(b, BIO_C_GET_SUFFIX, psuffix, psuffix_free);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */

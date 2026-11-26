@@ -646,7 +646,10 @@ size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_get_read_request(b) (int)BIO_ctrl(b, BIO_C_GET_READ_REQUEST, 0, NULL)
 size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
-int BIO_ctrl_reset_read_request(BIO *b);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see BIO_ctrl_reset_read_request(3) */
+OSSL_DEPRECATEDIN_4_2 int BIO_ctrl_reset_read_request(BIO *b);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 /* ctrl macros for dgram */
 #define BIO_ctrl_dgram_connect(b, peer) \
@@ -705,12 +708,18 @@ uint64_t BIO_number_written(BIO *bio);
 /* For BIO_f_asn1() */
 int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
     asn1_ps_func *prefix_free);
-int BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
     asn1_ps_func **pprefix_free);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
     asn1_ps_func *suffix_free);
-int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
     asn1_ps_func **psuffix_free);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
@@ -756,7 +765,10 @@ void BIO_free_all(BIO *a);
 BIO *BIO_find_type(BIO *b, int bio_type);
 BIO *BIO_next(BIO *b);
 void BIO_set_next(BIO *b, BIO *next);
-BIO *BIO_get_retry_BIO(BIO *bio, int *reason);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see BIO_get_retry_BIO(3) */
+OSSL_DEPRECATEDIN_4_2 BIO *BIO_get_retry_BIO(BIO *bio, int *reason);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int BIO_get_retry_reason(BIO *bio);
 void BIO_set_retry_reason(BIO *bio, int reason);
 BIO *BIO_dup_chain(BIO *in);
@@ -778,10 +790,16 @@ const BIO_METHOD *BIO_s_connect(void);
 const BIO_METHOD *BIO_s_accept(void);
 #endif
 const BIO_METHOD *BIO_s_fd(void);
-const BIO_METHOD *BIO_s_log(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 const BIO_METHOD *BIO_s_log(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const BIO_METHOD *BIO_s_bio(void);
 const BIO_METHOD *BIO_s_null(void);
-const BIO_METHOD *BIO_f_null(void);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see BIO_f_null(3) */
+OSSL_DEPRECATEDIN_4_2 const BIO_METHOD *BIO_f_null(void);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 const BIO_METHOD *BIO_f_buffer(void);
 const BIO_METHOD *BIO_f_readbuffer(void);
 const BIO_METHOD *BIO_f_linebuffer(void);
@@ -797,9 +815,12 @@ BIO *BIO_new_dgram(int fd, int close_flag);
 const BIO_METHOD *BIO_s_datagram_sctp(void);
 BIO *BIO_new_dgram_sctp(int fd, int close_flag);
 int BIO_dgram_is_sctp(BIO *bio);
-int BIO_dgram_sctp_notification_cb(BIO *b,
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/* doc-exempt: in util/missingcrypto.txt */
+OSSL_DEPRECATEDIN_4_2 int BIO_dgram_sctp_notification_cb(BIO *b,
     BIO_dgram_sctp_notification_handler_fn handle_notifications,
     void *context);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 int BIO_dgram_sctp_wait_for_dry(BIO *b);
 int BIO_dgram_sctp_msg_waiting(BIO *b);
 #endif
@@ -844,7 +865,10 @@ int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l);
 unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap);
 char *BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric);
 char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric);
-char *BIO_ADDR_path_string(const BIO_ADDR *ap);
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+/** @see BIO_ADDR_path_string(3) */
+OSSL_DEPRECATEDIN_4_2 char *BIO_ADDR_path_string(const BIO_ADDR *ap);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 const BIO_ADDRINFO *BIO_ADDRINFO_next(const BIO_ADDRINFO *bai);
 int BIO_ADDRINFO_family(const BIO_ADDRINFO *bai);

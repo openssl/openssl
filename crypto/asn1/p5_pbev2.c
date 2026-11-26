@@ -24,7 +24,10 @@ ASN1_SEQUENCE(PBE2PARAM) = {
     ASN1_SIMPLE(PBE2PARAM, encryption, X509_ALGOR)
 } ASN1_SEQUENCE_END(PBE2PARAM)
 
-IMPLEMENT_ASN1_FUNCTIONS(PBE2PARAM)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(PBE2PARAM, PBE2PARAM, PBE2PARAM)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(PBE2PARAM, PBE2PARAM, PBE2PARAM)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 ASN1_SEQUENCE(PBKDF2PARAM) = {
     ASN1_SIMPLE(PBKDF2PARAM, salt, ASN1_ANY),
@@ -33,7 +36,10 @@ ASN1_SEQUENCE(PBKDF2PARAM) = {
     ASN1_OPT(PBKDF2PARAM, prf, X509_ALGOR)
 } ASN1_SEQUENCE_END(PBKDF2PARAM)
 
-IMPLEMENT_ASN1_FUNCTIONS(PBKDF2PARAM)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(PBKDF2PARAM, PBKDF2PARAM, PBKDF2PARAM)
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(PBKDF2PARAM, PBKDF2PARAM, PBKDF2PARAM)
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 ASN1_SEQUENCE(PBMAC1PARAM) = {
     ASN1_SIMPLE(PBMAC1PARAM, keyDerivationFunc, X509_ALGOR),
@@ -170,12 +176,14 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
         NULL);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
     unsigned char *salt, int saltlen)
 {
     return PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, NULL, -1,
         NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
 
 X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
     int prf_nid, int keylen,
@@ -272,8 +280,10 @@ err:
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_2)
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     int prf_nid, int keylen)
 {
     return PKCS5_pbkdf2_set_ex(iter, salt, saltlen, prf_nid, keylen, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_2) */
