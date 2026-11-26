@@ -37,6 +37,9 @@ SSL_CTX_get_default_read_ahead() is identical to SSL_CTX_get_read_ahead().
 These functions cannot be used with QUIC SSL objects. SSL_set_read_ahead()
 has no effect if called on a QUIC SSL object.
 
+SSL_set_read_ahead() has no effect if called on a KTLS-enabled object where
+reading ahead is always on.
+
 =head1 NOTES
 
 These functions have no impact when used with DTLS. The return values for
