@@ -6,13 +6,14 @@ X509_STORE_CTX_get_error, X509_STORE_CTX_set_error,
 X509_STORE_CTX_get_error_depth, X509_STORE_CTX_set_error_depth,
 X509_STORE_CTX_get_current_cert, X509_STORE_CTX_set_current_cert,
 X509_STORE_CTX_get0_cert, X509_STORE_CTX_get1_chain,
+X509_STORE_CTX_get1_certs, X509_STORE_CTX_get1_crls,
 X509_STORE_CTX_get0_current_crl,
 X509_verify_cert_error_string - get or set certificate verification status
 information
 
 =head1 SYNOPSIS
 
- #include <openssl/x509.h>
+ #include <openssl/x509_vfy.h>
 
  int   X509_STORE_CTX_get_error(const X509_STORE_CTX *ctx);
  void  X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int s);
@@ -22,6 +23,10 @@ information
  void  X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
  X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
  STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx);
+ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
+                                           const X509_NAME *nm);
+ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
+                                              const X509_NAME *nm);
  X509_CRL *X509_STORE_CTX_get0_current_crl(const X509_STORE_CTX *ctx);
 
  const char *X509_verify_cert_error_string(long n);
@@ -88,6 +93,15 @@ X509 verification, the values seen and order in which they are seen if
 called during the verification callback should not be relied upon to
 be consistent.
 
+X509_STORE_CTX_get1_certs() returns all certificates in the store associated
+with I<ctx> whose subject name matches I<nm>.
+X509_STORE_CTX_get1_crls() returns all CRLs in the store whose issuer name matches I<nm>.
+The store's lookup methods may be called to find matching objects.
+
+The returned stacks of certificates and CRLs get owned by the caller.
+The cert stack should be freed with L<OSSL_STACK_OF_X509_free(3)>,
+and the CRL stack with C<sk_X509_CRL_pop_free(stack, X509_CRL_free)>.
+
 X509_verify_cert_error_string() returns a human readable error string for
 verification error I<n>.
 
@@ -102,6 +116,10 @@ error or NULL if no certificate is relevant to the error.
 
 X509_STORE_CTX_get_current_crl() returns the CRL which caused the error
 or NULL if no CRL is relevant to the error.
+
+X509_STORE_CTX_get1_certs() and X509_STORE_CTX_get1_crls() return a pointer
+to a stack of matching certificates or CRLs, which may be empty if no objects
+match. They return NULL on failure.
 
 X509_verify_cert_error_string() returns a human readable error string for
 verification error I<n>.
@@ -548,7 +566,8 @@ B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
 
 L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
 L<X509_up_ref(3)>,
-L<X509_free(3)>.
+L<X509_free(3)>, L<OSSL_STACK_OF_X509_free(3)>,
+L<X509_CRL_free(3)>, L<DEFINE_STACK_OF(3)>.
 
 =head1 COPYRIGHT
 

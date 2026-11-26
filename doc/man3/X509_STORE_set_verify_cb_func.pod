@@ -166,32 +166,32 @@ function.
 Its purpose is to look through the final chain and check the
 revocation status for each certificate.
 It must return 0 on failure and 1 on success.
-I<If no function to get the issuer is provided, the internal default
+I<If no function to check the revocation status is provided, the internal default
 function will be used instead.>
 
-X509_STORE_set_get_crl() sets the function to get the crl for a given
+X509_STORE_set_get_crl() sets the function to get the CRL for a given
 certificate I<x>.
-When found, the crl must be assigned to I<*crl>.
+When found, the CRL must be assigned to I<*crl>.
 This function must return 0 on failure and 1 on success.
-I<If no function to get the issuer is provided, the internal default
+I<If no function to get the CRL is provided, the internal default
 function will be used instead.>
 
 X509_STORE_set_check_crl() sets the function to check the validity of
 the given I<crl>.
 This function must return 0 on failure and 1 on success.
-I<If no function to get the issuer is provided, the internal default
+I<If no function to check the CRL is provided, the internal default
 function will be used instead.>
 
 X509_STORE_set_cert_crl() sets the function to check the revocation
 status of the given certificate I<x> against the given I<crl>.
 This function must return 0 on failure and 1 on success.
-I<If no function to get the issuer is provided, the internal default
+I<If no function to check the revocation status is provided, the internal default
 function will be used instead.>
 
 X509_STORE_set_check_policy() sets the function to check the policies
 of all the certificates in the final chain..
 This function must return 0 on failure and 1 on success.
-I<If no function to get the issuer is provided, the internal default
+I<If no function to check the policies is provided, the internal default
 function will be used instead.>
 
 X509_STORE_set_lookup_certs() and X509_STORE_set_lookup_crls() set the
@@ -200,13 +200,13 @@ given name I<nm>.
 These functions return NULL on failure and a pointer to a stack of
 certificates (B<X509>) or to a stack of CRLs (B<X509_CRL>) on
 success.
-I<If no function to get the issuer is provided, the internal default
-function will be used instead.>
+I<If no function to look up the certs or CRLs is provided, the internal default
+function will be used instead: L<X509_STORE_CTX_get1_certs(3)> or L<X509_STORE_CTX_get1_crls(3)>>
 
 X509_STORE_set_cleanup() sets the final cleanup function, which is
 called when the context (B<X509_STORE_CTX>) is being torn down.
 This function doesn't return any value.
-I<If no function to get the issuer is provided, the internal default
+I<If no function to do the cleanup is provided, the internal default
 function will be used instead.>
 
 X509_STORE_get_verify_cb(), X509_STORE_CTX_get_verify(),
