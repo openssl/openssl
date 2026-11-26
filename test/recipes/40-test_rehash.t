@@ -14,7 +14,7 @@ use File::Spec::Functions;
 use File::Copy;
 use File::Basename;
 use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
 
 setup("test_rehash");
 
@@ -23,7 +23,7 @@ setup("test_rehash");
 plan skip_all => "test_rehash is not available on this platform"
     unless run(app(["openssl", "rehash", "-help"]));
 
-plan tests => 4;
+plan tests => 6;
 
 indir "rehash.$$" => sub {
     prepare();
@@ -40,6 +40,44 @@ indir "rehash.$$" => sub {
 indir "rehash.$$" => sub {
     ok(run(app(["openssl", "rehash", curdir()])),
        'Testing rehash operations on empty directory');
+}, create => 1, cleanup => 1;
+
+indir "rehash.$$" => sub {
+    copy_fixtures(srctop_dir("test", "recipes", "40-test-rehash-good-data"));
+    my $errfile = "rehash_err.txt";
+
+    my @lines = run(app(["openssl", "rehash",
+                        srctop_dir("test", "recipes", "40-test-rehash-bad-data")],
+                        stderr => $errfile),
+                        capture => 1, statusvar => \my $exit_ok);
+
+    ok(!$exit_ok, 'rehash exited nonzero');
+
+    #open(my $fh, '<', $errfile) or die "can't open $errfile: $!";
+    #my @errlines = <$fh>;
+    #close($fh);
+
+    #ok(grep { /has an invalid PEM format/ } @errlines,
+    #   'rehash warns about the invalid PEM');
+}, create => 1, cleanup => 1;
+
+indir "rehash.$$" => sub {
+    copy_fixtures(srctop_dir("test", "recipes", "40-test-rehash-good-data"));
+    my $errfile = "rehash_err.txt";
+
+    run(app(["openssl", "rehash",
+                        srctop_dir("test", "recipes", curdir())],
+                        stderr => $errfile),
+                        statusvar => \my $exit_ok);
+
+    ok($exit_ok, 'rehash exits successfully with only valid PEM files');
+
+    #open(my $fh, '<', $errfile) or die "can't open $errfile: $!";
+    #my @errlines = <$fh>;
+    #close($fh);
+
+    #ok(!grep { /has an invalid PEM format/ } @errlines,
+   #'rehash does not warn about invalid PEM when none are present');
 }, create => 1, cleanup => 1;
 
 indir "rehash.$$" => sub {
@@ -95,4 +133,18 @@ sub prepare {
             unless (ref($_) eq 'CODE');
         $_->(@destfiles);
     }
+}
+
+sub copy_fixtures {
+    my ($srcdir) = @_;
+    my @srcfiles = sort glob(catfile($srcdir, "*"));
+    my @destfiles = ();
+
+    foreach my $f (@srcfiles) {
+        next unless -f $f;
+        my $dest = catfile(curdir(), basename($f));
+        copy($f, $dest) or die "Can't copy $f to $dest: $!\n";
+        push @destfiles, $dest;
+    }
+    return @destfiles;
 }
