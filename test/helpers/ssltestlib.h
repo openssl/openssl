@@ -12,6 +12,11 @@
 
 #include <openssl/ssl.h>
 
+/* Defined when the test socket helpers are available */
+#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
+#define OSSL_USE_SOCKETS 1
+#endif
+
 #define TLS13_AES_128_GCM_SHA256_BYTES ((const unsigned char *)"\x13\x01")
 #define TLS13_AES_256_GCM_SHA384_BYTES ((const unsigned char *)"\x13\x02")
 #define TLS13_CHACHA20_POLY1305_SHA256_BYTES ((const unsigned char *)"\x13\x03")

@@ -3693,6 +3693,88 @@ end:
     return testresult;
 }
 
+/* An empty datagram queued for a listener connection must be discarded. */
+static int test_dtls_listener_empty_datagram(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    BIO_MSG empty = { 0 };
+    SSL_POLL_ITEM item;
+    struct timeval timeout = { 0, 0 };
+    const char msg[] = "Hello World";
+    char buf[64], dummy = 0;
+    size_t len, processed, polled;
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    int i, ret, abortctr = 0, testresult = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (version == DTLS1_2_VERSION)
+        return TEST_skip("DTLS 1.2 is disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (version == DTLS1_3_VERSION)
+        return TEST_skip("DTLS 1.3 is disabled");
+#endif
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version, &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD, &listener, &clientssl,
+            &client_addr)))
+        goto end;
+
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = listener;
+    item.events = SSL_POLL_EVENT_IC;
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (!TEST_int_lt(++abortctr, 100))
+            goto end;
+        ret = SSL_connect(clientssl);
+        if (ret <= 0
+            && !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto end;
+        item.revents = 0;
+        if (!TEST_true(SSL_poll(&item, 1, sizeof(item), &timeout, 0, &polled)))
+            goto end;
+        if (polled > 0 && (item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener,
+                SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    empty.data = &dummy;
+    for (i = 0; i < 4; i++)
+        if (!TEST_true(BIO_sendmmsg(SSL_get_wbio(clientssl), &empty,
+                sizeof(empty), 1, 0, &processed))
+            || !TEST_size_t_eq(processed, 1))
+            goto end;
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &len))
+        || !TEST_true(dtls_read_with_retry(serverssl, buf, sizeof(buf), &len))
+        || !TEST_mem_eq(buf, len, msg, sizeof(msg)))
+        goto end;
+
+    /* With no record following, the reader must ask for a retry. */
+    if (!TEST_true(BIO_sendmmsg(SSL_get_wbio(clientssl), &empty, sizeof(empty),
+            1, 0, &processed)))
+        goto end;
+    ret = SSL_read_ex(serverssl, buf, sizeof(buf), &len);
+    if (!TEST_false(ret)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_get_shutdown(serverssl), 0))
+        goto end;
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /*
  * Test: SSL_poll() returns no events when no data is pending.
  *
@@ -8869,6 +8951,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_conn_event_w);
     ADD_TEST(test_dtls_poll_conn_dgram_pair_readable);
     ADD_TEST(test_dtls_poll_conn_no_events_before_data);
+    ADD_ALL_TESTS(test_dtls_listener_empty_datagram, 2);
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_ALL_TESTS(test_dtls13_poll_conn_held_app_data, 2);
 #endif

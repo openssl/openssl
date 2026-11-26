@@ -908,8 +908,10 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         clear_sys_error();
         n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH + DTLS1_RT_HEADER_LENGTH);
         if (n <= 0) {
-            if (BIO_should_retry(rbio)) {
-                /* Non-blocking IO */
+            if (BIO_should_retry(rbio)
+                || (n == 0
+                    && ossl_dtls_classify_zero_read(rbio) != DTLS_ZERO_READ_EOF)) {
+                /* Non-blocking IO or an empty datagram */
                 goto end;
             }
             ret = -1;

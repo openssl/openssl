@@ -15,6 +15,9 @@
 #include <openssl/comp.h>
 #include <openssl/ssl.h>
 #include "internal/e_os.h"
+#ifndef OPENSSL_NO_SOCK
+#include "internal/sockets.h"
+#endif
 #include "internal/packet.h"
 #include "internal/ssl3_cbc.h"
 #include "internal/dtls_record_rx.h"
@@ -282,6 +285,51 @@ int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
+int ossl_dtls_classify_zero_read(BIO *bio)
+{
+#ifndef OPENSSL_NO_SOCK
+    BIO *sockbio;
+    int fd, socktype;
+    socklen_t socktype_len = sizeof(socktype);
+
+#ifndef OPENSSL_NO_SCTP
+    /* A zero-length SCTP read means association shutdown. */
+    if (BIO_find_type(bio, BIO_TYPE_DGRAM_SCTP) != NULL)
+        return DTLS_ZERO_READ_EOF;
+#endif
+
+    /* A socket or fd BIO may wrap a UDP socket, as SSL_set_fd() does. */
+    sockbio = BIO_find_type(bio, BIO_TYPE_SOCKET);
+#ifndef OPENSSL_SYS_WINDOWS
+    if (sockbio == NULL)
+        sockbio = BIO_find_type(bio, BIO_TYPE_FD);
+#endif
+    if (sockbio != NULL) {
+        fd = BIO_get_fd(sockbio, NULL);
+        if (fd >= 0
+            && getsockopt(fd, SOL_SOCKET, SO_TYPE,
+                   (void *)&socktype, &socktype_len)
+                == 0
+            && socktype_len == sizeof(socktype)
+            && socktype == SOCK_DGRAM)
+            return DTLS_ZERO_READ_DATAGRAM;
+        return DTLS_ZERO_READ_EOF;
+    }
+#endif
+
+    /* BIO_eof() would also report the EOF inferred by the read converter. */
+    if (BIO_ctrl(bio, BIO_CTRL_EOF, 0, NULL) != 0)
+        return DTLS_ZERO_READ_EOF;
+    if (BIO_find_type(bio, BIO_TYPE_DGRAM) != NULL
+        || BIO_find_type(bio, BIO_TYPE_DGRAM_PAIR) != NULL
+        || BIO_find_type(bio, BIO_TYPE_DGRAM_MEM) != NULL)
+        return DTLS_ZERO_READ_DATAGRAM;
+    return DTLS_ZERO_READ_UNKNOWN;
+}
+
+/* Limit of consecutive zero reads from a BIO of unknown kind */
+#define MAX_UNKNOWN_ZERO_READS 32
+
 /*
  * Return values are as per SSL_read()
  */
@@ -298,6 +346,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
      * packets where they were
      */
     size_t len, left, align = 0;
+    int zero_read, zero_reads = 0;
     unsigned char *pkt;
     TLS_BUFFER *rb;
 
@@ -447,6 +496,16 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                     rl->prev = NULL;
                     continue;
                 }
+                ret = OSSL_RECORD_RETURN_RETRY;
+            } else if (ret == 0 && rl->isdtls
+                && (zero_read = ossl_dtls_classify_zero_read(bio))
+                    != DTLS_ZERO_READ_EOF) {
+                /* Discard an empty datagram and read the next one. */
+                if (zero_read == DTLS_ZERO_READ_DATAGRAM
+                    || ++zero_reads < MAX_UNKNOWN_ZERO_READS)
+                    continue;
+                BIO_clear_retry_flags(bio);
+                BIO_set_retry_read(bio);
                 ret = OSSL_RECORD_RETURN_RETRY;
             } else if (BIO_eof(bio)) {
                 ret = OSSL_RECORD_RETURN_EOF;
