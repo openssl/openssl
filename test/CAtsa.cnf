@@ -146,6 +146,21 @@ ess_cert_id_chain	= yes	# Must the ESS cert id chain be included?
 ess_cert_id_alg		= sha256	# algorithm to compute certificate
 					# identifier (optional, default: sha256)
 
+[ tsa_config_bad_serial ]
+
+# Like tsa_config1, but the serial number file cannot be written.
+dir		= .			# TSA root directory
+serial		= $dir/nonexistent/tsa_serial	# The current serial number (mandatory)
+signer_cert	= $dir/tsa_cert1.pem 	# The TSA signing certificate
+					# (optional)
+certs		= $dir/tsaca.pem	# Certificate chain to include in reply
+					# (optional)
+signer_key	= $dir/tsa_key1.pem	# The TSA private key (optional)
+signer_digest  = sha256             # Signing digest to use. (Optional)
+default_policy	= tsa_policy1		# Policy if request did not specify it
+					# (optional)
+digests     = sha1, sha256, sha384, sha512  # Acceptable message digests (mandatory)
+
 [ tsa_config2 ]
 
 # This configuration uses a certificate which doesn't have timeStamping usage.
