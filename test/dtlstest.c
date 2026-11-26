@@ -2757,6 +2757,59 @@ static int test_discard_record_framing_dtls13(void)
 {
     return test_discard_record_framing(DTLS1_3_VERSION);
 }
+
+/* A leftover DTLSv1.3 record with a body that resembles another record */
+static unsigned char record_leftover[] = {
+    0x2f, /* Unified header: fixed bits, S and L bit, epoch bits 11 */
+    0, 42, /* Record sequence number */
+    0, 34, /* Record length */
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, /* Dummy data */
+    0x2c, /* Resembles a unified header with epoch bits 00 */
+    0, 43, /* Resembles a record sequence number */
+    0, 21, /* Resembles a record length */
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5,
+    0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5 /* Dummy data */
+};
+
+/* Test that the body of a discarded record cannot abort a new handshake */
+static int test_discard_record_framing_handshake(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    int testresult = 0;
+    BIO *bio;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    /* Queue the leftover record ahead of the ClientHello */
+    bio = SSL_get_rbio(sssl);
+    if (!TEST_ptr(bio)
+        || !TEST_int_eq(mempacket_test_inject(bio, (char *)record_leftover,
+                            (int)sizeof(record_leftover), -1,
+                            INJECT_PACKET_IGNORE_REC_SEQ),
+            (int)sizeof(record_leftover)))
+        goto end;
+
+    /* The server must discard the whole record and complete the handshake */
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
 #endif /* OPENSSL_NO_DTLS1_3 */
 #endif /* !OPENSSL_NO_DTLS1_2 || !OPENSSL_NO_DTLS1_3 */
 
@@ -3231,6 +3284,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_ack_read_timeout);
     ADD_ALL_TESTS(test_dtls13_early_data_retransmit, 2);
     ADD_TEST(test_discard_record_framing_dtls13);
+    ADD_TEST(test_discard_record_framing_handshake);
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_client_retransmit);
