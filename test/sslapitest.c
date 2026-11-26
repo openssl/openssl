@@ -3528,7 +3528,7 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
     char *signer_cert_files[] = { "subinterCA.pem", "interCA.pem", "rootCA.pem" };
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
 
-    if (*argi != 1 && *argi != 3)
+    if (*argi != 1 && *argi != 3 && *argi != 5)
         goto end;
 
     ocsp_server_called += 1;
@@ -3555,6 +3555,15 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
         goto end;
 
     for (i = 0; i < num; i++) {
+        /*
+         * In the gap test (arg 5) the response for the first intermediate is
+         * intentionally missing, leaving a NULL element in the stack.
+         */
+        if (*argi == 5 && i == 1) {
+            if (!sk_OCSP_RESPONSE_push(sk_resp, NULL))
+                goto end;
+            continue;
+        }
         if (i == 0) {
             /* get OCSP response for server certificate first */
             ssl_cert = SSL_get_certificate(s);
@@ -3608,9 +3617,17 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
     SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
     num = sk_OCSP_RESPONSE_num(sk_resp);
 
-    /* check if we get as many OCSP responses as expected */
-    if (*argi < 1 || *argi > 3 || num != *argi)
+    /*
+     * Check if we get as many OCSP responses as expected. In the gap test
+     * (arg 5) the stack must keep its size and carry a NULL element where the
+     * response is missing.
+     */
+    if (*argi == 5) {
+        if (num != 3 || sk_OCSP_RESPONSE_value(sk_resp, 1) != NULL)
+            return 0;
+    } else if (*argi < 1 || *argi > 3 || num != *argi) {
         return 0;
+    }
 
     ocsp_client_called += 1;
 
@@ -3628,8 +3645,12 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
         if (X509_self_signed(ssl_cert, 0))
             continue;
 
-        if ((resp = sk_OCSP_RESPONSE_value(sk_resp, i)) == NULL)
+        if ((resp = sk_OCSP_RESPONSE_value(sk_resp, i)) == NULL) {
+            /* the gap test expects exactly one NULL element, at index 1 */
+            if (*argi == 5 && i == 1)
+                continue;
             break;
+        }
 
         if (ocsp_client_called != 3) {
             if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
@@ -3816,6 +3837,25 @@ static int test_tlsext_status_type_multi(void)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL))
         || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
         || !TEST_int_eq(ocsp_client_called, 4) || !TEST_int_eq(ocsp_server_called, 4)
+        || !TEST_true(ocsp_verify_cb_called))
+        goto end;
+
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = NULL;
+    clientssl = NULL;
+
+    /*
+     * Gap test: the server leaves out the response for the first intermediate,
+     * so the client stack must be [EE, NULL, interCA] and must not shift the
+     * interCA response down to index 1. Only the EE certificate is checked
+     * here, because X509_V_FLAG_OCSP_RESP_CHECK_ALL was cleared above.
+     */
+    ocsp_verify_cb_called = 0;
+    cdummyarg = 5; /* expect [EE, NULL, interCA] */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_int_eq(ocsp_client_called, 5) || !TEST_int_eq(ocsp_server_called, 5)
         || !TEST_true(ocsp_verify_cb_called))
         goto end;
 
