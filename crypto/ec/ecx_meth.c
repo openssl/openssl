@@ -377,7 +377,7 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
 err:
     OSSL_PARAM_BLD_free(tmpl);
-    OSSL_PARAM_free(params);
+    OSSL_PARAM_clear_free(params);
     return rv;
 }
 

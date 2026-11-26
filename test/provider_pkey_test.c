@@ -7,12 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* RSA_new() and EVP_PKEY_assign_RSA() are used to build a legacy key */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stddef.h>
 #include <string.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
 #include "testutil.h"
@@ -782,6 +786,176 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+/*
+ * Exporting a legacy key to a provider other than the default one goes
+ * through the key's export_to method, which builds an OSSL_PARAM array that
+ * holds the private key.  That array must be cleared when it is freed.  While
+ * the export runs, the allocator below records every block it hands out and
+ * searches a block for the private exponent when it is freed.  Blocks
+ * allocated before the allocator was installed are passed straight through.
+ */
+#define WATCH_MAX 4096
+
+static CRYPTO_malloc_fn watch_saved_malloc;
+static CRYPTO_realloc_fn watch_saved_realloc;
+static CRYPTO_free_fn watch_saved_free;
+static struct {
+    void *ptr;
+    size_t size;
+} watch_blocks[WATCH_MAX];
+static size_t watch_count;
+static int watch_overflow;
+static const unsigned char *watch_secret;
+static size_t watch_secret_len;
+static int watch_found;
+
+static void watch_add(void *ptr, size_t size)
+{
+    if (watch_count == WATCH_MAX) {
+        watch_overflow = 1;
+        return;
+    }
+    watch_blocks[watch_count].ptr = ptr;
+    watch_blocks[watch_count].size = size;
+    watch_count++;
+}
+
+/* Forget |ptr|, first searching it for the secret if |scan| is set */
+static void watch_remove(void *ptr, int scan)
+{
+    const unsigned char *p = ptr;
+    size_t i, j;
+
+    for (i = watch_count; i-- > 0;) {
+        if (watch_blocks[i].ptr != ptr)
+            continue;
+        if (scan && watch_secret != NULL)
+            for (j = 0; j + watch_secret_len <= watch_blocks[i].size; j++)
+                if (memcmp(p + j, watch_secret, watch_secret_len) == 0) {
+                    watch_found = 1;
+                    break;
+                }
+        watch_blocks[i] = watch_blocks[--watch_count];
+        return;
+    }
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = watch_saved_malloc(num, file, line);
+
+    if (ret != NULL)
+        watch_add(ret, num);
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = watch_saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_remove(ptr, 0);
+    if (ret != NULL)
+        watch_add(ret, num);
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_remove(ptr, 1);
+    watch_saved_free(ptr, file, line);
+}
+
+static int test_legacy_export_cleanse(void)
+{
+    static const char *const names[] = {
+        OSSL_PKEY_PARAM_RSA_N, OSSL_PKEY_PARAM_RSA_E, OSSL_PKEY_PARAM_RSA_D,
+        OSSL_PKEY_PARAM_RSA_FACTOR1, OSSL_PKEY_PARAM_RSA_FACTOR2,
+        OSSL_PKEY_PARAM_RSA_EXPONENT1, OSSL_PKEY_PARAM_RSA_EXPONENT2,
+        OSSL_PKEY_PARAM_RSA_COEFFICIENT1
+    };
+    BIGNUM *bn[OSSL_NELEM(names)] = { NULL };
+    OSSL_PROVIDER *deflt = NULL, *fake_rsa = NULL;
+    EVP_PKEY *gen = NULL, *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    RSA *rsa = NULL;
+    unsigned char *secret = NULL;
+    int secretlen = 0, init, ok = 0;
+    size_t i;
+
+    /*
+     * Build a legacy RSA key from plain BIGNUMs, so the private components
+     * are not in secure memory.
+     */
+    if (!TEST_ptr(deflt = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(gen = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", (size_t)2048)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(names); i++)
+        if (!TEST_true(EVP_PKEY_get_bn_param(gen, names[i], &bn[i])))
+            goto err;
+    if (!TEST_int_gt(secretlen = BN_num_bytes(bn[2]), 0)
+        || !TEST_ptr(secret = OPENSSL_malloc(secretlen))
+        || !TEST_int_eq(BN_bn2nativepad(bn[2], secret, secretlen), secretlen)
+        || !TEST_ptr(rsa = RSA_new())
+        || !TEST_true(RSA_set0_key(rsa, bn[0], bn[1], bn[2])))
+        goto err;
+    bn[0] = bn[1] = bn[2] = NULL;
+    if (!TEST_true(RSA_set0_factors(rsa, bn[3], bn[4])))
+        goto err;
+    bn[3] = bn[4] = NULL;
+    if (!TEST_true(RSA_set0_crt_params(rsa, bn[5], bn[6], bn[7])))
+        goto err;
+    bn[5] = bn[6] = bn[7] = NULL;
+    if (!TEST_ptr(pkey = EVP_PKEY_new())
+        || !TEST_true(EVP_PKEY_assign_RSA(pkey, rsa)))
+        goto err;
+    rsa = NULL;
+
+    if (!TEST_ptr(fake_rsa = fake_rsa_start(libctx))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey,
+                         "provider=fake-rsa")))
+        goto err;
+
+    CRYPTO_get_mem_functions(&watch_saved_malloc, &watch_saved_realloc,
+        &watch_saved_free);
+    if (!CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free)) {
+        ok = TEST_skip("the allocator can no longer be replaced");
+        goto err;
+    }
+    watch_count = 0;
+    watch_overflow = 0;
+    watch_found = 0;
+    watch_secret = secret;
+    watch_secret_len = secretlen;
+
+    /* This exports the key to the fake-rsa provider */
+    init = EVP_PKEY_sign_init(ctx);
+
+    watch_secret = NULL;
+    CRYPTO_set_mem_functions(watch_saved_malloc, watch_saved_realloc,
+        watch_saved_free);
+
+    if (!TEST_int_eq(init, 1)
+        || !TEST_false(watch_overflow)
+        || !TEST_false(watch_found))
+        goto err;
+    ok = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    fake_rsa_finish(fake_rsa);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(gen);
+    OSSL_PROVIDER_unload(deflt);
+    RSA_free(rsa);
+    for (i = 0; i < OSSL_NELEM(bn); i++)
+        BN_clear_free(bn[i]);
+    OPENSSL_clear_free(secret, secretlen);
+    return ok;
+}
+#endif
+
 int setup_tests(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -796,6 +970,9 @@ int setup_tests(void)
     ADD_TEST(test_pkey_delete);
     ADD_TEST(test_pkey_store_open_ex);
     ADD_TEST(test_pkey_provider_decoder_props);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_legacy_export_cleanse);
+#endif
 
     return 1;
 }
