@@ -92,7 +92,21 @@ int nseq_main(int argc, char **argv)
         seq->certs = sk_X509_new_null();
         if (seq->certs == NULL)
             goto end;
-        while ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
+        for (;;) {
+            ERR_set_mark();
+            x509 = PEM_read_bio_X509(in, NULL, NULL, NULL);
+            if (x509 == NULL) {
+                if (sk_X509_num(seq->certs) > 0
+                    && ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE) {
+                    ERR_pop_to_mark();
+                    break;
+                }
+                ERR_clear_last_mark();
+                BIO_printf(bio_err, "%s: Error reading certs file %s\n",
+                    prog, infile);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
             if (!sk_X509_push(seq->certs, x509))
                 goto end;
         }
@@ -103,7 +117,12 @@ int nseq_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        PEM_write_bio_NETSCAPE_CERT_SEQUENCE(out, seq);
+        if (!PEM_write_bio_NETSCAPE_CERT_SEQUENCE(out, seq)) {
+            BIO_printf(bio_err, "%s: Error writing sequence file %s\n",
+                prog, outfile);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
         ret = 0;
         goto end;
     }
