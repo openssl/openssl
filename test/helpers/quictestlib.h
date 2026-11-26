@@ -100,7 +100,9 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
  * @brief Run the handshake between the client and a listener.
  * @param listener listener
  * @param clientssl client
- * @param sconn receives the accepted server connection; caller frees it
+ * @param sconn set *sconn to NULL on the first call. Keep the returned server
+ *              SSL in that slot when resuming the same handshake. The caller
+ *              frees it even if the helper returns failure.
  * @returns 1 on success, 0 on failure
  */
 int qtest_create_quic_connection_ssl(SSL *listener, SSL *clientssl,
@@ -124,7 +126,7 @@ int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
  * client reports SSL_get_error() value |wanterr|.
  * @param listener listener
  * @param clientssl client
- * @param sconn receives the accepted server connection; caller frees it
+ * @param sconn same as for qtest_create_quic_connection_ssl()
  * @param wanterr SSL_ERROR_* value to stop at
  * @returns 1 on success, 0 on failure
  */

@@ -20,6 +20,7 @@
 #include "internal/quic_ssl.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_port.h"
+#include "internal/quic_reactor.h"
 #include "internal/statem.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
@@ -78,12 +79,6 @@ struct qtest_fault {
     size_t msgalloc;
     struct noise_args_data_st noiseargs;
 };
-
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-static int client_ready = 0;
-static CRYPTO_CONDVAR *client_ready_cond = NULL;
-static CRYPTO_MUTEX *client_ready_mutex = NULL;
-#endif
 
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
@@ -155,23 +150,6 @@ static int create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
     QTEST_DATA *bdata = NULL;
     int own_bdata = 1;
     SSL_CTX *sctx = NULL;
-
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-    if (client_ready_cond == NULL) {
-        client_ready_cond = ossl_crypto_condvar_new();
-        if (client_ready_cond == NULL)
-            return 0;
-    }
-
-    if (client_ready_mutex == NULL) {
-        client_ready_mutex = ossl_crypto_mutex_new();
-        if (client_ready_mutex == NULL) {
-            ossl_crypto_condvar_free(&client_ready_cond);
-            client_ready_cond = NULL;
-            return 0;
-        }
-    }
-#endif
 
     bdata = OPENSSL_zalloc(sizeof(QTEST_DATA));
     if (bdata == NULL)
@@ -558,27 +536,6 @@ int qtest_supports_blocking(void)
 
 #define MAXLOOPS 1000
 
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-static int globserverret = 0;
-static TSAN_QUALIFIER int abortserverthread = 0;
-static QUIC_TSERVER *globtserv;
-static SSL *globlistener;
-static SSL **globsconn;
-static const thread_t thread_zero;
-static int create_quic_connection(QUIC_TSERVER *qtserv, SSL *listener,
-    SSL *clientssl, SSL **sconn, int wanterr);
-static void run_server_thread(void)
-{
-    /*
-     * This will operate in a busy loop because the server does not block,
-     * but should be acceptable because it is local and we expect this to be
-     * fast
-     */
-    globserverret = create_quic_connection(globtserv, globlistener, NULL,
-        globsconn, SSL_ERROR_NONE);
-}
-#endif
-
 static int wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv, SSL *listener)
 {
     struct timeval tv;
@@ -638,172 +595,249 @@ int qtest_wait_for_timeout(SSL *s, QUIC_TSERVER *qtserv)
     return wait_for_timeout(s, qtserv, NULL);
 }
 
-static void tick_server(QUIC_TSERVER *qtserv, SSL *listener)
+static int tick_server(QUIC_TSERVER *qtserv, SSL *listener, SSL **sconn)
 {
+    uint64_t events;
+
     if (qtserv != NULL)
-        ossl_quic_tserver_tick(qtserv);
-    else
-        (void)SSL_handle_events(listener);
+        return ossl_quic_tserver_tick(qtserv);
+
+    if (!SSL_handle_events(listener))
+        return 0;
+    if (*sconn == NULL)
+        *sconn = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+    /* An empty accept queue and a failed port can both give us NULL. */
+    if (!ossl_quic_conn_poll_events(listener, SSL_POLL_EVENT_EL, 0, &events))
+        return 0;
+    if ((events & SSL_POLL_EVENT_EL) != 0) {
+        TEST_info("QUIC listener failed during handshake");
+        return 0;
+    }
+    return 1;
 }
 
-/* Both servers NULL means the server is ticked by another thread */
+/* The caller is the only thread driving the server. */
+static int server_handshake_status(QUIC_TSERVER *qtserv, SSL **sconn)
+{
+    QUIC_CHANNEL *ch;
+
+    if (qtserv != NULL)
+        ch = ossl_quic_tserver_get_channel(qtserv);
+    else if (*sconn == NULL)
+        return 0;
+    else
+        ch = ossl_quic_conn_get_channel(*sconn);
+
+    if (ossl_quic_channel_is_term_any(ch))
+        return -1;
+    return ossl_quic_channel_is_handshake_confirmed(ch);
+}
+
+static int connect_client(SSL *clientssl, int wanterr, int *paused)
+{
+    int ret = SSL_connect(clientssl);
+    int err;
+
+    if (ret > 0)
+        return 1;
+    err = SSL_get_error(clientssl, ret);
+    if (err == wanterr) {
+        *paused = 1;
+        return 1;
+    }
+    if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+        return 0;
+    TEST_info("SSL_connect() failed %d, %d", ret, err);
+    TEST_openssl_errors();
+    return -1;
+}
+
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#define BLOCKING_HANDSHAKE_TIMEOUT_MS 10000
+#define BLOCKING_HANDSHAKE_POLL_MS 25
+
+struct blocking_handshake {
+    QUIC_TSERVER *qtserv;
+    SSL *listener;
+    SSL **sconn;
+    QUIC_CHANNEL *client;
+    OSSL_TIME deadline, tick_deadline;
+    CRYPTO_MUTEX *mutex; /* Protects stop and server_failed. */
+    int stop, server_failed;
+    int client_aborted; /* Protected by the client engine mutex. */
+    void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
+    void *tick_arg;
+};
+
+static CRYPTO_THREAD_RETVAL run_server_thread(void *arg)
+{
+    struct blocking_handshake *h = arg;
+    int ret = 0;
+
+    for (;;) {
+        int stop, status;
+
+        if (ossl_time_compare(ossl_time_now(), h->deadline) >= 0) {
+            TEST_info("QUIC test server handshake timed out");
+            break;
+        }
+        qtest_add_time(1);
+        if (!tick_server(h->qtserv, h->listener, h->sconn))
+            break;
+        status = server_handshake_status(h->qtserv, h->sconn);
+        if (status < 0)
+            break;
+
+        /* Finish this tick and accept before returning a paused connection. */
+        ossl_crypto_mutex_lock(h->mutex);
+        stop = h->stop;
+        ossl_crypto_mutex_unlock(h->mutex);
+        if (stop || status > 0) {
+            ret = 1;
+            break;
+        }
+        OSSL_sleep(1);
+    }
+
+    if (ret == 0) {
+        ossl_crypto_mutex_lock(h->mutex);
+        h->server_failed = 1;
+        ossl_crypto_mutex_unlock(h->mutex);
+    }
+    OPENSSL_thread_stop();
+    return ret;
+}
+
+/* Keep SSL_connect() blocking but check the server result between OS waits. */
+static void tick_blocking_client(QUIC_TICK_RESULT *res, void *arg,
+    uint32_t flags)
+{
+    struct blocking_handshake *h = arg;
+    OSSL_TIME now = ossl_time_now();
+    OSSL_TIME next_check = ossl_time_add(now,
+        ossl_ms2time(BLOCKING_HANDSHAKE_POLL_MS));
+    int failed;
+
+    ossl_crypto_mutex_lock(h->mutex);
+    failed = h->server_failed;
+    ossl_crypto_mutex_unlock(h->mutex);
+    /* The reactor already holds the client engine lock here. */
+    if (failed || ossl_time_compare(now, h->deadline) >= 0) {
+        h->client_aborted = 1;
+        ossl_quic_channel_local_close(h->client, 0,
+            failed ? "QUIC test server handshake failed"
+                   : "QUIC test client handshake timed out");
+    }
+
+    h->tick_cb(res, h->tick_arg, flags);
+    h->tick_deadline = res->tick_deadline;
+    res->tick_deadline = ossl_time_min(res->tick_deadline,
+        ossl_time_min(h->deadline, next_check));
+}
+
+static int create_quic_connection_blocking(QUIC_TSERVER *qtserv, SSL *listener,
+    SSL *clientssl, SSL **sconn, int wanterr)
+{
+    struct blocking_handshake h = { 0 };
+    QUIC_REACTOR *reactor;
+    CRYPTO_THREAD *worker;
+    CRYPTO_THREAD_RETVAL server_ok;
+    int ret = 0, paused = 0, i;
+
+    h.qtserv = qtserv;
+    h.listener = listener;
+    h.sconn = sconn;
+    if (!TEST_ptr(h.client = ossl_quic_conn_get_channel(clientssl))
+        || !TEST_ptr(h.mutex = ossl_crypto_mutex_new()))
+        return 0;
+    h.deadline = ossl_time_add(ossl_time_now(),
+        ossl_ms2time(BLOCKING_HANDSHAKE_TIMEOUT_MS));
+    reactor = ossl_quic_channel_get_reactor(h.client);
+    worker = ossl_crypto_thread_native_start(run_server_thread, &h, 1);
+    if (!TEST_ptr(worker)) {
+        ossl_crypto_mutex_free(&h.mutex);
+        return 0;
+    }
+
+    ossl_crypto_mutex_lock(reactor->mutex);
+    h.tick_cb = reactor->tick_cb;
+    h.tick_arg = reactor->tick_cb_arg;
+    h.tick_deadline = reactor->tick_deadline;
+    reactor->tick_cb = tick_blocking_client;
+    reactor->tick_cb_arg = &h;
+    ossl_crypto_mutex_unlock(reactor->mutex);
+
+    for (i = 0; i < MAXLOOPS && ret == 0; ++i) {
+        ret = connect_client(clientssl, wanterr, &paused);
+        if (ret >= 0) {
+            qtest_add_time(1);
+            if (!SSL_handle_events(clientssl))
+                ret = -1;
+        }
+    }
+    if (ret == 0)
+        TEST_info("No blocking handshake progress made");
+
+    ossl_crypto_mutex_lock(reactor->mutex);
+    if (h.client_aborted)
+        ret = -1;
+    reactor->tick_cb = h.tick_cb;
+    reactor->tick_cb_arg = h.tick_arg;
+    reactor->tick_deadline = h.tick_deadline;
+    ossl_crypto_mutex_unlock(reactor->mutex);
+
+    if (ret <= 0 || paused) {
+        ossl_crypto_mutex_lock(h.mutex);
+        h.stop = 1;
+        ossl_crypto_mutex_unlock(h.mutex);
+    }
+
+    /* The worker still borrows the listener and |sconn| until joined. */
+    if (!ossl_crypto_thread_native_join(worker, &server_ok))
+        OPENSSL_die("Couldn't join QUIC test server thread", __FILE__, __LINE__);
+    ossl_crypto_thread_native_clean(worker);
+    ossl_crypto_mutex_free(&h.mutex);
+    return ret > 0 && server_ok;
+}
+#endif
+
 static int create_quic_connection(QUIC_TSERVER *qtserv, SSL *listener,
     SSL *clientssl, SSL **sconn, int wanterr)
 {
-    int retc = -1, rets = 0, abortctr = 0, ret = 0;
-    int clienterr = 0, servererr = 0;
+    int retc = 0, rets = 0, paused = 0, i;
+
+    if (!TEST_ptr(clientssl))
+        return 0;
+    if (SSL_get_blocking_mode(clientssl) > 0) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-
-    /*
-     * Pointless initialisation to avoid bogus compiler warnings about using
-     * t uninitialised
-     */
-    thread_t t = thread_zero;
-
-    if (clientssl != NULL)
-        abortserverthread = 0;
-
-    /*
-     * Only set the client_ready flag to zero if we are the client
-     */
-    if (clientssl != NULL) {
-        ossl_crypto_mutex_lock(client_ready_mutex);
-        client_ready = 0;
-        ossl_crypto_mutex_unlock(client_ready_mutex);
-    }
-#endif
-
-    if (!TEST_true(qtserv != NULL || listener != NULL)) {
-        goto err;
-    } else if (clientssl == NULL) {
-        retc = 1;
-    } else if (SSL_get_blocking_mode(clientssl) > 0) {
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-        /*
-         * clientssl is blocking. We will need a thread to complete the
-         * connection
-         */
-        globtserv = qtserv;
-        globlistener = listener;
-        globsconn = sconn;
-        if (!TEST_true(run_thread(&t, run_server_thread)))
-            goto err;
-
-        qtserv = NULL;
-        listener = NULL;
-        rets = 1;
+        return create_quic_connection_blocking(qtserv, listener, clientssl,
+            sconn, wanterr);
 #else
         TEST_error("No thread support in this build");
-        goto err;
+        return 0;
 #endif
     }
 
-    do {
-        if (!clienterr && retc <= 0) {
-            int err;
-
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-            ossl_crypto_mutex_lock(client_ready_mutex);
-            client_ready = 1;
-            ossl_crypto_condvar_broadcast(client_ready_cond);
-            ossl_crypto_mutex_unlock(client_ready_mutex);
-#endif
-            retc = SSL_connect(clientssl);
-            if (retc <= 0) {
-                err = SSL_get_error(clientssl, retc);
-
-                if (err == wanterr) {
-                    retc = 1;
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-                    if (qtserv == NULL && listener == NULL && rets > 0)
-                        tsan_store(&abortserverthread, 1);
-                    else
-#endif
-                        rets = 1;
-                } else {
-                    if (err != SSL_ERROR_WANT_READ
-                        && err != SSL_ERROR_WANT_WRITE) {
-                        TEST_info("SSL_connect() failed %d, %d", retc, err);
-                        TEST_openssl_errors();
-                        clienterr = 1;
-                    }
-                }
-            }
-        }
-
+    for (i = 0; i < MAXLOOPS; ++i) {
+        if (retc == 0)
+            retc = connect_client(clientssl, wanterr, &paused);
         qtest_add_time(1);
-        if (clientssl != NULL)
-            SSL_handle_events(clientssl);
-        if (qtserv != NULL || listener != NULL) {
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-            ossl_crypto_mutex_lock(client_ready_mutex);
-            for (;;) {
-                if (client_ready == 1)
-                    break;
-                ossl_crypto_condvar_wait(client_ready_cond, client_ready_mutex);
-            }
-            ossl_crypto_mutex_unlock(client_ready_mutex);
-#endif
-            tick_server(qtserv, listener);
-            if (listener != NULL && *sconn == NULL)
-                *sconn = SSL_accept_connection(listener, 0);
-        }
-
-        if (!servererr && rets <= 0) {
-            if (qtserv != NULL) {
-                servererr = ossl_quic_tserver_is_term_any(qtserv);
-                if (!servererr)
-                    rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
-            } else if (listener != NULL && *sconn != NULL) {
-                QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(*sconn);
-
-                servererr = ossl_quic_channel_is_term_any(ch);
-                if (!servererr)
-                    rets = ossl_quic_channel_is_handshake_confirmed(ch);
-            }
-        }
-
-        if (clienterr && servererr)
-            goto err;
-
-        if (clientssl != NULL && ++abortctr == MAXLOOPS) {
-            TEST_info("No progress made");
-            goto err;
-        }
-
-        if ((retc <= 0 && !clienterr) || (rets <= 0 && !servererr)) {
-            if (!wait_for_timeout(clientssl, qtserv, listener))
-                goto err;
-        }
-    } while ((retc <= 0 && !clienterr)
-        || (rets <= 0 && !servererr
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-            && !tsan_load(&abortserverthread)
-#endif
-                ));
-
-    if (qtserv == NULL && listener == NULL && rets > 0) {
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-        /*
-         * Make sure we unblock the server before we wait on completion here
-         * in case it didn't happen in the connect loop above
-         */
-        ossl_crypto_mutex_lock(client_ready_mutex);
-        client_ready = 1;
-        ossl_crypto_condvar_broadcast(client_ready_cond);
-        ossl_crypto_mutex_unlock(client_ready_mutex);
-        if (!TEST_true(wait_for_thread(t)) || !TEST_true(globserverret))
-            goto err;
-#else
-        TEST_error("Should not happen");
-        goto err;
-#endif
+        if (!SSL_handle_events(clientssl)
+            || !tick_server(qtserv, listener, sconn))
+            return 0;
+        /* An expected client error can end the handshake before the server. */
+        if (paused)
+            return rets >= 0;
+        if (rets == 0)
+            rets = server_handshake_status(qtserv, sconn);
+        if (retc != 0 && rets != 0)
+            return retc > 0 && rets > 0;
+        if (!wait_for_timeout(clientssl, qtserv, listener))
+            return 0;
     }
-
-    if (!clienterr && !servererr)
-        ret = 1;
-err:
-    return ret;
+    TEST_info("No progress made");
+    return 0;
 }
 
 int qtest_create_quic_connection_ex(QUIC_TSERVER *qtserv, SSL *clientssl,
@@ -837,6 +871,8 @@ int qtest_create_quic_connection_ssl(SSL *listener, SSL *clientssl,
 }
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+static QUIC_TSERVER *globtserv;
+static const thread_t thread_zero;
 static TSAN_QUALIFIER int shutdowndone;
 
 static void run_server_shutdown_thread(void)
@@ -862,11 +898,6 @@ int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
      * t uninitialised
      */
     thread_t t = thread_zero;
-
-    ossl_crypto_condvar_free(&client_ready_cond);
-    client_ready_cond = NULL;
-    ossl_crypto_mutex_free(&client_ready_mutex);
-    client_ready_mutex = NULL;
 #endif
 
     if (SSL_get_blocking_mode(clientssl) > 0) {
