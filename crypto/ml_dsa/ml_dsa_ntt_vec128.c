@@ -28,6 +28,8 @@
 
 #include "ml_dsa_local.h"
 #include "ml_dsa_poly.h"
+#include "ml_dsa_vector.h"
+#include "ml_dsa_matrix.h"
 
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 
@@ -47,6 +49,7 @@ typedef uint32_t vec_uint32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_
 
 /* Our implementation of the vectorized algorithms assumes NUM_INT32_IN_VECTOR == 4. */
 #define NUM_INT32_IN_VECTOR (VECTOR_REG_WIDTH_BYTES / ((int)sizeof(int32_t)))
+#define NUM_VEC_PER_POLY (ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR)
 
 /*
  * This file has multiple parts required for fast matrix multiplication,
@@ -359,14 +362,69 @@ static ossl_inline
 }
 
 /*
- * @brief Computes the Montgomery product of a and b.
- *        See [Seiler 2018, Algorithm 3].
+ * montgomery_multiplication_unreduced: raw Montgomery multiplication,
+ * no canonical reduction.
  *
- * @param a is the first factor, assumed to be in [0, q).
- * @param a_twist is (int32)((uint32)a * ML_DSA_Q_INV).
- * @param b is the second factor.
- * @returns The Montgomery product of a and b in the range
- *          [0, q).
+ * Algorithm (Seiler 2018, Algorithm 3):
+ *
+ *   k    = (a_twist * b) mod 2^32   (unsigned low-word multiply)
+ *   c    = mulh(k, q)               signed high-word
+ *   z_hi = mulh(a, b)               signed high-word
+ *   r    = z_hi - c
+ *
+ * where a_twist = (uint32_t)a * ML_DSA_Q_INV mod 2^32 (precomputed by caller).
+ *
+ * Correctness: r ≡ a * b * R^{-1} (mod q), R = 2^32.
+ *
+ * Range bounds (q = 8 380 417, R = 2^32):
+ *   |c| = |mulh(k, q)| <= floor(q / 2) = 4 190 208
+ *
+ *   Case a, b in [0, q):
+ *     |z_hi| <= floor((q-1)^2 / 2^32) = 16 379
+ *     |r| <= 4 206 587 < 2^23 < 2^31        (fits int32, no overflow)
+ *
+ *   Case a in [0, q), |b| <= 6.06q (worst case: INTT even-odd difference):
+ *     |z_hi| <= floor((q-1) * 6.06q / 2^32) = 99 131
+ *     |r| <= 4 289 339 < 2^23 < 2^31        (fits int32, no overflow)
+ *     (NTT worst case is |b| <= 5.037q, giving |r| <= 4 272 575.)
+ *
+ *   Case L unreduced accumulations (matrix-vector row, L <= 7):
+ *     Each term |r| <= 4 206 587; after L additions:
+ *     |sum| <= 7 * 4 206 587 = 29 446 109 ~= 3.51q < 2^25 << 2^31
+ *
+ * Implementation note: the low-word product k = a_twist * b must be computed
+ * as an *unsigned* 32-bit lane multiply.  a_twist holds precomputed values
+ * from zetas_montgomery_twisted[] such as 1830765815; multiplying those by
+ * even small values of b overflows int32_t, which is undefined behaviour and
+ * caught immediately by UBSan (signed integer overflow).
+ *
+ * Both operands are cast to the __may_alias__ unsigned type (vec_uint32_t)
+ * before multiplying so that wrapping is well-defined; the result is
+ * reinterpreted back as vec_int32_t.  See montgomery_multiplication_vectorized
+ * below for the full aliasing rationale.
+ *
+ * No reduction is performed; the caller is responsible for eventual
+ * reduce_fully() when the accumulated value must be brought to [0, q).
+ */
+static ossl_inline __owur vec_int32_t
+montgomery_multiplication_unreduced(vec_int32_t a, vec_int32_t a_twist,
+    vec_int32_t b)
+{
+    vec_int32_t k = (vec_int32_t)((vec_uint32_t)a_twist * (vec_uint32_t)b);
+    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
+    vec_int32_t z_hi = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
+    return z_hi - c;
+}
+
+/*
+ * montgomery_multiplication_vectorized: Montgomery multiplication with full
+ * canonical reduction to [0, q).
+ *
+ * Wraps montgomery_multiplication_unreduced and applies reduce_twice_signed
+ * to bring the result into [0, q).  Use this when the canonical form is
+ * required immediately (e.g. the final INTT normalization step).  Prefer
+ * montgomery_multiplication_unreduced when results will be accumulated before
+ * a final reduce_fully().
  *
  * Implementation note: the low-word product k = a_twist * b must be computed
  * as an *unsigned* 32-bit lane multiply.  a_twist holds precomputed values
@@ -388,30 +446,30 @@ static ossl_inline
  * unsigned type (vec_uint32_t) is therefore required for both operands of the
  * low multiply, matching the ML-KEM pattern exactly.
  */
-static ossl_inline
-    vec_int32_t
-    montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
+static ossl_inline vec_int32_t
+montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist,
+    vec_int32_t b)
 {
-    vec_int32_t k = (vec_int32_t)((vec_uint32_t)a_twist * (vec_uint32_t)b);
-    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
-    vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
-    vec_int32_t r = z_high - c;
-    return reduce_twice_signed(r);
+    return reduce_twice_signed(
+        montgomery_multiplication_unreduced(a, a_twist, b));
 }
 
 /*
- * @brief Reduce modulo q to a non-negative vector.
- *        See [Seiler 2018, Algorithm 5].
+ * reduce_fully: vectorized Barrett reduction for signed values.
+ *              See [Seiler 2018, Algorithm 5].
  *
- * @param a in the range [-9q, 9q]
- *        (Note that we are only calling this function twice in
- *        ossl_ml_dsa_poly_ntt_vec128 with inputs in the range [-9q, 9q],
- *        which is inside the valid range.)
- * @returns a mod q in the range [0, q).
+ * Pre:  Every lane of a is a signed 32-bit integer with |a[i]| <= 9q.
+ *       Current call-sites and their worst-case inputs:
+ *         - NTT final layer (offset == 1): |even +/- t| <= ~5.1q after 8
+ *           lazy CT layers (twiddle branch bounded by ~0.516q per layer).
+ *         - Matrix-vector row accumulation: l <= 7 unreduced products,
+ *           |acc| <= 7 * 4 206 587 ~= 29.4M ~= 3.51q < 9q.
+ *         - Fused INTT prefix (matrix_mult_vector_intt): same as above.
+ *       All inputs satisfy |a[i]| < 5.55q < 9q.
+ * Post: Every lane of the result is in [0, q) and congruent to a[i] mod q.
  */
-static ossl_inline
-    vec_int32_t
-    reduce_fully(vec_int32_t a)
+static ossl_inline vec_int32_t
+reduce_fully(vec_int32_t a)
 {
     const int32_t v_scalar = 1074791296;
     const vec_int32_alias_t v = { v_scalar, v_scalar, v_scalar, v_scalar };
@@ -433,7 +491,7 @@ void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *ou
     const vec_int32_t *rhs_vec_ptr = (const vec_int32_t *)rhs->coeff;
     vec_int32_t *out_vec_ptr = (vec_int32_t *)out->coeff;
 
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i++) {
+    for (i = 0; i < NUM_VEC_PER_POLY; i++) {
         vec_int32_t twist_vec = (vec_int32_t)((vec_uint32_t)lhs_vec_ptr[i] * (vec_uint32_t)vec_q_inv);
         out_vec_ptr[i] = montgomery_multiplication_vectorized(
             lhs_vec_ptr[i], twist_vec, rhs_vec_ptr[i]);
@@ -441,13 +499,34 @@ void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *ou
 }
 
 /*
- * In place number theoretic transform of a given polynomial.
+ * ossl_ml_dsa_poly_ntt_vec128: in-place forward NTT.
+ * See FIPS 204, Algorithm 41, NTT().
  *
- * See FIPS 204, Algorithm 41, NTT()
- * This function uses montgomery multiplication.
+ * Lazy Cooley-Tukey butterflies: the first 7 layers use
+ * montgomery_multiplication_unreduced so no per-butterfly reduction is needed.
+ * The final layer (offset == 1) feeds the unreduced output into reduce_fully()
+ * to produce canonical [0, q) output.
  *
- * @param p a polynomial that is used as the input, that is replaced with
- *        the NTT of the polynomial
+ * Overflow analysis for the lazy CT butterfly
+ *   t = MontMulRaw(odd, zeta),   new_even = even + t,   new_odd = even - t:
+ *
+ *   Both outputs are stored back to the same array, so both even and odd
+ *   in the next layer carry the same bound B_L.  With input in [0, q):
+ *     |t_L| <= floor((q-1) * B_{L-1}*q / 2^32) + floor(q/2)
+ *            = B_{L-1} * ~0.00195q + ~0.5002q  ~= 0.502q..0.508q
+ *     B_L    = B_{L-1} + |t_L|/q
+ *
+ *   Per-layer values (q = 8 380 417):
+ *     Layer 1 (offset 128): B_0 = 1q  -> |t| ~= 0.502q,  B_1 ~= 1.502q
+ *     Layer 2 (offset  64): B_1 ~= 1.502q -> B_2 ~= 2.004q
+ *     Layer 3 (offset  32): B_2 ~= 2.004q -> B_3 ~= 2.507q
+ *     Layer 4 (offset  16): B_3 ~= 2.507q -> B_4 ~= 3.011q
+ *     Layer 5 (offset   8): B_4 ~= 3.011q -> B_5 ~= 3.516q
+ *     Layer 6 (offset   4): B_5 ~= 3.516q -> B_6 ~= 4.022q
+ *     Layer 7 (offset   2): B_6 ~= 4.022q -> B_7 ~= 4.529q
+ *     Layer 8 (offset   1): B_7 ~= 4.529q -> inputs to reduce_fully ~= 5.037q
+ *
+ *   5.037q ~= 42.2M < 2^26 << 2^31: no signed 32-bit overflow occurs.
  */
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
 {
@@ -474,7 +553,7 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
             for (j = k; j < k + offset; j += NUM_INT32_IN_VECTOR) {
                 vec_int32_t w_even_vec = p_vec[j / NUM_INT32_IN_VECTOR];
                 vec_int32_t w_odd_vec = p_vec[(j + offset) / NUM_INT32_IN_VECTOR];
-                vec_int32_t t_odd_vec = montgomery_multiplication_vectorized(
+                vec_int32_t t_odd_vec = montgomery_multiplication_unreduced(
                     zeta,
                     zeta_twisted,
                     w_odd_vec);
@@ -517,7 +596,7 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
             p_vec[j / NUM_INT32_IN_VECTOR + 1][2],
             p_vec[j / NUM_INT32_IN_VECTOR + 1][3]
         };
-        vec_int32_t t_odd_vec = montgomery_multiplication_vectorized(
+        vec_int32_t t_odd_vec = montgomery_multiplication_unreduced(
             zeta,
             zeta_twisted,
             w_odd_vec);
@@ -566,7 +645,9 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
             p_vec[k / NUM_INT32_IN_VECTOR + 1][1],
             p_vec[k / NUM_INT32_IN_VECTOR + 1][3]
         };
-        vec_int32_t t_odd_vec = montgomery_multiplication_vectorized(
+        /* Final NTT layer (offset == 1): apply reduce_fully to produce the
+         * canonical [0, q) NTT-domain output required by all consumers.   */
+        vec_int32_t t_odd_vec = montgomery_multiplication_unreduced(
             zeta,
             zeta_twisted,
             w_odd_vec);
@@ -587,36 +668,111 @@ void ossl_ml_dsa_poly_ntt_vec128(POLY *p)
 }
 
 /*
- * @brief In place inverse number theoretic transform of a given polynomial.
- * See FIPS 204, Algorithm 42,  NTT^-1()
+ * ossl_ml_dsa_poly_ntt_inverse_vec128: in-place inverse NTT.
+ * See FIPS 204, Algorithm 42, NTT^{-1}().
  *
- * @param p a polynomial that is used as the input, that is overwritten with
- *          the inverse of the NTT.
+ * Fully lazy Gentleman-Sande butterflies: no reduce_fully() is needed at any
+ * intermediate layer.  All twiddle multiplications use
+ * montgomery_multiplication_unreduced.
+ *
+ * The even-sum branch (S) and twiddle branch (T) are tracked separately
+ * because T is reset by MontMulRaw each layer while S accumulates:
+ *
+ *   T_L (twiddle output, always small):
+ *     With |even-odd| <= S_{L-1} + T_{L-1} and zeta in [0,q):
+ *       |z_hi| <= floor((q-1)*(S_{L-1}+T_{L-1})/2^32)  [tiny for small B]
+ *       |c|    <= floor(q/2) = 4 190 208
+ *       T_L    <= z_hi + c  ~= 0.504q..0.510q  (grows negligibly)
+ *
+ *   S_L (even-sum output, cumulative):
+ *     S_L = S_{L-1} + T_{L-1}
+ *
+ *   Exact per-layer values (q = 8 380 417):
+ *     Layer 1 (offset   1): S_1 ~= 2.000q,  T_1 ~= 0.504q
+ *     Layer 2 (offset   2): S_2 ~= 2.504q,  T_2 ~= 0.504q
+ *     Layer 3 (offset   4): S_3 ~= 3.008q,  T_3 ~= 0.506q
+ *     Layer 4 (offset   8): S_4 ~= 3.514q,  T_4 ~= 0.507q
+ *     Layer 5 (offset  16): S_5 ~= 4.021q,  T_5 ~= 0.508q
+ *     Layer 6 (offset  32): S_6 ~= 4.529q,  T_6 ~= 0.509q
+ *     Layer 7 (offset  64): S_7 ~= 5.038q,  T_7 ~= 0.510q
+ *
+ *   5.038q ~= 42.2M < 2^26 << 2^31: no signed 32-bit overflow for layers 1-7.
+ *
+ *   Layer 8 (offset 128) is handled separately with a fused butterfly +
+ *   normalization (see the dedicated block below).  Its inputs satisfy
+ *   |b| <= S_7 + T_7 ~= 5.548q; montgomery_multiplication_vectorized produces
+ *   canonical [0, q) output:
+ *     |z_hi| <= floor((q-1)*5.548q/2^32) ~= 90 720
+ *     |r|    <= 90 720 + 4 190 208 ~= 4 281 000 < q  ✓
+ *
+ * Contrast with ML-KEM (q = 3329, R = 2^16): there the naive bound doubles
+ * each layer (T_L ~= q), reaching 16q > 2^15 after 4 layers, requiring
+ * two reduce_fully() resets.  For ML-DSA T_L is capped at ~q/2 because the
+ * MontMulRaw |c| term dominates, so all 8 layers fit within int32_t without
+ * any intermediate reduction.
  */
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
 {
-    /*
-     * Step: 128, 64, 32, 16, ..., 1
-     * Offset: 1, 2, 4, 8, ..., 128
-     */
     int i, j, k, offset, step = ML_DSA_NUM_POLY_COEFFICIENTS;
     /*
-     * The multiplicative inverse of 256 mod q, in Montgomery form is
-     * ((256^-1 mod q) * ((2^32 * 2^32) mod q)) mod q = (8347681 * 2365951) mod 8380417
+     * Normalization constant: 256^{-1} mod q in Montgomery form.
+     * = ((256^{-1} mod q) * ((2^32)^2 mod q)) mod q
+     * = (8347681 * 2365951) mod 8380417 = 41978
+     *
+     * This is only used for the even-sum outputs of the last layer (offset ==
+     * 128); the twiddle outputs of that layer use a merged constant instead
+     * (see below).
      */
     static const int32_t inverse_degree_montgomery = 41978;
     static const vec_int32_t vec_inverse_degree_montgomery = {
-        inverse_degree_montgomery,
-        inverse_degree_montgomery,
-        inverse_degree_montgomery,
-        inverse_degree_montgomery
+        inverse_degree_montgomery, inverse_degree_montgomery,
+        inverse_degree_montgomery, inverse_degree_montgomery
     };
     static const int32_t inverse_degree_montgomery_twisted = -8395782;
     static const vec_int32_t vec_inverse_degree_montgomery_twisted = {
-        inverse_degree_montgomery_twisted,
-        inverse_degree_montgomery_twisted,
-        inverse_degree_montgomery_twisted,
-        inverse_degree_montgomery_twisted
+        inverse_degree_montgomery_twisted, inverse_degree_montgomery_twisted,
+        inverse_degree_montgomery_twisted, inverse_degree_montgomery_twisted
+    };
+
+    /*
+     * Merged twiddle for the last INTT layer (offset == 128).
+     *
+     * At offset == 128 there is exactly one twiddle factor:
+     *   neg_zetas_montgomery[1] = q - zetas_montgomery[1] = 8380417 - 25847
+     *                           = 8354570
+     *
+     * The twiddle output of this layer is:
+     *   coeff_j_offset = MontMulRaw(neg_zeta_1, even - odd)
+     * then normalised:
+     *   result         = MontMul(inv256_mont, coeff_j_offset)
+     *                  = MontMul(inv256_mont, MontMulRaw(neg_zeta_1, even-odd))
+     *                  = MontMulRaw(MontMul(inv256_mont, neg_zeta_1), even-odd)
+     *
+     * Folding both multiplications into one:
+     *   merged_twiddle = MontMul(41978, 8354570) mod q = 3975713
+     *   merged_twisted = (uint32_t)3975713 * ML_DSA_Q_INV mod 2^32
+     *                  = 151046689  (as int32_t)
+     *
+     * The even-sum output (coeff_j = even + odd) still requires the separate
+     * normalization multiply by inv256_mont.
+     *
+     * Python verification:
+     *   q, R = 8380417, 2**32
+     *   q_neg_inv = 4236238847  # (-q)^{-1} mod 2^32
+     *   def mont_mul(a, b):
+     *       t = (a * b * q_neg_inv) % R; return ((a*b + t*q) >> 32) % q
+     *   merged = mont_mul(41978, 8354570)   # => 3975713
+     *   # verify: mont_mul(merged, x) == mont_mul(41978, mont_mul(8354570, x))
+     */
+    static const int32_t merged_twiddle_last = 3975713;
+    static const vec_int32_t vec_merged_twiddle_last = {
+        merged_twiddle_last, merged_twiddle_last,
+        merged_twiddle_last, merged_twiddle_last
+    };
+    static const int32_t merged_twiddle_last_twisted = 151046689;
+    static const vec_int32_t vec_merged_twiddle_last_twisted = {
+        merged_twiddle_last_twisted, merged_twiddle_last_twisted,
+        merged_twiddle_last_twisted, merged_twiddle_last_twisted
     };
 
     vec_int32_t *p_vec = (vec_int32_t *)p->coeff;
@@ -625,16 +781,18 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
     step >>= 1;
     k = 0;
 
+    /* offset == 1 */
     for (i = 0; i < step; i += NUM_INT32_IN_VECTOR) {
-        /* offset == 1*/
         const vec_int32_t zeta = { neg_zetas_montgomery[step + (step - 1 - i)],
             neg_zetas_montgomery[step + (step - 1 - i - 1)],
             neg_zetas_montgomery[step + (step - 1 - i - 2)],
             neg_zetas_montgomery[step + (step - 1 - i - 3)] };
-        const vec_int32_t zeta_twisted = { neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+        const vec_int32_t zeta_twisted = {
+            neg_zetas_montgomery_twisted[step + (step - 1 - i)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i - 2)],
-            neg_zetas_montgomery_twisted[step + (step - 1 - i - 3)] };
+            neg_zetas_montgomery_twisted[step + (step - 1 - i - 3)]
+        };
         vec_int32_t even = { p->coeff[k],
             p->coeff[k + 2],
             p->coeff[k + 4],
@@ -645,10 +803,8 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             p->coeff[k + 1 + 6] };
 
         vec_int32_t coeff_j = (odd + even);
-        vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
-            zeta,
-            zeta_twisted,
-            even - odd);
+        vec_int32_t coeff_j_offset = montgomery_multiplication_unreduced(
+            zeta, zeta_twisted, even - odd);
 
         p->coeff[k + 0] = coeff_j[0];
         p->coeff[k + 2] = coeff_j[1];
@@ -672,10 +828,12 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             neg_zetas_montgomery[step + (step - 1 - i)],
             neg_zetas_montgomery[step + (step - 1 - i - 1)],
             neg_zetas_montgomery[step + (step - 1 - i - 1)] };
-        const vec_int32_t zeta_twisted = { neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+        const vec_int32_t zeta_twisted = {
+            neg_zetas_montgomery_twisted[step + (step - 1 - i)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i)],
             neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)],
-            neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)] };
+            neg_zetas_montgomery_twisted[step + (step - 1 - i - 1)]
+        };
 
         j = k;
         vec_int32_t even = { p->coeff[j],
@@ -688,28 +846,20 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
             p->coeff[j + 7] };
 
         vec_int32_t coeff_j = (odd + even);
-        vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
-            zeta,
-            zeta_twisted,
-            even - odd);
+        vec_int32_t coeff_j_offset = montgomery_multiplication_unreduced(
+            zeta, zeta_twisted, even - odd);
 
         p_vec[j / NUM_INT32_IN_VECTOR] = (vec_int32_t) {
-            coeff_j[0],
-            coeff_j[1],
-            coeff_j_offset[0],
-            coeff_j_offset[1]
+            coeff_j[0], coeff_j[1], coeff_j_offset[0], coeff_j_offset[1]
         };
         p_vec[j / NUM_INT32_IN_VECTOR + 1] = (vec_int32_t) {
-            coeff_j[2],
-            coeff_j[3],
-            coeff_j_offset[2],
-            coeff_j_offset[3]
+            coeff_j[2], coeff_j[3], coeff_j_offset[2], coeff_j_offset[3]
         };
         k += 2 * 2 * offset;
     }
 
-    /* offset >= 4 */
-    for (offset <<= 1; offset < ML_DSA_NUM_POLY_COEFFICIENTS; offset <<= 1) {
+    /* offset >= 4: layers 3–7 (standard lazy GS butterfly) */
+    for (offset <<= 1; offset < ML_DSA_NUM_POLY_COEFFICIENTS / 2; offset <<= 1) {
         step >>= 1;
         k = 0;
 
@@ -718,20 +868,20 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
                 neg_zetas_montgomery[step + (step - 1 - i)],
                 neg_zetas_montgomery[step + (step - 1 - i)],
                 neg_zetas_montgomery[step + (step - 1 - i)] };
-            const vec_int32_t zeta_twisted = { neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+            const vec_int32_t zeta_twisted = {
                 neg_zetas_montgomery_twisted[step + (step - 1 - i)],
                 neg_zetas_montgomery_twisted[step + (step - 1 - i)],
-                neg_zetas_montgomery_twisted[step + (step - 1 - i)] };
+                neg_zetas_montgomery_twisted[step + (step - 1 - i)],
+                neg_zetas_montgomery_twisted[step + (step - 1 - i)]
+            };
 
             for (j = k; j < k + offset; j += NUM_INT32_IN_VECTOR) {
                 vec_int32_t even = p_vec[j / NUM_INT32_IN_VECTOR];
                 vec_int32_t odd = p_vec[(j + offset) / NUM_INT32_IN_VECTOR];
 
                 vec_int32_t coeff_j = (odd + even);
-                vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
-                    zeta,
-                    zeta_twisted,
-                    even - odd);
+                vec_int32_t coeff_j_offset = montgomery_multiplication_unreduced(
+                    zeta, zeta_twisted, even - odd);
                 p_vec[j / NUM_INT32_IN_VECTOR] = coeff_j;
                 p_vec[(j + offset) / NUM_INT32_IN_VECTOR] = coeff_j_offset;
             }
@@ -739,11 +889,192 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
         }
     }
 
-    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i += 1) {
-        p_vec[i] = montgomery_multiplication_vectorized(
-            vec_inverse_degree_montgomery,
-            vec_inverse_degree_montgomery_twisted,
-            p_vec[i]);
+    /*
+     * Layer 8 (offset == 128): fused butterfly + normalization.
+     *
+     * The even-sum output (coeff_j = even + odd) is multiplied by inv256_mont
+     * as usual.  The twiddle output (coeff_j_offset) is multiplied by the
+     * pre-merged constant merged_twiddle_last = MontMul(inv256_mont, neg_zeta_1),
+     * collapsing two Montgomery multiplications into one and eliminating the
+     * separate normalization pass entirely.
+     */
+    {
+        k = 0;
+        for (j = 0; j < ML_DSA_NUM_POLY_COEFFICIENTS / 2; j += NUM_INT32_IN_VECTOR) {
+            vec_int32_t even = p_vec[j / NUM_INT32_IN_VECTOR];
+            vec_int32_t odd = p_vec[(j + ML_DSA_NUM_POLY_COEFFICIENTS / 2)
+                / NUM_INT32_IN_VECTOR];
+
+            vec_int32_t coeff_j = montgomery_multiplication_vectorized(
+                vec_inverse_degree_montgomery,
+                vec_inverse_degree_montgomery_twisted,
+                odd + even);
+            vec_int32_t coeff_j_offset = montgomery_multiplication_vectorized(
+                vec_merged_twiddle_last,
+                vec_merged_twiddle_last_twisted,
+                even - odd);
+            p_vec[j / NUM_INT32_IN_VECTOR] = coeff_j;
+            p_vec[(j + ML_DSA_NUM_POLY_COEFFICIENTS / 2) / NUM_INT32_IN_VECTOR] = coeff_j_offset;
+        }
+    }
+}
+
+/*
+ * ossl_ml_dsa_matrix_mult_vector_vec128: vectorized matrix-vector multiply
+ * with lazy (deferred) reduction.
+ *
+ * Computes t[i] = sum_{j=0}^{l-1} A[i,j] (*) s[j]  for each row i, where (*)
+ * denotes NTT-domain pointwise Montgomery multiplication.
+ *
+ * For each row the per-element products are accumulated *without* per-product
+ * reduction using montgomery_multiplication_unreduced().  After l terms the
+ * accumulated int32 value satisfies |acc| <= l * 4 321 280 <= 7 * 4 321 280
+ * ≈ 30.2M < 2^25, well within signed 32-bit range.  A single reduce_fully()
+ * pass at the end of each row converts to [0, q).
+ *
+ * This avoids:
+ *   - reduce_twice_signed inside each pointwise multiply  (l*256/4 calls/row)
+ *   - reduce_once inside poly_add                         (l*256 calls/row)
+ *   - The intermediate scratch POLY used by the scalar path
+ *
+ * The matrix A and the input vector s contain only public NTT-domain values,
+ * so no OPENSSL_cleanse of the accumulator is required.
+ *
+ * Pre:  All coefficients of A and s are in [0, q)  (NTT-domain standard form).
+ *       t->num_poly == a->k,  a->l == s->num_poly.
+ * Post: All coefficients of t are in [0, q) and represent
+ *       sum_j A[i,j] (*) s[j] reduced mod q.
+ */
+void ossl_ml_dsa_matrix_mult_vector_vec128(const MATRIX *a, const VECTOR *s,
+    VECTOR *t)
+{
+    size_t i, j;
+    const POLY *ap = a->m_poly;
+
+    for (i = 0; i < a->k; i++) {
+        vec_int32_t *t_vec = (vec_int32_t *)t->poly[i].coeff;
+        int c;
+
+        /* First column: initialise accumulator (no addition). */
+        {
+            const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
+            const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[0].coeff;
+
+            for (c = 0; c < NUM_VEC_PER_POLY; c++) {
+                vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
+                    * (vec_uint32_t)vec_q_inv);
+                t_vec[c] = montgomery_multiplication_unreduced(a_vec[c],
+                    a_twist,
+                    s_vec[c]);
+            }
+            ap++;
+        }
+
+        /* Remaining columns: accumulate without per-product reduction. */
+        for (j = 1; j < a->l; j++) {
+            const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
+            const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[j].coeff;
+
+            for (c = 0; c < NUM_VEC_PER_POLY; c++) {
+                vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
+                    * (vec_uint32_t)vec_q_inv);
+                t_vec[c] += montgomery_multiplication_unreduced(a_vec[c],
+                    a_twist,
+                    s_vec[c]);
+            }
+            ap++;
+        }
+
+        /* Single Barrett reduction pass over the accumulated row output. */
+        for (c = 0; c < NUM_VEC_PER_POLY; c++)
+            t_vec[c] = reduce_fully(t_vec[c]);
+    }
+}
+
+/*
+ * poly_ntt_mult_accumulate_vec128: helper used by the fused matrix-multiply +
+ * INTT path.  Accumulates unreduced Montgomery products into an existing
+ * accumulator without any reduction.
+ *
+ * Pre:  a_vec and s_vec coefficients are in [0, q).
+ *       t_vec already holds the sum of (j) previous unreduced products; the
+ *       total after this call will be (j+1) products, so
+ *       |t_vec[i]| <= (j+1) * 4 321 280.  The caller must ensure j+1 <= l <= 7.
+ */
+static ossl_inline void
+poly_ntt_mult_accumulate_vec128(const vec_int32_t *a_vec,
+    const vec_int32_t *s_vec, vec_int32_t *t_vec)
+{
+    int c;
+
+    for (c = 0; c < NUM_VEC_PER_POLY; c++) {
+        vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c] * (vec_uint32_t)vec_q_inv);
+        t_vec[c] += montgomery_multiplication_unreduced(a_vec[c], a_twist,
+            s_vec[c]);
+    }
+}
+
+/*
+ * ossl_ml_dsa_matrix_mult_vector_intt_vec128: fused matrix-vector multiply
+ * followed by inverse NTT.
+ *
+ * Computes out[i] = INTT(sum_j A[i,j] (*) s[j]) for each row i.
+ *
+ * The accumulation step is identical to ossl_ml_dsa_matrix_mult_vector_vec128
+ * but omits the final reduce_fully pass, leaving each output polynomial in
+ * unreduced Montgomery form.  The INTT step begins with a reduce_fully pass
+ * (to bring the input into the [-9q, 9q] range that ossl_ml_dsa_poly_ntt_inverse_vec128
+ * expects) and then runs the standard lazy INTT, saving one full data pass
+ * over each output polynomial compared with calling the two functions separately.
+ *
+ * Pre:  All coefficients of A and s are in [0, q)  (NTT-domain standard form).
+ *       out->num_poly == a->k,  a->l == s->num_poly.
+ * Post: All coefficients of out are in [0, q) and equal
+ *       INTT(sum_j A[i,j] (*) s[j]) mod q.
+ */
+void ossl_ml_dsa_matrix_mult_vector_intt_vec128(const MATRIX *a,
+    const VECTOR *s, VECTOR *out)
+{
+    size_t i, j;
+    const POLY *ap = a->m_poly;
+
+    for (i = 0; i < a->k; i++) {
+        POLY *out_poly = &out->poly[i];
+        vec_int32_t *t_vec = (vec_int32_t *)out_poly->coeff;
+        int c;
+
+        /* First column: set accumulator. */
+        {
+            const vec_int32_t *a_vec = (const vec_int32_t *)ap->coeff;
+            const vec_int32_t *s_vec = (const vec_int32_t *)s->poly[0].coeff;
+
+            for (c = 0; c < NUM_VEC_PER_POLY; c++) {
+                vec_int32_t a_twist = (vec_int32_t)((vec_uint32_t)a_vec[c]
+                    * (vec_uint32_t)vec_q_inv);
+                t_vec[c] = montgomery_multiplication_unreduced(a_vec[c],
+                    a_twist,
+                    s_vec[c]);
+            }
+            ap++;
+        }
+
+        /* Remaining columns: accumulate unreduced. */
+        for (j = 1; j < a->l; j++) {
+            poly_ntt_mult_accumulate_vec128((const vec_int32_t *)ap->coeff,
+                (const vec_int32_t *)s->poly[j].coeff,
+                t_vec);
+            ap++;
+        }
+
+        /*
+         * Fused reduce + INTT: bring the unreduced accumulator into the
+         * range [0, q) with one reduce_fully pass, then run the lazy INTT
+         * in-place.  This avoids a separate data traversal that the
+         * separate-call path would require.
+         */
+        for (c = 0; c < NUM_VEC_PER_POLY; c++)
+            t_vec[c] = reduce_fully(t_vec[c]);
+        ossl_ml_dsa_poly_ntt_inverse_vec128(out_poly);
     }
 }
 
