@@ -595,7 +595,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
      */
     if (ops[operation].setup != NULL)
         ops[operation].setup(&buffer_cursor, &len, &in1, &in2);
-    if (ops[operation].doit != NULL && in1 != NULL)
+    /*
+     * Skip doit if setup failed to make a key. An operation without a
+     * setup step (sign/verify) makes its own key, so run it anyway.
+     */
+    if (ops[operation].doit != NULL
+        && (ops[operation].setup == NULL || in1 != NULL))
         ops[operation].doit(&buffer_cursor, &len, in1, in2, &out1, &out2);
     if (ops[operation].cleanup != NULL)
         ops[operation].cleanup(in1, in2, out1, out2);
