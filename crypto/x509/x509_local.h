@@ -193,6 +193,22 @@ DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 int ossl_ignored_x509_extension(const X509_EXTENSION *ex, int flags);
 int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
+
+/**
+ * @brief Checks for a self-issued RFC 9925 unsigned certificate.
+ * Both the signatureAlgorithm and the TBSCertificate signature fields must
+ * be id-alg-unsigned with parameters omitted, and the signatureValue must be
+ * empty.
+ * The authority key identifier checks are those applied to an apparently
+ * self-signed certificate: an AKID keyIdentifier must equal the SKID, and an
+ * AKID serial number or directoryName must match x itself.
+ * @param x the certificate to check
+ * @returns 1 if x is an RFC 9925 unsigned certificate, its issuer name
+ *          equals its subject name, and its AKID (if any) matches x,
+ *          0 otherwise
+ */
+int ossl_x509_unsigned_self_issued(const X509 *x);
+
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);

@@ -1170,6 +1170,14 @@ trusted:
  * With X509_V_FLAG_*_CHECK_ALL and X509_V_FLAG_PARTIAL_CHAIN, revocation
  * checking stops before the first trusted certificate in the chain.
  */
+/* The certificate at depth is a self-issued unsigned trust anchor */
+static int is_unsigned_anchor(const X509_STORE_CTX *ctx, int depth)
+{
+    return depth == sk_X509_num(ctx->chain) - 1
+        && depth >= ctx->num_untrusted
+        && ossl_x509_unsigned_self_issued(sk_X509_value(ctx->chain, depth));
+}
+
 static int revocation_check_end(X509_STORE_CTX *ctx, int check_all)
 {
     if (!check_all)
@@ -1205,8 +1213,9 @@ static int check_revocation(X509_STORE_CTX *ctx)
             ctx->error_depth = i;
             ctx->current_cert = sk_X509_value(ctx->chain, i);
 
-            /* skip if cert is apparently self-signed */
-            if (ctx->current_cert->ex_flags & EXFLAG_SS)
+            /* skip if cert is apparently self-signed or an unsigned anchor */
+            if ((ctx->current_cert->ex_flags & EXFLAG_SS) != 0
+                || is_unsigned_anchor(ctx, i))
                 continue;
 
             /* the issuer certificate is the next in the chain */
@@ -1455,8 +1464,9 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     ctx->current_crl_score = 0;
     ctx->current_reasons = 0;
 
-    /* skip if cert is apparently self-signed */
-    if (ctx->current_cert->ex_flags & EXFLAG_SS)
+    /* skip if cert is apparently self-signed or an unsigned anchor */
+    if ((ctx->current_cert->ex_flags & EXFLAG_SS) != 0
+        || is_unsigned_anchor(ctx, cnum))
         return 1;
     if ((x->ex_flags & EXFLAG_PROXY) != 0)
         return 1;
@@ -2542,6 +2552,77 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     return 1;
 }
 
+/* id-alg-unsigned with parameters omitted (RFC 9925, section 3.1) */
+static int is_alg_unsigned(const X509_ALGOR *alg)
+{
+    const ASN1_OBJECT *obj;
+    int ptype;
+
+    X509_ALGOR_get0(&obj, &ptype, NULL, alg);
+    return OBJ_obj2nid(obj) == NID_id_alg_unsigned && ptype == V_ASN1_UNDEF;
+}
+
+/* The first directoryName in the authorityCertIssuer of akid, or NULL */
+static const X509_NAME *akid_issuer_dirname(const AUTHORITY_KEYID *akid)
+{
+    int i;
+
+    for (i = 0; i < sk_GENERAL_NAME_num(akid->issuer); i++) {
+        const GENERAL_NAME *gen = sk_GENERAL_NAME_value(akid->issuer, i);
+
+        if (gen->type == GEN_DIRNAME)
+            return gen->d.dirn;
+    }
+    return NULL;
+}
+
+int ossl_x509_unsigned_self_issued(const X509 *x)
+{
+    AUTHORITY_KEYID *akid = NULL;
+    ASN1_OCTET_STRING *skid = NULL;
+    const ASN1_BIT_STRING *sig;
+    const X509_ALGOR *sig_alg;
+    int crit, ret = 0;
+
+    X509_get0_signature(&sig, &sig_alg, x);
+    if (!is_alg_unsigned(sig_alg)
+        || !is_alg_unsigned(X509_get0_tbs_sigalg(x))
+        || ASN1_STRING_get_length(sig) != 0
+        || X509_NAME_cmp(X509_get_subject_name(x),
+               X509_get_issuer_name(x))
+            != 0)
+        return 0;
+
+    /* A malformed or repeated AKID or SKID extension does not match. */
+    ERR_set_mark();
+    akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &crit, NULL);
+    if (akid == NULL && crit != -1)
+        goto end;
+    skid = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
+    if (skid == NULL && crit != -1)
+        goto end;
+    if (akid != NULL) {
+        const X509_NAME *dirname = akid_issuer_dirname(akid);
+
+        if (akid->keyid != NULL && skid != NULL
+            && ASN1_OCTET_STRING_cmp(akid->keyid, skid) != 0)
+            goto end;
+        if (akid->serial != NULL
+            && ASN1_INTEGER_cmp(X509_get0_serialNumber(x), akid->serial) != 0)
+            goto end;
+        if (dirname != NULL
+            && X509_NAME_cmp(dirname, X509_get_issuer_name(x)) != 0)
+            goto end;
+    }
+    ret = 1;
+
+end:
+    ERR_pop_to_mark();
+    AUTHORITY_KEYID_free(akid);
+    ASN1_OCTET_STRING_free(skid);
+    return ret;
+}
+
 /*
  * Verify the issuer signatures and cert times of ctx->chain.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -2571,6 +2652,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
          */
         xi = NULL;
     } else if (ossl_x509_likely_issued(xi, xi) != X509_V_OK
+        && !is_unsigned_anchor(ctx, n)
         /* exceptional case: last cert in the chain is not self-issued */
         && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0)) {
         if (n > 0) {
@@ -2607,7 +2689,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (xi != NULL
             && (xs != xi
                 || ((ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE) != 0
-                    && (xi->ex_flags & EXFLAG_SS) != 0))) {
+                    && ((xi->ex_flags & EXFLAG_SS) != 0
+                        || ossl_x509_unsigned_self_issued(xi))))) {
             EVP_PKEY *pkey;
             /*
              * If the issuer's public key is not available or its key usage

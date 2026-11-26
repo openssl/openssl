@@ -1077,6 +1077,383 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_EC)
+/*
+ * RFC 9925 unsigned trust anchors. unsigned_ee is issued by the key of
+ * unsigned_root. Each other unsigned_root_* certificate is unsigned_root with
+ * one RFC 9925 section 3.1 requirement broken: a different TBSCertificate or
+ * outer signature algorithm, NULL parameters in either or both, or a
+ * non-empty signature value. Further fixtures, each described where it is
+ * defined, cover the authority key identifier and self-issued conditions.
+ * Every fixture key is an EC P-256 key.
+ */
+static const char *unsigned_root[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBHDCCAQmgAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAxNDkyOFoYDzIxMjYxMTAxMDE0OTI4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMAoGCCsGAQUFBwYkAwEA\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_ee[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBfjCCASWgAwIBAgIBAjAKBggqhkjOPQQDAjAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAxMjk1NVoYDzIxMjYxMTAxMDEyOTU1WjAWMRQwEgYD\n"
+    "VQQDDAtVbnNpZ25lZCBFRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABHUApGRh\n"
+    "H3gwNL+r83jXtU4xwa1hgNSR4LFb/L8b5rDpfufdC7rrVSDyhHRmLKSXXurjcEnF\n"
+    "Y9f/LZ8U7iz25YmjYDBeMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgeAMB0G\n"
+    "A1UdDgQWBBTQ+S2L30B8El2U6bcgqO/TWiwk3DAfBgNVHSMEGDAWgBSxeqbvYLhf\n"
+    "W/UDi1cCsq2ORfn6CDAKBggqhkjOPQQDAgNHADBEAiAqJYQv77UPxfzN9Eg98fYp\n"
+    "5aM9e/Um1aE2E4xmjrkllwIgBxbCXvpdtkxVy6Tusj5UxOqKcBUf2gZ9vE3yy89w\n"
+    "tEE=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_root_tbs_alg[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBHDCCAQmgAwIBAgIBATAKBggrBgEFBQcGIzAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAxNDkyOFoYDzIxMjYxMTAxMDE0OTI4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMAoGCCsGAQUFBwYkAwEA\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_root_outer_alg[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBHDCCAQmgAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAxNDkyOFoYDzIxMjYxMTAxMDE0OTI4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMAoGCCsGAQUFBwYjAwEA\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_root_tbs_params[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBHjCCAQugAwIBAgIBATAMBggrBgEFBQcGJAUAMBgxFjAUBgNVBAMMDVVuc2ln\n"
+    "bmVkIFJvb3QwIBcNMjYxMTI1MDE0OTI4WhgPMjEyNjExMDEwMTQ5MjhaMBgxFjAU\n"
+    "BgNVBAMMDVVuc2lnbmVkIFJvb3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS/\n"
+    "eVO13Tvmf+Xfbjx/KJqZyZANMw7j/iRVpE3CiJ9hYNqrYnCdMbgMCjnuWAxOyCDc\n"
+    "lqler/nxXviHrSci3h6yo0IwQDAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQE\n"
+    "AwIBBjAdBgNVHQ4EFgQUsXqm72C4X1v1A4tXArKtjkX5+ggwCgYIKwYBBQUHBiQD\n"
+    "AQA=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_root_outer_params[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBHjCCAQmgAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAxNDkyOFoYDzIxMjYxMTAxMDE0OTI4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMAwGCCsGAQUFBwYkBQAD\n"
+    "AQA=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_root_both_params[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBIDCCAQugAwIBAgIBATAMBggrBgEFBQcGJAUAMBgxFjAUBgNVBAMMDVVuc2ln\n"
+    "bmVkIFJvb3QwIBcNMjYxMTI1MDE0OTI4WhgPMjEyNjExMDEwMTQ5MjhaMBgxFjAU\n"
+    "BgNVBAMMDVVuc2lnbmVkIFJvb3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS/\n"
+    "eVO13Tvmf+Xfbjx/KJqZyZANMw7j/iRVpE3CiJ9hYNqrYnCdMbgMCjnuWAxOyCDc\n"
+    "lqler/nxXviHrSci3h6yo0IwQDAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQE\n"
+    "AwIBBjAdBgNVHQ4EFgQUsXqm72C4X1v1A4tXArKtjkX5+ggwDAYIKwYBBQUHBiQF\n"
+    "AAMBAA==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *unsigned_root_sig[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBHTCCAQmgAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAxNDkyOFoYDzIxMjYxMTAxMDE0OTI4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMAoGCCsGAQUFBwYkAwIA\n"
+    "/w==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* CRL issued with the key of unsigned_root, covering unsigned_ee */
+static const char *unsigned_root_crl[] = {
+    "-----BEGIN X509 CRL-----\n"
+    "MIGyMFkCAQEwCgYIKoZIzj0EAwIwGDEWMBQGA1UEAwwNVW5zaWduZWQgUm9vdBcN\n"
+    "MjYxMTI1MDE0ODM1WhgPMjEyNjExMDEwMTQ4MzVaoA4wDDAKBgNVHRQEAwIBATAK\n"
+    "BggqhkjOPQQDAgNJADBGAiEA0TdjksIoOQcU4OhHfsbveENND6ZAw3bdQc9Rq1ya\n"
+    "j1QCIQDHg2BGZV6Noy6u8GHTTXGJ8TT4Suo+gnOpxYMiIqqf1A==\n"
+    "-----END X509 CRL-----\n",
+    NULL,
+};
+
+/* unsigned_root with an AKID matching its own SKID */
+static const char *unsigned_root_akid[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBPTCCASqgAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAyMTMzOFoYDzIxMjYxMTAxMDIxMzM4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNjMGEwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMB8GA1UdIwQYMBaAFLF6\n"
+    "pu9guF9b9QOLVwKyrY5F+foIMAoGCCsGAQUFBwYkAwEA\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* unsigned_root with an AKID not matching its own SKID */
+static const char *unsigned_root_bad_akid[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBPTCCASqgAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAyMTMzOFoYDzIxMjYxMTAxMDIxMzM4WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqNjMGEwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\n"
+    "AQYwHQYDVR0OBBYEFLF6pu9guF9b9QOLVwKyrY5F+foIMB8GA1UdIwQYMBaAFAAB\n"
+    "AgMEBQYHCAkKCwwNDg8QERITMAoGCCsGAQUFBwYkAwEA\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* unsigned_root with an AKID keyid, issuer name and serial matching its own */
+static const char *unsigned_root_akid_issuer[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBYDCCAU2gAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAyMTkyOVoYDzIxMjYxMTAxMDIxOTI5WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqOBhTCBgjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQE\n"
+    "AwIBBjAdBgNVHQ4EFgQUsXqm72C4X1v1A4tXArKtjkX5+ggwQAYDVR0jBDkwN4AU\n"
+    "sXqm72C4X1v1A4tXArKtjkX5+gihHKQaMBgxFjAUBgNVBAMMDVVuc2lnbmVkIFJv\n"
+    "b3SCAQEwCgYIKwYBBQUHBiQDAQA=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* unsigned_root_akid_issuer with a different AKID serial number */
+static const char *unsigned_root_akid_bad_serial[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBYDCCAU2gAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAyMTkyOVoYDzIxMjYxMTAxMDIxOTI5WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqOBhTCBgjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQE\n"
+    "AwIBBjAdBgNVHQ4EFgQUsXqm72C4X1v1A4tXArKtjkX5+ggwQAYDVR0jBDkwN4AU\n"
+    "sXqm72C4X1v1A4tXArKtjkX5+gihHKQaMBgxFjAUBgNVBAMMDVVuc2lnbmVkIFJv\n"
+    "b3SCAQIwCgYIKwYBBQUHBiQDAQA=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* unsigned_root_akid_issuer with a different AKID issuer name */
+static const char *unsigned_root_akid_bad_issuer[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBYDCCAU2gAwIBAgIBATAKBggrBgEFBQcGJDAYMRYwFAYDVQQDDA1VbnNpZ25l\n"
+    "ZCBSb290MCAXDTI2MTEyNTAyMTkyOVoYDzIxMjYxMTAxMDIxOTI5WjAYMRYwFAYD\n"
+    "VQQDDA1VbnNpZ25lZCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEv3lT\n"
+    "td075n/l3248fyiamcmQDTMO4/4kVaRNwoifYWDaq2JwnTG4DAo57lgMTsgg3Jap\n"
+    "Xq/58V74h60nIt4esqOBhTCBgjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQE\n"
+    "AwIBBjAdBgNVHQ4EFgQUsXqm72C4X1v1A4tXArKtjkX5+ggwQAYDVR0jBDkwN4AU\n"
+    "sXqm72C4X1v1A4tXArKtjkX5+gihHKQaMBgxFjAUBgNVBAMMDVVuc2lnbmVkIFJv\n"
+    "b3WCAQEwCgYIKwYBBQUHBiQDAQA=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* Unsigned, with the key and subject of unsigned_root, issuer signed_root */
+static const char *unsigned_not_self_issued[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBGjCCAQegAwIBAgIBBDAKBggrBgEFBQcGJDAWMRQwEgYDVQQDDAtTaWduZWQg\n"
+    "Um9vdDAgFw0yNjExMjUwMjEzMzhaGA8yMTI2MTEwMTAyMTMzOFowGDEWMBQGA1UE\n"
+    "AwwNVW5zaWduZWQgUm9vdDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABL95U7Xd\n"
+    "O+Z/5d9uPH8ompnJkA0zDuP+JFWkTcKIn2Fg2qticJ0xuAwKOe5YDE7IINyWqV6v\n"
+    "+fFe+IetJyLeHrKjQjBAMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEG\n"
+    "MB0GA1UdDgQWBBSxeqbvYLhfW/UDi1cCsq2ORfn6CDAKBggrBgEFBQcGJAMBAA==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* Self-signed root named as the issuer of unsigned_not_self_issued */
+static const char *signed_root[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBYDCCAQWgAwIBAgIBAzAKBggqhkjOPQQDAjAWMRQwEgYDVQQDDAtTaWduZWQg\n"
+    "Um9vdDAgFw0yNjExMjUwMjEzMzhaGA8yMTI2MTEwMTAyMTMzOFowFjEUMBIGA1UE\n"
+    "AwwLU2lnbmVkIFJvb3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASUTITlcOPk\n"
+    "njZnOFS1lwCol/8IoNaXmd+JRVjrNlySPE3lkuXG7/3EHWyhRC+ovwQE/UFcSW5G\n"
+    "1apcnSrOvLg4o0IwQDAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAd\n"
+    "BgNVHQ4EFgQUsmvNm80hd6OJreOVkyot/ZsrNMUwCgYIKoZIzj0EAwIDSQAwRgIh\n"
+    "AObglYFMFf6YNyttvWQM2Cal9X47h7x51clEmFQ6AY6cAiEA5kxeh3DQslLuEhws\n"
+    "KAp2JPBwjeyPrCMjI1trU8rL2Jo=\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const struct {
+    const char **root; /* Trusted certificate */
+    const char **untrusted; /* Untrusted certificate, or NULL */
+    const char **crl; /* CRL to use, or NULL */
+    unsigned long flags; /* Verification flags */
+    int expected_err; /* X509_STORE_CTX error after verification */
+} unsigned_anchors[] = {
+    { unsigned_root, NULL, NULL, 0, X509_V_OK },
+    { unsigned_root, NULL, NULL, X509_V_FLAG_CHECK_SS_SIGNATURE,
+        X509_V_ERR_CERT_SIGNATURE_FAILURE },
+    { unsigned_root, NULL, unsigned_root_crl,
+        X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL, X509_V_OK },
+    { unsigned_root, NULL, unsigned_root_crl,
+        X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL
+            | X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL,
+        X509_V_OK },
+    { unsigned_root_akid, NULL, NULL, 0, X509_V_OK },
+    { unsigned_root_bad_akid, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_akid_issuer, NULL, NULL, 0, X509_V_OK },
+    { unsigned_root_akid_bad_serial, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_akid_bad_issuer, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_not_self_issued, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { signed_root, unsigned_not_self_issued, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+    { unsigned_root_tbs_alg, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_outer_alg, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_tbs_params, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_outer_params, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_both_params, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+    { unsigned_root_sig, NULL, NULL, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT },
+};
+
+static int test_unsigned_anchor(int idx)
+{
+    X509 *ee = NULL;
+    X509 *root = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509) *trusted = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    STACK_OF(X509_CRL) *crls = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *vpm;
+    int ret = 0;
+
+    if (!TEST_ptr(ee = X509_from_strings(unsigned_ee))
+        || !TEST_ptr(trusted = sk_X509_new_null())
+        || !TEST_ptr(untrusted = sk_X509_new_null())
+        || !TEST_ptr(crls = sk_X509_CRL_new_null())
+        || !TEST_ptr(root = X509_from_strings(unsigned_anchors[idx].root))
+        || !TEST_true(sk_X509_push(trusted, root)))
+        goto err;
+    root = NULL;
+    if (unsigned_anchors[idx].untrusted != NULL) {
+        if (!TEST_ptr(root = X509_from_strings(unsigned_anchors[idx].untrusted))
+            || !TEST_true(sk_X509_push(untrusted, root)))
+            goto err;
+        root = NULL;
+    }
+    if (unsigned_anchors[idx].crl != NULL) {
+        if (!TEST_ptr(crl = CRL_from_strings(unsigned_anchors[idx].crl))
+            || !TEST_true(sk_X509_CRL_push(crls, crl)))
+            goto err;
+        crl = NULL;
+    }
+
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, NULL, ee, untrusted)))
+        goto err;
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+    X509_STORE_CTX_set0_crls(ctx, crls);
+    vpm = X509_STORE_CTX_get0_param(ctx);
+    if (!TEST_true(X509_VERIFY_PARAM_set_flags(vpm,
+            X509_V_FLAG_NO_CHECK_TIME | unsigned_anchors[idx].flags)))
+        goto err;
+
+    if (!TEST_int_eq(X509_verify_cert(ctx),
+            unsigned_anchors[idx].expected_err == X509_V_OK)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            unsigned_anchors[idx].expected_err))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(root);
+    X509_CRL_free(crl);
+    X509_free(ee);
+    OSSL_STACK_OF_X509_free(trusted);
+    OSSL_STACK_OF_X509_free(untrusted);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    X509_STORE_CTX_free(ctx);
+    return ret;
+}
+
+/* Set by unsigned_untrusted_cb() on X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE */
+static int unsigned_leaf_signature_error;
+
+/* Continues past every error, so that all of them are reported */
+static int unsigned_untrusted_cb(int ok, X509_STORE_CTX *ctx)
+{
+    if (!ok
+        && X509_STORE_CTX_get_error(ctx)
+            == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE)
+        unsigned_leaf_signature_error = 1;
+    return 1;
+}
+
+/*
+ * An unsigned self-issued certificate that is not in the trust store is not
+ * treated as self-issued, so its missing signature is reported.
+ */
+static int test_unsigned_untrusted(void)
+{
+    X509 *cert = NULL;
+    STACK_OF(X509) *trusted = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int ret = 0;
+
+    unsigned_leaf_signature_error = 0;
+    if (!TEST_ptr(cert = X509_from_strings(unsigned_root))
+        || !TEST_ptr(trusted = sk_X509_new_null())
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, NULL, cert, NULL)))
+        goto err;
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+    X509_STORE_CTX_set_verify_cb(ctx, unsigned_untrusted_cb);
+    if (!TEST_true(X509_VERIFY_PARAM_set_flags(X509_STORE_CTX_get0_param(ctx),
+            X509_V_FLAG_NO_CHECK_TIME)))
+        goto err;
+
+    (void)X509_verify_cert(ctx);
+    if (!TEST_true(unsigned_leaf_signature_error))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(trusted);
+    X509_STORE_CTX_free(ctx);
+    return ret;
+}
+#endif /* !defined(OPENSSL_NO_EC) */
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -1115,6 +1492,10 @@ int setup_tests(void)
     ADD_TEST(test_vpm_input_validation);
     ADD_TEST(test_vpm_copy_string_nul_term);
     ADD_ALL_TESTS(test_pathlen_chain, OSSL_NELEM(pathlen_chains));
+#if !defined(OPENSSL_NO_EC)
+    ADD_ALL_TESTS(test_unsigned_anchor, OSSL_NELEM(unsigned_anchors));
+    ADD_TEST(test_unsigned_untrusted);
+#endif /* !defined(OPENSSL_NO_EC) */
     return 1;
 err:
     cleanup_tests();

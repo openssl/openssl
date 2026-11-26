@@ -108,6 +108,14 @@ the first such name equals the C<issuer> field of the certificate.
 
 =back
 
+An unsigned certificate as specified in RFC 9925, whose signature algorithm is
+B<id-alg-unsigned>, is not apparently self-signed.
+If it is self-issued and meets the authority key identifier conditions above,
+it is a trust anchor in the trust store in the same way as an apparently
+self-signed certificate.
+It has no signature to check, so with the B<-check_ss_sig> option
+verification fails.
+
 Independent of any extended key usage (EKU) X.509v3 extension included,
 from the OpenSSL perspective a trust anchor certificate should be augmented
 with local trust attributes, giving an explicit designation for which
