@@ -35,12 +35,16 @@ my @test_param = (
     },
 );
 
-plan tests => 2 + scalar(@test_param) * 5 * 2;
+plan tests => 3 + scalar(@test_param) * 5 * 2;
 
 ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
 
 ok(run(app(['openssl', 'pkey', '-noout', '-check', '-in',
             data_file('rsamplcm.pem')])), "checking lcm in key check");
+
+ok(!run(app([ 'openssl', 'pkey',
+             '-in', data_file("rsamp_invalid_version.der"), '-noout'])),
+               "Invalid Version");
 
 my $cleartext = data_file("plain_text");
 
