@@ -68,7 +68,8 @@ IF[{- !$disabled{tests} -}]
           bio_base64_test bio_enc_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
-          x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
+          x509_time_test x509_dup_cert_test x509_add_certs_test \
+          x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest dtls13_internal_test ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest ocsptest fatalerrtest tls13ccstest \
@@ -833,6 +834,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
   INCLUDE[x509_dup_cert_test]=../include ../apps/include
   DEPEND[x509_dup_cert_test]=../libcrypto libtestutil.a
+
+  SOURCE[x509_add_certs_test]=x509_add_certs_test.c
+  INCLUDE[x509_add_certs_test]=../include ../apps/include
+  DEPEND[x509_add_certs_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_load_cert_file_test]=x509_load_cert_file_test.c
   INCLUDE[x509_load_cert_file_test]=../include ../apps/include
