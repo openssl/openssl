@@ -35,6 +35,10 @@ int PKCS12_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
     if (cipher == NULL)
         return 0;
+    if (EVP_CIPHER_get_iv_length(cipher) > (int)sizeof(iv)) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_IV_GEN_ERROR);
+        return 0;
+    }
 
     /* Extract useful info from parameter */
 
