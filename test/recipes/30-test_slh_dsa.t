@@ -23,9 +23,10 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 plan skip_all => 'SLH-DSA is not supported in this build' if disabled('slh-dsa');
-plan tests => 2;
+plan tests => 3;
 
 ok(run(test(["slh_dsa_test"])), "running slh_dsa_test");
+ok(run(test(["slh_dsa_internal_test"])), "running slh_dsa_internal_test");
 
 SKIP: {
     skip "Skipping FIPS tests", 1
