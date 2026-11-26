@@ -25,5 +25,7 @@ extern unsigned int OPENSSL_ppccap_P;
 #define PPC_MFTB (1 << 5)
 #define PPC_MFSPR268 (1 << 6)
 #define PPC_BRD31 (1 << 7)
+#define PPC_CRYPTO32 (1 << 8)
+#define PPC_DMF (1 << 9)
 
 #endif

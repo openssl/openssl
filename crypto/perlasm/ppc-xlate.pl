@@ -392,6 +392,77 @@ my $brd = sub {
 };
 my $vsrq	= sub { vcrypto_op(@_, 517); };
 
+# PowerISA 3.2
+my $xvadduwm = sub {
+    my ($f, $xt, $xa, $xb) = @_;
+    my $insn = (60 << 26)
+             | (($xt & 31) << 21)
+             | (($xa & 31) << 16)
+             | (($xb & 31) << 11)
+             | (131 << 3)
+             | (($xa >> 5) << 2)
+             | (($xb >> 5) << 1)
+             | ($xt >> 5);
+    "	.long	".sprintf "0x%X", $insn;
+};
+
+# RFC02653: Dense Math Facility instructions
+my $dmmr = sub {
+    my ($f, $at, $ab) = @_;
+    my $insn = (31  << 26)
+             | ($at << 23)
+             | (6   << 16)
+             | ($ab << 13)
+             | (177 << 1);
+    "	.long	".sprintf "0x%X", $insn;
+};
+
+my $dmsetdmrz = sub {
+    my ($f, $at) = @_;
+    my $insn = (31 << 26)
+             | ($at << 23)
+             | (2 << 16)
+             | (177 << 1);
+    "	.long	".sprintf "0x%X", $insn;
+};
+
+my $dmxxinstdmr512 = sub {
+    my ($f, $at, $xap, $xbp, $p) = @_;
+    my $insn = (60 << 26)
+             | ($at << 23)
+             | ((($xap & 31) >> 1) << 17)
+             | ($p << 16)
+             | ((($xbp & 31) >> 1) << 12)
+             | (234 << 3)
+             | (($xap >> 5) << 2)
+             | (($xbp >> 5) << 1);
+    "	.long	".sprintf "0x%X", $insn;
+};
+
+my $dmxxextfdmr512 = sub {
+    my ($f, $xap, $xbp, $as, $p) = @_;
+    my $insn = (60 << 26)
+             | ($as << 23)
+             | ((($xap & 31) >> 1) << 17)
+             | ($p << 16)
+             | ((($xbp & 31) >> 1) << 12)
+             | (226 << 3)
+             | (($xap >> 5) << 2)
+             | (($xbp >> 5) << 1);
+    "	.long	".sprintf "0x%X", $insn;
+};
+
+# RFC02654: SHA2 instruction
+my $dmsha2hash = sub {
+    my ($f, $at, $ab, $n) = @_;
+    my $insn = (31 << 26)
+             | ($at << 23)
+             | ($n << 21)
+             | (14 << 16)
+             | ($ab << 13)
+             | (177 << 1);
+    "	.long	".sprintf "0x%X", $insn;
+};
 
 
 while($line=<>) {
@@ -426,7 +497,7 @@ while($line=<>) {
 	my $mnemonic = $2;
 	my $f = $3;
 	my $opcode = eval("\$$mnemonic");
-	$line =~ s/\b(c?[rf]|v|vs)([0-9]+)\b/$2/g if ($c ne "." and $flavour !~ /osx/);
+	$line =~ s/\b(c?[rf]|dm|v|vs)([0-9]+)\b/$2/g if ($c ne "." and $flavour !~ /osx/);
 	if (ref($opcode) eq 'CODE') { $line = &$opcode($f,split(/,\s*/,$line)); }
 	elsif ($mnemonic)           { $line = $c.$mnemonic.$f."\t".$line; }
     }

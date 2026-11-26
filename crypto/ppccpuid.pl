@@ -91,6 +91,25 @@ $code=<<___;
 	.byte	0,12,0x14,0,0,0,0,0
 .size	.OPENSSL_brd31_probe,.-.OPENSSL_brd31_probe
 
+.globl	.OPENSSL_crypto32_probe
+.align	4
+.OPENSSL_crypto32_probe:
+	xvadduwm vs0, vs0, vs0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+.size	.OPENSSL_crypto32_probe,.-.OPENSSL_crypto32_probe
+
+.globl	.OPENSSL_dmf_probe
+.align	4
+.OPENSSL_dmf_probe:
+	xxlor vs0, vs0, vs0
+	dmmr dm0, dm0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+.size	.OPENSSL_dmf_probe,.-.OPENSSL_dmf_probe
+
 .globl	.OPENSSL_atomic_add
 .align	4
 .OPENSSL_atomic_add:

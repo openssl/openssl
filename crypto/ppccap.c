@@ -46,6 +46,8 @@ void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 void OPENSSL_brd31_probe(void);
+void OPENSSL_crypto32_probe(void);
+void OPENSSL_dmf_probe(void);
 
 long OPENSSL_rdtsc_mftb(void);
 long OPENSSL_rdtsc_mfspr268(void);
@@ -133,6 +135,8 @@ static unsigned long getauxval(unsigned long key)
 #define HWCAP_VEC_CRYPTO (1U << 25)
 #define HWCAP_ARCH_3_00 (1U << 23)
 #define HWCAP_ARCH_3_1 (1U << 18)
+#define HWCAP_ARCH_3_2 (1U << 16)
+#define HWCAP_DMF (1U << 15)
 
 #if defined(__GNUC__)
 __attribute__((constructor))
@@ -201,6 +205,9 @@ void OPENSSL_cpuid_setup(void)
     if (__power_set(0xffffffffU << 18)) /* POWER10 and later */
         OPENSSL_ppccap_P |= PPC_BRD31;
 
+    if (__power_set(0xffffffffU << 20)) /* Future ISA and later */
+        OPENSSL_ppccap_P |= PPC_CRYPTO32 | PPC_DMF;
+
     return;
 #endif
 #endif
@@ -251,6 +258,12 @@ void OPENSSL_cpuid_setup(void)
 
             if ((hwcap & HWCAP_VSX) && (hwcap2 & HWCAP_VEC_CRYPTO))
                 OPENSSL_ppccap_P |= PPC_CRYPTO207;
+
+            if ((hwcap & HWCAP_VSX) && (hwcap2 & HWCAP_ARCH_3_2))
+                OPENSSL_ppccap_P |= PPC_CRYPTO32;
+
+            if ((hwcap & HWCAP_VSX) && (hwcap2 & HWCAP_DMF))
+                OPENSSL_ppccap_P |= PPC_DMF;
         }
 
         if (hwcap2 & HWCAP_ARCH_3_00) {
@@ -307,6 +320,16 @@ void OPENSSL_cpuid_setup(void)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             OPENSSL_crypto207_probe();
             OPENSSL_ppccap_P |= PPC_CRYPTO207;
+        }
+
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_crypto32_probe();
+            OPENSSL_ppccap_P |= PPC_CRYPTO32;
+        }
+
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_dmf_probe();
+            OPENSSL_ppccap_P |= PPC_DMF;
         }
     }
 
