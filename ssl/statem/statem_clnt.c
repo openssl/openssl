@@ -3607,7 +3607,25 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt
                 SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
             return 0;
         }
-        sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, (int)chainidx);
+        /*
+         * The stack is indexed by the position of the certificate in the
+         * peer's chain, and a missing response is represented by a NULL
+         * element. Pad any gap left by certificates that were not stapled,
+         * otherwise the response for entry N would be stored at a lower
+         * index and end up attached to the wrong certificate.
+         */
+        while (sk_OCSP_RESPONSE_num(s->ext.ocsp.resp_ex) < (int)chainidx) {
+            if (sk_OCSP_RESPONSE_push(s->ext.ocsp.resp_ex, NULL) == 0) {
+                OCSP_RESPONSE_free(resp);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+                return 0;
+            }
+        }
+        if (sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp_ex, resp, (int)chainidx) == 0) {
+            OCSP_RESPONSE_free(resp);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+            return 0;
+        }
     }
 
 #endif
