@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,8 +16,9 @@ use OpenSSL::Test::Utils;
 setup("test_evp_extra");
 
 my $no_conf_autoload = disabled('autoload-config');
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_conf_autoload ? 3 : 4;
+plan tests => ($no_conf_autoload ? 3 : 4) + ($no_fips ? 0 : 1);
 
 ok(run(test(["evp_extra_test"])), "running evp_extra_test");
 
@@ -32,3 +33,10 @@ unless ($no_conf_autoload) {
 ok(run(test(["evp_extra_test", "-context"])), "running evp_extra_test with a non-default library context");
 
 ok(run(test(["evp_extra_test2"])), "running evp_extra_test2");
+
+unless ($no_fips) {
+    local $ENV{OPENSSL_TEST_AEAD_ONLY} = 1;
+    ok(run(test(["evp_extra_test", "-config",
+                 srctop_file("test", "fips-and-base.cnf")])),
+       "running AEAD EVP_Cipher tests with the FIPS provider");
+}
