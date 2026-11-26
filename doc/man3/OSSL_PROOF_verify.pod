@@ -394,7 +394,7 @@ L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 4.1.
+These functions were added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

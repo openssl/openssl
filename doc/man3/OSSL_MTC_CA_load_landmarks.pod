@@ -131,7 +131,7 @@ L<X509_STORE_trust_mtc_ca(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 4.1.
+These functions were added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
