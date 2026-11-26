@@ -161,6 +161,11 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      * like evp_keymgmt_util_copy() and evp_pkey_export_to_provider() called
      * further down help us find out if they are the same or not.
      */
+    if (from->keymgmt == NULL && !evp_pkey_is_legacy(from)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_PARAMETERS);
+        goto end;
+    }
+
     if (evp_pkey_is_blank(to)) {
 #ifndef FIPS_MODULE
         if (evp_pkey_is_legacy(from)) {

@@ -8612,6 +8612,22 @@ end:
 }
 #endif /*OPENSSL_NO_DES */
 
+static int test_evp_pkey_copy_parameters_blank(void)
+{
+    EVP_PKEY *to = EVP_PKEY_new(), *from = EVP_PKEY_new();
+    int testresult = 0;
+
+    if (!TEST_ptr(to) || !TEST_ptr(from)
+        || !TEST_false(EVP_PKEY_copy_parameters(to, from)))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_PKEY_free(to);
+    EVP_PKEY_free(from);
+    return testresult;
+}
+
 static int test_evp_cipher_pipeline(void)
 {
     OSSL_PROVIDER *fake_pipeline = NULL;
@@ -9782,6 +9798,7 @@ int setup_tests(void)
     ADD_TEST(test_evp_cipher_negative_length);
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
+    ADD_TEST(test_evp_pkey_copy_parameters_blank);
     ADD_TEST(test_evp_cipher_pipeline);
 
     ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
