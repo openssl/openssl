@@ -482,6 +482,19 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
                 goto err;
             }
             break;
+        case OSSL_STORE_INFO_PARAMS:
+            /*
+             * Tell the decoders that only key parameters are of
+             * interest, so key objects can be skipped rather than
+             * decoded (and potentially decrypted, which may involve
+             * a pass phrase prompt).
+             */
+            if (!OSSL_DECODER_CTX_set_selection(ctx->_.file.decoderctx,
+                    OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
+                goto err;
+            }
+            break;
         default:
             break;
         }
