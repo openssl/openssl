@@ -3073,6 +3073,71 @@ end:
     return testresult;
 }
 
+/*
+ * Check a bidirectional shutdown where the client sends close_notify first,
+ * before reading anything after the handshake. With DTLS 1.3 the server's
+ * post-handshake NewSessionTickets are still queued for the client, ahead of
+ * the server's reply close_notify. The client must still get through to that
+ * close_notify: otherwise it can never learn that the peer closed cleanly,
+ * and SSL_read() fails with SSL_ERROR_SYSCALL on an empty error queue instead
+ * (issue #33654).
+ */
+static int test_dtls_bidi_shutdown(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    unsigned char buf[64];
+    int version = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    int ret, testresult = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (version == DTLS1_2_VERSION)
+        return TEST_skip("DTLS 1.2 is disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (version == DTLS1_3_VERSION)
+        return TEST_skip("DTLS 1.3 is disabled");
+#endif
+
+    /* Do not read anything after the handshake, like the issue's client */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), version, version,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl,
+            NULL, NULL))
+        || !TEST_true(create_bare_ssl_connection(sssl, cssl, SSL_ERROR_NONE,
+            0, 0)))
+        goto end;
+
+    /* The client initiates the shutdown */
+    if (!TEST_int_eq(SSL_shutdown(cssl), 0))
+        goto end;
+
+    /* The server sees the client's close_notify and replies with its own */
+    ret = SSL_read(sssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(sssl, ret), SSL_ERROR_ZERO_RETURN)
+        || !TEST_int_eq(SSL_shutdown(sssl), 1))
+        goto end;
+
+    /* The client must see the server's close_notify, completing the shutdown */
+    ret = SSL_read(cssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(cssl, ret), SSL_ERROR_ZERO_RETURN)
+        || !TEST_int_eq(SSL_get_shutdown(cssl),
+            SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)
+        || !TEST_int_eq(SSL_shutdown(cssl), 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -3136,6 +3201,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_DTLS1_2) || !defined(OPENSSL_NO_DTLS1_3)
     ADD_ALL_TESTS(test_dtls_fragment_write_retry, 8);
 #endif
+    ADD_ALL_TESTS(test_dtls_bidi_shutdown, 2);
 
     return 1;
 }

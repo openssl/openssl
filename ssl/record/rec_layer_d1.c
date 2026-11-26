@@ -638,8 +638,15 @@ start:
         return -1;
     }
 
-    if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
-                                             * shutdown */
+    /*
+     * We have sent close_notify but not received one. In DTLS 1.3 the peer
+     * may still send post-handshake messages (e.g. NewSessionTicket) and ACKs
+     * ahead of its close_notify. Process them as TLS 1.3 does (see
+     * ssl3_read_bytes()) so that we can get through to the close_notify.
+     */
+    if ((sc->shutdown & SSL_SENT_SHUTDOWN) != 0
+        && !(is_dtls13
+            && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK))) {
         sc->rwstate = SSL_NOTHING;
         if (!ssl_release_record(sc, rr, 0))
             return -1;
