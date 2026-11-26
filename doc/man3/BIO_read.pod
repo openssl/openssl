@@ -39,6 +39,8 @@ however; for example, BIO_gets() on a digest BIO will calculate and
 return the digest and other BIOs may not support BIO_gets() at all.
 The returned string is always NUL-terminated and the '\n' is preserved
 if present in the input data.
+If I<size> is 0, BIO_gets() returns 0 without reading any data
+and without writing to I<buf>.
 On binary input there may be NUL characters within the string;
 in this case the return value (if nonnegative) may give an incorrect length.
 
