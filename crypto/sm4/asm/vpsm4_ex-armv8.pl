@@ -693,6 +693,7 @@ ${prefix}_set_encrypt_key:
 	bl	_${prefix}_set_key
 	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
+	mov	w0,#1
 	ret
 .size	${prefix}_set_encrypt_key,.-${prefix}_set_encrypt_key
 ___
@@ -711,6 +712,7 @@ ${prefix}_set_decrypt_key:
 	bl	_${prefix}_set_key
 	ldp	x29,x30,[sp],#16
 	AARCH64_VALIDATE_LINK_REGISTER
+	mov	w0,#1
 	ret
 .size	${prefix}_set_decrypt_key,.-${prefix}_set_decrypt_key
 ___
