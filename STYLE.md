@@ -123,7 +123,12 @@ code. Much of the existing API predates it and carries years of
 naming baggage, so it does not uniformly conform. Do not rename
 existing public functions to fit it -- that breaks the API.
 
-Public (API) functions use the uppercase subsystem prefix.
+Public (API) functions use the uppercase subsystem prefix. New
+subsystems must additionally start with `OSSL_` (an example is
+`OSSL_STORE_` for the STORE subsystem). Function names in older
+existing subsystems may preserve their prefix without `OSSL_`
+(for example, `X509_` and `EVP_`).
+
 Internal functions use the lowercase `ossl_` prefix unless they
 are static (i.e., local to the source file); static functions
 need no prefix.
