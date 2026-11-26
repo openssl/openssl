@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/pkcs12.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -155,8 +156,62 @@ static int aeswrap_unwrap_pad_n2_overflow_test(void)
     return aeswrap_unwrap_pad_overflow_test(16);
 }
 
+/* Exercise both EVP entry points and the PKCS12 allocation at wrap boundaries. */
+static int aeswrap_pad_output_size_test(int idx)
+{
+    int des = idx >= 16;
+    int ret = 0, len = des ? (idx - 15) * 8 : idx + 1, outlen, plainlen;
+    int expected = des ? len + 16 : ((len + 7) / 8 + 1) * 8;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    X509_ALGOR *alg = NULL;
+    unsigned char key[24] = { 0 }, in[64] = { 0 }, out[80], recovered[80];
+    unsigned char salt[8] = { 0 };
+    unsigned char *encrypted = NULL, *plain = NULL;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(NULL,
+                      des ? "DES3-WRAP" : "AES-128-WRAP-PAD", NULL))
+        || !TEST_int_eq(EVP_CIPHER_get_block_size(cipher), 8)
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, NULL, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out, &outlen, in, len))
+        || !TEST_int_eq(outlen, expected)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, NULL, NULL))
+        || !TEST_int_gt(EVP_Cipher(ctx, out, in, len), 0)
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, NULL, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, recovered, &plainlen, out, expected))
+        || !TEST_mem_eq(recovered, plainlen, in, len)
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, cipher, key, NULL, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &plainlen, out, expected))
+        || !TEST_mem_eq(out, plainlen, in, len))
+        goto end;
+
+    if (!TEST_ptr(alg = PKCS5_pbe2_set(cipher, 1, salt, sizeof(salt)))
+        || !TEST_ptr(encrypted = PKCS12_pbe_crypt(alg, "password", 8,
+                         in, len, NULL, &outlen, 1))
+        || !TEST_int_eq(outlen, expected)
+        || !TEST_ptr(plain = PKCS12_pbe_crypt(alg, "password", 8,
+                         encrypted, outlen, NULL, &plainlen, 0))
+        || !TEST_mem_eq(plain, plainlen, in, len))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(plain);
+    OPENSSL_free(encrypted);
+    X509_ALGOR_free(alg);
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_DES
+    ADD_ALL_TESTS(aeswrap_pad_output_size_test, 24);
+#else
+    ADD_ALL_TESTS(aeswrap_pad_output_size_test, 16);
+#endif
     ADD_TEST(aeswrap_input_size_fail_test);
     ADD_TEST(aeswrap_multi_update_fail_test);
     ADD_ALL_TESTS(aeswrap_null_key_init_fail_test,
