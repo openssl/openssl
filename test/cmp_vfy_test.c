@@ -706,13 +706,33 @@ static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int not_yet_
     }
 }
 
+/* check that chain consists of cert and, if expected, the intermediate CA */
+static int check_validated_chain(const STACK_OF(X509) *chain, X509 *cert)
+{
+    int n = cert == endentity1 ? 1 : 2; /* endentity1 is directly below root */
+
+    return TEST_int_eq(sk_X509_num(chain), n)
+        && TEST_int_eq(X509_cmp(sk_X509_value(chain, 0), cert), 0)
+        && (n == 1
+            || TEST_int_eq(X509_cmp(sk_X509_value(chain, 1), intermediate), 0));
+}
+
 static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     X509_STORE *ts = OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx);
     int res = TEST_int_eq(fixture->expected,
         OSSL_CMP_validate_cert_path(fixture->cmp_ctx, ts, fixture->cert));
+    STACK_OF(X509) *chain;
 
     OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
+    if (!res)
+        return 0;
+    /* the internal variant also yields the validated chain on success */
+    chain = ossl_cmp_validate_cert_path(fixture->cmp_ctx, ts, fixture->cert);
+    OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
+    res = fixture->expected ? check_validated_chain(chain, fixture->cert)
+                            : TEST_ptr_null(chain);
+    OSSL_STACK_OF_X509_free(chain);
     return res;
 }
 

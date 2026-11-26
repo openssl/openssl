@@ -1004,6 +1004,35 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
 int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+/**
+ * @brief Validate a certificate and its path, yielding the validated chain.
+ *
+ * Like OSSL_CMP_validate_cert_path(), but on success returns the chain.
+ *
+ * @param ctx the CMP context
+ * @param trusted_store the storte with trust anchors, possibly CRLs and a callback
+ * @param cert the target certificate to validate
+ * @returns on success the validated chain, including the target cert
+ *          but without the trust anchor (unless it is the target cert),
+ *          to be freed by the caller, or NULL on error or validation failure
+ */
+STACK_OF(X509) *ossl_cmp_validate_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *trusted_store, X509 *cert);
+
+/**
+ * @brief Validate the protection of a CMP message, yielding the validated chain.
+ *
+ * Like OSSL_CMP_validate_msg(), but on success also provides the validated
+ * chain of the sender certificate, as far as cert path validation was done.
+ *
+ * @param ctx the CMP context
+ * @param msg the CMP message to validate
+ * @param chain receives on success the validated chain of the sender cert,
+ *              excluding the trust anchor, to be freed by the caller, or NULL
+ *              if no cert path validation has been performed (when using PBM
+ *              or a pinned or previously validated sender cert); NULL on error
+ * @returns 1 on success, 0 on error or validation failure
+ */
+int ossl_cmp_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg, STACK_OF(X509) **chain);
 int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
