@@ -290,10 +290,12 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 #ifndef OPENSSL_NO_RFC3779
     /* RFC 3779 path validation, now that CRL check has been done */
-    if ((ok = X509v3_asid_validate_path(ctx)) <= 0)
-        return ok;
-    if ((ok = X509v3_addr_validate_path(ctx)) <= 0)
-        return ok;
+    if ((ctx->param->flags & X509_V_FLAG_RFC3779) != 0) {
+        if ((ok = X509v3_asid_validate_path(ctx)) <= 0)
+            return ok;
+        if ((ok = X509v3_addr_validate_path(ctx)) <= 0)
+            return ok;
+    }
 #endif
 
     /* If we get this far evaluate policies */
@@ -603,6 +605,28 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
     return verify_cb_cert(ctx, x, depth, X509_V_ERR_INVALID_PURPOSE);
 }
 
+/*
+ * Returns 1 if |x| has a critical RFC 3779 extension and RFC 3779 path
+ * validation is not enabled, 0 otherwise.
+ */
+static int has_unhandled_rfc3779_ext(const X509_STORE_CTX *ctx, const X509 *x)
+{
+#if !defined(OPENSSL_NO_RFC3779)
+    static const int nids[] = { NID_sbgp_ipAddrBlock, NID_sbgp_autonomousSysNum };
+    size_t i;
+
+    if ((ctx->param->flags & X509_V_FLAG_RFC3779) != 0)
+        return 0;
+    for (i = 0; i < OSSL_NELEM(nids); i++) {
+        int loc = X509_get_ext_by_NID(x, nids[i], -1);
+
+        if (loc >= 0 && X509_EXTENSION_get_critical(X509_get_ext(x, loc)))
+            return 1;
+    }
+#endif /* !defined(OPENSSL_NO_RFC3779) */
+    return 0;
+}
+
 /*-
  * Check extensions of a cert chain for consistency with the supplied purpose.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -640,7 +664,8 @@ static int check_extensions(X509_STORE_CTX *ctx)
         CB_FAIL_IF((x->ex_flags & EXFLAG_DUPLICATE) != 0,
             ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
-                && (x->ex_flags & EXFLAG_CRITICAL) != 0,
+                && ((x->ex_flags & EXFLAG_CRITICAL) != 0
+                    || has_unhandled_rfc3779_ext(ctx, x)),
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
         CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
             ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);

@@ -293,6 +293,12 @@ anything other than debugging purposes can be a security risk. Finer
 control over which extensions are supported can be performed in the
 verification callback.
 
+B<X509_V_FLAG_RFC3779> enables RFC 3779 path validation of the IP address
+and AS identifier delegation extensions. By default no RFC 3779 path
+validation is performed, and a certificate with a critical RFC 3779
+extension is rejected as having an unhandled critical extension. This flag
+has no effect if OpenSSL was built with B<no-rfc3779>.
+
 The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some
 broken certificates and makes verification strictly apply B<X509>
 rules.
@@ -422,6 +428,9 @@ enabling policy checking however the implementation has never done this.
 The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
+
+The B<X509_V_FLAG_RFC3779> flag was added in OpenSSL 4.2. Before
+OpenSSL 4.2, RFC 3779 path validation was always performed.
 
 =head1 COPYRIGHT
 

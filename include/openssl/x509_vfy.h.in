@@ -394,6 +394,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_FLAG_OCSP_RESP_CHECK 0x400000
 /* Verify OCSP stapling responses for whole chain */
 #define X509_V_FLAG_OCSP_RESP_CHECK_ALL 0x800000
+/* Perform RFC 3779 path validation */
+#define X509_V_FLAG_RFC3779 0x1000000
 
 #define X509_VP_FLAG_DEFAULT 0x1
 #define X509_VP_FLAG_OVERWRITE 0x2

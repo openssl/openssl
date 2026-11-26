@@ -118,6 +118,10 @@ DEPEND[man/man1/openssl-gendsa.1]=man1/openssl-gendsa.pod
 GENERATE[man/man1/openssl-gendsa.1]=man1/openssl-gendsa.pod
 DEPEND[man1/openssl-gendsa.pod]{pod}=man1/openssl-gendsa.pod.in
 GENERATE[man1/openssl-gendsa.pod]=man1/openssl-gendsa.pod.in
+DEPEND[html/man1/openssl-generate_tai_chain.html]=man1/openssl-generate_tai_chain.pod
+GENERATE[html/man1/openssl-generate_tai_chain.html]=man1/openssl-generate_tai_chain.pod
+DEPEND[man/man1/openssl-generate_tai_chain.1]=man1/openssl-generate_tai_chain.pod
+GENERATE[man/man1/openssl-generate_tai_chain.1]=man1/openssl-generate_tai_chain.pod
 DEPEND[html/man1/openssl-genpkey.html]=man1/openssl-genpkey.pod
 GENERATE[html/man1/openssl-genpkey.html]=man1/openssl-genpkey.pod
 DEPEND[man/man1/openssl-genpkey.1]=man1/openssl-genpkey.pod
@@ -365,6 +369,7 @@ html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
 html/man1/openssl-gendsa.html \
+html/man1/openssl-generate_tai_chain.html \
 html/man1/openssl-genpkey.html \
 html/man1/openssl-genrsa.html \
 html/man1/openssl-info.html \
@@ -427,6 +432,7 @@ man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
 man/man1/openssl-gendsa.1 \
+man/man1/openssl-generate_tai_chain.1 \
 man/man1/openssl-genpkey.1 \
 man/man1/openssl-genrsa.1 \
 man/man1/openssl-info.1 \

@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * RFC 3779 path validation is no longer performed by default during
+   certificate verification. Applications that need it must set the new
+   `X509_V_FLAG_RFC3779` verification flag. Without the flag, a certificate
+   with a critical RFC 3779 IP address or AS identifier extension fails
+   verification with `X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION`.
+
+   *Bob Beck*
+
  * Added parameter name pointers for faster `OSSL_PARAM` decoding.
 
    *Dr Paul Dale*
