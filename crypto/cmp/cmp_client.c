@@ -827,6 +827,18 @@ retry:
         ctx->status = OSSL_CMP_PKISTATUS_rejected_by_client;
         ret = 0;
     }
+
+    /*
+     * Unless disabled, cache the chain of the newly enrolled cert, typically
+     * constructed from the received extraCerts, such that it is available,
+     * e.g., when using the new cert as CMP signer cert later. This is done
+     * only if the chain has been validated, which is the case if the default
+     * certConf_cb, given a trust store as its argument, accepted the new cert.
+     */
+    if (ret == 1 && !ctx->noCacheExtraCerts
+        && cb == OSSL_CMP_certConf_cb && ctx->certConf_cb_arg != NULL
+        && ossl_x509_prepend_certs(&ctx->untrusted, ctx->newChain, -1) < 0)
+        ret = 0;
     OPENSSL_free(subj);
     return ret;
 

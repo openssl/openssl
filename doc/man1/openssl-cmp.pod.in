@@ -748,7 +748,14 @@ implements a form of trust-on-first-use (TOFU).
 =item B<-no_cache_extracerts>
 
 Do not cache certificates in the extraCerts field of CMP messages received.
-By default, they are kept as they may be helpful for validating further messages.
+By default, after successfully validating an incoming message, the
+intermediate CA certificates of the validated chain of its protection
+certificate (if any) are kept as they may be helpful
+for validating protection certificates of further messages.
+Likewise, the chain of a newly enrolled certificate is kept
+if it has been validated using the B<-out_trusted> option,
+which is helpful when using it later, e.g., as CMP signer certificate.
+Other certificates received in the extraCerts field are never kept.
 This option applies to both CMP clients and the mock server.
 
 In any case, after successfully validating an incoming message, its protection

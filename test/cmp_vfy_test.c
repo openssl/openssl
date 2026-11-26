@@ -683,6 +683,67 @@ static int test_msg_check_own_chain_not_using_extracerts(void)
     return result;
 }
 
+static int execute_cache_validated_chain_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    int res = ossl_cmp_msg_check_update(ctx, fixture->msg,
+        fixture->allow_unprotected_cb, fixture->additional_arg);
+    STACK_OF(X509) *untrusted;
+
+    if (!TEST_int_eq(res, 1))
+        return 0;
+    /*
+     * The unrelated srvcert from the extraCerts of ir_protected_2_extracerts
+     * must not be in the validated chain and thus not in the cache of untrusted
+     * certs. The validated chain consists just of the protection cert,
+     * insta_cert, which must not be cached either.
+     */
+    untrusted = OSSL_CMP_CTX_get0_untrusted(ctx);
+    return TEST_int_eq(sk_X509_num(untrusted), 0);
+}
+
+static int test_msg_check_cache_validated_chain(int no_cache, int bad_sig)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    /*
+     * Set fixture->msg to ir_protected_2_extracerts, which has as its
+     * extraCerts the unrelated srvcert and the insta_cert.
+     * The validated chain consists just of the insta_cert.
+     */
+    setup_extracerts_msg(&fixture, 1);
+    if (fixture == NULL)
+        return 0;
+    if (bad_sig) {
+        fixture->allow_unprotected_cb = allow_unprotected;
+        fixture->additional_arg = 1; /* accept msg despite bad signature */
+    }
+    if (!TEST_true(OSSL_CMP_CTX_set_option(fixture->cmp_ctx,
+            OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, no_cache))
+        || (bad_sig && !TEST_true(flip_bit(fixture->msg->protection)))) {
+        tear_down(fixture);
+        return 0;
+    }
+    EXECUTE_TEST(execute_cache_validated_chain_test, tear_down);
+    return result;
+}
+
+static int test_msg_check_not_caching_protection_cert(void)
+{
+    return test_msg_check_cache_validated_chain(0, 0);
+}
+
+static int test_msg_check_no_cache_extracerts(void)
+{
+    return test_msg_check_cache_validated_chain(1, 0);
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int test_msg_check_not_cached_when_accepted_via_cb(void)
+{
+    return test_msg_check_cache_validated_chain(0, 1);
+}
+#endif
+
 /*
  * The functions below use the normal OpenSSL test certs from test/certs/,
  * forming a 2-level and mostly 3-level chains,
@@ -919,6 +980,11 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_extracerts_limit_sender_cert_dropped);
 #endif
     ADD_TEST(test_msg_check_own_chain_not_using_extracerts);
+    ADD_TEST(test_msg_check_not_caching_protection_cert);
+    ADD_TEST(test_msg_check_no_cache_extracerts);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_msg_check_not_cached_when_accepted_via_cb);
+#endif
 
     /* Cert path validation tests, using normal OpenSSL test certs */
     ADD_TEST(test_validate_cert_path_2_level_ok);

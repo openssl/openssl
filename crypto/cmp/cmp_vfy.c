@@ -772,7 +772,8 @@ static int check_transactionID_or_nonce(OSSL_CMP_CTX *ctx, const ASN1_OCTET_STRI
 
 /*-
  * Check received message (i.e., response by server or request from client)
- * Any msg->extraCerts are prepended to ctx->untrusted.
+ * On success, unless ctx->noCacheExtraCerts, the chain of the validated
+ * protection cert (if any) is prepended to ctx->untrusted.
  *
  * Ensures that:
  * its sender is of appropriate type (currently only X509_NAME) and
@@ -796,7 +797,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
     int bodytype, end_of_polling;
-    int num_extra, num_added, res;
+    int num_extra, num_added, res, validated = 0;
+    STACK_OF(X509) *chain = NULL;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
@@ -861,13 +863,11 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             num_extra, OSSL_CMP_MAX_EXTRACERTS);
 
     /*
-     * Store the extraCerts in ctx for use in OSSL_CMP_validate_msg()
-     * and for future use, such that they are available to ctx->certConf_cb and
-     * the peer does not need to send them again in the same transaction.
-     * Note that it does not help validating the message before storing the
-     * extraCerts because they do not belong to the protected msg part anyway.
-     * The extraCerts are prepended. Allows simple removal if they shall not be
-     * cached. Also they get used first, which is likely good for efficiency.
+     * Temporarily make the extraCerts available in ctx->untrusted for use in
+     * ossl_cmp_validate_msg(). Note that it does not help validating the
+     * message before using the extraCerts because they do not belong to the
+     * protected msg part anyway. They are prepended such that they get used
+     * first, which is likely good for efficiency, and can be removed easily.
      */
     num_added = ossl_x509_prepend_certs(&ctx->untrusted, msg->extraCerts,
         OSSL_CMP_MAX_EXTRACERTS);
@@ -875,7 +875,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
 
     if (hdr->protectionAlg != NULL)
-        res = OSSL_CMP_validate_msg(ctx, msg)
+        res = (validated = ossl_cmp_validate_msg(ctx, msg, &chain))
             /* explicitly permitted exceptions for invalid protection: */
             || (cb != NULL && (*cb)(ctx, msg, 1, cb_arg) > 0);
     else
@@ -885,15 +885,32 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     res = 1; /* support more aggressive fuzzing by letting invalid msg pass */
 #endif
 
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(ctx->untrusted));
+
     /*
-     * remove extraCerts again if not caching
-     * or if we failed validation above, lest a remote user
-     * starts sending us lots of certificates in invalid messages
-     * leading to a DOS from unbounded certificate stack growth
+     * Unless disabled, cache the intermediate CA certs of the validated chain
+     * (if any) in ctx->untrusted, so the peer does not need to send them again.
+     * This is done only if the msg protection has been successfully validated,
+     * not if the msg has been accepted just as an exception via cb.
+     * The protection cert itself is not cached here because it is held in
+     * ctx->validatedPeerCert anyway. This way, also on a long-running server,
+     * the growth of ctx->untrusted is limited to the CA certs of the PKI.
+     * Any other extraCerts are not cached because they are not authenticated
+     * (as they do not belong to the protected msg part),
+     * lest a remote user starts sending us lots of certificates
+     * leading to a DOS from unbounded certificate stack growth.
+     * The certs are prepended such that they get used first,
+     * which is likely good for efficiency.
      */
-    if (ctx->noCacheExtraCerts || res != 1)
-        while (num_added-- > 0)
-            X509_free(sk_X509_shift(ctx->untrusted));
+    if (sk_X509_num(chain) > 0)
+        X509_free(sk_X509_shift(chain)); /* the protection cert */
+    if (validated && !ctx->noCacheExtraCerts
+        && ossl_x509_prepend_certs(&ctx->untrusted, chain, -1) < 0) {
+        OSSL_STACK_OF_X509_free(chain);
+        return 0;
+    }
+    OSSL_STACK_OF_X509_free(chain);
 
     if (!res) {
         if (hdr->protectionAlg != NULL)
