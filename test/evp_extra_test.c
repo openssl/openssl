@@ -8612,6 +8612,22 @@ end:
 }
 #endif /*OPENSSL_NO_DES */
 
+static int test_evp_cipher_params_before_init(void)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr_null(EVP_CIPHER_CTX_gettable_params(ctx))
+        || !TEST_ptr_null(EVP_CIPHER_CTX_settable_params(ctx)))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 static int test_evp_cipher_pipeline(void)
 {
     OSSL_PROVIDER *fake_pipeline = NULL;
@@ -9783,6 +9799,7 @@ int setup_tests(void)
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
     ADD_TEST(test_evp_cipher_pipeline);
+    ADD_TEST(test_evp_cipher_params_before_init);
 
     ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
     ADD_ALL_TESTS(test_rsasve_degenerate_ciphertext, 3);
