@@ -258,23 +258,23 @@ end:
     return result;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+static int cipher_in_list(const STACK_OF(SSL_CIPHER) *ciphers, uint32_t id)
+{
+    int i;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++)
+        if (SSL_CIPHER_get_id(sk_SSL_CIPHER_value(ciphers, i)) == id)
+            return 1;
+
+    return 0;
+}
+
 /*
  * SSL_CTX_set_ciphersuites() must not crash on empty list elements.
  * CONF_parse_list() signals them with elem=NULL; ciphersuite_cb() must skip
  * such entries rather than passing NULL to memcpy().
  */
-#ifndef OPENSSL_NO_TLS1_3
-static int cipher_in_ctx(const SSL_CTX *ctx, uint32_t id)
-{
-    const STACK_OF(SSL_CIPHER) *sk = SSL_CTX_get_ciphers(ctx);
-    int i;
-
-    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++)
-        if (SSL_CIPHER_get_id(sk_SSL_CIPHER_value(sk, i)) == id)
-            return 1;
-    return 0;
-}
-
 static int test_set_ciphersuites_empty_elem(void)
 {
     SSL_CTX *ctx = NULL;
@@ -287,20 +287,24 @@ static int test_set_ciphersuites_empty_elem(void)
     if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
             "TLS_AES_128_GCM_SHA256::TLS_AES_256_GCM_SHA384")))
         goto end;
-    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256))
-        || !TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_256_GCM_SHA384)))
+    if (!TEST_true(cipher_in_list(SSL_CTX_get_ciphers(ctx),
+            TLS1_3_CK_AES_128_GCM_SHA256))
+        || !TEST_true(cipher_in_list(SSL_CTX_get_ciphers(ctx),
+            TLS1_3_CK_AES_256_GCM_SHA384)))
         goto end;
 
     /* Leading separator: empty first element, one valid suite must apply */
     if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, ":TLS_AES_128_GCM_SHA256")))
         goto end;
-    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256)))
+    if (!TEST_true(cipher_in_list(SSL_CTX_get_ciphers(ctx),
+            TLS1_3_CK_AES_128_GCM_SHA256)))
         goto end;
 
     /* Trailing separator: empty last element, one valid suite must apply */
     if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, "TLS_AES_128_GCM_SHA256:")))
         goto end;
-    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256)))
+    if (!TEST_true(cipher_in_list(SSL_CTX_get_ciphers(ctx),
+            TLS1_3_CK_AES_128_GCM_SHA256)))
         goto end;
 
     result = 1;
@@ -308,6 +312,81 @@ end:
     SSL_CTX_free(ctx);
     return result;
 }
+
+#ifndef OPENSSL_NO_DTLS
+/*
+ * Replacing the TLSv1.3 ciphersuites on a DTLS SSL_CTX or SSL must remove all
+ * previous suites, including those that DTLS does not support.
+ */
+static int test_dtls_ctx_ciphersuite_replacement(void)
+{
+    SSL_CTX *ctx = NULL;
+    const STACK_OF(SSL_CIPHER) *sk;
+    int result = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_method())))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
+            "TLS_AES_128_CCM_8_SHA256:TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    sk = SSL_CTX_get_ciphers(ctx);
+    if (!TEST_true(cipher_in_list(sk, TLS1_3_CK_AES_128_CCM_8_SHA256))
+        || !TEST_true(cipher_in_list(sk, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, "TLS_AES_256_GCM_SHA384")))
+        goto end;
+
+    sk = SSL_CTX_get_ciphers(ctx);
+    if (!TEST_true(cipher_in_list(sk, TLS1_3_CK_AES_256_GCM_SHA384))
+        || !TEST_false(cipher_in_list(sk, TLS1_3_CK_AES_128_CCM_8_SHA256))
+        || !TEST_false(cipher_in_list(sk, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    result = 1;
+end:
+    SSL_CTX_free(ctx);
+    return result;
+}
+
+static int test_dtls_ssl_ciphersuite_replacement(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    const STACK_OF(SSL_CIPHER) *sk;
+    int result = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx)))
+        goto end;
+
+    if (!TEST_true(SSL_set_ciphersuites(ssl,
+            "TLS_AES_128_CCM_8_SHA256:TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    sk = SSL_get_ciphers(ssl);
+    if (!TEST_true(cipher_in_list(sk, TLS1_3_CK_AES_128_CCM_8_SHA256))
+        || !TEST_true(cipher_in_list(sk, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    if (!TEST_true(SSL_set_ciphersuites(ssl, "TLS_AES_256_GCM_SHA384")))
+        goto end;
+
+    sk = SSL_get_ciphers(ssl);
+    if (!TEST_true(cipher_in_list(sk, TLS1_3_CK_AES_256_GCM_SHA384))
+        || !TEST_false(cipher_in_list(sk, TLS1_3_CK_AES_128_CCM_8_SHA256))
+        || !TEST_false(cipher_in_list(sk, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    result = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return result;
+}
+#endif
 #endif
 
 int setup_tests(void)
@@ -317,6 +396,10 @@ int setup_tests(void)
     ADD_TEST(test_default_cipherlist_clear);
 #ifndef OPENSSL_NO_TLS1_3
     ADD_TEST(test_set_ciphersuites_empty_elem);
+#ifndef OPENSSL_NO_DTLS
+    ADD_TEST(test_dtls_ctx_ciphersuite_replacement);
+    ADD_TEST(test_dtls_ssl_ciphersuite_replacement);
+#endif
 #endif
     ADD_TEST(test_stdname_cipherlist);
     return 1;
