@@ -71,6 +71,19 @@ static unsigned int timer_cb(SSL *s, unsigned int timer_us)
         return 2 * timer_us;
 }
 
+#if (!defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_DTLS1_3)) || !defined(OPENSSL_NO_DTLS1_2)
+
+static OSSL_TIME fake_now_base;
+static OSSL_TIME fake_now_advanced;
+
+static OSSL_TIME fake_now_cb(void)
+{
+    return ossl_time_add(fake_now_base, fake_now_advanced);
+}
+
+#endif
+
 static int test_dtls_unprocessed(int testidx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -2063,7 +2076,11 @@ static int test_dtls_client_retransmit(void)
 
     SSL_set0_wbio(clientssl, frag_wbio);
 
-    DTLS_set_timer_cb(clientssl, timer_cb);
+    fake_now_base = ossl_time_now();
+    fake_now_advanced = ossl_time_zero();
+
+    if (!TEST_true(dtls1_set_now_cb(clientssl, fake_now_cb)))
+        goto end;
 
     /*
      * Flight 1: frag_wbio's budget of 1 write buys exactly ClientHello's
@@ -2091,7 +2108,8 @@ static int test_dtls_client_retransmit(void)
             goto end;
 
         /* Wait for the retransmit timer to actually expire */
-        OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(clientssl), 0))
             goto end;
@@ -2186,7 +2204,11 @@ static int test_dtls_server_retransmit(void)
 
     SSL_set0_wbio(serverssl, frag_wbio);
 
-    DTLS_set_timer_cb(serverssl, timer_cb);
+    fake_now_base = ossl_time_now();
+    fake_now_advanced = ossl_time_zero();
+
+    if (!TEST_true(dtls1_set_now_cb(serverssl, fake_now_cb)))
+        goto end;
 
     /* Flight 1: the client sends its ClientHello without any restriction. */
     if (!TEST_int_le(SSL_connect(clientssl), 0))
@@ -2218,7 +2240,8 @@ static int test_dtls_server_retransmit(void)
         if (!TEST_int_gt((int)DTLSv1_get_timeout(serverssl, &tv), 0))
             goto end;
 
-        OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(serverssl), 0))
             goto end;
@@ -2324,7 +2347,11 @@ static int test_dtls_client_retransmit_dtls13(void)
 
     SSL_set0_wbio(clientssl, frag_wbio);
 
-    DTLS_set_timer_cb(clientssl, timer_cb);
+    fake_now_base = ossl_time_now();
+    fake_now_advanced = ossl_time_zero();
+
+    if (!TEST_true(dtls1_set_now_cb(clientssl, fake_now_cb)))
+        goto end;
 
     /*
      * Flight 1: frag_wbio's budget of 1 write buys exactly ClientHello's
@@ -2352,7 +2379,8 @@ static int test_dtls_client_retransmit_dtls13(void)
             goto end;
 
         /* Wait for the retransmit timer to actually expire */
-        OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(clientssl), 0))
             goto end;
@@ -2441,7 +2469,11 @@ static int test_dtls_server_retransmit_dtls13(void)
 
     SSL_set0_wbio(serverssl, frag_wbio);
 
-    DTLS_set_timer_cb(serverssl, timer_cb);
+    fake_now_base = ossl_time_now();
+    fake_now_advanced = ossl_time_zero();
+
+    if (!TEST_true(dtls1_set_now_cb(serverssl, fake_now_cb)))
+        goto end;
 
     /* Flight 1: the client sends its ClientHello without any restriction. */
     if (!TEST_int_le(SSL_connect(clientssl), 0))
@@ -2471,7 +2503,8 @@ static int test_dtls_server_retransmit_dtls13(void)
         if (!TEST_int_gt((int)DTLSv1_get_timeout(serverssl, &tv), 0))
             goto end;
 
-        OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_time_from_timeval(tv));
+        fake_now_advanced = ossl_time_add(fake_now_advanced, ossl_ms2time(10));
 
         if (!TEST_int_ge((int)DTLSv1_handle_timeout(serverssl), 0))
             goto end;

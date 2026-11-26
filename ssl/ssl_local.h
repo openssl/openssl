@@ -2394,6 +2394,8 @@ typedef struct dtls1_state_st {
     unsigned int req_blocking_mode : 2;
 #endif
 
+    /* Support for fake time during testing */
+    OSSL_TIME (*now_cb)(void);
 } DTLS1_STATE;
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
@@ -3226,6 +3228,20 @@ void dtls1_stop_timer(SSL_CONNECTION *s);
  */
 int dtls1_stop_timer_for_read_flight(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
+
+/**
+ * Set the callback on @p s used to get the current time.
+ *
+ * This override is intended for testing (such as fake time) and should not
+ * be combined with real socket BIOs whose timeouts rely on real wall-clock time.
+ *
+ * @param s A DTLS SSL object.
+ * @param now_cb Callback returning the current time, or NULL to restore the
+ *               default time provider.
+ * @return 1 on success, or 0 on failure.
+ */
+int dtls1_set_now_cb(SSL *s, OSSL_TIME (*now_cb)(void));
+
 void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 /**
  * @brief Check whether the current write record layer is still needed for
