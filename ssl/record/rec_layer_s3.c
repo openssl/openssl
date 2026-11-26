@@ -126,14 +126,8 @@ static uint32_t ossl_get_max_early_data(SSL_CONNECTION *s)
      * session/psksession. Otherwise we go with the lowest out of the max early
      * data set in the session and the configured max_early_data.
      */
-    if (!s->server && sess->ext.max_early_data == 0) {
-        if (!ossl_assert(s->psksession != NULL
-                && s->psksession->ext.max_early_data > 0)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        sess = s->psksession;
-    }
+    if (!s->server && s->ext.early_data_session != NULL)
+        sess = s->ext.early_data_session;
 
     if (!s->server)
         max_early_data = sess->ext.max_early_data;
