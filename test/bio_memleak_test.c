@@ -114,10 +114,18 @@ static int test_bio_gets_zero_size(int idx)
         bio = BIO_new(BIO_s_mem());
         if (!TEST_ptr(bio) || !TEST_int_eq(BIO_puts(bio, "Hello World\n"), 12))
             goto finish;
-    } else {
+    } else if (idx == 1) {
         bio = BIO_new_mem_buf("Hello World\n", 12);
         if (!TEST_ptr(bio))
             goto finish;
+    } else {
+        BIO *mem = BIO_new_mem_buf("Hello World\n", 12);
+
+        if (!TEST_ptr(mem) || !TEST_ptr(bio = BIO_new(BIO_f_buffer()))) {
+            BIO_free(mem);
+            goto finish;
+        }
+        BIO_push(bio, mem);
     }
     data[0] = 'x';
     if (!TEST_int_eq(BIO_gets(bio, data, 0), 0)
@@ -132,7 +140,7 @@ static int test_bio_gets_zero_size(int idx)
     ok = 1;
 
 finish:
-    BIO_free(bio);
+    BIO_free_all(bio);
     return ok;
 }
 
@@ -316,7 +324,7 @@ int setup_tests(void)
     ADD_TEST(test_bio_memleak);
     ADD_TEST(test_bio_get_mem);
     ADD_TEST(test_bio_new_mem_buf);
-    ADD_ALL_TESTS(test_bio_gets_zero_size, 2);
+    ADD_ALL_TESTS(test_bio_gets_zero_size, 3);
     ADD_TEST(test_bio_rdonly_mem_buf);
     ADD_TEST(test_bio_rdwr_rdonly);
     ADD_TEST(test_bio_nonclear_rst);

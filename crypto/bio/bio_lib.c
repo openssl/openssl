@@ -582,6 +582,10 @@ int BIO_gets(BIO *b, char *buf, int size)
         return -1;
     }
 
+    /* A zero-size buffer has no room for the terminating NUL */
+    if (size == 0)
+        return 0;
+
     if (HAS_CALLBACK(b)) {
         ret = (int)bio_call_callback(b, BIO_CB_GETS, buf, size, 0, 0L, 1, NULL);
         if (ret <= 0)
