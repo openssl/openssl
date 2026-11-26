@@ -2027,6 +2027,86 @@ err:
     return ret;
 }
 
+#if defined(__aarch64__) && !defined(__AARCH64EB__)
+/*
+ * Non-regression test for the inner HMAC length-in-bits encoding in the
+ * AArch64 AES-CBC+HMAC ETM assembly. The assembly splits the 64-bit byte
+ * counter into 32-bit halves before scaling to bits; the buggy code
+ * computed the high word as (len>>32)*8 instead of len>>29, which agree
+ * only while the byte count stays below 2^29. Once the hashed length
+ * (data bytes + the 64-byte i_key_pad block already absorbed into the
+ * running HMAC state) reaches 2^29, the encodings differ and the tag
+ * diverges from the one a reference HMAC produces.
+ *
+ * The expected tag below is precomputed offline with a reference
+ * implementation of this cipher's HMAC construction (inner SHA-256 over
+ * the ciphertext from the i_key_pad state, with the total byte count
+ * including the 64 pad bytes; outer SHA-256 over the inner digest) for
+ * key/iv of zero bytes and a zero-filled plaintext. The construction was
+ * validated byte-for-byte against single-shot tags at small lengths, and
+ * an unpatched AArch64 build produces a different tag for this exact
+ * input.
+ *
+ * Multi-part EVP_EncryptUpdate calls are deliberately not used as a
+ * reference: without full partial-update support (PR #27609) the tag of
+ * a multi-part encryption is not equal to the single-shot tag for these
+ * ciphers.
+ */
+static int test_evp_aead_etm_sha256_large_len(void)
+{
+    /* (2^29 + 64) data bytes + 64 phantom pad bytes => counter >= 2^29 */
+    const size_t big_len = ((size_t)1 << 29) + 64;
+    const size_t buf_len = big_len + EVP_MAX_BLOCK_LENGTH;
+    const unsigned char expected_tag[32] = {
+        0x8c, 0x0f, 0xed, 0xab, 0x2f, 0x9d, 0x94, 0x37,
+        0x40, 0x74, 0xa1, 0x40, 0xda, 0x96, 0x15, 0xba,
+        0x8d, 0x62, 0x6c, 0x08, 0xbe, 0xc6, 0xd6, 0x28,
+        0x38, 0xe5, 0x45, 0x54, 0x79, 0x06, 0x91, 0xcd
+    };
+    unsigned char key[32] = { 0 };
+    unsigned char iv[16] = { 0 };
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char *in = NULL, *out = NULL;
+    int outl = 0, taglen = 32, testresult = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *ciph = NULL;
+
+    in = OPENSSL_malloc(buf_len);
+    out = OPENSSL_malloc(buf_len);
+    if (in == NULL || out == NULL) {
+        TEST_info("test_evp_aead_etm_sha256_large_len: cannot allocate %zu bytes, skipping",
+                  buf_len);
+        OPENSSL_free(in);
+        OPENSSL_free(out);
+        return 1;
+    }
+    /* zero-filled plaintext; any constant content works */
+    memset(in, 0, big_len);
+
+    if (!TEST_ptr(ciph = EVP_CIPHER_fetch(NULL, "AES-256-CBC-HMAC-SHA256-ETM", NULL))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, ciph, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out, &outl, in, (int)big_len))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, out + outl, &outl))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                                          taglen, tag)))
+        goto err;
+
+    if (!TEST_mem_eq(tag, taglen, expected_tag, sizeof(expected_tag)))
+        goto err;
+
+    testresult = 1;
+ err:
+    if (testresult == 0)
+        TEST_error("ETM HMAC length encoding regression: tag mismatch at len >= 2^29");
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(ciph);
+    OPENSSL_free(in);
+    OPENSSL_free(out);
+    return testresult;
+}
+#endif
+
 static int test_aes_gcm_ivlen_change_cve_2023_5363(void)
 {
     /* AES-GCM test data obtained from NIST public test vectors */
@@ -2279,6 +2359,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_stale_key_reinit, OSSL_NELEM(aead_list));
     ADD_TEST(test_aes_gcm_ivlen_change_cve_2023_5363);
+#if defined(__aarch64__) && !defined(__AARCH64EB__)
+    ADD_TEST(test_evp_aead_etm_sha256_large_len);
+#endif
     ADD_ALL_TESTS(test_evp_aead_tag_reject, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
     return 1;
