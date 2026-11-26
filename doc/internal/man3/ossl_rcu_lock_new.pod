@@ -126,8 +126,10 @@ thread which executes the callback.
 
 =item *
 
-ossl_rcu_deref(p) atomically reads a pointer under an RCU locks
-protection
+ossl_rcu_deref(p) atomically reads a pointer under the protection of an RCU
+lock. When this acquire load reads from the release store in
+ossl_rcu_assign_ptr(p,v), the writer's preceding writes happen before the
+reader's subsequent accesses.
 
 =item *
 
