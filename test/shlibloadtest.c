@@ -15,11 +15,17 @@
 #include <openssl/types.h>
 #include "simpledynamic.h"
 
+#if defined(OPENSSL_THREADS) && defined(__linux__)
+#include <pthread.h>
+#define TEST_PTHREAD_KEYS
+#endif
+
 typedef void DSO;
 
 typedef const SSL_METHOD *(*TLS_method_t)(void);
 typedef SSL_CTX *(*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
+typedef void (*OPENSSL_cleanup_t)(void);
 typedef int (*OPENSSL_init_crypto_t)(uint64_t, void *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OPENSSL_version_major_t)(void);
@@ -32,6 +38,7 @@ typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
     JUST_CRYPTO,
+    CRYPTO_CLEANUP,
     DSO_REFTEST,
 } TEST_TYPE;
 
@@ -40,6 +47,23 @@ static const char *path_crypto;
 static const char *path_ssl;
 
 #ifdef SD_INIT
+
+#ifdef TEST_PTHREAD_KEYS
+/* Measure the key capacity available to the host across library unload. */
+static size_t available_keys(void)
+{
+    pthread_key_t keys[2048];
+    size_t count = 0, i;
+
+    while (count < sizeof(keys) / sizeof(keys[0])
+        && pthread_key_create(&keys[count], NULL) == 0)
+        ++count;
+    for (i = 0; i < count; ++i)
+        if (pthread_key_delete(keys[i]) != 0)
+            return 0;
+    return count == sizeof(keys) / sizeof(keys[0]) ? 0 : count;
+}
+#endif
 
 static int test_lib(void)
 {
@@ -58,9 +82,16 @@ static int test_lib(void)
     OPENSSL_version_minor_t myOPENSSL_version_minor;
     OPENSSL_version_patch_t myOPENSSL_version_patch;
     int result = 0;
+#ifdef TEST_PTHREAD_KEYS
+    size_t keys_before = 0;
+
+    if (test_type == CRYPTO_CLEANUP && (keys_before = available_keys()) == 0)
+        goto end;
+#endif
 
     switch (test_type) {
     case JUST_CRYPTO:
+    case CRYPTO_CLEANUP:
     case DSO_REFTEST:
     case CRYPTO_FIRST:
         if (!sd_load(path_crypto, &cryptolib, SD_SHLIB)) {
@@ -86,6 +117,7 @@ static int test_lib(void)
     }
 
     if (test_type != JUST_CRYPTO
+        && test_type != CRYPTO_CLEANUP
         && test_type != DSO_REFTEST) {
         if (!sd_sym(ssllib, "TLS_method", &symbols[0].sym)
             || !sd_sym(ssllib, "SSL_CTX_new", &symbols[1].sym)
@@ -162,11 +194,27 @@ static int test_lib(void)
 #endif /* DSO_DLFCN */
     }
 
+    if (test_type == CRYPTO_CLEANUP) {
+        OPENSSL_cleanup_t myOPENSSL_cleanup;
+
+        if (!sd_sym(cryptolib, "OPENSSL_cleanup", &symbols[0].sym))
+            goto end;
+        myOPENSSL_cleanup = (OPENSSL_cleanup_t)symbols[0].func;
+        myOPENSSL_cleanup();
+    }
+
     if (!sd_close(cryptolib)) {
         fprintf(stderr, "Failed to close libcrypto\n");
         goto end;
     }
     cryptolib = SD_INIT;
+
+#ifdef TEST_PTHREAD_KEYS
+    if (test_type == CRYPTO_CLEANUP && available_keys() != keys_before) {
+        fprintf(stderr, "libcrypto unload leaked thread-local keys\n");
+        goto end;
+    }
+#endif
 
     if (test_type == CRYPTO_FIRST || test_type == SSL_FIRST) {
         if (!sd_close(ssllib)) {
@@ -208,6 +256,8 @@ int main(int argc, char *argv[])
         test_type = SSL_FIRST;
     } else if (strcmp(p, "-just_crypto") == 0) {
         test_type = JUST_CRYPTO;
+    } else if (strcmp(p, "-cleanup") == 0) {
+        test_type = CRYPTO_CLEANUP;
     } else if (strcmp(p, "-dso_ref") == 0) {
         test_type = DSO_REFTEST;
     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -411,4 +411,14 @@ void CRYPTO_THREAD_clean_local(void)
         clean_master_key(mkey);
         CRYPTO_THREAD_set_local(&master_key, NULL);
     }
+}
+
+void ossl_thread_cleanup_global(void)
+{
+    if (!master_key_init)
+        return;
+
+    CRYPTO_THREAD_clean_local();
+    CRYPTO_THREAD_cleanup_local(&master_key);
+    master_key_init = 0;
 }
