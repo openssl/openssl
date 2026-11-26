@@ -626,6 +626,25 @@ static int test_WPACKET_quic_vlint_random(void)
     return 1;
 }
 
+static int test_WPACKET_quic_write_vlint_null(void)
+{
+    WPACKET pkt;
+    size_t written;
+
+    /*
+     * A null WPACKET only counts bytes; WPACKET_allocate_bytes() returns a
+     * NULL buffer for one.  Writing a vlint to it must not dereference
+     * that NULL pointer.
+     */
+    if (!TEST_true(WPACKET_init_null(&pkt, 0))
+        || !TEST_true(WPACKET_quic_write_vlint(&pkt, 5))
+        || !TEST_true(WPACKET_finish(&pkt))
+        || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+        || !TEST_size_t_eq(written, ossl_quic_vlint_encode_len(5)))
+        return 0;
+    return 1;
+}
+
 #endif
 
 int setup_tests(void)
@@ -643,6 +662,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_QUIC
     ADD_TEST(test_WPACKET_quic);
     ADD_TEST(test_WPACKET_quic_vlint_random);
+    ADD_TEST(test_WPACKET_quic_write_vlint_null);
 #endif
     return 1;
 }
