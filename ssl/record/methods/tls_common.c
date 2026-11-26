@@ -1774,6 +1774,17 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
+    if (numtempl == 1 && rl->funcs == &dtls_1_funcs) {
+        ret = dtls_write_record_direct(rl, templates);
+        if (ret < 0) {
+            /* RLAYERfatal already called */
+            return 0;
+        }
+        if (ret > 0)
+            return 1;
+        /* Not suitable, so do a standard write */
+    }
+
     if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
         mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
         if (mac_size < 0) {

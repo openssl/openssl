@@ -261,11 +261,13 @@ start:
      * We are not handshaking and have no data yet, so process data buffered
      * during the last handshake in advance, if any.
      */
-    if (SSL_is_init_finished(s))
+    if (pqueue_peek(sc->rlayer.d->buffered_app_data) != NULL
+        && SSL_is_init_finished(s))
         dtls_unbuffer_record(sc);
 
     /* Check for timeout */
-    if (dtls1_handle_timeout(sc) > 0) {
+    if (!ossl_time_is_zero(sc->d1->next_timeout)
+        && dtls1_handle_timeout(sc) > 0) {
         goto start;
     } else if (ossl_statem_in_error(sc)) {
         /* dtls1_handle_timeout() has failed with a fatal error */
@@ -325,7 +327,8 @@ start:
             }
 
             if (ret <= 0) {
-                ret = dtls1_read_failed(sc, ret);
+                if (!ossl_time_is_zero(sc->d1->next_timeout))
+                    ret = dtls1_read_failed(sc, ret);
                 /*
                  * Anything other than a timeout is an error. SSLfatal() already
                  * called if appropriate.
@@ -347,7 +350,7 @@ start:
                  * SSL_READING on such a connection without needing one.
                  */
                 if (sc->rwstate == SSL_READING) {
-                    BIO *rbio = SSL_get_rbio(s);
+                    BIO *rbio = sc->rbio;
 
                     if (rbio != NULL && !BIO_should_retry(rbio)) {
                         BIO_clear_retry_flags(rbio);
@@ -371,7 +374,7 @@ start:
         sc->rlayer.alert_count = 0;
 
     /* we now have a packet which can be read and processed */
-    current_state = SSL_get_state(s);
+    current_state = ossl_statem_get_state(sc);
     if ((sc->s3.change_cipher_spec /* set when we receive ChangeCipherSpec,
                                     * reset by ssl3_get_finished */
             && (rr->type != SSL3_RT_HANDSHAKE))
