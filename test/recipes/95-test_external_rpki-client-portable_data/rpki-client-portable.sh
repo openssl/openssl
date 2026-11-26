@@ -105,7 +105,18 @@ cat <<EOF | patch -p0
 +#endif
  
  	/* XXX - assert that unused bits are zero */
- 
+
+--- validate.c.orig
++++ validate.c
+@@ -400,5 +400,8 @@
+ 	flags |= X509_V_FLAG_POLICY_CHECK;
+ 	flags |= X509_V_FLAG_EXPLICIT_POLICY;
+ 	flags |= X509_V_FLAG_INHIBIT_MAP;
++#if defined(X509_V_FLAG_RFC3779)
++	flags |= X509_V_FLAG_RFC3779;
++#endif
+ 	X509_STORE_CTX_set_flags(store_ctx, flags);
+ 	X509_STORE_CTX_set_depth(store_ctx, MAX_CERT_DEPTH);
 EOF
 cd ..
 ./configure --with-openssl-cflags="$CFLAGS" --with-openssl-ldflags="$LDFLAGS" \

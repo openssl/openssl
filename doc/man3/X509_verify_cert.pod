@@ -111,7 +111,9 @@ the general-name types it covers.
 =item 8.
 
 B<RFC 3779 path validation> of AS-number and IP-address delegation
-extensions, performed by default unless OpenSSL was built with
+extensions, performed only when B<X509_V_FLAG_RFC3779> is set. Without
+that flag a certificate with a critical RFC 3779 extension fails step 2 as
+an unhandled critical extension. Not available if OpenSSL was built with
 B<no-rfc3779>.
 
 =item 9.
