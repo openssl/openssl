@@ -13,6 +13,14 @@
 int ossl_ccm_generic_setiv(PROV_CCM_CTX *ctx, const unsigned char *nonce,
     size_t nlen, size_t mlen)
 {
+    /*
+     * CRYPTO_ccm128_init() encodes L and M into the flags octet, but it is
+     * only called when the key is set. Both can be changed after that, so
+     * encode them for every message. Otherwise the nonce would be truncated
+     * to the length that was valid when the key was set.
+     */
+    ctx->ccm_ctx.nonce.c[0] = (unsigned char)(((ctx->l - 1) & 0x7)
+        | (((ctx->m - 2) >> 1) & 0x7) << 3);
     return CRYPTO_ccm128_setiv(&ctx->ccm_ctx, nonce, nlen, mlen) == 0;
 }
 

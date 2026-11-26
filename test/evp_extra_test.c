@@ -7198,6 +7198,287 @@ err:
     return testresult;
 }
 
+/* All the CCM ciphers, the known answer below is for the first one */
+static const char *ccm_params_after_key_ciphers[] = {
+    "AES-128-CCM",
+    "AES-192-CCM",
+    "AES-256-CCM",
+    "ARIA-128-CCM",
+    "ARIA-192-CCM",
+    "ARIA-256-CCM",
+    "SM4-CCM"
+};
+
+/*
+ * NIST SP 800-38C, Appendix C, Example 2, with the key and the nonce extended
+ * for the ciphers and the nonce lengths that need more bytes.
+ */
+static const unsigned char ccm_pak_key[32] = {
+    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f
+};
+static const unsigned char ccm_pak_iv[13] = {
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c
+};
+static const unsigned char ccm_pak_aad[16] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+};
+static const unsigned char ccm_pak_pt[16] = {
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f
+};
+static const unsigned char ccm_pak_aes_ct[16] = {
+    0xd2, 0xa1, 0xf0, 0xe0, 0x51, 0xea, 0x5f, 0x62,
+    0x08, 0x1a, 0x77, 0x92, 0x07, 0x3d, 0x59, 0x3d
+};
+static const unsigned char ccm_pak_aes_tag[6] = {
+    0x1f, 0xc6, 0x4f, 0xbf, 0xac, 0xcd
+};
+
+/*
+ * Pass one message through a context that has its key and nonce set. The AAD
+ * can only be passed if the message length is passed separately.
+ */
+static int ccm_pak_message(EVP_CIPHER_CTX *ctx, int pass_len, int pass_aad,
+    const unsigned char *in, unsigned char *out)
+{
+    int len = sizeof(ccm_pak_pt), outl = 0, tmpl = 0;
+
+    if (pass_len && !TEST_true(EVP_CipherUpdate(ctx, NULL, &outl, NULL, len)))
+        return 0;
+    if (pass_aad
+        && !TEST_true(EVP_CipherUpdate(ctx, NULL, &outl, ccm_pak_aad,
+            sizeof(ccm_pak_aad))))
+        return 0;
+    return TEST_true(EVP_CipherUpdate(ctx, out, &outl, in, len))
+        && TEST_int_eq(outl, len)
+        && TEST_true(EVP_CipherFinal_ex(ctx, out + outl, &tmpl));
+}
+
+/* Encrypt with the nonce and the tag lengths set before the key */
+static int ccm_pak_reference(const EVP_CIPHER *cipher, int ivlen, int taglen,
+    int pass_aad, unsigned char *ct, unsigned char *tag)
+{
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    int ret;
+
+    ret = TEST_ptr(ctx)
+        && TEST_true(EVP_EncryptInit_ex2(ctx, cipher, NULL, NULL, NULL))
+        && TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                           ivlen, NULL),
+            0)
+        && TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                           taglen, NULL),
+            0)
+        && TEST_true(EVP_EncryptInit_ex2(ctx, NULL, ccm_pak_key, ccm_pak_iv,
+            NULL))
+        && ccm_pak_message(ctx, 1, pass_aad, ccm_pak_pt, ct)
+        && TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                           taglen, tag),
+            0);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * The nonce and the tag lengths can be set after the key. They have to be
+ * used for the messages that follow, without setting the key again.
+ */
+static int test_ccm_params_after_key(int idx)
+{
+    const char *name = ccm_params_after_key_ciphers[idx];
+    unsigned char ref_ct[4][sizeof(ccm_pak_pt)], ref_tag[4][16];
+    unsigned char out[sizeof(ccm_pak_pt)], tag[16], iv[sizeof(ccm_pak_iv)];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int outl = 0, testresult = 0;
+
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(testctx, name, testpropq);
+    ERR_pop_to_mark();
+    if (cipher == NULL)
+        return TEST_skip("%s is not supported", name);
+    if (!TEST_size_t_le(EVP_CIPHER_get_key_length(cipher), sizeof(ccm_pak_key)))
+        goto err;
+
+    if (!ccm_pak_reference(cipher, 8, 6, 1, ref_ct[0], ref_tag[0])
+        || !ccm_pak_reference(cipher, 13, 16, 1, ref_ct[1], ref_tag[1])
+        || !ccm_pak_reference(cipher, 12, 12, 0, ref_ct[2], ref_tag[2])
+        || !ccm_pak_reference(cipher, 12, 16, 0, ref_ct[3], ref_tag[3]))
+        goto err;
+    if (idx == 0
+        && (!TEST_mem_eq(ref_ct[0], sizeof(ref_ct[0]),
+                ccm_pak_aes_ct, sizeof(ccm_pak_aes_ct))
+            || !TEST_mem_eq(ref_tag[0], 6,
+                ccm_pak_aes_tag, sizeof(ccm_pak_aes_tag))))
+        goto err;
+
+    /* Both lengths are set after the key */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, ccm_pak_key, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, 8,
+                            NULL),
+            0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 6,
+                            NULL),
+            0)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !ccm_pak_message(ctx, 1, 1, ccm_pak_pt, out)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 6,
+                            tag),
+            0)
+        || !TEST_mem_eq(out, sizeof(out), ref_ct[0], sizeof(ref_ct[0]))
+        || !TEST_mem_eq(tag, 6, ref_tag[0], 6))
+        goto err;
+
+    /* All the bytes of the nonce are used, not just the default 7 */
+    memcpy(iv, ccm_pak_iv, sizeof(iv));
+    iv[7] ^= 0x01;
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, NULL))
+        || !ccm_pak_message(ctx, 1, 1, ccm_pak_pt, out)
+        || !TEST_mem_ne(out, sizeof(out), ref_ct[0], sizeof(ref_ct[0])))
+        goto err;
+
+    /* Both lengths are changed for the next message, the key is kept */
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, 2, NULL), 0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16,
+                            NULL),
+            0)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !ccm_pak_message(ctx, 1, 1, ccm_pak_pt, out)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16,
+                            tag),
+            0)
+        || !TEST_mem_eq(out, sizeof(out), ref_ct[1], sizeof(ref_ct[1]))
+        || !TEST_mem_eq(tag, 16, ref_tag[1], 16))
+        goto err;
+
+    /* Decryption, with the lengths and the tag set after the key */
+    if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, cipher, ccm_pak_key, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, 8,
+                            NULL),
+            0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 6,
+                            ref_tag[0]),
+            0)
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !ccm_pak_message(ctx, 1, 1, ref_ct[0], out)
+        || !TEST_mem_eq(out, sizeof(out), ccm_pak_pt, sizeof(ccm_pak_pt)))
+        goto err;
+
+    /*
+     * The nonce length is changed after the length of a message was passed.
+     * That message cannot be continued, the next one uses the new nonce.
+     */
+    if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, ccm_pak_key, ccm_pak_iv,
+            NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, NULL,
+            sizeof(ccm_pak_pt)))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, 12,
+                            NULL),
+            0)
+        || !TEST_false(EVP_EncryptUpdate(ctx, out, &outl, ccm_pak_pt,
+            sizeof(ccm_pak_pt)))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !ccm_pak_message(ctx, 0, 0, ccm_pak_pt, out)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 12,
+                            tag),
+            0)
+        || !TEST_mem_eq(out, sizeof(out), ref_ct[2], sizeof(ref_ct[2]))
+        || !TEST_mem_eq(tag, 12, ref_tag[2], 12))
+        goto err;
+
+    /* A message that fails on a wrong length does not affect the next one */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, NULL,
+            sizeof(ccm_pak_pt)))
+        || !TEST_false(EVP_EncryptUpdate(ctx, out, &outl, ccm_pak_pt,
+            sizeof(ccm_pak_pt) - 1))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !ccm_pak_message(ctx, 1, 0, ccm_pak_pt, out)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 12,
+                            tag),
+            0)
+        || !TEST_mem_eq(out, sizeof(out), ref_ct[2], sizeof(ref_ct[2]))
+        || !TEST_mem_eq(tag, 12, ref_tag[2], 12))
+        goto err;
+
+    /*
+     * The tag length is changed after the length of a message was passed.
+     * That message cannot be continued, the next one uses the new tag length.
+     */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, NULL, &outl, NULL,
+            sizeof(ccm_pak_pt)))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16,
+                            NULL),
+            0)
+        || !TEST_false(EVP_EncryptUpdate(ctx, out, &outl, ccm_pak_pt,
+            sizeof(ccm_pak_pt)))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !ccm_pak_message(ctx, 1, 0, ccm_pak_pt, out)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16,
+                            tag),
+            0)
+        || !TEST_mem_eq(out, sizeof(out), ref_ct[3], sizeof(ref_ct[3]))
+        || !TEST_mem_eq(tag, 16, ref_tag[3], 16))
+        goto err;
+
+    /*
+     * Decryption with the tag value set after the AAD. Its length is not the
+     * default one, so it is set before the length of the message is passed.
+     */
+    if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, cipher, ccm_pak_key, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, 13,
+                            NULL),
+            0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16,
+                            NULL),
+            0)
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, NULL,
+            sizeof(ccm_pak_pt)))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, ccm_pak_aad,
+            sizeof(ccm_pak_aad)))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16,
+                            ref_tag[1]),
+            0)
+        || !ccm_pak_message(ctx, 0, 0, ref_ct[1], out)
+        || !TEST_mem_eq(out, sizeof(out), ccm_pak_pt, sizeof(ccm_pak_pt)))
+        goto err;
+
+    /* A tag value of another length at that point makes the message fail */
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, NULL, NULL, ccm_pak_iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, NULL,
+            sizeof(ccm_pak_pt)))
+        || !TEST_true(EVP_DecryptUpdate(ctx, NULL, &outl, ccm_pak_aad,
+            sizeof(ccm_pak_aad)))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 6,
+                            ref_tag[0]),
+            0))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_false(EVP_DecryptUpdate(ctx, out, &outl, ref_ct[1],
+            sizeof(ccm_pak_pt)))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            PROV_R_INVALID_TAG_LENGTH)
+        || !TEST_false(EVP_DecryptFinal_ex(ctx, out, &outl)))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return testresult;
+}
+
 static const char *ivlen_change_ciphers[] = {
     "AES-256-GCM",
 #ifndef OPENSSL_NO_OCB
@@ -9744,6 +10025,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
     ADD_TEST(test_ccm_get_iv_with_large_buffer);
+    ADD_ALL_TESTS(test_ccm_params_after_key,
+        OSSL_NELEM(ccm_params_after_key_ciphers));
 
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
     ADD_ALL_TESTS(test_iv_reuse, OSSL_NELEM(iv_state_ciphers));

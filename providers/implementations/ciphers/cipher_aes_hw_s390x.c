@@ -555,7 +555,8 @@ static int s390x_aes_ccm_initkey(PROV_CCM_CTX *ctx,
     /* Store encoded m and l. */
     sctx->ccm.s390x.nonce.b[0] = ((ctx->l - 1) & 0x7)
         | (((ctx->m - 2) >> 1) & 0x7) << 3;
-    memset(sctx->ccm.s390x.nonce.b + 1, 0, sizeof(sctx->ccm.s390x.nonce.b));
+    memset(sctx->ccm.s390x.nonce.b + 1, 0,
+        sizeof(sctx->ccm.s390x.nonce.b) - 1);
     sctx->ccm.s390x.blocks = 0;
     ctx->key_set = 1;
     return 1;
@@ -567,7 +568,12 @@ static int s390x_aes_ccm_setiv(PROV_CCM_CTX *ctx,
 {
     PROV_AES_CCM_CTX *sctx = (PROV_AES_CCM_CTX *)ctx;
 
-    sctx->ccm.s390x.nonce.b[0] &= ~S390X_CCM_AAD_FLAG;
+    /*
+     * Encode m and l for every message, they can be changed after the key
+     * was set. This clears the AAD flag as well.
+     */
+    sctx->ccm.s390x.nonce.b[0] = ((ctx->l - 1) & 0x7)
+        | (((ctx->m - 2) >> 1) & 0x7) << 3;
     sctx->ccm.s390x.nonce.g[1] = mlen;
     memcpy(sctx->ccm.s390x.nonce.b + 1, nonce, 15 - ctx->l);
     return 1;
