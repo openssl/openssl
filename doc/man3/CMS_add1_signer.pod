@@ -50,6 +50,8 @@ parameter.
 If B<CMS_REUSE_DIGEST> is set then an attempt is made to copy the content
 digest value from the CMS_ContentInfo structure: to add a signer to an existing
 structure.  An error occurs if a matching digest value cannot be found to copy.
+B<CMS_REUSE_DIGEST> cannot be combined with B<CMS_NOATTR>: without signed
+attributes there is no messageDigest value to copy.
 The returned CMS_ContentInfo structure will be valid and finalized when this
 flag is set.
 

@@ -588,6 +588,15 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         ERR_raise(ERR_LIB_CMS, CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         return NULL;
     }
+    /*
+     * Without signed attributes the signature is computed over the content
+     * itself, which a copied messageDigest cannot stand in for.
+     */
+    if ((flags & (CMS_REUSE_DIGEST | CMS_NOATTR)) == (CMS_REUSE_DIGEST | CMS_NOATTR)) {
+        ERR_raise_data(ERR_LIB_CMS, ERR_R_PASSED_INVALID_ARGUMENT,
+            "CMS_REUSE_DIGEST cannot be combined with CMS_NOATTR");
+        return NULL;
+    }
     sd = cms_signed_data_init(cms);
     if (sd == NULL)
         goto err;

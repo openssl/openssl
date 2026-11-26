@@ -379,6 +379,40 @@ static int test_CMS_add1_cert(void)
     return ret;
 }
 
+static int test_CMS_add1_signer_reuse_digest_noattr(void)
+{
+    static const char msg[] = "hello";
+    BIO *in = NULL;
+    CMS_ContentInfo *cms = NULL;
+    CMS_SignerInfo *si = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf(msg, sizeof(msg) - 1))
+        || !TEST_ptr(cms = CMS_sign(cert, privkey, NULL, in, CMS_BINARY)))
+        goto end;
+
+    /* REUSE_DIGEST on its own adds a second signer with a real signature */
+    if (!TEST_ptr(si = CMS_add1_signer(cms, cert2, privkey2, EVP_sha256(),
+                                       CMS_REUSE_DIGEST)))
+        goto end;
+
+    /*
+     * REUSE_DIGEST combined with NOATTR cannot work: without signed
+     * attributes there is no messageDigest value to copy, so the call
+     * must fail instead of returning a SignerInfo with an empty signature.
+     */
+    if (!TEST_ptr_null(CMS_add1_signer(cms, cert2, privkey2, EVP_sha256(),
+                                       CMS_REUSE_DIGEST | CMS_NOATTR)))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    BIO_free(in);
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
 static int test_CMS_SignerInfo_verify_sigalg_oid(void)
 {
     static const char msg[] = "Hello World!\r\n";
@@ -1557,6 +1591,7 @@ int setup_tests(void)
     ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_decrypt_with_wrong_key);
     ADD_TEST(test_CMS_add1_cert);
+    ADD_TEST(test_CMS_add1_signer_reuse_digest_noattr);
     ADD_TEST(test_CMS_SignerInfo_verify_sigalg_oid);
     ADD_TEST(test_CMS_verify_result_no_signer_cert);
     ADD_TEST(test_CMS_verify_result_partial_signer_cert);
