@@ -2163,19 +2163,24 @@ static int determine_stream_len(struct tx_helper *h,
 static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
     struct txp_pkt *pkt, uint32_t pn_space)
 {
-    QUIC_SSTREAM *crypto = txp->args.crypto[pn_space];
-    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(txp->args.ackm);
+    QUIC_SSTREAM *crypto;
+    OSSL_ACKM_PROBE_INFO *probe;
     OSSL_QUIC_FRAME_CRYPTO chdr = { 0 };
-    uint64_t from = txp->probe_crypto_next[pn_space], start, end, hdr_bytes;
+    uint64_t from, start, end, hdr_bytes;
     size_t space_left;
 
-    if (pn_space != QUIC_PN_SPACE_INITIAL || probe->pto[pn_space] == 0)
+    if (pn_space != QUIC_PN_SPACE_INITIAL)
         return;
 
     if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
             QUIC_ENC_LEVEL_HANDSHAKE))
         return;
 
+    probe = ossl_ackm_get0_probe_request(txp->args.ackm);
+    if (probe->pto[pn_space] == 0)
+        return;
+
+    crypto = txp->args.crypto[pn_space];
     if (sstream_is_pending(crypto))
         return;
 
@@ -2187,9 +2192,12 @@ static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
             pkt->h.max_ppl + pkt->geom.pkt_overhead))
         return;
 
+    from = txp->probe_crypto_next[pn_space];
     space_left = tx_helper_get_space_left_ack_eliciting(&pkt->h);
-    while (space_left >= MIN_FRAME_SIZE_CRYPTO
-        && ossl_quic_sstream_get_first_unacked(crypto, from, &start, &end)) {
+    while (space_left >= MIN_FRAME_SIZE_CRYPTO) {
+        if (!ossl_quic_sstream_get_first_unacked(crypto, from, &start, &end))
+            break;
+
         chdr.offset = start;
         chdr.len = end - start + 1;
         if (!determine_crypto_len(&pkt->h, &chdr, space_left, &hdr_bytes,
@@ -2213,11 +2221,21 @@ static void txp_requeue_crypto_for_probe(OSSL_QUIC_TX_PACKETISER *txp,
 static void txp_crypto_probe_sent(OSSL_QUIC_TX_PACKETISER *txp,
     QUIC_TXPIM_PKT *tpkt, OSSL_ACKM_PROBE_INFO *probe, uint32_t pn_space)
 {
-    QUIC_SSTREAM *crypto = txp->args.crypto[pn_space];
-    const QUIC_TXPIM_CHUNK *chunks = ossl_quic_txpim_pkt_get_chunks(tpkt);
-    size_t i, num_chunks = ossl_quic_txpim_pkt_get_num_chunks(tpkt);
+    QUIC_SSTREAM *crypto;
+    const QUIC_TXPIM_CHUNK *chunks;
+    size_t i, num_chunks;
     uint64_t start, end;
 
+    if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
+            QUIC_ENC_LEVEL_HANDSHAKE)) {
+        probe->pto[pn_space] = 0;
+        txp->probe_crypto_next[pn_space] = 0;
+        return;
+    }
+
+    crypto = txp->args.crypto[pn_space];
+    chunks = ossl_quic_txpim_pkt_get_chunks(tpkt);
+    num_chunks = ossl_quic_txpim_pkt_get_num_chunks(tpkt);
     for (i = 0; i < num_chunks; ++i) {
         if (chunks[i].stream_id != UINT64_MAX
             || chunks[i].end < txp->probe_crypto_next[pn_space])
@@ -2231,9 +2249,7 @@ static void txp_crypto_probe_sent(OSSL_QUIC_TX_PACKETISER *txp,
         txp->probe_crypto_next[pn_space] = chunks[i].end + 1;
     }
 
-    if (ossl_qtx_is_enc_level_provisioned(txp->args.qtx,
-            QUIC_ENC_LEVEL_HANDSHAKE)
-        || !ossl_quic_sstream_get_first_unacked(crypto,
+    if (!ossl_quic_sstream_get_first_unacked(crypto,
             txp->probe_crypto_next[pn_space], &start, &end))
         probe->pto[pn_space] = 0;
 
