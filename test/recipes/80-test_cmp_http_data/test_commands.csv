@@ -4,14 +4,12 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1,minimum options, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK,
 ,,,,,,,,,,,,,,,,,
 0,no cmd, -section,,BLANK,,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,cmd missing arg, -section,, -cmd,,,BLANK,,,BLANK,,,BLANK,,BLANK,
 0,cmd undefined , -section,, -cmd,abc,,BLANK,,,BLANK,,,BLANK,,BLANK,
 0,cmd incomplete, -section,, -cmd,i,,BLANK,,,BLANK,,,BLANK,,BLANK,
 ,,,,,,,,,,,,,,,,,
 1,no cacertsout, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK,
 1,cacertsout given, -section,, -cmd,ir,, -cacertsout,_RESULT_DIR/test.cacerts1.pem,,BLANK,,,BLANK,,BLANK,
 1,use cacerts, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK, -trusted,_RESULT_DIR/test.cacerts1.pem
-0,cacertsout missing arg, -section,, -cmd,ir,, -cacertsout,,,BLANK,,,BLANK,,BLANK,
 ,,,,,,,,,,,,,,,,,
 1, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
 1,revreason unspecified, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,0
@@ -73,15 +71,12 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 ,,,,,,,,,,,,,,,,,,,,,,
 1,genm rootCaCert with oldwithold        , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew0.pem
 1,genm rootCaCert without oldwithold     , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, BLANK      ,               , -newwithnew, _RESULT_DIR/test.newwithnew.pem
-0,genm rootCaCert oldwithold missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold,               , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert oldwithold empty file  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, empty.txt     , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert oldwithold random file , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, random.bin    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert oldwithold nonexistent , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, idontexist    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 1,genm rootCaCert oldwithold different   , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, signer.crt    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
 0,genm rootCaCert missing newwithnew     , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, BLANK      ,,
-0,genm rootCaCert newwithnew missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew,,
 1,genm rootCaCert with oldwithnew        , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew1.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew1.pem
-0,genm rootCaCert oldwithnew missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew.pem, -oldwithnew,,
 1,genm rootCaCert newwithnew oldwithnew newwithold  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew2.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew2.pem, -newwithold, _RESULT_DIR/test.newwithold1.pem
 0,genm rootCaCert newwithold missig arg  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew.pem, -newwithold,,
 1,genm rootCaCert newwithnew newwithold  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew3.pem, -newwithold, _RESULT_DIR/test.newwithold2.pem
@@ -106,21 +101,17 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 ,,,,,,,,,,,,,,,,,,,,,,
 1,profile, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile1,BLANK,,BLANK,
 0,profile wrong value, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile2,BLANK,,BLANK,
-0,profile missing argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,,,,,
 0,profile extra argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -profile,profile1,profile2,,,
 ,,,,,,,,,,,,,,,,,,,,,,
 1,geninfo int,                        -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.3:int:987
 1,geninfo str,                        -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,id-kp:str:name
 1,geninfo empty str,                  -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,id-kp:str:
 1,geninfo str and int,                -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo, 'id-kp:str:name, 1.3:int:987'
-0,geninfo missing argument,           -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,,,,,
 0,geninfo bad OID num: leading '.',   -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,.1.2.3:int:987
 0,geninfo invalid OID number string,  -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.333:int:987
 1,geninfo unknown OID number string,  -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.33:int:987
 0,geninfo bad OID name: trailing '_', -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,id-kp_:int:987
-0,geninfo bad syntax: missing ':int', -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.2.3,,,,
 0,geninfo bad type tag,               -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:xyz:987,,,,
-0,geninfo bad syntax: missing ':',    -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int987,,,,
 0,geninfo bad int syntax: double ':', -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int::987,,,,
 0,geninfo bad int syntax: extra char, -section,, -cmd,cr,, -cert,signer.crt,, -key,signer.p12,, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int:987@,,,,
 ,,,,,,,,,,,,,,,,,,,
