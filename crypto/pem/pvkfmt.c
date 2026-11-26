@@ -367,7 +367,7 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
 
     pkey = evp_pkey_new0_key(key, isdss_to_evp_type(isdss));
 err:
-    OPENSSL_free(buf);
+    OPENSSL_clear_free(buf, length);
     return pkey;
 }
 
@@ -627,7 +627,7 @@ static int do_i2b_bio(BIO *out, const EVP_PKEY *pk, int ispub)
     if (outlen < 0)
         return -1;
     wrlen = BIO_write(out, tmp, outlen);
-    OPENSSL_free(tmp);
+    OPENSSL_clear_free(tmp, outlen);
     if (wrlen == outlen)
         return outlen;
     return -1;
@@ -941,7 +941,7 @@ err:
 #endif
     if (enctmp != NULL) {
         OPENSSL_cleanse(keybuf, sizeof(keybuf));
-        OPENSSL_free(enctmp);
+        OPENSSL_clear_free(enctmp, keylen + 8);
     }
     return key;
 }
@@ -1121,7 +1121,7 @@ error:
     EVP_CIPHER_free(rc4);
 #endif
     if (*out == NULL)
-        OPENSSL_free(start);
+        OPENSSL_clear_free(start, outlen);
 
     return ret;
 }
@@ -1137,7 +1137,7 @@ int i2b_PVK_bio_ex(BIO *out, const EVP_PKEY *pk, int enclevel,
     if (outlen < 0)
         return -1;
     wrlen = BIO_write(out, tmp, outlen);
-    OPENSSL_free(tmp);
+    OPENSSL_clear_free(tmp, outlen);
     if (wrlen == outlen) {
         return outlen;
     }

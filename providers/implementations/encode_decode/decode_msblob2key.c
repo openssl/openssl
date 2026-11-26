@@ -98,7 +98,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     const unsigned char *p;
     unsigned char hdr_buf[16], *buf = NULL;
-    unsigned int bitlen, magic, length;
+    unsigned int bitlen, magic, length = 0;
     int isdss = -1;
     int ispub = -1;
     void *key = NULL;
@@ -177,7 +177,7 @@ next:
      * we know the process is recursive and the allocated chunks of memory
      * add up.
      */
-    OPENSSL_free(buf);
+    OPENSSL_clear_free(buf, length);
     BIO_free(in);
     buf = NULL;
     in = NULL;
@@ -199,7 +199,7 @@ next:
 
 end:
     BIO_free(in);
-    OPENSSL_free(buf);
+    OPENSSL_clear_free(buf, length);
     ctx->desc->free_key(key);
 
     return ok;
