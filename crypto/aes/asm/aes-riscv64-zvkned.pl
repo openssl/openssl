@@ -191,6 +191,27 @@ ___
     return $code;
 }
 
+# aes-128 encryption with round keys v1-v11 on an arbitrary state register
+sub aes_128_encrypt_reg {
+    my $STATE = shift;
+
+    my $code=<<___;
+    @{[vaesz_vs $STATE, $V1]}     # with round key w[ 0, 3]
+    @{[vaesem_vs $STATE, $V2]}    # with round key w[ 4, 7]
+    @{[vaesem_vs $STATE, $V3]}    # with round key w[ 8,11]
+    @{[vaesem_vs $STATE, $V4]}    # with round key w[12,15]
+    @{[vaesem_vs $STATE, $V5]}    # with round key w[16,19]
+    @{[vaesem_vs $STATE, $V6]}    # with round key w[20,23]
+    @{[vaesem_vs $STATE, $V7]}    # with round key w[24,27]
+    @{[vaesem_vs $STATE, $V8]}    # with round key w[28,31]
+    @{[vaesem_vs $STATE, $V9]}    # with round key w[32,35]
+    @{[vaesem_vs $STATE, $V10]}   # with round key w[36,39]
+    @{[vaesef_vs $STATE, $V11]}   # with round key w[40,43]
+___
+
+    return $code;
+}
+
 # aes-128 decryption with round keys v1-v11
 sub aes_128_decrypt {
     my $code=<<___;
@@ -340,31 +361,83 @@ L_cbc_enc_128:
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
-    # Load IV.
-    @{[vle32_v $V16, $IVP]}
+    # Load the IV as the initial chaining value.
+    @{[vle32_v $V24, $IVP]}
 
-    @{[vle32_v $V24, $INP]}
-    @{[vxor_vv $V24, $V24, $V16]}
-    j 2f
+    # Process four blocks per iteration while at least four blocks remain,
+    # each block in its own state register (v24-v27, mirroring the batched
+    # decrypt path).  All four plaintext loads are issued up front so their
+    # memory latency overlaps the dependent AES round chains, and the
+    # per-block scalar overhead (pointer bumps and loop control) is
+    # amortized over four blocks instead of one.
+    li $T0, 64
+.p2align 3
+.Lcbc_enc_128_loop4:
+    # length is a size_t (unsigned); use an unsigned compare so that a
+    # length with the high bit set is never mistaken for a small (negative)
+    # value and wrongly routed to the tail.  This also matches the unsigned
+    # "bgeu" comparisons used in the batched decrypt path.
+    bltu $LEN, $T0, .Lcbc_enc_128_tail
 
-1:
+    # Hoist the plaintext loads for all four blocks.
+    @{[vle32_v $V17, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V18, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V19, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V20, $INP]}
+    addi $INP, $INP, 16
+
+    # Block A: chain the previous ciphertext (v24: the IV on the first
+    # iteration, the previous iteration's last ciphertext afterwards)
+    # with the first plaintext and encrypt.
+    @{[vxor_vv $V24, $V24, $V17]}
+    @{[aes_128_encrypt]}
+    @{[vse32_v $V24, $OUTP]}
+    addi $OUTP, $OUTP, 16
+
+    # Block B: chain with block A's ciphertext (v24), encrypt in v25.
+    @{[vxor_vv $V25, $V24, $V18]}
+    @{[aes_128_encrypt_reg $V25]}
+    @{[vse32_v $V25, $OUTP]}
+    addi $OUTP, $OUTP, 16
+
+    # Block C: chain with block B's ciphertext (v25), encrypt in v26.
+    @{[vxor_vv $V26, $V25, $V19]}
+    @{[aes_128_encrypt_reg $V26]}
+    @{[vse32_v $V26, $OUTP]}
+    addi $OUTP, $OUTP, 16
+
+    # Block D: chain with block C's ciphertext (v26), encrypt in v27.
+    @{[vxor_vv $V27, $V26, $V20]}
+    @{[aes_128_encrypt_reg $V27]}
+    @{[vse32_v $V27, $OUTP]}
+    addi $OUTP, $OUTP, 16
+
+    addi $LEN, $LEN, -64
+    # v27 now holds the last ciphertext; make it the chaining value for
+    # the next iteration (and the IV to store when the loop exits).
+    @{[vmv_v_v $V24, $V27]}
+    bnez $LEN, .Lcbc_enc_128_loop4
+
+    @{[vse32_v $V24, $IVP]}
+    ret
+
+.p2align 3
+.Lcbc_enc_128_tail:
+    # Fewer than 64 bytes remain: process the remaining 16/32/48 bytes one
+    # block at a time, chaining from v24 (last ciphertext, or the IV).
     @{[vle32_v $V17, $INP]}
     @{[vxor_vv $V24, $V24, $V17]}
-
-2:
-    # AES body
     @{[aes_128_encrypt]}
-
     @{[vse32_v $V24, $OUTP]}
-
     addi $INP, $INP, 16
     addi $OUTP, $OUTP, 16
     addi $LEN, $LEN, -16
-
-    bnez $LEN, 1b
+    bnez $LEN, .Lcbc_enc_128_tail
 
     @{[vse32_v $V24, $IVP]}
-
     ret
 .size L_cbc_enc_128,.-L_cbc_enc_128
 ___
