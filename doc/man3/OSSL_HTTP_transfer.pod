@@ -210,6 +210,10 @@ else from the server contained in the I<url>, and returns it as a BIO.
 It supports redirection via HTTP status code 301 or 302.
 Redirection from HTTPS to HTTP is not allowed.  It is meant for
 transfers with a single round trip, so does not support persistent connections.
+On a redirect to a different origin, identified by a change in scheme, host,
+or port, C<Authorization>, C<Cookie>, and C<Proxy-Authorization> entries in
+I<headers> are not forwarded on that or any subsequent redirect.  Other
+entries are forwarded as before.
 If I<bio> is non-NULL, any host and port components in the I<url> are not used
 for connecting but the hostname is used, as usual, for the C<Host> header.
 Any userinfo and fragment components in the I<url> are ignored.

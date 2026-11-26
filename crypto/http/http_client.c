@@ -400,8 +400,17 @@ void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
     rctx->max_hdr_lines = count;
 }
 
+static int is_sensitive_header(const char *name)
+{
+    return name != NULL
+        && (OPENSSL_strcasecmp("Authorization", name) == 0
+            || OPENSSL_strcasecmp("Cookie", name) == 0
+            || OPENSSL_strcasecmp("Proxy-Authorization", name) == 0);
+}
+
 static int add1_headers(OSSL_HTTP_REQ_CTX *rctx,
-    const STACK_OF(CONF_VALUE) *headers, const char *host)
+    const STACK_OF(CONF_VALUE) *headers, const char *host,
+    int allow_sensitive_headers)
 {
     int i;
     int add_host = host != NULL && *host != '\0';
@@ -409,6 +418,8 @@ static int add1_headers(OSSL_HTTP_REQ_CTX *rctx,
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
         hdr = sk_CONF_VALUE_value(headers, i);
+        if (!allow_sensitive_headers && is_sensitive_header(hdr->name))
+            continue;
         if (add_host && OPENSSL_strcasecmp("host", hdr->name) == 0)
             add_host = 0;
         if (!OSSL_HTTP_REQ_CTX_add1_header(rctx, hdr->name, hdr->value))
@@ -1192,11 +1203,12 @@ end:
     return rctx;
 }
 
-int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
+static int http_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
     const STACK_OF(CONF_VALUE) *headers,
     const char *content_type, BIO *req,
     const char *expected_content_type, int expect_asn1,
-    size_t max_resp_len, int timeout, int keep_alive)
+    size_t max_resp_len, int timeout, int keep_alive,
+    int allow_sensitive_headers)
 {
     int use_http_proxy;
 
@@ -1215,10 +1227,21 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
                use_http_proxy ? rctx->server
                               : NULL,
                rctx->port, path)
-        && add1_headers(rctx, headers, rctx->server)
+        && add1_headers(rctx, headers, rctx->server, allow_sensitive_headers)
         && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
             expect_asn1, timeout, keep_alive)
         && set1_content(rctx, content_type, req);
+}
+
+int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
+    const STACK_OF(CONF_VALUE) *headers,
+    const char *content_type, BIO *req,
+    const char *expected_content_type, int expect_asn1,
+    size_t max_resp_len, int timeout, int keep_alive)
+{
+    return http_set1_request(rctx, path, headers, content_type, req,
+        expected_content_type, expect_asn1, max_resp_len, timeout, keep_alive,
+        1);
 }
 
 /*-
@@ -1312,6 +1335,10 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     char *port;
     char *path;
     int use_ssl;
+    char *previous_host = NULL;
+    int previous_port_num = 0;
+    int previous_use_ssl = 0;
+    int allow_sensitive_headers = 1;
     BIO *resp = NULL;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
 
@@ -1325,10 +1352,19 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     for (;;) {
         OSSL_HTTP_REQ_CTX *rctx;
         char *redirection_url;
+        int port_num;
 
         if (!OSSL_HTTP_parse_url(current_url, &use_ssl, NULL /* user */, &host,
-                &port, NULL /* port_num */, &path, NULL, NULL))
+                &port, &port_num, &path, NULL, NULL))
             break;
+
+        if (previous_host != NULL) {
+            if (previous_use_ssl != use_ssl || previous_port_num != port_num
+                || OPENSSL_strcasecmp(previous_host, host) != 0)
+                allow_sensitive_headers = 0;
+            OPENSSL_free(previous_host);
+            previous_host = NULL;
+        }
 
         rctx = OSSL_HTTP_open(host, port, proxy, no_proxy,
             use_ssl, bio, rbio, bio_update_fn, arg,
@@ -1336,12 +1372,12 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     new_rpath:
         redirection_url = NULL;
         if (rctx != NULL) {
-            if (!OSSL_HTTP_set1_request(rctx, path, headers,
+            if (!http_set1_request(rctx, path, headers,
                     NULL /* content_type */,
                     NULL /* req */,
                     expected_ct, expect_asn1, max_resp_len,
                     -1 /* use same max time (timeout) */,
-                    0 /* no keep_alive */)) {
+                    0 /* no keep_alive */, allow_sensitive_headers)) {
                 OSSL_HTTP_REQ_CTX_free(rctx);
                 rctx = NULL;
             } else {
@@ -1367,7 +1403,9 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                     }
                     goto new_rpath;
                 }
-                OPENSSL_free(host);
+                previous_host = host;
+                previous_port_num = port_num;
+                previous_use_ssl = use_ssl;
                 OPENSSL_free(port);
                 (void)OSSL_HTTP_close(rctx, 1);
                 continue;
@@ -1383,6 +1421,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         }
         break;
     }
+    OPENSSL_free(previous_host);
     OPENSSL_free(current_url);
     return resp;
 }
