@@ -132,6 +132,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     rl->enc_mode = EVP_CIPHER_get_mode(ciph);
     rl->enc_bs = EVP_CIPHER_get_block_size(ciph);
     rl->has_mac = rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL;
+    rl->gcm_aad_pad = 0;
 
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
     if ((EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
@@ -312,8 +313,12 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                 return 0;
             }
 
-            /* For GCM the pad is the tag length */
-            if (rl->enc_mode == EVP_CIPH_GCM_MODE) {
+            /*
+             * GCM has no length dependent padding, so the pad the cipher
+             * reports is the same for every record. Ask the cipher for it
+             * on the first record and only set the AAD after that.
+             */
+            if (rl->gcm_aad_pad > 0) {
                 OSSL_PARAM params[2];
 
                 params[0] = OSSL_PARAM_construct_octet_string(
@@ -322,10 +327,12 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                 params[1] = OSSL_PARAM_construct_end();
                 pad = 0;
                 if (EVP_CIPHER_CTX_set_params(ds, params) > 0)
-                    pad = (int)rl->taglen;
+                    pad = rl->gcm_aad_pad;
             } else {
                 pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD,
                     EVP_AEAD_TLS1_AAD_LEN, buf[ctr]);
+                if (pad > 0 && rl->enc_mode == EVP_CIPH_GCM_MODE)
+                    rl->gcm_aad_pad = pad;
             }
             if (pad <= 0) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

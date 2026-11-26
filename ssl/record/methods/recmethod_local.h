@@ -295,6 +295,8 @@ struct ossl_record_layer_st {
     int enc_mode;
     int enc_bs;
     int has_mac;
+    /* TLS AAD pad reported by a GCM cipher, or 0 if not yet known */
+    int gcm_aad_pad;
     /* cryptographic state for DTLS 1.3 encrypted sequence numbers */
     EVP_CIPHER_CTX *sn_enc_ctx;
 
@@ -480,6 +482,18 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 int dtls_prev_epoch_allows_type(const OSSL_RECORD_LAYER *crypto_rl, int type);
 
+/**
+ * @brief Write a single DTLS record straight into the write buffer.
+ * Builds the record header, copies the payload and encrypts it in place
+ * without going through a WPACKET. Only records protected by an AEAD cipher
+ * with no separate MAC, no compression and no message callback are handled,
+ * and DTLSv1.3 is never handled.
+ * @param rl the record layer to write the record with
+ * @param templ the template describing the record to write
+ * @retval 1 the record was written
+ * @retval 0 the record is not suitable, the caller must do a standard write
+ * @retval -1 a fatal error occurred and RLAYERfatal() has been called
+ */
 int dtls_write_record_direct(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *templ);
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
