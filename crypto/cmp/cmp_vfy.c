@@ -736,7 +736,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
     int bodytype, end_of_polling;
-    int num_untrusted, num_added, res;
+    int num_added, res;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
@@ -792,18 +792,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * The extraCerts are prepended. Allows simple removal if they shall not be
      * cached. Also they get used first, which is likely good for efficiency.
      */
-    num_untrusted = ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted);
-    res = ossl_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
-        /* this allows self-signed certs */
-        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-            | X509_ADD_FLAG_PREPEND);
-    num_added = (ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted))
-        - num_untrusted;
-    if (!res) {
-        while (num_added-- > 0)
-            X509_free(sk_X509_shift(ctx->untrusted));
+    if ((num_added = ossl_x509_prepend_certs(&ctx->untrusted, msg->extraCerts)) < 0)
         return 0;
-    }
 
     if (hdr->protectionAlg != NULL)
         res = OSSL_CMP_validate_msg(ctx, msg)

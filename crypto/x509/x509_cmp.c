@@ -290,6 +290,21 @@ int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, 
     return 1;
 }
 
+/* See the documentation in include/crypto/x509.h */
+int ossl_x509_prepend_certs(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs)
+{
+    int num_before = *p_sk == NULL ? 0 : sk_X509_num(*p_sk),
+        res = ossl_x509_add_certs_new(p_sk, certs,
+            X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP | X509_ADD_FLAG_PREPEND),
+        num_added = (*p_sk == NULL ? 0 : sk_X509_num(*p_sk)) - num_before;
+
+    if (res)
+        return num_added;
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(*p_sk));
+    return -1;
+}
+
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 {
     int ret;
