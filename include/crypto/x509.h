@@ -484,17 +484,19 @@ int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, 
 /**
  * @brief Prepend certs to a stack, preserving their order and skipping dups.
  *
- * The given certs are up-ref'ed and inserted at the front of the stack in
- * their given order, skipping any certs that are already present.
- * Self-signed certs are included. Since the certs are prepended, they can be
- * removed again easily by shifting them off the front.
+ * The given certs, at most the first max of them, are up-ref'ed and inserted
+ * at the front of the stack in their given order, skipping any certs that are
+ * already present. Self-signed certs are included. Since the certs are
+ * prepended, they can be removed again easily by shifting them off the front.
  *
  * @param p_sk pointer to the stack to prepend to; is allocated if *p_sk is NULL
  * @param certs the certs to prepend, may be NULL
+ * @param max the maximum number of certs to take from the front of certs,
+ *            or -1 for taking all of them
  * @returns the number of certs added, or -1 on error,
  *          in which case the stack is left unchanged
  */
-int ossl_x509_prepend_certs(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs);
+int ossl_x509_prepend_certs(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, int max);
 
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x);
 STACK_OF(X509_EXTENSION) *

@@ -597,6 +597,66 @@ static int test_msg_check_update_malicious_sender(void)
 }
 
 /*
+ * Tests on the handling of extraCerts by ossl_cmp_msg_check_update(), using
+ * IR_protected_2_extraCerts.der, protected by the Insta cert, which is issued
+ * by the Insta CA. Its extraCerts are the unrelated srvcert and the Insta cert.
+ */
+
+static int add_extracert(OSSL_CMP_MSG *msg, X509 *cert, int prepend)
+{
+    return X509_add_cert(msg->extraCerts, cert,
+        X509_ADD_FLAG_UP_REF | (prepend ? X509_ADD_FLAG_PREPEND : 0));
+}
+
+static void setup_extracerts_msg(CMP_VFY_TEST_FIXTURE **fixture, int expected)
+{
+    (*fixture)->expected = expected;
+    if (!TEST_ptr((*fixture)->msg = load_pkimsg(ir_protected_2_extracerts, libctx))
+        || !add_trusted((*fixture)->cmp_ctx, instaca_cert)) {
+        tear_down(*fixture);
+        *fixture = NULL;
+    }
+}
+
+static int execute_extracerts_limit_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    return TEST_int_eq(fixture->expected, ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg, NULL, 0))
+        /* the msg must not be modified */
+        && TEST_int_eq(sk_X509_num(fixture->msg->extraCerts), 2 + OSSL_CMP_MAX_EXTRACERTS);
+}
+
+/* add OSSL_CMP_MAX_EXTRACERTS unrelated certs in front or at the end */
+static int test_msg_check_extracerts_limit(int prepend)
+{
+    int i;
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_extracerts_msg(&fixture, !prepend /* else Insta cert gets dropped */);
+    if (fixture == NULL)
+        return 0;
+    for (i = 0; i < OSSL_CMP_MAX_EXTRACERTS; i++) {
+        if (!TEST_true(add_extracert(fixture->msg, i % 2 == 0 ? clcert : endentity1, prepend))) {
+            tear_down(fixture);
+            return 0;
+        }
+    }
+    EXECUTE_TEST(execute_extracerts_limit_test, tear_down);
+    return result;
+}
+
+static int test_msg_check_extracerts_limit_ok(void)
+{
+    return test_msg_check_extracerts_limit(0);
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int test_msg_check_extracerts_limit_sender_cert_dropped(void)
+{
+    return test_msg_check_extracerts_limit(1);
+}
+#endif
+
+/*
  * The functions below use the normal OpenSSL test certs from test/certs/,
  * forming a 2-level and mostly 3-level chains,
  * all of which are kept valid (for tests using the current time).
@@ -805,6 +865,12 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
     ADD_TEST(test_msg_check_recipient_nonce_error);
+
+    /* Tests on the handling of extraCerts */
+    ADD_TEST(test_msg_check_extracerts_limit_ok);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_msg_check_extracerts_limit_sender_cert_dropped);
+#endif
 
     /* Cert path validation tests, using normal OpenSSL test certs */
     ADD_TEST(test_validate_cert_path_2_level_ok);

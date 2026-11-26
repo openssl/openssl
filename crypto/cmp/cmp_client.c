@@ -194,10 +194,21 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     ossl_cmp_log2(INFO, ctx, "received %s%s", ossl_cmp_bodytype_to_string(bt),
         ossl_cmp_is_error_with_waiting(*rep) ? " (waiting)" : "");
 
-    /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
-    if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
-        && !ossl_cmp_ctx_set1_extraCertsIn(ctx, (*rep)->extraCerts))
-        return 0;
+    /*
+     * copy received extraCerts, at most the first OSSL_CMP_MAX_EXTRACERTS,
+     * to ctx->extraCertsIn so they can be retrieved
+     */
+    if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF) {
+        STACK_OF(X509) *extraCerts = NULL;
+        int ok = ossl_x509_prepend_certs(&extraCerts, (*rep)->extraCerts,
+                     OSSL_CMP_MAX_EXTRACERTS)
+                >= 0
+            && ossl_cmp_ctx_set1_extraCertsIn(ctx, extraCerts);
+
+        OSSL_STACK_OF_X509_free(extraCerts);
+        if (!ok)
+            return 0;
+    }
 
     if (!ossl_cmp_msg_check_update(ctx, *rep, unprotected_exception,
             expected_type))

@@ -764,6 +764,8 @@ OSSL_CMP_CTX_get1_extraCertsIn() returns a pointer to a duplicate of the list
 of X.509 certificates contained in the extraCerts field of the last received
 response message (except for pollRep and PKIConf), or
 an empty stack if no extraCerts have been received in the current transaction.
+Of the extraCerts received, at most the first 10 are retained,
+and any duplicates among them are removed.
 
 OSSL_CMP_CTX_set1_transactionID() sets the given transaction ID in the given
 OSSL_CMP_CTX structure.

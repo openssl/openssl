@@ -51,6 +51,10 @@ The callback is passed also the arguments B<ctx>, B<msg>, and <cb_arg>
 The callback should return 1 on acceptance, 0 on rejection, or -1 on error.
 It should not put an error on the error stack since this could be misleading.
 
+Since the extraCerts are not protected, at most the first
+B<OSSL_CMP_MAX_EXTRACERTS> of them are used. Any further ones are ignored,
+issuing a warning.
+
 Unless the B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> is set in the B<ctx>,
 ossl_cmp_msg_check_update() adds all extraCerts contained in the <msg> to
 the list of untrusted certificates in B<ctx> such that they are already usable

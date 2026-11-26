@@ -18,6 +18,9 @@
 
 #define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
+/* max number of extraCerts of a received msg used, any further ones are ignored */
+#define OSSL_CMP_MAX_EXTRACERTS 10
+
 /*
  * this structure is used to store the context for CMP sessions
  */

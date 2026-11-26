@@ -339,8 +339,8 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg, X509 *scrt)
 {
     int valid = 0;
-    X509_STORE *store;
-    STACK_OF(X509) *extraCerts;
+    X509_STORE *store = NULL;
+    STACK_OF(X509) *extraCerts = NULL;
 
     if (!ctx->permitTAInExtraCertsForIR)
         return 0;
@@ -350,9 +350,13 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
      * For subsequent msgs (pollRep or PKIConf) in the same transaction,
      * use extraCertsIn remembered from earlier message (typically, the IP message).
      * The extraCertsIn field will be cleared by OSSL_CMP_CTX_reinit().
+     * In any case, use at most the first OSSL_CMP_MAX_EXTRACERTS of them.
      */
-    extraCerts = ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn;
-    if ((store = X509_STORE_new()) == NULL
+    if (ossl_x509_prepend_certs(&extraCerts,
+            ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn,
+            OSSL_CMP_MAX_EXTRACERTS)
+            < 0
+        || (store = X509_STORE_new()) == NULL
         || !ossl_cmp_X509_STORE_add1_certs(store, extraCerts,
             1 /* self-issued only */))
         goto err;
@@ -379,6 +383,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
 
 err:
     X509_STORE_free(store);
+    OSSL_STACK_OF_X509_free(extraCerts);
     return valid;
 }
 
@@ -392,7 +397,8 @@ static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, X509 *cert,
 
 /*-
  * Try all certs in given list for verifying msg, normally or in 3GPP mode.
- * If already_checked1 == NULL then certs are assumed to be the msg->extraCerts.
+ * If already_checked1 == NULL then certs are assumed to be the msg->extraCerts,
+ * of which at most the first OSSL_CMP_MAX_EXTRACERTS are considered.
  * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
  */
 static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
@@ -403,14 +409,17 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
 {
     int in_extraCerts = already_checked1 == NULL;
     int n_acceptable_certs = 0;
+    int n = sk_X509_num(certs /* may be NULL */);
     int i;
 
-    if (sk_X509_num(certs) <= 0) {
+    if (n <= 0) {
         ossl_cmp_log1(INFO, ctx, "no %s", desc);
         return 0;
     }
+    if (in_extraCerts && n > OSSL_CMP_MAX_EXTRACERTS)
+        n = OSSL_CMP_MAX_EXTRACERTS;
 
-    for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
+    for (i = 0; i < n; i++) {
         X509 *cert = sk_X509_value(certs, i);
 
         if (!ossl_assert(cert != NULL))
@@ -736,7 +745,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
     int bodytype, end_of_polling;
-    int num_added, res;
+    int num_extra, num_added, res;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
@@ -779,12 +788,20 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     /* Ignoring recipient */
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
-    num_added = sk_X509_num(msg->extraCerts);
-    if (num_added > 10)
-        ossl_cmp_log1(WARN, ctx, "received CMP message contains %d extraCerts",
-            num_added);
     /*
-     * Store any provided extraCerts in ctx for use in OSSL_CMP_validate_msg()
+     * The extraCerts are not covered by any CMP message protection,
+     * so they are not safe and their number could be painfully high.
+     * Therefore we use at most the first OSSL_CMP_MAX_EXTRACERTS of them,
+     * ignoring any further ones.
+     */
+    num_extra = sk_X509_num(msg->extraCerts);
+    if (num_extra > OSSL_CMP_MAX_EXTRACERTS)
+        ossl_cmp_log2(WARN, ctx,
+            "received CMP message contains %d extraCerts; using only the first %d",
+            num_extra, OSSL_CMP_MAX_EXTRACERTS);
+
+    /*
+     * Store the extraCerts in ctx for use in OSSL_CMP_validate_msg()
      * and for future use, such that they are available to ctx->certConf_cb and
      * the peer does not need to send them again in the same transaction.
      * Note that it does not help validating the message before storing the
@@ -792,7 +809,9 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * The extraCerts are prepended. Allows simple removal if they shall not be
      * cached. Also they get used first, which is likely good for efficiency.
      */
-    if ((num_added = ossl_x509_prepend_certs(&ctx->untrusted, msg->extraCerts)) < 0)
+    num_added = ossl_x509_prepend_certs(&ctx->untrusted, msg->extraCerts,
+        OSSL_CMP_MAX_EXTRACERTS);
+    if (num_added < 0)
         return 0;
 
     if (hdr->protectionAlg != NULL)
