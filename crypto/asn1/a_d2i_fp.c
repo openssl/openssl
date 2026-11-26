@@ -13,6 +13,7 @@
 #include "internal/numbers.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include "internal/asn1.h"
 #include "crypto/asn1.h"
 
@@ -66,8 +67,17 @@ void *ASN1_item_d2i_bio_ex(const ASN1_ITEM *it, BIO *in, void *x,
     if (in == NULL)
         return NULL;
     len = asn1_d2i_read_bio(in, &b);
-    if (len < 0)
+    if (len < 0) {
+        /*
+         * A read error means no decoding was attempted, so the object that
+         * the caller may have supplied in *x is still owned by the caller.
+         * Match the decoding-failure path of ASN1_item_d2i_ex() and release
+         * it here, clearing the caller's pointer.  This is safe when x is
+         * NULL or *x is NULL, which ASN1_item_ex_free() handles.
+         */
+        ASN1_item_ex_free((ASN1_VALUE **)x, it);
         goto err;
+    }
 
     p = (const unsigned char *)b->data;
     ret = ASN1_item_d2i_ex(x, &p, len, it, libctx, propq);
