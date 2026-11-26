@@ -527,6 +527,10 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_RESET:
         ctx->cont = 1;
         ctx->start = 1;
+        ctx->tmp_nl = 0;
+        ctx->buf_len = 0;
+        ctx->buf_off = 0;
+        ctx->tmp_len = 0;
         ctx->encode = B64_NONE;
         ctx->encoded_len = 0;
         ctx->encoded_off = 0;
