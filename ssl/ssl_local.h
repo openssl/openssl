@@ -3534,6 +3534,17 @@ __owur int srp_verify_server_param(SSL_CONNECTION *s);
 
 __owur int send_certificate_request(SSL_CONNECTION *s);
 
+/**
+ * @brief Whether the handshake includes a server Certificate message.
+ *
+ * Session resumption, PSK, SRP and anonymous ciphers carry no server
+ * certificate.
+ *
+ * @param s the server connection, after the cipher has been chosen
+ * @returns 1 if a server Certificate message is sent, 0 otherwise
+ */
+__owur int ossl_send_server_certificate(SSL_CONNECTION *s);
+
 OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx);
 
 /* statem/extensions_cust.c */
