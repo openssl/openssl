@@ -100,13 +100,13 @@ poly1305_init:
 	tst	w17,#ARMV7_NEON
 
 	adrp	$d0,poly1305_blocks
-	add	$d0,$d0,#:lo12:.Lpoly1305_blocks
+	add	$d0,$d0,#:lo12:poly1305_blocks
 	adrp	$r0,poly1305_blocks_neon
-	add	$r0,$r0,#:lo12:.Lpoly1305_blocks_neon
+	add	$r0,$r0,#:lo12:poly1305_blocks_neon
 	adrp	$d1,poly1305_emit
-	add	$d1,$d1,#:lo12:.Lpoly1305_emit
+	add	$d1,$d1,#:lo12:poly1305_emit
 	adrp	$r1,poly1305_emit_neon
-	add	$r1,$r1,#:lo12:.Lpoly1305_emit_neon
+	add	$r1,$r1,#:lo12:poly1305_emit_neon
 
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
@@ -133,8 +133,6 @@ poly1305_init:
 .align	5
 poly1305_blocks:
 .Lpoly1305_blocks:
-	// The symbol .Lpoly1305_blocks is not a .globl symbol
-	// but a pointer to it is returned by poly1305_init
 	AARCH64_VALID_CALL_TARGET
 	ands	$len,$len,#-16
 	b.eq	.Lno_data
@@ -200,9 +198,6 @@ poly1305_blocks:
 .type	poly1305_emit,%function
 .align	5
 poly1305_emit:
-.Lpoly1305_emit:
-	// The symbol .poly1305_emit is not a .globl symbol
-	// but a pointer to it is returned by poly1305_init
 	AARCH64_VALID_CALL_TARGET
 	ldp	$h0,$h1,[$ctx]		// load hash base 2^64
 	ldr	$h2,[$ctx,#16]
@@ -310,8 +305,7 @@ poly1305_splat:
 .type	poly1305_blocks_neon,%function
 .align	5
 poly1305_blocks_neon:
-.Lpoly1305_blocks_neon:
-	// The symbol .Lpoly1305_blocks_neon is not a .globl symbol
+	// The symbol poly1305_blocks_neon is not a .globl symbol
 	// but a pointer to it is returned by poly1305_init
 	AARCH64_VALID_CALL_TARGET
 	ldr	$is_base2_26,[$ctx,#24]
@@ -899,8 +893,7 @@ poly1305_blocks_neon:
 .type	poly1305_emit_neon,%function
 .align	5
 poly1305_emit_neon:
-.Lpoly1305_emit_neon:
-	// The symbol .Lpoly1305_emit_neon is not a .globl symbol
+	// The symbol poly1305_emit_neon is not a .globl symbol
 	// but a pointer to it is returned by poly1305_init
 	AARCH64_VALID_CALL_TARGET
 	ldr	$is_base2_26,[$ctx,#24]
