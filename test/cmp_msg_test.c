@@ -526,6 +526,30 @@ static int test_cmp_pkimessage_create(int bodytype)
     return result;
 }
 
+static int test_cmp_msg_write(void)
+{
+    static const char file[] = "cmp_msg_test_write.der";
+    OSSL_CMP_CTX *ctx = NULL;
+    OSSL_CMP_MSG *msg = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = OSSL_CMP_CTX_new(libctx, NULL))
+        || !TEST_true(SET_OPT_UNPROTECTED_SEND(ctx, 1))
+        || !TEST_ptr(msg = ossl_cmp_msg_create(ctx, OSSL_CMP_PKIBODY_GENM))
+        /* a successful write returns the length of the encoding */
+        || !TEST_int_eq(OSSL_CMP_MSG_write(file, msg), i2d_OSSL_CMP_MSG(msg, NULL))
+        /* a directory cannot be opened for writing: a negative result */
+        || !TEST_int_lt(OSSL_CMP_MSG_write(".", msg), 0))
+        goto err;
+    ret = 1;
+
+err:
+    (void)remove(file);
+    OSSL_CMP_MSG_free(msg);
+    OSSL_CMP_CTX_free(ctx);
+    return ret;
+}
+
 void cleanup_tests(void)
 {
     EVP_PKEY_free(newkey);
@@ -582,6 +606,7 @@ int setup_tests(void)
     ADD_TEST(test_cmp_create_genm);
     ADD_TEST(test_cmp_create_certrep);
     ADD_TEST(test_cmp_create_pollrep);
+    ADD_TEST(test_cmp_msg_write);
     ADD_ALL_TESTS_NOSUBTEST(test_cmp_pkimessage_create,
         OSSL_CMP_PKIBODY_POLLREP + 1);
     return 1;
