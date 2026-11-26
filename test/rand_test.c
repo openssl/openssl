@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* RAND_pseudo_bytes() and RAND_get_rand_method() are deprecated */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -122,6 +125,57 @@ static int test_jitter_fips_indicator(void)
 err:
     EVP_RAND_CTX_free(ctx);
     EVP_RAND_free(rand);
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+/*
+ * A negative length must be rejected before it reaches the DRBG, as
+ * RAND_bytes() and RAND_priv_bytes() already do.  The public test DRBG
+ * hands out its entropy in 16-byte chunks, so a negative length that
+ * reached EVP_RAND_generate() as SIZE_MAX would copy all 32 bytes into
+ * buf before failing.
+ */
+static int test_rand_pseudo_bytes_negative(void)
+{
+    EVP_RAND_CTX *pubctx;
+    unsigned char entropy[32], buf[64], zero[64];
+    size_t maxreq = 16;
+    OSSL_PARAM params[3];
+    int ret = 0;
+
+    memset(entropy, 0xa5, sizeof(entropy));
+    memset(buf, 0, sizeof(buf));
+    memset(zero, 0, sizeof(zero));
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        entropy, sizeof(entropy));
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_RAND_PARAM_MAX_REQUEST,
+        &maxreq);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_ptr(pubctx = RAND_get0_public(NULL))
+        || !TEST_true(EVP_RAND_CTX_set_params(pubctx, params)))
+        return 0;
+
+    if (!TEST_int_le(RAND_pseudo_bytes(buf, -1), 0)
+        || !TEST_mem_eq(buf, sizeof(buf), zero, sizeof(zero)))
+        goto err;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (!TEST_int_le(RAND_get_rand_method()->pseudorand(buf, -1), 0)
+        || !TEST_mem_eq(buf, sizeof(buf), zero, sizeof(zero)))
+        goto err;
+#endif
+    /* The entropy was not consumed */
+    if (!TEST_int_gt(RAND_pseudo_bytes(buf, 16), 0)
+        || !TEST_mem_eq(buf, 16, entropy, 16))
+        goto err;
+    ret = 1;
+err:
+    maxreq = INT_MAX;
+    params[0] = params[1];
+    params[1] = params[2];
+    if (!TEST_true(EVP_RAND_CTX_set_params(pubctx, params)))
+        ret = 0;
     return ret;
 }
 #endif
@@ -1282,6 +1336,9 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_rand);
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+    ADD_TEST(test_rand_pseudo_bytes_negative);
+#endif
 #ifndef OPENSSL_NO_FIPS_JITTER
     ADD_TEST(test_jitter_fips_indicator);
 #endif
