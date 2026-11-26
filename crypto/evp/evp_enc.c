@@ -21,6 +21,7 @@
 #include "internal/common.h"
 #include "internal/safe_math.h"
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "evp_local.h"
 
 OSSL_SAFE_MATH_SIGNED(int, int)
@@ -201,6 +202,8 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     if (is_pipeline)
         return 1;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (enc) {
         if (ctx->cipher->einit == NULL) {
             /*
@@ -336,6 +339,8 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     if (iv == NULL)
         iv_len = 0;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     /* We have a data managed via key management, using the new callbacks */
     if (enc) {
         if (ctx->cipher->einit_skey == NULL) {
@@ -437,6 +442,8 @@ int EVP_CipherPipelineEncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
     }
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     return ctx->cipher->p_einit(ctx->algctx,
         key,
         keylen,
@@ -466,6 +473,8 @@ int EVP_CipherPipelineDecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     return ctx->cipher->p_dinit(ctx->algctx,
         key,
@@ -514,6 +523,8 @@ int EVP_CipherPipelineUpdate(EVP_CIPHER_CTX *ctx,
 
     for (i = 0; i < ctx->numpipes; i++)
         outl[i] = 0;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     return ctx->cipher->p_cupdate(ctx->algctx, ctx->numpipes,
         out, outl, outsize,
@@ -564,6 +575,8 @@ int EVP_CipherPipelineFinal(EVP_CIPHER_CTX *ctx,
 
     for (i = 0; i < ctx->numpipes; i++)
         outl[i] = 0;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     return ctx->cipher->p_cfinal(ctx->algctx, ctx->numpipes,
         out, outl, outsize);
@@ -656,6 +669,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (inl < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
         return 0;
@@ -717,6 +732,8 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int blocksize;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (outl != NULL) {
         *outl = 0;
     } else {
@@ -766,6 +783,8 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int ret;
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (inl < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
@@ -827,6 +846,8 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int ret;
     int blocksize;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (outl != NULL) {
         *outl = 0;
@@ -1147,7 +1168,11 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
 
     if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL) {
-        r = ctx->cipher->set_ctx_params(ctx->algctx, params);
+        {
+            OSSL_ENABLE_DIT_FOR_SCOPE
+
+            r = ctx->cipher->set_ctx_params(ctx->algctx, params);
+        }
         if (r > 0) {
             p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
             if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->key_len)) {
@@ -1168,8 +1193,11 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 
 int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL)
+    if (ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL) {
+        OSSL_ENABLE_DIT_FOR_SCOPE
+
         return ctx->cipher->get_ctx_params(ctx->algctx, params);
+    }
     return 0;
 }
 
