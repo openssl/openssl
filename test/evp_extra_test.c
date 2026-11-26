@@ -2062,6 +2062,77 @@ out:
     return ret;
 }
 
+/*
+ * Re-initialising EVP_DigestSignInit_ex()/EVP_DigestVerifyInit_ex() with a
+ * NULL pkey must keep the parameters set earlier, here the RSA PSS padding.
+ */
+static int test_EVP_DigestSignVerifyInit_keep_rsa_padding(int idx)
+{
+    static const unsigned char msg[] = "message";
+    EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int pad = 0, ret = 0;
+
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto err;
+    if (idx == 0) {
+        if (!TEST_int_eq(EVP_DigestSignInit_ex(ctx, &pctx, "SHA256", testctx,
+                             NULL, pkey, NULL),
+                1))
+            goto err;
+    } else if (!TEST_int_eq(EVP_DigestVerifyInit_ex(ctx, &pctx, "SHA256",
+                                testctx, NULL, pkey, NULL),
+                   1)) {
+        goto err;
+    }
+    if (!TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST), 0))
+        goto err;
+
+    pctx = NULL;
+    if (idx == 0) {
+        if (!TEST_int_eq(EVP_DigestSignInit_ex(ctx, &pctx, "SHA256", testctx,
+                             NULL, NULL, NULL),
+                1))
+            goto err;
+    } else if (!TEST_int_eq(EVP_DigestVerifyInit_ex(ctx, &pctx, "SHA256",
+                                testctx, NULL, NULL, NULL),
+                   1)) {
+        goto err;
+    }
+    if (!TEST_int_gt(EVP_PKEY_CTX_get_rsa_padding(pctx, &pad), 0)
+        || !TEST_int_eq(pad, RSA_PKCS1_PSS_PADDING))
+        goto err;
+
+    if (idx == 0) {
+        unsigned char sig[256];
+        size_t siglen = sizeof(sig);
+        EVP_MD_CTX *vctx = NULL;
+        EVP_PKEY_CTX *vpctx = NULL;
+
+        /* The signature must verify as PSS */
+        ret = TEST_int_eq(EVP_DigestSign(ctx, sig, &siglen, msg, sizeof(msg)), 1)
+            && TEST_ptr(vctx = EVP_MD_CTX_new())
+            && TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, &vpctx, "SHA256",
+                               testctx, NULL, pkey, NULL),
+                1)
+            && TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(vpctx,
+                               RSA_PKCS1_PSS_PADDING),
+                0)
+            && TEST_int_eq(EVP_DigestVerify(vctx, sig, siglen, msg, sizeof(msg)), 1);
+        EVP_MD_CTX_free(vctx);
+    } else {
+        ret = 1;
+    }
+
+err:
+    EVP_MD_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 static int test_EVP_DigestVerifyInit(void)
 {
     int ret = 0;
@@ -9625,6 +9696,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 30);
     ADD_TEST(test_EVP_DigestVerifyInit);
+    ADD_ALL_TESTS(test_EVP_DigestSignVerifyInit_keep_rsa_padding, 2);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_ecdsa_digestsign_keccak);
 #endif

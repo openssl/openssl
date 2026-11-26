@@ -542,6 +542,13 @@ rsa_signverify_init(PROV_RSA_CTX *prsactx, void *vrsa,
     prsactx->flag_allow_final = 1;
     prsactx->flag_allow_oneshot = 1;
 
+    /*
+     * Re-initialisation without a key: keep the padding mode and salt
+     * length set on the context by earlier calls.
+     */
+    if (vrsa == NULL)
+        goto set_params;
+
     /* Maximize up to digest length for sign, auto for verify */
     prsactx->saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
     prsactx->min_saltlen = -1;
@@ -607,6 +614,7 @@ rsa_signverify_init(PROV_RSA_CTX *prsactx, void *vrsa,
         return 0;
     }
 
+set_params:
     OSSL_FIPS_IND_SET_APPROVED(prsactx)
     if (!set_ctx_params(prsactx, params))
         return 0;
