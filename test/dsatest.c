@@ -486,6 +486,140 @@ err:
     return ret;
 }
 
+/*
+ * DSA_set0_key() frees the private key it replaces, and that key must be
+ * cleared, as DSA_free() does.  While the test runs, the allocator below
+ * records every block it hands out and searches a block for the old private
+ * key when it is freed.  Blocks allocated before the allocator was installed
+ * are passed straight through.
+ */
+#define WATCH_MAX 4096
+
+static CRYPTO_malloc_fn watch_saved_malloc;
+static CRYPTO_realloc_fn watch_saved_realloc;
+static CRYPTO_free_fn watch_saved_free;
+static struct {
+    void *ptr;
+    size_t size;
+} watch_blocks[WATCH_MAX];
+static size_t watch_count;
+static int watch_overflow;
+static const unsigned char *watch_secret;
+static size_t watch_secret_len;
+static int watch_found;
+
+static void watch_add(void *ptr, size_t size)
+{
+    if (watch_count == WATCH_MAX) {
+        watch_overflow = 1;
+        return;
+    }
+    watch_blocks[watch_count].ptr = ptr;
+    watch_blocks[watch_count].size = size;
+    watch_count++;
+}
+
+/* Forget |ptr|, first searching it for the secret if |scan| is set */
+static void watch_remove(void *ptr, int scan)
+{
+    const unsigned char *p = ptr;
+    size_t i, j;
+
+    for (i = watch_count; i-- > 0;) {
+        if (watch_blocks[i].ptr != ptr)
+            continue;
+        if (scan && watch_secret != NULL)
+            for (j = 0; j + watch_secret_len <= watch_blocks[i].size; j++)
+                if (memcmp(p + j, watch_secret, watch_secret_len) == 0) {
+                    watch_found = 1;
+                    break;
+                }
+        watch_blocks[i] = watch_blocks[--watch_count];
+        return;
+    }
+}
+
+static void *watch_malloc(size_t num, const char *file, int line)
+{
+    void *ret = watch_saved_malloc(num, file, line);
+
+    if (ret != NULL)
+        watch_add(ret, num);
+    return ret;
+}
+
+static void *watch_realloc(void *ptr, size_t num, const char *file, int line)
+{
+    void *ret = watch_saved_realloc(ptr, num, file, line);
+
+    if (ptr != NULL && (ret != NULL || num == 0))
+        watch_remove(ptr, 0);
+    if (ret != NULL)
+        watch_add(ret, num);
+    return ret;
+}
+
+static void watch_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        watch_remove(ptr, 1);
+    watch_saved_free(ptr, file, line);
+}
+
+static int test_dsa_set0_key_clear(void)
+{
+    /*
+     * A key made of one repeated byte has the same layout in the words of
+     * a BIGNUM whatever the word size and byte order are.
+     */
+    unsigned char secret[32];
+    DSA *dsa = NULL;
+    BIGNUM *pub = NULL, *priv = NULL, *priv2 = NULL;
+    int replaced, ret = 0;
+
+    CRYPTO_get_mem_functions(&watch_saved_malloc, &watch_saved_realloc,
+        &watch_saved_free);
+    if (!CRYPTO_set_mem_functions(watch_malloc, watch_realloc, watch_free))
+        return TEST_skip("the allocator can no longer be replaced");
+    watch_count = 0;
+    watch_overflow = 0;
+    watch_found = 0;
+
+    memset(secret, 0xa5, sizeof(secret));
+    if (!TEST_ptr(dsa = DSA_new())
+        || !TEST_ptr(pub = BN_new())
+        || !TEST_true(BN_set_word(pub, 2))
+        || !TEST_ptr(priv = BN_bin2bn(secret, sizeof(secret), NULL))
+        || !TEST_ptr(priv2 = BN_new())
+        || !TEST_true(BN_set_word(priv2, 3))
+        || !TEST_true(DSA_set0_key(dsa, pub, priv)))
+        goto err;
+    pub = priv = NULL;
+
+    /* This frees the first private key */
+    watch_secret = secret;
+    watch_secret_len = sizeof(secret);
+    replaced = DSA_set0_key(dsa, NULL, priv2);
+    watch_secret = NULL;
+    if (!TEST_true(replaced))
+        goto err;
+    priv2 = NULL;
+
+    if (!TEST_false(watch_overflow)
+        || !TEST_false(watch_found))
+        goto err;
+    ret = 1;
+err:
+    watch_secret = NULL;
+    CRYPTO_set_mem_functions(watch_saved_malloc, watch_saved_realloc,
+        watch_saved_free);
+    DSA_free(dsa);
+    BN_free(pub);
+    BN_clear_free(priv);
+    BN_free(priv2);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
@@ -496,6 +630,7 @@ int setup_tests(void)
     ADD_TEST(test_dsa_sig_infinite_loop);
     ADD_TEST(test_dsa_sig_neg_param);
     ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
+    ADD_TEST(test_dsa_set0_key_clear);
 #endif
     return 1;
 }
