@@ -568,6 +568,10 @@ static void pushsig(void)
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = recsig;
+#ifdef SA_ONSTACK
+    /* Go and similar runtimes require handlers to use the alternate stack */
+    sa.sa_flags = SA_ONSTACK;
+#endif
 #endif
 
 #ifdef OPENSSL_SYS_WIN32
