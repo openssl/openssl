@@ -42,6 +42,7 @@ BIO_lookup_type                         datatype
 CRYPTO_malloc_fn                        datatype
 CRYPTO_realloc_fn                       datatype
 CRYPTO_free_fn                          datatype
+CRYPTO_safe_getenv_fn                   datatype
 CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
@@ -293,6 +294,7 @@ BIO_write_filename                      define
 BN_mod                                  define
 BN_num_bytes                            define
 BN_one                                  define
+CRYPTO_safe_getenv                      define
 BN_zero                                 define deprecated 0.9.8
 CONF_modules_free                       define deprecated 1.1.0
 DES_ecb2_encrypt                        define deprecated 3.0

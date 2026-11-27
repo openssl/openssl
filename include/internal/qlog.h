@@ -41,7 +41,7 @@ typedef struct qlog_trace_info_st {
 } QLOG_TRACE_INFO;
 
 QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info);
-QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info);
+QLOG *ossl_qlog_new_from_env(const OSSL_LIB_CTX *libctx, const QLOG_TRACE_INFO *info);
 
 void ossl_qlog_free(QLOG *qlog);
 
