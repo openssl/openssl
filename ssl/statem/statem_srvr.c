@@ -2095,6 +2095,11 @@ static int early_post_process_client_hello(SSL_CONNECTION *s)
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
     CLIENTHELLO_MSG *clienthello = s->clienthello;
     DOWNGRADE dgrd = DOWNGRADE_NONE;
+    /*
+     * After the ClientHello callback, sctx is used only to choose the DTLS
+     * cookie verifier, even if the callback has replaced the SSL_CTX. See
+     * tls_early_post_process_client_hello().
+     */
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
