@@ -127,6 +127,7 @@ my %OS_data = (
                      platforms  => { WIN32                      => 1,
                                      _WIN32                     => 1 } },
     windows     => 'WINDOWS',   # alias
+    win         => 'WINDOWS',   # alias
     WIN32       => 'WINDOWS',   # alias
     win32       => 'WIN32',     # alias
     32          => 'WIN32',     # alias
