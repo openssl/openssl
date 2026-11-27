@@ -152,6 +152,7 @@ int tls_setup_handshake(SSL_CONNECTION *s)
 
     /* Reset any extension flags */
     memset(s->ext.extflags, 0, sizeof(s->ext.extflags));
+    s->statem.no_cert_verify = 0;
 
     if (ssl_get_min_max_version(s, &ver_min, &ver_max, NULL) != 0) {
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_NO_PROTOCOLS_AVAILABLE);
