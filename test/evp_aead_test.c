@@ -2232,6 +2232,7 @@ static int test_evp_aead_keylen_reinit(int idx)
     OSSL_PARAM keylenparams[2];
 
     size_t wrong_keylen = 0, got_keylen = 0;
+    uint8_t short_key[1] = { 0 };
     uint8_t key[EVP_MAX_KEY_LENGTH] = { 0 };
     uint8_t iv[EVP_MAX_IV_LENGTH] = { 0 };
     uint8_t tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
@@ -2301,6 +2302,16 @@ static int test_evp_aead_keylen_reinit(int idx)
         goto err;
     }
 
+    /* must fail with a key that actually has this length and is non-NULL */
+    wrong_keylen = sizeof(short_key);
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, NULL, short_key, iv,
+            keylenparams))) {
+        TEST_info("%s: init with a %zu byte key and KEYLEN %zu accepted "
+                  "(key length %d)",
+            info->name, wrong_keylen, wrong_keylen, info->keylen);
+        goto err;
+    }
+
     ERR_clear_error();
 
     /* the key length is unchanged, for the provider and for EVP */
@@ -2354,7 +2365,9 @@ static int test_evp_aead_ivlen_reinit(int idx)
     OSSL_PARAM tagparams[2];
     OSSL_PARAM ivlenparams[2];
 
-    size_t wrong_ivlen = 0xFFFF, ref_ivlen = 0, got_ivlen = 0;
+    /* longer than any AEAD takes */
+    static uint8_t long_iv[0xFFFF] = { 0 };
+    size_t wrong_ivlen = sizeof(long_iv), ref_ivlen = 0, got_ivlen = 0;
     uint8_t key[EVP_MAX_KEY_LENGTH] = { 0 };
     uint8_t iv[EVP_MAX_IV_LENGTH] = { 0 };
     uint8_t tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
@@ -2427,6 +2440,15 @@ static int test_evp_aead_ivlen_reinit(int idx)
             info->name, wrong_ivlen, ref_ivlen,
             settable ? "accepted, but IVLEN is settable and must refuse it"
                      : "failed, but IVLEN is not settable and must be ignored");
+        goto err;
+    }
+
+    /* must fail with an IV that actually has this length and is non-NULL */
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, NULL, NULL, long_iv,
+            ivlenparams))) {
+        TEST_info("%s: init with a %zu byte IV and IVLEN %zu accepted "
+                  "(IV length %zu)",
+            info->name, wrong_ivlen, wrong_ivlen, ref_ivlen);
         goto err;
     }
 
