@@ -6245,3 +6245,4 @@ OSSL_KDF_PURPOSE_server_cipher_key      ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_iv              ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_key             ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_mac_key         ?	4_2_0	EXIST::VARIABLE:
+OSSL_MAC_PARAM_tlstree                  ?	4_2_0	EXIST::VARIABLE:

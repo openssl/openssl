@@ -264,6 +264,7 @@ OSSL_MAC_PARAM_properties,
 OSSL_MAC_PARAM_salt,
 OSSL_MAC_PARAM_size,
 OSSL_MAC_PARAM_tls_data_size,
+OSSL_MAC_PARAM_tlstree,
 OSSL_MAC_PARAM_xof,
 OSSL_OBJECT_PARAM_data,
 OSSL_OBJECT_PARAM_data_structure,
@@ -561,6 +562,7 @@ L<openssl-core_names.h(7)>
 These parameter name pointers and their use by decoder functions were added
 in OpenSSL 4.2.
 OSSL_PARAM_is_internal_name() was added in OpenSSL 4.2.
+OSSL_MAC_PARAM_tlstree was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 

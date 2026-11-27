@@ -52,6 +52,10 @@
             (void (*)(void))ossl_##lc##_gettable_ctx_params },                  \
         { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                 \
             (void (*)(void))ossl_##lc##_settable_ctx_params },                  \
+        { OSSL_FUNC_CIPHER_ENCRYPT_SKEY_INIT,                                   \
+            (void (*)(void))ossl_##lc##_skey_einit },                           \
+        { OSSL_FUNC_CIPHER_DECRYPT_SKEY_INIT,                                   \
+            (void (*)(void))ossl_##lc##_skey_dinit },                           \
         OSSL_DISPATCH_END                                                       \
     }
 

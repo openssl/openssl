@@ -13,6 +13,8 @@
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
 #include "prov/providercommon.h"
+#include "crypto/types.h"
+#include "internal/skey.h"
 
 #include "providers/implementations/ciphers/ciphercommon_ccm.inc"
 
@@ -259,6 +261,24 @@ int ossl_ccm_dinit(void *vctx, const unsigned char *key, size_t keylen,
     const OSSL_PARAM params[])
 {
     return ccm_init(vctx, key, keylen, iv, ivlen, params, 0);
+}
+
+int ossl_ccm_skey_einit(void *vctx, void *skeydata,
+    const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    return ccm_init(vctx, key->data, key->length, iv, ivlen, params, 1);
+}
+
+int ossl_ccm_skey_dinit(void *vctx, void *skeydata,
+    const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    return ccm_init(vctx, key->data, key->length, iv, ivlen, params, 0);
 }
 
 int ossl_ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,

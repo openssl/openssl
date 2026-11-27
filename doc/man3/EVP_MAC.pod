@@ -355,6 +355,19 @@ the value passed in the "tls-data-size" parameter. The length passed in the
 B<datalen> parameter to EVP_MAC_update() should be equal to the length of the
 record after the MAC and any padding has been removed.
 
+=item "tlstree" (B<OSSL_MAC_PARAM_TLSTREE>) <octet string>
+
+When set, this parameter signals that TLSTREE per-record re-keying should be applied
+to the MAC key, deriving a fresh key from the 8-byte TLS record sequence number.
+This is used by certain ciphersuites that require sequence-number-based key
+derivation for each record.
+
+The parameter value must be an 8-byte octet string containing the record sequence
+number in network byte order. It is set by libssl via EVP_MAC_CTX_set_params()
+after duplicating the base MAC context and before calling EVP_MAC_update().
+Providers that implement ciphersuites requiring TLSTREE re-keying must handle
+this parameter in their MAC implementation.
+
 =back
 
 All these parameters should be used before the calls to any of

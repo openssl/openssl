@@ -75,6 +75,8 @@ struct prov_ccm_hw_st {
 
 OSSL_FUNC_cipher_encrypt_init_fn ossl_ccm_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_ccm_dinit;
+OSSL_FUNC_cipher_encrypt_skey_init_fn ossl_ccm_skey_einit;
+OSSL_FUNC_cipher_decrypt_skey_init_fn ossl_ccm_skey_dinit;
 OSSL_FUNC_cipher_get_ctx_params_fn ossl_ccm_get_ctx_params;
 OSSL_FUNC_cipher_set_ctx_params_fn ossl_ccm_set_ctx_params;
 OSSL_FUNC_cipher_update_fn ossl_ccm_stream_update;

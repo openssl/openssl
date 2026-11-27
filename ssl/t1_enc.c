@@ -21,6 +21,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include <openssl/trace.h>
+#include "crypto/evp.h"
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL_CONNECTION *s,
@@ -119,6 +120,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
     unsigned char *key, *iv;
+    OSSL_RECORD_KEY cipherkey = { 0 }, mackey = { 0 };
+    OSSL_RECORD_KEY *pmackey = NULL;
+    const char *key_purpose, *mac_purpose, *iv_purpose;
     const EVP_CIPHER *c;
     const SSL_COMP *comp = NULL;
     const EVP_MD *m;
@@ -152,6 +156,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     }
     k = iivlen;
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) || (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
+        key_purpose = OSSL_KDF_PURPOSE_CLIENT_CIPHER_KEY;
+        mac_purpose = OSSL_KDF_PURPOSE_CLIENT_MAC_KEY;
+        iv_purpose = OSSL_KDF_PURPOSE_CLIENT_IV;
         mac_secret = &(p[0]);
         n = i + i;
         key = &(p[n]);
@@ -159,6 +166,9 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         iv = &(p[n]);
         n += k + k;
     } else {
+        key_purpose = OSSL_KDF_PURPOSE_SERVER_CIPHER_KEY;
+        mac_purpose = OSSL_KDF_PURPOSE_SERVER_MAC_KEY;
+        iv_purpose = OSSL_KDF_PURPOSE_SERVER_IV;
         n = i;
         mac_secret = &(p[n]);
         n += i + j;
@@ -168,7 +178,41 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         n += k;
     }
 
-    if (n > s->s3.tmp.key_block_length) {
+    if (s->s3.tmp.key_block_kdf != NULL) {
+        /*
+         * The schedule was derived as EVP_SKEY objects, so the keys are taken
+         * as such and never become bytes here.  The IV is not secret and is
+         * still handed over raw.
+         */
+        const char *propq = SSL_CONNECTION_GET_CTX(s)->propq;
+        const unsigned char *skiv;
+        size_t skivlen;
+
+        cipherkey.opaque = EVP_KDF_CTX_get1_SKEY(s->s3.tmp.key_block_kdf,
+            key_purpose, propq);
+        if (cipherkey.opaque == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        if (mac_secret_size != 0) {
+            mackey.opaque = EVP_KDF_CTX_get1_SKEY(s->s3.tmp.key_block_kdf,
+                mac_purpose, propq);
+            if (mackey.opaque == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            pmackey = &mackey;
+        }
+        if (k != 0) {
+            if (!EVP_KDF_CTX_get0_IV(s->s3.tmp.key_block_kdf, iv_purpose,
+                    &skiv, &skivlen)
+                || skivlen != k) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            iv = (unsigned char *)skiv;
+        }
+    } else if (n > s->s3.tmp.key_block_length) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -236,10 +280,20 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
+    if (cipherkey.opaque == NULL) {
+        cipherkey.secret = key;
+        cipherkey.len = cl;
+    }
+    if (mac_secret_size != 0 && mackey.opaque == NULL) {
+        mackey.secret = mac_secret;
+        mackey.len = mac_secret_size;
+        pmackey = &mackey;
+    }
+
     if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-            NULL, 0, NULL, key, cl, iv, (size_t)k,
-            mac_secret, mac_secret_size, NULL, c, taglen,
+            NULL, 0, NULL, &cipherkey, iv, (size_t)k,
+            pmackey, NULL, c, taglen,
             mac_type, m, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
@@ -248,16 +302,100 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     OSSL_TRACE_BEGIN(TLS)
     {
         BIO_printf(trc_out, "which = %04X, key:\n", which);
-        BIO_dump_indent(trc_out, key, EVP_CIPHER_get_key_length(c), 4);
+        if (cipherkey.opaque == NULL)
+            BIO_dump_indent(trc_out, cipherkey.secret,
+                EVP_CIPHER_get_key_length(c), 4);
+        else
+            BIO_printf(trc_out, "    <EVP_SKEY>\n");
         BIO_printf(trc_out, "iv:\n");
         BIO_dump_indent(trc_out, iv, (int)k, 4);
     }
     OSSL_TRACE_END(TLS);
 
+    EVP_SKEY_free(cipherkey.opaque);
+    cipherkey.opaque = NULL;
+    EVP_SKEY_free(mackey.opaque);
+    mackey.opaque = NULL;
+
     return 1;
 err:
+    EVP_SKEY_free(cipherkey.opaque);
+    EVP_SKEY_free(mackey.opaque);
     return 0;
 }
+
+#ifdef OPENSSL_HAVE_TLS1PRF
+/*
+ * Derive a TLS 1.2 key block as EVP_SKEY objects.
+ *
+ * Same inputs and therefore same bytes as tls1_generate_key_block(), but the
+ * keys come back as EVP_SKEY objects held by the returned context rather than
+ * as a buffer, which is what a provider that cannot export raw key material
+ * needs.  The context is stored on the connection and released by
+ * ssl3_cleanup_key_block().
+ */
+static int tls1_generate_key_skeys(SSL_CONNECTION *s, const EVP_CIPHER *c,
+    size_t mac_secret_size, size_t ivlen)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[12], *p = params;
+    size_t cipher_key_len = (size_t)EVP_CIPHER_get_key_length(c);
+    /* The PRF digest, which is not the MAC digest and exists for AEAD too */
+    const EVP_MD *md = ssl_prf_md(s);
+    const char *mdname;
+    int ret = 0;
+
+    if (md == NULL || (mdname = EVP_MD_get0_name(md)) == NULL)
+        goto err;
+
+    if ((kctx = EVP_KDF_CTX_new(sctx->tls1prf)) == NULL)
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        (char *)mdname, 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        s->session->master_key, s->session->master_key_length);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        (void *)TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        s->s3.server_random, SSL3_RANDOM_SIZE);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        s->s3.client_random, SSL3_RANDOM_SIZE);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_KEY_LEN,
+        &mac_secret_size);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_CIPHER_KEY_LEN,
+        &cipher_key_len);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_IV_LEN, &ivlen);
+    /*
+     * Name the algorithms the keys are for so the provider can pick a key
+     * type for each.  The lengths above are given explicitly rather than left
+     * to the cipher: the IV in a TLS 1.2 key block is the protocol's, which
+     * for an AEAD suite is the implicit nonce and not the cipher's full IV.
+     */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+        (char *)EVP_CIPHER_get0_name(c), 0);
+    if (mac_secret_size > 0)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
+            (char *)OSSL_MAC_NAME_HMAC, 0);
+    if (sctx->propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+            (char *)sctx->propq, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!EVP_KDF_derive_SKEYs(kctx, params))
+        goto err;
+
+    EVP_KDF_CTX_free(s->s3.tmp.key_block_kdf);
+    s->s3.tmp.key_block_kdf = kctx;
+    return 1;
+
+err:
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_HAVE_TLS1PRF */
 
 int tls1_setup_key_block(SSL_CONNECTION *s)
 {
@@ -319,15 +457,30 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
     }
     OSSL_TRACE_END(TLS);
 
-    if (!tls1_generate_key_block(s, p, num)) {
+#ifdef OPENSSL_HAVE_TLS1PRF
+    if (ssl_prefer_skey_derivation(s, SSL_CONNECTION_GET_CTX(s)->tls1prf, c,
+            mac_type == EVP_PKEY_HMAC ? SSL_CONNECTION_GET_CTX(s)->hmac : NULL,
+            mac_secret_size)) {
+        if (!tls1_generate_key_skeys(s, c, mac_secret_size, (size_t)ivlen)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    } else
+#endif
+        if (!tls1_generate_key_block(s, p, num)) {
         /* SSLfatal() already called */
         goto err;
     }
 
     OSSL_TRACE_BEGIN(TLS)
     {
-        BIO_printf(trc_out, "key block\n");
-        BIO_dump_indent(trc_out, p, (int)num, 4);
+        /* Nothing was written to the key block if the keys are EVP_SKEYs */
+        if (s->s3.tmp.key_block_kdf == NULL) {
+            BIO_printf(trc_out, "key block\n");
+            BIO_dump_indent(trc_out, p, (int)num, 4);
+        } else {
+            BIO_printf(trc_out, "key block derived as EVP_SKEY objects\n");
+        }
     }
     OSSL_TRACE_END(TLS);
 
@@ -431,6 +584,68 @@ int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
     OSSL_TRACE_END(TLS);
 
     *secret_size = SSL3_MASTER_SECRET_SIZE;
+    return 1;
+}
+
+/*
+ * Decide whether to derive keys as opaque EVP_SKEY objects or raw bytes.
+ *
+ * Returns 1 to use opaque keys (for providers that cannot export key material,
+ * e.g., PKCS#11), or 0 to use raw bytes (the default).
+ *
+ * Opaque path is blocked if:
+ * - KTLS is enabled (kernel needs raw bytes)
+ * - SSL_OP_OPAQUE_RECORD_KEYS is not set
+ * - KDF, cipher, and MAC come from different providers
+ * - MAC key is needed but EVP_MAC is unavailable or cipher is composite
+ */
+int ssl_prefer_skey_derivation(const SSL_CONNECTION *s, const EVP_KDF *kdf,
+    const EVP_CIPHER *c, const EVP_MAC *mac, size_t mac_secret_size)
+{
+    const OSSL_PROVIDER *prov;
+
+    if (kdf == NULL || c == NULL || EVP_CIPHER_get_key_length(c) <= 0)
+        return 0;
+
+    /*
+     * KTLS needs raw key bytes for the kernel, so it always uses the raw
+     * key block path regardless of SSL_OP_OPAQUE_RECORD_KEYS.
+     */
+    if ((s->options & SSL_OP_ENABLE_KTLS) != 0)
+        return 0;
+
+    /*
+     * Default to raw bytes unless the application explicitly requested
+     * opaque keys.
+     */
+    if ((s->options & SSL_OP_OPAQUE_RECORD_KEYS) == 0)
+        return 0;
+
+    /*
+     * The cipher must support SKEY initialization to keep keys opaque.
+     * If not, fall back to raw key derivation rather than deriving opaque
+     * keys that must be immediately extracted.
+     */
+    if (c->einit_skey == NULL || c->dinit_skey == NULL)
+        return 0;
+
+    prov = EVP_KDF_get0_provider(kdf);
+    if (prov != EVP_CIPHER_get0_provider(c))
+        return 0;
+
+    if (mac_secret_size != 0) {
+        if (mac == NULL
+            || prov != EVP_MAC_get0_provider(mac)
+            || (EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
+            return 0;
+
+        /*
+         * The MAC must also support SKEY initialization to keep keys opaque.
+         */
+        if (mac->init_skey == NULL)
+            return 0;
+    }
+
     return 1;
 }
 

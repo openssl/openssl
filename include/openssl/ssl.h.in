@@ -458,6 +458,14 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define SSL_OP_GREASE SSL_OP_BIT(41)
 
 /*
+ * Derive TLS record keys as opaque EVP_SKEY objects instead of raw bytes.
+ * Applications that want to use providers that cannot export key material
+ * (such as PKCS#11 tokens) should set this option.  KTLS always uses raw
+ * keys regardless of this setting.
+ */
+#define SSL_OP_OPAQUE_RECORD_KEYS SSL_OP_BIT(42)
+
+/*
  * Option "collections."
  */
 #define SSL_OP_NO_SSL_MASK                                 \

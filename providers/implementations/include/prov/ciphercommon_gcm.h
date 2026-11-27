@@ -102,6 +102,8 @@ struct prov_gcm_hw_st {
 
 OSSL_FUNC_cipher_encrypt_init_fn ossl_gcm_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_gcm_dinit;
+OSSL_FUNC_cipher_encrypt_skey_init_fn ossl_gcm_skey_einit;
+OSSL_FUNC_cipher_decrypt_skey_init_fn ossl_gcm_skey_dinit;
 OSSL_FUNC_cipher_get_ctx_params_fn ossl_gcm_get_ctx_params;
 OSSL_FUNC_cipher_set_ctx_params_fn ossl_gcm_set_ctx_params;
 OSSL_FUNC_cipher_cipher_fn ossl_gcm_cipher;

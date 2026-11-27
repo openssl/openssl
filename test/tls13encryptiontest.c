@@ -283,6 +283,7 @@ static int test_tls13_encryption(void)
 {
     TLS_RL_RECORD rec;
     unsigned char *key = NULL;
+    OSSL_RECORD_KEY reckey = { 0 };
     const EVP_CIPHER *ciph = EVP_aes_128_gcm();
     int ret = 0;
     size_t ivlen, ctr;
@@ -306,12 +307,15 @@ static int test_tls13_encryption(void)
             goto err;
         }
 
+        reckey.secret = key;
+        reckey.len = 16;
+
         /* Set up the write record layer */
         if (!TEST_true(ossl_tls_record_method.new_record_layer(
                 NULL, NULL, TLS1_3_VERSION, OSSL_RECORD_ROLE_SERVER,
                 OSSL_RECORD_DIRECTION_WRITE,
                 OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, NULL, 0,
-                NULL, key, 16, iv, ivlen, NULL, 0, NULL,
+                NULL, &reckey, iv, ivlen, NULL, NULL,
                 EVP_aes_128_gcm(),
                 EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
                 NULL, 0, NULL, NULL, NULL, NULL, NULL,
@@ -336,7 +340,7 @@ static int test_tls13_encryption(void)
                 NULL, NULL, TLS1_3_VERSION, OSSL_RECORD_ROLE_SERVER,
                 OSSL_RECORD_DIRECTION_READ,
                 OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, NULL, 0,
-                NULL, key, 16, iv, ivlen, NULL, 0, NULL,
+                NULL, &reckey, iv, ivlen, NULL, NULL,
                 EVP_aes_128_gcm(),
                 EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
                 NULL, 0, NULL, NULL, NULL, NULL, NULL,

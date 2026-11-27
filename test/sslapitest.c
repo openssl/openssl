@@ -2811,6 +2811,128 @@ static int test_ktls_sendfile(int test)
 }
 #endif
 
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+/*
+ * Test SSL_OP_OPAQUE_RECORD_KEYS: verify that opaque key derivation works
+ * for TLS 1.2 (CBC+HMAC and AEAD) and TLS 1.3.
+ */
+static int test_opaque_record_keys(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    const char *cipher = NULL;
+    int min_version, max_version;
+
+    if (is_fips && fips_provider_version_lt(libctx, 4, 2, 0))
+        return TEST_skip("Multi-key derivation not supported in this version of fips provider");
+
+    /*
+     * Test cases:
+     * 0: TLS 1.2 with AES-CBC-HMAC (CBC + HMAC suite)
+     * 1: TLS 1.2 with AES-GCM (AEAD suite with SKEY support)
+     * 2: TLS 1.3 with AES-GCM (AEAD suite with SKEY support)
+     * 3: TLS 1.2 with AES-CCM (AEAD suite with SKEY support)
+     * 4: TLS 1.3 with AES-CCM (AEAD suite with SKEY support)
+     */
+    switch (idx) {
+    case 0:
+#ifdef OPENSSL_NO_TLS1_2
+        return TEST_skip("TLS 1.2 not supported");
+#endif
+        min_version = max_version = TLS1_2_VERSION;
+        cipher = "AES128-SHA256"; /* CBC + HMAC */
+        break;
+    case 1:
+#ifdef OPENSSL_NO_TLS1_2
+        return TEST_skip("TLS 1.2 not supported");
+#endif
+        min_version = max_version = TLS1_2_VERSION;
+        cipher = "AES128-GCM-SHA256"; /* GCM AEAD */
+        break;
+    case 2:
+#ifdef OSSL_NO_USABLE_TLS1_3
+        return TEST_skip("TLS 1.3 not supported");
+#endif
+        min_version = max_version = TLS1_3_VERSION;
+        cipher = "TLS_AES_128_GCM_SHA256"; /* GCM AEAD */
+        break;
+    case 3:
+#ifdef OPENSSL_NO_TLS1_2
+        return TEST_skip("TLS 1.2 not supported");
+#endif
+        min_version = max_version = TLS1_2_VERSION;
+        cipher = "AES128-CCM"; /* CCM AEAD */
+        break;
+    case 4:
+#ifdef OSSL_NO_USABLE_TLS1_3
+        return TEST_skip("TLS 1.3 not supported");
+#endif
+        min_version = max_version = TLS1_3_VERSION;
+        cipher = "TLS_AES_128_CCM_SHA256"; /* CCM AEAD */
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), min_version,
+            max_version, &sctx, &cctx, cert,
+            privkey)))
+        return 0;
+
+    /* Set cipher - use cipher_list for TLS 1.2, ciphersuites for TLS 1.3 */
+    if (idx == 2 || idx == 4) {
+        /* TLS 1.3 */
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx, cipher)))
+            goto end;
+    } else {
+        /* TLS 1.2 */
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher)))
+            goto end;
+    }
+
+    /* Enable opaque record keys on the server */
+    SSL_CTX_set_options(sctx, SSL_OP_OPAQUE_RECORD_KEYS);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Verify data can be transferred successfully - this exercises the
+     * opaque key path through record encryption/decryption and MAC.
+     */
+    {
+        unsigned char buf[64];
+        size_t written, readbytes;
+        const char *msg = "test message";
+        size_t msglen = strlen(msg);
+
+        if (!TEST_true(SSL_write_ex(clientssl, msg, msglen, &written))
+            || !TEST_size_t_eq(written, msglen)
+            || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+            || !TEST_mem_eq(buf, readbytes, msg, msglen))
+            goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
 static int test_large_message_tls(void)
 {
     return execute_test_large_message(TLS_server_method(), TLS_client_method(),
@@ -20427,6 +20549,7 @@ int setup_tests(void)
 #endif
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_ALL_TESTS(test_opaque_record_keys, 5);
     ADD_TEST(test_group_before_handshake);
 #endif
     ADD_TEST(test_large_message_tls);
