@@ -2218,10 +2218,9 @@ err:
 
 /*-
  * A key length other than the cipher's own, via set_params or as an init
- * param, must be refused where KEYLEN is settable and ignored where it is
- * not. Either way the keyed context must stay usable: the key length is
- * unchanged, for the provider and for EVP, and a NULL-key re-init reproduces
- * the same ciphertext and tag.
+ * param, must be refused, and the keyed context must stay usable: the key
+ * length is unchanged, for the provider and for EVP, and a NULL-key re-init
+ * reproduces the same ciphertext and tag.
  */
 static int test_evp_aead_keylen_reinit(int idx)
 {
@@ -2244,7 +2243,7 @@ static int test_evp_aead_keylen_reinit(int idx)
     uint8_t ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
 
     size_t i = 0;
-    int len = 0, ct1len = 0, ct2len = 0, settable = 0, testresult = 0;
+    int len = 0, ct1len = 0, ct2len = 0, testresult = 0;
 
     for (i = 0; i < (size_t)info->keylen; i++)
         key[i] = (uint8_t)(0xA0 + i);
@@ -2252,9 +2251,6 @@ static int test_evp_aead_keylen_reinit(int idx)
         iv[i] = (uint8_t)(0xB0 + i);
 
     wrong_keylen = (size_t)info->keylen / 2;
-    settable = OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(info->ciph),
-                   OSSL_CIPHER_PARAM_KEYLEN)
-        != NULL;
 
     /* reference: Init, (CCM len), AAD, Update, Final, get tag */
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
@@ -2283,22 +2279,17 @@ static int test_evp_aead_keylen_reinit(int idx)
 
     ERR_clear_error();
 
-    /* via set_params: refused if settable, ignored otherwise */
-    if (!TEST_int_eq(EVP_CIPHER_CTX_set_params(ctx, keylenparams), !settable)) {
-        TEST_info("%s: set_params with KEYLEN %zu (key length %d) %s",
-            info->name, wrong_keylen, info->keylen,
-            settable ? "accepted, but KEYLEN is settable and must refuse it"
-                     : "failed, but KEYLEN is not settable and must be ignored");
+    /* via set_params */
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, keylenparams))) {
+        TEST_info("%s: set_params accepted KEYLEN %zu (key length %d)",
+            info->name, wrong_keylen, info->keylen);
         goto err;
     }
 
     /* as an init param, without a key so the context keeps its own */
-    if (!TEST_int_eq(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, keylenparams),
-            !settable)) {
-        TEST_info("%s: init with KEYLEN %zu param (key length %d) %s",
-            info->name, wrong_keylen, info->keylen,
-            settable ? "accepted, but KEYLEN is settable and must refuse it"
-                     : "failed, but KEYLEN is not settable and must be ignored");
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, keylenparams))) {
+        TEST_info("%s: init accepted a KEYLEN %zu param (key length %d)",
+            info->name, wrong_keylen, info->keylen);
         goto err;
     }
 
@@ -2352,10 +2343,9 @@ err:
 
 /*-
  * An IV length no AEAD can take, via set_params or as an init param, must be
- * refused where IVLEN is settable and ignored where it is not. Either way the
- * keyed context must stay usable: the IV length is unchanged, for the
- * provider and for EVP, and a NULL-key re-init reproduces the same
- * ciphertext and tag.
+ * refused, and the keyed context must stay usable: the IV length is
+ * unchanged, for the provider and for EVP, and a NULL-key re-init reproduces
+ * the same ciphertext and tag.
  */
 static int test_evp_aead_ivlen_reinit(int idx)
 {
@@ -2379,17 +2369,13 @@ static int test_evp_aead_ivlen_reinit(int idx)
     uint8_t ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
 
     size_t i = 0;
-    int len = 0, ct1len = 0, ct2len = 0, settable = 0, testresult = 0;
+    int len = 0, ct1len = 0, ct2len = 0, testresult = 0;
     int ref_evp_ivlen = 0;
 
     for (i = 0; i < (size_t)info->keylen; i++)
         key[i] = (uint8_t)(0xA0 + i);
     for (i = 0; i < (size_t)info->ivlen; i++)
         iv[i] = (uint8_t)(0xB0 + i);
-
-    settable = OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(info->ciph),
-                   OSSL_CIPHER_PARAM_IVLEN)
-        != NULL;
 
     /* reference: Init, (CCM len), AAD, Update, Final, get tag */
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
@@ -2424,22 +2410,17 @@ static int test_evp_aead_ivlen_reinit(int idx)
 
     ERR_clear_error();
 
-    /* via set_params: refused if settable, ignored otherwise */
-    if (!TEST_int_eq(EVP_CIPHER_CTX_set_params(ctx, ivlenparams), !settable)) {
-        TEST_info("%s: set_params with IVLEN %zu (IV length %zu) %s",
-            info->name, wrong_ivlen, ref_ivlen,
-            settable ? "accepted, but IVLEN is settable and must refuse it"
-                     : "failed, but IVLEN is not settable and must be ignored");
+    /* via set_params */
+    if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, ivlenparams))) {
+        TEST_info("%s: set_params accepted IVLEN %zu (IV length %zu)",
+            info->name, wrong_ivlen, ref_ivlen);
         goto err;
     }
 
     /* as an init param, without a key so the context keeps its own */
-    if (!TEST_int_eq(EVP_EncryptInit_ex2(ctx, NULL, NULL, NULL, ivlenparams),
-            !settable)) {
-        TEST_info("%s: init with IVLEN %zu param (IV length %zu) %s",
-            info->name, wrong_ivlen, ref_ivlen,
-            settable ? "accepted, but IVLEN is settable and must refuse it"
-                     : "failed, but IVLEN is not settable and must be ignored");
+    if (!TEST_false(EVP_EncryptInit_ex2(ctx, NULL, NULL, NULL, ivlenparams))) {
+        TEST_info("%s: init accepted an IVLEN %zu param (IV length %zu)",
+            info->name, wrong_ivlen, ref_ivlen);
         goto err;
     }
 
