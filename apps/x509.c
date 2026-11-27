@@ -256,19 +256,12 @@ static void warn_copying(ASN1_OBJECT *excluded, const char *names)
             sn);
 }
 
-static int x509_remove_exts_by_nid(X509 *x, int nid)
+static void x509_remove_exts_by_nid(X509 *x, int nid)
 {
     int loc;
-    X509_EXTENSION *ext;
 
-    while ((loc = X509_get_ext_by_NID(x, nid, -1)) >= 0) {
-        if ((ext = X509_delete_ext(x, loc)) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        X509_EXTENSION_free(ext);
-    }
-    return 1;
+    while ((loc = X509_get_ext_by_NID(x, nid, -1)) >= 0)
+        X509_EXTENSION_free(X509_delete_ext(x, loc));
 }
 
 static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
@@ -1097,9 +1090,9 @@ cert_loop:
         }
         noout = 1;
     } else if (unsigned_cert) {
-        if (!x509_remove_exts_by_nid(x, NID_authority_key_identifier)
-            || !x509_remove_exts_by_nid(x, NID_issuer_alt_name)
-            || !X509_set_version(x, X509_VERSION_3) /* make sure v3 is used regardless of extensions */
+        x509_remove_exts_by_nid(x, NID_authority_key_identifier);
+        x509_remove_exts_by_nid(x, NID_issuer_alt_name);
+        if (!X509_set_version(x, X509_VERSION_3) /* make sure v3 is used regardless of extensions */
             || !X509_set_unsigned(x))
             goto err;
     } else if (CAfile != NULL) {
