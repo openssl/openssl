@@ -361,13 +361,15 @@ static int fill_first_blocks(uint8_t *blockhash, const KDF_ARGON2 *ctx)
         store32(blockhash + ARGON2_PREHASH_DIGEST_LENGTH, 0);
         store32(blockhash + ARGON2_PREHASH_DIGEST_LENGTH + 4, l);
         if (blake2b_long(ctx->md, ctx->mac, blockhash_bytes, ARGON2_BLOCK_SIZE,
-                blockhash, ARGON2_PREHASH_SEED_LENGTH) != 1)
+                blockhash, ARGON2_PREHASH_SEED_LENGTH)
+            != 1)
             goto end;
         load_block(&ctx->memory[l * ctx->lane_length + 0],
             blockhash_bytes);
         store32(blockhash + ARGON2_PREHASH_DIGEST_LENGTH, 1);
         if (blake2b_long(ctx->md, ctx->mac, blockhash_bytes, ARGON2_BLOCK_SIZE,
-                blockhash, ARGON2_PREHASH_SEED_LENGTH) != 1)
+                blockhash, ARGON2_PREHASH_SEED_LENGTH)
+            != 1)
             goto end;
         load_block(&ctx->memory[l * ctx->lane_length + 1],
             blockhash_bytes);
