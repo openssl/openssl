@@ -129,6 +129,17 @@ __owur int tls_get_message_body(SSL_CONNECTION *s, size_t *len);
 __owur int dtls_get_message(SSL_CONNECTION *s, int *mt);
 __owur int dtls_get_message_body(SSL_CONNECTION *s, size_t *len);
 int dtls_record_from_retained_epoch(SSL_CONNECTION *s);
+/**
+ * @brief Test whether a server read state is waiting for the client's flight.
+ *
+ * In these states an ACK must not finish the client's flight. The certificate
+ * states are also used during post-handshake authentication. Callers admitting
+ * ACKs must exclude a pending HelloRetryRequest.
+ *
+ * @param state the server handshake state to test
+ * @returns 1 if the server is waiting for the rest of the client's flight,
+ *          0 otherwise
+ */
 int dtls13_server_waiting_for_client_flight(OSSL_HANDSHAKE_STATE state);
 int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr);
