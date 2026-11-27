@@ -19,6 +19,15 @@
 #include "crypto/asn1.h"
 #include "cms_local.h"
 
+/* RFC 3211 wrapping requires a length-preserving block cipher. */
+static int kek_cipher_supported(const EVP_CIPHER *cipher)
+{
+    int mode = EVP_CIPHER_get_mode(cipher);
+
+    return (mode == EVP_CIPH_CBC_MODE || mode == EVP_CIPH_ECB_MODE)
+        && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0;
+}
+
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
     unsigned char *pass, ossl_ssize_t passlen)
 {
@@ -71,7 +80,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
         ERR_raise(ERR_LIB_CMS, CMS_R_NO_CIPHER);
         return NULL;
     }
-    if ((EVP_CIPHER_get_flags(kekciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
+    if (!kek_cipher_supported(kekciph)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEK_ALGORITHM);
         return NULL;
     }
@@ -260,6 +269,12 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
     size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     size_t olen;
     int dummy;
+
+    /* This cipher can also come from a parsed PasswordRecipientInfo. */
+    if (!kek_cipher_supported(EVP_CIPHER_CTX_get0_cipher(ctx))) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEK_ALGORITHM);
+        return 0;
+    }
 
     if (blocklen == 0)
         return 0;

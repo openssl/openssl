@@ -1895,6 +1895,143 @@ end:
     return ret;
 }
 
+static const struct {
+    const char *name;
+    int supported;
+} pwri_kek_ciphers[] = {
+    { "AES-128-CBC", 1 },
+    { "AES-128-ECB", 1 },
+    { "AES-128-CFB", 0 },
+    { "AES-128-OFB", 0 },
+    { "AES-128-GCM", 0 },
+    { "AES-128-WRAP", 0 },
+    { "AES-128-WRAP-PAD", 0 },
+#ifndef OPENSSL_NO_DES
+    { "DES3-WRAP", 0 },
+#endif
+};
+
+static int test_pwri_kek_cipher(int idx)
+{
+    CMS_ContentInfo *cms = NULL;
+    CMS_RecipientInfo *ri;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char *pass = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(NULL,
+                      pwri_kek_ciphers[idx].name, NULL))
+        || !TEST_ptr(cms = CMS_encrypt(NULL, NULL, EVP_aes_128_cbc(),
+                         CMS_PARTIAL))
+        || !TEST_ptr(pass = (unsigned char *)OPENSSL_strdup("password")))
+        goto end;
+
+    ri = CMS_add0_recipient_password(cms, -1, NID_undef, NID_undef,
+        pass, -1, cipher);
+    if (ri != NULL)
+        pass = NULL;
+    if (pwri_kek_ciphers[idx].supported) {
+        if (!TEST_ptr(ri))
+            goto end;
+    } else if (!TEST_ptr_null(ri)
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_CMS)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            CMS_R_UNSUPPORTED_KEK_ALGORITHM)) {
+        goto end;
+    }
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    OPENSSL_free(pass);
+    EVP_CIPHER_free(cipher);
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+static const int pwri_wrap_nids[] = {
+    NID_id_aes128_wrap,
+    NID_id_aes256_wrap,
+    NID_id_aes128_wrap_pad,
+#ifndef OPENSSL_NO_DES
+    NID_id_smime_alg_CMS3DESwrap,
+#endif
+};
+
+/* A parsed PWRI must not select a cipher that expands its input. */
+static int test_pwri_kek_wrap_cipher(int idx)
+{
+    const char *msg = "Hello world";
+    STACK_OF(X509) *recips = NULL;
+    STACK_OF(CMS_RecipientInfo) *ris;
+    BIO *msgbio = NULL, *derbio = NULL;
+    CMS_ContentInfo *cms = NULL, *decoded = NULL;
+    CMS_RecipientInfo *ri = NULL;
+    X509_ALGOR *kekalg = NULL;
+    unsigned char *pass = NULL;
+    int ret = 0, i;
+
+    if (!TEST_ptr(recips = sk_X509_new_null())
+        || !TEST_int_gt(sk_X509_push(recips, cert), 0)
+        || !TEST_ptr(msgbio = BIO_new_mem_buf(msg, (int)strlen(msg)))
+        || !TEST_ptr(derbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(cms = CMS_encrypt(recips, msgbio, EVP_aes_256_cbc(),
+                         CMS_PARTIAL))
+        || !TEST_ptr(pass = (unsigned char *)OPENSSL_strdup("password")))
+        goto end;
+    if (!TEST_ptr(CMS_add0_recipient_password(cms, -1, NID_undef,
+            NID_undef, pass, -1, NULL)))
+        goto end;
+    pass = NULL;
+
+    if (!TEST_true(CMS_final(cms, msgbio, NULL, CMS_BINARY))
+        || !TEST_true(i2d_CMS_bio(derbio, cms))
+        || !TEST_ptr(decoded = d2i_CMS_bio(derbio, NULL))
+        || !TEST_true(CMS_decrypt_set1_pkey(decoded, privkey, cert))
+        || !TEST_ptr(ris = CMS_get0_RecipientInfos(decoded)))
+        goto end;
+
+    for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
+        ri = sk_CMS_RecipientInfo_value(ris, i);
+        if (CMS_RecipientInfo_type(ri) == CMS_RECIPINFO_PASS)
+            break;
+    }
+    if (!TEST_int_lt(i, sk_CMS_RecipientInfo_num(ris)))
+        goto end;
+
+    /* Preserve the original parameters and change only the cipher OID. */
+    if (!TEST_ptr(kekalg = ASN1_TYPE_unpack_sequence(
+                      ASN1_ITEM_rptr(X509_ALGOR),
+                      ri->d.pwri->keyEncryptionAlgorithm->parameter)))
+        goto end;
+    ASN1_OBJECT_free(kekalg->algorithm);
+    kekalg->algorithm = OBJ_nid2obj(pwri_wrap_nids[idx]);
+    if (!TEST_ptr(ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(X509_ALGOR), kekalg,
+            &ri->d.pwri->keyEncryptionAlgorithm->parameter))
+        || !TEST_ptr(pass = (unsigned char *)OPENSSL_strdup("newpassword"))
+        || !TEST_true(CMS_RecipientInfo_set0_password(ri, pass, -1)))
+        goto end;
+    pass = NULL;
+
+    if (!TEST_false(CMS_RecipientInfo_encrypt(decoded, ri))
+        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_CMS)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            CMS_R_UNSUPPORTED_KEK_ALGORITHM))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    OPENSSL_free(pass);
+    X509_ALGOR_free(kekalg);
+    CMS_ContentInfo_free(decoded);
+    CMS_ContentInfo_free(cms);
+    sk_X509_free(recips);
+    BIO_free(msgbio);
+    BIO_free(derbio);
+    return ret;
+}
+
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
 /*
  * CVE-2026-63072: CMS_decrypt() with a KeyAgreeRecipientInfo naming an
@@ -2065,6 +2202,8 @@ int setup_tests(void)
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
     ADD_TEST(test_pwri_kek_unwrap_no_iv_key);
+    ADD_ALL_TESTS(test_pwri_kek_cipher, OSSL_NELEM(pwri_kek_ciphers));
+    ADD_ALL_TESTS(test_pwri_kek_wrap_cipher, OSSL_NELEM(pwri_wrap_nids));
     if (ed448_cert != NULL && ed448_privkey != NULL) {
         /*
          * We only run the overlong test if we have ec enabled
