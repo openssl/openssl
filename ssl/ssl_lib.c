@@ -615,6 +615,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->hello_retry_request = SSL_HRR_NONE;
     sc->dtls13_process_hello = 0;
     sc->sent_tickets = 0;
+    sc->certreqs_sent = 0;
 
     sc->error = 0;
     sc->hit = 0;
@@ -648,6 +649,10 @@ int ossl_ssl_connection_reset(SSL *s)
 
     EVP_MD_CTX_free(sc->pha_dgst);
     sc->pha_dgst = NULL;
+    sc->post_handshake_auth = SSL_PHA_NONE;
+    OPENSSL_free(sc->pha_context);
+    sc->pha_context = NULL;
+    sc->pha_context_len = 0;
 
     /* Reset DANE verification result state */
     sc->dane.mdpth = -1;
