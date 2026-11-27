@@ -898,6 +898,18 @@ void ossl_qtx_finish_dgram(OSSL_QTX *qtx)
     ++qtx->datagram_count;
 }
 
+void ossl_qtx_pad_dgram(OSSL_QTX *qtx, size_t min_len)
+{
+    TXE *txe = qtx->cons;
+
+    if (txe == NULL || txe->data_len == 0 || txe->data_len >= min_len
+        || min_len > txe->alloc_len)
+        return;
+
+    memset(txe_data(txe) + txe->data_len, 0, min_len - txe->data_len);
+    txe->data_len = min_len;
+}
+
 static void txe_to_msg(TXE *txe, BIO_MSG *msg)
 {
     msg->data = txe_data(txe);

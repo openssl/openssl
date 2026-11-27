@@ -53,6 +53,7 @@ typedef struct ossl_quic_tx_packetiser_args_st {
     QLOG *(*get_qlog_cb)(void *arg); /* Optional QLOG retrieval func */
     void *get_qlog_cb_arg;
     uint32_t protocol_version; /* The protocol version to try negotiating */
+    int is_server; /* Whether we are the server */
 
     /*
      * Injected dependencies - crypto streams.

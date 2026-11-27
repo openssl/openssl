@@ -45,7 +45,10 @@ static int depack_do_frame_ping(PACKET *pkt, QUIC_CHANNEL *ch,
     uint32_t enc_level,
     OSSL_ACKM_RX_PKT *ackm_data)
 {
-    /* We ignore this frame, apart from eliciting an ACK */
+    /*
+     * A PING only needs an ACK (RFC 9000 s. 19.2), and the packet is already
+     * ack-eliciting, so there is nothing more to do.
+     */
     if (!ossl_quic_wire_decode_frame_ping(pkt)) {
         ossl_quic_channel_raise_protocol_error(ch,
             OSSL_QUIC_ERR_FRAME_ENCODING_ERROR,
@@ -54,7 +57,6 @@ static int depack_do_frame_ping(PACKET *pkt, QUIC_CHANNEL *ch,
         return 0;
     }
 
-    ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, enc_level);
     return 1;
 }
 

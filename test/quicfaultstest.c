@@ -11,6 +11,8 @@
 #include <openssl/ssl.h>
 #include "helpers/quictestlib.h"
 #include "internal/quic_error.h"
+#include "internal/quic_wire.h"
+#include "internal/packet.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -146,6 +148,83 @@ static int test_unknown_frame(void)
         goto err;
 
     if (!TEST_true(qtest_check_server_frame_encoding_err(qtserv)))
+        goto err;
+
+    testresult = 1;
+err:
+    qtest_fault_free(fault);
+    SSL_free(cssl);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test that a received PING does not make the client send a PING
+ */
+static int add_ping_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len, void *cbarg)
+{
+    int *done = cbarg;
+    unsigned char ping_frame[] = { OSSL_QUIC_FRAME_TYPE_PING };
+
+    /* Add a PING to the first Handshake packet only */
+    if (hdr->type != QUIC_PKT_TYPE_HANDSHAKE || *done)
+        return 1;
+
+    *done = 1;
+    return qtest_fault_prepend_frame(fault, ping_frame, sizeof(ping_frame));
+}
+
+static void count_ping_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    int *pings = arg;
+    PACKET pkt;
+    uint64_t frame_type;
+
+    if (write_p && content_type == SSL3_RT_QUIC_FRAME_FULL
+        && PACKET_buf_init(&pkt, buf, len)
+        && ossl_quic_wire_peek_frame_header(&pkt, &frame_type, NULL)
+        && frame_type == OSSL_QUIC_FRAME_TYPE_PING)
+        ++*pings;
+}
+
+static int test_ping_no_ping_reply(void)
+{
+    int testresult = 0, done = 0, pings = 0;
+    SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
+    QUIC_TSERVER *qtserv = NULL;
+    SSL *cssl = NULL;
+    QTEST_FAULT *fault = NULL;
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    /* Fake time keeps a PTO probe, which carries a PING, from firing */
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, NULL, cert, privkey,
+            QTEST_FLAG_FAKE_TIME, &qtserv, &cssl, &fault, NULL)))
+        goto err;
+
+    if (!TEST_true(qtest_fault_set_packet_plain_listener(fault, add_ping_cb,
+            &done)))
+        goto err;
+
+    SSL_set_msg_callback(cssl, count_ping_cb);
+    SSL_set_msg_callback_arg(cssl, &pings);
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
+        goto err;
+
+    /* Exchange a little more so that any PING the client queued is sent */
+    if (!TEST_int_eq(SSL_write(cssl, "x", 1), 1))
+        goto err;
+
+    ossl_quic_tserver_tick(qtserv);
+    if (!TEST_true(SSL_handle_events(cssl)))
+        goto err;
+
+    if (!TEST_true(done) || !TEST_int_eq(pings, 0))
         goto err;
 
     testresult = 1;
@@ -393,6 +472,7 @@ int setup_tests(void)
 
     ADD_TEST(test_basic);
     ADD_TEST(test_unknown_frame);
+    ADD_TEST(test_ping_no_ping_reply);
     ADD_ALL_TESTS(test_drop_extensions, 2);
     ADD_ALL_TESTS(test_corrupted_data, 2);
 

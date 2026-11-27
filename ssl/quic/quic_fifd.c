@@ -113,6 +113,12 @@ static void on_acked(void *arg)
         ossl_quic_cfq_release(fifd->cfq, cfq_item);
     }
 
+    /* Confirm flag frames */
+    if (pkt->had_handshake_done_frame)
+        fifd->confirm_frame(OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE,
+            UINT64_MAX, pkt,
+            fifd->confirm_frame_arg);
+
     ossl_quic_txpim_pkt_release(fifd->txpim, pkt);
 }
 
