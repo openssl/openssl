@@ -1150,14 +1150,17 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
         r = ctx->cipher->set_ctx_params(ctx->algctx, params);
         if (r > 0) {
             p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-            /* the provider may have ignored it, re-query on next use */
-            if (p != NULL)
+            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->key_len)) {
+                r = 0;
                 ctx->key_len = -1;
+            }
         }
         if (r > 0) {
             p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
-            if (p != NULL)
+            if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len)) {
+                r = 0;
                 ctx->iv_len = -1;
+            }
         }
     }
     return r;
