@@ -3705,7 +3705,7 @@ int has_stdin_waiting(void)
     if (!peeked) {
         /* Probably redirected input? _kbhit() does not work in this case */
         if (GetFileType(inhand) == FILE_TYPE_PIPE) {
-            DWORD avail = 0;
+            DWORD flags = 0, avail = 0;
 
             /*
              * For a pipe we must only report readiness when bytes are really
@@ -3715,10 +3715,20 @@ int has_stdin_waiting(void)
              * arrive, and leaves in the pipe whatever it reports. If it fails
              * we cannot tell what is buffered, so report ready and let the
              * subsequent read report the condition.
+             *
+             * Only a byte pipe can be judged by its byte count. A message
+             * pipe can hold an empty message, which PeekNamedPipe() reports
+             * as zero bytes just like an empty pipe, yet a read returns at
+             * once, and that is how EOF arrives if the writer has closed.
+             * For a message pipe, or if the type is unknown, fall through
+             * to the answer given for other redirected input.
              */
-            if (!PeekNamedPipe(inhand, NULL, 0, NULL, &avail, NULL))
-                return 1;
-            return avail > 0;
+            if (GetNamedPipeInfo(inhand, &flags, NULL, NULL, NULL)
+                && (flags & PIPE_TYPE_MESSAGE) == 0) {
+                if (!PeekNamedPipe(inhand, NULL, 0, NULL, &avail, NULL))
+                    return 1;
+                return avail > 0;
+            }
         }
         if (!feof(stdin)) {
             return 1;
