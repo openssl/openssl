@@ -1688,9 +1688,9 @@ static int test_script(int idx)
 /*
  * Helpers for the Initial PTO scripts. The byte at offset o of their CRYPTO
  * data is o % 251, so each probe payload can be checked against its offset.
- * probe_crypto_end is the end of the CRYPTO data carried by the probes so far.
+ * crypto_probe_end is the end of the CRYPTO data carried by the probes so far.
  */
-static uint64_t probe_crypto_end;
+static uint64_t crypto_probe_end;
 
 static int check_is_initial(struct helper *h);
 static int check_is_handshake(struct helper *h);
@@ -1725,18 +1725,18 @@ static int trigger_pto(struct helper *h)
 
 static int check_first_probe(struct helper *h)
 {
-    probe_crypto_end = h->frame.crypto.offset + h->frame.crypto.len;
+    crypto_probe_end = h->frame.crypto.offset + h->frame.crypto.len;
     return TEST_uint64_t_eq(h->frame.crypto.offset, 0)
         && check_crypto_data(h);
 }
 
 static int check_next_probe(struct helper *h)
 {
-    if (!TEST_uint64_t_eq(h->frame.crypto.offset, probe_crypto_end)
+    if (!TEST_uint64_t_eq(h->frame.crypto.offset, crypto_probe_end)
         || !check_crypto_data(h))
         return 0;
 
-    probe_crypto_end += h->frame.crypto.len;
+    crypto_probe_end += h->frame.crypto.len;
     return 1;
 }
 
@@ -1748,7 +1748,7 @@ static int check_nothing_sent(struct helper *h)
         && TEST_size_t_eq(status.sent_pkt, 0);
 }
 
-/* Keep the PTO tests usable on branches that lack flush_qtx */
+/* TODO: replace with flush_qtx once #34049 is merged into 3.5 and 4.0 */
 static int pto_flush_qtx(struct helper *h)
 {
     ossl_qtx_finish_dgram(h->args.qtx);
@@ -1798,7 +1798,7 @@ static unsigned char pto_crypto_2[2312];
 
 static int check_all_sent_2(struct helper *h)
 {
-    return TEST_uint64_t_eq(probe_crypto_end, sizeof(pto_crypto_2));
+    return TEST_uint64_t_eq(crypto_probe_end, sizeof(pto_crypto_2));
 }
 
 static const struct script_op pto_script_2[] = {
@@ -1836,7 +1836,7 @@ static unsigned char pto_crypto_3[64];
 
 static int check_all_sent_3(struct helper *h)
 {
-    return TEST_uint64_t_eq(probe_crypto_end, sizeof(pto_crypto_3));
+    return TEST_uint64_t_eq(crypto_probe_end, sizeof(pto_crypto_3));
 }
 
 static const struct script_op pto_script_3[] = {
@@ -2185,7 +2185,7 @@ static const struct script_op pto_script_12[] = {
     { OPK_END }
 };
 
-/* Scripts that need an unvalidated path, set up by OPK_NO_VALIDATION */
+/* TODO: drop the #ifdef once #34049 is merged into 3.5 and 4.0 */
 #ifdef OPK_NO_VALIDATION
 /* Initial PTO probes when anti-amplification credit runs out */
 static int rx_initial_13(struct helper *h)
@@ -2293,6 +2293,7 @@ static const struct script_op pto_script_14[] = {
 };
 #endif
 
+/* TODO: move these into scripts[] once #34049 is merged into 3.5 and 4.0 */
 static const struct script_op *const pto_scripts[] = {
     pto_script_1,
     pto_script_2,
