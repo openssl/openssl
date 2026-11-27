@@ -566,7 +566,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
     int ret = -1;
 
     if (a == NULL)
-        return 0;
+        return -1;
     if (a->ameth != NULL) {
         X509_PUBKEY *xpk = NULL;
 
@@ -641,7 +641,7 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
     EVP_PKEY *pktmp;
     int ret;
     if (!a)
-        return 0;
+        return -1;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
@@ -683,7 +683,7 @@ int ossl_i2d_DH_PUBKEY(const DH *a, unsigned char **pp)
     EVP_PKEY *pktmp;
     int ret;
     if (!a)
-        return 0;
+        return -1;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
@@ -790,7 +790,7 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
     EVP_PKEY *pktmp;
     int ret;
     if (!a)
-        return 0;
+        return -1;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
@@ -836,7 +836,7 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
     int ret;
 
     if (a == NULL)
-        return 0;
+        return -1;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
