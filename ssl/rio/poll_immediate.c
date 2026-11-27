@@ -266,23 +266,24 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
             /* Tell the listener we need to receive notifications. */
             if (!poll_register_dtls_listener(wctx, ssl))
                 return 0;
-
-            /*
-             * Only after the above call returns is it guaranteed that any
-             * readiness events will cause the notifier to become readable.
-             * Therefore it is possible the listener became ready after the
-             * readout which decided we needed to block. Re-check now.
-             */
-            if (!ossl_dtls_listener_poll_events(ssl, events, /*do_tick=*/0,
-                    &revents))
-                return 0;
-
-            if (revents != 0 || ossl_dtls_listener_has_pending_input(ssl)) {
-                *abort_blocking = 1;
-                return 1;
-            }
         }
     }
+
+    /*
+     * The listener can have become ready after the readout read this item.
+     * The readout ticks the listener for each later item which is one of its
+     * connections, the translation of an earlier such item can tick it too,
+     * and with a notifier another thread can tick it before the registration
+     * above takes effect. A tick can queue an incoming connection, or leave
+     * input undriven on a pending one, without making the socket or the
+     * notifier readable, hence this check, which does not tick. A tick in
+     * the translation of a later item is covered by poll_dtls_items_ready().
+     */
+    if (!ossl_dtls_listener_poll_events(ssl, events, /*do_tick=*/0, &revents))
+        return 0;
+
+    if (revents != 0 || ossl_dtls_listener_has_pending_input(ssl))
+        *abort_blocking = 1;
 
     return 1;
 }
@@ -415,6 +416,61 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     return 1;
 }
 
+/**
+ * @brief Report whether a leading poll item is a DTLS item which is ready.
+ *
+ * Translating a DTLS connection can tick its listener. That tick can queue an
+ * incoming connection on the listener, or a datagram for another of its
+ * connections, after the item for that object was translated. The tick takes
+ * the datagram which did so off the socket, and a listener with no notifier
+ * has nothing else to end a wait. Nothing here ticks.
+ *
+ * @param items the poll items being translated
+ * @param recheck_count the number of leading items to check
+ * @param stride the size in bytes of one item
+ * @returns 1 if one of those items is ready, 0 otherwise.
+ */
+static int poll_dtls_items_ready(SSL_POLL_ITEM *items,
+    size_t recheck_count,
+    size_t stride)
+{
+    SSL_POLL_ITEM *item;
+    SSL_CONNECTION *sc;
+    SSL *ssl;
+    uint64_t revents;
+    size_t i;
+
+    for (i = 0; i < recheck_count; ++i) {
+        item = &ITEM_N(items, stride, i);
+        if (item->desc.type != BIO_POLL_DESCRIPTOR_TYPE_SSL)
+            continue;
+
+        ssl = item->desc.value.ssl;
+        revents = 0;
+
+        if (IS_DTLS_LISTENER(ssl)) {
+            if (ossl_dtls_listener_poll_events(ssl, item->events,
+                    /*do_tick=*/0, &revents)
+                && revents != 0)
+                return 1;
+        } else if (ssl != NULL && ssl->type == SSL_TYPE_SSL_CONNECTION) {
+            /*
+             * A tick delivers nothing but datagrams to a connection, and
+             * only to one which belongs to a listener.
+             */
+            sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+            if ((item->events & SSL_POLL_EVENT_R) != 0
+                && sc->d1 != NULL && sc->d1->listener != NULL
+                && ossl_dtls_conn_poll_events(ssl, SSL_POLL_EVENT_R,
+                    /*do_tick=*/0, &revents)
+                && revents != 0)
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
 #endif /* OPENSSL_NO_DTLS */
 
 #if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
@@ -510,6 +566,10 @@ static int poll_translate(SSL_POLL_ITEM *items,
     struct timeval timeout;
     int is_infinite = 0;
 #endif
+#ifndef OPENSSL_NO_DTLS
+    /* Number of items translated before the last DTLS connection item */
+    size_t recheck_count = 0;
+#endif
     size_t i;
 
     for (i = 0; i < num_items; ++i) {
@@ -571,6 +631,8 @@ static int poll_translate(SSL_POLL_ITEM *items,
                     if (*abort_blocking)
                         goto out;
 
+                    recheck_count = i;
+
                     /*
                      * Bound the wait by the DTLS retransmission timer,
                      * otherwise a poll with no timeout sleeps straight through
@@ -621,6 +683,11 @@ static int poll_translate(SSL_POLL_ITEM *items,
             FAIL_ITEM(i);
         }
     }
+
+#ifndef OPENSSL_NO_DTLS
+    if (poll_dtls_items_ready(items, recheck_count, stride))
+        *abort_blocking = 1;
+#endif
 
 out:
     /*
