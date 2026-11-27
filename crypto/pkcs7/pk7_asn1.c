@@ -59,6 +59,10 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
         *content = ossl_pkcs7_get0_stream_content(*pp7);
     } break;
+
+    case ASN1_OP_FREE_POST:
+        OPENSSL_free((*pp7)->ctx.propq);
+        break;
     }
     return 1;
 }
@@ -117,10 +121,7 @@ PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 
 void PKCS7_free(PKCS7 *p7)
 {
-    if (p7 != NULL) {
-        OPENSSL_free(p7->ctx.propq);
-        ASN1_item_free((ASN1_VALUE *)p7, ASN1_ITEM_rptr(PKCS7));
-    }
+    ASN1_item_free((ASN1_VALUE *)p7, ASN1_ITEM_rptr(PKCS7));
 }
 
 IMPLEMENT_ASN1_NDEF_FUNCTION(PKCS7)

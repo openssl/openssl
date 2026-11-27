@@ -31,10 +31,6 @@ PKCS12 *PKCS12_new(void)
 
 void PKCS12_free(PKCS12 *p12)
 {
-    if (p12 != NULL && p12->authsafes != NULL) {
-        OPENSSL_free(p12->authsafes->ctx.propq);
-        p12->authsafes->ctx.propq = NULL;
-    }
     ASN1_item_free((ASN1_VALUE *)p12, ASN1_ITEM_rptr(PKCS12));
 }
 

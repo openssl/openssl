@@ -603,6 +603,37 @@ end:
     return ret;
 }
 
+/* The property query copy must be freed when the ASN.1 template frees p7 */
+static int pkcs7_propq_template_free_test(void)
+{
+    /* SEQUENCE { INTEGER 5 } is not a ContentInfo */
+    static const unsigned char bad[] = { 0x30, 0x03, 0x02, 0x01, 0x05 };
+    const unsigned char *in = bad;
+    PKCS7 *p7 = NULL, *inner = NULL;
+    int ret = 0;
+
+    /* Failed decoding into an existing object frees it */
+    if (!TEST_ptr(p7 = PKCS7_new_ex(NULL, "provider=default"))
+        || !TEST_ptr_null(d2i_PKCS7(&p7, &in, sizeof(bad)))
+        || !TEST_ptr_null(p7))
+        goto end;
+
+    /* The inner content is freed as a member of the outer structure */
+    if (!TEST_ptr(p7 = PKCS7_new_ex(NULL, "provider=default"))
+        || !TEST_ptr(inner = PKCS7_new_ex(NULL, "provider=default"))
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_set_type(inner, NID_pkcs7_data))
+        || !TEST_true(PKCS7_set_content(p7, inner)))
+        goto end;
+    inner = NULL;
+
+    ret = 1;
+end:
+    PKCS7_free(inner);
+    PKCS7_free(p7);
+    return ret;
+}
+
 int setup_tests(void)
 {
     const char *certin, *privkeyin;
@@ -637,6 +668,7 @@ int setup_tests(void)
         ADD_TEST(test_pkcs7_smimecap);
     ADD_TEST(pkcs7_stream_non_data_test);
     ADD_TEST(pkcs7_null_contents_test);
+    ADD_TEST(pkcs7_propq_template_free_test);
     return 1;
 }
 
