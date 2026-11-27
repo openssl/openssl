@@ -4853,6 +4853,103 @@ err:
     return testresult;
 }
 
+/* Unread FIN, partially read FIN, and partially read RESET. */
+static int test_stream_gc_connection_credit(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *client = NULL, *server = NULL, *listener = NULL;
+    SSL *send = NULL, *recv = NULL, *next = NULL;
+    QUIC_CHANNEL *client_ch, *server_ch;
+    QUIC_STREAM_MAP *qsm;
+    QUIC_STREAM *stream;
+    unsigned char payload[64] = { 1 }, byte = 0;
+    size_t written, readbytes, read_before_free = idx == 0 ? 0 : 1;
+    uint64_t id;
+    int reset = idx == 2, i, testresult = 0;
+
+    if (!TEST_ptr(cctx = create_client_ctx())
+        || !TEST_ptr(sctx = create_server_ctx())
+        || !TEST_true(create_quic_ssl_objects_ex(sctx, cctx, NULL,
+            &listener, &client, 1))
+        || !TEST_ptr(client_ch = ossl_quic_conn_get_channel(client))
+        || !TEST_true(ossl_quic_channel_set_max_data_request(client_ch, sizeof(payload)))
+        || !TEST_true(SSL_set_default_stream_mode(client, SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_true(SSL_set_incoming_stream_policy(client,
+            SSL_INCOMING_STREAM_POLICY_ACCEPT, 0))
+        || !TEST_true(queue_incoming_connection(listener, client))
+        || !TEST_ptr(server = SSL_accept_connection(listener, 0))
+        || !TEST_true(create_bare_ssl_connection(server, client, SSL_ERROR_NONE, 0, 0))
+        || !TEST_ptr(server_ch = ossl_quic_conn_get_channel(server))
+        || !TEST_ptr(send = SSL_new_stream(server, SSL_STREAM_FLAG_UNI))
+        || !TEST_true(SSL_write_ex(send, payload, sizeof(payload), &written))
+        || !TEST_size_t_eq(written, sizeof(payload))
+        || (!reset && !TEST_true(SSL_stream_conclude(send, 0))))
+        goto err;
+
+    id = SSL_get_stream_id(send);
+    qsm = ossl_quic_channel_get_qsm(client_ch);
+    for (i = 0; i < 20; ++i) {
+        if (!TEST_true(SSL_handle_events(client)))
+            goto err;
+        stream = ossl_quic_stream_map_get_by_id(qsm, id);
+        if (stream != NULL
+            && ossl_quic_rxfc_get_swm(&stream->rxfc) == sizeof(payload)
+            && (reset || stream->recv_state == QUIC_RSTREAM_STATE_DATA_RECVD))
+            break;
+        fake_now = ossl_time_add(fake_now, ossl_ms2time(1));
+        if (!TEST_true(SSL_handle_events(server)))
+            goto err;
+    }
+    if (!TEST_int_lt(i, 20)
+        || !TEST_ptr(recv = SSL_accept_stream(client, SSL_ACCEPT_STREAM_NO_BLOCK))
+        || !TEST_uint64_t_eq(SSL_get_stream_id(recv), id)
+        || !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(&server_ch->conn_txfc, 0), 0))
+        goto err;
+
+    if (read_before_free != 0
+        && (!TEST_true(SSL_read_ex(recv, &byte, 1, &readbytes))
+            || !TEST_size_t_eq(readbytes, 1)))
+        goto err;
+    if (reset
+        && (!TEST_true(SSL_stream_reset(send, NULL, 0))
+            || !TEST_true(SSL_handle_events(server))
+            || !TEST_true(SSL_handle_events(client))
+            || !TEST_int_eq(stream->recv_state, QUIC_RSTREAM_STATE_RESET_RECVD)
+            || !TEST_ptr_null(stream->rstream)))
+        goto err;
+    if (!TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&client_ch->conn_rxfc),
+            read_before_free))
+        goto err;
+
+    SSL_free(recv);
+    recv = NULL;
+    if (!TEST_true(SSL_handle_events(client))
+        || !TEST_ptr_null(ossl_quic_stream_map_get_by_id(qsm, id))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&client_ch->conn_rxfc), sizeof(payload))
+        || !TEST_true(SSL_handle_events(server))
+        || !TEST_uint64_t_gt(ossl_quic_txfc_get_credit(&server_ch->conn_txfc, 0), 0)
+        || !TEST_ptr(next = SSL_new_stream(server, SSL_STREAM_FLAG_UNI))
+        || !TEST_true(SSL_write_ex(next, payload, 1, &written))
+        || !TEST_size_t_eq(written, 1)
+        || !TEST_true(SSL_handle_events(client))
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_swm(&client_ch->conn_rxfc),
+            sizeof(payload) + 1)
+        || !TEST_uint64_t_eq(ossl_quic_rxfc_get_rwm(&client_ch->conn_rxfc), sizeof(payload)))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(next);
+    SSL_free(recv);
+    SSL_free(send);
+    SSL_free(server);
+    SSL_free(client);
+    SSL_free(listener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /*
  * A deleted bidirectional stream whose receive part is terminal must not be
  * garbage collected while its send part still has data which the peer has not
@@ -6274,6 +6371,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
     ADD_ALL_TESTS(test_stream_gc, 3);
+    ADD_ALL_TESTS(test_stream_gc_connection_credit, 3);
     ADD_TEST(test_stream_gc_send_active);
     ADD_TEST(test_net_desired);
     ADD_TEST(test_client_hello_retry);
