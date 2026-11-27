@@ -218,6 +218,11 @@ int ossl_uint_set_insert(UINT_SET *s, const UINT_RANGE *range)
                 ossl_list_uint_set_remove(s, x);
                 OPENSSL_free(x);
             }
+
+            /* The merged range may now touch its neighbours. */
+            uint_set_merge_adjacent(s, ovend);
+            if ((x = ossl_list_uint_set_next(ovend)) != NULL)
+                uint_set_merge_adjacent(s, x);
             break;
         } else if (end < z->range.start
             && (zprev == NULL || start > zprev->range.end)) {
