@@ -196,6 +196,12 @@ static int aes_siv_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
+
+    /* SIV takes no IV */
+    if (p.ivlen != NULL && !OSSL_PARAM_set_size_t(p.ivlen, 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
     return 1;
 }
 
@@ -243,6 +249,20 @@ static int aes_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         /* The key length can not be modified */
         if (keylen != ctx->keylen)
             return 0;
+    }
+
+    if (p.ivlen != NULL) {
+        size_t ivlen;
+
+        if (!OSSL_PARAM_get_size_t(p.ivlen, &ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        /* SIV takes no IV */
+        if (ivlen != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
     }
     sctx->final_ret = -1;
 

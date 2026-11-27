@@ -219,6 +219,11 @@ static int ossl_aes_gcm_siv_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
+
+    if (p.ivlen != NULL && !OSSL_PARAM_set_size_t(p.ivlen, NONCE_SIZE)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
     return 1;
 }
 

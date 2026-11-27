@@ -285,6 +285,18 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !ossl_cipher_gcm_set_ctx_params_decoder(params, &p))
         return 0;
 
+    if (p.keylen != NULL) {
+        if (!OSSL_PARAM_get_size_t(p.keylen, &sz)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        /* The key length can not be modified */
+        if (sz != ctx->keylen) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+
     if (p.tag != NULL) {
         vp = ctx->buf;
         if (!OSSL_PARAM_get_octet_string(p.tag, &vp, EVP_GCM_TLS_TAG_LEN, &sz)) {
