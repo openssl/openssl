@@ -6245,3 +6245,6 @@ OSSL_KDF_PURPOSE_server_cipher_key      ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_iv              ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_key             ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_mac_key         ?	4_2_0	EXIST::VARIABLE:
+X509_STORE_CTX_purpose_inherit_ex       ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_purpose_ex           ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_trust_ex             ?	4_2_0	EXIST::FUNCTION:

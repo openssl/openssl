@@ -302,7 +302,8 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     STACK_OF(X509) *untrusted,
     STACK_OF(X509_CRL) *crls,
     STACK_OF(X509) **chain,
-    const CMS_CTX *cms_ctx)
+    const CMS_CTX *cms_ctx,
+    time_t *verification_time)
 {
     X509_STORE_CTX *ctx;
     X509 *signer;
@@ -323,6 +324,8 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     if (crls != NULL)
         X509_STORE_CTX_set0_crls(ctx, crls);
 
+    if (verification_time)
+        X509_STORE_CTX_set_time(ctx, 0, *verification_time);
     i = X509_verify_cert(ctx);
     if (i <= 0) {
         j = X509_STORE_CTX_get_error(ctx);
@@ -352,6 +355,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     X509 *signer;
     int i, n = 0, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
+    time_t verification_time, *vt = NULL;
     int cadesVerify = (flags & CMS_CADES) != 0;
     int partial = (flags & CMS_VERIFY_PARTIAL) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
@@ -413,6 +417,66 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         goto err;
     }
 
+    /*
+     * Handle CAdES signatures of higher levels (Baseline-T, -LT, and -LTA)
+     * that include additional information packed into the unsigned attributes
+     * of the signerInfo elements.
+     * Read this: they are not organized by document but by signer, therefore
+     * multiple * objects may exist.
+     * Extract timestamp, if available, to set the correct time for certificate
+     * validation.
+     * Timestamp (and archive-timestamps) are taken from the unsigned
+     * attributes anyway, so it does not matter when they are evaluated.
+     * Evaluating earlier however supplies the timestamp and optional CRLs
+     * supporting the verification.
+     */
+    if (cadesVerify) {
+        int num, j;
+
+        for (i = 0; i < scount; i++) {
+            si = sk_CMS_SignerInfo_value(sinfos, i);
+
+            /*
+             * Look for embedded timestamp tokens and archiveTimestamps,
+             * note: there can be more than one
+             */
+            num = CMS_unsigned_get_attr_count(si);
+            if (num < 0)
+                continue;
+            for (j = 0; j < num; j++) {
+                X509_ATTRIBUTE *attr = CMS_unsigned_get_attr(si, j);
+                const ASN1_OBJECT *obj = X509_ATTRIBUTE_get0_object(attr);
+                switch (OBJ_obj2nid(obj)) {
+                case NID_id_smime_aa_timeStampToken:
+                    /*
+                     * Perform evaluation of timestamp. The value
+                     * timestamped is the original signature
+                     * If successful, a valid signing time is available
+                     */
+                    if (!ossl_cms_handle_CAdES_SignatureTimestampToken(attr,
+                            store, si->signature, &verification_time))
+                        goto err;
+                    vt = &verification_time;
+                    break;
+                case NID_id_aa_ets_archiveTimestampV3:
+                    /*
+                     * Evaluate archiveTimestampV3 attribute
+                     */
+                    /* prepared for future use with Baseline-LT(A) */
+                    break;
+                default:; /* Other information not covered */
+                }
+            }
+        }
+    }
+
+    /*
+     * at this point, verification_time is supported by a valid time stamp if
+     * at least Baseline-T level was reached.
+     * If higher level long term information was available, it was verified
+     * as well.
+     */
+
     /* Attempt to verify all signers certs */
     /* at this point scount == sk_CMS_SignerInfo_num(sinfos) */
 
@@ -436,9 +500,10 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
 
+            /* vt is NULL unless a valid timestamp was found */
             if (!cms_signerinfo_verify_cert(si, store, untrusted, crls,
                     si_chains ? &si_chains[i] : NULL,
-                    ctx)) {
+                    ctx, vt)) {
                 si->verify_result = 0;
                 if (!partial)
                     goto err;
@@ -537,6 +602,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         if (!cms_copy_content(out, cmsbio, flags))
             goto err;
     }
+
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);

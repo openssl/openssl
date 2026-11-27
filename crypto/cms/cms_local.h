@@ -563,6 +563,21 @@ int ossl_cms_kem_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_get1_certs_ex(CMS_ContentInfo *cms, STACK_OF(X509) **certs);
 int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls);
 
+/* CAdES routines */
+/**
+ * @param tsattr the unsigned attribute carrying the embedded PKCS7
+ * timeStampToken
+ * @param store the trusted certificate store used to verify the timestamp
+ * token's signature
+ * @param os the SignerInfo signature value that the timestamp token is
+ * expected to cover
+ * @param stamp_time receives the time asserted by the timestamp token on
+ * success
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_handle_CAdES_SignatureTimestampToken(X509_ATTRIBUTE *tsattr,
+    X509_STORE *store, ASN1_OCTET_STRING *os, time_t *stamp_time);
+
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
 DECLARE_ASN1_ITEM(CMS_DigestedData)
 DECLARE_ASN1_ITEM(CMS_EncryptedData)
