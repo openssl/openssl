@@ -40,6 +40,8 @@
 # higher - for ECDSA sign, relatively fastest server-side operation.
 # Keep in mind that +100% means 2x improvement.
 
+use File::Spec;
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -80,8 +82,9 @@ if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([
 	$addx = ($ver>=3.03);
 }
 
-if (!$addx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
-	=~ /#define __clang_major__.([0-9]+)/) {
+my $devnull = File::Spec->devnull();
+if (!$addx && $ENV{CC} && `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+	=~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m) {
 	if ($1) {
 		$avx = ($1>=11); #icx started with clang 11
 		$addx = ($1>=11);

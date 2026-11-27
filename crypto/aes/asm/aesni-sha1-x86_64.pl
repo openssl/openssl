@@ -88,6 +88,8 @@
 # (**)	Execution is fully dominated by integer code sequence and
 #	SIMD still hardly shows [in single-process benchmark;-]
 
+use File::Spec;
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -111,7 +113,10 @@ $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   $1>=10);
 $avx=1 if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=3.0);
 
-$avx=1 if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
+my $devnull = File::Spec->devnull();
+$avx=1 if (!$avx && $ENV{CC} &&
+	   `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+	       =~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m &&
 	   $1>=11); #icx started with clang 11
 
 $shaext=1;	### set to zero if compiling for 1.0.1

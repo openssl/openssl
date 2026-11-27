@@ -113,6 +113,8 @@
 #	below certain limit makes no difference/sense; to conserve
 #	space SHA256 XOP code path is therefore omitted;
 
+use File::Spec;
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -144,8 +146,9 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
-if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
-	=~ /#define __clang_major__.([0-9]+)/) {
+my $devnull = File::Spec->devnull();
+if (!$avx && $ENV{CC} && `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+	=~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m) {
 	if ($1) {
 		$avx = ($1>=11); #icx started with clang 11
 	}
@@ -2411,7 +2414,7 @@ $code.=<<___ if($win64);
     # xmm6:xmm9, xmm11:xmm15 need to be maintained for Windows
     # xmm10 not used
     sub \$`9*16`,%rsp
-.cfi_adjust_cfa_offset \$`9*16`
+.cfi_adjust_cfa_offset `9*16`
     vmovdqu %xmm6, 16*0(%rsp)
     vmovdqu %xmm7, 16*1(%rsp)
     vmovdqu %xmm8, 16*2(%rsp)
@@ -2629,7 +2632,7 @@ $code.=<<___ if($win64);
     vmovdqu 16*7(%rsp),%xmm14
     vmovdqu 16*8(%rsp),%xmm15
     add \$`9*16`,%rsp
-.cfi_adjust_cfa_offset \$`-9*16`
+.cfi_adjust_cfa_offset `-9*16`
 ___
 
 $code.=<<___;

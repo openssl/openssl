@@ -9,6 +9,8 @@
 # Erase the temporary broadcast key schedule used by the AES VAES
 # intrinsic implementations and clear their caller-clobbered register state.
 
+use File::Spec;
+
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
@@ -51,8 +53,9 @@ if (!$avx512vaes && `$ENV{CC} -v 2>&1`
     }
 }
 
-if (!$avx512vaes && `$ENV{CC} -x c /dev/null -dM -E 2>/dev/null`
-        =~ /#define __clang_major__\s+([0-9]+)/) {
+my $devnull = File::Spec->devnull();
+if (!$avx512vaes && $ENV{CC} && `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+        =~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m) {
     $avx512vaes = ($1 >= 11); # icx started with clang 11
 }
 

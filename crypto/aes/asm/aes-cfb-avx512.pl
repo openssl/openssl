@@ -9,6 +9,8 @@
 #
 # Implements AES-CFB128 encryption and decryption with Intel(R) VAES
 
+use File::Spec;
+
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
@@ -49,8 +51,9 @@ if (!$avx512vaes && `$ENV{CC} -v 2>&1`
     }
 }
 
-if (!$avx512vaes && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
-    =~ /#define __clang_major__.([0-9]+)/) {
+my $devnull = File::Spec->devnull();
+if (!$avx512vaes && $ENV{CC} && `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+    =~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m) {
     if ($1) {
         $avx512vaes = ($1>=11); #icx started with clang 11
     }

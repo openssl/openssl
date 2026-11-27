@@ -43,6 +43,8 @@
 #	SSE2-capable ones; AVX is omitted, because it doesn't give
 #	a lot of improvement, 5-10% depending on processor;
 
+use File::Spec;
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
@@ -74,8 +76,9 @@ if ($sse2) {
 		$avx = ($2>=3.0) + ($2>3.0);
 	}
 
-	if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
-		=~ /#define __clang_major__.([0-9]+)/) {
+	my $devnull = File::Spec->devnull();
+	if (!$avx && $ENV{CC} && `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+		=~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m) {
 		if ($1) {
 			$avx = ($1>=11); #icx started with clang 11
 		}
