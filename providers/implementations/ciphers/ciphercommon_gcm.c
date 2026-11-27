@@ -16,6 +16,8 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "fips/fipsindicator.h"
+#include "crypto/types.h"
+#include "internal/skey.h"
 
 #include "providers/implementations/ciphers/ciphercommon_gcm.inc"
 
@@ -103,6 +105,24 @@ int ossl_gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
     const OSSL_PARAM params[])
 {
     return gcm_init(vctx, key, keylen, iv, ivlen, params, 0);
+}
+
+int ossl_gcm_skey_einit(void *vctx, void *skeydata,
+    const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    return gcm_init(vctx, key->data, key->length, iv, ivlen, params, 1);
+}
+
+int ossl_gcm_skey_dinit(void *vctx, void *skeydata,
+    const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    PROV_SKEY *key = skeydata;
+
+    return gcm_init(vctx, key->data, key->length, iv, ivlen, params, 0);
 }
 
 /* increment counter (64-bit int) by 1 */
