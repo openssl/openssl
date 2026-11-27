@@ -2232,23 +2232,23 @@ static int test_evp_aead_keylen_reinit(int idx)
     OSSL_PARAM keylenparams[2];
 
     size_t wrong_keylen = 0, got_keylen = 0;
-    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
-    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
-    unsigned char tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
-    unsigned char tag2[EVPTEST_TAG_LEN_MAX] = { 0 };
+    uint8_t key[EVP_MAX_KEY_LENGTH] = { 0 };
+    uint8_t iv[EVP_MAX_IV_LENGTH] = { 0 };
+    uint8_t tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
+    uint8_t tag2[EVPTEST_TAG_LEN_MAX] = { 0 };
 
-    static const unsigned char msg[] = "key length re-init regression";
-    static const unsigned char aad[] = "key length re-init aad";
-    unsigned char ct1[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
-    unsigned char ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    static const uint8_t msg[] = "key length re-init regression";
+    static const uint8_t aad[] = "key length re-init aad";
+    uint8_t ct1[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    uint8_t ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
 
     size_t i = 0;
     int len = 0, ct1len = 0, ct2len = 0, settable = 0, testresult = 0;
 
     for (i = 0; i < (size_t)info->keylen; i++)
-        key[i] = (unsigned char)(0xA0 + i);
+        key[i] = (uint8_t)(0xA0 + i);
     for (i = 0; i < (size_t)info->ivlen; i++)
-        iv[i] = (unsigned char)(0xB0 + i);
+        iv[i] = (uint8_t)(0xB0 + i);
 
     wrong_keylen = (size_t)info->keylen / 2;
     settable = OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(info->ciph),
@@ -2355,24 +2355,24 @@ static int test_evp_aead_ivlen_reinit(int idx)
     OSSL_PARAM ivlenparams[2];
 
     size_t wrong_ivlen = 0xFFFF, ref_ivlen = 0, got_ivlen = 0;
-    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
-    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
-    unsigned char tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
-    unsigned char tag2[EVPTEST_TAG_LEN_MAX] = { 0 };
+    uint8_t key[EVP_MAX_KEY_LENGTH] = { 0 };
+    uint8_t iv[EVP_MAX_IV_LENGTH] = { 0 };
+    uint8_t tag1[EVPTEST_TAG_LEN_MAX] = { 0 };
+    uint8_t tag2[EVPTEST_TAG_LEN_MAX] = { 0 };
 
-    static const unsigned char msg[] = "IV length re-init regression";
-    static const unsigned char aad[] = "IV length re-init aad";
-    unsigned char ct1[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
-    unsigned char ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    static const uint8_t msg[] = "IV length re-init regression";
+    static const uint8_t aad[] = "IV length re-init aad";
+    uint8_t ct1[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
+    uint8_t ct2[sizeof(msg) + EVP_MAX_BLOCK_LENGTH] = { 0 };
 
     size_t i = 0;
     int len = 0, ct1len = 0, ct2len = 0, settable = 0, testresult = 0;
     int ref_evp_ivlen = 0;
 
     for (i = 0; i < (size_t)info->keylen; i++)
-        key[i] = (unsigned char)(0xA0 + i);
+        key[i] = (uint8_t)(0xA0 + i);
     for (i = 0; i < (size_t)info->ivlen; i++)
-        iv[i] = (unsigned char)(0xB0 + i);
+        iv[i] = (uint8_t)(0xB0 + i);
 
     settable = OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(info->ciph),
                    OSSL_CIPHER_PARAM_IVLEN)
