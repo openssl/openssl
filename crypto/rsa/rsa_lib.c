@@ -779,9 +779,16 @@ int ossl_rsa_set0_all_params(RSA *r, STACK_OF(BIGNUM) *primes,
             return 0;
 
         for (i = 2; i < pnum; i++) {
-            BIGNUM *prime = sk_BIGNUM_pop(primes);
-            BIGNUM *exp = sk_BIGNUM_pop(exps);
-            BIGNUM *coeff = sk_BIGNUM_pop(coeffs);
+            /*
+             * The components arrive in natural order (r1..rn, dmp1, dmq1,
+             * d3..dn, iqmp, t3..tn) and prime_infos must end up in that same
+             * ascending order, so shift the stacks front to back.  Shifting
+             * also removes each component from its stack, leaving the stacks
+             * empty once every component has been consumed.
+             */
+            BIGNUM *prime = sk_BIGNUM_shift(primes);
+            BIGNUM *exp = sk_BIGNUM_shift(exps);
+            BIGNUM *coeff = sk_BIGNUM_shift(coeffs);
             RSA_PRIME_INFO *pinfo = NULL;
 
             if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
