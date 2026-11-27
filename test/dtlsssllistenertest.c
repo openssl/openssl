@@ -8263,6 +8263,41 @@ static int redrive_finish(REDRIVE_FIXTURE *fx, size_t i)
     return ok;
 }
 
+/*
+ * Accept client |i| and complete its handshake, leaving the other clients
+ * as they are and nothing in flight between client |i| and its connection.
+ */
+static int redrive_accept(REDRIVE_FIXTURE *fx, size_t i, SSL **serverssl)
+{
+    int k;
+    char buf[16];
+
+    if (!redrive_send_ch2(fx, i))
+        return 0;
+    for (k = 0; k < 200
+        && SSL_get_accept_connection_queue_len(fx->listener) == 0;
+        k++) {
+        listener_tick(fx->listener);
+        OSSL_sleep(10);
+    }
+    if (!TEST_ptr(*serverssl = SSL_accept_connection(fx->listener,
+                      SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_true(create_ssl_connection(*serverssl, fx->clients[i],
+            SSL_ERROR_NONE)))
+        return 0;
+
+    /* Let any post-handshake messages settle */
+    for (k = 0; k < 20; k++) {
+        if (!TEST_int_le(SSL_read(fx->clients[i], buf, sizeof(buf)), 0)
+            || !TEST_int_le(SSL_read(*serverssl, buf, sizeof(buf)), 0))
+            return 0;
+        listener_tick(fx->listener);
+        OSSL_sleep(10);
+    }
+    ERR_clear_error();
+    return 1;
+}
+
 static int redrive_params(int idx, int *version, uint64_t *flags)
 {
     *version = (idx & 1) != 0 ? DTLS1_3_VERSION : DTLS1_2_VERSION;
@@ -8476,7 +8511,7 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
 {
     REDRIVE_FIXTURE fx;
     REDRIVE_CONN_POLL cp;
-    int version, ret, testresult = 0, k;
+    int version, ret, testresult = 0;
     uint64_t flags;
     size_t i, njunk = DTLS_LISTENER_MAX_DRIVE_PASSES;
     size_t ei = njunk + 1, ci = njunk;
@@ -8490,33 +8525,9 @@ static int test_dtls_listener_conn_poll_pending_input(int idx)
     if ((ret = redrive_params(idx, &version, &flags)) >= 0)
         return ret;
 
-    if (!redrive_setup(&fx, version, flags, njunk + 2))
+    if (!redrive_setup(&fx, version, flags, njunk + 2)
+        || !redrive_accept(&fx, ei, &serverssl))
         goto end;
-
-    /* Accept client ei */
-    if (!redrive_send_ch2(&fx, ei))
-        goto end;
-    for (k = 0; k < 200
-        && SSL_get_accept_connection_queue_len(fx.listener) == 0;
-        k++) {
-        listener_tick(fx.listener);
-        OSSL_sleep(10);
-    }
-    if (!TEST_ptr(serverssl = SSL_accept_connection(fx.listener,
-                      SSL_ACCEPT_CONNECTION_NO_BLOCK))
-        || !TEST_true(create_ssl_connection(serverssl, fx.clients[ei],
-            SSL_ERROR_NONE)))
-        goto end;
-
-    /* Let any post-handshake messages settle */
-    for (k = 0; k < 20; k++) {
-        if (!TEST_int_le(SSL_read(fx.clients[ei], buf, sizeof(buf)), 0)
-            || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
-            goto end;
-        listener_tick(fx.listener);
-        OSSL_sleep(10);
-    }
-    ERR_clear_error();
     if (!TEST_true(redrive_all_idle((DTLS_LISTENER *)fx.listener, njunk + 1)))
         goto end;
 
