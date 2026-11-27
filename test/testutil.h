@@ -278,6 +278,18 @@ void add_mfail_all_tests(const char *test_case_name, int (*test_fn)(int idx),
 #define MFAIL_start mfail_start
 #define MFAIL_end mfail_end
 
+/* Watch that the secret is not left in memory freed until the watch ends */
+#define MFAIL_watch_secret(secret, len) mfail_watch_secret(secret, len)
+/* End the watch and return 1 if no secret was found */
+#define MFAIL_watch_end() test_mfail_watch_end(__FILE__, __LINE__)
+/**
+ * End the watch and report the found secrets
+ * @param file source file of the caller
+ * @param line source line of the caller
+ * @returns 1 if no secret was found, 0 otherwise
+ */
+int test_mfail_watch_end(const char *file, int line);
+
 /*
  * Declarations for user defined functions.
  * The first two return a boolean indicating that the test should not proceed.

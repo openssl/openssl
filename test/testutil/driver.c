@@ -326,6 +326,51 @@ static void test_verdict(int verdict,
     test_flush_tapout();
 }
 
+int test_mfail_watch_end(const char *file, int line)
+{
+    const MFAIL_LEAK *l;
+    int i, leaks;
+
+    /* the watch does not start if mfail is not installed */
+    if (!mfail_is_watching())
+        return 1;
+    mfail_watch_end();
+    leaks = mfail_watch_get_leaks();
+    if (leaks < 0) {
+        test_error(file, line, "secret watch failed to track allocations");
+        return 0;
+    }
+    if (leaks == 0) {
+        /* nothing has to be freed if the failure was injected */
+        if (mfail_watch_get_checked() > 0 || mfail_watch_was_triggered())
+            return 1;
+        test_error(file, line, "secret watch has not seen any freed memory");
+        return 0;
+    }
+    test_error(file, line, "secret left in freed memory (%d block%s)", leaks,
+        leaks == 1 ? "" : "s");
+    for (i = 0; (l = mfail_watch_get_leak(i)) != NULL; i++) {
+        test_note("secret %d at offset %zu of %zu byte block", l->secret,
+            l->offset, l->size);
+        test_note("  allocation %d at %s:%d", l->alloc_num,
+            l->alloc_file != NULL ? l->alloc_file : "(unknown)",
+            l->alloc_line);
+        test_note("  free %d at %s:%d", l->free_num,
+            l->free_file != NULL ? l->free_file : "(unknown)", l->free_line);
+        if (l->point >= 0)
+            test_note("  after the failure at point %d", l->point);
+    }
+    return 0;
+}
+
+/* End the watch left running by the test and check there were no leaks */
+static int mfail_watch_finish(const char *file, int line)
+{
+    if (mfail_is_watching())
+        return test_mfail_watch_end(file, line);
+    return mfail_watch_get_leaks() == 0;
+}
+
 static double mfail_elapsed_secs(clock_t start)
 {
     return (double)(clock() - start) / CLOCKS_PER_SEC;
@@ -371,6 +416,9 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
 
         ERR_clear_error();
         rv = t->param_test_fn != NULL ? t->param_test_fn(idx) : t->test_fn();
+        /* a watch result must not be lost if the injected failure is expected */
+        if (!mfail_watch_finish(__FILE__, __LINE__))
+            rv = -1;
 
         if (phase == MFAIL_PHASE_COUNTING) {
             allocations = mfail_get_count();
@@ -432,6 +480,13 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
     return counting_ok && injection_ok;
 }
 
+static int run_watched_test(int verdict)
+{
+    if (mfail_is_watching() && !test_mfail_watch_end(__FILE__, __LINE__))
+        return 0;
+    return verdict;
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
@@ -490,7 +545,7 @@ int run_tests(const char *test_prog_name)
             if (all_tests[i].mfail)
                 verdict = mfail_run_test(&all_tests[i], 0);
             else
-                verdict = all_tests[i].test_fn();
+                verdict = run_watched_test(all_tests[i].test_fn());
             finalize(verdict != 0);
             test_verdict(verdict, "%d - %s", test_case_count + 1, test_title);
             if (verdict == 0)
@@ -528,7 +583,7 @@ int run_tests(const char *test_prog_name)
                 if (all_tests[i].mfail)
                     v = mfail_run_test(&all_tests[i], j);
                 else
-                    v = all_tests[i].param_test_fn(j);
+                    v = run_watched_test(all_tests[i].param_test_fn(j));
 
                 if (v == 0) {
                     verdict = 0;
