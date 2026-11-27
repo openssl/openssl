@@ -67,8 +67,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     if (!ossl_init_thread())
         goto err;
 
-    if (!CRYPTO_THREAD_init_local(&in_init_config_local, NULL))
+    if (!CRYPTO_THREAD_init_local(&in_init_config_local, NULL)) {
+        ossl_cleanup_thread();
         goto err;
+    }
 
     base_inited = 1;
     return 1;

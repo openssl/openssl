@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -57,7 +57,8 @@ struct sparse_array_st {
 
 OPENSSL_SA *ossl_sa_new(void)
 {
-    OPENSSL_SA *res = OPENSSL_zalloc(sizeof(*res));
+    /* Error-queue TLS uses sparse arrays: reporting OOM here would recurse. */
+    OPENSSL_SA *res = CRYPTO_zalloc(sizeof(*res), NULL, 0);
 
     return res;
 }
@@ -173,7 +174,7 @@ void *ossl_sa_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
 
 static ossl_inline void **alloc_node(void)
 {
-    return OPENSSL_calloc(SA_BLOCK_MAX, sizeof(void *));
+    return CRYPTO_calloc(SA_BLOCK_MAX, sizeof(void *), NULL, 0);
 }
 
 int ossl_sa_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)
