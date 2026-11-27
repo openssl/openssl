@@ -104,6 +104,201 @@ static int test_x509_tbs_cache(void)
     return ret;
 }
 
+/* Encodes x and decodes it into a new certificate */
+static X509 *reencode_x509(const X509 *x)
+{
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    X509 *ret = NULL;
+    int der_len = i2d_X509(x, &der);
+
+    if (der_len > 0) {
+        p = der;
+        ret = d2i_X509(NULL, &p, der_len);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+/* The NID of the TBSCertificate signature algorithm of x */
+static int tbs_sigalg_nid(const X509 *x)
+{
+    const ASN1_OBJECT *obj;
+
+    X509_ALGOR_get0(&obj, NULL, NULL, X509_get0_tbs_sigalg(x));
+    return OBJ_obj2nid(obj);
+}
+
+/*
+ * X509_set1_signature_algo() and X509_set1_signature_value() replace the
+ * signature of a parsed certificate, including the TBSCertificate copy of the
+ * algorithm, and the result survives re-encoding.
+ */
+static int test_x509_set_signature(void)
+{
+    static const uint8_t zeros[16] = { 0 };
+    const unsigned char *p = certdata;
+    const ASN1_BIT_STRING *sig;
+    const X509_ALGOR *alg;
+    X509_ALGOR *signed_alg = NULL, *unsigned_alg = NULL;
+    uint8_t *sig_bytes = NULL;
+    size_t sig_len;
+    X509 *x = NULL, *copy = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0))
+        goto end;
+    X509_get0_signature(&sig, &alg, x);
+    sig_len = ASN1_STRING_get_length(sig);
+    if (!TEST_ptr(signed_alg = X509_ALGOR_dup(alg))
+        || !TEST_ptr(sig_bytes = OPENSSL_memdup(ASN1_STRING_get0_data(sig),
+                         sig_len))
+        || !TEST_ptr(unsigned_alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set0(unsigned_alg,
+            OBJ_nid2obj(NID_id_alg_unsigned), V_ASN1_UNDEF, NULL)))
+        goto end;
+
+    /* A different signature value fails, restoring it verifies again */
+    if (!TEST_true(X509_set1_signature_value(x, zeros, sizeof(zeros)))
+        || !TEST_int_le(X509_verify(x, pubkey), 0)
+        || !TEST_true(X509_set1_signature_value(x, sig_bytes, sig_len))
+        || !TEST_int_eq(X509_verify(x, pubkey), 1))
+        goto end;
+
+    /* Both algorithm fields change, restoring them verifies again */
+    if (!TEST_true(X509_set1_signature_algo(x, unsigned_alg))
+        || !TEST_int_eq(X509_get_signature_nid(x), NID_id_alg_unsigned)
+        || !TEST_int_eq(tbs_sigalg_nid(x),
+            NID_id_alg_unsigned)
+        || !TEST_int_le(X509_verify(x, pubkey), 0)
+        || !TEST_true(X509_set1_signature_algo(x, signed_alg))
+        || !TEST_int_eq(X509_verify(x, pubkey), 1)
+        || !TEST_ptr(copy = reencode_x509(x))
+        || !TEST_int_eq(X509_verify(copy, pubkey), 1))
+        goto end;
+    X509_free(copy);
+    copy = NULL;
+
+    /* An RFC 9925 unsigned certificate survives re-encoding */
+    if (!TEST_true(X509_set1_signature_algo(x, unsigned_alg))
+        || !TEST_true(X509_set1_signature_value(x, NULL, 0))
+        || !TEST_ptr(copy = reencode_x509(x))
+        || !TEST_int_eq(X509_get_signature_nid(copy), NID_id_alg_unsigned)
+        || !TEST_int_eq(tbs_sigalg_nid(copy),
+            NID_id_alg_unsigned))
+        goto end;
+    X509_get0_signature(&sig, NULL, copy);
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(sig), 0))
+        goto end;
+
+    /* Invalid arguments */
+    if (!TEST_false(X509_set1_signature_algo(NULL, signed_alg))
+        || !TEST_false(X509_set1_signature_algo(x, NULL))
+        || !TEST_false(X509_set1_signature_value(NULL, sig_bytes, sig_len))
+        || !TEST_false(X509_set1_signature_value(x, NULL, 1)))
+        goto end;
+
+    ret = 1;
+end:
+    X509_ALGOR_free(signed_alg);
+    X509_ALGOR_free(unsigned_alg);
+    OPENSSL_free(sig_bytes);
+    X509_free(copy);
+    X509_free(x);
+    return ret;
+}
+
+static int test_x509_unsigned_algor(const X509_ALGOR *alg)
+{
+    const ASN1_OBJECT *obj;
+    int ptype;
+
+    if (!TEST_ptr(alg))
+        return 0;
+    X509_ALGOR_get0(&obj, &ptype, NULL, alg);
+    return TEST_ptr(obj)
+        && TEST_int_eq(OBJ_obj2nid(obj), NID_id_alg_unsigned)
+        && TEST_int_eq(ptype, V_ASN1_UNDEF);
+}
+
+static int test_x509_has_placeholder_issuer(const X509 *x)
+{
+    const X509_NAME *issuer = X509_get_issuer_name(x);
+    const X509_NAME_ENTRY *entry;
+    const ASN1_STRING *value;
+
+    if (!TEST_ptr(issuer) || !TEST_int_eq(X509_NAME_entry_count(issuer), 1))
+        return 0;
+    if (!TEST_ptr((entry = X509_NAME_get_entry(issuer, 0)))
+        || !TEST_int_eq(OBJ_obj2nid(X509_NAME_ENTRY_get_object(entry)), NID_id_rdna_unsigned))
+        return 0;
+    if (!TEST_ptr((value = X509_NAME_ENTRY_get_data(entry)))
+        || !TEST_int_eq(ASN1_STRING_type(value), V_ASN1_UTF8STRING)
+        || !TEST_size_t_eq(ASN1_STRING_get_length(value), 0))
+        return 0;
+
+    return 1;
+}
+
+static int test_x509_is_unsigned(const X509 *x)
+{
+    const ASN1_BIT_STRING *sig;
+    const X509_ALGOR *alg = X509_get0_tbs_sigalg(x);
+
+    if (!test_x509_unsigned_algor(alg))
+        return 0;
+    X509_get0_signature(&sig, &alg, x);
+    return test_x509_unsigned_algor(alg)
+        && TEST_ptr(sig)
+        && TEST_size_t_eq(ASN1_STRING_get_length(sig), 0);
+}
+
+static int test_x509_make_unsigned(void)
+{
+    const unsigned char *p = certdata;
+    X509 *x = NULL, *decoded = NULL;
+    X509_NAME *issuer = NULL, *empty_issuer = NULL;
+    int derlen, ret = 0;
+
+    unsigned char *der = NULL;
+
+    if (!TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
+        || !TEST_ptr(issuer = X509_NAME_dup(X509_get_issuer_name(x)))
+        || !TEST_ptr(X509_NAME_get_entry(issuer, 0))
+        || !TEST_true(X509_set_unsigned(x))
+        || !TEST_int_eq(X509_NAME_cmp(X509_get_issuer_name(x), issuer), 0)
+        || !TEST_true(test_x509_is_unsigned(x)))
+        goto end;
+
+    derlen = i2d_X509(x, &der);
+    if (!TEST_int_gt(derlen, 0) || !TEST_ptr(der))
+        goto end;
+
+    p = der;
+    if (!TEST_ptr(decoded = d2i_X509(NULL, &p, derlen))
+        || !TEST_ptr_eq(p, der + derlen)
+        || !TEST_int_eq(X509_NAME_cmp(X509_get_issuer_name(decoded), issuer), 0)
+        || !TEST_true(test_x509_is_unsigned(decoded)))
+        goto end;
+
+    if (!TEST_ptr(X509_NAME_get_entry(X509_get_subject_name(decoded), 0))
+        || !TEST_ptr(empty_issuer = X509_NAME_new())
+        || !TEST_int_eq(X509_set_issuer_name(decoded, empty_issuer), 1)
+        || !TEST_true(X509_set_unsigned(decoded))
+        || !TEST_true(test_x509_has_placeholder_issuer(decoded)))
+        goto end;
+    ret = 1;
+
+end:
+    OPENSSL_free(der);
+    X509_NAME_free(empty_issuer);
+    X509_NAME_free(issuer);
+    X509_free(decoded);
+    X509_free(x);
+    return ret;
+}
+
 static int test_x509_store_object_count(X509_STORE *store, int expected)
 {
     STACK_OF(X509_OBJECT) *objs = X509_STORE_get1_objects(store);
@@ -1180,6 +1375,8 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_x509_tbs_cache);
+    ADD_TEST(test_x509_set_signature);
+    ADD_TEST(test_x509_make_unsigned);
     ADD_TEST(test_x509_crl_tbs_cache);
     ADD_ALL_TESTS(test_x509_store_duplicates, 6);
     ADD_TEST(test_asn1_item_verify);

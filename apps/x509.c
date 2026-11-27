@@ -54,6 +54,7 @@ typedef enum OPTION_choice {
     OPT_PASSIN,
     OPT_EXTFILE,
     OPT_EXTENSIONS,
+    OPT_UNSIGNED,
     OPT_IN,
     OPT_OUT,
     OPT_KEY,
@@ -212,6 +213,8 @@ const OPTIONS x509_options[] = {
     { "extfile", OPT_EXTFILE, '<', "Config file with X509V3 extensions to add" },
     { "extensions", OPT_EXTENSIONS, 's',
         "Section of extfile to use - default: unnamed section" },
+    { "unsigned", OPT_UNSIGNED, '-',
+        "When creating a certificate, do this unsigned according to RFC 9925" },
     { "sigopt", OPT_SIGOPT, 's', "Signature parameter, in n:v form" },
     { "badsig", OPT_BADSIG, '-',
         "Corrupt last byte of certificate signature (for test)" },
@@ -251,6 +254,14 @@ static void warn_copying(ASN1_OBJECT *excluded, const char *names)
         BIO_printf(bio_err,
             "Warning: -ext should not specify copying %s extension to CSR; ignoring this\n",
             sn);
+}
+
+static void x509_remove_exts_by_nid(X509 *x, int nid)
+{
+    int loc;
+
+    while ((loc = X509_get_ext_by_NID(x, nid, -1)) >= 0)
+        X509_EXTENSION_free(X509_delete_ext(x, loc));
 }
 
 static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
@@ -374,7 +385,7 @@ int x509_main(int argc, char **argv)
     X509V3_CTX ext_ctx;
     EVP_PKEY *privkey = NULL, *CAkey = NULL, *pubkey = NULL;
     EVP_PKEY *pkey;
-    int newcert = 0, newout = 0;
+    int newcert = 0, newout = 0, unsigned_cert = 0;
     char *issu = NULL, *subj = NULL, *digest = NULL;
     X509_NAME *fissu = NULL, *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
@@ -516,6 +527,9 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_EXTENSIONS:
             extsect = opt_arg();
+            break;
+        case OPT_UNSIGNED:
+            unsigned_cert = 1;
             break;
         case OPT_KEY:
         case OPT_SIGNKEY:
@@ -714,7 +728,16 @@ int x509_main(int argc, char **argv)
     if (!opt_check_md(digest))
         goto opthelp;
 
-    if (reqfile || newcert || privkeyfile != NULL || CAfile != NULL)
+    if (unsigned_cert) {
+        if (x509toreq)
+            BIO_puts(bio_err, "Warning: ignoring -unsigned with -x509toreq\n");
+        else if (CAfile != NULL || sigopts != NULL || badsig) {
+            BIO_puts(bio_err, "Cannot use -unsigned with -CA, -sigopt, or -badsig\n");
+            goto err;
+        }
+    }
+
+    if (unsigned_cert || reqfile || newcert || privkeyfile != NULL || CAfile != NULL)
         newout = 1;
     else if (sno != NULL
         || not_before != NULL
@@ -892,7 +915,7 @@ int x509_main(int argc, char **argv)
             BIO_puts(bio_err,
                 "Warning: ignoring -preserve_dates option with -req or -new\n");
         preserve_dates = 0;
-        if (privkeyfile == NULL && CAkeyfile == NULL) {
+        if (!unsigned_cert && privkeyfile == NULL && CAkeyfile == NULL) {
             BIO_puts(bio_err,
                 "We need a private key to sign with, use -key or -CAkey or -CA with private key\n");
             goto err;
@@ -992,7 +1015,7 @@ cert_loop:
         if (!x509toreq && !reqfile && !newcert && !self_signed(ctx, x))
             goto err;
     } else {
-        if (privkey != NULL && !cert_matches_key(x, privkey))
+        if (!unsigned_cert && privkey != NULL && !cert_matches_key(x, privkey))
             BIO_puts(bio_err,
                 "Warning: Signature key and public key of cert do not match\n");
     }
@@ -1000,7 +1023,7 @@ cert_loop:
     if (sno != NULL && !X509_set_serialNumber(x, sno))
         goto err;
 
-    if (reqfile || newcert || privkey != NULL || CAfile != NULL) {
+    if (newout) {
         if (!preserve_dates && !set_cert_times(x, not_before, not_after, days, 1))
             goto err;
         if (fissu != NULL) {
@@ -1066,6 +1089,12 @@ cert_loop:
             }
         }
         noout = 1;
+    } else if (unsigned_cert) {
+        x509_remove_exts_by_nid(x, NID_authority_key_identifier);
+        x509_remove_exts_by_nid(x, NID_issuer_alt_name);
+        if (!X509_set_version(x, X509_VERSION_3) /* make sure v3 is used regardless of extensions */
+            || !X509_set_unsigned(x))
+            goto err;
     } else if (CAfile != NULL) {
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
                  0, passin, "CA private key"))

@@ -61,6 +61,12 @@ OpenSSL 4.2
 
    *Shane Lontis*
 
+ * Added the BoringSSL `X509_set1_signature_algo()` and
+   `X509_set1_signature_value()` functions to set the signature algorithm
+   and signature value of a certificate.
+
+   *Bob Beck*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build
@@ -166,6 +172,11 @@ OpenSSL 4.2
    <!-- https://github.com/openssl/openssl/pull/32823 -->
 
    *Daniel Kubec*
+
+ * Added `X509_set_unsigned()` and the `openssl x509 -unsigned` option
+   for generating unsigned X.509 certificates according to RFC 9925.
+
+   *David von Oheimb*
 
  * Added optimized ML-KEM implementation for x86 platforms that support the
    AVX2 vector instruction set.

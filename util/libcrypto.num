@@ -5739,6 +5739,7 @@ IPAddrBlocks_free                       ?	4_2_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_new                        ?	4_2_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_it                         ?	4_2_0	EXIST::FUNCTION:RFC3779
 X509v3_addr_get_safi                    ?	4_2_0	EXIST::FUNCTION:RFC3779
+X509_set_unsigned                       ?	4_2_0	EXIST::FUNCTION:
 PKCS8_PRIV_KEY_INFO_get1_skey           ?	4_2_0	EXIST::FUNCTION:
 PKCS12_decrypt_secretbag                ?	4_2_0	EXIST::FUNCTION:
 PKCS12_PARSE_CTX_new                    ?	4_2_0	EXIST::FUNCTION:
@@ -6245,3 +6246,5 @@ OSSL_KDF_PURPOSE_server_cipher_key      ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_iv              ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_key             ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_mac_key         ?	4_2_0	EXIST::VARIABLE:
+X509_set1_signature_algo                ?	4_2_0	EXIST::FUNCTION:
+X509_set1_signature_value               ?	4_2_0	EXIST::FUNCTION:

@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 160;
+plan tests => 172;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -601,6 +601,39 @@ ok(get_issuer($a2_cert) =~ /CN=ca.example.com/);
 my $in_csr = srctop_file('test', 'certs', 'x509-check.csr');
 my $in_key = srctop_file('test', 'certs', 'x509-check-key.pem');
 my $invextfile = srctop_file('test', 'invalid-x509.cnf');
+
+# Unsigned certs (RFC 9925) have a special signature algorithm,
+# X.509 version 3, no AKID, and by default they are rendered as self-issued.
+my $unsigned_cert = "x509-unsigned.pem";
+ok(run(app(["openssl", "x509", "-req", "-in", $in_csr, "-unsigned", "-text", "-out", $unsigned_cert])),
+   "create unsigned certificate from CSR without signing key");
+cert_contains($unsigned_cert, "Signature Algorithm: id-alg-unsigned", 1,
+              "unsigned certificate signature algorithm");
+has_version($unsigned_cert, 3);
+my $unsigned_from_cert = "x509-unsigned-from-cert.pem";
+has_AKID($testcert, 1); # ee-cert.pem
+ok(run(app(["openssl", "x509", "-in", $testcert, "-unsigned", "-text", "-out", $unsigned_from_cert])),
+   "create unsigned certificate after removing pre-existing AKID");
+has_AKID($unsigned_from_cert, 0);
+my $unsigned_issuer = get_issuer($unsigned_cert);
+ok($unsigned_issuer ne "", "unsigned certificate issuer is non-empty");
+is($unsigned_issuer, get_field($unsigned_cert, "Subject"),
+   "unsigned certificate issuer matches subject");
+# Yet with -set_issuer /, the NULL-DN issuer of an unsigned cert gets replaced
+# by the id-rdna-unsigned placeholder, while a signed cert keeps the NULL-DN
+my $unsigned_placeholder = "x509-unsigned-placeholder.pem";
+ok(run(app(["openssl", "x509", "-req", "-in", $in_csr, "-unsigned",
+            "-set_issuer", "/", "-text", "-out", $unsigned_placeholder])),
+   "create unsigned certificate from CSR with NULL-DN issuer");
+is(get_issuer($unsigned_placeholder), "id-rdna-unsigned=",
+   "unsigned certificate from CSR has the placeholder issuer");
+my $signed_null_issuer = "x509-signed-null-issuer.pem";
+ok(run(app(["openssl", "x509", "-req", "-in", $in_csr, "-key", $in_key,
+            "-set_issuer", "/", "-text", "-out", $signed_null_issuer])),
+   "create signed certificate with NULL-DN issuer");
+is(get_issuer($signed_null_issuer), "",
+   "signed certificate keeps NULL-DN issuer without placeholder");
+
 # Test that invalid extensions settings fail
 ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
             "-out", File::Spec->devnull(), "-days", "3650" , "-extensions", "ext",

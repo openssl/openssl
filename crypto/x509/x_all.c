@@ -199,9 +199,63 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
     return 0;
 }
 
-int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
+static int x509_prepare_for_signing(X509 *x)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+
+    if ((exts = X509_get0_extensions(x)) != NULL
+        && sk_X509_EXTENSION_num(exts) > 0
+        && (bad_keyid_exts(exts) || !X509_set_version(x, X509_VERSION_3)))
+        return 0;
+
+    /*
+     * Setting the modified flag before signing. This makes the cached
+     * encoding to be ignored, so even if the certificate fields have changed,
+     * they are signed correctly.
+     * The X509_sign_ctx, X509_REQ_sign{,_ctx}, X509_CRL_sign{,_ctx} functions
+     * which exist below are the same.
+     */
+    x->cert_info.enc.modified = 1;
+    return 1;
+}
+
+int X509_set_unsigned(X509 *x)
+{
+    const X509_NAME *issuer;
+    X509_NAME *placeholder = NULL;
+    static const unsigned char empty[] = "";
+    X509_ALGOR *unsigned_alg = NULL;
+    int ret = 0;
+
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!x509_prepare_for_signing(x))
+        return 0;
+
+    issuer = X509_get_issuer_name(x);
+    if (X509_NAME_get_entry(issuer, 0) == NULL) { /* issuer is the NULL-DN */
+        if ((placeholder = X509_NAME_new()) == NULL
+            || !X509_NAME_add_entry_by_OBJ(placeholder,
+                OBJ_nid2obj(NID_id_rdna_unsigned), V_ASN1_UTF8STRING, empty, 0, -1, 0)
+            || !X509_set_issuer_name(x, placeholder))
+            goto end;
+    }
+
+    if ((unsigned_alg = ossl_X509_ALGOR_from_nid(NID_id_alg_unsigned, V_ASN1_UNDEF, NULL)) != NULL
+        && X509_set1_signature_algo(x, unsigned_alg)
+        && X509_set1_signature_value(x, NULL, 0))
+        ret = 1;
+
+end:
+    X509_ALGOR_free(unsigned_alg);
+    X509_NAME_free(placeholder);
+    return ret;
+}
+
+int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
+{
     OSSL_LIB_CTX *libctx;
     const char *propq;
 
@@ -209,19 +263,8 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((exts = X509_get0_extensions(x)) != NULL
-        && sk_X509_EXTENSION_num(exts) > 0
-        && (bad_keyid_exts(exts) || !X509_set_version(x, X509_VERSION_3)))
+    if (!x509_prepare_for_signing(x))
         return 0;
-
-    /*
-     * Setting the modified flag before signing it. This makes the cached
-     * encoding to be ignored, so even if the certificate fields have changed,
-     * they are signed correctly.
-     * The X509_sign_ctx, X509_REQ_sign{,_ctx}, X509_CRL_sign{,_ctx} functions
-     * which exist below are the same.
-     */
-    x->cert_info.enc.modified = 1;
     ossl_x509_get0_libctx(x, &libctx, &propq);
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
@@ -230,18 +273,12 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
-    const STACK_OF(X509_EXTENSION) *exts;
-
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((exts = X509_get0_extensions(x)) != NULL && bad_keyid_exts(exts))
+    if (!x509_prepare_for_signing(x))
         return 0;
-    if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
-        && !X509_set_version(x, X509_VERSION_3))
-        return 0;
-    x->cert_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);

@@ -347,6 +347,11 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
 int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
     const ASN1_STRING *sig);
 
+/**
+ * @brief Make an X509 certificate unsigned, removing signature and adapting the issuer.
+ * @see X509_set_unsigned(3)
+ */
+int X509_set_unsigned(X509 *x);
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
@@ -594,6 +599,16 @@ int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
+/**
+ * @brief Set both signature algorithm fields of a certificate.
+ * @see X509_set1_signature_algo(3)
+ */
+int X509_set1_signature_algo(X509 *x509, const X509_ALGOR *algo);
+/**
+ * @brief Set the signature value of a certificate.
+ * @see X509_set1_signature_value(3)
+ */
+int X509_set1_signature_value(X509 *x509, const uint8_t *sig, size_t sig_len);
 
 void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *d_id);
 const ASN1_OCTET_STRING *X509_get0_distinguishing_id(const X509 *x);

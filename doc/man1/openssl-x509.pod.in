@@ -66,6 +66,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile> I<filename>]
 [B<-extensions> I<section>]
+[B<-unsigned>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-badsig>]
 [B<-I<digest>>]
@@ -131,7 +132,7 @@ So this excludes the B<-in> and B<-req> options.
 Instead, the B<-set_subject> option needs to be given.
 The public key to include can be given with the B<-force_pubkey> option
 and defaults to the key given with the B<-key> (or B<-signkey>) option,
-which implies self-signature.
+which implies self-signature unless B<-unsigned> is given.
 
 =item B<-x509toreq>
 
@@ -178,7 +179,8 @@ Names and values of these options are algorithm-specific.
 This option provides the private key for signing a new certificate or
 certificate request.
 Unless B<-force_pubkey> is given, the corresponding public key is placed in
-the new certificate or certificate request, resulting in a self-signature.
+the new certificate or certificate request, resulting in a self-signature
+unless a certificate is created with B<-unsigned>.
 
 This option cannot be used in conjunction with the B<-CA> option.
 
@@ -448,7 +450,13 @@ Cannot be used together with the options B<-days>, B<-not_before> and B<-not_aft
 
 =item B<-set_issuer> I<arg>
 
-When a certificate is created set its issuer name to the given value.
+When a certificate is created set its issuer distinguished name (DN) to the given value.
+
+When used with B<-unsigned>, a nonempty issuer DN is set as given,
+while C</> leads to setting the C<id-rdna-unsigned> placeholder defined in RFC 9925,
+rather than the NULL-DN, which avoids an empty issuer DN.
+For instance, C<-unsigned -set_issuer /> produces an unsigned certificate
+with the placeholder issuer, which renders the certificate not self-issued.
 
 See B<-set_subject> on how the arg must be formatted.
 
@@ -542,6 +550,21 @@ See the description of B<-extfile> above for details.
 
 See the L<x509v3_config(5)> manual page for details of the
 extension section format.
+
+=item B<-unsigned>
+
+When creating a certificate, do this unsigned according to RFC 9925.
+Unless B<-set_issuer> is given and interferes as described there,
+the issuer is set to the subject if it is not the NULL-DN,
+otherwise the C<id-rdna-unsigned> placeholder is set.
+Any authority key identifier and issuer alternative name extensions are removed.
+
+When used with B<-req>, no B<-key> input is needed. When used with B<-new>,
+a subject public key must still be provided with B<-key> or B<-force_pubkey>.
+
+This option cannot be used with B<-CA>, B<-sigopt>, or B<-badsig>.
+When used with B<-x509toreq>, this option is ignored and a warning is emitted;
+the request is still signed with the key provided by B<-key>.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -902,6 +925,8 @@ See B<-extfile> above for details.
 As of OpenSSL 4.0, the B<x509> utility no longer has specialised built-in logic
 to add the SKID or AKID extensions, they are handled through configuration
 files and command-line options just like any other extension.
+
+The B<-unsigned> option was added in OpenSSL 4.2.
 
 =head1 COPYRIGHT
 
