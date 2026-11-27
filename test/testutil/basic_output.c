@@ -69,7 +69,9 @@ static LOCAL_TEST_DATA *get_local_test_data(void)
 
     return p;
 #else
-    return NULL;
+    static LOCAL_TEST_DATA data;
+
+    return &data;
 #endif
 }
 

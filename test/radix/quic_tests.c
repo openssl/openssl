@@ -5133,7 +5133,7 @@ static int script_80_send_stateless_reset(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
 
     fault->word1 = 0;
 
-    fprintf(stderr, "Sending stateless reset\n");
+    TEST_info("Sending stateless reset");
 
     RAND_bytes(databuf, 64);
     databuf[0] = 0x40;
@@ -5163,7 +5163,7 @@ static int script_80_gen_new_conn_id(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
 
     fault->word0 = 0;
 
-    fprintf(stderr, "sending new conn id\n");
+    TEST_info("sending new conn id");
     if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
             sizeof(frame_buf), 0)))
         return 0;

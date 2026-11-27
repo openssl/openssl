@@ -103,6 +103,16 @@ to nonblocking mode, so enable blocking I/O after that operation. The domain
 flags still enable blocking support, which is also needed by tests of
 `SSL_poll` with a nonzero timeout.
 
+Diagnostic output
+-----------------
+
+Each script logs its generated form and an execution trace. To keep the output
+of a passing run small, the log is held in memory and written to stderr only if
+the script fails. If the `HARNESS_VERBOSE` environment variable is set, as it is
+by `make test V=1`, the main thread's log is written as it is produced instead,
+which helps when a test crashes or hangs. The logs of child threads are always
+written once the script has finished.
+
 Architecture
 ------------
 
