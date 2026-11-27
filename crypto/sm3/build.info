@@ -29,5 +29,6 @@ IF[{- !$disabled{sm3} -}]
   GENERATE[sm3-riscv64-zbb.S]=asm/sm3-riscv64-zbb.pl
   GENERATE[sm3-riscv64-zvksh.S]=asm/sm3-riscv64-zvksh.pl
   GENERATE[sm3-x86_64.S]=asm/sm3-x86_64.pl
+  DEPEND[sm3-x86_64.S]=../perlasm/x86_64-xlate.pl
 ENDIF
 

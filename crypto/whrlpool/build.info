@@ -31,3 +31,4 @@ GENERATE[wp-mmx.S]=asm/wp-mmx.pl
 DEPEND[wp-mmx.S]=../perlasm/x86asm.pl
 
 GENERATE[wp-x86_64.s]=asm/wp-x86_64.pl
+DEPEND[wp-x86_64.s]=../perlasm/x86_64-xlate.pl

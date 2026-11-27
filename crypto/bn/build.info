@@ -162,16 +162,27 @@ GENERATE[s390x-mont.S]=asm/s390x-mont.pl
 GENERATE[s390x-gf2m.s]=asm/s390x-gf2m.pl
 
 GENERATE[x86_64-mont.s]=asm/x86_64-mont.pl
+DEPEND[x86_64-mont.s]=../perlasm/x86_64-xlate.pl
 GENERATE[x86_64-mont5.s]=asm/x86_64-mont5.pl
+DEPEND[x86_64-mont5.s]=../perlasm/x86_64-xlate.pl
 GENERATE[x86_64-gf2m.s]=asm/x86_64-gf2m.pl
+DEPEND[x86_64-gf2m.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-x86_64.s]=asm/rsaz-x86_64.pl
+DEPEND[rsaz-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-avx2.s]=asm/rsaz-avx2.pl
+DEPEND[rsaz-avx2.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-2k-avx512.s]=asm/rsaz-2k-avx512.pl
+DEPEND[rsaz-2k-avx512.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-3k-avx512.s]=asm/rsaz-3k-avx512.pl
+DEPEND[rsaz-3k-avx512.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-4k-avx512.s]=asm/rsaz-4k-avx512.pl
+DEPEND[rsaz-4k-avx512.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-2k-avxifma.s]=asm/rsaz-2k-avxifma.pl
+DEPEND[rsaz-2k-avxifma.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-3k-avxifma.s]=asm/rsaz-3k-avxifma.pl
+DEPEND[rsaz-3k-avxifma.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rsaz-4k-avxifma.s]=asm/rsaz-4k-avxifma.pl
+DEPEND[rsaz-4k-avxifma.s]=../perlasm/x86_64-xlate.pl
 
 GENERATE[bn-ia64.s]=asm/ia64.S
 GENERATE[ia64-mont.s]=asm/ia64-mont.pl

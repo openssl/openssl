@@ -41,3 +41,4 @@ INCLUDE[vpsm4-armv8.o]=..
 INCLUDE[vpsm4_ex-armv8.o]=..
 GENERATE[sm4-riscv64-zvksed.s]=asm/sm4-riscv64-zvksed.pl
 GENERATE[sm4-x86_64.S]=asm/sm4-x86_64.pl
+DEPEND[sm4-x86_64.S]=../perlasm/x86_64-xlate.pl

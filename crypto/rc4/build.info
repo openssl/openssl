@@ -34,7 +34,9 @@ GENERATE[rc4-586.S]=asm/rc4-586.pl
 DEPEND[rc4-586.S]=../perlasm/x86asm.pl
 
 GENERATE[rc4-x86_64.s]=asm/rc4-x86_64.pl
+DEPEND[rc4-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[rc4-md5-x86_64.s]=asm/rc4-md5-x86_64.pl
+DEPEND[rc4-md5-x86_64.s]=../perlasm/x86_64-xlate.pl
 
 GENERATE[rc4-parisc.s]=asm/rc4-parisc.pl
 GENERATE[rc4-c64xplus.s]=asm/rc4-c64xplus.pl
