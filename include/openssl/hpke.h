@@ -162,9 +162,28 @@ size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
 size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
 size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
 
+/**
+ * @brief Get the HPKE suite associated with an HPKE context.
+ * @see OSSL_HPKE_get_suite(3)
+ */
 OSSL_HPKE_SUITE OSSL_HPKE_get_suite(const OSSL_HPKE_CTX *ctx);
+
+/**
+ * @brief Get the public key size in bytes for an HPKE suite.
+ * @see OSSL_HPKE_get_public_key_size(3)
+ */
 size_t OSSL_HPKE_get_public_key_size(OSSL_HPKE_SUITE suite);
+
+/**
+ * @brief Check whether an HPKE mode is supported for an HPKE suite.
+ * @see OSSL_HPKE_mode_is_supported(3)
+ */
 int OSSL_HPKE_mode_is_supported(OSSL_HPKE_SUITE suite, int mode);
+
+/**
+ * @brief Convert an HPKE suite to a newly allocated canonical string.
+ * @see OSSL_HPKE_suite2str(3), OPENSSL_free(3)
+ */
 char *OSSL_HPKE_suite2str(OSSL_HPKE_SUITE suite);
 
 #ifdef __cplusplus

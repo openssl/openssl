@@ -1007,15 +1007,15 @@ static int test_hpke_modes_suites(void)
                      */
                     if (!TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite, hpke_mode))
                         || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
-                                                                 OSSL_HPKE_MODE_BASE))
+                            OSSL_HPKE_MODE_BASE))
                         || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
-                                                                 OSSL_HPKE_MODE_PSK))
+                            OSSL_HPKE_MODE_PSK))
                         || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
-                                                                 OSSL_HPKE_MODE_AUTH))
+                            OSSL_HPKE_MODE_AUTH))
                         || !TEST_true(OSSL_HPKE_mode_is_supported(hpke_suite,
-                                                                 OSSL_HPKE_MODE_PSKAUTH))
+                            OSSL_HPKE_MODE_PSKAUTH))
                         || !TEST_false(OSSL_HPKE_mode_is_supported(hpke_suite,
-                                                                  0xbad)))
+                            0xbad)))
                         overallresult = 0;
 
                     if (!TEST_true(OSSL_HPKE_keygen(hpke_suite,
@@ -1058,7 +1058,7 @@ static int test_hpke_modes_suites(void)
                         overallresult = 0;
 
                     if ((hpke_mode == OSSL_HPKE_MODE_AUTH
-                         || hpke_mode == OSSL_HPKE_MODE_PSKAUTH)
+                            || hpke_mode == OSSL_HPKE_MODE_PSKAUTH)
                         && !TEST_size_t_eq(pk_size, authpublen))
                         overallresult = 0;
 
