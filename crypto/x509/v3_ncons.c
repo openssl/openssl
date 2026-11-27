@@ -784,6 +784,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     char *host;
     int hostlen;
     int ret;
+    unsigned char ipout[16];
 
     if ((uri_copy = OPENSSL_strndup((const char *)uri->data, uri->length)) == NULL)
         return X509_V_ERR_UNSPECIFIED;
@@ -806,6 +807,18 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     /* We don't need these anymore */
     OPENSSL_free(scheme);
     OPENSSL_free(uri_copy);
+
+    /*
+     * RFC 5280 section 4.2.1.10: if the URI has no authority, or its
+     * authority is an IP address rather than a DNS name, the certificate
+     * MUST be rejected. IPv6 and IPvFuture literals are enclosed in '[]'.
+     */
+    if (*host == '\0' || *host == '[' || ossl_a2i_ipadd(ipout, host) != 0) {
+        ERR_raise_data(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
+            "x509: URI authority is not a DNS name: %s", host);
+        ret = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+        goto end;
+    }
 
     hostlen = (int)strlen(host);
 
