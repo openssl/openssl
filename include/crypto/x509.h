@@ -481,6 +481,23 @@ int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
 int ossl_x509_add_cert_new(STACK_OF(X509) **sk, const X509 *cert, int flags);
 int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, int flags);
 
+/**
+ * @brief Prepend certs to a stack, preserving their order and skipping dups.
+ *
+ * The given certs, at most the first max of them, are up-ref'ed and inserted
+ * at the front of the stack in their given order, skipping any certs that are
+ * already present. Self-signed certs are included. Since the certs are
+ * prepended, they can be removed again easily by shifting them off the front.
+ *
+ * @param p_sk pointer to the stack to prepend to; is allocated if *p_sk is NULL
+ * @param certs the certs to prepend, may be NULL
+ * @param max the maximum number of certs to take from the front of certs,
+ *            or -1 for taking all of them
+ * @returns the number of certs added, or -1 on error,
+ *          in which case the stack is left unchanged
+ */
+int ossl_x509_prepend_certs(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, int max);
+
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x);
 STACK_OF(X509_EXTENSION) *
 ossl_x509_req_get1_extensions_by_nid(const X509_REQ *req, int nid);

@@ -194,10 +194,21 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     ossl_cmp_log2(INFO, ctx, "received %s%s", ossl_cmp_bodytype_to_string(bt),
         ossl_cmp_is_error_with_waiting(*rep) ? " (waiting)" : "");
 
-    /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
-    if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
-        && !ossl_cmp_ctx_set1_extraCertsIn(ctx, (*rep)->extraCerts))
-        return 0;
+    /*
+     * copy received extraCerts, at most the first OSSL_CMP_MAX_EXTRACERTS,
+     * to ctx->extraCertsIn so they can be retrieved
+     */
+    if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF) {
+        STACK_OF(X509) *extraCerts = NULL;
+        int ok = ossl_x509_prepend_certs(&extraCerts, (*rep)->extraCerts,
+                     OSSL_CMP_MAX_EXTRACERTS)
+                >= 0
+            && ossl_cmp_ctx_set1_extraCertsIn(ctx, extraCerts);
+
+        OSSL_STACK_OF_X509_free(extraCerts);
+        if (!ok)
+            return 0;
+    }
 
     if (!ossl_cmp_msg_check_update(ctx, *rep, unprotected_exception,
             expected_type))
@@ -573,7 +584,7 @@ err:
 /*-
  * Callback fn validating that the new certificate can be verified, using
  * ctx->certConf_cb_arg, which has been initialized using opt_out_trusted, and
- * ctx->untrusted, which at this point already contains msg->extraCerts.
+ * ctx->untrusted, which at this point temporarily contains msg->extraCerts.
  * Returns 0 on acceptance, else a bit field reflecting PKIFailureInfo.
  * Quoting from RFC 9810 section 5.1. Overall PKI Message:
  *     The extraCerts field can contain certificates that may be useful to
@@ -674,7 +685,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     X509 *cert;
     char *subj = NULL;
     int ret = 1;
-    int rcvd_type;
+    int rcvd_type, num_added;
     OSSL_CMP_PKISI *si;
 
     if (!ossl_assert(ctx != NULL))
@@ -740,14 +751,24 @@ retry:
         return 0;
     }
 
+    /*
+     * Temporarily make the received extraCerts available in ctx->untrusted,
+     * as they may be needed for verifying the signer of any centrally
+     * generated private key and for validating the newly enrolled cert.
+     */
+    num_added = ossl_x509_prepend_certs(&ctx->untrusted, (*resp)->extraCerts,
+        OSSL_CMP_MAX_EXTRACERTS);
+    if (num_added < 0)
+        return 0;
+
     cert = get1_cert_status(ctx, (*resp)->body->type, crep);
     if (cert == NULL) {
         ERR_add_error_data(1, "; cannot extract certificate from response");
-        return 0;
+        goto err;
     }
     if (!ossl_cmp_ctx_set0_newCert(ctx, cert)) {
         X509_free(cert);
-        return 0;
+        goto err;
     }
 
     /*
@@ -756,7 +777,7 @@ retry:
      */
     if (crepmsg != NULL && crepmsg->caPubs != NULL
         && !ossl_cmp_ctx_set1_caPubs(ctx, crepmsg->caPubs))
-        return 0;
+        goto err;
 
     subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
     rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
@@ -786,6 +807,8 @@ retry:
     if (fail_info != 0) /* immediately log error before any certConf exchange */
         ossl_cmp_log1(ERROR, ctx,
             "rejecting newly enrolled cert with subject: %s", subj);
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(ctx->untrusted));
     /*
      * certConf exchange should better be moved to do_certreq_seq() such that
      * also more low-level errors with CertReqMessages get reported to server
@@ -804,8 +827,25 @@ retry:
         ctx->status = OSSL_CMP_PKISTATUS_rejected_by_client;
         ret = 0;
     }
+
+    /*
+     * Unless disabled, cache the chain of the newly enrolled cert, typically
+     * constructed from the received extraCerts, such that it is available,
+     * e.g., when using the new cert as CMP signer cert later. This is done
+     * only if the chain has been validated, which is the case if the default
+     * certConf_cb, given a trust store as its argument, accepted the new cert.
+     */
+    if (ret == 1 && !ctx->noCacheExtraCerts
+        && cb == OSSL_CMP_certConf_cb && ctx->certConf_cb_arg != NULL
+        && ossl_x509_prepend_certs(&ctx->untrusted, ctx->newChain, -1) < 0)
+        ret = 0;
     OPENSSL_free(subj);
     return ret;
+
+err:
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(ctx->untrusted));
+    return 0;
 }
 
 static int initial_certreq(OSSL_CMP_CTX *ctx,

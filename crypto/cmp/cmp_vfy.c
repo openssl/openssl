@@ -97,23 +97,24 @@ static int verify_PBMAC(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  * certs (possibly including CRLs and a cert verification callback function)
  * and non-trusted intermediate certs from the given ctx.
  *
- * Returns 1 on successful validation and 0 otherwise.
+ * Returns on success the validated chain, including the target cert but
+ * without the trust anchor (unless it is the target cert), else NULL.
  */
-int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
+STACK_OF(X509) *ossl_cmp_validate_cert_path(const OSSL_CMP_CTX *ctx,
     X509_STORE *trusted_store, X509 *cert)
 {
-    int valid = 0;
+    STACK_OF(X509) *chain = NULL;
     X509_STORE_CTX *csc = NULL;
     int err;
 
     if (ctx == NULL || cert == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        return 0;
+        return NULL;
     }
 
     if (trusted_store == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_TRUST_STORE);
-        return 0;
+        return NULL;
     }
 
     if ((csc = X509_STORE_CTX_new_ex(ctx->libctx, ctx->propq)) == NULL
@@ -121,17 +122,31 @@ int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
             cert, ctx->untrusted))
         goto err;
 
-    valid = X509_verify_cert(csc) > 0;
+    if (X509_verify_cert(csc) > 0
+        && (chain = X509_STORE_CTX_get1_chain(csc)) != NULL
+        && sk_X509_num(chain) > 1) /* keep target cert even if trusted */
+        X509_free(sk_X509_pop(chain)); /* remove trust anchor */
 
     /* make sure suitable error is queued even if callback did not do */
     err = ERR_peek_last_error();
-    if (!valid && ERR_GET_REASON(err) != CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
+    if (chain == NULL && ERR_GET_REASON(err) != CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
         ERR_raise(ERR_LIB_CMP, CMP_R_POTENTIALLY_INVALID_CERTIFICATE);
 
 err:
     /* directly output any fresh errors, needed for check_msg_find_cert() */
     OSSL_CMP_CTX_print_errors(ctx);
     X509_STORE_CTX_free(csc);
+    return chain;
+}
+
+/* Returns 1 on successful validation and 0 otherwise. */
+int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
+    X509_STORE *trusted_store, X509 *cert)
+{
+    STACK_OF(X509) *chain = ossl_cmp_validate_cert_path(ctx, trusted_store, cert);
+    int valid = chain != NULL;
+
+    OSSL_STACK_OF_X509_free(chain);
     return valid;
 }
 
@@ -315,10 +330,11 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
     return 1;
 }
 
+/* on success, provide in *chain the validated chain of scrt */
 static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
-    X509 *scrt)
+    X509 *scrt, STACK_OF(X509) **chain)
 {
-    if (OSSL_CMP_validate_cert_path(ctx, store, scrt))
+    if ((*chain = ossl_cmp_validate_cert_path(ctx, store, scrt)) != NULL)
         return 1;
 
     ossl_cmp_warn(ctx,
@@ -334,14 +350,16 @@ static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
  * in this and any subsequent responses from the server in the same transaction,
  * but only if these extraCerts can also be used as trust anchors for validating
  * the newly enrolled certificate received in the IP message.
+ * On success, provide in *chain the validated chain of scrt.
  */
 static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
-    const OSSL_CMP_MSG *msg, X509 *scrt)
+    const OSSL_CMP_MSG *msg, X509 *scrt, STACK_OF(X509) **chain)
 {
     int valid = 0;
-    X509_STORE *store;
-    STACK_OF(X509) *extraCerts;
+    X509_STORE *store = NULL;
+    STACK_OF(X509) *extraCerts = NULL;
 
+    *chain = NULL;
     if (!ctx->permitTAInExtraCertsForIR)
         return 0;
 
@@ -350,15 +368,19 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
      * For subsequent msgs (pollRep or PKIConf) in the same transaction,
      * use extraCertsIn remembered from earlier message (typically, the IP message).
      * The extraCertsIn field will be cleared by OSSL_CMP_CTX_reinit().
+     * In any case, use at most the first OSSL_CMP_MAX_EXTRACERTS of them.
      */
-    extraCerts = ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn;
-    if ((store = X509_STORE_new()) == NULL
+    if (ossl_x509_prepend_certs(&extraCerts,
+            ctx->extraCertsIn == NULL ? msg->extraCerts : ctx->extraCertsIn,
+            OSSL_CMP_MAX_EXTRACERTS)
+            < 0
+        || (store = X509_STORE_new()) == NULL
         || !ossl_cmp_X509_STORE_add1_certs(store, extraCerts,
             1 /* self-issued only */))
         goto err;
 
     /* store does not include CRLs */
-    valid = OSSL_CMP_validate_cert_path(ctx, store, scrt);
+    valid = (*chain = ossl_cmp_validate_cert_path(ctx, store, scrt)) != NULL;
     if (!valid) {
         ossl_cmp_warn(ctx,
             "also exceptional 3GPP mode cert path validation failed");
@@ -375,10 +397,15 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
             && (newcrt = ossl_cmp_certresponse_get1_cert(ctx, crep)) != NULL
             && OSSL_CMP_validate_cert_path(ctx, store, newcrt);
         X509_free(newcrt);
+        if (!valid) {
+            OSSL_STACK_OF_X509_free(*chain);
+            *chain = NULL;
+        }
     }
 
 err:
     X509_STORE_free(store);
+    OSSL_STACK_OF_X509_free(extraCerts);
     return valid;
 }
 
@@ -392,25 +419,30 @@ static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, X509 *cert,
 
 /*-
  * Try all certs in given list for verifying msg, normally or in 3GPP mode.
- * If already_checked1 == NULL then certs are assumed to be the msg->extraCerts.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
+ * If already_checked1 == NULL then certs are assumed to be the msg->extraCerts,
+ * of which at most the first OSSL_CMP_MAX_EXTRACERTS are considered.
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert()
+ * and provide in *chain its validated chain.
  */
 static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
     const char *desc,
     const STACK_OF(X509) *already_checked1,
     const STACK_OF(X509) *already_checked2,
-    const OSSL_CMP_MSG *msg, int mode_3gpp)
+    const OSSL_CMP_MSG *msg, int mode_3gpp, STACK_OF(X509) **chain)
 {
     int in_extraCerts = already_checked1 == NULL;
     int n_acceptable_certs = 0;
+    int n = sk_X509_num(certs /* may be NULL */);
     int i;
 
-    if (sk_X509_num(certs) <= 0) {
+    if (n <= 0) {
         ossl_cmp_log1(INFO, ctx, "no %s", desc);
         return 0;
     }
+    if (in_extraCerts && n > OSSL_CMP_MAX_EXTRACERTS)
+        n = OSSL_CMP_MAX_EXTRACERTS;
 
-    for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
+    for (i = 0; i < n; i++) {
         X509 *cert = sk_X509_value(certs, i);
 
         if (!ossl_assert(cert != NULL))
@@ -419,10 +451,14 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
                 already_checked1, already_checked2, msg))
             continue;
         n_acceptable_certs++;
-        if (mode_3gpp ? check_cert_path_3gpp(ctx, msg, cert)
-                      : check_cert_path(ctx, ctx->trusted, cert)) {
+        if (mode_3gpp ? check_cert_path_3gpp(ctx, msg, cert, chain)
+                      : check_cert_path(ctx, ctx->trusted, cert, chain)) {
             /* store successful sender cert for further msgs in transaction */
-            return ossl_cmp_ctx_set1_validatedPeerCert(ctx, cert);
+            if (ossl_cmp_ctx_set1_validatedPeerCert(ctx, cert))
+                return 1;
+            OSSL_STACK_OF_X509_free(*chain);
+            *chain = NULL;
+            return 0;
         }
     }
     if (in_extraCerts && n_acceptable_certs == 0)
@@ -433,10 +469,11 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
 /*-
  * Verify msg trying first ctx->untrusted, which should include extraCerts
  * at its front, then trying the trusted certs in truststore (if any) of ctx.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert()
+ * and provide in *chain its validated chain.
  */
 static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-    int mode_3gpp)
+    int mode_3gpp, STACK_OF(X509) **chain)
 {
     int ret = 0;
 
@@ -447,10 +484,10 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
 
     if (check_msg_with_certs(ctx, msg->extraCerts, "extraCerts",
-            NULL, NULL, msg, mode_3gpp))
+            NULL, NULL, msg, mode_3gpp, chain))
         return 1;
     if (check_msg_with_certs(ctx, ctx->untrusted, "untrusted certs",
-            msg->extraCerts, NULL, msg, mode_3gpp))
+            msg->extraCerts, NULL, msg, mode_3gpp, chain))
         return 1;
 
     if (ctx->trusted == NULL) {
@@ -462,7 +499,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             mode_3gpp ? "self-issued extraCerts"
                       : "certs in trusted store",
             msg->extraCerts, ctx->untrusted,
-            msg, mode_3gpp);
+            msg, mode_3gpp, chain);
         OSSL_STACK_OF_X509_free(trusted);
     }
     return ret;
@@ -470,9 +507,10 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
 /*-
  * Verify message signature with any acceptable and valid candidate cert.
- * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert().
+ * On success cache the found cert using ossl_cmp_ctx_set1_validatedPeerCert()
+ * and provide in *chain its validated chain, or NULL if the cert was cached.
  */
-static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
+static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg, STACK_OF(X509) **chain)
 {
     X509 *scrt = ctx->validatedPeerCert; /* first successfully  sender cert */
     GENERAL_NAME *sender = msg->header->sender;
@@ -482,6 +520,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     OSSL_CMP_log_cb_t backup_log_cb = ctx->log_cb;
     int res = 0;
 
+    *chain = NULL;
     if (sender == NULL || msg->body == NULL)
         return 0; /* other NULL cases already have been checked */
     if (sender->type != GEN_DIRNAME) {
@@ -519,8 +558,8 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         (void)ossl_cmp_ctx_set1_validatedPeerCert(ctx, NULL); /* this invalidates scrt */
     }
 
-    res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */)
-        || check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
+    res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */, chain)
+        || check_msg_all_certs(ctx, msg, 1 /* 3gpp */, chain);
 
     ctx->log_cb = backup_log_cb; /* re-enable logging */
     /* discard any previous diagnostic information on trying to use certs */
@@ -533,6 +572,8 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     sname = X509_NAME_oneline(sender->d.directoryName, NULL, 0);
     skid_str = skid == NULL ? NULL : i2s_ASN1_OCTET_STRING(NULL, skid);
     if (ctx->log_cb != NULL) {
+        STACK_OF(X509) *unused_chain = NULL;
+
         ossl_cmp_info(ctx, "trying to verify msg signature with a valid cert that..");
         if (sname != NULL)
             ossl_cmp_log1(INFO, ctx, "matches msg sender    = %s", sname);
@@ -541,8 +582,11 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         else
             ossl_cmp_info(ctx, "while msg header does not contain senderKID");
         /* re-do the above checks (just) for adding diagnostic information */
-        (void)check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */);
-        (void)check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
+        (void)check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */, &unused_chain);
+        OSSL_STACK_OF_X509_free(unused_chain);
+        unused_chain = NULL;
+        (void)check_msg_all_certs(ctx, msg, 1 /* 3gpp */, &unused_chain);
+        OSSL_STACK_OF_X509_free(unused_chain);
     }
 
     ERR_raise(ERR_LIB_CMP, CMP_R_NO_SUITABLE_SENDER_CERT);
@@ -576,12 +620,19 @@ end:
  * to validate the newly enrolled certificate returned in the IP msg.
  * This is according to the need given in 3GPP TS 33.310.
  *
+ * On success, *chain is the validated chain of the sender cert, excluding
+ * the trust anchor, in case cert path validation has been performed,
+ * else NULL.
+ *
  * Returns 1 on success, 0 on error or validation failed.
  */
-int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
+int ossl_cmp_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg, STACK_OF(X509) **chain)
 {
     X509 *scrt;
 
+    if (!ossl_assert(chain != NULL))
+        return 0;
+    *chain = NULL;
     ossl_cmp_debug(ctx, "validating CMP message");
     if (ctx == NULL || msg == NULL
         || msg->header == NULL || msg->body == NULL) {
@@ -655,7 +706,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
                 ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_TRUST_ANCHOR);
                 return 0;
             }
-            if (check_msg_find_cert(ctx, msg)) {
+            if (check_msg_find_cert(ctx, msg, chain)) {
                 ossl_cmp_log1(DEBUG, ctx,
                     "successfully validated signature-based CMP message protection using trust store%s",
                     ctx->permitTAInExtraCertsForIR ? " or 3GPP mode" : "");
@@ -674,6 +725,15 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         break;
     }
     return 0;
+}
+
+int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
+{
+    STACK_OF(X509) *chain = NULL;
+    int res = ossl_cmp_validate_msg(ctx, msg, &chain);
+
+    OSSL_STACK_OF_X509_free(chain);
+    return res;
 }
 
 static int check_transactionID_or_nonce(OSSL_CMP_CTX *ctx, const ASN1_OCTET_STRING *expected,
@@ -712,7 +772,8 @@ static int check_transactionID_or_nonce(OSSL_CMP_CTX *ctx, const ASN1_OCTET_STRI
 
 /*-
  * Check received message (i.e., response by server or request from client)
- * Any msg->extraCerts are prepended to ctx->untrusted.
+ * On success, unless ctx->noCacheExtraCerts, the chain of the validated
+ * protection cert (if any) is prepended to ctx->untrusted.
  *
  * Ensures that:
  * its sender is of appropriate type (currently only X509_NAME) and
@@ -736,7 +797,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
     int bodytype, end_of_polling;
-    int num_untrusted, num_added, res;
+    int num_extra, num_added, res, validated = 0;
+    STACK_OF(X509) *chain = NULL;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
@@ -779,34 +841,41 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     /* Ignoring recipient */
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
-    num_added = sk_X509_num(msg->extraCerts);
-    if (num_added > 10)
-        ossl_cmp_log1(WARN, ctx, "received CMP message contains %d extraCerts",
-            num_added);
     /*
-     * Store any provided extraCerts in ctx for use in OSSL_CMP_validate_msg()
-     * and for future use, such that they are available to ctx->certConf_cb and
-     * the peer does not need to send them again in the same transaction.
-     * Note that it does not help validating the message before storing the
-     * extraCerts because they do not belong to the protected msg part anyway.
-     * The extraCerts are prepended. Allows simple removal if they shall not be
-     * cached. Also they get used first, which is likely good for efficiency.
+     * Unless done already, build the chain of the own CMP signer cert (if any)
+     * before any received extraCerts get added to ctx->untrusted below.
+     * The extraCerts are not authenticated, so the peer could otherwise
+     * inject a bogus CA cert into the chain we send with our own messages.
      */
-    num_untrusted = ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted);
-    res = ossl_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
-        /* this allows self-signed certs */
-        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-            | X509_ADD_FLAG_PREPEND);
-    num_added = (ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted))
-        - num_untrusted;
-    if (!res) {
-        while (num_added-- > 0)
-            X509_free(sk_X509_shift(ctx->untrusted));
+    if (ctx->cert != NULL && ctx->pkey != NULL)
+        ossl_cmp_set_own_chain(ctx);
+
+    /*
+     * The extraCerts are not covered by any CMP message protection,
+     * so they are not safe and their number could be painfully high.
+     * Therefore we use at most the first OSSL_CMP_MAX_EXTRACERTS of them,
+     * ignoring any further ones.
+     */
+    num_extra = sk_X509_num(msg->extraCerts);
+    if (num_extra > OSSL_CMP_MAX_EXTRACERTS)
+        ossl_cmp_log2(WARN, ctx,
+            "received CMP message contains %d extraCerts; using only the first %d",
+            num_extra, OSSL_CMP_MAX_EXTRACERTS);
+
+    /*
+     * Temporarily make the extraCerts available in ctx->untrusted for use in
+     * ossl_cmp_validate_msg(). Note that it does not help validating the
+     * message before using the extraCerts because they do not belong to the
+     * protected msg part anyway. They are prepended such that they get used
+     * first, which is likely good for efficiency, and can be removed easily.
+     */
+    num_added = ossl_x509_prepend_certs(&ctx->untrusted, msg->extraCerts,
+        OSSL_CMP_MAX_EXTRACERTS);
+    if (num_added < 0)
         return 0;
-    }
 
     if (hdr->protectionAlg != NULL)
-        res = OSSL_CMP_validate_msg(ctx, msg)
+        res = (validated = ossl_cmp_validate_msg(ctx, msg, &chain))
             /* explicitly permitted exceptions for invalid protection: */
             || (cb != NULL && (*cb)(ctx, msg, 1, cb_arg) > 0);
     else
@@ -816,22 +885,15 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     res = 1; /* support more aggressive fuzzing by letting invalid msg pass */
 #endif
 
-    /*
-     * remove extraCerts again if not caching
-     * or if we failed validation above, lest a remote user
-     * starts sending us lots of certificates in invalid messages
-     * leading to a DOS from unbounded certificate stack growth
-     */
-    if (ctx->noCacheExtraCerts || res != 1)
-        while (num_added-- > 0)
-            X509_free(sk_X509_shift(ctx->untrusted));
+    while (num_added-- > 0)
+        X509_free(sk_X509_shift(ctx->untrusted));
 
     if (!res) {
         if (hdr->protectionAlg != NULL)
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_PROTECTION);
         else
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PROTECTION);
-        return 0;
+        goto err;
     }
 
     /* check CMP version number in header */
@@ -839,21 +901,21 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         && ossl_cmp_hdr_get_pvno(hdr) != OSSL_CMP_PVNO_3) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PVNO);
-        return 0;
+        goto err;
 #endif
     }
 
     if (bodytype < 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_PKIBODY_ERROR);
-        return 0;
+        goto err;
 #endif
     }
 
     /* compare received transactionID with the expected one in previous msg */
     if (!check_transactionID_or_nonce(ctx, ctx->transactionID, hdr->transactionID,
             bodytype, CMP_R_TRANSACTIONID_UNMATCHED))
-        return 0;
+        goto err;
 
     /*
      * Compare received nonce with the one we sent last.
@@ -868,13 +930,13 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             /* otherwise, compare received nonce with our sender nonce at poll start: */
             || !check_transactionID_or_nonce(ctx, ctx->first_senderNonce, hdr->recipNonce,
                 bodytype, CMP_R_RECIPNONCE_UNMATCHED))
-            return 0;
+            goto err;
     }
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL
         && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
-        return 0;
+        goto err;
 
     /*
      * RFC 9810 section 5.1.1 states: the recipNonce is copied from
@@ -882,7 +944,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * --> Store for setting in next message
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
-        return 0;
+        goto err;
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
         /*
@@ -902,14 +964,40 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
                 if (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, certs, 0))
                     /* adds both self-issued and not self-issued certs */
-                    return 0;
+                    goto err;
             }
             break;
         default:
             break;
         }
     }
+    /*
+     * Unless disabled, cache the intermediate CA certs of the validated chain
+     * (if any) in ctx->untrusted, so the peer does not need to send them again.
+     * This is done only if all above checks have passed, and if the msg
+     * protection has been successfully validated,
+     * not if the msg has been accepted just as an exception via cb.
+     * The protection cert itself is not cached here because it is held in
+     * ctx->validatedPeerCert anyway. This way, also on a long-running server,
+     * the growth of ctx->untrusted is limited to the CA certs of the PKI.
+     * Any other extraCerts are not cached because they are not authenticated
+     * (as they do not belong to the protected msg part),
+     * lest a remote user starts sending us lots of certificates
+     * leading to a DOS from unbounded certificate stack growth.
+     * The certs are prepended such that they get used first,
+     * which is likely good for efficiency.
+     */
+    if (sk_X509_num(chain) > 0)
+        X509_free(sk_X509_shift(chain)); /* the protection cert */
+    if (validated && !ctx->noCacheExtraCerts
+        && ossl_x509_prepend_certs(&ctx->untrusted, chain, -1) < 0)
+        goto err;
+    OSSL_STACK_OF_X509_free(chain);
     return 1;
+
+err:
+    OSSL_STACK_OF_X509_free(chain);
+    return 0;
 }
 
 int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,

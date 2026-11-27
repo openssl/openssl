@@ -19,6 +19,10 @@ static const char *server_cert_f;
 static const char *client_key_f;
 static const char *client_cert_f;
 static const char *pkcs10_f;
+static const char *ee_cert_f;
+static const char *ee_key_f;
+static const char *ca_cert_f;
+static const char *root_cert_f;
 
 typedef struct test_fixture {
     const char *test_case_name;
@@ -36,6 +40,8 @@ static EVP_PKEY *server_key = NULL;
 static X509 *server_cert = NULL;
 static EVP_PKEY *client_key = NULL;
 static X509 *client_cert = NULL;
+static X509 *ee_cert = NULL, *ca_cert = NULL, *root_cert = NULL; /* 3-level chain */
+static EVP_PKEY *ee_key = NULL;
 static unsigned char ref[CMP_TEST_REFVALUE_LENGTH]; /* not actually used */
 
 /*
@@ -578,6 +584,241 @@ static int test_exec_P10CR_ses_reject(void)
     return test_exec_P10CR_ses(1);
 }
 
+/* fixture->expected is here whether the CA cert is expected to get cached */
+static int execute_cache_newChain_test(CMP_SES_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    X509 *res = OSSL_CMP_exec_certreq(ctx, OSSL_CMP_PKIBODY_IR, NULL);
+    STACK_OF(X509) *untrusted = OSSL_CMP_CTX_get0_untrusted(ctx);
+    int i, found = 0;
+
+    print_errors_PKIStatusInfo(ctx);
+    if (!TEST_ptr(res) || !TEST_int_eq(X509_cmp(res, ee_cert), 0))
+        return 0;
+    for (i = 0; i < sk_X509_num(untrusted); i++)
+        if (X509_cmp(sk_X509_value(untrusted, i), ca_cert) == 0)
+            found = 1;
+    return TEST_int_eq(found, fixture->expected);
+}
+
+/*
+ * The mock server issues ee_cert and provides its issuing ca_cert in extraCerts.
+ * The chain of the new cert gets cached only if validated by the certConf_cb.
+ */
+static int test_exec_IR_ses_cache_newChain(int validate)
+{
+    STACK_OF(X509) *chain = NULL;
+    X509_STORE *out_trusted = NULL;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    fixture->expected = validate;
+    if (!TEST_ptr(chain = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(chain, ca_cert))
+        || !TEST_true(ossl_cmp_mock_srv_set1_certOut(fixture->srv_ctx, ee_cert))
+        || !TEST_true(ossl_cmp_mock_srv_set1_chainOut(fixture->srv_ctx, chain))
+        || !TEST_true(EVP_PKEY_up_ref(ee_key))
+        || !TEST_true(OSSL_CMP_CTX_set0_newPkey(fixture->cmp_ctx, 1, ee_key))
+        || (validate
+            && (!TEST_ptr(out_trusted = X509_STORE_new())
+                || !TEST_true(X509_STORE_add_cert(out_trusted, root_cert))
+                || !TEST_true(X509_VERIFY_PARAM_set_flags(X509_STORE_get0_param(out_trusted),
+                    X509_V_FLAG_NO_CHECK_TIME))
+                || !TEST_true(OSSL_CMP_CTX_set_certConf_cb_arg(fixture->cmp_ctx,
+                    out_trusted))))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    sk_X509_free(chain);
+    EXECUTE_TEST(execute_cache_newChain_test, tear_down);
+    X509_STORE_free(out_trusted);
+    return result;
+}
+
+static int test_exec_IR_ses_cache_validated_newChain(void)
+{
+    return test_exec_IR_ses_cache_newChain(1);
+}
+
+static int test_exec_IR_ses_no_cache_unvalidated_newChain(void)
+{
+    return test_exec_IR_ses_cache_newChain(0);
+}
+
+static int execute_cache_protection_chain_test(CMP_SES_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    ASN1_OBJECT *type = OBJ_txt2obj("1.3.6.1.5.5.7.4.2", 1);
+    STACK_OF(OSSL_CMP_ITAV) *itavs;
+    STACK_OF(X509) *untrusted;
+    int i, found_ca = 0, found_ee = 0;
+
+    if (!TEST_true(OSSL_CMP_CTX_push0_genm_ITAV(ctx, OSSL_CMP_ITAV_create(type, NULL))))
+        return 0;
+    itavs = OSSL_CMP_exec_GENM_ses(ctx);
+    print_errors_PKIStatusInfo(ctx);
+    sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
+    if (!TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), OSSL_CMP_PKISTATUS_accepted))
+        return 0;
+    untrusted = OSSL_CMP_CTX_get0_untrusted(ctx);
+    for (i = 0; i < sk_X509_num(untrusted); i++) {
+        X509 *cert = sk_X509_value(untrusted, i);
+
+        found_ca |= X509_cmp(cert, ca_cert) == 0;
+        found_ee |= X509_cmp(cert, ee_cert) == 0;
+    }
+    /* the intermediate CA cert is cached, but not the protection cert itself */
+    return TEST_true(found_ca) && TEST_false(found_ee);
+}
+
+/*
+ * The mock server protects its responses using ee_cert, providing in extraCerts
+ * also its issuing ca_cert, while the client trusts root_cert.
+ */
+static int test_exec_GENM_ses_cache_protection_chain(void)
+{
+    STACK_OF(X509) *chain = NULL;
+    OSSL_CMP_CTX *srv_cmp_ctx;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    if (!TEST_ptr(chain = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(chain, ca_cert))
+        || !TEST_ptr(srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(fixture->srv_ctx))
+        || !TEST_true(OSSL_CMP_CTX_set1_cert(srv_cmp_ctx, ee_cert))
+        || !TEST_true(OSSL_CMP_CTX_set1_pkey(srv_cmp_ctx, ee_key))
+        || !TEST_true(OSSL_CMP_CTX_set1_untrusted(srv_cmp_ctx, chain))
+        || !TEST_true(X509_STORE_add_cert(OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx),
+            root_cert))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    sk_X509_free(chain);
+    EXECUTE_TEST(execute_cache_protection_chain_test, tear_down);
+    return result;
+}
+
+/*
+ * A GENP message protected using ee_cert, providing also its issuing ca_cert in
+ * extraCerts, is checked by the client, which trusts root_cert.
+ * If the transactionID does not match, the msg is rejected and nothing is cached.
+ */
+static int test_msg_check_update_caching(int wrong_tid)
+{
+    static const unsigned char tid[OSSL_CMP_TRANSACTIONID_LENGTH] = { 0 };
+    OSSL_CMP_CTX *srv_ctx = NULL;
+    OSSL_CMP_MSG *msg = NULL;
+    STACK_OF(X509) *chain = NULL, *untrusted;
+    ASN1_OCTET_STRING *trid = NULL;
+    int i, found_ca = 0;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    if (!TEST_ptr(srv_ctx = OSSL_CMP_CTX_new(libctx, NULL))
+        || !TEST_ptr(chain = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(chain, ca_cert))
+        || !TEST_true(OSSL_CMP_CTX_set1_cert(srv_ctx, ee_cert))
+        || !TEST_true(OSSL_CMP_CTX_set1_pkey(srv_ctx, ee_key))
+        || !TEST_true(OSSL_CMP_CTX_set1_untrusted(srv_ctx, chain))
+        || !TEST_ptr(msg = ossl_cmp_genp_new(srv_ctx, NULL))
+        || !TEST_true(X509_STORE_add_cert(OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx),
+            root_cert)))
+        goto end;
+    if (wrong_tid
+        && (!TEST_ptr(trid = ASN1_OCTET_STRING_new())
+            || !TEST_true(ASN1_OCTET_STRING_set(trid, tid, sizeof(tid)))
+            || !TEST_true(OSSL_CMP_CTX_set1_transactionID(fixture->cmp_ctx, trid))))
+        goto end;
+
+    if (!TEST_int_eq(ossl_cmp_msg_check_update(fixture->cmp_ctx, msg, NULL, 0),
+            !wrong_tid))
+        goto end;
+    untrusted = OSSL_CMP_CTX_get0_untrusted(fixture->cmp_ctx);
+    for (i = 0; i < sk_X509_num(untrusted); i++)
+        found_ca |= X509_cmp(sk_X509_value(untrusted, i), ca_cert) == 0;
+    result = TEST_int_eq(found_ca, !wrong_tid);
+
+end:
+    ASN1_OCTET_STRING_free(trid);
+    OSSL_CMP_MSG_free(msg);
+    sk_X509_free(chain);
+    OSSL_CMP_CTX_free(srv_ctx);
+    tear_down(fixture);
+    return result;
+}
+
+static int test_msg_check_update_caching_ok(void)
+{
+    return test_msg_check_update_caching(0);
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int test_msg_check_update_no_caching_on_wrong_transactionID(void)
+{
+    return test_msg_check_update_caching(1);
+}
+#endif
+
+static int execute_extraCertsIn_limit_test(CMP_SES_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    X509 *res = OSSL_CMP_exec_certreq(ctx, OSSL_CMP_PKIBODY_IR, NULL);
+    STACK_OF(X509) *extraCertsIn = OSSL_CMP_CTX_get1_extraCertsIn(ctx);
+    int i, found_ca = 0, found_root = 0, ret;
+
+    print_errors_PKIStatusInfo(ctx);
+    for (i = 0; i < sk_X509_num(extraCertsIn); i++) {
+        X509 *cert = sk_X509_value(extraCertsIn, i);
+
+        found_ca |= X509_cmp(cert, ca_cert) == 0;
+        found_root |= X509_cmp(cert, root_cert) == 0;
+    }
+    ret = TEST_ptr(res)
+        && TEST_int_le(sk_X509_num(extraCertsIn), OSSL_CMP_MAX_EXTRACERTS)
+        && TEST_true(found_ca) && TEST_false(found_root);
+    OSSL_STACK_OF_X509_free(extraCertsIn);
+    return ret;
+}
+
+/*
+ * The extraCerts sent by the mock server are ca_cert, followed by
+ * OSSL_CMP_MAX_EXTRACERTS variants of it with different serial numbers
+ * (such that they are not removed as duplicates), followed by root_cert,
+ * which is to be ignored by the client.
+ */
+static int test_exec_IR_ses_extraCertsIn_limit(void)
+{
+    STACK_OF(X509) *chain = NULL;
+    X509 *cert = NULL;
+    ASN1_INTEGER *serial = NULL;
+    int i;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    if (!TEST_ptr(chain = sk_X509_new_null())
+        || !TEST_true(X509_add_cert(chain, ca_cert, X509_ADD_FLAG_UP_REF))
+        || !TEST_ptr(serial = ASN1_INTEGER_new()))
+        goto err;
+    for (i = 1; i <= OSSL_CMP_MAX_EXTRACERTS; i++) {
+        if (!TEST_ptr(cert = X509_dup(ca_cert))
+            || !TEST_true(ASN1_INTEGER_set(serial, 1000 + i))
+            || !TEST_true(X509_set_serialNumber(cert, serial))
+            || !TEST_true(X509_add_cert(chain, cert, X509_ADD_FLAG_DEFAULT)))
+            goto err;
+        cert = NULL;
+    }
+    if (!TEST_true(X509_add_cert(chain, root_cert, X509_ADD_FLAG_UP_REF))
+        || !TEST_true(ossl_cmp_mock_srv_set1_chainOut(fixture->srv_ctx, chain)))
+        goto err;
+    ASN1_INTEGER_free(serial);
+    OSSL_STACK_OF_X509_free(chain);
+    EXECUTE_TEST(execute_extraCertsIn_limit_test, tear_down);
+    return result;
+
+err:
+    X509_free(cert);
+    ASN1_INTEGER_free(serial);
+    OSSL_STACK_OF_X509_free(chain);
+    tear_down(fixture);
+    return 0;
+}
+
 static int execute_try_certreq_poll_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
@@ -727,13 +968,19 @@ void cleanup_tests(void)
     EVP_PKEY_free(server_key);
     X509_free(client_cert);
     EVP_PKEY_free(client_key);
+    X509_free(ee_cert);
+    EVP_PKEY_free(ee_key);
+    X509_free(ca_cert);
+    X509_free(root_cert);
     OSSL_PROVIDER_unload(default_null_provider);
     OSSL_PROVIDER_unload(provider);
     OSSL_LIB_CTX_free(libctx);
     return;
 }
 
-#define USAGE "server.key server.crt client.key client.crt client.csr module_name [module_conf_file]\n"
+#define USAGE "server.key server.crt client.key client.crt client.csr " \
+              "ee-cert.pem ee-key.pem ca-cert.pem root-cert.pem "       \
+              "module_name [module_conf_file]\n"
 OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
@@ -747,18 +994,26 @@ int setup_tests(void)
         || !TEST_ptr(server_cert_f = test_get_argument(1))
         || !TEST_ptr(client_key_f = test_get_argument(2))
         || !TEST_ptr(client_cert_f = test_get_argument(3))
-        || !TEST_ptr(pkcs10_f = test_get_argument(4))) {
+        || !TEST_ptr(pkcs10_f = test_get_argument(4))
+        || !TEST_ptr(ee_cert_f = test_get_argument(5))
+        || !TEST_ptr(ee_key_f = test_get_argument(6))
+        || !TEST_ptr(ca_cert_f = test_get_argument(7))
+        || !TEST_ptr(root_cert_f = test_get_argument(8))) {
         TEST_error("usage: cmp_client_test %s", USAGE);
         return 0;
     }
 
-    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 5, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 9, USAGE))
         return 0;
 
     if (!TEST_ptr(server_key = load_pkey_pem(server_key_f, libctx))
         || !TEST_ptr(server_cert = load_cert_pem(server_cert_f, libctx))
         || !TEST_ptr(client_key = load_pkey_pem(client_key_f, libctx))
         || !TEST_ptr(client_cert = load_cert_pem(client_cert_f, libctx))
+        || !TEST_ptr(ee_cert = load_cert_pem(ee_cert_f, libctx))
+        || !TEST_ptr(ee_key = load_pkey_pem(ee_key_f, libctx))
+        || !TEST_ptr(ca_cert = load_cert_pem(ca_cert_f, libctx))
+        || !TEST_ptr(root_cert = load_cert_pem(root_cert_f, libctx))
         || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref), 0))) { /* not actually used */
         cleanup_tests();
         return 0;
@@ -776,6 +1031,9 @@ int setup_tests(void)
     ADD_TEST(test_exec_IR_ses_poll_ok);
     ADD_TEST(test_exec_IR_ses_poll_no_timeout);
     ADD_TEST(test_exec_IR_ses_poll_total_timeout);
+    ADD_TEST(test_exec_IR_ses_cache_validated_newChain);
+    ADD_TEST(test_exec_IR_ses_no_cache_unvalidated_newChain);
+    ADD_TEST(test_exec_IR_ses_extraCertsIn_limit);
     ADD_TEST(test_exec_KUR_ses_ok);
     ADD_TEST(test_exec_KUR_ses_transfer_error);
     ADD_TEST(test_exec_KUR_bad_pkiConf_protection);
@@ -787,6 +1045,11 @@ int setup_tests(void)
     ADD_TEST(test_try_certreq_poll);
     ADD_TEST(test_try_certreq_poll_abort);
     ADD_TEST(test_exec_GENM_ses_ok);
+    ADD_TEST(test_exec_GENM_ses_cache_protection_chain);
+    ADD_TEST(test_msg_check_update_caching_ok);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_msg_check_update_no_caching_on_wrong_transactionID);
+#endif
     ADD_TEST(test_exec_GENM_ses_transfer_error);
     ADD_TEST(test_exec_GENM_ses_total_timeout);
     ADD_TEST(test_exec_GENM_ses_poll_ok);

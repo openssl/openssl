@@ -61,6 +61,19 @@ OpenSSL 4.2
 
    *Shane Lontis*
 
+ * The CMP implementation no longer caches all certificates received in the
+   extraCerts field of CMP messages in the list of untrusted certificates,
+   as this could be used for DoS. Instead, they are used only temporarily
+   for validating the received message and the newly enrolled certificate.
+   Unless `OSSL_CMP_OPT_NO_CACHE_EXTRACERTS` (or the `-no_cache_extracerts`
+   option of the `openssl cmp` app) is set, after successful validation
+   only the chain of intermediate CA certificates of the message protection
+   certificate, excluding the message protection certificate and the trust anchor,
+   is cached, as well as the validated chain of any newly enrolled certificate.
+   Also, at most the first 10 extraCerts of a received message are used.
+
+   *David von Oheimb*
+
  * Added `BIO_dgram_pair_set0_pcap_file()` which intercepts and writes UDP
    datagrams exchanged of over `BIO_dgram_pair` bio memory object to file
    in libpcap format. To enable `BIO_dgram_pair_set0_pcap_file()` the build

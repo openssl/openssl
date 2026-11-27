@@ -31,7 +31,11 @@ my @basic_cmd = ("cmp_client_test",
                  data_file("server.crt"),
                  data_file("client.key"),
                  data_file("client.crt"),
-                 data_file("client.csr"));
+                 data_file("client.csr"),
+                 srctop_file("test", "certs", "ee-cert.pem"),
+                 srctop_file("test", "certs", "ee-key.pem"),
+                 srctop_file("test", "certs", "ca-cert.pem"),
+                 srctop_file("test", "certs", "root-cert.pem"));
 
 ok(run(test([@basic_cmd, "none"])));
 

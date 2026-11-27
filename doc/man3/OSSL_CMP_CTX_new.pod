@@ -365,7 +365,21 @@ implements a form of trust-on-first-use (TOFU).
 =item B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS>
 
 Do not cache certificates received in the extraCerts CMP message field.
-Otherwise they are stored to potentially help validate further messages.
+Otherwise, after successfully validating an incoming message,
+the intermediate CA certificates of the validated chain of its protection
+certificate (if any), i.e., excluding the protection certificate itself and
+the trust anchor, are added to the untrusted certificates in the context
+to potentially help validate further messages.
+Likewise, after successful enrollment, the chain of the newly enrolled
+certificate (see OSSL_CMP_CTX_get1_newChain()), which typically has been
+constructed using the received extraCerts, is added such that it is available
+later, for instance when building the chain of the new certificate used as
+CMP signer certificate. This is done only if the chain has been validated,
+namely by the default certificate confirmation callback OSSL_CMP_certConf_cb()
+using the trust store given as its argument.
+Other certificates received in the extraCerts field are never cached
+because they are not authenticated, most likely not needed later,
+and may even have been added as part of a DoS attack.
 
 In any case, after successfully validating an incoming message, its protection
 certificate (if any) is cached for reuse with validation of subsequent messages.
@@ -509,8 +523,11 @@ of intermediate CAs that may be useful for path construction for the own CMP
 signer certificate, for the own TLS certificate (if any), when verifying peer
 CMP protection certificates, and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
-This list of untrusted certificates in I<ctx> will get augmented by extraCerts
-in received CMP messages unless B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> is set.
+This list of untrusted certificates in I<ctx> will get augmented by the
+intermediate CA certificates of the validated chain of the protection
+certificate of received CMP messages
+and by the validated chain of any newly enrolled certificate
+unless B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> is set.
 
 OSSL_CMP_CTX_get0_untrusted() returns a pointer to the
 list of untrusted certs in I<ctx>, which may be empty if unset.
@@ -668,7 +685,8 @@ OSSL_CMP_certConf_cb() is the default certificate confirmation callback function
 If the callback argument is not NULL it must point to a trust store.
 In this case the function checks that the newly enrolled certificate can be
 verified using this trust store and untrusted certificates from the I<ctx>,
-which have been augmented by the list of extraCerts received.
+which during the callback have been augmented by the list of extraCerts
+received in the message containing the newly enrolled certificate.
 During this verification, any certificate status checking is disabled.
 If the callback argument is NULL the function tries building an approximate
 chain as far as possible using the same untrusted certificates from the I<ctx>,
@@ -696,6 +714,13 @@ Typically, the callback will check at least that the certificate can be verified
 using a set of trusted certificates.
 It also could compare the subject DN and other fields of the newly
 enrolled certificate with the certificate template of the request.
+The callback must not modify the list of untrusted certificates in the I<ctx>,
+neither by calling OSSL_CMP_CTX_set1_untrusted() nor by changing the list
+obtained via OSSL_CMP_CTX_get0_untrusted().
+This is because before calling the callback, the library temporarily adds
+to the front of this list the extraCerts of the message containing the newly
+enrolled certificate, and after the callback returns, the library removes them
+again from the front of the list, assuming that the list has not been changed.
 
 OSSL_CMP_CTX_set_certConf_cb_arg() sets an argument, respectively a pointer to a
 structure containing arguments, optionally to be used by the certConf callback.
@@ -764,6 +789,8 @@ OSSL_CMP_CTX_get1_extraCertsIn() returns a pointer to a duplicate of the list
 of X.509 certificates contained in the extraCerts field of the last received
 response message (except for pollRep and PKIConf), or
 an empty stack if no extraCerts have been received in the current transaction.
+Of the extraCerts received, at most the first 10 are retained,
+and any duplicates among them are removed.
 
 OSSL_CMP_CTX_set1_transactionID() sets the given transaction ID in the given
 OSSL_CMP_CTX structure.

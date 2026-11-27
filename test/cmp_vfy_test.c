@@ -597,6 +597,154 @@ static int test_msg_check_update_malicious_sender(void)
 }
 
 /*
+ * Tests on the handling of extraCerts by ossl_cmp_msg_check_update(), using
+ * IR_protected_2_extraCerts.der, protected by the Insta cert, which is issued
+ * by the Insta CA. Its extraCerts are the unrelated srvcert and the Insta cert.
+ */
+
+static int add_extracert(OSSL_CMP_MSG *msg, X509 *cert, int prepend)
+{
+    return X509_add_cert(msg->extraCerts, cert,
+        X509_ADD_FLAG_UP_REF | (prepend ? X509_ADD_FLAG_PREPEND : 0));
+}
+
+static void setup_extracerts_msg(CMP_VFY_TEST_FIXTURE **fixture, int expected)
+{
+    (*fixture)->expected = expected;
+    if (!TEST_ptr((*fixture)->msg = load_pkimsg(ir_protected_2_extracerts, libctx))
+        || !add_trusted((*fixture)->cmp_ctx, instaca_cert)) {
+        tear_down(*fixture);
+        *fixture = NULL;
+    }
+}
+
+static int execute_extracerts_limit_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    return TEST_int_eq(fixture->expected, ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg, NULL, 0))
+        /* the msg must not be modified */
+        && TEST_int_eq(sk_X509_num(fixture->msg->extraCerts), 2 + OSSL_CMP_MAX_EXTRACERTS);
+}
+
+/* add OSSL_CMP_MAX_EXTRACERTS unrelated certs in front or at the end */
+static int test_msg_check_extracerts_limit(int prepend)
+{
+    int i;
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_extracerts_msg(&fixture, !prepend /* else Insta cert gets dropped */);
+    if (fixture == NULL)
+        return 0;
+    for (i = 0; i < OSSL_CMP_MAX_EXTRACERTS; i++) {
+        if (!TEST_true(add_extracert(fixture->msg, i % 2 == 0 ? clcert : endentity1, prepend))) {
+            tear_down(fixture);
+            return 0;
+        }
+    }
+    EXECUTE_TEST(execute_extracerts_limit_test, tear_down);
+    return result;
+}
+
+static int test_msg_check_extracerts_limit_ok(void)
+{
+    return test_msg_check_extracerts_limit(0);
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int test_msg_check_extracerts_limit_sender_cert_dropped(void)
+{
+    return test_msg_check_extracerts_limit(1);
+}
+#endif
+
+static int execute_own_chain_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+
+    if (!TEST_int_eq(ossl_cmp_msg_check_update(ctx, fixture->msg, NULL, 0), 1))
+        return 0;
+    ossl_cmp_set_own_chain(ctx); /* as done when protecting our next msg via ossl_cmp_msg_protect() */
+    /* the intermediate CA cert received in extraCerts must not be included */
+    return TEST_int_eq(sk_X509_num(ctx->chain), 1)
+        && TEST_int_eq(X509_cmp(sk_X509_value(ctx->chain, 0), endentity2), 0);
+}
+
+static int test_msg_check_own_chain_not_using_extracerts(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_extracerts_msg(&fixture, 1);
+    if (fixture == NULL
+        || !TEST_true(OSSL_CMP_CTX_set1_cert(fixture->cmp_ctx, endentity2))
+        || !TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, X509_get0_pubkey(endentity2)))
+        || !TEST_true(add_extracert(fixture->msg, intermediate, 0))) {
+        tear_down(fixture);
+        return 0;
+    }
+    EXECUTE_TEST(execute_own_chain_test, tear_down);
+    return result;
+}
+
+static int execute_cache_validated_chain_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    int res = ossl_cmp_msg_check_update(ctx, fixture->msg,
+        fixture->allow_unprotected_cb, fixture->additional_arg);
+    STACK_OF(X509) *untrusted;
+
+    if (!TEST_int_eq(res, 1))
+        return 0;
+    /*
+     * The unrelated srvcert from the extraCerts of ir_protected_2_extracerts
+     * must not be in the validated chain and thus not in the cache of untrusted
+     * certs. The validated chain consists just of the protection cert,
+     * insta_cert, which must not be cached either.
+     */
+    untrusted = OSSL_CMP_CTX_get0_untrusted(ctx);
+    return TEST_int_eq(sk_X509_num(untrusted), 0);
+}
+
+static int test_msg_check_cache_validated_chain(int no_cache, int bad_sig)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    /*
+     * Set fixture->msg to ir_protected_2_extracerts, which has as its
+     * extraCerts the unrelated srvcert and the insta_cert.
+     * The validated chain consists just of the insta_cert.
+     */
+    setup_extracerts_msg(&fixture, 1);
+    if (fixture == NULL)
+        return 0;
+    if (bad_sig) {
+        fixture->allow_unprotected_cb = allow_unprotected;
+        fixture->additional_arg = 1; /* accept msg despite bad signature */
+    }
+    if (!TEST_true(OSSL_CMP_CTX_set_option(fixture->cmp_ctx,
+            OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, no_cache))
+        || (bad_sig && !TEST_true(flip_bit(fixture->msg->protection)))) {
+        tear_down(fixture);
+        return 0;
+    }
+    EXECUTE_TEST(execute_cache_validated_chain_test, tear_down);
+    return result;
+}
+
+static int test_msg_check_not_caching_protection_cert(void)
+{
+    return test_msg_check_cache_validated_chain(0, 0);
+}
+
+static int test_msg_check_no_cache_extracerts(void)
+{
+    return test_msg_check_cache_validated_chain(1, 0);
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int test_msg_check_not_cached_when_accepted_via_cb(void)
+{
+    return test_msg_check_cache_validated_chain(0, 1);
+}
+#endif
+
+/*
  * The functions below use the normal OpenSSL test certs from test/certs/,
  * forming a 2-level and mostly 3-level chains,
  * all of which are kept valid (for tests using the current time).
@@ -619,13 +767,33 @@ static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int not_yet_
     }
 }
 
+/* check that chain consists of cert and, if expected, the intermediate CA */
+static int check_validated_chain(const STACK_OF(X509) *chain, X509 *cert)
+{
+    int n = cert == endentity1 ? 1 : 2; /* endentity1 is directly below root */
+
+    return TEST_int_eq(sk_X509_num(chain), n)
+        && TEST_int_eq(X509_cmp(sk_X509_value(chain, 0), cert), 0)
+        && (n == 1
+            || TEST_int_eq(X509_cmp(sk_X509_value(chain, 1), intermediate), 0));
+}
+
 static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     X509_STORE *ts = OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx);
     int res = TEST_int_eq(fixture->expected,
         OSSL_CMP_validate_cert_path(fixture->cmp_ctx, ts, fixture->cert));
+    STACK_OF(X509) *chain;
 
     OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
+    if (!res)
+        return 0;
+    /* the internal variant also yields the validated chain on success */
+    chain = ossl_cmp_validate_cert_path(fixture->cmp_ctx, ts, fixture->cert);
+    OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
+    res = fixture->expected ? check_validated_chain(chain, fixture->cert)
+                            : TEST_ptr_null(chain);
+    OSSL_STACK_OF_X509_free(chain);
     return res;
 }
 
@@ -805,6 +973,18 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
     ADD_TEST(test_msg_check_recipient_nonce_error);
+
+    /* Tests on the handling of extraCerts */
+    ADD_TEST(test_msg_check_extracerts_limit_ok);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_msg_check_extracerts_limit_sender_cert_dropped);
+#endif
+    ADD_TEST(test_msg_check_own_chain_not_using_extracerts);
+    ADD_TEST(test_msg_check_not_caching_protection_cert);
+    ADD_TEST(test_msg_check_no_cache_extracerts);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_msg_check_not_cached_when_accepted_via_cb);
+#endif
 
     /* Cert path validation tests, using normal OpenSSL test certs */
     ADD_TEST(test_validate_cert_path_2_level_ok);
