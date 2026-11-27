@@ -1321,7 +1321,7 @@ err:
 #define OP_READ_EXPECT_B(name, buf) \
     OP_READ_EXPECT(name, (buf), sizeof(buf))
 
-#define OP_READ_FAIL()       \
+#define OP_READ_FAIL(name)   \
     (OP_SELECT_SSL(0, name), \
         OP_PUSH_U64(0),      \
         OP_FUNC(hf_read_fail))
