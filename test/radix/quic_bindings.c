@@ -422,7 +422,7 @@ static int RADIX_PROCESS_join_all_threads(RADIX_PROCESS *rp, int *testresult)
     for (i = 1; i < sk_RADIX_THREAD_num(rp->threads); ++i) {
         rt = sk_RADIX_THREAD_value(rp->threads, i);
 
-        BIO_printf(bio_err, "==> Joining thread %d\n", i);
+        TEST_note("==> Joining thread %d", i);
 
         if (!TEST_true(RADIX_THREAD_join(rt)))
             ok = 0;
@@ -434,8 +434,6 @@ static int RADIX_PROCESS_join_all_threads(RADIX_PROCESS *rp, int *testresult)
     rp->thread_composite_testresult = composite_testresult;
     *testresult = composite_testresult;
     rp->done_join_all_threads = 1;
-
-    RADIX_PROCESS_report_thread_results(rp, bio_err);
     return ok;
 }
 
@@ -637,8 +635,33 @@ static void radix_thread_cleanup(void)
     if (!TEST_ptr(rt))
         return;
 
+    set_override_bio_out(NULL);
+    set_override_bio_err(NULL);
+
     if (!TEST_true(CRYPTO_THREAD_set_local(&radix_thread, NULL)))
         return;
+}
+
+/* In verbose mode the main thread's log is written out as it comes */
+static int radix_verbose(void)
+{
+    const char *v = ossl_safe_getenv("HARNESS_VERBOSE");
+
+    return v != NULL && *v != '\0' && strcmp(v, "0") != 0;
+}
+
+/* Write out the main thread's log, which is held back until a script fails */
+static void radix_write_log(void)
+{
+    BIO *debug_bio = radix_get_thread()->debug_bio;
+    char *p;
+    long l;
+
+    if (debug_bio == NULL)
+        return;
+
+    l = BIO_get_mem_data(debug_bio, &p);
+    BIO_write(bio_err, p, (int)l);
 }
 
 static int bindings_process_init(size_t node_idx, size_t process_idx)
@@ -655,6 +678,9 @@ static int bindings_process_init(size_t node_idx, size_t process_idx)
     if (!TEST_ptr(rt = RADIX_THREAD_new(&radix_process)))
         return 0;
 
+    if (!radix_verbose() && !TEST_ptr(rt->debug_bio = BIO_new(BIO_s_mem())))
+        return 0;
+
     /* Allocate structures for main thread. */
     return radix_thread_init(rt);
 }
@@ -664,23 +690,29 @@ static int bindings_process_finish(int testresult_main)
     int testresult, testresult_child;
 
     if (!TEST_true(RADIX_PROCESS_join_all_threads(&radix_process,
-            &testresult_child)))
+            &testresult_child))) {
+        radix_write_log();
         return 0;
+    }
 
     testresult = testresult_main && testresult_child;
-    RADIX_PROCESS_report_state(&radix_process, bio_err,
-        /*verbose=*/!testresult);
+    if (!testresult || radix_verbose()) {
+        radix_write_log();
+        RADIX_PROCESS_report_thread_results(&radix_process, bio_err);
+        RADIX_PROCESS_report_state(&radix_process, bio_err,
+            /*verbose=*/!testresult);
+    }
     radix_thread_cleanup(); /* cleanup main thread */
     RADIX_PROCESS_cleanup(&radix_process);
 
     if (!TEST_true(CRYPTO_THREAD_cleanup_local(&radix_thread)))
         testresult = 0;
 
-    if (testresult)
-        BIO_printf(bio_err, "==> OK\n\n");
-    else
+    if (!testresult)
         BIO_printf(bio_err, "==> ERROR (main=%d, children=%d)\n\n",
             testresult_main, testresult_child);
+    else if (radix_verbose())
+        BIO_printf(bio_err, "==> OK\n\n");
 
     return testresult;
 }
@@ -728,6 +760,9 @@ static int do_per_op(TERP *terp, void *arg)
 
 static int bindings_adjust_terp_config(TERP_CONFIG *cfg)
 {
+    if (RT()->debug_bio != NULL)
+        cfg->debug_bio = RT()->debug_bio;
+
     cfg->now_cb = terp_now;
     cfg->per_op_cb = do_per_op;
 
