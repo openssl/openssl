@@ -5,6 +5,7 @@
 # to that directory
 name: Interoperability tests with GnuTLS, NSS and OpenSSH
 on:
+  pull_request:
   schedule:
     - cron: '55 02 * * *'
   workflow_dispatch:
