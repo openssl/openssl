@@ -254,6 +254,11 @@ OpenSSL 4.2
 
    *Daiki Ueno and Clemens Lang*
 
+ * Added `OSSL_HPKE_get_suite()`, `OSSL_HPKE_get_public_key_size()`,
+   `OSSL_HPKE_mode_is_supported()`, and `OSSL_HPKE_suite2str()` functions.
+
+   *Shivam Kumar*
+
 OpenSSL 4.1
 -----------
 

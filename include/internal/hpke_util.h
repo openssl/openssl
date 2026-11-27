@@ -102,4 +102,14 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     OSSL_LIB_CTX *libctx, const char *propq);
 
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite);
+
+/**
+ * @brief Map an HPKE suite to its canonical string representation.
+ *
+ * The caller must free the returned string with OPENSSL_free().
+ *
+ * @param[in] suite the HPKE suite to convert
+ * @returns a newly allocated string in "KEM,KDF,AEAD" format, or NULL on error
+ */
+char *ossl_hpke_suite2str(OSSL_HPKE_SUITE suite);
 #endif
