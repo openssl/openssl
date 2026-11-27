@@ -1692,6 +1692,9 @@ static int test_script(int idx)
  */
 static uint64_t probe_crypto_end;
 
+static int check_is_initial(struct helper *h);
+static int check_is_handshake(struct helper *h);
+
 static void fill_pto_crypto(unsigned char *buf, size_t len)
 {
     size_t i;
@@ -1790,7 +1793,7 @@ static const struct script_op pto_script_1[] = {
     { OPK_END }
 };
 
-/* Initial PTO with two full packets of CRYPTO data in flight */
+/* Initial PTO with two packets of CRYPTO data in flight */
 static unsigned char pto_crypto_2[2312];
 
 static int check_all_sent_2(struct helper *h)
@@ -1956,7 +1959,7 @@ static const struct script_op pto_script_6[] = {
 };
 
 /* Initial PTO with a CRYPTO tail that has never been sent */
-static unsigned char pto_crypto_5[2377];
+static unsigned char pto_crypto_7[2377];
 
 static int check_tail_7(struct helper *h)
 {
@@ -1968,13 +1971,13 @@ static int check_tail_7(struct helper *h)
 static const struct script_op pto_script_7[] = {
     { OPK_PROVIDE_SECRET, QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM,
         secret_1, sizeof(secret_1) },
-    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_5, 2313 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_7, 2313 },
     { OPK_TXP_GENERATE },
     { OPK_RX_PKT },
     { OPK_TXP_GENERATE },
     { OPK_RX_PKT },
     /* the tail is queued but not sent before the PTO */
-    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_5 + 2313, 64 },
+    { OPK_CRYPTO_SEND, QUIC_PN_SPACE_INITIAL, 0, pto_crypto_7 + 2313, 64 },
     { OPK_CHECK, 0, 0, NULL, 0, trigger_pto },
     /* the first probe sends the queued tail */
     { OPK_TXP_GENERATE },
@@ -2086,7 +2089,7 @@ static int check_handshake_10(struct helper *h)
         && check_crypto_data(h);
 }
 
-static int check_no_probe_10(struct helper *h)
+static int check_no_pto_pending(struct helper *h)
 {
     OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
 
@@ -2109,16 +2112,18 @@ static const struct script_op pto_script_10[] = {
     /* the Initial probe leaves the datagram to the queued Handshake data */
     { OPK_TXP_GENERATE },
     { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, check_is_initial },
     { OPK_NEXT_FRAME },
     { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_PING },
     { OPK_EXPECT_NO_FRAME },
     { OPK_RX_PKT },
+    { OPK_CHECK, 0, 0, NULL, 0, check_is_handshake },
     { OPK_NEXT_FRAME },
     { OPK_EXPECT_FRAME, OSSL_QUIC_FRAME_TYPE_CRYPTO },
     { OPK_CHECK, 0, 0, NULL, 0, check_handshake_10 },
     { OPK_EXPECT_NO_FRAME },
     /* a single probe, as the Handshake keys are available */
-    { OPK_CHECK, 0, 0, NULL, 0, check_no_probe_10 },
+    { OPK_CHECK, 0, 0, NULL, 0, check_no_pto_pending },
     { OPK_END }
 };
 
@@ -2399,7 +2404,7 @@ int setup_tests(void)
     fill_pto_crypto(pto_crypto_2, sizeof(pto_crypto_2));
     fill_pto_crypto(pto_crypto_3, sizeof(pto_crypto_3));
     fill_pto_crypto(pto_crypto_4, sizeof(pto_crypto_4));
-    fill_pto_crypto(pto_crypto_5, sizeof(pto_crypto_5));
+    fill_pto_crypto(pto_crypto_7, sizeof(pto_crypto_7));
     ADD_ALL_TESTS(test_pto_script, OSSL_NELEM(pto_scripts));
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     ADD_ALL_TESTS(test_dyn_script_1,

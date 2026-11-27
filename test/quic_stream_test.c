@@ -386,11 +386,14 @@ static int check_stream_frame(QUIC_SSTREAM *sstream, size_t idx,
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
     size_t i, num_iov = OSSL_NELEM(iov), total = 0;
+    int got;
 
-    if (!ossl_quic_sstream_get_stream_frame(sstream, idx, &hdr, iov, &num_iov))
-        return TEST_uint64_t_eq(len, 0);
+    got = ossl_quic_sstream_get_stream_frame(sstream, idx, &hdr, iov, &num_iov);
+    if (len == 0)
+        return TEST_false(got);
 
-    if (!TEST_uint64_t_eq(hdr.offset, offset)
+    if (!TEST_true(got)
+        || !TEST_uint64_t_eq(hdr.offset, offset)
         || !TEST_uint64_t_eq(hdr.len, len))
         return 0;
 
