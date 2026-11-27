@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use File::Spec::Functions;
+use File::Spec::Functions qw(:DEFAULT devnull);
 use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file bldtop_dir
@@ -105,7 +105,7 @@ my @prov_method = qw(-provider default);
 push @prov_method, qw(-provider legacy) unless disabled('legacy');
 push @methods, [ @prov_method ];
 
-my $n = 4 + scalar @methods
+my $n = 4 + 1 + scalar @methods
     * ( (3 * scalar @noexist_files)
         + (6 * scalar @src_files)
         + (2 * scalar @data_files)
@@ -278,6 +278,44 @@ indir "store_$$" => sub {
             }
         }
     }
+
+    subtest 'combined certificate + encrypted key file' => sub {
+        plan tests => 3;
+
+        # A file holding a traditional encrypted key followed by a
+        # certificate: loading only the certificate must not ask for
+        # the key's pass phrase.
+        my $combined = "rsa-keycert-aes128.pem";
+        copy("rsa-key-pkcs1-aes128.pem", $combined) or die $!;
+        {
+            open my $out, '>>', $combined or die $!;
+            open my $in, '<', srctop_file("test", "testx509.pem") or die $!;
+            print {$out} (<$in>);
+            close $in;
+            close $out;
+        }
+
+        my @storeutl = (qw(openssl storeutl), @prov_method);
+        my $out = "combined-certs-out.txt";
+        my $err = "combined-certs-err.txt";
+
+        # The undecodable key object is reported as unsupported (an
+        # exit code is not asserted); what matters is that the
+        # certificate is found without a pass phrase prompt.
+        run(app([@storeutl, '-certs', $combined],
+                stdin => devnull(), stdout => $out, stderr => $err));
+        test_file_contains("certificate in combined file",
+            $out, "Total found: 1");
+        test_file_contains("pass phrase prompt for combined file",
+            $err, "Enter pass phrase", 0);
+
+        # Loading everything from the same file still decrypts the key
+        # when the pass phrase is given.
+        ok(run(app([@storeutl, '-noout', '-passin', 'pass:password',
+                    $combined],
+                   stdin => devnull())),
+           "loading key and certificate from combined file");
+    };
 }, create => 1, cleanup => 1;
 
 sub init {
