@@ -3841,7 +3841,7 @@ err:
 }
 #endif /* OPENSSL_NO_SNMPKDF */
 
-#ifndef OPENSSL_NO_ARGON2
+#if !defined(OPENSSL_NO_ARGON2)
 /*
  * Argon2 asks BLAKE2b for digest sizes other than 64 and finalises into
  * buffers of exactly that size. A BLAKE2B-512 that does not support
@@ -3903,7 +3903,7 @@ err:
     OSSL_LIB_CTX_free(libctx);
     return ret;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_ARGON2) */
 
 int setup_tests(void)
 {
@@ -4028,8 +4028,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_KBKDF
     ADD_TEST(test_kbkdf_mac_change);
 #endif
-#ifndef OPENSSL_NO_ARGON2
+#if !defined(OPENSSL_NO_ARGON2)
     ADD_ALL_TESTS(test_kdf_argon2_unsized_blake2b, 3);
-#endif
+#endif /* !defined(OPENSSL_NO_ARGON2) */
     return 1;
 }

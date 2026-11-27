@@ -123,23 +123,29 @@ static const OSSL_PARAM *fake_blake2b_gettable_params(void *provctx)
     return gettables;
 }
 
-#define FAKE_BLAKE2B_FUNCTIONS(name)                                        \
-    static const OSSL_DISPATCH fake_blake2b_##name##_functions[] = {        \
-        { OSSL_FUNC_DIGEST_NEWCTX,                                          \
-            (void (*)(void))fake_blake2b_##name##_newctx },                 \
-        { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))fake_blake2b_freectx }, \
-        { OSSL_FUNC_DIGEST_INIT, (void (*)(void))fake_blake2b_init },       \
-        { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))fake_blake2b_update },   \
-        { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))fake_blake2b_final },     \
-        { OSSL_FUNC_DIGEST_GET_PARAMS,                                      \
-            (void (*)(void))fake_blake2b_get_params },                      \
-        { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                 \
-            (void (*)(void))fake_blake2b_gettable_params },                 \
-        OSSL_DISPATCH_END                                                   \
-    }
+static const OSSL_DISPATCH fake_blake2b_fixed_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))fake_blake2b_fixed_newctx },
+    { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))fake_blake2b_freectx },
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))fake_blake2b_init },
+    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))fake_blake2b_update },
+    { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))fake_blake2b_final },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))fake_blake2b_get_params },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,
+        (void (*)(void))fake_blake2b_gettable_params },
+    OSSL_DISPATCH_END
+};
 
-FAKE_BLAKE2B_FUNCTIONS(fixed);
-FAKE_BLAKE2B_FUNCTIONS(failing);
+static const OSSL_DISPATCH fake_blake2b_failing_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))fake_blake2b_failing_newctx },
+    { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))fake_blake2b_freectx },
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))fake_blake2b_init },
+    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))fake_blake2b_update },
+    { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))fake_blake2b_final },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))fake_blake2b_get_params },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,
+        (void (*)(void))fake_blake2b_gettable_params },
+    OSSL_DISPATCH_END
+};
 
 static const OSSL_ALGORITHM fake_blake2b_digests[] = {
     { "BLAKE2B-512:BLAKE2b512", "provider=fake-blake2b,fake.blake2b=fixed",

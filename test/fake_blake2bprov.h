@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_TEST_FAKE_BLAKE2BPROV_H)
+#define OSSL_TEST_FAKE_BLAKE2BPROV_H
+
 #include <openssl/provider.h>
 
 /*
@@ -34,3 +37,5 @@ void fake_blake2b_finish(OSSL_PROVIDER *p);
 #define FAKE_BLAKE2B_PROV_NAME "fake-blake2b"
 #define FAKE_BLAKE2B_FIXED_PROPS "?fake.blake2b=fixed"
 #define FAKE_BLAKE2B_FAILING_PROPS "?fake.blake2b=failing"
+
+#endif /* !defined(OSSL_TEST_FAKE_BLAKE2BPROV_H) */
