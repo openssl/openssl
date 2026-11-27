@@ -188,6 +188,7 @@ static int enc_read(BIO *b, char *out, int outl)
                         (unsigned char *)out, &buf_len,
                         ctx->read_start, i > j ? j : i)) {
                     BIO_clear_retry_flags(b);
+                    ctx->ok = 0;
                     return 0;
                 }
                 ret += buf_len;
