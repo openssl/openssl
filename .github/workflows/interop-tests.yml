@@ -132,6 +132,7 @@ jobs:
       with:
         persist-credentials: false
         repository: openssh/openssh-portable
+        ref: d1b85c67231443b6db150c56ec5aec0e88459edb
         fetch-depth: 1
     - name: setup ci
       run: sh ./.github/setup_ci.sh ${{ matrix.branch.openssh }} ubuntu-latest
