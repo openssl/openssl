@@ -927,6 +927,188 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
 }
 
 /*
+ * Decode every proper prefix of |blob| from an allocation of exactly that
+ * size, through |b2i| and through the MSBLOB decoder, and check that each
+ * one is rejected.  Run under ASan, this catches any read past the end of
+ * the input.
+ */
+static int check_truncated_MSBLOB(const char *type, int ispub,
+    const unsigned char *blob, size_t blob_len)
+{
+    EVP_PKEY *(*b2i)(const unsigned char **, long) = ispub ? b2i_PublicKey
+                                                           : b2i_PrivateKey;
+    int selection = ispub ? OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+                          : OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+    size_t n;
+
+    for (n = 1; n < blob_len; n++) {
+        unsigned char *trunc = OPENSSL_memdup(blob, n);
+        const unsigned char *p = trunc;
+        size_t len = n;
+        EVP_PKEY *pkey = NULL;
+        OSSL_DECODER_CTX *dctx = NULL;
+        int ok;
+
+        if (!TEST_ptr(trunc))
+            return 0;
+        ok = TEST_ptr_null(pkey = b2i(&p, (long)n));
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+        p = trunc;
+        ok = ok
+            && TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "MSBLOB",
+                            NULL, type, selection,
+                            testctx, testpropq))
+            && TEST_false(OSSL_DECODER_from_data(dctx, &p, &len))
+            && TEST_ptr_null(pkey);
+        OSSL_DECODER_CTX_free(dctx);
+        EVP_PKEY_free(pkey);
+        OPENSSL_free(trunc);
+        if (!ok) {
+            TEST_info("%s %s MSBLOB truncated to %zu of %zu bytes",
+                type, ispub ? "public" : "private", n, blob_len);
+            return 0;
+        }
+    }
+    ERR_clear_error();
+    return 1;
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+/*
+ * Hand every proper prefix of the key material that follows the MSBLOB
+ * header in |blob|, in an allocation of exactly that size, straight to the
+ * RSA or DSA reader, and check that each one is rejected without relying on
+ * a length check done by the caller.
+ */
+static int check_truncated_MSBLOB_body(const unsigned char *blob,
+    size_t blob_len, int ispub)
+{
+    const unsigned char *p = blob;
+    unsigned int magic, bitlen, needed, n;
+    int isdss = -1;
+
+    if (!TEST_int_gt(ossl_do_blob_header(&p, (unsigned int)blob_len, &magic,
+                         &bitlen, &isdss, &ispub),
+            0))
+        return 0;
+    /* The DSA readers do not consume the trailing 24-byte DSSSEED */
+    needed = ossl_blob_length(bitlen, isdss, ispub) - (isdss ? 24 : 0);
+    if (!TEST_size_t_ge(blob_len - 16, needed))
+        return 0;
+
+    for (n = 0; n < needed; n++) {
+        unsigned char *trunc = OPENSSL_malloc(n > 0 ? n : 1);
+        void *key = NULL;
+
+        if (!TEST_ptr(trunc))
+            return 0;
+        memcpy(trunc, blob + 16, n);
+        p = trunc;
+        if (!isdss)
+            key = ossl_b2i_RSA_after_header(&p, n, bitlen, ispub);
+#ifndef OPENSSL_NO_DSA
+        else
+            key = ossl_b2i_DSA_after_header(&p, n, bitlen, ispub);
+#endif
+        OPENSSL_free(trunc);
+        /* On failure |key| is leaked; it cannot be freed here */
+        if (!TEST_ptr_null(key)) {
+            TEST_info("%s %s key material truncated to %u of %u bytes",
+                isdss ? "DSA" : "RSA", ispub ? "public" : "private",
+                n, needed);
+            return 0;
+        }
+    }
+    ERR_clear_error();
+    return 1;
+}
+#endif
+
+static int test_truncated_via_MSBLOB(const char *type, EVP_PKEY *key)
+{
+    int ispub, ok = 1;
+
+    for (ispub = 0; ok && ispub <= 1; ispub++) {
+        BIO *mem = BIO_new(BIO_s_mem());
+        BUF_MEM *bm = NULL;
+
+        ok = TEST_ptr(mem)
+            && TEST_int_gt(ispub ? i2b_PublicKey_bio(mem, key)
+                                 : i2b_PrivateKey_bio(mem, key),
+                0)
+            && TEST_true(BIO_get_mem_ptr(mem, &bm) > 0)
+            && check_truncated_MSBLOB(type, ispub,
+                (unsigned char *)bm->data, bm->length)
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+            && check_truncated_MSBLOB_body((unsigned char *)bm->data,
+                bm->length, ispub)
+#endif
+            ;
+        BIO_free(mem);
+    }
+    return ok;
+}
+
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
+/*
+ * An encrypted PVK whose key blob is 8 to 11 bytes long decrypts to fewer
+ * than the 4 bytes of a key blob magic number.  It must be rejected as a bad
+ * decrypt without reading past the decrypted bytes.
+ */
+static int test_PVK_short_encrypted_blob(void)
+{
+    static const unsigned char hdr[24] = {
+        0x1e, 0xf1, 0xb5, 0xb0, /* magic */
+        0, 0, 0, 0, /* reserved */
+        1, 0, 0, 0, /* key type: MS_KEYTYPE_KEYX */
+        1, 0, 0, 0, /* encrypted */
+        16, 0, 0, 0, /* salt length */
+        0, 0, 0, 0 /* key length, set below */
+    };
+    unsigned char pvk[sizeof(hdr) + 16 + 11];
+    OSSL_PROVIDER *lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
+    unsigned int keylen;
+    int ok = 1;
+
+    if (lgcyprov == NULL)
+        return TEST_skip("Legacy provider not available");
+
+    for (keylen = 8; ok && keylen < 12; keylen++) {
+        const unsigned char *p = pvk;
+        size_t len = sizeof(hdr) + 16 + keylen;
+        EVP_PKEY *pkey = NULL;
+        OSSL_DECODER_CTX *dctx = NULL;
+        unsigned long err;
+        int bad_decrypt = 0;
+
+        memset(pvk, 0x5a, sizeof(pvk));
+        memcpy(pvk, hdr, sizeof(hdr));
+        pvk[20] = (unsigned char)keylen;
+        ERR_clear_error();
+        ok = TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PVK", NULL,
+                          "RSA", OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
+                          testctx, testpropq))
+            && TEST_true(OSSL_DECODER_CTX_set_passphrase(dctx,
+                (const unsigned char *)pass, strlen(pass)))
+            && TEST_false(OSSL_DECODER_from_data(dctx, &p, &len))
+            && TEST_ptr_null(pkey);
+        while ((err = ERR_get_error()) != 0)
+            if (ERR_GET_LIB(err) == ERR_LIB_PEM
+                && ERR_GET_REASON(err) == PEM_R_BAD_DECRYPT)
+                bad_decrypt = 1;
+        ok = ok && TEST_true(bad_decrypt);
+        OSSL_DECODER_CTX_free(dctx);
+        EVP_PKEY_free(pkey);
+        if (!ok)
+            TEST_info("PVK key length %u", keylen);
+    }
+    OSSL_PROVIDER_unload(lgcyprov);
+    return ok;
+}
+#endif
+
+/*
  * Build a public-only EVP_PKEY of the same algorithm as |src| by
  * round-tripping the public component through OSSL_PARAMs.
  */
@@ -1424,6 +1606,10 @@ static int test_fromdata_no_keygen(void)
     static int test_public_##KEYTYPE##_via_MSBLOB(void)                \
     {                                                                  \
         return test_public_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);      \
+    }                                                                  \
+    static int test_truncated_##KEYTYPE##_via_MSBLOB(void)             \
+    {                                                                  \
+        return test_truncated_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);   \
     }
 
 #define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                         \
@@ -1431,6 +1617,7 @@ static int test_fromdata_no_keygen(void)
         if (key_##KEYTYPE != NULL) {                           \
             ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB); \
             ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB);      \
+            ADD_TEST(test_truncated_##KEYTYPE##_via_MSBLOB);   \
         }                                                      \
     } while (0)
 
@@ -2073,6 +2260,7 @@ int setup_tests(void)
         ADD_TEST_SUITE_UNPROTECTED_PVK(RSA);
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
         ADD_TEST_SUITE_PROTECTED_PVK(RSA);
+        ADD_TEST(test_PVK_short_encrypted_blob);
 #endif
 
 #ifndef OPENSSL_NO_ML_DSA
