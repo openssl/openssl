@@ -129,6 +129,13 @@ __owur int tls_get_message_body(SSL_CONNECTION *s, size_t *len);
 __owur int dtls_get_message(SSL_CONNECTION *s, int *mt);
 __owur int dtls_get_message_body(SSL_CONNECTION *s, size_t *len);
 int dtls_record_from_retained_epoch(SSL_CONNECTION *s);
+/**
+ * @brief Check for a server read state where an ACK must not finish the
+ * client's flight.
+ * @param[in] state the handshake state to check
+ * @returns 1 if the server is still waiting for the client's flight in
+ *          @p state, 0 otherwise
+ */
 int dtls13_server_waiting_for_client_flight(OSSL_HANDSHAKE_STATE state);
 int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     const struct hm_header_st *msg_hdr);

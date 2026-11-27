@@ -2087,6 +2087,10 @@ int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(const SSL *s);
 int SSL_new_session_ticket(SSL *s);
 int SSL_shutdown(SSL *s);
+/**
+ * @brief Send a fatal alert and abort a TLS or DTLS connection.
+ * @see SSL_send_fatal_alert(3)
+ */
 int SSL_send_fatal_alert(SSL *s, uint8_t alert);
 __owur int SSL_verify_client_post_handshake(SSL *s);
 void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val);

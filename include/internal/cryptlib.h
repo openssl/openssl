@@ -128,9 +128,28 @@ int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
 void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */);
-int ossl_lib_ctx_get_new_providers_loaded(OSSL_LIB_CTX *, int);
-int ossl_lib_ctx_set_new_providers_loaded(OSSL_LIB_CTX *);
-int ossl_lib_ctx_clear_new_providers_loaded(OSSL_LIB_CTX *, int);
+/**
+ * @brief Check whether providers were loaded since the methods for an
+ * operation were last constructed.
+ * @param[in] ctx the library context, NULL for the default one
+ * @param[in] op the operation identity, one of the OSSL_OP_ values
+ * @returns 1 if new providers are loaded or the flag could not be read,
+ *          0 otherwise
+ */
+int ossl_lib_ctx_get_new_providers_loaded(OSSL_LIB_CTX *ctx, int op);
+/**
+ * @brief Flag for every operation that new providers have been loaded.
+ * @param[in] ctx the library context, NULL for the default one
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_lib_ctx_set_new_providers_loaded(OSSL_LIB_CTX *ctx);
+/**
+ * @brief Clear the new providers loaded flag of an operation.
+ * @param[in] ctx the library context, NULL for the default one
+ * @param[in] op the operation identity, one of the OSSL_OP_ values
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_lib_ctx_clear_new_providers_loaded(OSSL_LIB_CTX *ctx, int op);
 
 void ossl_lib_ctx_default_deinit(void);
 OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
