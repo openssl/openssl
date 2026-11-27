@@ -11377,6 +11377,52 @@ end:
     return testresult;
 }
 
+/* Test that SSL_VERIFY_CLIENT_ONCE does not carry over SSL_clear() */
+static int test_ssl_clear_client_once(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int i, testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (idx == 1)
+        return TEST_skip("No TLSv1.2 in this build");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION,
+            idx == 1 ? TLS1_2_VERSION : 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_verify(sctx,
+        SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE,
+        NULL);
+
+    /* A client without a certificate must be rejected on each connection */
+    for (i = 0; i < 2; i++) {
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                NULL, NULL))
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_ptr_null(SSL_get0_peer_certificate(serverssl))
+            || !TEST_true(SSL_clear(serverssl)))
+            goto end;
+        SSL_free(clientssl);
+        clientssl = NULL;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /* Parse CH and retrieve any MFL extension value if present */
 static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
 {
@@ -11534,6 +11580,70 @@ static int test_pha_key_update(void)
 
     SSL_shutdown(clientssl);
     SSL_shutdown(serverssl);
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/* Test that post-handshake auth state does not carry over SSL_clear() */
+static int test_pha_ssl_clear(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    const char *msg = "Hello World";
+    char buf[20];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* Test 2 also requests a certificate in the handshake */
+    SSL_CTX_set_verify(sctx,
+        SSL_VERIFY_PEER | (idx < 2 ? SSL_VERIFY_POST_HANDSHAKE : 0), NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    SSL_set_post_handshake_auth(clientssl, 1);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_int_eq(SSL_do_handshake(serverssl), 1))
+        goto end;
+
+    /* Tests 1 and 2 let the client answer with an empty certificate */
+    if (idx > 0
+        && (!TEST_int_le(SSL_read(clientssl, NULL, 0), 0)
+            || !TEST_int_le(SSL_read(serverssl, NULL, 0), 0)))
+        goto end;
+
+    SSL_free(clientssl);
+    clientssl = NULL;
+
+    /* The next client does not offer post-handshake authentication */
+    if (!TEST_true(SSL_clear(serverssl))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+        || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, strlen(msg))
+        || !TEST_false(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            SSL_R_EXTENSION_NOT_RECEIVED))
+        goto end;
 
     testresult = 1;
 
@@ -20561,6 +20671,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_pha_key_update);
+    ADD_ALL_TESTS(test_pha_ssl_clear, 3);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
@@ -20580,6 +20691,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
+    ADD_ALL_TESTS(test_ssl_clear_client_once, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
 #if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
     ADD_ALL_TESTS(test_srp, 6);
