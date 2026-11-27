@@ -19,6 +19,7 @@
 #include <openssl/e_os2.h>
 #include "internal/nelem.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
+#include "openssl/bio.h"
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -919,7 +920,8 @@ typedef enum PROTOCOL_choice {
     PROTO_LMTP,
     PROTO_NNTP,
     PROTO_SIEVE,
-    PROTO_LDAP
+    PROTO_LDAP,
+    PROTO_NFS
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -937,6 +939,7 @@ static const OPT_PAIR services[] = {
     { "nntp", PROTO_NNTP },
     { "sieve", PROTO_SIEVE },
     { "ldap", PROTO_LDAP },
+    { "nfs", PROTO_NFS },
     { NULL, 0 }
 };
 
@@ -3152,6 +3155,122 @@ re_start:
             goto shut;
         }
         mbuf_len = 0;
+    } break;
+    case PROTO_NFS: {
+        static const unsigned char starttls_request[] = {
+            // Last Fragment flag
+            0x80, 0x00,
+            // Fragment Length = 40 (0x28)
+            0x00, 0x28,
+            // hard-coded XID
+            0xDE, 0xAD, 0xBE, 0xEF,
+            // Message Type = Call
+            0x00, 0x00, 0x00, 0x00,
+            // RPC Version = 2
+            0x00, 0x00, 0x00, 0x02,
+            // Program = NFS (100003)
+            0x00, 0x01, 0x86, 0xa3,
+            // Program Version = 4 (NFSv4)
+            0x00, 0x00, 0x00, 0x04,
+            // Procedure = NULL (0)
+            0x00, 0x00, 0x00, 0x00,
+            // Credentials = AUTH_TLS, Length = 0
+            0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00,
+            // Verifier = AUTH_NULL, Length = 0
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        };
+        int fragment_length;
+
+        BIO_write(sbio, starttls_request, 44);
+        (void) BIO_flush(sbio);
+
+        if (BIO_read(sbio, sbuf, 4) < 4) {
+            BIO_puts(bio_err, "invalid RPC response, truncated header");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[0] != 0x80 ||
+            (unsigned char) sbuf[1] != 0x00
+        ) {
+            BIO_puts(bio_err, "invalid RPC response, not Last Segment");
+            goto shut;
+        }
+        fragment_length = ((unsigned int) sbuf[2] << 8) + ((unsigned int) sbuf[3] << 0);
+        if (fragment_length != 32 && fragment_length != 40) {
+            BIO_puts(bio_err, "invalid RPC response, invalid fragment length, expect either 32 or 40");
+            goto shut;
+        }
+        if (BIO_read(sbio, sbuf + 4, fragment_length) < fragment_length) {
+            BIO_puts(bio_err, "invalid RPC response, truncated payload");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[4] != 0xDE ||
+            (unsigned char) sbuf[5] != 0xAD ||
+            (unsigned char) sbuf[6] != 0xBE ||
+            (unsigned char) sbuf[7] != 0xEF
+        ) {
+            BIO_puts(bio_err, "invalid RPC response: XID mismatch with the one in RPC call (0xDEADBEEF)");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[8] != 0x00 ||
+            (unsigned char) sbuf[9] != 0x00 ||
+            (unsigned char) sbuf[10] != 0x00 ||
+            (unsigned char) sbuf[11] != 0x01
+        ) {
+            BIO_puts(bio_err, "invalid RPC response: message type is not reply (1)");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[12] != 0x00 ||
+            (unsigned char) sbuf[13] != 0x00 ||
+            (unsigned char) sbuf[14] != 0x00 ||
+            (unsigned char) sbuf[15] != 0x00
+        ) {
+            BIO_puts(bio_err, "invalid RPC response: reply state is not accepted (0)");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[16] != 0x00 ||
+            (unsigned char) sbuf[17] != 0x00 ||
+            (unsigned char) sbuf[18] != 0x00 ||
+            (unsigned char) sbuf[19] != 0x00
+        ) {
+            BIO_puts(bio_err, "invalid RPC response: verifier is not AUTH_NULL (0)");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[20] != 0x00 ||
+            (unsigned char) sbuf[21] != 0x00 ||
+            (unsigned char) sbuf[22] != 0x00 ||
+            (unsigned char) sbuf[23] != 0x08
+        ) {
+            BIO_puts(bio_err, "invalid RPC response: verifier is AUTH_NULL (0), but length is not 8 for STARTTLS");
+            goto shut;
+        }
+        if (strncmp(&sbuf[24], "STARTTLS", 8)) {
+            BIO_puts(bio_err, "invalid RPC response: verifier is AUTH_NULL (0), with length 8 for STARTTLS, but opaque data is not STARTTLS");
+            goto shut;
+        }
+        if (
+            (unsigned char) sbuf[32] != 0x00 ||
+            (unsigned char) sbuf[33] != 0x00 ||
+            (unsigned char) sbuf[34] != 0x00 ||
+            (unsigned char) sbuf[35] >= 0x06
+        ) {
+            BIO_puts(bio_err, "invalid RPC response: accept state is not valid (0x00-0x05)");
+            goto shut;
+        }
+        // PROG_MISMATCH (0x02) has 2 extra unsigned int fields so lengthed 8 extra bytes
+        if ((unsigned char) sbuf[35] == 0x02 && fragment_length != 40) {
+            BIO_puts(bio_err, "invalid RPC response: accept state PROG_MISMATCH (0x02) but fragment size mismatches to 40");
+            goto shut;
+        }
+        if ((unsigned char) sbuf[35] != 0x02 && fragment_length != 32) {
+            BIO_puts(bio_err, "invalid RPC response: accept state is valid but fragment size mismatches to 32");
+            goto shut;
+        }
     } break;
     }
 
