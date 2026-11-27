@@ -281,6 +281,57 @@ err:
     return ret;
 }
 
+/*
+ * Replacing the method of a multi-prime key whose Montgomery contexts,
+ * including the per-prime ones, have been cached runs the old method's
+ * finish().  The key must stay usable and be freed cleanly afterwards,
+ * also when the new method keeps the default finish().
+ */
+static int test_rsa_mp_set_method_after_use(int i)
+{
+    int ret = 0;
+    RSA *key;
+    RSA_METHOD *meth = NULL;
+    unsigned char ptext[256];
+    unsigned char ctext[256];
+    static unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
+    int plen = sizeof(ptext_ex) - 1;
+    int clen = 0;
+    int num, j;
+    static int (*param_set[])(RSA *) = {
+        key2048p3_v1,
+        key2048p3_v2,
+    };
+
+    key = RSA_new();
+    if (!TEST_ptr(key)
+        || !TEST_ptr(meth = RSA_meth_dup(RSA_PKCS1_OpenSSL())))
+        goto err;
+
+    if (!TEST_int_eq((clen = key2048_key(key)), 256)
+        || !TEST_int_eq((clen = param_set[i](key)), 256))
+        goto err;
+
+    for (j = 0; j < 2; j++) {
+        num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
+            RSA_PKCS1_PADDING);
+        if (!TEST_int_eq(num, clen))
+            goto err;
+        num = RSA_private_decrypt(num, ctext, ptext, key, RSA_PKCS1_PADDING);
+        if (!TEST_int_gt(num, 0)
+            || !TEST_mem_eq(ptext, num, ptext_ex, plen))
+            goto err;
+        if (j == 0 && !TEST_true(RSA_set_method(key, meth)))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    RSA_free(key);
+    RSA_meth_free(meth);
+    return ret;
+}
+
 static int test_rsa_mp_gen_bad_input(void)
 {
     int ret = 0;
@@ -344,6 +395,7 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_rsa_mp_gen_bad_input);
+    ADD_ALL_TESTS(test_rsa_mp_set_method_after_use, 2);
     ADD_ALL_TESTS(test_rsa_mp, 2);
     ADD_MFAIL_SAMPLED_TEST(test_rsa_mp_gen_mfail, 64);
     return 1;
