@@ -77,6 +77,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
         ctx->ivlen = ivlen;
         memcpy(ctx->iv, iv, ivlen);
         ctx->iv_state = IV_STATE_BUFFERED;
+        ctx->iv_advanced = 0;
     }
 
     if (key != NULL) {
@@ -88,12 +89,14 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
             return 0;
         ctx->tls_enc_records = 0;
         /*
-         * A new key resets the GCM128 context (Yi, EK0, Xi). If an IV was
-         * already applied and no new IV is given, re-apply it under the new
-         * key instead of continuing with an all-zero counter block.
+         * A new key resets the GCM128 context (Yi, EK0, Xi), so an IV that
+         * was already applied is applied again. If the IV came from the IV
+         * generator, ctx->iv already holds the next IV, so the IV is marked
+         * as used and a new one must be generated or set.
          */
         if (iv == NULL && ctx->iv_state == IV_STATE_COPIED)
-            ctx->iv_state = IV_STATE_BUFFERED;
+            ctx->iv_state = ctx->iv_advanced ? IV_STATE_FINISHED
+                                             : IV_STATE_BUFFERED;
     }
     return ossl_gcm_set_ctx_params(ctx, params);
 }
@@ -143,6 +146,7 @@ static int getivgen(PROV_GCM_CTX *ctx, unsigned char *out, size_t olen)
      */
     ctr64_inc(ctx->iv + ctx->ivlen - 8);
     ctx->iv_state = IV_STATE_COPIED;
+    ctx->iv_advanced = 1;
     return 1;
 }
 
@@ -160,6 +164,7 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
     if (!ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
         return 0;
     ctx->iv_state = IV_STATE_COPIED;
+    ctx->iv_advanced = 0;
     return 1;
 }
 
@@ -442,6 +447,7 @@ static int gcm_iv_generate(PROV_GCM_CTX *ctx, int offset)
     if (RAND_bytes_ex(ctx->libctx, ctx->iv + offset, sz, 0) <= 0)
         return 0;
     ctx->iv_state = IV_STATE_BUFFERED;
+    ctx->iv_advanced = 0;
     ctx->iv_gen_rand = 1;
     return 1;
 }
@@ -583,6 +589,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
         ctx->iv_gen_rand = 0;
         ctx->iv_gen = 1;
         ctx->iv_state = IV_STATE_BUFFERED;
+        ctx->iv_advanced = 0;
         return 1;
     }
     /* Fixed field must be at least 4 bytes and invocation field at least 8 */
@@ -599,6 +606,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     }
     ctx->iv_gen = 1;
     ctx->iv_state = IV_STATE_BUFFERED;
+    ctx->iv_advanced = 0;
     return 1;
 }
 

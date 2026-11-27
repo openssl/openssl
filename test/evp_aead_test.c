@@ -2173,6 +2173,110 @@ err:
     return testresult;
 }
 
+/*
+ * GCM key-only re-init with the IV generator (SET_IV_FIXED).  An IV handed
+ * out by IV_GEN is not applied again: the next message needs the next
+ * generated IV.  An IV set by SET_IV_INV or given explicitly is applied
+ * again under the new key, as with a fresh context using that IV.
+ */
+static int test_evp_gcm_ivgen_key_only_reinit(int idx)
+{
+    const AEAD_DATA *info = &aead_list[idx];
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[EVP_MAX_KEY_LENGTH], key2[EVP_MAX_KEY_LENGTH];
+    unsigned char fixed[4] = { 0x01, 0x02, 0x03, 0x04 };
+    unsigned char iv[12], iv1[12], iv2[12];
+    unsigned char pt[32], out[64], ct[64], ct_ref[64];
+    unsigned char tag_ref[EVPTEST_TAG_LEN_MAX];
+    int len, fin, ref_len, i, testresult = 0;
+
+    if (info->mode != EVP_CIPH_GCM_MODE)
+        return TEST_skip("%s is not GCM", info->name);
+
+    for (i = 0; i < (int)sizeof(key); i++) {
+        key[i] = (unsigned char)(0xA0 + i);
+        key2[i] = (unsigned char)(0xF0 + i);
+    }
+    memcpy(iv, fixed, sizeof(fixed));
+    for (i = (int)sizeof(fixed); i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+    memset(pt, 0xA7, sizeof(pt));
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    /* IV_GEN, then a new key: the next message needs the next IV. */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                            (int)sizeof(fixed), fixed),
+            0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_IV_GEN,
+                            (int)sizeof(iv1), iv1),
+            0)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, key2, NULL, NULL))
+        || !TEST_false(EVP_EncryptUpdate(ctx, ct, &len, pt, sizeof(pt))))
+        goto err;
+    ERR_clear_error();
+    /* The invocation field is the last 8 bytes; expect it to step by one. */
+    memcpy(iv, iv1, sizeof(iv));
+    for (i = (int)sizeof(iv) - 1; i >= (int)sizeof(iv) - 8; i--)
+        if (++iv[i] != 0)
+            break;
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_IV_GEN,
+                         (int)sizeof(iv2), iv2),
+            0)
+        || !TEST_mem_eq(iv2, sizeof(iv2), iv, sizeof(iv))
+        || !aead_reinit_ref(info, key2, iv2, pt, sizeof(pt), ct_ref, &ref_len,
+            tag_ref)
+        || !aead_reinit_msg(ctx, info, pt, sizeof(pt), ct, &len)
+        || !aead_reinit_check(ctx, info, ct, len, ct_ref, ref_len, tag_ref))
+        goto err;
+
+    /* SET_IV_INV on decrypt, then a new key: the same IV is applied. */
+    memcpy(iv, fixed, sizeof(fixed));
+    for (i = (int)sizeof(fixed); i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+    if (!aead_reinit_ref(info, key2, iv, pt, sizeof(pt), ct_ref, &ref_len,
+            tag_ref)
+        || !TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, info->ciph, key, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                            (int)sizeof(fixed), fixed),
+            0)
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_INV,
+                            (int)(sizeof(iv) - sizeof(fixed)),
+                            iv + sizeof(fixed)),
+            0)
+        || !TEST_true(EVP_DecryptInit_ex2(ctx, NULL, key2, NULL, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, out, &len, ct_ref, ref_len))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                            info->taglen, tag_ref),
+            0)
+        || !TEST_true(EVP_DecryptFinal_ex(ctx, out + len, &fin))
+        || !TEST_mem_eq(out, len + fin, pt, sizeof(pt)))
+        goto err;
+
+    /* An explicit IV after SET_IV_FIXED is applied again too. */
+    if (!TEST_true(EVP_CIPHER_CTX_reset(ctx))
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, info->ciph, key, NULL, NULL))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                            (int)sizeof(fixed), fixed),
+            0)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, NULL, iv, NULL))
+        || !aead_reinit_msg(ctx, info, pt, sizeof(pt), ct, &len)
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, NULL, key2, NULL, NULL))
+        || !aead_reinit_msg(ctx, info, pt, sizeof(pt), ct, &len)
+        || !aead_reinit_check(ctx, info, ct, len, ct_ref, ref_len, tag_ref))
+        goto err;
+
+    testresult = 1;
+err:
+    if (!testresult)
+        TEST_info("%s", info->name);
+    EVP_CIPHER_CTX_free(ctx);
+    return testresult;
+}
+
 static int test_aes_gcm_ivlen_change_cve_2023_5363(void)
 {
     /* AES-GCM test data obtained from NIST public test vectors */
@@ -2425,6 +2529,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_stale_key_reinit, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_evp_aead_key_only_reinit, OSSL_NELEM(aead_list));
+    ADD_ALL_TESTS(test_evp_gcm_ivgen_key_only_reinit, OSSL_NELEM(aead_list));
     ADD_TEST(test_aes_gcm_ivlen_change_cve_2023_5363);
     ADD_ALL_TESTS(test_evp_aead_tag_reject, OSSL_NELEM(aead_list));
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
