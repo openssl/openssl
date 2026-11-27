@@ -77,6 +77,10 @@ typedef struct rand_global_st {
      * 1 strict, 0 not strict, -1 unset (strict only for JITTER)
      */
     int seed_strict;
+
+    /* Parameters to use when DRGBs are created via rand_get_0 functions. */
+    OSSL_PARAM *default_params;
+    OSSL_PARAM *default_primary_params;
 } RAND_GLOBAL;
 
 static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl);
@@ -511,6 +515,8 @@ void ossl_rand_ctx_free(void *vdgbl)
     OPENSSL_free(dgbl->rng_propq);
     OPENSSL_free(dgbl->seed_name);
     OPENSSL_free(dgbl->seed_propq);
+    OSSL_PARAM_free(dgbl->default_primary_params);
+    OSSL_PARAM_free(dgbl->default_params);
 
     OPENSSL_free(dgbl);
 }
@@ -751,9 +757,11 @@ int ossl_rand_seed_source_strict(OSSL_LIB_CTX *ctx)
 }
 #endif /* !FIPS_MODULE */
 
+typedef enum { DRBG_PRIMARY,
+    DRBG_SECONDARY } drbg_kind;
+
 static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
-    unsigned int reseed_interval,
-    time_t reseed_time_interval)
+    drbg_kind kind)
 {
     EVP_RAND *rand;
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
@@ -762,9 +770,22 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     const OSSL_PARAM *settables;
     char *name, *cipher;
     int use_df = 1;
+    time_t reseed_time_interval;
+    unsigned int reseed_interval;
+    const OSSL_PARAM *default_params;
+    OSSL_PARAM *merged_params;
 
     if (dgbl == NULL)
         return NULL;
+    if (kind == DRBG_PRIMARY) {
+        default_params = dgbl->default_primary_params;
+        reseed_time_interval = PRIMARY_RESEED_TIME_INTERVAL;
+        reseed_interval = PRIMARY_RESEED_INTERVAL;
+    } else {
+        default_params = dgbl->default_params;
+        reseed_time_interval = SECONDARY_RESEED_TIME_INTERVAL;
+        reseed_interval = SECONDARY_RESEED_INTERVAL;
+    }
     name = dgbl->rng_name != NULL ? dgbl->rng_name : "CTR-DRBG";
     rand = EVP_RAND_fetch(libctx, name, dgbl->rng_propq);
     if (rand == NULL) {
@@ -800,11 +821,18 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     *p++ = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_reseed_time_interval,
         &reseed_time_interval);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, params)) {
-        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+    if ((merged_params = OSSL_PARAM_merge(params, default_params)) == NULL) {
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
         EVP_RAND_CTX_free(ctx);
         return NULL;
     }
+
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, merged_params)) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        ctx = NULL;
+    }
+    OSSL_PARAM_free(merged_params);
     return ctx;
 }
 
@@ -871,8 +899,7 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     /* The FIPS provider has entropy health tests instead of the primary */
     ret = rand_new_crngt(ctx, seed);
 #else /* FIPS_MODULE */
-    ret = rand_new_drbg(ctx, seed, PRIMARY_RESEED_INTERVAL,
-        PRIMARY_RESEED_TIME_INTERVAL);
+    ret = rand_new_drbg(ctx, seed, DRBG_PRIMARY);
 #endif /* FIPS_MODULE */
 
     if (ret == NULL)
@@ -943,8 +970,7 @@ static EVP_RAND_CTX *rand_get0_public(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY, ctx) == NULL
             && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
-        rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
-            SECONDARY_RESEED_TIME_INTERVAL);
+        rand = rand_new_drbg(ctx, primary, DRBG_SECONDARY);
         if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PUB_KEY, ctx, rand)) {
             EVP_RAND_CTX_free(rand);
             rand = NULL;
@@ -986,8 +1012,7 @@ static EVP_RAND_CTX *rand_get0_private(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PUB_KEY, ctx) == NULL
             && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
-        rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
-            SECONDARY_RESEED_TIME_INTERVAL);
+        rand = rand_new_drbg(ctx, primary, DRBG_SECONDARY);
         if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY, ctx, rand)) {
             EVP_RAND_CTX_free(rand);
             rand = NULL;
@@ -1180,6 +1205,53 @@ int RAND_set_DRBG_type(OSSL_LIB_CTX *ctx, const char *drbg, const char *propq,
         && random_set_string(&dgbl->rng_propq, propq)
         && random_set_string(&dgbl->rng_cipher, cipher)
         && random_set_string(&dgbl->rng_digest, digest);
+}
+
+int(RAND_set1_primary_default_params)(OSSL_LIB_CTX *ctx,
+    const OSSL_PARAM *parameters)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+    if (dgbl->primary != NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ALREADY_INSTANTIATED);
+        return 0;
+    }
+    OSSL_PARAM_free(dgbl->default_primary_params);
+    if (parameters == NULL) {
+        dgbl->default_primary_params = NULL;
+        return 1;
+    }
+    dgbl->default_primary_params = OSSL_PARAM_dup(parameters);
+    if (dgbl->default_primary_params == NULL) {
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    return 1;
+}
+
+int RAND_set1_default_params(OSSL_LIB_CTX *ctx, const OSSL_PARAM *params)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+    if (dgbl->primary != NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ALREADY_INSTANTIATED);
+        return 0;
+    }
+    OSSL_PARAM_free(dgbl->default_params);
+    if (params == NULL) {
+        dgbl->default_params = NULL;
+        return 1;
+    }
+    dgbl->default_params = OSSL_PARAM_dup(params);
+    if (dgbl->default_params == NULL) {
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    return 1;
 }
 
 int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
