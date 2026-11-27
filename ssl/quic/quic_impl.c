@@ -4451,11 +4451,9 @@ int ossl_quic_stream_reset(SSL *ssl,
         /*
          * After the first successful call, subsequent calls succeed but are
          * ignored, keeping the original error code. See SSL_stream_reset(3).
-         * This applies only to a reset the application requested itself, and
-         * not once the connection is shutting down or terminating.
+         * This applies only to a reset the application requested itself.
          */
-        if (err == SSL_R_STREAM_RESET && ctx.xso->requested_reset
-            && quic_mutation_allowed(ctx.qc, /*req_active=*/0))
+        if (err == SSL_R_STREAM_RESET && ctx.xso->requested_reset)
             ok = 1;
         else
             ok = QUIC_RAISE_NON_NORMAL_ERROR(&ctx, err, NULL);
