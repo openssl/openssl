@@ -322,6 +322,8 @@ my %params = (
 # DRBG call back parameters
     'OSSL_DRBG_PARAM_ENTROPY_REQUIRED' =>        "entropy_required",
     'OSSL_DRBG_PARAM_PREDICTION_RESISTANCE' =>   "prediction_resistance",
+# Although the following two parameter names should be spelled differently
+# we cannot change them for backwards compatibility.
     'OSSL_DRBG_PARAM_MIN_LENGTH' =>              "minium_length",
     'OSSL_DRBG_PARAM_MAX_LENGTH' =>              "maxium_length",
     'OSSL_DRBG_PARAM_RANDOM_DATA' =>             "random_data",
