@@ -189,6 +189,8 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 
 =item DTLSv1_2_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
 
+=item err_free_strings_int (Deprecated in 1.1.1) - removed, no-op
+
 =item ERR_get_state (Deprecated in 3.0.0) - removed, no use with opaque ERR_STATE
 
 =item ERR_remove_state (Deprecated in 1.0.0) - removed, no-op
