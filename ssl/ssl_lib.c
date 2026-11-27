@@ -7264,12 +7264,20 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
             if (single == NULL)
                 continue;
 
+            /*
+             * A single response without the SCT extension, the usual case, or
+             * with a duplicated or undecodable one contributes no SCTs. It
+             * must not discard the SCTs delivered in the certificate or the
+             * TLS extension, nor leave the decoder's errors on the queue.
+             */
+            ERR_set_mark();
             scts = OCSP_SINGLERESP_get1_ext_d2i(single,
                 NID_ct_cert_scts, NULL, NULL);
             if (scts == NULL) {
-                scts_extracted = -1;
-                goto err;
+                ERR_pop_to_mark();
+                continue;
             }
+            ERR_clear_last_mark();
 
             ret = ct_move_scts(&s->scts, scts,
                 SCT_SOURCE_OCSP_STAPLED_RESPONSE);
