@@ -2607,9 +2607,14 @@ err:
 }
 
 /*
- * The callbacks run while the ClientHello is processed can replace the SSL_CTX
- * with SSL_set_SSL_CTX(). Hold a reference to the one in use on entry, which
- * is used until its cookie verifier has run, so that the switch can't free it.
+ * The callbacks run while the ClientHello is processed can replace the
+ * SSL_CTX with SSL_set_SSL_CTX() and free the one in use on entry. The
+ * reference taken here keeps that SSL_CTX alive until this call returns.
+ *
+ * Its verify callback checks the DTLS cookie: DTLSv1_listen() keeps no
+ * copy of the cookie in the connection, and the replacement SSL_CTX may
+ * have no verify callback. After SSL_CLIENT_HELLO_RETRY, the next call
+ * enters with the replacement SSL_CTX and uses its verify callback.
  */
 static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 {
