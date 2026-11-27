@@ -59,7 +59,8 @@ The extraCerts contained in the B<msg> are temporarily prepended to
 the list of untrusted certificates in B<ctx> such that they are usable for
 OSSL_CMP_validate_msg(), which is called internally, and removed thereafter.
 Unless the B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> is set in the B<ctx>,
-after successful validation ossl_cmp_msg_check_update() adds the intermediate
+if all checks pass and the message protection has been successfully validated,
+ossl_cmp_msg_check_update() adds the intermediate
 CA certificates of the validated chain of the protection certificate (if any),
 i.e., excluding the protection certificate itself and the trust anchor,
 to the list of untrusted certificates in B<ctx> for future use,

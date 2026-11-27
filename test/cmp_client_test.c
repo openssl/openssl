@@ -696,6 +696,66 @@ static int test_exec_GENM_ses_cache_protection_chain(void)
     return result;
 }
 
+/*
+ * A GENP message protected using ee_cert, providing also its issuing ca_cert in
+ * extraCerts, is checked by the client, which trusts root_cert.
+ * If the transactionID does not match, the msg is rejected and nothing is cached.
+ */
+static int test_msg_check_update_caching(int wrong_tid)
+{
+    static const unsigned char tid[OSSL_CMP_TRANSACTIONID_LENGTH] = { 0 };
+    OSSL_CMP_CTX *srv_ctx = NULL;
+    OSSL_CMP_MSG *msg = NULL;
+    STACK_OF(X509) *chain = NULL, *untrusted;
+    ASN1_OCTET_STRING *trid = NULL;
+    int i, found_ca = 0;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    if (!TEST_ptr(srv_ctx = OSSL_CMP_CTX_new(libctx, NULL))
+        || !TEST_ptr(chain = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(chain, ca_cert))
+        || !TEST_true(OSSL_CMP_CTX_set1_cert(srv_ctx, ee_cert))
+        || !TEST_true(OSSL_CMP_CTX_set1_pkey(srv_ctx, ee_key))
+        || !TEST_true(OSSL_CMP_CTX_set1_untrusted(srv_ctx, chain))
+        || !TEST_ptr(msg = ossl_cmp_genp_new(srv_ctx, NULL))
+        || !TEST_true(X509_STORE_add_cert(OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx),
+            root_cert)))
+        goto end;
+    if (wrong_tid
+        && (!TEST_ptr(trid = ASN1_OCTET_STRING_new())
+            || !TEST_true(ASN1_OCTET_STRING_set(trid, tid, sizeof(tid)))
+            || !TEST_true(OSSL_CMP_CTX_set1_transactionID(fixture->cmp_ctx, trid))))
+        goto end;
+
+    if (!TEST_int_eq(ossl_cmp_msg_check_update(fixture->cmp_ctx, msg, NULL, 0),
+            !wrong_tid))
+        goto end;
+    untrusted = OSSL_CMP_CTX_get0_untrusted(fixture->cmp_ctx);
+    for (i = 0; i < sk_X509_num(untrusted); i++)
+        found_ca |= X509_cmp(sk_X509_value(untrusted, i), ca_cert) == 0;
+    result = TEST_int_eq(found_ca, !wrong_tid);
+
+end:
+    ASN1_OCTET_STRING_free(trid);
+    OSSL_CMP_MSG_free(msg);
+    sk_X509_free(chain);
+    OSSL_CMP_CTX_free(srv_ctx);
+    tear_down(fixture);
+    return result;
+}
+
+static int test_msg_check_update_caching_ok(void)
+{
+    return test_msg_check_update_caching(0);
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static int test_msg_check_update_no_caching_on_wrong_transactionID(void)
+{
+    return test_msg_check_update_caching(1);
+}
+#endif
+
 static int execute_extraCertsIn_limit_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
@@ -986,6 +1046,10 @@ int setup_tests(void)
     ADD_TEST(test_try_certreq_poll_abort);
     ADD_TEST(test_exec_GENM_ses_ok);
     ADD_TEST(test_exec_GENM_ses_cache_protection_chain);
+    ADD_TEST(test_msg_check_update_caching_ok);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_TEST(test_msg_check_update_no_caching_on_wrong_transactionID);
+#endif
     ADD_TEST(test_exec_GENM_ses_transfer_error);
     ADD_TEST(test_exec_GENM_ses_total_timeout);
     ADD_TEST(test_exec_GENM_ses_poll_ok);

@@ -888,36 +888,12 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     while (num_added-- > 0)
         X509_free(sk_X509_shift(ctx->untrusted));
 
-    /*
-     * Unless disabled, cache the intermediate CA certs of the validated chain
-     * (if any) in ctx->untrusted, so the peer does not need to send them again.
-     * This is done only if the msg protection has been successfully validated,
-     * not if the msg has been accepted just as an exception via cb.
-     * The protection cert itself is not cached here because it is held in
-     * ctx->validatedPeerCert anyway. This way, also on a long-running server,
-     * the growth of ctx->untrusted is limited to the CA certs of the PKI.
-     * Any other extraCerts are not cached because they are not authenticated
-     * (as they do not belong to the protected msg part),
-     * lest a remote user starts sending us lots of certificates
-     * leading to a DOS from unbounded certificate stack growth.
-     * The certs are prepended such that they get used first,
-     * which is likely good for efficiency.
-     */
-    if (sk_X509_num(chain) > 0)
-        X509_free(sk_X509_shift(chain)); /* the protection cert */
-    if (validated && !ctx->noCacheExtraCerts
-        && ossl_x509_prepend_certs(&ctx->untrusted, chain, -1) < 0) {
-        OSSL_STACK_OF_X509_free(chain);
-        return 0;
-    }
-    OSSL_STACK_OF_X509_free(chain);
-
     if (!res) {
         if (hdr->protectionAlg != NULL)
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_PROTECTION);
         else
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PROTECTION);
-        return 0;
+        goto err;
     }
 
     /* check CMP version number in header */
@@ -925,21 +901,21 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         && ossl_cmp_hdr_get_pvno(hdr) != OSSL_CMP_PVNO_3) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PVNO);
-        return 0;
+        goto err;
 #endif
     }
 
     if (bodytype < 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         ERR_raise(ERR_LIB_CMP, CMP_R_PKIBODY_ERROR);
-        return 0;
+        goto err;
 #endif
     }
 
     /* compare received transactionID with the expected one in previous msg */
     if (!check_transactionID_or_nonce(ctx, ctx->transactionID, hdr->transactionID,
             bodytype, CMP_R_TRANSACTIONID_UNMATCHED))
-        return 0;
+        goto err;
 
     /*
      * Compare received nonce with the one we sent last.
@@ -954,13 +930,13 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             /* otherwise, compare received nonce with our sender nonce at poll start: */
             || !check_transactionID_or_nonce(ctx, ctx->first_senderNonce, hdr->recipNonce,
                 bodytype, CMP_R_RECIPNONCE_UNMATCHED))
-            return 0;
+            goto err;
     }
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL
         && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
-        return 0;
+        goto err;
 
     /*
      * RFC 9810 section 5.1.1 states: the recipNonce is copied from
@@ -968,7 +944,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * --> Store for setting in next message
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
-        return 0;
+        goto err;
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
         /*
@@ -988,14 +964,40 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
                 if (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, certs, 0))
                     /* adds both self-issued and not self-issued certs */
-                    return 0;
+                    goto err;
             }
             break;
         default:
             break;
         }
     }
+    /*
+     * Unless disabled, cache the intermediate CA certs of the validated chain
+     * (if any) in ctx->untrusted, so the peer does not need to send them again.
+     * This is done only if all above checks have passed, and if the msg
+     * protection has been successfully validated,
+     * not if the msg has been accepted just as an exception via cb.
+     * The protection cert itself is not cached here because it is held in
+     * ctx->validatedPeerCert anyway. This way, also on a long-running server,
+     * the growth of ctx->untrusted is limited to the CA certs of the PKI.
+     * Any other extraCerts are not cached because they are not authenticated
+     * (as they do not belong to the protected msg part),
+     * lest a remote user starts sending us lots of certificates
+     * leading to a DOS from unbounded certificate stack growth.
+     * The certs are prepended such that they get used first,
+     * which is likely good for efficiency.
+     */
+    if (sk_X509_num(chain) > 0)
+        X509_free(sk_X509_shift(chain)); /* the protection cert */
+    if (validated && !ctx->noCacheExtraCerts
+        && ossl_x509_prepend_certs(&ctx->untrusted, chain, -1) < 0)
+        goto err;
+    OSSL_STACK_OF_X509_free(chain);
     return 1;
+
+err:
+    OSSL_STACK_OF_X509_free(chain);
+    return 0;
 }
 
 int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,
