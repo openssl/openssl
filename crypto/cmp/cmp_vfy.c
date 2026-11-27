@@ -884,31 +884,6 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
         return 0;
 
-    if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
-        /*
-         * RFC 9810, 5.3.2: 'Note that if the PKI message protection is
-         * "shared secret information", then any certificate transported in
-         * the caPubs field may be directly trusted as a root CA
-         * certificate by the initiator.'
-         */
-        switch (bodytype) {
-        case OSSL_CMP_PKIBODY_IP:
-        case OSSL_CMP_PKIBODY_CP:
-        case OSSL_CMP_PKIBODY_KUP:
-        case OSSL_CMP_PKIBODY_CCP:
-            if (ctx->trusted != NULL) {
-                STACK_OF(X509) *certs = msg->body->value.ip->caPubs;
-                /* value.ip is same for cp, kup, and ccp */
-
-                if (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, certs, 0))
-                    /* adds both self-issued and not self-issued certs */
-                    return 0;
-            }
-            break;
-        default:
-            break;
-        }
-    }
     return 1;
 }
 
