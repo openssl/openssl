@@ -56,6 +56,11 @@ When signing X509 certificates and certificate requests, any B<empty>
 subjectKeyIdentifier (empty string) or authorityKeyIdentifier (empty sequence)
 extensions are flagged as an error and the signature operation fails.
 
+For X509 certificates with an ML-DSA subject public key, X509_sign() and
+X509_sign_ctx() also reject a keyUsage extension containing keyEncipherment,
+dataEncipherment, keyAgreement, encipherOnly, or decipherOnly, as required by
+RFC 9881.
+
 =head1 RETURN VALUES
 
 All functions return the size of the signature
