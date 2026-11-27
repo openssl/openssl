@@ -43,4 +43,5 @@ DEFINE[../../providers/libdefault.a]=$MLKEMDEF
 DEFINE[../../providers/libfips.a]=$MLKEMDEF
 
 GENERATE[ml_kem_avx2.s]=asm/ml_kem_avx2.pl
+DEPEND[ml_kem_avx2.s]=../perlasm/x86_64-xlate.pl
 GENERATE[mlkem-armv8.S]=asm/mlkem-armv8.pl

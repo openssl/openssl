@@ -117,6 +117,7 @@ ENDIF
 GENERATE[ecp_nistz256-x86.S]=asm/ecp_nistz256-x86.pl
 
 GENERATE[ecp_nistz256-x86_64.s]=asm/ecp_nistz256-x86_64.pl
+DEPEND[ecp_nistz256-x86_64.s]=../perlasm/x86_64-xlate.pl
 
 GENERATE[ecp_nistz256-avx2.s]=asm/ecp_nistz256-avx2.pl
 
@@ -140,6 +141,7 @@ GENERATE[ecp_nistp521-ppc64.s]=asm/ecp_nistp521-ppc64.pl
 
 IF[{- !$disabled{'ecx'} -}]
 GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl
+DEPEND[x25519-x86_64.s]=../perlasm/x86_64-xlate.pl
 GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl
 ENDIF
 
