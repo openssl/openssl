@@ -189,9 +189,21 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             break;
 
         case BIO_CONN_S_BLOCKED_CONNECT:
-            /* wait for socket being writable, before querying BIO_sock_error */
-            if (BIO_socket_wait(b->num, 0, time(NULL)) == 0)
-                break;
+            /* socket must be writable before querying BIO_sock_error */
+            i = BIO_socket_wait(b->num, 0, time(NULL));
+            if (i <= 0) {
+                BIO_clear_retry_flags(b);
+                b->retry_reason = 0;
+                if (i == 0 || BIO_sock_should_retry(i)) {
+                    BIO_set_retry_special(b);
+                    b->retry_reason = BIO_RR_CONNECT;
+                    ret = 0;
+                } else {
+                    ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                        "calling BIO_socket_wait()");
+                }
+                goto exit_loop;
+            }
             i = BIO_sock_error(b->num);
             if (i != 0) {
                 BIO_clear_retry_flags(b);
