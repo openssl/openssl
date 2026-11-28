@@ -680,7 +680,7 @@ static int initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx)
 
     mdctx = EVP_MD_CTX_create();
     if (mdctx == NULL || EVP_DigestInit_ex(mdctx, ctx->md, NULL) != 1
-        || !check_md_size(mdctx, ARGON2_PREHASH_DIGEST_LENGTH))
+        || check_md_size(mdctx, ARGON2_PREHASH_DIGEST_LENGTH) != 1)
         goto fail;
 
     for (tmp = 0; tmp < sizeof(args) / sizeof(uint32_t); ++tmp) {
@@ -869,7 +869,7 @@ static int blake2b_md(EVP_MD *md, void *out, size_t outlen, const void *in,
     par[1] = OSSL_PARAM_construct_end();
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
-        && check_md_size(ctx, outlen)
+        && check_md_size(ctx, outlen) == 1
         && EVP_DigestUpdate(ctx, in, inlen) == 1
         && EVP_DigestFinal_ex(ctx, out, NULL) == 1;
 
@@ -915,7 +915,7 @@ static int blake2b_long(EVP_MD *md, EVP_MAC *mac, unsigned char *out,
     par[1] = OSSL_PARAM_construct_end();
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
-        && check_md_size(ctx, outlen_md)
+        && check_md_size(ctx, outlen_md) == 1
         && EVP_DigestUpdate(ctx, outlen_bytes, sizeof(outlen_bytes)) == 1
         && EVP_DigestUpdate(ctx, in, inlen) == 1
         && EVP_DigestFinal_ex(ctx, (outlen > BLAKE2B_OUTBYTES) ? outbuf : out,
