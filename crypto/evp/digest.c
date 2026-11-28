@@ -344,7 +344,8 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 {
     int ret = 0;
     OSSL_PARAM params[2];
-    size_t i = 0;
+    size_t prev_xoflen = 0;
+    int restore_xoflen = 0;
 
     if (ossl_unlikely(ctx->digest == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
@@ -370,12 +371,28 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
      * For backward compatibility we pass the XOFLEN via a param here so that
      * older providers can use the supplied value. Ideally we should have just
      * used the size passed into ctx->digest->dfinal().
+     * Save and restore any previous xoflen so this one-shot call does not
+     * alter subsequent operations on a reused context.
      */
-    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen, &size);
-    params[i++] = OSSL_PARAM_construct_end();
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen,
+        &prev_xoflen);
+    params[1] = OSSL_PARAM_construct_end();
+    ERR_set_mark();
+    if (EVP_MD_CTX_get_params(ctx, params) > 0 && OSSL_PARAM_modified(&params[0]))
+        restore_xoflen = 1;
+    ERR_pop_to_mark();
 
-    if (ossl_likely(EVP_MD_CTX_set_params(ctx, params) >= 0))
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen, &size);
+    if (ossl_likely(EVP_MD_CTX_set_params(ctx, params) >= 0)) {
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
+        if (restore_xoflen) {
+            params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen,
+                &prev_xoflen);
+            ERR_set_mark();
+            (void)EVP_MD_CTX_set_params(ctx, params);
+            ERR_pop_to_mark();
+        }
+    }
 
     ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
 
