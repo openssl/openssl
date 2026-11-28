@@ -243,7 +243,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         goto err;
     }
 
-    sv = _CONF_new_section(conf, section);
+    if ((sv = _CONF_get_section(conf, section)) == NULL)
+        sv = _CONF_new_section(conf, section);
     if (sv == NULL) {
         ERR_raise(ERR_LIB_CONF, CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
         goto err;
