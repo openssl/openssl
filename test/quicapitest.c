@@ -2836,10 +2836,18 @@ static int qc_init(SSL *qconn, BIO_ADDR *dst_addr)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
+/** @brief Set until rand_fail_bytes() has failed the 32-byte key request */
 static int rand_fail_key_once;
 
-/* RAND_bytes() returns -1 when a RAND_METHOD fails it */
+/**
+ * @brief RAND_METHOD bytes() callback that fails the token key request once.
+ * RAND_bytes() returns -1 when a RAND_METHOD fails it.
+ * @param buf buffer to fill with random bytes
+ * @param num number of bytes requested
+ * @returns -1 for the first 32-byte request while rand_fail_key_once is set,
+ * otherwise the result of EVP_RAND_generate() on the test's library context
+ */
 static int rand_fail_bytes(unsigned char *buf, int num)
 {
     if (num == 32 && rand_fail_key_once) {
@@ -2855,11 +2863,13 @@ static int rand_fail_status(void)
     return 1;
 }
 
-/*
+/**
+ * @brief Check that a listener fails when its token key cannot be generated.
  * A listener must not come up when the random key encrypting its address
  * validation tokens could not be generated: RAND_priv_bytes_ex() failing
  * with -1 left the key as uninitialised memory, so anyone able to guess it
  * could forge tokens.
+ * @returns 1 if the test passed, 0 otherwise
  */
 static int test_listener_token_key_rand_failure(void)
 {
@@ -2899,7 +2909,7 @@ err:
     SSL_CTX_free(sctx);
     return testresult;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
 
 static int test_ssl_new_from_listener(void)
 {
@@ -6329,9 +6339,9 @@ int setup_tests(void)
     ADD_TEST(test_early_ticks);
     ADD_TEST(test_ssl_new_from_listener);
     ADD_TEST(test_ssl_new_from_listener_user_ssl);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     ADD_TEST(test_listener_token_key_rand_failure);
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
 #ifndef OPENSSL_NO_SSL_TRACE
     ADD_TEST(test_new_token);
 #endif
