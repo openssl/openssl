@@ -5044,6 +5044,1079 @@ err:
 }
 
 /*
+ * Pending connections expire oldest first, and only the ones that are due.
+ *
+ * Three clients send a ClientHello one second apart under a three second
+ * pending timeout. A tick half a second after the first one is due must
+ * expire it alone; the second and third follow, one per second, in order.
+ * Expiry stops at the first connection that is not due, so this would fail
+ * if the pending table were not walked in creation order.
+ */
+#define EXPIRY_ORDER_CLIENTS 3
+
+static int test_pending_timeout_expires_oldest_first(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[EXPIRY_ORDER_CLIENTS] = { NULL };
+    int client_fds[EXPIRY_ORDER_CLIENTS] = { -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int server_fd = -1;
+    int testresult = 0;
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            0, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    /* HVR is required, so the connections stay pending */
+    if (!TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 3000)))
+        goto err;
+
+    timeout_test_fake_time = ossl_time_from_time_t(1700000000);
+    if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
+            timeout_test_now_cb, NULL)))
+        goto err;
+
+    /* One ClientHello per second: created at T, T + 1 and T + 2 */
+    for (i = 0; i < EXPIRY_ORDER_CLIENTS; i++) {
+        if (i > 0)
+            timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+                ossl_seconds2time(1));
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+    }
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            EXPIRY_ORDER_CLIENTS))
+        goto err;
+
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    /* T + 3.5: the first is due, the second (2.5 s old) is not */
+    timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+        ossl_ms2time(1500));
+    for (i = EXPIRY_ORDER_CLIENTS - 1; i >= 0; i--) {
+        poll_item.revents = 0;
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+                &poll_timeout, 0, &poll_result))
+            || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                                   ((DTLS_LISTENER *)listener)->pending_conns),
+                (size_t)i))
+            goto err;
+        /* A second later the next one is due */
+        timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+            ossl_seconds2time(1));
+    }
+
+    testresult = 1;
+
+err:
+    for (i = 0; i < EXPIRY_ORDER_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A peer address hashed by one lookup probes and registers in the lookups
+ * created to share its hashing key, through a key or hashed afresh.
+ */
+static int test_dgram_conn_lookup_shared_key(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *ssl = NULL;
+    DGRAM_CONN_LOOKUP *a = NULL, *b = NULL;
+    DGRAM_CONN_KEY key, bkey;
+    DGRAM_URXE urxe;
+    BIO_ADDR *peer = NULL;
+    unsigned char raw[4] = { 192, 0, 2, 1 };
+    int testresult = 0;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(ssl = SSL_new(sctx))
+        || !TEST_ptr(peer = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(peer, AF_INET, raw, sizeof(raw),
+            htons(4433)))
+        || !TEST_ptr(a = ossl_dgram_conn_lookup_new_addr(NULL, 0))
+        || !TEST_ptr(b = ossl_dgram_conn_lookup_new_addr(a, 0)))
+        goto end;
+
+    /* Hashed by |a|, the key registers in and finds through |b| alone */
+    if (!TEST_true(ossl_dgram_conn_lookup_hash(a, peer, &key))
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(a, &key))
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(b, &key))
+        || !TEST_true(ossl_dgram_conn_lookup_register_key(b, &key, peer, ssl))
+        || !TEST_ptr_eq(ossl_dgram_conn_lookup_find_key(b, &key), ssl)
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(a, &key))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(b), 1)
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(a), 0))
+        goto end;
+
+    /* Hashed afresh by |b|, and by a datagram's peer address, it is found */
+    memset(&urxe, 0, sizeof(urxe));
+    BIO_ADDR_copy(&urxe.peer, peer);
+    if (!TEST_true(ossl_dgram_conn_lookup_hash(b, peer, &bkey))
+        || !TEST_uint64_t_eq(bkey.hash, key.hash)
+        || !TEST_size_t_eq(bkey.len, key.len)
+        || !TEST_mem_eq(bkey.buf, bkey.len, key.buf, key.len)
+        || !TEST_ptr_eq(ossl_dgram_conn_lookup_find_key(b, &bkey), ssl)
+        || !TEST_ptr_eq(ossl_dgram_conn_lookup_find(b, &urxe), ssl)
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find(a, &urxe)))
+        goto end;
+
+    /* Unregistered through its own link, it is gone from |b| */
+    if (!TEST_true(ossl_dgram_conn_lookup_unregister(ssl))
+        || !TEST_false(ossl_dgram_conn_lookup_unregister(ssl))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(b), 0)
+        || !TEST_ptr_null(ossl_dgram_conn_lookup_find_key(b, &key)))
+        goto end;
+
+    testresult = 1;
+end:
+    /* The lookups unlink what is still registered; the SSL is freed last */
+    ossl_dgram_conn_lookup_free(b);
+    ossl_dgram_conn_lookup_free(a);
+    BIO_ADDR_free(peer);
+    SSL_free(ssl);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
+/*
+ * A lookup created for a few entries grows under many: every entry stays
+ * found through the growth, and so does every one left after unregistering.
+ */
+#define LOOKUP_GROW_CONNS 300
+
+static int test_dgram_conn_lookup_grows(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *ssl[LOOKUP_GROW_CONNS] = { NULL };
+    DGRAM_CONN_LOOKUP *lookup = NULL;
+    DGRAM_URXE urxe;
+    unsigned char raw[4] = { 192, 0, 2, 1 };
+    int i, testresult = 0;
+
+    memset(&urxe, 0, sizeof(urxe));
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method()))
+        /* 64 buckets to start with, doubled at 65, 129 and 257 entries */
+        || !TEST_ptr(lookup = ossl_dgram_conn_lookup_new_addr(NULL, 4)))
+        goto end;
+
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        if (!TEST_ptr(ssl[i] = SSL_new(sctx))
+            || !TEST_true(BIO_ADDR_rawmake(&urxe.peer, AF_INET, raw,
+                sizeof(raw), htons(1024 + i)))
+            || !TEST_true(ossl_dgram_conn_lookup_register_addr(lookup,
+                &urxe.peer, ssl[i])))
+            goto end;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(lookup),
+            LOOKUP_GROW_CONNS))
+        goto end;
+
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        if (!TEST_true(BIO_ADDR_rawmake(&urxe.peer, AF_INET, raw, sizeof(raw),
+                htons(1024 + i)))
+            || !TEST_ptr_eq(ossl_dgram_conn_lookup_find(lookup, &urxe), ssl[i]))
+            goto end;
+
+    for (i = 0; i < LOOKUP_GROW_CONNS; i += 2)
+        if (!TEST_true(ossl_dgram_conn_lookup_unregister(ssl[i])))
+            goto end;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(lookup),
+            LOOKUP_GROW_CONNS / 2))
+        goto end;
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        if (!TEST_true(BIO_ADDR_rawmake(&urxe.peer, AF_INET, raw, sizeof(raw),
+                htons(1024 + i)))
+            || !TEST_ptr_eq(ossl_dgram_conn_lookup_find(lookup, &urxe),
+                i % 2 == 0 ? NULL : ssl[i]))
+            goto end;
+
+    testresult = 1;
+end:
+    /* Freeing the lookup unlinks what is still registered */
+    ossl_dgram_conn_lookup_free(lookup);
+    for (i = 0; i < LOOKUP_GROW_CONNS; i++)
+        SSL_free(ssl[i]);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
+/*
+ * A backward step of the listener's clock must not stop pending connections
+ * from expiring.
+ *
+ * The first connection is created before the step, so it carries a stamp
+ * ahead of the clock. Expiry walks the connections in creation order and
+ * stops at the first one that is not due, so if that stamp were left alone
+ * nothing would expire until the clock had made up the whole step, an hour
+ * here. The stale stamp is replaced by the first tick after the step
+ * instead, and every connection expires one pending timeout after that tick,
+ * or after its own creation if that is later.
+ */
+static int test_pending_timeout_clock_step_back(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[EXPIRY_ORDER_CLIENTS] = { NULL };
+    int client_fds[EXPIRY_ORDER_CLIENTS] = { -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    OSSL_TIME step;
+    int server_fd = -1;
+    int testresult = 0;
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            0, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    /* HVR is required, so the connections stay pending */
+    if (!TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 3000)))
+        goto err;
+
+    timeout_test_fake_time = ossl_time_from_time_t(1700000000);
+    if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
+            timeout_test_now_cb, NULL)))
+        goto err;
+
+    /* Created at T, before the step */
+    if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+            &clients[0], &client_fds[0])))
+        goto err;
+
+    /*
+     * The clock steps back an hour, to S. The second is created at S, by a
+     * tick that also finds the first stamped ahead of the clock, and the
+     * third at S + 1.
+     */
+    step = ossl_time_subtract(timeout_test_fake_time, ossl_seconds2time(3600));
+    timeout_test_fake_time = step;
+    if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+            &clients[1], &client_fds[1])))
+        goto err;
+    timeout_test_fake_time = ossl_time_add(step, ossl_seconds2time(1));
+    if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+            &clients[2], &client_fds[2])))
+        goto err;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            EXPIRY_ORDER_CLIENTS))
+        goto err;
+
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    /*
+     * S + 3.5: the first two are due, the first one aged from the step and
+     * not from a stamp that is still almost an hour away; the third is not.
+     */
+    timeout_test_fake_time = ossl_time_add(step, ossl_ms2time(3500));
+    poll_item.revents = 0;
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+            &poll_timeout, 0, &poll_result))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                               ((DTLS_LISTENER *)listener)->pending_conns),
+            1))
+        goto err;
+
+    /* S + 4.5: so is the third */
+    timeout_test_fake_time = ossl_time_add(step, ossl_ms2time(4500));
+    poll_item.revents = 0;
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+            &poll_timeout, 0, &poll_result))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                               ((DTLS_LISTENER *)listener)->pending_conns),
+            0))
+        goto err;
+
+    testresult = 1;
+
+err:
+    for (i = 0; i < EXPIRY_ORDER_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A connection is promoted under the peer address it has by then, which a
+ * new_pending_conn_cb() may have set. Two connections given the same address
+ * cannot both be registered in established_conns: the second one is refused
+ * and dropped, the first one stays, and nothing asserts.
+ */
+static BIO_ADDR duplicate_peer_addr;
+
+static int duplicate_peer_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    return SSL_set1_initial_peer_addr(new_ssl, &duplicate_peer_addr);
+}
+
+static int test_dtls_listener_duplicate_peer_addr_refused(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *first = NULL;
+    SSL *clients[2] = { NULL, NULL };
+    int client_fds[2] = { -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    DTLS_LISTENER *dl;
+    DGRAM_URXE probe;
+    struct in_addr ina;
+    int server_fd = -1, i, testresult = 0;
+
+    memset(&probe, 0, sizeof(probe));
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_true(BIO_ADDR_rawmake(&duplicate_peer_addr, AF_INET, &ina,
+            sizeof(ina), htons(9999)))
+        || !TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    SSL_CTX_set_new_pending_conn_cb(sctx, duplicate_peer_pending_cb, NULL);
+
+    /* Not validated, so a connection is promoted by its first ClientHello */
+    if (!TEST_true(create_udp_listener(sctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+    dl = (DTLS_LISTENER *)listener;
+    BIO_ADDR_copy(&probe.peer, &duplicate_peer_addr);
+
+    for (i = 0; i < 2; i++) {
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i]))
+            || !TEST_size_t_eq(
+                ossl_dgram_conn_lookup_num_items(dl->pending_conns), 0)
+            || !TEST_size_t_eq(
+                ossl_dgram_conn_lookup_num_items(dl->established_conns), 1)
+            || !TEST_int_eq(sk_SSL_num(dl->incoming_connections), 1))
+            goto err;
+        /* The one registered is the first, whoever came after it */
+        if (i == 0)
+            first = ossl_dtls_listener_find_established_conn(dl, &probe);
+        if (!TEST_ptr(first)
+            || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl,
+                                &probe),
+                first)
+            || !TEST_ptr_eq(sk_SSL_value(dl->incoming_connections, 0), first))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    for (i = 0; i < 2; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static size_t listener_run_queue_len(DTLS_LISTENER *dl)
+{
+    OSSL_QNODE *it;
+    size_t n = 0;
+
+    OSSL_QUEUE_WALK (it, &dl->run_queue)
+        n++;
+    return n;
+}
+
+static int run_queue_test_tick(SSL *listener)
+{
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    return SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
+        &poll_result);
+}
+
+/*
+ * A pending connection that waits for its peer is on the listener's run
+ * queue neither after a HelloVerifyRequest (idx 0, DTLS 1.2) nor after a
+ * HelloRetryRequest (idx 1, DTLS 1.3), so a tick does not look at it. A
+ * DTLS 1.3 connection has a retransmit timer running then, and waits on the
+ * timer queue for it. A datagram routed to a connection puts that one, and
+ * no other, on the run queue, and the tick that drives it takes it off both.
+ */
+#define RUN_QUEUE_CLIENTS 4
+
+static int test_dtls_listener_run_queue(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[RUN_QUEUE_CLIENTS] = { NULL };
+    int client_fds[RUN_QUEUE_CLIENTS] = { -1, -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    DTLS_LISTENER *dl;
+    int ver = idx == 0 ? DTLS1_2_VERSION : DTLS1_3_VERSION;
+    size_t timers = idx == 0 ? 0 : RUN_QUEUE_CLIENTS;
+    int server_fd = -1, i, routed = 0, testresult = 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (idx == 0)
+        return TEST_skip("DTLS 1.2 is disabled");
+#endif
+#ifdef OPENSSL_NO_DTLS1_3
+    if (idx == 1)
+        return TEST_skip("DTLS 1.3 is disabled");
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), ver, ver, &sctx, &cctx, cert, privkey))
+        /* A cookie exchange is required, so the connections stay pending */
+        || !TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+    dl = (DTLS_LISTENER *)listener;
+
+    for (i = 0; i < RUN_QUEUE_CLIENTS; i++)
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+
+    /* All of them wait for their peer: none is on the run queue */
+    if (!TEST_true(run_queue_test_tick(listener))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
+            RUN_QUEUE_CLIENTS)
+        || !TEST_size_t_eq(listener_run_queue_len(dl), 0)
+        || !TEST_size_t_eq(dl->num_timers, timers))
+        goto err;
+
+    /*
+     * The first client answers the cookie request. Routing its ClientHello,
+     * without driving anything yet, queues its connection alone.
+     */
+    for (i = 0; i < 100 && !routed; i++) {
+        if (!TEST_int_le(SSL_connect(clients[0]), 0))
+            goto err;
+        routed = ossl_dgram_demux_pump(dl->demux) == DGRAM_DEMUX_PUMP_RES_OK;
+        if (!routed)
+            OSSL_sleep(10);
+    }
+    if (!TEST_true(routed)
+        || !TEST_size_t_eq(listener_run_queue_len(dl), 1)
+        || !TEST_size_t_eq(dl->num_timers, timers))
+        goto err;
+
+    /* The tick drives and promotes it, which takes it off both queues */
+    if (!TEST_true(run_queue_test_tick(listener))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
+            RUN_QUEUE_CLIENTS - 1)
+        || !TEST_int_eq(sk_SSL_num(dl->incoming_connections), 1)
+        || !TEST_size_t_eq(listener_run_queue_len(dl), 0)
+        || !TEST_size_t_eq(dl->num_timers,
+            idx == 0 ? 0 : RUN_QUEUE_CLIENTS - 1))
+        goto err;
+
+    testresult = 1;
+err:
+    for (i = 0; i < RUN_QUEUE_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_DTLS1_3
+/*
+ * A pending DTLS 1.3 connection that waits on the timer queue is driven
+ * when its retransmit timer is due, and goes back to the timer queue with
+ * the deadline of the timer its drive restarted.
+ */
+static unsigned int timer_queue_test_timer_cb(SSL *s, unsigned int timer_us)
+{
+    return 50000; /* 50 ms, whatever the retransmission */
+}
+
+static int timer_queue_test_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    DTLS_set_timer_cb(new_ssl, timer_queue_test_timer_cb);
+    return 1;
+}
+
+static void timer_queue_test_get_conn_cb(SSL *ssl, const BIO_ADDR *peer,
+    void *arg)
+{
+    *(SSL **)arg = ssl;
+}
+
+static int test_dtls13_listener_timer_queue(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL, *pending = NULL;
+    BIO_ADDR *server_addr = NULL;
+    DTLS_LISTENER *dl;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER_CONN *lc;
+    OSSL_TIME first;
+    int server_fd = -1, client_fd = -1, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    SSL_CTX_set_new_pending_conn_cb(sctx, timer_queue_test_pending_cb, NULL);
+
+    if (!TEST_true(create_udp_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd))
+        || !TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+            &client, &client_fd)))
+        goto err;
+    dl = (DTLS_LISTENER *)listener;
+
+    ossl_dgram_conn_lookup_foreach(dl->pending_conns,
+        timer_queue_test_get_conn_cb, &pending);
+    if (!TEST_ptr(pending)
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(pending))
+        || !TEST_ptr(sc->d1)
+        || !TEST_ptr(lc = sc->listener_conn))
+        goto err;
+
+    /* Its HelloRetryRequest is out: it waits for its timer, not to be run */
+    if (!TEST_true(run_queue_test_tick(listener))
+        || !TEST_false(ossl_time_is_zero(sc->d1->next_timeout))
+        || !TEST_true(lc->timer_queued)
+        || !TEST_size_t_eq(dl->num_timers, 1)
+        || !TEST_ptr_eq(dl->timer_first, lc)
+        || !TEST_size_t_eq(listener_run_queue_len(dl), 0)
+        || !TEST_int_eq(ossl_time_compare(lc->timer_at, sc->d1->next_timeout),
+            0))
+        goto err;
+    first = lc->timer_at;
+
+    /* Once the timer is due, a tick drives the connection, which restarts it */
+    OSSL_sleep(100);
+    if (!TEST_true(run_queue_test_tick(listener))
+        || !TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns),
+            1)
+        || !TEST_true(lc->timer_queued)
+        || !TEST_size_t_eq(dl->num_timers, 1)
+        || !TEST_ptr_eq(dl->timer_first, lc)
+        || !TEST_size_t_eq(listener_run_queue_len(dl), 0)
+        || !TEST_int_gt(ossl_time_compare(lc->timer_at, first), 0)
+        || !TEST_int_eq(ossl_time_compare(lc->timer_at, sc->d1->next_timeout),
+            0))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(client);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
+/*
+ * The number of URXEs on the free list of a demux that no other thread is
+ * using. ossl_dgram_demux_get_free_list_len() reports the limit at most, as
+ * a thread returning a URXE counts it in before it finds the list full, so
+ * the limit is lifted while it is asked: a list that outgrew it shows.
+ */
+static size_t demux_free_len(DGRAM_DEMUX *demux, size_t max_free)
+{
+    size_t n;
+
+    ossl_dgram_demux_set_max_free_urxe(demux, 0);
+    n = ossl_dgram_demux_get_free_list_len(demux);
+    ossl_dgram_demux_set_max_free_urxe(demux, max_free);
+    return n;
+}
+
+/*
+ * A route handler may decline a datagram. The demux then takes the URXE back
+ * itself, without the handler releasing it, caches it on the free list and
+ * receives the next datagram into it. One the handler takes stays out until
+ * it is released, and the free list keeps to its limit either way. idx 0 is
+ * a demux without locking, idx 1 a thread-safe one.
+ */
+#define ROUTE_TEST_MAX_FREE 2
+#define ROUTE_TEST_TAKEN 4
+
+typedef struct {
+    DGRAM_URXE *last;
+    int calls;
+    int bad;
+    int take;
+} ROUTE_TEST;
+
+static int route_test_cb(DGRAM_URXE *e, void *arg)
+{
+    ROUTE_TEST *rt = arg;
+
+    /* Handed over issued, on no list, with the datagram in it */
+    if (e->demux_state != URXE_DEMUX_STATE_ISSUED
+        || ossl_list_urxe_prev(e) != NULL
+        || ossl_list_urxe_next(e) != NULL
+        || e->data_len != 3
+        || memcmp(ossl_dgram_urxe_data(e), "abc", 3) != 0)
+        rt->bad = 1;
+    rt->last = e;
+    rt->calls++;
+    return rt->take;
+}
+
+static int test_dgram_demux_route_decline(int idx)
+{
+    DGRAM_DEMUX *demux = NULL;
+    DGRAM_URXE *declined, *taken[ROUTE_TEST_TAKEN] = { NULL };
+    ROUTE_TEST rt = { NULL, 0, 0, 0 };
+    static const unsigned char dgram[] = { 'a', 'b', 'c' };
+    int i, ntaken = 0, testresult = 0;
+
+    if (!TEST_ptr(demux = ossl_dgram_demux_new(NULL, idx, NULL, NULL)))
+        goto end;
+    ossl_dgram_demux_set_max_free_urxe(demux, ROUTE_TEST_MAX_FREE);
+    ossl_dgram_demux_set_route_handler(demux, route_test_cb, &rt);
+
+    /* Declined: back on the free list without a release */
+    if (!TEST_true(ossl_dgram_demux_inject(demux, dgram, sizeof(dgram), NULL,
+            NULL))
+        || !TEST_int_eq(rt.calls, 1)
+        || !TEST_ptr(declined = rt.last)
+        || !TEST_size_t_eq(demux_free_len(demux, ROUTE_TEST_MAX_FREE), 1))
+        goto end;
+
+    /* The next datagram is received into the same URXE, declined again */
+    if (!TEST_true(ossl_dgram_demux_inject(demux, dgram, sizeof(dgram), NULL,
+            NULL))
+        || !TEST_int_eq(rt.calls, 2)
+        || !TEST_ptr_eq(rt.last, declined)
+        || !TEST_size_t_eq(demux_free_len(demux, ROUTE_TEST_MAX_FREE), 1))
+        goto end;
+
+    /* Taken: the first is that URXE again, and nothing comes back by itself */
+    rt.take = 1;
+    for (i = 0; i < ROUTE_TEST_TAKEN; i++) {
+        if (!TEST_true(ossl_dgram_demux_inject(demux, dgram, sizeof(dgram),
+                NULL, NULL))
+            || !TEST_int_eq(rt.calls, 3 + i)
+            || !TEST_size_t_eq(demux_free_len(demux, ROUTE_TEST_MAX_FREE), 0))
+            goto end;
+        taken[ntaken++] = rt.last;
+    }
+    if (!TEST_ptr_eq(taken[0], declined)
+        || !TEST_ptr_ne(taken[1], declined))
+        goto end;
+
+    /* Released, they are cached up to the limit and freed beyond it */
+    while (ntaken > 0) {
+        ossl_dgram_demux_release_urxe(demux, taken[--ntaken]);
+        if (!TEST_size_t_le(demux_free_len(demux, ROUTE_TEST_MAX_FREE),
+                ROUTE_TEST_MAX_FREE))
+            goto end;
+    }
+    if (!TEST_size_t_eq(demux_free_len(demux, ROUTE_TEST_MAX_FREE),
+            ROUTE_TEST_MAX_FREE))
+        goto end;
+
+    /* With no handler at all the demux keeps the URXE too */
+    ossl_dgram_demux_set_route_handler(demux, NULL, NULL);
+    if (!TEST_true(ossl_dgram_demux_inject(demux, dgram, sizeof(dgram), NULL,
+            NULL))
+        || !TEST_int_eq(rt.calls, 2 + ROUTE_TEST_TAKEN)
+        || !TEST_size_t_eq(demux_free_len(demux, ROUTE_TEST_MAX_FREE),
+            ROUTE_TEST_MAX_FREE))
+        goto end;
+
+    if (!TEST_false(rt.bad))
+        goto end;
+
+    testresult = 1;
+end:
+    while (ntaken > 0)
+        ossl_dgram_demux_release_urxe(demux, taken[--ntaken]);
+    ossl_dgram_demux_free(demux);
+    return testresult;
+}
+
+/*
+ * A thread-safe demux reads a whole batch of datagrams from the network and
+ * hands them to the route handler in the order received. The ones it
+ * declines are returned to the free list together, which keeps to its limit;
+ * the ones it takes come back when they are released. A pump that finds
+ * nothing to read says so.
+ */
+#define BATCH_TEST_DGRAMS (DEMUX_MAX_MSGS_PER_CALL + 8)
+#define BATCH_TEST_MAX_FREE 4
+
+typedef struct {
+    DGRAM_URXE *taken[BATCH_TEST_DGRAMS];
+    int ntaken;
+    int calls;
+    int bad;
+} BATCH_TEST;
+
+static int batch_test_cb(DGRAM_URXE *e, void *arg)
+{
+    BATCH_TEST *bt = arg;
+    unsigned char seq;
+
+    if (bt->calls >= BATCH_TEST_DGRAMS
+        || e->demux_state != URXE_DEMUX_STATE_ISSUED
+        || e->data_len != 1) {
+        bt->bad = 1;
+        return 0;
+    }
+    /* In the order sent */
+    seq = *ossl_dgram_urxe_data(e);
+    if (seq != bt->calls)
+        bt->bad = 1;
+    bt->calls++;
+
+    /* Decline every other one */
+    if ((seq & 1) != 0)
+        return 0;
+    bt->taken[bt->ntaken++] = e;
+    return 1;
+}
+
+static int test_dgram_demux_batch_pump(void)
+{
+    DGRAM_DEMUX *demux = NULL;
+    BIO *net = NULL, *peer = NULL;
+    BATCH_TEST bt;
+    unsigned char seq;
+    int i, testresult = 0;
+
+    memset(&bt, 0, sizeof(bt));
+    if (!TEST_true(BIO_new_bio_dgram_pair(&net, 0, &peer, 0))
+        || !TEST_ptr(demux = ossl_dgram_demux_new(net, 1, NULL, NULL)))
+        goto end;
+    ossl_dgram_demux_set_max_free_urxe(demux, BATCH_TEST_MAX_FREE);
+    ossl_dgram_demux_set_route_handler(demux, batch_test_cb, &bt);
+
+    for (i = 0; i < BATCH_TEST_DGRAMS; i++) {
+        seq = (unsigned char)i;
+        if (!TEST_int_eq(BIO_write(peer, &seq, 1), 1))
+            goto end;
+    }
+
+    /*
+     * The first pump routes one full batch. Half of it is declined, more
+     * than the free list may hold: it is cut to the limit.
+     */
+    if (!TEST_int_eq(ossl_dgram_demux_pump(demux), DGRAM_DEMUX_PUMP_RES_OK)
+        || !TEST_int_eq(bt.calls, DEMUX_MAX_MSGS_PER_CALL)
+        || !TEST_int_eq(bt.ntaken, DEMUX_MAX_MSGS_PER_CALL / 2)
+        || !TEST_size_t_eq(demux_free_len(demux, BATCH_TEST_MAX_FREE),
+            BATCH_TEST_MAX_FREE))
+        goto end;
+
+    /* The second routes the rest, and the third finds nothing to read */
+    if (!TEST_int_eq(ossl_dgram_demux_pump(demux), DGRAM_DEMUX_PUMP_RES_OK)
+        || !TEST_int_eq(bt.calls, BATCH_TEST_DGRAMS)
+        || !TEST_int_eq(bt.ntaken, BATCH_TEST_DGRAMS / 2)
+        || !TEST_int_eq(ossl_dgram_demux_pump(demux),
+            DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL)
+        || !TEST_int_eq(bt.calls, BATCH_TEST_DGRAMS)
+        || !TEST_size_t_le(demux_free_len(demux, BATCH_TEST_MAX_FREE),
+            BATCH_TEST_MAX_FREE))
+        goto end;
+
+    /* Released, the taken ones fill the free list up to its limit */
+    while (bt.ntaken > 0) {
+        ossl_dgram_demux_release_urxe(demux, bt.taken[--bt.ntaken]);
+        if (!TEST_size_t_le(demux_free_len(demux, BATCH_TEST_MAX_FREE),
+                BATCH_TEST_MAX_FREE))
+            goto end;
+    }
+    if (!TEST_size_t_eq(demux_free_len(demux, BATCH_TEST_MAX_FREE),
+            BATCH_TEST_MAX_FREE)
+        || !TEST_false(bt.bad))
+        goto end;
+
+    testresult = 1;
+end:
+    while (bt.ntaken > 0)
+        ossl_dgram_demux_release_urxe(demux, bt.taken[--bt.ntaken]);
+    ossl_dgram_demux_free(demux);
+    BIO_free(net);
+    BIO_free(peer);
+    return testresult;
+}
+
+#if defined(OPENSSL_THREADS)
+/*
+ * The free list of a thread-safe demux takes no lock: any thread returns a
+ * URXE to it while another refills the receive reserve from it. Threads that
+ * pump datagrams from the network, threads that inject them and threads that
+ * release the URXEs the route handler took run against each other here; the
+ * handler declines one datagram in three, so URXEs come back one at a time
+ * and a batch at a time. Every datagram must be routed exactly once and the
+ * free list end up within its limit. Corruption of the list is for the
+ * sanitizers to find, a lost URXE for the leak check.
+ */
+#define FREE_STRESS_MAX_FREE 16
+#define FREE_STRESS_HELD 256
+#define FREE_STRESS_SENT 20000
+#define FREE_STRESS_INJECTED 5000
+#define FREE_STRESS_RELEASERS 3
+#define FREE_STRESS_INJECTORS 2
+#define FREE_STRESS_PUMPERS 2
+#define FREE_STRESS_THREADS \
+    (FREE_STRESS_RELEASERS + FREE_STRESS_INJECTORS + FREE_STRESS_PUMPERS)
+
+static struct {
+    DGRAM_DEMUX *demux;
+    CRYPTO_MUTEX *mutex;
+    /* The rest is protected by |mutex| */
+    DGRAM_URXE *held[FREE_STRESS_HELD];
+    int nheld;
+    int stop_pumping;
+    int stop_releasing;
+    int failed;
+    unsigned int seq;
+    unsigned int routed;
+} free_stress;
+
+static int free_stress_route_cb(DGRAM_URXE *e, void *arg)
+{
+    int take = 0;
+
+    ossl_crypto_mutex_lock(free_stress.mutex);
+    free_stress.routed++;
+    if (free_stress.seq++ % 3 != 0 && free_stress.nheld < FREE_STRESS_HELD) {
+        free_stress.held[free_stress.nheld++] = e;
+        take = 1;
+    }
+    ossl_crypto_mutex_unlock(free_stress.mutex);
+    return take;
+}
+
+static void free_stress_fail(void)
+{
+    ossl_crypto_mutex_lock(free_stress.mutex);
+    free_stress.failed = 1;
+    ossl_crypto_mutex_unlock(free_stress.mutex);
+}
+
+static unsigned int free_stress_releaser(void *arg)
+{
+    DGRAM_URXE *e;
+    int stop;
+
+    for (;;) {
+        e = NULL;
+        ossl_crypto_mutex_lock(free_stress.mutex);
+        if (free_stress.nheld > 0)
+            e = free_stress.held[--free_stress.nheld];
+        stop = free_stress.stop_releasing;
+        ossl_crypto_mutex_unlock(free_stress.mutex);
+
+        if (e != NULL) {
+            ossl_dgram_demux_release_urxe(free_stress.demux, e);
+        } else if (stop) {
+            break;
+        } else {
+            OSSL_sleep(0);
+        }
+    }
+    return 1;
+}
+
+static unsigned int free_stress_injector(void *arg)
+{
+    static const unsigned char dgram[64] = { 0 };
+    int i;
+
+    for (i = 0; i < FREE_STRESS_INJECTED; i++)
+        if (!ossl_dgram_demux_inject(free_stress.demux, dgram, sizeof(dgram),
+                NULL, NULL)) {
+            free_stress_fail();
+            break;
+        }
+    return 1;
+}
+
+static unsigned int free_stress_pumper(void *arg)
+{
+    int stop, res;
+
+    for (;;) {
+        /* Read the flag first: told to stop, one more empty read ends it */
+        ossl_crypto_mutex_lock(free_stress.mutex);
+        stop = free_stress.stop_pumping;
+        ossl_crypto_mutex_unlock(free_stress.mutex);
+
+        res = ossl_dgram_demux_pump(free_stress.demux);
+        if (res == DGRAM_DEMUX_PUMP_RES_OK)
+            continue;
+        if (res != DGRAM_DEMUX_PUMP_RES_TRANSIENT_FAIL) {
+            free_stress_fail();
+            break;
+        }
+        if (stop)
+            break;
+        OSSL_sleep(0);
+    }
+    return 1;
+}
+
+static int test_dgram_demux_free_list_stress(void)
+{
+    static const unsigned char dgram[64] = { 0 };
+    BIO *net = NULL, *peer = NULL;
+    CRYPTO_THREAD *threads[FREE_STRESS_THREADS] = { NULL };
+    int i, sent = 0, started = 0, testresult = 0;
+
+    memset(&free_stress, 0, sizeof(free_stress));
+    if (!TEST_true(BIO_new_bio_dgram_pair(&net, 0, &peer, 0))
+        || !TEST_ptr(free_stress.mutex = ossl_crypto_mutex_new())
+        || !TEST_ptr(free_stress.demux = ossl_dgram_demux_new(net, 1, NULL,
+                         NULL)))
+        goto end;
+    ossl_dgram_demux_set_max_free_urxe(free_stress.demux, FREE_STRESS_MAX_FREE);
+    ossl_dgram_demux_set_route_handler(free_stress.demux, free_stress_route_cb,
+        NULL);
+
+    /* Releasers first, then injectors, then pumpers */
+    for (i = 0; i < FREE_STRESS_THREADS; i++) {
+        threads[i] = ossl_crypto_thread_native_start(
+            i < FREE_STRESS_RELEASERS ? free_stress_releaser
+                : i < FREE_STRESS_RELEASERS + FREE_STRESS_INJECTORS
+                ? free_stress_injector
+                : free_stress_pumper,
+            NULL, 1);
+        if (!TEST_ptr(threads[i]))
+            break;
+        started++;
+    }
+
+    /* This thread is the network: datagrams for the pumpers to read */
+    while (started == FREE_STRESS_THREADS && sent < FREE_STRESS_SENT) {
+        if (BIO_write(peer, dgram, sizeof(dgram)) == (int)sizeof(dgram))
+            sent++;
+        else
+            OSSL_sleep(0);
+    }
+
+    /*
+     * Wind down in the order the URXEs flow: the injectors end by
+     * themselves, the pumpers once the network is drained, and the
+     * releasers once nothing can be routed to them any more.
+     */
+    for (i = FREE_STRESS_RELEASERS; i < started; i++) {
+        if (i == FREE_STRESS_RELEASERS + FREE_STRESS_INJECTORS) {
+            ossl_crypto_mutex_lock(free_stress.mutex);
+            free_stress.stop_pumping = 1;
+            ossl_crypto_mutex_unlock(free_stress.mutex);
+        }
+        ossl_crypto_thread_native_join(threads[i], NULL);
+    }
+    ossl_crypto_mutex_lock(free_stress.mutex);
+    free_stress.stop_pumping = 1;
+    free_stress.stop_releasing = 1;
+    ossl_crypto_mutex_unlock(free_stress.mutex);
+    for (i = 0; i < started && i < FREE_STRESS_RELEASERS; i++)
+        ossl_crypto_thread_native_join(threads[i], NULL);
+    for (i = 0; i < started; i++)
+        ossl_crypto_thread_native_clean(threads[i]);
+
+    if (!TEST_int_eq(started, FREE_STRESS_THREADS)
+        || !TEST_false(free_stress.failed)
+        || !TEST_int_eq(free_stress.nheld, 0)
+        || !TEST_uint_eq(free_stress.routed,
+            FREE_STRESS_SENT + FREE_STRESS_INJECTORS * FREE_STRESS_INJECTED)
+        || !TEST_size_t_le(demux_free_len(free_stress.demux,
+                               FREE_STRESS_MAX_FREE),
+            FREE_STRESS_MAX_FREE))
+        goto end;
+
+    testresult = 1;
+end:
+    while (free_stress.nheld > 0)
+        ossl_dgram_demux_release_urxe(free_stress.demux,
+            free_stress.held[--free_stress.nheld]);
+    ossl_dgram_demux_free(free_stress.demux);
+    ossl_crypto_mutex_free(&free_stress.mutex);
+    BIO_free(net);
+    BIO_free(peer);
+    return testresult;
+}
+#endif /* OPENSSL_THREADS */
+
+/*
  * ============================================================================
  * new_pending_conn_cb tests
  * ============================================================================
@@ -6423,7 +7496,7 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
     DTLS_LISTENER *dl = NULL;
     DGRAM_URXE probe = { 0 };
     CRYPTO_free_fn saved_free = NULL;
-    int have_peer = 0, wrapped = 0, ret;
+    int wrapped = 0, ret;
     /* Invariant failures must fail even when an allocation was injected. */
     int testresult = -1;
 
@@ -6446,7 +7519,6 @@ static int test_dtls_listener_ssl_clear_mfail(int idx)
 
     dl = (DTLS_LISTENER *)listener;
     probe.peer = sc->d1->peer_addr;
-    have_peer = 1;
     if (!TEST_int_eq(BIO_ADDR_family(&probe.peer), AF_INET)
         || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
             serverssl)
@@ -6518,9 +7590,6 @@ end:
         && !TEST_true(CRYPTO_set_mem_functions(ssl_clear_malloc,
             ssl_clear_realloc, saved_free)))
         testresult = -1;
-    /* Remove any stale entry before freeing the object on a failing run. */
-    if (have_peer)
-        ossl_dtls_listener_unregister_established_conn(listener, &probe.peer);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
@@ -6528,6 +7597,144 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     ERR_clear_error();
+    return testresult;
+}
+
+/*
+ * Regression test: a connection is registered under the peer address its
+ * ClientHello came from, through a link it owns. Freeing it after the
+ * application changed its peer address (idx 0 clears it, idx 1 moves it) must
+ * still unlink it, or the table keeps pointing into freed memory.
+ */
+static int test_dtls_listener_free_after_peer_change(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl;
+    DGRAM_URXE probe = { 0 };
+    BIO_ADDR other;
+    struct in_addr ina;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr))
+        || !drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->d1))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    probe.peer = sc->d1->peer_addr;
+    if (!TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 1)
+        || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
+            serverssl))
+        goto end;
+
+    if (idx == 0) {
+        if (!TEST_true(SSL_set1_initial_peer_addr(serverssl, NULL)))
+            goto end;
+    } else {
+        ina.s_addr = htonl(INADDR_LOOPBACK);
+        if (!TEST_true(BIO_ADDR_rawmake(&other, AF_INET, &ina, sizeof(ina),
+                htons(9999)))
+            || !TEST_true(SSL_set1_initial_peer_addr(serverssl, &other)))
+            goto end;
+    }
+
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    if (!TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 0)
+        || !TEST_ptr_null(ossl_dtls_listener_find_established_conn(dl, &probe)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static BIO_ADDR peer_change_pending_addr;
+
+static int peer_change_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    return SSL_set1_initial_peer_addr(new_ssl, &peer_change_pending_addr);
+}
+
+/*
+ * Regression test: a new_pending_conn_cb() that gives the pending connection
+ * another peer address. The connection was registered in pending_conns under
+ * the address its ClientHello came from, so promoting it to established must
+ * unlink it through its node rather than by its current address, or it is
+ * freed while still linked in pending_conns.
+ */
+static int test_dtls_listener_promote_after_peer_change(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl;
+    DGRAM_URXE probe = { 0 };
+    struct in_addr ina;
+    int testresult = 0;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_true(BIO_ADDR_rawmake(&peer_change_pending_addr, AF_INET, &ina,
+            sizeof(ina), htons(9999)))
+        || !TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_new_pending_conn_cb(sctx, peer_change_pending_cb, NULL);
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr))
+        || !drive_until_connection_queued(listener, clientssl))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(dl->pending_conns), 0)
+        || !TEST_size_t_eq(
+            ossl_dgram_conn_lookup_num_items(dl->established_conns), 1)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_ptr(sc->d1))
+        goto end;
+
+    /* It is registered under the address the callback gave it. */
+    probe.peer = sc->d1->peer_addr;
+    if (!TEST_int_eq(BIO_ADDR_rawport(&probe.peer), htons(9999))
+        || !TEST_ptr_eq(ossl_dtls_listener_find_established_conn(dl, &probe),
+            serverssl))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
     return testresult;
 }
 #endif
@@ -8914,6 +10121,8 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_MFAIL_ALL_NO_CHECK_TESTS(test_dtls_listener_ssl_clear_mfail, 2);
+    ADD_ALL_TESTS(test_dtls_listener_free_after_peer_change, 2);
+    ADD_TEST(test_dtls_listener_promote_after_peer_change);
 #endif
 
     /* Max number of pending connections tests */
@@ -8923,6 +10132,22 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_max_dgram_size_functional);
     ADD_TEST(test_pending_conn_cap_enforcement);
     ADD_TEST(test_pending_cap_with_timeout);
+    ADD_TEST(test_pending_timeout_expires_oldest_first);
+    ADD_TEST(test_dgram_conn_lookup_shared_key);
+    ADD_TEST(test_dgram_conn_lookup_grows);
+    ADD_TEST(test_pending_timeout_clock_step_back);
+    ADD_TEST(test_dtls_listener_duplicate_peer_addr_refused);
+    ADD_ALL_TESTS(test_dtls_listener_run_queue, 2);
+#ifndef OPENSSL_NO_DTLS1_3
+    ADD_TEST(test_dtls13_listener_timer_queue);
+#endif
+
+    /* Datagram demux tests */
+    ADD_ALL_TESTS(test_dgram_demux_route_decline, 2);
+    ADD_TEST(test_dgram_demux_batch_pump);
+#if defined(OPENSSL_THREADS)
+    ADD_TEST(test_dgram_demux_free_list_stress);
+#endif
 
     /* new_pending_conn_cb tests (DTLS listener) */
     ADD_TEST(test_new_pending_cb_allow_all);

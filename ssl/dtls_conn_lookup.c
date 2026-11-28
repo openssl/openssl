@@ -11,504 +11,369 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
+#include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/common.h"
 #include "internal/dgram_conn_lookup.h"
-#include "crypto/siphash.h"
+#include "internal/queue.h"
+#include "internal/hashtable.h"
 
 #ifndef OPENSSL_NO_DTLS
 
 /*
- * Internal entry structure for address-based connection lookup.
- * Stores a connection keyed by peer address.
+ * Address-based lookup. Connections are linked into a growable intrusive
+ * hash table (internal/hashtable.h) through a DGRAM_CONN_LINK, part of the
+ * block a connection is given at its first registration and keeps for its
+ * lifetime (DTLS_LISTENER_CONN). Apart from that, neither registration nor
+ * lookup allocates, except when the table doubles its buckets because the
+ * entries outnumber them. The buckets start in the lookup itself and are
+ * grown up front, when the lookup is created, for the number of entries its
+ * owner expects, so a listener's tables start at a few hundred bytes rather
+ * than 128 KB each: its pending table holds at most max_pending_conns
+ * entries, 256 by default, and its established table has no bound. Every
+ * link carries its hash, so growing re-links the entries without hashing
+ * them, an O(n) step at each power of two under the lock the caller holds; a
+ * table never shrinks. Every registered link is also on the |all| list, in
+ * registration order, which iteration walks instead of the buckets: the
+ * listener expires a pending table from its oldest entry and stops at the
+ * first one that is not due, so a tick walks neither the buckets nor the
+ * entries behind it.
  */
-typedef struct dgram_conn_entry_st {
-    BIO_ADDR peer; /* Peer address (key) */
-    SSL *ssl; /* The SSL connection object */
-    uint8_t *hashkey; /* Pre-built hash key (family + port + addr) */
-    size_t hashkey_len; /* Length of the hash key */
-    uint64_t *siphash_key; /* Pointer to shared SipHash key (hash-flooding defense) */
-} DGRAM_CONN_ENTRY;
+#define ADDR_LOOKUP_MIN_BITS 6 /* 64 buckets, 512 bytes on LP64 */
+#define ADDR_LOOKUP_MAX_BITS 20 /* 1M buckets, 8 MB */
 
-DEFINE_LHASH_OF_EX(DGRAM_CONN_ENTRY);
+DEFINE_QUEUE_OF(addr, DGRAM_CONN_LINK);
+DEFINE_HTABLE_DYN_OF(addr, DGRAM_CONN_LINK, ADDR_LOOKUP_MIN_BITS,
+    ADDR_LOOKUP_MAX_BITS);
+DEFINE_QUEUE_OF(addr_all, DGRAM_CONN_LINK);
+
+struct dgram_conn_lookup_st {
+    OSSL_HTABLE(addr) table; /* by keyed hash of the peer address */
+    OSSL_QUEUE all; /* every registered link, oldest registration first */
+    DGRAM_CONN_LINK *last; /* the newest, i.e. the tail of |all|, or NULL */
+    uint64_t hash_key[2]; /* 128-bit SipHash key (hash-flooding defense) */
+};
 
 /*
- * Wrapper structure for address-based lookup implementation data.
- * Contains the hash table and SipHash key for hash-flooding defense.
+ * The bytes of a key, derived from a BIO_ADDR: family (int) + port
+ * (uint16_t) + raw address bytes.
  */
-typedef struct addr_lookup_data_st {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
-    uint64_t hash_key[2]; /* 128-bit SipHash key */
-} ADDR_LOOKUP_DATA;
-
-/* BIO_ADDR contains the raw address for every supported address family. */
-#define ADDR_HASHKEY_MAX_LEN (sizeof(int) + sizeof(uint16_t) + sizeof(BIO_ADDR))
-
-/*
- * Build a hash key from a BIO_ADDR in caller-provided storage.
- * The key format is: family (int) + port (uint16_t) + raw address bytes.
- *
- * Returns 1 on success, 0 on failure.
- */
-static int build_hashkey_into(const BIO_ADDR *peer, uint8_t *hashkey,
-    size_t capacity, size_t *out_len)
+static int addr_key_build(const BIO_ADDR *peer, DGRAM_CONN_KEY *key)
 {
-    size_t addr_len = 0;
-    size_t header_len = sizeof(int) + sizeof(uint16_t);
     int family = BIO_ADDR_family(peer);
     uint16_t port;
+    size_t addr_len = 0;
+    unsigned char *p = key->buf;
+
+    memcpy(p, &family, sizeof(family));
+    p += sizeof(family);
 
     /* For AF_UNSPEC (no peer address), use a minimal key */
     if (family == AF_UNSPEC) {
-        if (capacity < sizeof(family))
-            return 0;
-        memcpy(hashkey, &family, sizeof(family));
-        *out_len = sizeof(family);
+        key->len = sizeof(family);
         return 1;
     }
 
     if (!BIO_ADDR_rawaddress(peer, NULL, &addr_len)
-        || capacity < header_len || addr_len > capacity - header_len)
+        || addr_len > DGRAM_CONN_KEY_MAX_ADDR_LEN)
         return 0;
 
     port = BIO_ADDR_rawport(peer);
-    memcpy(hashkey, &family, sizeof(family));
-    memcpy(hashkey + sizeof(family), &port, sizeof(port));
-    if (!BIO_ADDR_rawaddress(peer, hashkey + header_len, NULL))
+    memcpy(p, &port, sizeof(port));
+    p += sizeof(port);
+
+    if (!BIO_ADDR_rawaddress(peer, p, NULL))
         return 0;
 
-    *out_len = header_len + addr_len;
-    return 1;
-}
-
-/* Return an allocated hash key for callers which need owned storage. */
-static uint8_t *build_hashkey(const BIO_ADDR *peer, size_t *out_len)
-{
-    uint8_t hashkey[ADDR_HASHKEY_MAX_LEN];
-
-    if (!build_hashkey_into(peer, hashkey, sizeof(hashkey), out_len))
-        return NULL;
-    return OPENSSL_memdup(hashkey, *out_len);
-}
-
-/*
- * Hash function for DGRAM_CONN_ENTRY.
- * Uses SipHash with a per-instance random key to defend against
- * hash-flooding CPU DoS attacks
- */
-static unsigned long conn_entry_hash(const DGRAM_CONN_ENTRY *e)
-{
-    SIPHASH siphash = { 0 };
-    unsigned long hashval = 0;
-
-    if (e->hashkey == NULL || e->hashkey_len == 0 || e->siphash_key == NULL)
-        return 0;
-
-    if (!SipHash_set_hash_size(&siphash, sizeof(unsigned long)))
-        return 0;
-    if (!SipHash_Init(&siphash, (const unsigned char *)e->siphash_key, 0, 0))
-        return 0;
-    SipHash_Update(&siphash, e->hashkey, e->hashkey_len);
-    if (!SipHash_Final(&siphash, (unsigned char *)&hashval, sizeof(unsigned long)))
-        return 0;
-
-    return hashval;
-}
-
-/*
- * Compare function for DGRAM_CONN_ENTRY - compares pre-built hashkeys.
- * Returns 0 if equal, non-zero otherwise.
- */
-static int conn_entry_cmp(const DGRAM_CONN_ENTRY *a, const DGRAM_CONN_ENTRY *b)
-{
-    if (a->hashkey_len != b->hashkey_len)
-        return 1;
-    if (a->hashkey == NULL || b->hashkey == NULL)
-        return (a->hashkey == b->hashkey) ? 0 : 1;
-    return memcmp(a->hashkey, b->hashkey, a->hashkey_len);
-}
-
-/*
- * Free a connection entry (but not the connection itself).
- */
-static void conn_entry_free(DGRAM_CONN_ENTRY *e)
-{
-    if (e == NULL)
-        return;
-    OPENSSL_free(e->hashkey);
-    OPENSSL_free(e);
-}
-
-/*
- * Callback for lh_DGRAM_CONN_ENTRY_doall to free all entries.
- */
-static void conn_entry_free_cb(DGRAM_CONN_ENTRY *e)
-{
-    conn_entry_free(e);
-}
-
-/*
- * Lookup a connection by peer address from URXE.
- */
-static SSL *addr_lookup(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e)
-{
-    ADDR_LOOKUP_DATA *data;
-    DGRAM_CONN_ENTRY key;
-    DGRAM_CONN_ENTRY *result;
-
-    if (lookup == NULL || lookup->impl_data == NULL || e == NULL)
-        return NULL;
-
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-
-    memset(&key, 0, sizeof(key));
-    BIO_ADDR_copy(&key.peer, &e->peer);
-
-    /* Build hashkey for the lookup key */
-    key.hashkey = build_hashkey(&e->peer, &key.hashkey_len);
-    if (key.hashkey == NULL)
-        return NULL;
-
-    /* Set SipHash key pointer for hash function */
-    key.siphash_key = data->hash_key;
-
-    result = lh_DGRAM_CONN_ENTRY_retrieve(data->htable, &key);
-
-    OPENSSL_free(key.hashkey);
-
-    if (result == NULL)
-        return NULL;
-
-    return result->ssl;
-}
-
-/*
- * Register a connection with peer address from URXE.
- */
-static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
-    SSL *ssl)
-{
-    ADDR_LOOKUP_DATA *data;
-    DGRAM_CONN_ENTRY *entry, *old;
-
-    if (lookup == NULL || lookup->impl_data == NULL || e == NULL || ssl == NULL)
-        return 0;
-
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-
-    entry = OPENSSL_zalloc(sizeof(*entry));
-    if (entry == NULL)
-        return 0;
-
-    BIO_ADDR_copy(&entry->peer, &e->peer);
-    entry->ssl = ssl;
-    entry->hashkey = build_hashkey(&e->peer, &entry->hashkey_len);
-    if (entry->hashkey == NULL) {
-        OPENSSL_free(entry);
-        return 0;
-    }
-
-    /* Set SipHash key pointer for hash function */
-    entry->siphash_key = data->hash_key;
-
-    old = lh_DGRAM_CONN_ENTRY_insert(data->htable, entry);
-
-    /* Check if insert failed due to allocation error */
-    if (lh_DGRAM_CONN_ENTRY_error(data->htable)) {
-        conn_entry_free(entry);
-        /* Don't free old since it is still in the hash table since insert failed */
-        return 0;
-    }
-
-    /*
-     * A non-NULL return from lh_DGRAM_CONN_ENTRY_insert means an entry with the
-     * same key (peer address) was already present and has just been replaced.
-     * This must not happen: callers always look up an address and only register
-     * when no entry exists, all while holding the listener mutex, so the same peer
-     * is never registered twice. We therefore expect old == NULL here.
-     *
-     * We deliberately do NOT free old->ssl: this lookup table is an
-     * ownership-agnostic index and does not own the SSL objects it stores.
-     * The owning layer (the DTLS listener) is responsible for the lifecycle of
-     * those SSL objects. Freeing one here would be a use-after-free for the
-     * non-owning established_conns table.
-     */
-    if (!ossl_assert(old == NULL))
-        conn_entry_free(old);
-
+    key->len = sizeof(family) + sizeof(port) + addr_len;
     return 1;
 }
 
 /*
- * Register a connection by peer address from BIO_ADDR directly.
- * This is used when we don't have a URXE available.
+ * Keyed hash of a built key. SipHash with a per-lookup random key defends
+ * against hash-flooding CPU DoS attacks. The key records which hashing key
+ * it was hashed with, and every lookup it is used with checks that.
  */
-static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer,
-    SSL *ssl)
+static void addr_key_hash(const DGRAM_CONN_LOOKUP *lookup, DGRAM_CONN_KEY *key)
 {
-    ADDR_LOOKUP_DATA *data;
-    DGRAM_CONN_ENTRY *entry, *old;
+    key->hash = ossl_siphash24_u64((const unsigned char *)lookup->hash_key,
+        key->buf, key->len);
+    key->hashed_with = lookup->hash_key[0];
+}
 
-    if (lookup == NULL || lookup->impl_data == NULL || peer == NULL || ssl == NULL)
-        return 0;
+static int addr_key_matches(const DGRAM_CONN_LOOKUP *lookup,
+    const DGRAM_CONN_KEY *key)
+{
+    return key->hashed_with == lookup->hash_key[0];
+}
 
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
+/* Find the link registered under the hashed |key|. */
+static DGRAM_CONN_LINK *addr_find_key(const DGRAM_CONN_LOOKUP *lookup,
+    const DGRAM_CONN_KEY *key)
+{
+    DGRAM_CONN_LINK *link;
+    DGRAM_CONN_KEY ckey;
 
-    entry = OPENSSL_zalloc(sizeof(*entry));
-    if (entry == NULL)
-        return 0;
+    OSSL_HTABLE_FIND(link, addr, &lookup->table, key->hash,
+        addr_key_build(&link->peer, &ckey)
+            && ckey.len == key->len
+            && memcmp(ckey.buf, key->buf, key->len) == 0);
+    return link;
+}
 
-    BIO_ADDR_copy(&entry->peer, peer);
-    entry->ssl = ssl;
-    entry->hashkey = build_hashkey(peer, &entry->hashkey_len);
-    if (entry->hashkey == NULL) {
-        OPENSSL_free(entry);
-        return 0;
+/*
+ * The link of a connection, or NULL if |ssl| is not a connection or has no
+ * link. With |create|, a connection that has none is given the block that
+ * holds it, which it keeps until it is freed; NULL then also means that the
+ * allocation failed.
+ */
+static DGRAM_CONN_LINK *conn_link_of(SSL *ssl, int create)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+    if (sc == NULL)
+        return NULL;
+
+    if (sc->listener_conn == NULL) {
+        if (!create)
+            return NULL;
+        sc->listener_conn = OPENSSL_zalloc(sizeof(*sc->listener_conn));
+        if (sc->listener_conn == NULL)
+            return NULL;
+        sc->listener_conn->sc = sc;
     }
-
-    /* Set SipHash key pointer for hash function */
-    entry->siphash_key = data->hash_key;
-
-    old = lh_DGRAM_CONN_ENTRY_insert(data->htable, entry);
-
-    /* Check if insert failed due to allocation error */
-    if (lh_DGRAM_CONN_ENTRY_error(data->htable)) {
-        conn_entry_free(entry);
-        /* Don't free old since it is still in the hash table since insert failed */
-        return 0;
-    }
-
-    /*
-     * A non-NULL return from lh_DGRAM_CONN_ENTRY_insert means an entry with the
-     * same key(peer address) was already present and has just been replaced. This
-     * must not happen: callers always look up an address and only register when no
-     * entry exists, all while holding the listener mutex, so the same peer is
-     * never registered twice. We therefore expect old == NULL here.
-     *
-     * We deliberately do NOT free old->ssl: this lookup table is an
-     * ownership-agnostic index and does not own the SSL objects it stores.
-     * The owning layer (the DTLS listener) is responsible for the lifecycle of
-     * those SSL objects. Freeing one here would be a use-after-free for the
-     * non-owning established_conns table.
-     */
-    if (!ossl_assert(old == NULL))
-        conn_entry_free(old);
-
-    return 1;
+    return &sc->listener_conn->lookup_link;
 }
 
-/*
- * Unregister a connection by peer address.
- */
-static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
+/* The connection a link belongs to. */
+static SSL *link_conn(DGRAM_CONN_LINK *link)
 {
-    ADDR_LOOKUP_DATA *data;
-    DGRAM_CONN_ENTRY lookup_key;
-    DGRAM_CONN_ENTRY *removed;
-    uint8_t hashkey[ADDR_HASHKEY_MAX_LEN];
+    DTLS_LISTENER_CONN *lc
+        = OSSL_CONTAINER_OF(link, DTLS_LISTENER_CONN, lookup_link);
 
-    if (lookup == NULL || lookup->impl_data == NULL || peer == NULL)
-        return 0;
-
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-
-    memset(&lookup_key, 0, sizeof(lookup_key));
-    BIO_ADDR_copy(&lookup_key.peer, peer);
-
-    /* Cleanup must not depend on allocating a temporary lookup key. */
-    if (!build_hashkey_into(peer, hashkey, sizeof(hashkey),
-            &lookup_key.hashkey_len))
-        return 0;
-    lookup_key.hashkey = hashkey;
-
-    /* Set SipHash key pointer for hash function */
-    lookup_key.siphash_key = data->hash_key;
-
-    removed = lh_DGRAM_CONN_ENTRY_delete(data->htable, &lookup_key);
-
-    if (removed != NULL) {
-        conn_entry_free(removed);
-        return 1;
-    }
-
-    return 0;
+    return SSL_CONNECTION_GET_SSL(lc->sc);
 }
 
-/*
- * Free the lookup structure and all entries.
- */
-static void addr_free(DGRAM_CONN_LOOKUP *lookup)
+static void addr_unlink(DGRAM_CONN_LOOKUP *lookup, DGRAM_CONN_LINK *link)
 {
-    ADDR_LOOKUP_DATA *data;
-
-    if (lookup == NULL)
-        return;
-
-    if (lookup->impl_data != NULL) {
-        data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-        if (data->htable != NULL) {
-            lh_DGRAM_CONN_ENTRY_doall(data->htable, conn_entry_free_cb);
-            lh_DGRAM_CONN_ENTRY_free(data->htable);
-        }
-        OPENSSL_free(data);
-    }
-
-    OPENSSL_free(lookup);
+    ossl_htable_addr_del(&lookup->table, link);
+    ossl_queue_addr_all_del_keep_tail(&lookup->all, &lookup->last, link);
+    link->lookup = NULL;
 }
 
 /*
- * Context structure for iteration callback.
+ * Create a new address-based connection lookup for DTLS. With |share|, it
+ * hashes with that lookup's key instead of one of its own, so that a key
+ * hashed by either probes and registers in both: the listener hashes each
+ * datagram's peer address once for its two tables. The buckets start at
+ * the smallest power of two not below |expected|, within the bounds (or
+ * fewer, if growing them for |expected| fails), and double whenever the
+ * entries outnumber them.
  */
-typedef struct {
-    ossl_dgram_conn_lookup_iter_fn user_cb;
-    void *user_arg;
-} ADDR_FOREACH_CTX;
-
-/*
- * Internal callback for lh_doall_arg that invokes the user's callback.
- */
-static void addr_foreach_cb(DGRAM_CONN_ENTRY *e, void *arg)
-{
-    ADDR_FOREACH_CTX *ctx = arg;
-
-    if (ctx->user_cb != NULL)
-        ctx->user_cb(e->ssl, &e->peer, ctx->user_arg);
-}
-
-IMPLEMENT_LHASH_DOALL_ARG(DGRAM_CONN_ENTRY, void);
-
-/*
- * Iterate over all connections, calling the callback for each.
- */
-static void addr_foreach(DGRAM_CONN_LOOKUP *lookup,
-    ossl_dgram_conn_lookup_iter_fn cb, void *arg)
-{
-    ADDR_LOOKUP_DATA *data;
-    ADDR_FOREACH_CTX ctx;
-
-    if (lookup == NULL || lookup->impl_data == NULL || cb == NULL)
-        return;
-
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-    ctx.user_cb = cb;
-    ctx.user_arg = arg;
-
-    lh_DGRAM_CONN_ENTRY_doall_void(data->htable, addr_foreach_cb, &ctx);
-}
-
-static size_t addr_num_items(const DGRAM_CONN_LOOKUP *lookup)
-{
-    ADDR_LOOKUP_DATA *data;
-
-    if (lookup == NULL || lookup->impl_data == NULL)
-        return 0;
-
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-    return lh_DGRAM_CONN_ENTRY_num_items(data->htable);
-}
-
-static const DGRAM_CONN_LOOKUP_METHODS addr_methods = {
-    addr_lookup,
-    addr_register_conn,
-    addr_register_conn_addr,
-    addr_unregister_conn,
-    addr_foreach,
-    addr_free,
-    addr_num_items
-};
-
-/*
- * Create a new address-based connection lookup for DTLS.
- */
-DGRAM_CONN_LOOKUP *ossl_dgram_conn_lookup_new_addr(void)
+DGRAM_CONN_LOOKUP *ossl_dgram_conn_lookup_new_addr(const DGRAM_CONN_LOOKUP *share,
+    size_t expected)
 {
     DGRAM_CONN_LOOKUP *lookup;
-    ADDR_LOOKUP_DATA *data;
 
     lookup = OPENSSL_zalloc(sizeof(*lookup));
     if (lookup == NULL)
         return NULL;
 
-    data = OPENSSL_zalloc(sizeof(*data));
-    if (data == NULL) {
-        OPENSSL_free(lookup);
-        return NULL;
-    }
-
-    /* Generate random SipHash key for hash-flooding defense */
-    if (RAND_priv_bytes((unsigned char *)data->hash_key,
-            sizeof(data->hash_key))
+    if (share != NULL) {
+        memcpy(lookup->hash_key, share->hash_key, sizeof(lookup->hash_key));
+    } else if (RAND_priv_bytes((unsigned char *)lookup->hash_key,
+                   sizeof(lookup->hash_key))
         <= 0) {
-        OPENSSL_free(data);
+        /* Random SipHash key for hash-flooding defense: none, no lookup */
         OPENSSL_free(lookup);
         return NULL;
     }
-
-    data->htable = lh_DGRAM_CONN_ENTRY_new(conn_entry_hash, conn_entry_cmp);
-    if (data->htable == NULL) {
-        OPENSSL_free(data);
-        OPENSSL_free(lookup);
-        return NULL;
-    }
-
-    lookup->methods = &addr_methods;
-    lookup->impl_data = data;
+    ossl_htable_addr_init(&lookup->table);
+    /* Best effort: a table that could not grow up front grows as it fills. */
+    (void)ossl_htable_addr_reserve(&lookup->table, expected);
+    ossl_queue_init(&lookup->all);
 
     return lookup;
 }
 
+/* Build and hash |peer| for this lookup and those sharing its hashing key. */
+int ossl_dgram_conn_lookup_hash(const DGRAM_CONN_LOOKUP *lookup,
+    const BIO_ADDR *peer, DGRAM_CONN_KEY *key)
+{
+    if (lookup == NULL || peer == NULL || key == NULL
+        || !addr_key_build(peer, key))
+        return 0;
+
+    addr_key_hash(lookup, key);
+    return 1;
+}
+
 /*
- * Public API wrappers - call through methods table.
+ * Lookup a connection by a hashed key.
+ */
+SSL *ossl_dgram_conn_lookup_find_key(DGRAM_CONN_LOOKUP *lookup,
+    const DGRAM_CONN_KEY *key)
+{
+    DGRAM_CONN_LINK *link;
+
+    if (lookup == NULL || key == NULL
+        || !ossl_assert(addr_key_matches(lookup, key)))
+        return NULL;
+
+    link = addr_find_key(lookup, key);
+    return link == NULL ? NULL : link_conn(link);
+}
+
+/*
+ * Lookup a connection by peer address from URXE.
  */
 SSL *ossl_dgram_conn_lookup_find(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->lookup == NULL)
+    DGRAM_CONN_KEY key;
+
+    if (e == NULL || !ossl_dgram_conn_lookup_hash(lookup, &e->peer, &key))
         return NULL;
-    return lookup->methods->lookup(lookup, e);
+    return ossl_dgram_conn_lookup_find_key(lookup, &key);
 }
 
-int ossl_dgram_conn_lookup_register(DGRAM_CONN_LOOKUP *lookup,
-    const DGRAM_URXE *e, SSL *ssl)
+/*
+ * Register a connection under a hashed key, |peer| being the address the key
+ * was hashed from.
+ *
+ * A peer that is already registered is refused rather than replaced. That is
+ * not a broken invariant but something a caller must expect: the listener
+ * registers a new connection only after it found none for the address, but
+ * it promotes one under the peer address the connection has by then, which
+ * the application may have set to that of another connection
+ * (SSL_set1_initial_peer_addr()). A connection is never registered in two
+ * lookups at once; that one is an invariant, and is checked as such.
+ *
+ * The lookup is an ownership-agnostic index: it never frees the SSL objects
+ * it stores. The owning layer (the DTLS listener) manages their lifecycle.
+ */
+int ossl_dgram_conn_lookup_register_key(DGRAM_CONN_LOOKUP *lookup,
+    const DGRAM_CONN_KEY *key, const BIO_ADDR *peer, SSL *ssl)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->register_conn == NULL)
+    DGRAM_CONN_LINK *link;
+
+    if (lookup == NULL || key == NULL || peer == NULL || ssl == NULL)
         return 0;
-    return lookup->methods->register_conn(lookup, e, ssl);
+    if (!ossl_assert(addr_key_matches(lookup, key)))
+        return 0;
+    if (addr_find_key(lookup, key) != NULL)
+        return 0;
+
+    /* Allocates the link the first time this connection is registered. */
+    if ((link = conn_link_of(ssl, 1)) == NULL)
+        return 0;
+    if (!ossl_assert(!ossl_queue_addr_hashed(link)))
+        return 0;
+
+    link->lookup = lookup;
+    BIO_ADDR_copy(&link->peer, peer);
+    ossl_htable_addr_add(&lookup->table, link, key->hash);
+    /* Append: |all| is kept in registration order. */
+    ossl_queue_addr_all_add_tail(&lookup->all, &lookup->last, link);
+    return 1;
 }
 
+/*
+ * Register a connection by peer address.
+ */
 int ossl_dgram_conn_lookup_register_addr(DGRAM_CONN_LOOKUP *lookup,
     const BIO_ADDR *peer, SSL *ssl)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->register_conn_addr == NULL)
+    DGRAM_CONN_KEY key;
+
+    if (!ossl_dgram_conn_lookup_hash(lookup, peer, &key))
         return 0;
-    return lookup->methods->register_conn_addr(lookup, peer, ssl);
+    return ossl_dgram_conn_lookup_register_key(lookup, &key, peer, ssl);
 }
 
-int ossl_dgram_conn_lookup_unregister(DGRAM_CONN_LOOKUP *lookup,
-    const BIO_ADDR *peer)
+/*
+ * Unregister a connection. It is unlinked through its own node, so this
+ * neither rebuilds nor hashes an address and cannot miss: the connection's
+ * peer address may have changed since it was registered.
+ */
+int ossl_dgram_conn_lookup_unregister(SSL *ssl)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->unregister_conn == NULL)
+    DGRAM_CONN_LINK *link = conn_link_of(ssl, 0);
+
+    if (link == NULL || link->lookup == NULL)
         return 0;
-    return lookup->methods->unregister_conn(lookup, peer);
+    if (!ossl_assert(ossl_queue_addr_hashed(link)))
+        return 0;
+
+    addr_unlink(link->lookup, link);
+    return 1;
 }
 
+/*
+ * The list of all entries is a dependent pointer chase through links that
+ * are cold at large counts; fetching the next one while the callback works
+ * on this one overlaps the misses.
+ */
+static ossl_inline void addr_prefetch(const DGRAM_CONN_LINK *link)
+{
+#if defined(__GNUC__) || defined(__clang__)
+    if (link != NULL)
+        __builtin_prefetch(link);
+#endif
+}
+
+/*
+ * Iterate over all connections, oldest registration first, calling the
+ * callback for each. The callback may unregister (and then free) the
+ * connection it is handed, but no other.
+ */
 void ossl_dgram_conn_lookup_foreach(DGRAM_CONN_LOOKUP *lookup,
     ossl_dgram_conn_lookup_iter_fn cb, void *arg)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->foreach == NULL)
+    DGRAM_CONN_LINK *link, *next;
+
+    if (lookup == NULL || cb == NULL)
         return;
-    lookup->methods->foreach(lookup, cb, arg);
+
+    OSSL_QUEUE_FOREACH_DELSAFE (link, next, addr_all, &lookup->all) {
+        addr_prefetch(next);
+        cb(link_conn(link), &link->peer, arg);
+    }
 }
 
+/*
+ * The same, until the callback returns 0: the connections behind the one it
+ * was handed are not visited.
+ */
+void ossl_dgram_conn_lookup_foreach_until(DGRAM_CONN_LOOKUP *lookup,
+    ossl_dgram_conn_lookup_until_fn cb, void *arg)
+{
+    DGRAM_CONN_LINK *link, *next;
+
+    if (lookup == NULL || cb == NULL)
+        return;
+
+    OSSL_QUEUE_FOREACH_DELSAFE (link, next, addr_all, &lookup->all) {
+        addr_prefetch(next);
+        if (!cb(link_conn(link), &link->peer, arg))
+            break;
+    }
+}
+
+/*
+ * Free the lookup structure. Connections still registered are unlinked so
+ * that they can be registered elsewhere; they are not freed.
+ */
 void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->free == NULL)
+    DGRAM_CONN_LINK *link, *next;
+
+    if (lookup == NULL)
         return;
-    lookup->methods->free(lookup);
+
+    OSSL_QUEUE_FOREACH_DELSAFE (link, next, addr_all, &lookup->all)
+        addr_unlink(lookup, link);
+    ossl_htable_addr_cleanup(&lookup->table);
+    OPENSSL_free(lookup);
 }
 
 /*
@@ -521,10 +386,7 @@ void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup)
  */
 size_t ossl_dgram_conn_lookup_num_items(const DGRAM_CONN_LOOKUP *lookup)
 {
-    if (lookup == NULL || lookup->methods == NULL
-        || lookup->methods->num_items == NULL)
-        return 0;
-    return lookup->methods->num_items(lookup);
+    return lookup == NULL ? 0 : ossl_htable_num(&lookup->table);
 }
 
 #endif /* OPENSSL_NO_DTLS */
