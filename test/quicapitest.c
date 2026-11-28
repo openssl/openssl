@@ -11,6 +11,9 @@
 #define _DARWIN_C_SOURCE
 #endif
 
+/* We need RAND_set_rand_method() to make RAND_bytes() fail */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
