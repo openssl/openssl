@@ -13,12 +13,14 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 {- produce_param_decoder('aes_siv_get_ctx_params',
                          (['OSSL_CIPHER_PARAM_KEYLEN',      'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',       'ivlen',  'size_t'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAGLEN', 'taglen', 'size_t'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAG',    'tag',    'octet_string'],
                          )); -}
 
 {- produce_param_decoder('aes_siv_set_ctx_params',
                          (['OSSL_CIPHER_PARAM_KEYLEN',   'keylen', 'size_t'],
+                          ['OSSL_CIPHER_PARAM_IVLEN',    'ivlen',  'size_t'],
                           ['OSSL_CIPHER_PARAM_SPEED',    'speed',  'uint'],
                           ['OSSL_CIPHER_PARAM_AEAD_TAG', 'tag',    'octet_string'],
                          )); -}

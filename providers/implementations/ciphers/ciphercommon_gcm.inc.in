@@ -27,7 +27,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 {- produce_param_decoder
         ('ossl_cipher_gcm_set_ctx_params',
-         (['OSSL_CIPHER_PARAM_AEAD_IVLEN',           'ivlen', 'size_t'],
+         (['OSSL_CIPHER_PARAM_KEYLEN',               'keylen', 'size_t'],
+          ['OSSL_CIPHER_PARAM_AEAD_IVLEN',           'ivlen', 'size_t'],
           ['OSSL_CIPHER_PARAM_AEAD_TAG',             'tag',   'octet_string'],
           ['OSSL_CIPHER_PARAM_AEAD_TLS1_AAD',        'aad',   'octet_string'],
           ['OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED',   'fixed', 'octet_string'],
