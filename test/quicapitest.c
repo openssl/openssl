@@ -11,6 +11,9 @@
 #define _DARWIN_C_SOURCE
 #endif
 
+/* We need RAND_set_rand_method() to make RAND_bytes() fail */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -2832,6 +2835,81 @@ static int qc_init(SSL *qconn, BIO_ADDR *dst_addr)
 
     return 1;
 }
+
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
+/** @brief Set until rand_fail_bytes() has failed the 32-byte key request */
+static int rand_fail_key_once;
+
+/**
+ * @brief RAND_METHOD bytes() callback that fails the token key request once.
+ * RAND_bytes() returns -1 when a RAND_METHOD fails it.
+ * @param buf buffer to fill with random bytes
+ * @param num number of bytes requested
+ * @returns -1 for the first 32-byte request while rand_fail_key_once is set,
+ * otherwise the result of EVP_RAND_generate() on the test's library context
+ */
+static int rand_fail_bytes(unsigned char *buf, int num)
+{
+    if (num == 32 && rand_fail_key_once) {
+        rand_fail_key_once = 0;
+        return -1;
+    }
+    /* The test's library context, not the global one (null provider) */
+    return EVP_RAND_generate(RAND_get0_public(libctx), buf, num, 0, 0, NULL, 0);
+}
+
+static int rand_fail_status(void)
+{
+    return 1;
+}
+
+/**
+ * @brief Check that a listener fails when its token key cannot be generated.
+ * A listener must not come up when the random key encrypting its address
+ * validation tokens could not be generated: RAND_priv_bytes_ex() failing
+ * with -1 left the key as uninitialised memory, so anyone able to guess it
+ * could forge tokens.
+ * @returns 1 if the test passed, 0 otherwise
+ */
+static int test_listener_token_key_rand_failure(void)
+{
+    RAND_METHOD meth = { NULL, rand_fail_bytes, NULL, NULL, rand_fail_bytes,
+        rand_fail_status };
+    const RAND_METHOD *saved = RAND_get_rand_method();
+    SSL_CTX *sctx = NULL;
+    SSL *qlistener = NULL;
+    BIO *lbio = NULL, *pbio = NULL;
+    int testresult = 0, listened = 0;
+
+    if (!TEST_ptr(saved)
+        || !TEST_ptr(sctx = create_server_ctx())
+        || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &pbio, 0))
+        || !TEST_true(RAND_set_rand_method(&meth)))
+        goto err;
+
+    rand_fail_key_once = 1;
+    qlistener = SSL_new_listener(sctx, 0);
+    if (qlistener != NULL) {
+        SSL_set_bio(qlistener, lbio, lbio);
+        lbio = NULL;
+        listened = SSL_listen(qlistener);
+    }
+    /* The key request failed, and so did the listener */
+    if (!TEST_false(rand_fail_key_once)
+        || !TEST_false(listened))
+        goto err;
+
+    testresult = 1;
+err:
+    RAND_set_rand_method(saved);
+    ERR_clear_error();
+    SSL_free(qlistener);
+    BIO_free(lbio);
+    BIO_free(pbio);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
 
 static int test_ssl_new_from_listener(void)
 {
@@ -6261,6 +6339,9 @@ int setup_tests(void)
     ADD_TEST(test_early_ticks);
     ADD_TEST(test_ssl_new_from_listener);
     ADD_TEST(test_ssl_new_from_listener_user_ssl);
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
+    ADD_TEST(test_listener_token_key_rand_failure);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
 #ifndef OPENSSL_NO_SSL_TRACE
     ADD_TEST(test_new_token);
 #endif
