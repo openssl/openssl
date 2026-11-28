@@ -5118,8 +5118,15 @@ err:
     return ret;
 }
 
+/** @brief Cleared by keygen_info_cb() when a check on the parameters fails */
 static int keygen_info_cb_ok;
 
+/**
+ * @brief Key generation callback checking EVP_PKEY_CTX_get_keygen_info().
+ * The RSA generation reports two parameters, so index 2 is out of range.
+ * @param ctx the context of the generation in progress
+ * @returns 1, to let the generation continue
+ */
 static int keygen_info_cb(EVP_PKEY_CTX *ctx)
 {
     int n = EVP_PKEY_CTX_get_keygen_info(ctx, -1);
@@ -5130,9 +5137,12 @@ static int keygen_info_cb(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-/*
- * EVP_PKEY_CTX_get_keygen_info() must stay within the parameters of the
- * current generation and must not dereference anything outside of one.
+/**
+ * @brief Check EVP_PKEY_CTX_get_keygen_info() before, during and after a
+ * generation.
+ * It must stay within the parameters of the current generation and must not
+ * dereference anything outside of one.
+ * @returns 1 if the test passed, 0 otherwise
  */
 static int test_keygen_info(void)
 {
@@ -5169,10 +5179,12 @@ err:
 }
 
 #if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_EC)
-/*
+/**
+ * @brief Check that a failed generation does not leave its parameters behind.
  * A generation that fails after the parameters were set up (here: a legacy
  * template key that cannot be exported to the provider) must not leave them,
  * a stack buffer of EVP_PKEY_generate(), attached to the context.
+ * @returns 1 if the test passed, TEST_SKIP_CODE if it was skipped, 0 otherwise
  */
 static int test_keygen_info_after_failure(void)
 {
@@ -5202,7 +5214,7 @@ err:
     EVP_PKEY_CTX_free(ctx);
     return ret;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_EC) */
 
 /*
  * Test that we fail if we attempt to use an algorithm that is not available
@@ -9802,7 +9814,7 @@ int setup_tests(void)
     ADD_TEST(test_keygen_info);
 #if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_EC)
     ADD_TEST(test_keygen_info_after_failure);
-#endif
+#endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_EC) */
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
