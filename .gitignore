@@ -353,6 +353,7 @@ providers/implementations/rands/test_rng.inc
 /test/threadstest_fips
 /test/timing_load_creds
 /test/timing_namemap_x509store
+/test/quic_alpn_server
 
 # Demo applications
 /demos/bio/client-arg

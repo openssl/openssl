@@ -1103,7 +1103,7 @@ int s_client_main(int argc, char **argv)
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
-    int isdtls = 0, isquic = 0;
+    int isdtls = 0, isquic = 0, quic_closed = 0;
     char *psksessf = NULL;
     int enable_pha = 0;
     int enable_client_rpk = 0;
@@ -3334,7 +3334,13 @@ re_start:
                     tv.tv_usec = 0;
                     i = select(width, (void *)&readfds, (void *)&writefds,
                         NULL, &tv);
-                    if (!i && (!has_stdin_waiting() || !read_tty))
+                    /*
+                     * -no-interactive never reads stdin, so its progress must
+                     * not depend on stdin being readable: fall through on a
+                     * timeout and let the dispatch below decide whether to
+                     * take the nointeractive exit.
+                     */
+                    if (!i && !nointeractive && !has_stdin_waiting())
                         continue;
                 } else
                     i = select(width, (void *)&readfds, (void *)&writefds,
@@ -3352,7 +3358,21 @@ re_start:
         }
 
         if (timeoutp != NULL) {
-            SSL_handle_events(con);
+            /*
+             * This can fail the connection, e.g. once DTLS has given up
+             * retransmitting, and with -nbio nothing else here would notice.
+             * A write that would block is not a failure: the next call
+             * retries it.
+             */
+            if (!SSL_handle_events(con)) {
+                switch (SSL_get_error(con, 0)) {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    break;
+                default:
+                    goto shut;
+                }
+            }
             if (isdtls
                 && !FD_ISSET(SSL_get_fd(con), &readfds)
                 && !FD_ISSET(SSL_get_fd(con), &writefds))
@@ -3508,10 +3528,51 @@ re_start:
             }
         }
 
-        /* don't wait for client input in the non-interactive mode */
+        /*
+         * Don't wait for client input in the non-interactive mode, but do
+         * wait for the handshake: a timeout can get here before it is done.
+         */
         else if (nointeractive) {
-            ret = 0;
-            goto shut;
+#ifndef OPENSSL_NO_QUIC
+            SSL_CONN_CLOSE_INFO close_info;
+#endif
+
+            if (SSL_is_init_finished(con)) {
+                /*
+                 * QUIC can finish the handshake in SSL_handle_events()
+                 * above, before the top of the loop has reported it (e.g.
+                 * -brief's CONNECTION ESTABLISHED). Go round once more for
+                 * that, then leave.
+                 */
+                if (!in_init) {
+                    ret = 0;
+                    goto shut;
+                }
+            }
+#ifndef OPENSSL_NO_QUIC
+            /*
+             * A failed QUIC handshake just leaves the connection closed:
+             * SSL_handle_events() still succeeds, and no read or write is
+             * pending to report it.
+             */
+            else if (isquic
+                && SSL_get_conn_close_info(con, &close_info,
+                       sizeof(close_info))
+                    == 1) {
+                BIO_printf(bio_err,
+                    "QUIC connection closed during the handshake: "
+                    "%s error 0x%llx%s%.*s\n",
+                    (close_info.flags & SSL_CONN_CLOSE_FLAG_LOCAL) != 0
+                        ? "local"
+                        : "remote",
+                    (unsigned long long)close_info.error_code,
+                    close_info.reason_len > 0 ? ", " : "",
+                    (int)close_info.reason_len,
+                    close_info.reason != NULL ? close_info.reason : "");
+                quic_closed = 1;
+                goto shut;
+            }
+#endif
         }
 
 /* OPENSSL_SYS_MSDOS includes OPENSSL_SYS_WINDOWS */
@@ -3566,7 +3627,14 @@ shut:
         ERR_print_errors(bio_err); /* show any errors accumulated so far */
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
-    do_ssl_shutdown(con);
+    /*
+     * A QUIC connection that closed during the handshake has nothing left to
+     * shut down.  If its handshake failed here, SSL_shutdown() also returns
+     * -1 while SSL_get_error() can still report the WANT_READ of an earlier
+     * call, and do_ssl_shutdown() would retry that for ever.
+     */
+    if (!quic_closed)
+        do_ssl_shutdown(con);
 
     /* The following half-close/drain workaround is TCP-specific. */
     if (!isdtls && !isquic) {
