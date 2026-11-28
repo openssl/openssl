@@ -18,6 +18,7 @@
 #include <openssl/core_names.h>
 #include "internal/numbers.h"
 #include "internal/sizes.h"
+#include "fake_blake2bprov.h"
 #include "testutil.h"
 
 static EVP_KDF_CTX *get_kdfbyname_libctx(OSSL_LIB_CTX *libctx, const char *name)
@@ -3840,6 +3841,70 @@ err:
 }
 #endif /* OPENSSL_NO_SNMPKDF */
 
+#if !defined(OPENSSL_NO_ARGON2)
+/*
+ * Argon2 asks BLAKE2b for digest sizes other than 64 and finalises into
+ * buffers of exactly that size. A BLAKE2B-512 that does not support
+ * OSSL_DIGEST_PARAM_SIZE must make the derivation fail, not write past the
+ * output or report success with an unwritten key. With a 100-byte output the
+ * unsupported size is only requested by the last step of the long hash.
+ */
+static int test_kdf_argon2_unsized_blake2b(int idx)
+{
+    static const struct {
+        const char *props;
+        size_t outlen;
+    } tests[] = {
+        { FAKE_BLAKE2B_FIXED_PROPS, 32 },
+        { FAKE_BLAKE2B_FAILING_PROPS, 32 },
+        { FAKE_BLAKE2B_FAILING_PROPS, 100 },
+    };
+    const size_t outlen = tests[idx].outlen;
+    unsigned char out[132], zero[100] = { 0 }, guard[32];
+    uint32_t one = 1, memcost = 32;
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *deflt = NULL, *fake = NULL;
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[8], *p = params;
+    int ret = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(deflt = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(fake = fake_blake2b_start(libctx))
+        || !TEST_ptr(kdf = EVP_KDF_fetch(libctx, "ARGON2ID", NULL))
+        || !TEST_ptr(kctx = EVP_KDF_CTX_new(kdf)))
+        goto err;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        "password", 8);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+        "saltsaltsaltsalt", 16);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ITER, &one);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_THREADS, &one);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ARGON2_LANES, &one);
+    *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ARGON2_MEMCOST, &memcost);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+        (char *)tests[idx].props, 0);
+    *p = OSSL_PARAM_construct_end();
+
+    memset(out, 0xa5, sizeof(out));
+    memset(guard, 0xa5, sizeof(guard));
+    if (!TEST_int_le(EVP_KDF_derive(kctx, out, outlen, params), 0)
+        || !TEST_mem_eq(out + outlen, sizeof(guard), guard, sizeof(guard))
+        || !TEST_mem_eq(out, outlen, zero, outlen))
+        goto err;
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
+    fake_blake2b_finish(fake);
+    OSSL_PROVIDER_unload(deflt);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+#endif /* !defined(OPENSSL_NO_ARGON2) */
+
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_pbkdf1);
@@ -3963,5 +4028,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_KBKDF
     ADD_TEST(test_kbkdf_mac_change);
 #endif
+#if !defined(OPENSSL_NO_ARGON2)
+    ADD_ALL_TESTS(test_kdf_argon2_unsized_blake2b, 3);
+#endif /* !defined(OPENSSL_NO_ARGON2) */
     return 1;
 }

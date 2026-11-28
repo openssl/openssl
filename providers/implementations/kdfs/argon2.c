@@ -235,7 +235,7 @@ static void copy_block(BLOCK *dst, const BLOCK *src);
 static void xor_block(BLOCK *dst, const BLOCK *src);
 static void load_block(BLOCK *dst, const void *input);
 static void store_block(void *output, const BLOCK *src);
-static void fill_first_blocks(uint8_t *blockhash, const KDF_ARGON2 *ctx);
+static int fill_first_blocks(uint8_t *blockhash, const KDF_ARGON2 *ctx);
 static void fill_block(const BLOCK *prev, const BLOCK *ref, BLOCK *next,
     int with_xor);
 
@@ -258,9 +258,11 @@ static int fill_mem_blocks_mt(KDF_ARGON2 *ctx);
 static int fill_mem_blocks_st(KDF_ARGON2 *ctx);
 static ossl_inline int fill_memory_blocks(KDF_ARGON2 *ctx);
 
-static void initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx);
+static int initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx);
 static int initialize(KDF_ARGON2 *ctx);
-static void finalize(const KDF_ARGON2 *ctx, void *out);
+static int finalize(const KDF_ARGON2 *ctx, void *out);
+static void free_memory(KDF_ARGON2 *ctx);
+static int check_md_size(const EVP_MD_CTX *ctx, size_t size);
 
 static int blake2b(EVP_MD *md, EVP_MAC *mac, void *out, size_t outlen,
     const void *in, size_t inlen, const void *key,
@@ -345,10 +347,11 @@ static void store_block(void *output, const BLOCK *src)
         store64((uint8_t *)output + i * sizeof(src->v[i]), src->v[i]);
 }
 
-static void fill_first_blocks(uint8_t *blockhash, const KDF_ARGON2 *ctx)
+static int fill_first_blocks(uint8_t *blockhash, const KDF_ARGON2 *ctx)
 {
     uint32_t l;
     uint8_t blockhash_bytes[ARGON2_BLOCK_SIZE];
+    int ret = 0;
 
     /*
      * Make the first and second block in each lane as G(H0||0||i)
@@ -357,17 +360,24 @@ static void fill_first_blocks(uint8_t *blockhash, const KDF_ARGON2 *ctx)
     for (l = 0; l < ctx->lanes; ++l) {
         store32(blockhash + ARGON2_PREHASH_DIGEST_LENGTH, 0);
         store32(blockhash + ARGON2_PREHASH_DIGEST_LENGTH + 4, l);
-        blake2b_long(ctx->md, ctx->mac, blockhash_bytes, ARGON2_BLOCK_SIZE,
-            blockhash, ARGON2_PREHASH_SEED_LENGTH);
+        if (blake2b_long(ctx->md, ctx->mac, blockhash_bytes, ARGON2_BLOCK_SIZE,
+                blockhash, ARGON2_PREHASH_SEED_LENGTH)
+            != 1)
+            goto end;
         load_block(&ctx->memory[l * ctx->lane_length + 0],
             blockhash_bytes);
         store32(blockhash + ARGON2_PREHASH_DIGEST_LENGTH, 1);
-        blake2b_long(ctx->md, ctx->mac, blockhash_bytes, ARGON2_BLOCK_SIZE,
-            blockhash, ARGON2_PREHASH_SEED_LENGTH);
+        if (blake2b_long(ctx->md, ctx->mac, blockhash_bytes, ARGON2_BLOCK_SIZE,
+                blockhash, ARGON2_PREHASH_SEED_LENGTH)
+            != 1)
+            goto end;
         load_block(&ctx->memory[l * ctx->lane_length + 1],
             blockhash_bytes);
     }
+    ret = 1;
+end:
     OPENSSL_cleanse(blockhash_bytes, ARGON2_BLOCK_SIZE);
+    return ret;
 }
 
 static void fill_block(const BLOCK *prev, const BLOCK *ref,
@@ -649,15 +659,16 @@ static ossl_inline int fill_memory_blocks(KDF_ARGON2 *ctx)
 #endif
 }
 
-static void initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx)
+static int initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx)
 {
     EVP_MD_CTX *mdctx;
     uint8_t value[sizeof(uint32_t)];
     unsigned int tmp;
     uint32_t args[7];
+    int ret = 0;
 
     if (ctx == NULL || blockhash == NULL)
-        return;
+        return 0;
 
     args[0] = ctx->lanes;
     args[1] = ctx->outlen;
@@ -668,7 +679,8 @@ static void initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx)
     args[6] = ctx->pwdlen;
 
     mdctx = EVP_MD_CTX_create();
-    if (mdctx == NULL || EVP_DigestInit_ex(mdctx, ctx->md, NULL) != 1)
+    if (mdctx == NULL || EVP_DigestInit_ex(mdctx, ctx->md, NULL) != 1
+        || check_md_size(mdctx, ARGON2_PREHASH_DIGEST_LENGTH) != 1)
         goto fail;
 
     for (tmp = 0; tmp < sizeof(args) / sizeof(uint32_t); ++tmp) {
@@ -719,14 +731,17 @@ static void initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx)
     tmp = ARGON2_PREHASH_DIGEST_LENGTH;
     if (EVP_DigestFinal_ex(mdctx, blockhash, &tmp) != 1)
         goto fail;
+    ret = 1;
 
 fail:
     EVP_MD_CTX_destroy(mdctx);
+    return ret;
 }
 
 static int initialize(KDF_ARGON2 *ctx)
 {
     uint8_t blockhash[ARGON2_PREHASH_SEED_LENGTH];
+    int ret;
 
     if (ctx == NULL)
         return 0;
@@ -745,24 +760,27 @@ static int initialize(KDF_ARGON2 *ctx)
         return 0;
     }
 
-    initial_hash(blockhash, ctx);
-    OPENSSL_cleanse(blockhash + ARGON2_PREHASH_DIGEST_LENGTH,
-        ARGON2_PREHASH_SEED_LENGTH - ARGON2_PREHASH_DIGEST_LENGTH);
-    fill_first_blocks(blockhash, ctx);
+    ret = initial_hash(blockhash, ctx);
+    if (ret == 1) {
+        OPENSSL_cleanse(blockhash + ARGON2_PREHASH_DIGEST_LENGTH,
+            ARGON2_PREHASH_SEED_LENGTH - ARGON2_PREHASH_DIGEST_LENGTH);
+        ret = fill_first_blocks(blockhash, ctx);
+    }
     OPENSSL_cleanse(blockhash, ARGON2_PREHASH_SEED_LENGTH);
 
-    return 1;
+    return ret;
 }
 
-static void finalize(const KDF_ARGON2 *ctx, void *out)
+static int finalize(const KDF_ARGON2 *ctx, void *out)
 {
     BLOCK blockhash;
     uint8_t blockhash_bytes[ARGON2_BLOCK_SIZE];
     uint32_t last_block_in_lane;
     uint32_t l;
+    int ret;
 
     if (ctx == NULL)
-        return;
+        return 0;
 
     copy_block(&blockhash, ctx->memory + ctx->lane_length - 1);
 
@@ -774,17 +792,40 @@ static void finalize(const KDF_ARGON2 *ctx, void *out)
 
     /* Hash the result */
     store_block(blockhash_bytes, &blockhash);
-    blake2b_long(ctx->md, ctx->mac, out, ctx->outlen, blockhash_bytes,
+    ret = blake2b_long(ctx->md, ctx->mac, out, ctx->outlen, blockhash_bytes,
         ARGON2_BLOCK_SIZE);
     OPENSSL_cleanse(blockhash.v, ARGON2_BLOCK_SIZE);
     OPENSSL_cleanse(blockhash_bytes, ARGON2_BLOCK_SIZE);
 
+    return ret;
+}
+
+static void free_memory(KDF_ARGON2 *ctx)
+{
     if (ctx->type != ARGON2_D)
         OPENSSL_secure_clear_free(ctx->memory,
             ctx->memory_blocks * sizeof(BLOCK));
     else
         OPENSSL_clear_free(ctx->memory,
             ctx->memory_blocks * sizeof(BLOCK));
+    ctx->memory = NULL;
+}
+
+/*
+ * The output buffers passed to EVP_DigestFinal_ex() below are sized for the
+ * requested digest length. A BLAKE2b implementation that does not support
+ * OSSL_DIGEST_PARAM_SIZE ignores it and would write its full digest size, so
+ * check the size the context will actually produce.
+ */
+static int check_md_size(const EVP_MD_CTX *ctx, size_t size)
+{
+    int sz = EVP_MD_CTX_get_size_ex(ctx);
+
+    if (sz <= 0 || (size_t)sz != size) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
+        return 0;
+    }
+    return 1;
 }
 
 static int blake2b_mac(EVP_MAC *mac, void *out, size_t outlen, const void *in,
@@ -806,7 +847,8 @@ static int blake2b_mac(EVP_MAC *mac, void *out, size_t outlen, const void *in,
     ret = EVP_MAC_CTX_set_params(ctx, par) == 1
         && EVP_MAC_init(ctx, NULL, 0, NULL) == 1
         && EVP_MAC_update(ctx, in, inlen) == 1
-        && EVP_MAC_final(ctx, out, (size_t *)&out_written, outlen) == 1;
+        && EVP_MAC_final(ctx, out, (size_t *)&out_written, outlen) == 1
+        && out_written == outlen;
 
 fail:
     EVP_MAC_CTX_free(ctx);
@@ -827,6 +869,7 @@ static int blake2b_md(EVP_MD *md, void *out, size_t outlen, const void *in,
     par[1] = OSSL_PARAM_construct_end();
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
+        && check_md_size(ctx, outlen) == 1
         && EVP_DigestUpdate(ctx, in, inlen) == 1
         && EVP_DigestFinal_ex(ctx, out, NULL) == 1;
 
@@ -872,6 +915,7 @@ static int blake2b_long(EVP_MD *md, EVP_MAC *mac, unsigned char *out,
     par[1] = OSSL_PARAM_construct_end();
 
     ret = EVP_DigestInit_ex2(ctx, md, par) == 1
+        && check_md_size(ctx, outlen_md) == 1
         && EVP_DigestUpdate(ctx, outlen_bytes, sizeof(outlen_bytes)) == 1
         && EVP_DigestUpdate(ctx, in, inlen) == 1
         && EVP_DigestFinal_ex(ctx, (outlen > BLAKE2B_OUTBYTES) ? outbuf : out,
@@ -880,6 +924,7 @@ static int blake2b_long(EVP_MD *md, EVP_MAC *mac, unsigned char *out,
 
     if (ret == 0)
         goto fail;
+    ret = 0;
 
     if (outlen > BLAKE2B_OUTBYTES) {
         memcpy(out, outbuf, BLAKE2B_OUTBYTES / 2);
@@ -1020,6 +1065,7 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     KDF_ARGON2 *ctx;
     uint32_t memory_blocks, segment_length;
     OSSL_PARAM *size_param;
+    int ret;
 
     ctx = (KDF_ARGON2 *)vctx;
 
@@ -1110,22 +1156,16 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     ctx->passes = ctx->t_cost;
     ctx->lane_length = segment_length * ARGON2_SYNC_POINTS;
 
-    if (initialize(ctx) != 1)
-        return 0;
+    ret = initialize(ctx) == 1
+        && fill_memory_blocks(ctx) == 1
+        && finalize(ctx, out) == 1;
 
-    if (fill_memory_blocks(ctx) != 1) {
-        if (ctx->type != ARGON2_D)
-            OPENSSL_secure_clear_free(ctx->memory,
-                ctx->memory_blocks * sizeof(BLOCK));
-        else
-            OPENSSL_clear_free(ctx->memory,
-                ctx->memory_blocks * sizeof(BLOCK));
-        return 0;
-    }
+    free_memory(ctx);
+    /* Never hand back a partially computed or unwritten output as a key */
+    if (ret == 0)
+        OPENSSL_cleanse(out, outlen);
 
-    finalize(ctx, out);
-
-    return 1;
+    return ret;
 }
 
 static void kdf_argon2_reset(void *vctx)
