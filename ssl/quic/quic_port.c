@@ -922,9 +922,14 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
 
     if (odcid->id_len != 0) {
         /*
-         * If we have an odcid, then we went through server address validation
-         * and as such, this channel need not conform to the 3x validation cap
-         * See RFC 9000 s. 8.1
+         * A Retry took place: odcid is the client's first DCID, and the
+         * client address was validated, so this channel need not conform to
+         * the 3x validation cap. See RFC 9000 s. 8.1.
+         *
+         * A NEW_TOKEN token leaves odcid empty and the cap in place: such a
+         * token can be replayed from the same address for its whole lifetime
+         * (RFC 9000 s. 8.1.4), so it only spares the client a Retry. The cap
+         * is lifted once the client sends a Handshake packet.
          */
         ossl_quic_tx_packetiser_set_validated(ch->txp);
         if (!ossl_quic_bind_channel(ch, peer, dcid, odcid)) {
@@ -933,7 +938,7 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         }
     } else {
         /*
-         * No odcid means we didn't do server validation, so we need to
+         * No odcid means no Retry took place, so we need to
          * generate a cid via ossl_quic_channel_on_new_conn
          */
         if (!ossl_quic_channel_on_new_conn(ch, peer, dcid)) {
@@ -1468,24 +1473,22 @@ err:
  * QUIC packet header (`QUIC_PKT_HDR *hdr`). The validation process involves
  * verifying that the token matches an expected format and value. If the
  * token is from a RETRY packet, the function extracts the original connection
- * ID (ODCID)/original source connection ID (SCID) and stores it in the provided
- * parameters. If the token is from a NEW_TOKEN packet, the values will be
- * derived instead.
+ * ID (ODCID) and stores it in @p odcid. If the token is from a NEW_TOKEN
+ * frame, no Retry took place and @p odcid is left untouched: the client's
+ * DCID is the original DCID (RFC 9000 s. 7.3).
  *
  * @param hdr   Pointer to the QUIC packet header containing the token.
  * @param port  Pointer to the QUIC port from which to send the packet.
  * @param peer  Address of the client peer receiving the packet.
  * @param odcid Pointer to the connection ID structure to store the ODCID if the
- *              token is valid.
- * @param scid  Pointer to the connection ID structure to store the SCID if the
- *              token is valid.
+ *              token is a valid Retry token; left untouched otherwise.
  * @param gen_new_token Set to 1 if a NEW_TOKEN frame should be sent on the
  *              new connection.
  * @param is_retry Set to 1 if the token decrypted and parsed as a token we
  *              minted for a RETRY packet, even if it then failed validation.
  *
- * @return      1 if the token is valid and ODCID/SCID are successfully set.
- *              0 otherwise.
+ * @return      1 if the token is valid (and, for a Retry token, @p odcid is
+ *              set), 0 otherwise.
  *
  * The function performs the following checks:
  * - Token length meets the required minimum.
@@ -1541,8 +1544,9 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
 
     /*
      * Set ODCID and SCID. If the token is from a RETRY packet, retrieve both
-     * from the token. Otherwise, generate a new ODCID and use the header's
-     * source connection ID for SCID.
+     * from the token. Otherwise (a NEW_TOKEN token) no Retry took place: the
+     * ODCID stays empty and the client's DCID is the original DCID
+     * (RFC 9000 s. 7.3).
      */
     if (token.is_retry) {
         /*
@@ -1560,9 +1564,6 @@ static int port_validate_token(QUIC_PKT_HDR *hdr, QUIC_PORT *port,
                 != 0)
             goto err;
         *odcid = token.odcid;
-    } else {
-        if (!ossl_quic_lcidm_get_unused_cid(port->lcidm, odcid))
-            goto err;
     }
 
     /*
@@ -1635,7 +1636,8 @@ static void generate_new_token(QUIC_CHANNEL *ch, BIO_ADDR *peer)
     }
 
     ch->pending_new_token = ct_buf;
-    ch->pending_new_token_len = ct_len;
+    /* No Retry Integrity Tag follows a NEW_TOKEN token */
+    ch->pending_new_token_len = ct_len - QUIC_RETRY_INTEGRITY_TAG_LEN;
 
     cleanup_validation_token(&token);
 }
@@ -1654,6 +1656,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     QUIC_CONN_ID odcid;
     uint8_t gen_new_token = 0;
     uint8_t is_retry_token = 0;
+    int validated = 0;
     OSSL_QRX *qrx = NULL, *qrx_ref;
     OSSL_QRX *qrx_src = NULL;
     OSSL_QRX_ARGS qrx_args = { 0 };
@@ -1811,10 +1814,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
      * a NEW_TOKEN frame during a prior connection, which we should still
      * validate here
      */
-    if (hdr.token != NULL
-        && port_validate_token(&hdr, port, &e->peer,
-               &odcid, &gen_new_token, &is_retry_token)
-            == 0) {
+    if (hdr.token != NULL)
+        validated = port_validate_token(&hdr, port, &e->peer,
+            &odcid, &gen_new_token, &is_retry_token);
+    if (hdr.token != NULL && validated == 0) {
         /*
          * RFC 9000 s 8.1.3
          * When a server receives an Initial packet with an address
@@ -1860,13 +1863,26 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         }
     }
 
+    if (qrx != NULL && validated == 1 && odcid.id_len == 0) {
+        /*
+         * A valid NEW_TOKEN token: no Retry took place, so the client's DCID
+         * is not one of ours and the qrx parses short headers with the
+         * client's DCID length. As when address validation is off, let the
+         * channel create its own qrx for the connection ID it chooses, and
+         * inject the packets validated here into it.
+         */
+        qrx_src = qrx;
+        qrx = NULL;
+    }
+
     qrx_ref = NULL;
     if (qrx != NULL) {
         /*
          * if we are here, then client is validated via retry packet
-         * (client sent a valid token). In this case the qrx has valid
-         * secrets set for QUIC initial level encryption. We can pass
-         * reference to qrx to newly created channel.
+         * (client sent a valid Retry token, so its DCID is the SCID of our
+         * Retry). In this case the qrx has valid secrets set for QUIC initial
+         * level encryption. We can pass reference to qrx to newly created
+         * channel.
          *
          * Note: port_bind_channel()/channel becomes owner of qrx_ref.
          */

@@ -3127,6 +3127,135 @@ static int queue_incoming_connection(SSL *qlistener, SSL *clientssl)
     return TEST_size_t_eq(SSL_get_accept_connection_queue_len(qlistener), 1);
 }
 
+/**
+ * @brief Check that a NEW_TOKEN token works on the server that issued it.
+ * A NEW_TOKEN token lets the client skip the Retry on its next connection to
+ * the same server, and that connection must complete: the server must not
+ * announce an original DCID other than the client's first DCID, nor a Retry
+ * SCID, when no Retry took place (RFC 9000 s. 7.3). The client's first DCID
+ * is 16 bytes long, unlike the server's 8-byte connection IDs, and data must
+ * flow both ways in 1-RTT packets afterwards.
+ * @returns 1 if the test passed, 0 otherwise
+ */
+static int test_new_token_same_server(void)
+{
+    static const char msg[] = "hello";
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    SSL *clientssl2 = NULL, *serverssl2 = NULL;
+    SSL *cstream = NULL, *sstream = NULL;
+    BIO *cbio = NULL;
+    BIO_ADDR *addr = NULL;
+    QUIC_TOKEN *token = NULL;
+    QUIC_CHANNEL *cch;
+    struct in_addr ina;
+    char buf[sizeof(msg)];
+    size_t written, readbytes;
+    int testresult = 0, ret, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx())
+        || !TEST_true(create_quic_ssl_objects(sctx, cctx, &qlistener,
+            &clientssl)))
+        goto err;
+
+    /* First connection: no token yet, so the server sends a Retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+    if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    /* Let the NEW_TOKEN frame reach the client's token cache */
+    ina.s_addr = htonl(0x1f000001);
+    if (!TEST_ptr(addr = create_addr(&ina, 8040)))
+        goto err;
+    for (i = 0; i < 10 && ossl_quic_get_peer_token(cctx, addr, &token) == 0;
+        i++) {
+        SSL_handle_events(serverssl);
+        SSL_handle_events(qlistener);
+        SSL_handle_events(clientssl);
+    }
+    if (!TEST_ptr(token))
+        goto err;
+    ossl_quic_free_peer_token(token);
+
+    /* Second connection from the same address, with that token */
+    cbio = SSL_get_rbio(clientssl);
+    if (!TEST_true(BIO_up_ref(cbio)))
+        goto err;
+    SSL_free(serverssl);
+    serverssl = NULL;
+    SSL_free(clientssl);
+    clientssl = NULL;
+    if (!TEST_ptr(clientssl2 = SSL_new(cctx))
+        || !TEST_true(qc_init(clientssl2, addr)))
+        goto err;
+    SSL_set_bio(clientssl2, cbio, cbio);
+    cbio = NULL;
+
+    /*
+     * Make the client's first DCID longer than the server's connection IDs,
+     * before the connection starts and derives its Initial secrets from it.
+     */
+    if (!TEST_ptr(cch = ossl_quic_conn_get_channel(clientssl2))
+        || !TEST_true(ossl_quic_gen_rand_conn_id(libctx, 16, &cch->init_dcid))
+        || !TEST_true(ossl_quic_tx_packetiser_set_cur_dcid(cch->txp,
+            &cch->init_dcid)))
+        goto err;
+
+    /* The first flight is accepted: no Retry */
+    ret = SSL_connect(clientssl2);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl2, ret), SSL_ERROR_WANT_READ))
+        goto err;
+    SSL_handle_events(qlistener);
+    if (!TEST_size_t_eq(SSL_get_accept_connection_queue_len(qlistener), 1)
+        || !TEST_ptr(serverssl2 = SSL_accept_connection(qlistener, 0))
+        || !TEST_true(create_bare_ssl_connection(serverssl2, clientssl2,
+            SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    /* Data flows both ways on the new connection */
+    if (!TEST_true(SSL_set_default_stream_mode(serverssl2,
+            SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_true(SSL_set_default_stream_mode(clientssl2,
+            SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_ptr(cstream = SSL_new_stream(clientssl2, 0))
+        || !TEST_true(SSL_write_ex(cstream, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg))
+        || !TEST_int_eq(SSL_handle_events(serverssl2), 1)
+        || !TEST_ptr(sstream = SSL_accept_stream(serverssl2, 0))
+        || !TEST_true(SSL_read_ex(sstream, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg))
+        || !TEST_true(SSL_write_ex(sstream, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg))
+        || !TEST_true(SSL_read_ex(cstream, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(sstream);
+    SSL_free(cstream);
+    BIO_free(cbio);
+    BIO_ADDR_free(addr);
+    SSL_free(serverssl2);
+    SSL_free(clientssl2);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static SSL *listen_ex_msg_cb_ssl;
 static char listen_ex_msg_cb_arg;
 static unsigned int listen_ex_tls_msg_count;
@@ -6264,6 +6393,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_SSL_TRACE
     ADD_TEST(test_new_token);
 #endif
+    ADD_TEST(test_new_token_same_server);
     ADD_TEST(test_server_method_with_ssl_new);
     ADD_TEST(test_ssl_accept_connection);
     ADD_TEST(test_quic_amplification_limit);
