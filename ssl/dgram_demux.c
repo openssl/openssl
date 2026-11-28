@@ -20,6 +20,8 @@
 
 #define DEMUX_DEFAULT_MTU 1500
 #define DEMUX_MIN_INITIAL_DGRAM_LEN 1200
+/* No UDP datagram is longer, so no receive buffer needs to be. */
+#define DEMUX_MAX_MTU 65535
 
 struct dgram_demux_st {
     /* The underlying transport BIO with datagram semantics. */
@@ -149,24 +151,31 @@ void ossl_dgram_demux_free(DGRAM_DEMUX *demux)
 
 void ossl_dgram_demux_set_bio(DGRAM_DEMUX *demux, BIO *net_bio)
 {
-    unsigned int mtu;
+    long mtu;
 
     demux->net_bio = net_bio;
 
-    if (net_bio != NULL) {
-        /*
-         * Try to determine our MTU if possible. The BIO is not required to
-         * support this, in which case we remain at the last known MTU, or our
-         * initial default.
-         */
-        mtu = BIO_dgram_get_mtu(net_bio);
-        if (mtu >= DEMUX_MIN_INITIAL_DGRAM_LEN)
-            ossl_dgram_demux_set_mtu(demux, mtu);
+    if (net_bio == NULL)
+        return;
 
-        if (BIO_dgram_get_local_addr_cap(net_bio)
-            && BIO_dgram_set_local_addr_enable(net_bio, 1))
-            demux->use_local_addr = 1;
-    }
+    /*
+     * Try to determine our MTU if possible. The BIO is not required to
+     * support this, in which case we remain at the last known MTU, or our
+     * initial default.
+     *
+     * BIO_ctrl() returns zero or a negative value for a control the BIO
+     * does not implement, so the result is examined as the long it is.
+     * Converted to unsigned, -1 or -2 would pass for an MTU of about
+     * 4 GiB, and every receive buffer is allocated at the MTU.
+     */
+    mtu = BIO_ctrl(net_bio, BIO_CTRL_DGRAM_GET_MTU, 0, NULL);
+    if (mtu > DEMUX_MAX_MTU)
+        mtu = DEMUX_MAX_MTU;
+    if (mtu >= DEMUX_MIN_INITIAL_DGRAM_LEN)
+        ossl_dgram_demux_set_mtu(demux, (unsigned int)mtu);
+    if (BIO_dgram_get_local_addr_cap(net_bio) > 0
+        && BIO_dgram_set_local_addr_enable(net_bio, 1) > 0)
+        demux->use_local_addr = 1;
 }
 
 int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu)
@@ -184,6 +193,18 @@ int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu)
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
     return 1;
+}
+
+size_t ossl_dgram_demux_get_mtu(DGRAM_DEMUX *demux)
+{
+    size_t mtu;
+
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+    mtu = demux->mtu;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+    return mtu;
 }
 
 void ossl_dgram_demux_set_max_free_urxe(DGRAM_DEMUX *demux, size_t max_free)
