@@ -375,7 +375,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
      * alter subsequent operations on a reused context.
      */
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen,
-                                            &prev_xoflen);
+        &prev_xoflen);
     params[1] = OSSL_PARAM_construct_end();
     ERR_set_mark();
     if (EVP_MD_CTX_get_params(ctx, params) > 0 && OSSL_PARAM_modified(&params[0]))
@@ -387,7 +387,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
         if (restore_xoflen) {
             params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_xoflen,
-                                                    &prev_xoflen);
+                &prev_xoflen);
             ERR_set_mark();
             (void)EVP_MD_CTX_set_params(ctx, params);
             ERR_pop_to_mark();

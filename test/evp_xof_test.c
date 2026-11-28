@@ -21,6 +21,106 @@
 static OSSL_LIB_CTX *fips_libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL, *fipsprov = NULL;
 
+/* golden list of XOF digests that should end up in xof_list */
+static const char *const xof_algs[] = {
+    "SHAKE-128",
+    "SHAKE-256",
+    "CSHAKE-128",
+    "CSHAKE-256",
+    "CSHAKE-KECCAK-128",
+    "CSHAKE-KECCAK-256",
+#ifndef OPENSSL_NO_TURBOSHAKE
+    "TURBOSHAKE-128",
+    "TURBOSHAKE-256",
+#endif
+#ifndef OPENSSL_NO_KT
+    "KT-128",
+    "KT-256",
+#endif
+};
+
+typedef struct {
+    const EVP_MD *md;
+    const char *name;
+    int default_xoflen;
+    unsigned int found : 1;
+} XOF_DATA;
+
+/* populated from xof_algs[] by setup_xof_list(); same indices */
+static XOF_DATA xof_list[OSSL_NELEM(xof_algs)];
+
+static void collect_xof_cb(EVP_MD *md, void *arg)
+{
+    const char *name = NULL;
+    size_t i = 0;
+    size_t *unknown = arg;
+
+    if (md == NULL
+        || !EVP_MD_xof(md)
+        || (name = EVP_MD_get0_name(md)) == NULL)
+        return;
+
+    for (i = 0; i < OSSL_NELEM(xof_list); i++) {
+        if (OPENSSL_strcasecmp(xof_list[i].name, name) == 0) {
+            xof_list[i].found = 1;
+            return;
+        }
+    }
+
+    /* an XOF the golden list does not know about */
+    TEST_info("collect_xof_cb: %s discovered at runtime but not in"
+              " xof_algs[]",
+        name);
+    (*unknown)++;
+}
+
+static int setup_xof_list(void)
+{
+    XOF_DATA *info = NULL;
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(xof_algs); i++) {
+        info = &xof_list[i];
+
+        if (!TEST_ptr(info->md = EVP_MD_fetch(NULL, xof_algs[i], NULL))) {
+            TEST_info("setup_xof_list: %s failed to fetch", xof_algs[i]);
+            return 0;
+        }
+
+        info->name = xof_algs[i];
+        info->default_xoflen = EVP_MD_get_size(info->md);
+    }
+
+    return 1;
+}
+
+static void cleanup_xof_list(void)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(xof_list); i++) {
+        EVP_MD_free((EVP_MD *)xof_list[i].md);
+        xof_list[i].md = NULL;
+    }
+}
+
+static int test_evp_xof_provided(void)
+{
+    size_t i, unknown = 0;
+
+    EVP_MD_do_all_provided(NULL, collect_xof_cb, &unknown);
+
+    for (i = 0; i < OSSL_NELEM(xof_list); i++) {
+        if (!TEST_true(xof_list[i].found)) {
+            TEST_info("test_evp_xof_provided: %s NOT dynamically discovered",
+                xof_list[i].name);
+            return 0;
+        }
+    }
+
+    return TEST_size_t_eq(unknown, 0);
+}
+
 static const uint8_t shake256_input[] = {
     0x8d, 0x80, 0x01, 0xe2, 0xc0, 0x96, 0xf1, 0xb8,
     0x8e, 0x7c, 0x92, 0x24, 0xa0, 0x86, 0xef, 0xd4,
@@ -1742,6 +1842,91 @@ err:
     return ret;
 }
 
+static int test_xof_digestfinalxof_xoflen(int idx)
+{
+    const XOF_DATA *info = &xof_list[idx];
+    int ret = 0;
+    EVP_MD_CTX *md_ctx = NULL;
+    unsigned char md[64];
+    unsigned int len = 0, reinit_len = 0;
+    size_t xoflen = 20;
+    int expected_default = info->default_xoflen == 0 ? -1 : info->default_xoflen;
+    OSSL_PARAM params[2];
+
+    if (!TEST_int_le(expected_default, (int)sizeof(md))
+        || !TEST_int_ne(expected_default, 40)
+        || !TEST_ptr(md_ctx = EVP_MD_CTX_new()))
+        goto err;
+
+    /* Without explicit xoflen, EVP_DigestFinalXOF must not alter xoflen */
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, info->md, NULL))
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), expected_default)
+        || !TEST_true(EVP_DigestUpdate(md_ctx, shake256_input,
+            sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, 40))
+        || !TEST_true(EVP_DigestInit_ex2(md_ctx, NULL, NULL))
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), expected_default)
+        || !TEST_true(EVP_DigestUpdate(md_ctx, shake256_input,
+            sizeof(shake256_input))))
+        goto err;
+
+    if (expected_default < 0) {
+        ERR_set_mark();
+        if (!TEST_false(EVP_DigestFinal_ex(md_ctx, md, &len))) {
+            ERR_clear_last_mark();
+            goto err;
+        }
+        ERR_pop_to_mark();
+    } else {
+        if (!TEST_true(EVP_DigestFinal_ex(md_ctx, md, &len))
+            || !TEST_uint_eq(len, (unsigned int)expected_default))
+            goto err;
+    }
+
+    /* Re-initializing with the same EVP_MD must also keep default xoflen */
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, info->md, NULL))
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), expected_default))
+        goto err;
+
+    /*
+     * Explicit xoflen set by caller: establish how the provider handles
+     * xoflen across re-initialization without EVP_DigestFinalXOF(), then
+     * verify EVP_DigestFinalXOF() preserves that post-reinit behavior.
+     */
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &xoflen);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, info->md, params))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, shake256_input,
+            sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, &len))
+        || !TEST_uint_eq(len, (unsigned int)xoflen)
+        || !TEST_true(EVP_DigestInit_ex2(md_ctx, NULL, NULL))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, shake256_input,
+            sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, &reinit_len))
+        || !TEST_uint_ne(reinit_len, 40)
+        || !TEST_uint_gt(reinit_len, 0)
+        || !TEST_size_t_le(reinit_len, sizeof(md)))
+        goto err;
+
+    if (!TEST_true(EVP_DigestInit_ex2(md_ctx, info->md, params))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, shake256_input,
+            sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, 40))
+        || !TEST_true(EVP_DigestInit_ex2(md_ctx, NULL, NULL))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, shake256_input,
+            sizeof(shake256_input)))
+        || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, &len))
+        || !TEST_uint_eq(len, reinit_len)
+        || !TEST_int_eq(EVP_MD_CTX_get_size_ex(md_ctx), (int)reinit_len))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MD_CTX_free(md_ctx);
+    return ret;
+}
+
 static int xof_fail_test(void)
 {
     int ret;
@@ -1777,6 +1962,13 @@ int setup_tests(void)
         return 1;
     }
 
+    if (setup_xof_list() == 0) {
+        cleanup_tests();
+        return 0;
+    }
+
+    ADD_TEST(test_evp_xof_provided);
+    ADD_ALL_TESTS(test_xof_digestfinalxof_xoflen, OSSL_NELEM(xof_list));
     ADD_ALL_TESTS(xof_kat_test, OSSL_NELEM(xof_test_data));
     ADD_ALL_TESTS(xof_kat_digestfinal_test, OSSL_NELEM(xof_test_data));
     ADD_ALL_TESTS(xof_kat_digestfinal_xoflen_test, OSSL_NELEM(xof_test_data));
@@ -1816,6 +2008,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    cleanup_xof_list();
     OSSL_PROVIDER_unload(fipsprov);
     OSSL_PROVIDER_unload(nullprov);
     OSSL_LIB_CTX_free(fips_libctx);
