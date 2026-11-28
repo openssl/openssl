@@ -1902,6 +1902,19 @@ err:
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     size_t numtempl)
 {
+    /*
+     * A previous write (e.g. a handshake flight from a drive that returned
+     * WANT mid-flight) may have left records pending. Flush them before
+     * starting a new batch instead of failing the new write.
+     */
+    if (rl->nextwbuf < rl->numwpipes
+            && TLS_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) != 0) {
+        int fret = tls_retry_write_records(rl);
+
+        if (fret != OSSL_RECORD_RETURN_SUCCESS)
+            return fret;
+    }
+
     /* Check we don't have pending data waiting to write */
     if (!ossl_assert(rl->nextwbuf >= rl->numwpipes
             || TLS_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) == 0)) {
