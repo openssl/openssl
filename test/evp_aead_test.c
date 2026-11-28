@@ -2229,6 +2229,7 @@ static int test_evp_aead_keylen_reinit(int idx)
 
     OSSL_PARAM tagparams[2];
     OSSL_PARAM keylenparams[2];
+    OSSL_PARAM bothparams[3];
 
     size_t wrong_keylen = 0, got_keylen = 0;
     uint8_t short_key[1] = { 0 };
@@ -2282,6 +2283,18 @@ static int test_evp_aead_keylen_reinit(int idx)
     /* via set_params */
     if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, keylenparams))) {
         TEST_info("%s: set_params accepted KEYLEN %zu (key length %d)",
+            info->name, wrong_keylen, info->keylen);
+        goto err;
+    }
+
+    /* with a tag too, where a tag alone is accepted: still refused */
+    bothparams[0] = tagparams[0];
+    bothparams[1] = keylenparams[0];
+    bothparams[2] = OSSL_PARAM_construct_end();
+    if (EVP_CIPHER_CTX_set_params(ctx, tagparams) > 0
+        && !TEST_false(EVP_CIPHER_CTX_set_params(ctx, bothparams))) {
+        TEST_info("%s: set_params accepted KEYLEN %zu alongside a tag "
+                  "(key length %d)",
             info->name, wrong_keylen, info->keylen);
         goto err;
     }
@@ -2354,6 +2367,7 @@ static int test_evp_aead_ivlen_reinit(int idx)
 
     OSSL_PARAM tagparams[2];
     OSSL_PARAM ivlenparams[2];
+    OSSL_PARAM bothparams[3];
 
     /* longer than any AEAD takes */
     static uint8_t long_iv[0xFFFF] = { 0 };
@@ -2413,6 +2427,18 @@ static int test_evp_aead_ivlen_reinit(int idx)
     /* via set_params */
     if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx, ivlenparams))) {
         TEST_info("%s: set_params accepted IVLEN %zu (IV length %zu)",
+            info->name, wrong_ivlen, ref_ivlen);
+        goto err;
+    }
+
+    /* with a tag too, where a tag alone is accepted: still refused */
+    bothparams[0] = tagparams[0];
+    bothparams[1] = ivlenparams[0];
+    bothparams[2] = OSSL_PARAM_construct_end();
+    if (EVP_CIPHER_CTX_set_params(ctx, tagparams) > 0
+        && !TEST_false(EVP_CIPHER_CTX_set_params(ctx, bothparams))) {
+        TEST_info("%s: set_params accepted IVLEN %zu alongside a tag "
+                  "(IV length %zu)",
             info->name, wrong_ivlen, ref_ivlen);
         goto err;
     }
