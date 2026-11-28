@@ -585,6 +585,14 @@ IF[{- !$disabled{tests} -}]
     DEPEND[dtlsssllistenertest]=../libcrypto.a ../libssl.a libtestutil.a
   ENDIF
 
+  IF[{- !$disabled{dtls} || !$disabled{quic} -}]
+    PROGRAMS{noinst}=dgram_demux_test
+
+    SOURCE[dgram_demux_test]=dgram_demux_test.c
+    INCLUDE[dgram_demux_test]=../include ../apps/include
+    DEPEND[dgram_demux_test]=../libcrypto.a ../libssl.a libtestutil.a
+  ENDIF
+
   IF[{- !$disabled{sock} && !$disabled{dtls} && !$disabled{threads}-}]
     PROGRAMS{noinst}=dtls_multithread_test
 
