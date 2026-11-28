@@ -410,6 +410,17 @@ err:
     return 0;
 }
 
+#ifndef OPENSSL_NO_ECH
+/* Returns 1 if real (not GREASE) ECH was offered and the server rejected it */
+static int ech_rejected(const SSL_CONNECTION *s)
+{
+    return s->ext.ech.es != NULL
+        && s->ext.ech.attempted == 1
+        && s->ext.ech.success != 1
+        && s->ext.ech.grease != OSSL_ECH_IS_GREASE;
+}
+#endif
+
 static int do_compressed_cert(SSL_CONNECTION *sc)
 {
     /* If we negotiated RPK, we won't try to compress it */
@@ -900,6 +911,27 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         return tls_finish_handshake(s, wst, 0, 1);
 
     case TLS_ST_OK:
+#ifndef OPENSSL_NO_ECH
+        /*
+         * RFC 9849 section 6.1.6: if ECH was rejected, the handshake with the
+         * public name is complete (the client's Finished has been sent and
+         * the server's verified) and is aborted with ech_required before any
+         * application data is sent. A resumed session does not authenticate
+         * the server for the public name, so it is not a secure signal to
+         * retry: abort with illegal_parameter and no retry configs.
+         * cleanuphand is set only at the end of a full or abbreviated
+         * handshake, not on post-handshake returns to TLS_ST_OK.
+         */
+        if (s->statem.cleanuphand && ech_rejected(s)) {
+            if (s->hit) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
+                return WORK_ERROR;
+            }
+            s->ext.ech.retry_configs_ok = 1;
+            SSLfatal(s, SSL_AD_ECH_REQUIRED, SSL_R_ECH_REQUIRED);
+            return WORK_ERROR;
+        }
+#endif
         /*
          * A message that arrived out of order may already be sitting fully
          * received in the reassembly buffer, waiting on something earlier
@@ -3674,18 +3706,6 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
     }
 #endif
 
-#ifndef OPENSSL_NO_ECH
-    /* check result of ech and return error if needed */
-    if (s->ext.ech.es != NULL
-        && s->ext.ech.attempted == 1
-        && s->ext.ech.success != 1
-        && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
-        s->ext.ech.retry_configs_ok = 1; /* note those are good */
-        SSLfatal(s, SSL_AD_ECH_REQUIRED, SSL_R_ECH_REQUIRED);
-        return 0;
-    }
-#endif /* OPENSSL_NO_ECH */
-
     return 1;
 }
 
@@ -4413,12 +4433,40 @@ static int ssl3_check_client_certificate(SSL_CONNECTION *s)
     return 1;
 }
 
+/*
+ * Arrange for an empty Certificate and no CertificateVerify to be sent.
+ * Returns 1 on success or 0 on failure, in which case SSLfatal() has been
+ * called.
+ */
+static int set_no_client_certificate(SSL_CONNECTION *s)
+{
+    s->s3.tmp.cert_req = 2;
+    s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
+    return ssl3_digest_cached_records(s, 0);
+}
+
 WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s, WORK_STATE wst)
 {
     X509 *x509 = NULL;
     EVP_PKEY *pkey = NULL;
     int i;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+#ifndef OPENSSL_NO_ECH
+    /*
+     * RFC 9849 section 6.1.7: if ECH was rejected the server is authenticated
+     * only for the public name, and a requested client certificate is
+     * answered with an empty Certificate message. Post-handshake
+     * authentication follows a completed handshake, in which ECH was not
+     * rejected, even if an ECH configuration was set afterwards.
+     */
+    if (s->post_handshake_auth != SSL_PHA_REQUESTED && ech_rejected(s)) {
+        if (!set_no_client_certificate(s))
+            /* SSLfatal() already called */
+            return WORK_ERROR;
+        return WORK_FINISHED_CONTINUE;
+    }
+#endif
 
     if (wst == WORK_MORE_A) {
         /* Let cert callback update client certificates if required */
@@ -4470,13 +4518,9 @@ WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s, WORK_STATE wst)
         EVP_PKEY_free(pkey);
         if (i && !ssl3_check_client_certificate(s))
             i = 0;
-        if (i == 0) {
-            s->s3.tmp.cert_req = 2;
-            s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
-            if (!ssl3_digest_cached_records(s, 0))
-                /* SSLfatal() already called */
-                return WORK_ERROR;
-        }
+        if (i == 0 && !set_no_client_certificate(s))
+            /* SSLfatal() already called */
+            return WORK_ERROR;
 
         if (!SSL_CONNECTION_IS_VERSION13(s)
             || (s->options & SSL_OP_NO_TX_CERTIFICATE_COMPRESSION) != 0)
