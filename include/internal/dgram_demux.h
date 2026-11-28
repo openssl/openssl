@@ -169,7 +169,9 @@ void ossl_dgram_demux_free(DGRAM_DEMUX *demux);
 
 /*
  * Changes the BIO which the demuxer reads from. This also sets the MTU if the
- * BIO supports querying the MTU.
+ * BIO supports querying the MTU. An MTU the BIO reports is used only if it is
+ * at least the minimum ossl_dgram_demux_set_mtu() accepts, and is limited to
+ * the largest UDP datagram, 65535 bytes.
  */
 void ossl_dgram_demux_set_bio(DGRAM_DEMUX *demux, BIO *net_bio);
 
@@ -178,6 +180,14 @@ void ossl_dgram_demux_set_bio(DGRAM_DEMUX *demux, BIO *net_bio);
  * Returns 1 on success, 0 if mtu is below minimum.
  */
 int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu);
+
+/**
+ * @brief Get the MTU the demuxer uses to receive datagrams.
+ * This is the size at which receive buffers are allocated.
+ * @param demux the demuxer to query
+ * @returns the MTU in bytes
+ */
+size_t ossl_dgram_demux_get_mtu(DGRAM_DEMUX *demux);
 
 /*
  * Sets the maximum number of URXEs cached on the free list; 0 (the
